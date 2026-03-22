@@ -1,5 +1,9 @@
 # Testing Guide
 
+See [~/.claude/standards/testing.md](~/.claude/standards/testing.md) for universal conventions (coverage thresholds, what not to test, accessible query priority).
+
+## Project-specific test cases
+
 ## Backend
 
 ### Setup
