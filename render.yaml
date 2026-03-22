@@ -22,4 +22,4 @@ services:
         fromService:
           name: yahtzee-api
           type: web
-          property: onlineUrl
+          property: host
