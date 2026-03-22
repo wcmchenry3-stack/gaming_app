@@ -1,5 +1,5 @@
 import pytest
-from game import YahtzeeGame, _calculate_score, CATEGORIES
+from game import YahtzeeGame, _calculate_score
 
 # ---------------------------------------------------------------------------
 # Helpers
