@@ -1,16 +1,18 @@
 import React, { useState, useEffect } from "react";
 import { View, Pressable, Text, StyleSheet } from "react-native";
 import Die from "./Die";
+import { useTheme } from "../theme/ThemeContext";
 
 interface DiceRowProps {
   dice: number[];
   rollsUsed: number;
   gameOver: boolean;
   onRoll: (held: boolean[]) => Promise<void>;
-  resetHeld: boolean; // toggled by parent to signal new round
+  resetHeld: boolean;
 }
 
 export default function DiceRow({ dice, rollsUsed, gameOver, onRoll, resetHeld }: DiceRowProps) {
+  const { colors } = useTheme();
   const [held, setHeld] = useState<boolean[]>([false, false, false, false, false]);
   const [rolling, setRolling] = useState(false);
 
@@ -19,17 +21,13 @@ export default function DiceRow({ dice, rollsUsed, gameOver, onRoll, resetHeld }
   }, [resetHeld]);
 
   function toggleHeld(index: number) {
-    if (rollsUsed === 0) return; // can't hold before first roll
+    if (rollsUsed === 0) return;
     setHeld((prev) => prev.map((h, i) => (i === index ? !h : h)));
   }
 
   async function handleRoll() {
     setRolling(true);
-    try {
-      await onRoll(held);
-    } finally {
-      setRolling(false);
-    }
+    try { await onRoll(held); } finally { setRolling(false); }
   }
 
   const canRoll = rollsUsed < 3 && !gameOver;
@@ -48,11 +46,14 @@ export default function DiceRow({ dice, rollsUsed, gameOver, onRoll, resetHeld }
           />
         ))}
       </View>
-      <Text style={styles.hint}>
+      <Text style={[styles.hint, { color: colors.textMuted }]}>
         {rollsUsed > 0 ? "Tap dice to hold" : "Press Roll to start your turn"}
       </Text>
       <Pressable
-        style={[styles.rollButton, !canRoll && styles.rollButtonDisabled]}
+        style={[
+          styles.rollButton,
+          { backgroundColor: canRoll ? colors.accent : colors.textFilled },
+        ]}
         onPress={handleRoll}
         disabled={!canRoll || rolling}
       >
@@ -74,19 +75,14 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   hint: {
-    color: "#64748b",
     fontSize: 13,
     marginTop: 4,
     marginBottom: 8,
   },
   rollButton: {
-    backgroundColor: "#2563eb",
     paddingHorizontal: 36,
     paddingVertical: 12,
     borderRadius: 8,
-  },
-  rollButtonDisabled: {
-    backgroundColor: "#94a3b8",
   },
   rollButtonText: {
     color: "#fff",

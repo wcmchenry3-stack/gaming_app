@@ -1,32 +1,42 @@
 import React from "react";
 import { Pressable, Text, StyleSheet, View } from "react-native";
+import { useTheme } from "../theme/ThemeContext";
 
 interface ScoreRowProps {
   label: string;
   score: number | null;
   potential: number | undefined;
   onSelect: () => void;
-  canScore: boolean; // true when rolls_used > 0 and not game_over
+  canScore: boolean;
 }
 
 export default function ScoreRow({ label, score, potential, onSelect, canScore }: ScoreRowProps) {
+  const { colors } = useTheme();
   const isFilled = score !== null;
   const isSelectable = !isFilled && canScore;
 
   return (
     <Pressable
-      style={[styles.row, isFilled && styles.filledRow]}
+      style={[
+        styles.row,
+        {
+          backgroundColor: isFilled ? colors.surfaceAlt : colors.surface,
+          borderBottomColor: colors.border,
+        },
+      ]}
       onPress={isSelectable ? onSelect : undefined}
       disabled={!isSelectable}
     >
-      <Text style={[styles.label, isFilled && styles.filledText]}>{label}</Text>
+      <Text style={[styles.label, { color: isFilled ? colors.textFilled : colors.text }]}>
+        {label}
+      </Text>
       <View style={styles.scoreBox}>
         {isFilled ? (
-          <Text style={[styles.score, styles.filledText]}>{score}</Text>
+          <Text style={[styles.score, { color: colors.textFilled }]}>{score}</Text>
         ) : canScore && potential !== undefined ? (
-          <Text style={styles.potential}>{potential}</Text>
+          <Text style={[styles.potential, { color: colors.accent }]}>{potential}</Text>
         ) : (
-          <Text style={styles.dash}>—</Text>
+          <Text style={[styles.dash, { color: colors.border }]}>—</Text>
         )}
       </View>
     </Pressable>
@@ -41,19 +51,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 8,
     borderBottomWidth: 1,
-    borderBottomColor: "#e2e8f0",
-    backgroundColor: "#fff",
-  },
-  filledRow: {
-    backgroundColor: "#f8fafc",
   },
   label: {
     fontSize: 14,
-    color: "#1e293b",
     flex: 1,
-  },
-  filledText: {
-    color: "#94a3b8",
   },
   scoreBox: {
     width: 44,
@@ -66,10 +67,8 @@ const styles = StyleSheet.create({
   potential: {
     fontSize: 14,
     fontWeight: "600",
-    color: "#2563eb",
   },
   dash: {
     fontSize: 14,
-    color: "#cbd5e1",
   },
 });

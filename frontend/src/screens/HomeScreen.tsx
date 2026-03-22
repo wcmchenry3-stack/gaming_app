@@ -3,12 +3,14 @@ import { View, Text, Pressable, StyleSheet, ActivityIndicator } from "react-nati
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { RootStackParamList } from "../../App";
 import { api } from "../api/client";
+import { useTheme } from "../theme/ThemeContext";
 
 type Props = {
   navigation: NativeStackNavigationProp<RootStackParamList, "Home">;
 };
 
 export default function HomeScreen({ navigation }: Props) {
+  const { colors, theme, toggle } = useTheme();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -18,21 +20,27 @@ export default function HomeScreen({ navigation }: Props) {
     try {
       const state = await api.newGame();
       navigation.navigate("Game", { initialState: state });
-    } catch (e: any) {
-      setError("Could not connect to backend. Is the Python server running?");
+    } catch {
+      setError("Could not connect to backend. Is the server running?");
     } finally {
       setLoading(false);
     }
   }
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>🎲 Yahtzee</Text>
-      <Text style={styles.subtitle}>Single Player</Text>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <Pressable style={styles.themeToggle} onPress={toggle}>
+        <Text style={[styles.themeToggleText, { color: colors.textMuted }]}>
+          {theme === "dark" ? "Light mode" : "Dark mode"}
+        </Text>
+      </Pressable>
 
-      {error && <Text style={styles.error}>{error}</Text>}
+      <Text style={[styles.title, { color: "#facc15" }]}>Yahtzee</Text>
+      <Text style={[styles.subtitle, { color: colors.textMuted }]}>Single Player</Text>
 
-      <Pressable style={styles.button} onPress={startGame} disabled={loading}>
+      {error && <Text style={[styles.error, { color: colors.error }]}>{error}</Text>}
+
+      <Pressable style={[styles.button, { backgroundColor: colors.accent }]} onPress={startGame} disabled={loading}>
         {loading ? (
           <ActivityIndicator color="#fff" />
         ) : (
@@ -46,24 +54,30 @@ export default function HomeScreen({ navigation }: Props) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#0f172a",
     alignItems: "center",
     justifyContent: "center",
     padding: 24,
   },
+  themeToggle: {
+    position: "absolute",
+    top: 16,
+    right: 16,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+  },
+  themeToggleText: {
+    fontSize: 13,
+  },
   title: {
     fontSize: 56,
     fontWeight: "800",
-    color: "#facc15",
     marginBottom: 8,
   },
   subtitle: {
     fontSize: 18,
-    color: "#94a3b8",
     marginBottom: 48,
   },
   button: {
-    backgroundColor: "#2563eb",
     paddingHorizontal: 48,
     paddingVertical: 16,
     borderRadius: 12,
@@ -76,7 +90,6 @@ const styles = StyleSheet.create({
     fontWeight: "700",
   },
   error: {
-    color: "#f87171",
     textAlign: "center",
     marginBottom: 16,
     fontSize: 14,

@@ -1,5 +1,6 @@
 import React from "react";
-import { Pressable, Text, StyleSheet, View } from "react-native";
+import { Pressable, Text, StyleSheet } from "react-native";
+import { useTheme } from "../theme/ThemeContext";
 
 interface DieProps {
   value: number;
@@ -9,17 +10,24 @@ interface DieProps {
 }
 
 export default function Die({ value, held, onPress, disabled }: DieProps) {
+  const { colors } = useTheme();
+
   return (
     <Pressable
       onPress={onPress}
       disabled={disabled}
       style={[
         styles.die,
-        held && styles.held,
+        {
+          backgroundColor: held ? colors.heldBg : colors.dieBg,
+          borderColor: held ? colors.heldBorder : colors.dieBorder,
+        },
         disabled && styles.disabled,
       ]}
     >
-      <Text style={styles.value}>{value > 0 ? value : "—"}</Text>
+      <Text style={[styles.value, { color: colors.text }]}>
+        {value > 0 ? value : "—"}
+      </Text>
     </Pressable>
   );
 }
@@ -30,15 +38,9 @@ const styles = StyleSheet.create({
     height: 56,
     borderRadius: 10,
     borderWidth: 3,
-    borderColor: "#ccc",
-    backgroundColor: "#fff",
     alignItems: "center",
     justifyContent: "center",
     margin: 6,
-  },
-  held: {
-    borderColor: "#2563eb",
-    backgroundColor: "#dbeafe",
   },
   disabled: {
     opacity: 0.4,
@@ -46,6 +48,5 @@ const styles = StyleSheet.create({
   value: {
     fontSize: 26,
     fontWeight: "700",
-    color: "#1e293b",
   },
 });
