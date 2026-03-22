@@ -34,9 +34,7 @@ See [`docs/RENDER.md`](docs/RENDER.md) for Render hosting setup.
 ## Key Conventions
 - All rule enforcement is server-side (`backend/game.py`). Frontend is display only.
 - Frontend replaces state wholesale from each API response.
-- Theme: dark by default, toggled per-screen, persisted to `localStorage`.
-  All colors flow from `frontend/src/theme/ThemeContext.tsx`.
 - Scoring category keys: `ones` `twos` `threes` `fours` `fives` `sixes`
   `three_of_a_kind` `four_of_a_kind` `full_house` `small_straight`
   `large_straight` `yahtzee` `chance`
-- `EXPO_PUBLIC_API_URL` env var sets backend URL for deployed builds.
+- `EXPO_PUBLIC_API_URL` env var overrides `BASE_URL` in `frontend/src/api/client.ts`.
