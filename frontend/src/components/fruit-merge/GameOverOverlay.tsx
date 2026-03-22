@@ -1,6 +1,12 @@
 import React, { useState } from "react";
 import {
-  View, Text, TextInput, Pressable, StyleSheet, ActivityIndicator, Modal,
+  View,
+  Text,
+  TextInput,
+  Pressable,
+  StyleSheet,
+  ActivityIndicator,
+  Modal,
 } from "react-native";
 import { fruitMergeApi, ScoreEntry } from "../../api/fruitMergeClient";
 import { useTheme } from "../../theme/ThemeContext";
@@ -34,7 +40,9 @@ export default function GameOverOverlay({ score, onRestart }: Props) {
   return (
     <Modal transparent animationType="fade">
       <View style={styles.backdrop}>
-        <View style={[styles.card, { backgroundColor: colors.modalBg, borderColor: colors.border }]}>
+        <View
+          style={[styles.card, { backgroundColor: colors.modalBg, borderColor: colors.border }]}
+        >
           <Text style={[styles.title, { color: colors.text }]}>Game Over</Text>
           <Text style={[styles.score, { color: colors.accent }]}>{score.toLocaleString()}</Text>
           <Text style={[styles.scoreLabel, { color: colors.textMuted }]}>points</Text>
@@ -42,7 +50,14 @@ export default function GameOverOverlay({ score, onRestart }: Props) {
           {!submitted ? (
             <>
               <TextInput
-                style={[styles.input, { backgroundColor: colors.surface, borderColor: colors.border, color: colors.text }]}
+                style={[
+                  styles.input,
+                  {
+                    backgroundColor: colors.surface,
+                    borderColor: colors.border,
+                    color: colors.text,
+                  },
+                ]}
                 placeholder="Enter your name"
                 placeholderTextColor={colors.textMuted}
                 value={name}
@@ -52,14 +67,18 @@ export default function GameOverOverlay({ score, onRestart }: Props) {
               />
               {error && <Text style={[styles.error, { color: colors.error }]}>{error}</Text>}
               <Pressable
-                style={[styles.btn, { backgroundColor: colors.accent, opacity: submitting ? 0.6 : 1 }]}
+                style={[
+                  styles.btn,
+                  { backgroundColor: colors.accent, opacity: submitting ? 0.6 : 1 },
+                ]}
                 onPress={handleSubmit}
                 disabled={submitting || !name.trim()}
               >
-                {submitting
-                  ? <ActivityIndicator color="#fff" />
-                  : <Text style={styles.btnText}>Save Score</Text>
-                }
+                {submitting ? (
+                  <ActivityIndicator color="#fff" />
+                ) : (
+                  <Text style={styles.btnText}>Save Score</Text>
+                )}
               </Pressable>
             </>
           ) : (

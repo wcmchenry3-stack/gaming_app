@@ -1,11 +1,13 @@
-import React, {
-  useRef, useEffect, useCallback, forwardRef, useImperativeHandle,
-} from "react";
+import React, { useRef, useEffect, useCallback, forwardRef, useImperativeHandle } from "react";
 import { View, StyleSheet } from "react-native";
 import Matter from "matter-js";
 import {
-  createEngine, dropFruit, FruitBody, MergeEvent,
-  WALL_THICKNESS, DANGER_LINE_RATIO,
+  createEngine,
+  dropFruit,
+  FruitBody,
+  MergeEvent,
+  WALL_THICKNESS,
+  DANGER_LINE_RATIO,
 } from "../../game/fruit-merge/engine";
 import { FruitSet, FruitDefinition } from "../../theme/fruitSets";
 import { useTheme } from "../../theme/ThemeContext";
@@ -17,7 +19,7 @@ export interface GameCanvasHandle {
 
 interface Props {
   fruitSet: FruitSet;
-  nextDef: FruitDefinition;   // current fruit about to be dropped (for ghost indicator)
+  nextDef: FruitDefinition; // current fruit about to be dropped (for ghost indicator)
   onMerge: (event: MergeEvent) => void;
   onGameOver: () => void;
   onTap: (x: number) => void;
@@ -43,11 +45,21 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
     const onTapRef = useRef(onTap);
     const fruitSetRef = useRef(fruitSet);
 
-    useEffect(() => { nextDefRef.current = nextDef; }, [nextDef]);
-    useEffect(() => { onMergeRef.current = onMerge; }, [onMerge]);
-    useEffect(() => { onGameOverRef.current = onGameOver; }, [onGameOver]);
-    useEffect(() => { onTapRef.current = onTap; }, [onTap]);
-    useEffect(() => { fruitSetRef.current = fruitSet; }, [fruitSet]);
+    useEffect(() => {
+      nextDefRef.current = nextDef;
+    }, [nextDef]);
+    useEffect(() => {
+      onMergeRef.current = onMerge;
+    }, [onMerge]);
+    useEffect(() => {
+      onGameOverRef.current = onGameOver;
+    }, [onGameOver]);
+    useEffect(() => {
+      onTapRef.current = onTap;
+    }, [onTap]);
+    useEffect(() => {
+      fruitSetRef.current = fruitSet;
+    }, [fruitSet]);
 
     // initEngine only re-runs when canvas dimensions or fruit skin changes.
     // Callbacks (onMerge, onGameOver, onTap, nextDef) are accessed via refs.
@@ -64,10 +76,11 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
       canvas.height = height;
 
       engineRef.current = createEngine(
-        width, height,
+        width,
+        height,
         fruitSetRef.current,
         (e) => onMergeRef.current(e),
-        () => onGameOverRef.current(),
+        () => onGameOverRef.current()
       );
 
       const ctx = canvas.getContext("2d")!;
@@ -79,9 +92,9 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
 
         // --- Walls ---
         ctx.fillStyle = colors.border;
-        ctx.fillRect(0, 0, WALL_THICKNESS, height);                       // left
-        ctx.fillRect(width - WALL_THICKNESS, 0, WALL_THICKNESS, height);  // right
-        ctx.fillRect(0, height - WALL_THICKNESS, width, WALL_THICKNESS);  // floor
+        ctx.fillRect(0, 0, WALL_THICKNESS, height); // left
+        ctx.fillRect(width - WALL_THICKNESS, 0, WALL_THICKNESS, height); // right
+        ctx.fillRect(0, height - WALL_THICKNESS, width, WALL_THICKNESS); // floor
 
         // --- Danger line ---
         ctx.save();
@@ -100,7 +113,7 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
         if (px !== null) {
           const clamped = Math.max(
             WALL_THICKNESS + nd.radius,
-            Math.min(width - WALL_THICKNESS - nd.radius, px),
+            Math.min(width - WALL_THICKNESS - nd.radius, px)
           );
           // Vertical guide
           ctx.save();
@@ -168,7 +181,9 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
         const rect = canvas.getBoundingClientRect();
         pointerXRef.current = e.clientX - rect.left;
       };
-      const onPointerLeave = () => { pointerXRef.current = null; };
+      const onPointerLeave = () => {
+        pointerXRef.current = null;
+      };
       const onTouchEnd = (e: TouchEvent) => {
         e.preventDefault();
         const rect = canvas.getBoundingClientRect();
@@ -196,19 +211,23 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
       };
     }, [initEngine]);
 
-    useImperativeHandle(ref, () => ({
-      drop(def: FruitDefinition, x: number) {
-        if (!engineRef.current) return;
-        const clamped = Math.max(
-          WALL_THICKNESS + def.radius,
-          Math.min(width - WALL_THICKNESS - def.radius, x),
-        );
-        dropFruit(engineRef.current.world, def, fruitSetRef.current.id, clamped, DROP_Y);
-      },
-      reset() {
-        initEngine();
-      },
-    }), [initEngine, width]);
+    useImperativeHandle(
+      ref,
+      () => ({
+        drop(def: FruitDefinition, x: number) {
+          if (!engineRef.current) return;
+          const clamped = Math.max(
+            WALL_THICKNESS + def.radius,
+            Math.min(width - WALL_THICKNESS - def.radius, x)
+          );
+          dropFruit(engineRef.current.world, def, fruitSetRef.current.id, clamped, DROP_Y);
+        },
+        reset() {
+          initEngine();
+        },
+      }),
+      [initEngine, width]
+    );
 
     return (
       <View style={[styles.wrapper, { width, height, backgroundColor: colors.fruitBackground }]}>
@@ -221,7 +240,7 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
         />
       </View>
     );
-  },
+  }
 );
 
 GameCanvas.displayName = "GameCanvas";

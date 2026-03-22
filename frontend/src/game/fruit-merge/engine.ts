@@ -4,7 +4,7 @@ import { FruitDefinition, FruitSet, FruitTier } from "../../theme/fruitSets";
 export const WALL_THICKNESS = 16;
 // Fruits drop into the top of the container; danger line sits below the drop zone
 export const DANGER_LINE_RATIO = 0.18; // 18% from top — game over if settled fruit crosses this
-const GAME_OVER_GRACE_MS = 2000;       // ignore newly-dropped fruit for 2 seconds
+const GAME_OVER_GRACE_MS = 2000; // ignore newly-dropped fruit for 2 seconds
 
 export interface FruitBody extends Matter.Body {
   fruitTier: FruitTier;
@@ -31,7 +31,7 @@ export function createEngine(
   H: number,
   fruitSet: FruitSet,
   onMerge: (event: MergeEvent) => void,
-  onGameOver: () => void,
+  onGameOver: () => void
 ): EngineSetup {
   const engine = Matter.Engine.create({ gravity: { y: 2 } });
   const world = engine.world;
@@ -39,13 +39,16 @@ export function createEngine(
   // Walls sit INSIDE the canvas so physics and rendering match.
   // Left wall inner surface = WALL_THICKNESS; right = W - WALL_THICKNESS.
   const floor = Matter.Bodies.rectangle(W / 2, H + WALL_THICKNESS / 2, W, WALL_THICKNESS, {
-    isStatic: true, label: "floor",
+    isStatic: true,
+    label: "floor",
   });
   const wallLeft = Matter.Bodies.rectangle(WALL_THICKNESS / 2, H / 2, WALL_THICKNESS, H * 2, {
-    isStatic: true, label: "wall",
+    isStatic: true,
+    label: "wall",
   });
   const wallRight = Matter.Bodies.rectangle(W - WALL_THICKNESS / 2, H / 2, WALL_THICKNESS, H * 2, {
-    isStatic: true, label: "wall",
+    isStatic: true,
+    label: "wall",
   });
   Matter.World.add(world, [floor, wallLeft, wallRight]);
 
@@ -61,8 +64,10 @@ export function createEngine(
         a.fruitTier === undefined ||
         b.fruitTier === undefined ||
         a.fruitTier !== b.fruitTier ||
-        a.isMerging || b.isMerging
-      ) continue;
+        a.isMerging ||
+        b.isMerging
+      )
+        continue;
 
       const key = [a.id, b.id].sort().join("-");
       if (mergeSet.has(key)) continue;
@@ -102,7 +107,8 @@ export function createEngine(
         fb.isStatic ||
         fb.isMerging ||
         now - fb.createdAt < GAME_OVER_GRACE_MS
-      ) continue;
+      )
+        continue;
 
       // Top of the fruit circle
       if (body.position.y - (fb.circleRadius ?? 0) < dangerY) {
@@ -131,7 +137,7 @@ export function spawnFruitAt(
   def: FruitDefinition,
   fruitSetId: string,
   x: number,
-  y: number,
+  y: number
 ): FruitBody {
   const body = Matter.Bodies.circle(x, y, def.radius, {
     restitution: 0.3,
@@ -155,7 +161,7 @@ export function dropFruit(
   def: FruitDefinition,
   fruitSetId: string,
   x: number,
-  spawnY: number,
+  spawnY: number
 ): FruitBody {
   return spawnFruitAt(world, def, fruitSetId, x, spawnY);
 }

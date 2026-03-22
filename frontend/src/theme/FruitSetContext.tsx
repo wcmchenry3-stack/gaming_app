@@ -25,7 +25,11 @@ export function FruitSetProvider({ children }: { children: React.ReactNode }) {
 
   function setFruitSetById(id: string) {
     if (!FRUIT_SETS[id]) return;
-    try { localStorage.setItem(STORAGE_KEY, id); } catch { /* storage unavailable */ }
+    try {
+      localStorage.setItem(STORAGE_KEY, id);
+    } catch {
+      /* storage unavailable */
+    }
     setActiveId(id);
   }
 

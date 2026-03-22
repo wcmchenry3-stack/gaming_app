@@ -21,11 +21,16 @@ export default function GameScreen({ navigation, route }: Props) {
   const [error, setError] = useState<string | null>(null);
 
   const fetchPossibleScores = useCallback(async (rolls_used: number) => {
-    if (rolls_used === 0) { setPossibleScores({}); return; }
+    if (rolls_used === 0) {
+      setPossibleScores({});
+      return;
+    }
     try {
       const res = await api.possibleScores();
       setPossibleScores(res.possible_scores);
-    } catch { /* non-critical */ }
+    } catch {
+      /* non-critical */
+    }
   }, []);
 
   useEffect(() => {
@@ -36,7 +41,9 @@ export default function GameScreen({ navigation, route }: Props) {
     setError(null);
     try {
       setGameState(await api.roll(held));
-    } catch (e: unknown) { setError(e instanceof Error ? e.message : String(e)); }
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : String(e));
+    }
   }
 
   async function handleScore(category: string) {
@@ -45,7 +52,9 @@ export default function GameScreen({ navigation, route }: Props) {
       setGameState(await api.score(category));
       setResetHeld((r) => !r);
       setPossibleScores({});
-    } catch (e: unknown) { setError(e instanceof Error ? e.message : String(e)); }
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : String(e));
+    }
   }
 
   return (
@@ -54,14 +63,10 @@ export default function GameScreen({ navigation, route }: Props) {
       <View style={[styles.header, { backgroundColor: colors.headerBg }]}>
         <Text style={styles.headerText}>Round {gameState.round} / 13</Text>
         <Pressable onPress={toggle} style={styles.themeToggle}>
-          <Text style={styles.themeToggleText}>
-            {theme === "dark" ? "Light" : "Dark"}
-          </Text>
+          <Text style={styles.themeToggleText}>{theme === "dark" ? "Light" : "Dark"}</Text>
         </Pressable>
       </View>
-      {error && (
-        <Text style={[styles.errorText, { color: colors.error }]}>{error}</Text>
-      )}
+      {error && <Text style={[styles.errorText, { color: colors.error }]}>{error}</Text>}
 
       {/* Dice */}
       <DiceRow

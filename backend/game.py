@@ -95,7 +95,6 @@ class YahtzeeGame:
 
 def _calculate_score(category: str, dice: list[int]) -> int:
     counts = Counter(dice)
-    sorted_dice = sorted(dice)
 
     if category == "ones":
         return dice.count(1) * 1

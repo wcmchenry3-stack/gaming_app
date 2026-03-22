@@ -25,9 +25,7 @@ export default function Die({ value, held, onPress, disabled }: DieProps) {
         disabled && styles.disabled,
       ]}
     >
-      <Text style={[styles.value, { color: colors.text }]}>
-        {value > 0 ? value : "—"}
-      </Text>
+      <Text style={[styles.value, { color: colors.text }]}>{value > 0 ? value : "—"}</Text>
     </Pressable>
   );
 }
