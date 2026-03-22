@@ -1,6 +1,7 @@
 import React from "react";
 import { View, Text, StyleSheet, ScrollView } from "react-native";
 import ScoreRow from "./ScoreRow";
+import { useTheme } from "../theme/ThemeContext";
 
 const UPPER_CATEGORIES: { key: string; label: string }[] = [
   { key: "ones", label: "Ones" },
@@ -33,21 +34,19 @@ interface ScorecardProps {
 }
 
 export default function Scorecard({
-  scores,
-  possibleScores,
-  rollsUsed,
-  gameOver,
-  upperSubtotal,
-  upperBonus,
-  totalScore,
-  onScore,
+  scores, possibleScores, rollsUsed, gameOver,
+  upperSubtotal, upperBonus, totalScore, onScore,
 }: ScorecardProps) {
+  const { colors } = useTheme();
   const canScore = rollsUsed > 0 && !gameOver;
 
   return (
-    <ScrollView style={styles.container}>
-      {/* Upper Section */}
-      <Text style={styles.sectionHeader}>Upper Section</Text>
+    <ScrollView
+      style={[styles.container, { borderColor: colors.border }]}
+    >
+      <Text style={[styles.sectionHeader, { backgroundColor: colors.sectionHeaderBg }]}>
+        Upper Section
+      </Text>
       {UPPER_CATEGORIES.map(({ key, label }) => (
         <ScoreRow
           key={key}
@@ -58,15 +57,16 @@ export default function Scorecard({
           onSelect={() => onScore(key)}
         />
       ))}
-      <View style={styles.bonusRow}>
-        <Text style={styles.bonusLabel}>Bonus (≥63 = +35)</Text>
-        <Text style={styles.bonusValue}>
+      <View style={[styles.bonusRow, { backgroundColor: colors.bonusBg, borderBottomColor: colors.border }]}>
+        <Text style={[styles.bonusLabel, { color: colors.textMuted }]}>Bonus (≥63 = +35)</Text>
+        <Text style={[styles.bonusValue, { color: colors.textMuted }]}>
           {upperSubtotal} / 63{upperBonus > 0 ? " ✓" : ""}
         </Text>
       </View>
 
-      {/* Lower Section */}
-      <Text style={styles.sectionHeader}>Lower Section</Text>
+      <Text style={[styles.sectionHeader, { backgroundColor: colors.sectionHeaderBg }]}>
+        Lower Section
+      </Text>
       {LOWER_CATEGORIES.map(({ key, label }) => (
         <ScoreRow
           key={key}
@@ -78,8 +78,7 @@ export default function Scorecard({
         />
       ))}
 
-      {/* Total */}
-      <View style={styles.totalRow}>
+      <View style={[styles.totalRow, { backgroundColor: colors.totalBg }]}>
         <Text style={styles.totalLabel}>Total Score</Text>
         <Text style={styles.totalValue}>{totalScore}</Text>
       </View>
@@ -93,10 +92,8 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     overflow: "hidden",
     borderWidth: 1,
-    borderColor: "#e2e8f0",
   },
   sectionHeader: {
-    backgroundColor: "#1e293b",
     color: "#fff",
     fontSize: 13,
     fontWeight: "700",
@@ -109,18 +106,14 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     paddingHorizontal: 12,
     paddingVertical: 8,
-    backgroundColor: "#f1f5f9",
     borderBottomWidth: 1,
-    borderBottomColor: "#e2e8f0",
   },
   bonusLabel: {
     fontSize: 13,
-    color: "#475569",
     fontStyle: "italic",
   },
   bonusValue: {
     fontSize: 13,
-    color: "#475569",
     fontWeight: "600",
   },
   totalRow: {
@@ -129,7 +122,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingHorizontal: 12,
     paddingVertical: 12,
-    backgroundColor: "#1e293b",
   },
   totalLabel: {
     fontSize: 15,

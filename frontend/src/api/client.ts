@@ -1,4 +1,5 @@
-const BASE_URL = "http://localhost:8000";
+const _apiUrl = process.env.EXPO_PUBLIC_API_URL ?? "http://localhost:8000";
+const BASE_URL = _apiUrl.startsWith("http") ? _apiUrl : `https://${_apiUrl}`;
 
 export interface GameState {
   dice: number[];
