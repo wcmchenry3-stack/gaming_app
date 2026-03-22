@@ -29,6 +29,5 @@ export const fruitMergeApi = {
       body: JSON.stringify({ player_name, score }),
     }),
 
-  getLeaderboard: () =>
-    request<LeaderboardResponse>("/fruit-merge/scores"),
+  getLeaderboard: () => request<LeaderboardResponse>("/fruit-merge/scores"),
 };

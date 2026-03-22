@@ -35,6 +35,7 @@ def _score(category: str) -> dict:
 # POST /game/new
 # ---------------------------------------------------------------------------
 
+
 class TestNewGame:
     def test_returns_valid_state(self):
         state = _new_game()
@@ -61,6 +62,7 @@ class TestNewGame:
 # GET /game/state
 # ---------------------------------------------------------------------------
 
+
 class TestGetState:
     def test_404_without_game(self):
         res = client.get("/game/state")
@@ -76,6 +78,7 @@ class TestGetState:
 # ---------------------------------------------------------------------------
 # POST /game/roll
 # ---------------------------------------------------------------------------
+
 
 class TestRoll:
     def test_roll_updates_dice(self):
@@ -97,7 +100,9 @@ class TestRoll:
 
     def test_400_after_three_rolls(self):
         _new_game()
-        _roll(); _roll(); _roll()
+        _roll()
+        _roll()
+        _roll()
         res = _roll()
         assert res.status_code == 400
         assert "No rolls remaining" in res.json()["detail"]
@@ -115,6 +120,7 @@ class TestRoll:
 # ---------------------------------------------------------------------------
 # POST /game/score
 # ---------------------------------------------------------------------------
+
 
 class TestScore:
     def test_score_advances_round(self):
@@ -155,9 +161,19 @@ class TestScore:
     def test_game_over_after_all_categories(self):
         _new_game()
         categories = [
-            "ones", "twos", "threes", "fours", "fives", "sixes",
-            "three_of_a_kind", "four_of_a_kind", "full_house",
-            "small_straight", "large_straight", "yahtzee", "chance",
+            "ones",
+            "twos",
+            "threes",
+            "fours",
+            "fives",
+            "sixes",
+            "three_of_a_kind",
+            "four_of_a_kind",
+            "full_house",
+            "small_straight",
+            "large_straight",
+            "yahtzee",
+            "chance",
         ]
         for cat in categories:
             _roll()
@@ -169,6 +185,7 @@ class TestScore:
 # ---------------------------------------------------------------------------
 # GET /game/possible-scores
 # ---------------------------------------------------------------------------
+
 
 class TestPossibleScores:
     def test_404_without_game(self):

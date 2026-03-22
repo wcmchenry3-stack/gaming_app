@@ -6,9 +6,6 @@ on:
   push:
     branches: [dev, main]
 
-# TODO: Add lint-python (black/ruff) and lint-frontend (eslint/prettier) jobs
-# once linting tools are configured in backend/ and frontend/.
-
 jobs:
   gate-main-source:
     uses: wcmchenry3-stack/.github/.github/workflows/called-gate-main-source.yml@main
@@ -16,6 +13,18 @@ jobs:
 
   secret-scan:
     uses: wcmchenry3-stack/.github/.github/workflows/called-secret-scan.yml@main
+    secrets: inherit
+
+  lint-python:
+    uses: wcmchenry3-stack/.github/.github/workflows/called-lint-python.yml@main
+    with:
+      working-directory: backend
+    secrets: inherit
+
+  lint-frontend:
+    uses: wcmchenry3-stack/.github/.github/workflows/called-lint-frontend.yml@main
+    with:
+      working-directory: frontend
     secrets: inherit
 
   test-python:

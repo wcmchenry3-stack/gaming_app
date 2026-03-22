@@ -34,16 +34,20 @@ interface ScorecardProps {
 }
 
 export default function Scorecard({
-  scores, possibleScores, rollsUsed, gameOver,
-  upperSubtotal, upperBonus, totalScore, onScore,
+  scores,
+  possibleScores,
+  rollsUsed,
+  gameOver,
+  upperSubtotal,
+  upperBonus,
+  totalScore,
+  onScore,
 }: ScorecardProps) {
   const { colors } = useTheme();
   const canScore = rollsUsed > 0 && !gameOver;
 
   return (
-    <ScrollView
-      style={[styles.container, { borderColor: colors.border }]}
-    >
+    <ScrollView style={[styles.container, { borderColor: colors.border }]}>
       <Text style={[styles.sectionHeader, { backgroundColor: colors.sectionHeaderBg }]}>
         Upper Section
       </Text>
@@ -57,7 +61,12 @@ export default function Scorecard({
           onSelect={() => onScore(key)}
         />
       ))}
-      <View style={[styles.bonusRow, { backgroundColor: colors.bonusBg, borderBottomColor: colors.border }]}>
+      <View
+        style={[
+          styles.bonusRow,
+          { backgroundColor: colors.bonusBg, borderBottomColor: colors.border },
+        ]}
+      >
         <Text style={[styles.bonusLabel, { color: colors.textMuted }]}>Bonus (≥63 = +35)</Text>
         <Text style={[styles.bonusValue, { color: colors.textMuted }]}>
           {upperSubtotal} / 63{upperBonus > 0 ? " ✓" : ""}

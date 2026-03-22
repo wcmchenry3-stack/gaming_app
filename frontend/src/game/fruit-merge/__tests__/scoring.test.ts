@@ -11,9 +11,7 @@ describe("scoreForMerge", () => {
   });
 
   it("doubles each tier", () => {
-    const values = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9].map((t) =>
-      scoreForMerge(t as FruitTier),
-    );
+    const values = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9].map((t) => scoreForMerge(t as FruitTier));
     for (let i = 1; i < values.length; i++) {
       expect(values[i]).toBe(values[i - 1] * 2);
     }

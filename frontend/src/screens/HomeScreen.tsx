@@ -75,7 +75,9 @@ export default function HomeScreen({ navigation }: Props) {
               <Text style={styles.cardEmoji}>{game.emoji}</Text>
               <View style={styles.cardBody}>
                 <Text style={[styles.cardTitle, { color: colors.text }]}>{game.title}</Text>
-                <Text style={[styles.cardDesc, { color: colors.textMuted }]}>{game.description}</Text>
+                <Text style={[styles.cardDesc, { color: colors.textMuted }]}>
+                  {game.description}
+                </Text>
               </View>
               {game.loading ? (
                 <ActivityIndicator color={colors.accent} />
