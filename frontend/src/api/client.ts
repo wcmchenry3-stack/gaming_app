@@ -30,11 +30,9 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
 }
 
 export const api = {
-  newGame: () =>
-    request<GameState>("/game/new", { method: "POST" }),
+  newGame: () => request<GameState>("/game/new", { method: "POST" }),
 
-  getState: () =>
-    request<GameState>("/game/state"),
+  getState: () => request<GameState>("/game/state"),
 
   roll: (held: boolean[]) =>
     request<GameState>("/game/roll", {
@@ -48,6 +46,5 @@ export const api = {
       body: JSON.stringify({ category }),
     }),
 
-  possibleScores: () =>
-    request<PossibleScores>("/game/possible-scores"),
+  possibleScores: () => request<PossibleScores>("/game/possible-scores"),
 };

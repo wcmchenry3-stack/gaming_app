@@ -22,7 +22,9 @@ export default function ScoreDisplay({ score }: Props) {
   }, [score, scale]);
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+    <View
+      style={[styles.container, { backgroundColor: colors.surface, borderColor: colors.border }]}
+    >
       <Text style={[styles.label, { color: colors.textMuted }]}>Score</Text>
       <Animated.Text style={[styles.score, { color: colors.accent, transform: [{ scale }] }]}>
         {score.toLocaleString()}

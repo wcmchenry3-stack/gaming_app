@@ -21,6 +21,7 @@ def _submit(player_name: str, score: int):
 # POST /fruit-merge/score
 # ---------------------------------------------------------------------------
 
+
 class TestSubmitScore:
     def test_valid_submission_returns_201(self):
         res = _submit("Alice", 500)
@@ -49,6 +50,7 @@ class TestSubmitScore:
 # ---------------------------------------------------------------------------
 # GET /fruit-merge/scores
 # ---------------------------------------------------------------------------
+
 
 class TestGetScores:
     def test_empty_initially(self):

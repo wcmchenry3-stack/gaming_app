@@ -27,7 +27,11 @@ export default function DiceRow({ dice, rollsUsed, gameOver, onRoll, resetHeld }
 
   async function handleRoll() {
     setRolling(true);
-    try { await onRoll(held); } finally { setRolling(false); }
+    try {
+      await onRoll(held);
+    } finally {
+      setRolling(false);
+    }
   }
 
   const canRoll = rollsUsed < 3 && !gameOver;

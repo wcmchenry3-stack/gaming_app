@@ -1,10 +1,10 @@
 import pytest
-from game import YahtzeeGame, _calculate_score, CATEGORIES
-
+from game import YahtzeeGame, _calculate_score
 
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def make_game(dice: list[int], rolls_used: int = 1) -> YahtzeeGame:
     """Return a game with dice pre-set and rolls_used set (skips randomness)."""
@@ -17,6 +17,7 @@ def make_game(dice: list[int], rolls_used: int = 1) -> YahtzeeGame:
 # ---------------------------------------------------------------------------
 # Upper section scoring
 # ---------------------------------------------------------------------------
+
 
 class TestUpperCategories:
     def test_ones_counts_ones(self):
@@ -47,6 +48,7 @@ class TestUpperCategories:
 # ---------------------------------------------------------------------------
 # Lower section scoring
 # ---------------------------------------------------------------------------
+
 
 class TestThreeOfAKind:
     def test_hit(self):
@@ -141,6 +143,7 @@ class TestChance:
 # Roll logic
 # ---------------------------------------------------------------------------
 
+
 class TestRoll:
     def test_first_roll_sets_dice(self):
         g = YahtzeeGame()
@@ -159,8 +162,8 @@ class TestRoll:
 
     def test_held_dice_preserved(self):
         g = YahtzeeGame()
-        g.roll([False] * 5)          # first roll
-        g.dice = [6, 6, 1, 1, 1]    # force known state
+        g.roll([False] * 5)  # first roll
+        g.dice = [6, 6, 1, 1, 1]  # force known state
         g.roll([True, True, False, False, False])  # hold first two
         assert g.dice[0] == 6
         assert g.dice[1] == 6
@@ -189,6 +192,7 @@ class TestRoll:
 # ---------------------------------------------------------------------------
 # Scoring / round logic
 # ---------------------------------------------------------------------------
+
 
 class TestScoring:
     def test_score_records_value(self):
@@ -227,9 +231,21 @@ class TestScoring:
 
     def test_game_over_after_13_rounds(self):
         g = YahtzeeGame()
-        for cat in ["ones", "twos", "threes", "fours", "fives", "sixes",
-                    "three_of_a_kind", "four_of_a_kind", "full_house",
-                    "small_straight", "large_straight", "yahtzee", "chance"]:
+        for cat in [
+            "ones",
+            "twos",
+            "threes",
+            "fours",
+            "fives",
+            "sixes",
+            "three_of_a_kind",
+            "four_of_a_kind",
+            "full_house",
+            "small_straight",
+            "large_straight",
+            "yahtzee",
+            "chance",
+        ]:
             g.dice = [1, 2, 3, 4, 5]
             g.rolls_used = 1
             g.score(cat)
@@ -246,6 +262,7 @@ class TestScoring:
 # ---------------------------------------------------------------------------
 # Upper bonus
 # ---------------------------------------------------------------------------
+
 
 class TestUpperBonus:
     def _fill_upper(self, g: YahtzeeGame, ones=3, twos=6, threes=9, fours=12, fives=15, sixes=18):
@@ -287,6 +304,7 @@ class TestUpperBonus:
 # ---------------------------------------------------------------------------
 # possible_scores
 # ---------------------------------------------------------------------------
+
 
 class TestPossibleScores:
     def test_returns_only_unfilled(self):

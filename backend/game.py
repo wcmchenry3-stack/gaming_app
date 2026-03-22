@@ -4,9 +4,19 @@ from typing import Optional
 from collections import Counter
 
 CATEGORIES = [
-    "ones", "twos", "threes", "fours", "fives", "sixes",
-    "three_of_a_kind", "four_of_a_kind", "full_house",
-    "small_straight", "large_straight", "yahtzee", "chance",
+    "ones",
+    "twos",
+    "threes",
+    "fours",
+    "fives",
+    "sixes",
+    "three_of_a_kind",
+    "four_of_a_kind",
+    "full_house",
+    "small_straight",
+    "large_straight",
+    "yahtzee",
+    "chance",
 ]
 
 UPPER_CATEGORIES = {"ones", "twos", "threes", "fours", "fives", "sixes"}
@@ -64,9 +74,7 @@ class YahtzeeGame:
 
     def possible_scores(self) -> dict[str, int]:
         return {
-            cat: _calculate_score(cat, self.dice)
-            for cat in CATEGORIES
-            if self.scores[cat] is None
+            cat: _calculate_score(cat, self.dice) for cat in CATEGORIES if self.scores[cat] is None
         }
 
     def upper_subtotal(self) -> int:
@@ -84,9 +92,9 @@ class YahtzeeGame:
 
 # --- Pure scoring functions ---
 
+
 def _calculate_score(category: str, dice: list[int]) -> int:
     counts = Counter(dice)
-    sorted_dice = sorted(dice)
 
     if category == "ones":
         return dice.count(1) * 1

@@ -28,7 +28,7 @@ function FruitMergeGame({ navigation }: Props) {
   const [gameOver, setGameOver] = useState(false);
   const [containerWidth, setContainerWidth] = useState(0);
   const [canvasHeight, setCanvasHeight] = useState(0);
-  const [queueVersion, setQueueVersion] = useState(0);
+  const [, setQueueVersion] = useState(0);
 
   const canvasRef = useRef<GameCanvasHandle>(null);
   const queueRef = useRef(new FruitQueue());
@@ -61,18 +61,23 @@ function FruitMergeGame({ navigation }: Props) {
     setGameOver(true);
   }, []);
 
-  const handleTap = useCallback((x: number) => {
-    if (gameOver || droppingRef.current) return;
-    droppingRef.current = true;
+  const handleTap = useCallback(
+    (x: number) => {
+      if (gameOver || droppingRef.current) return;
+      droppingRef.current = true;
 
-    const tier = queueRef.current.consume();
-    setQueueVersion((v) => v + 1);
+      const tier = queueRef.current.consume();
+      setQueueVersion((v) => v + 1);
 
-    const def = activeFruitSet.fruits[tier];
-    canvasRef.current?.drop(def, x);
+      const def = activeFruitSet.fruits[tier];
+      canvasRef.current?.drop(def, x);
 
-    setTimeout(() => { droppingRef.current = false; }, 400);
-  }, [gameOver, activeFruitSet]);
+      setTimeout(() => {
+        droppingRef.current = false;
+      }, 400);
+    },
+    [gameOver, activeFruitSet]
+  );
 
   function handleRestart() {
     queueRef.current = new FruitQueue();
@@ -166,6 +171,6 @@ const styles = StyleSheet.create({
   },
   canvasOuter: {
     flex: 1,
-    alignItems: "center",   // centers the canvas horizontally when narrower than container
+    alignItems: "center", // centers the canvas horizontally when narrower than container
   },
 });

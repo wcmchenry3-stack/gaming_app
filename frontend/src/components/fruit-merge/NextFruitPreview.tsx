@@ -17,7 +17,13 @@ export default function NextFruitPreview({ current, next }: Props) {
         <Text style={styles.emoji}>{current.emoji}</Text>
         <Text style={[styles.name, { color: colors.text }]}>{current.name}</Text>
       </View>
-      <View style={[styles.card, styles.nextCard, { backgroundColor: colors.surfaceAlt, borderColor: colors.border }]}>
+      <View
+        style={[
+          styles.card,
+          styles.nextCard,
+          { backgroundColor: colors.surfaceAlt, borderColor: colors.border },
+        ]}
+      >
         <Text style={styles.label}>Next</Text>
         <Text style={[styles.emoji, styles.nextEmoji]}>{next.emoji}</Text>
         <Text style={[styles.name, { color: colors.textMuted }]}>{next.name}</Text>
