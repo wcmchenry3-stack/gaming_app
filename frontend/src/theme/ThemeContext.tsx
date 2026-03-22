@@ -101,7 +101,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   function toggle() {
     setTheme((t) => {
       const next = t === "dark" ? "light" : "dark";
-      try { localStorage.setItem(STORAGE_KEY, next); } catch {}
+      try { localStorage.setItem(STORAGE_KEY, next); } catch { /* storage unavailable */ }
       return next;
     });
   }

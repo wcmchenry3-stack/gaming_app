@@ -36,7 +36,7 @@ export default function GameScreen({ navigation, route }: Props) {
     setError(null);
     try {
       setGameState(await api.roll(held));
-    } catch (e: any) { setError(e.message); }
+    } catch (e: unknown) { setError(e instanceof Error ? e.message : String(e)); }
   }
 
   async function handleScore(category: string) {
@@ -45,7 +45,7 @@ export default function GameScreen({ navigation, route }: Props) {
       setGameState(await api.score(category));
       setResetHeld((r) => !r);
       setPossibleScores({});
-    } catch (e: any) { setError(e.message); }
+    } catch (e: unknown) { setError(e instanceof Error ? e.message : String(e)); }
   }
 
   return (

@@ -212,7 +212,7 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
 
     return (
       <View style={[styles.wrapper, { width, height, backgroundColor: colors.fruitBackground }]}>
-        {/* @ts-ignore — canvas is a valid DOM element in Expo Web */}
+        {/* @ts-expect-error — canvas is a valid DOM element in Expo Web */}
         <canvas
           ref={canvasRef}
           width={width}

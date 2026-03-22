@@ -28,7 +28,7 @@ function FruitMergeGame({ navigation }: Props) {
   const [gameOver, setGameOver] = useState(false);
   const [containerWidth, setContainerWidth] = useState(0);
   const [canvasHeight, setCanvasHeight] = useState(0);
-  const [queueVersion, setQueueVersion] = useState(0);
+  const [, setQueueVersion] = useState(0);
 
   const canvasRef = useRef<GameCanvasHandle>(null);
   const queueRef = useRef(new FruitQueue());
