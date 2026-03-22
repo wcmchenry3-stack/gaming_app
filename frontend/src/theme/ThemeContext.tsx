@@ -22,6 +22,8 @@ export interface Colors {
   modalBg: string;
   error: string;
   bonus: string;
+  fruitContainer: string;
+  fruitBackground: string;
 }
 
 const dark: Colors = {
@@ -44,6 +46,8 @@ const dark: Colors = {
   modalBg: "#1e293b",
   error: "#f87171",
   bonus: "#4ade80",
+  fruitContainer: "#1e293b",
+  fruitBackground: "#0f172a",
 };
 
 const light: Colors = {
@@ -66,6 +70,8 @@ const light: Colors = {
   modalBg: "#ffffff",
   error: "#ef4444",
   bonus: "#16a34a",
+  fruitContainer: "#e2e8f0",
+  fruitBackground: "#f8fafc",
 };
 
 const PALETTES = { dark, light };

@@ -3,8 +3,10 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from game import YahtzeeGame
 from models import GameStateResponse, PossibleScoresResponse, RollRequest, ScoreRequest
+from fruit_merge.router import router as fruit_merge_router
 
-app = FastAPI(title="Yahtzee API")
+app = FastAPI(title="Gaming App API")
+app.include_router(fruit_merge_router, prefix="/fruit-merge")
 
 app.add_middleware(
     CORSMiddleware,
