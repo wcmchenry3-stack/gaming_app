@@ -1,0 +1,25 @@
+services:
+  # --- Python FastAPI backend ---
+  - type: web
+    name: yahtzee-api
+    runtime: python
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.0
+
+  # --- Expo Web static frontend ---
+  - type: web
+    name: yahtzee-frontend
+    runtime: static
+    rootDir: frontend
+    buildCommand: npm ci && npx expo export --platform web
+    staticPublishPath: dist
+    envVars:
+      - key: EXPO_PUBLIC_API_URL
+        fromService:
+          name: yahtzee-api
+          type: web
+          property: onlineUrl

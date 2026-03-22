@@ -3,7 +3,7 @@
 ## Stack
 - **Backend:** Python 3, FastAPI, uvicorn (in-memory, no DB)
 - **Frontend:** Expo TypeScript, runs in browser via Expo Web
-- **Docs:** See `docs/` for testing, conventions, and workflow details
+- **Docs:** See `docs/` for testing, deployment, and workflow details
 
 ## Git Workflow
 - **Never push directly to `main` or `dev`**
@@ -23,10 +23,13 @@ npx expo start --web                  # http://localhost:8081
 ```
 
 ## Testing
-See [`docs/TESTING.md`](docs/TESTING.md) for full test setup and commands.
+See [`docs/TESTING.md`](docs/TESTING.md).
 ```bash
 cd backend && python -m pytest tests/ -v
 ```
+
+## Deployment
+See [`docs/RENDER.md`](docs/RENDER.md) for Render hosting setup.
 
 ## Key Conventions
 - All rule enforcement is server-side (`backend/game.py`). Frontend is display only.
@@ -34,4 +37,4 @@ cd backend && python -m pytest tests/ -v
 - Scoring category keys: `ones` `twos` `threes` `fours` `fives` `sixes`
   `three_of_a_kind` `four_of_a_kind` `full_house` `small_straight`
   `large_straight` `yahtzee` `chance`
-- `BASE_URL` in `frontend/src/api/client.ts` — swap `localhost` for LAN IP on physical devices.
+- `EXPO_PUBLIC_API_URL` env var overrides `BASE_URL` in `frontend/src/api/client.ts`.
