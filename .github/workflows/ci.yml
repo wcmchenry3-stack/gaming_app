@@ -2,14 +2,18 @@ name: CI
 
 on:
   pull_request:
-    branches: [main]
+    branches: [dev, main]
   push:
-    branches: [main]
+    branches: [dev, main]
 
 # TODO: Add lint-python (black/ruff) and lint-frontend (eslint/prettier) jobs
 # once linting tools are configured in backend/ and frontend/.
 
 jobs:
+  gate-main-source:
+    uses: wcmchenry3-stack/.github/.github/workflows/called-gate-main-source.yml@main
+    secrets: inherit
+
   secret-scan:
     uses: wcmchenry3-stack/.github/.github/workflows/called-secret-scan.yml@main
     secrets: inherit
