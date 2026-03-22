@@ -1,0 +1,28 @@
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  ci:
+    uses: wcmchenry3-stack/gaming_app/.github/workflows/ci.yml@main
+    secrets: inherit
+
+  deploy-api:
+    needs: ci
+    uses: wcmchenry3-stack/.github/.github/workflows/called-deploy-render.yml@main
+    with:
+      service-name: 'gaming-app-api'
+      service-id: 'srv-d6vk8c9r0fns73cbbfug'
+      zap-target-url: 'https://yahtzee-api.onrender.com'
+    secrets: inherit
+
+  deploy-frontend:
+    needs: ci
+    uses: wcmchenry3-stack/.github/.github/workflows/called-deploy-render.yml@main
+    with:
+      service-name: 'gaming-app-frontend'
+      service-id: 'srv-d6vkanhr0fns73cbcol0'
+      zap-target-url: 'https://yahtzee-frontend-l24f.onrender.com'
+    secrets: inherit
