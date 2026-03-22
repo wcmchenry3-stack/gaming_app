@@ -9,23 +9,49 @@ type Props = {
   navigation: NativeStackNavigationProp<RootStackParamList, "Home">;
 };
 
+interface GameCard {
+  emoji: string;
+  title: string;
+  description: string;
+  action: () => void;
+  loading?: boolean;
+  error?: string | null;
+}
+
 export default function HomeScreen({ navigation }: Props) {
   const { colors, theme, toggle } = useTheme();
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [yahtzeeLoading, setYahtzeeLoading] = useState(false);
+  const [yahtzeeError, setYahtzeeError] = useState<string | null>(null);
 
-  async function startGame() {
-    setLoading(true);
-    setError(null);
+  async function startYahtzee() {
+    setYahtzeeLoading(true);
+    setYahtzeeError(null);
     try {
       const state = await api.newGame();
       navigation.navigate("Game", { initialState: state });
     } catch {
-      setError("Could not connect to backend. Is the server running?");
+      setYahtzeeError("Could not connect to backend. Is the server running?");
     } finally {
-      setLoading(false);
+      setYahtzeeLoading(false);
     }
   }
+
+  const games: GameCard[] = [
+    {
+      emoji: "🎲",
+      title: "Yahtzee",
+      description: "Roll dice, score categories, beat your high score.",
+      action: startYahtzee,
+      loading: yahtzeeLoading,
+      error: yahtzeeError,
+    },
+    {
+      emoji: "🍉",
+      title: "Fruit Merge",
+      description: "Drop fruit, merge matches, don't let them overflow.",
+      action: () => navigation.navigate("FruitMerge"),
+    },
+  ];
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
@@ -35,18 +61,34 @@ export default function HomeScreen({ navigation }: Props) {
         </Text>
       </Pressable>
 
-      <Text style={[styles.title, { color: "#facc15" }]}>Yahtzee</Text>
-      <Text style={[styles.subtitle, { color: colors.textMuted }]}>Single Player</Text>
+      <Text style={[styles.title, { color: colors.text }]}>Gaming App</Text>
+      <Text style={[styles.subtitle, { color: colors.textMuted }]}>Choose a game</Text>
 
-      {error && <Text style={[styles.error, { color: colors.error }]}>{error}</Text>}
-
-      <Pressable style={[styles.button, { backgroundColor: colors.accent }]} onPress={startGame} disabled={loading}>
-        {loading ? (
-          <ActivityIndicator color="#fff" />
-        ) : (
-          <Text style={styles.buttonText}>New Game</Text>
-        )}
-      </Pressable>
+      <View style={styles.cards}>
+        {games.map((game) => (
+          <View key={game.title}>
+            <Pressable
+              style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.border }]}
+              onPress={game.action}
+              disabled={game.loading}
+            >
+              <Text style={styles.cardEmoji}>{game.emoji}</Text>
+              <View style={styles.cardBody}>
+                <Text style={[styles.cardTitle, { color: colors.text }]}>{game.title}</Text>
+                <Text style={[styles.cardDesc, { color: colors.textMuted }]}>{game.description}</Text>
+              </View>
+              {game.loading ? (
+                <ActivityIndicator color={colors.accent} />
+              ) : (
+                <Text style={[styles.cardArrow, { color: colors.textMuted }]}>›</Text>
+              )}
+            </Pressable>
+            {game.error && (
+              <Text style={[styles.error, { color: colors.error }]}>{game.error}</Text>
+            )}
+          </View>
+        ))}
+      </View>
     </View>
   );
 }
@@ -69,29 +111,48 @@ const styles = StyleSheet.create({
     fontSize: 13,
   },
   title: {
-    fontSize: 56,
+    fontSize: 42,
     fontWeight: "800",
-    marginBottom: 8,
+    marginBottom: 6,
   },
   subtitle: {
-    fontSize: 18,
-    marginBottom: 48,
+    fontSize: 17,
+    marginBottom: 40,
   },
-  button: {
-    paddingHorizontal: 48,
-    paddingVertical: 16,
-    borderRadius: 12,
-    minWidth: 180,
+  cards: {
+    width: "100%",
+    maxWidth: 480,
+    gap: 16,
+  },
+  card: {
+    flexDirection: "row",
     alignItems: "center",
+    padding: 20,
+    borderRadius: 16,
+    borderWidth: 1,
+    gap: 16,
   },
-  buttonText: {
-    color: "#fff",
+  cardEmoji: {
+    fontSize: 36,
+  },
+  cardBody: {
+    flex: 1,
+  },
+  cardTitle: {
     fontSize: 18,
     fontWeight: "700",
+    marginBottom: 2,
+  },
+  cardDesc: {
+    fontSize: 13,
+  },
+  cardArrow: {
+    fontSize: 28,
+    lineHeight: 32,
   },
   error: {
-    textAlign: "center",
-    marginBottom: 16,
-    fontSize: 14,
+    fontSize: 13,
+    marginTop: 6,
+    marginLeft: 4,
   },
 });
