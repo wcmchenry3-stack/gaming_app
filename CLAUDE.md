@@ -1,4 +1,5 @@
 # Yahtzee Game — Claude Guide
+<!-- Global standards: ~/.claude/CLAUDE.md and ~/.claude/standards/ -->
 
 ## Stack
 - **Backend:** Python 3, FastAPI, uvicorn (in-memory, no DB)
@@ -6,10 +7,10 @@
 - **Docs:** See `docs/` for testing, deployment, and workflow details
 
 ## Git Workflow
-- **Never push directly to `main` or `dev`**
-- Branch: `git checkout dev && git checkout -b feature/<name>`
-- PR: `feature/<name>` → `dev` → `main` (releases only)
-- Remote: `https://github.com/wcmchenry3-stack/yahtzee_game.git`
+See [~/.claude/standards/git.md](~/.claude/standards/git.md).
+- Never push directly to `main` or `dev`
+- Branch: `git checkout dev && git checkout -b feat/<name>`
+- PR: `feat/<name>` → `dev` → `main` (releases only)
 
 ## Running Locally
 ```bash
@@ -23,7 +24,7 @@ npx expo start --web                  # http://localhost:8081
 ```
 
 ## Testing
-See [`docs/TESTING.md`](docs/TESTING.md).
+See [~/.claude/standards/testing.md](~/.claude/standards/testing.md) + [`docs/TESTING.md`](docs/TESTING.md) for project-specific test cases.
 ```bash
 cd backend && python -m pytest tests/ -v
 ```
