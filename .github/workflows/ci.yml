@@ -6,7 +6,6 @@ on:
   push:
     branches: [dev, main]
   workflow_call:
-    secrets: inherit
 
 jobs:
   gate-main-source:
