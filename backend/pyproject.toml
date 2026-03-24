@@ -1,3 +1,8 @@
+[tool.pytest.ini_options]
+markers = [
+    "security: security-focused tests (CORS, headers, injection)",
+]
+
 [tool.black]
 line-length = 100
 
