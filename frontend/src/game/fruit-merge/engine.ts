@@ -95,6 +95,9 @@ export function createEngine(
 
   // Game-over: a settled fruit (alive > grace period) above the danger line
   const dangerY = H * DANGER_LINE_RATIO;
+  const leftBoundary = WALL_THICKNESS;
+  const rightBoundary = W - WALL_THICKNESS;
+  const floorY = H;
   let gameOverFired = false;
 
   Matter.Events.on(engine, "afterUpdate", () => {
@@ -102,6 +105,33 @@ export function createEngine(
     const now = Date.now();
     for (const body of Matter.Composite.allBodies(world)) {
       const fb = body as FruitBody;
+      if (fb.fruitTier !== undefined && !fb.isStatic) {
+        const radius = fb.circleRadius ?? 0;
+        let correctedX: number | null = null;
+        let correctedY: number | null = null;
+
+        if (body.position.x - radius < leftBoundary) {
+          correctedX = leftBoundary + radius;
+        } else if (body.position.x + radius > rightBoundary) {
+          correctedX = rightBoundary - radius;
+        }
+
+        if (body.position.y + radius > floorY) {
+          correctedY = floorY - radius;
+        }
+
+        if (correctedX !== null || correctedY !== null) {
+          Matter.Body.setPosition(body, {
+            x: correctedX ?? body.position.x,
+            y: correctedY ?? body.position.y,
+          });
+          Matter.Body.setVelocity(body, {
+            x: correctedX !== null ? 0 : body.velocity.x,
+            y: correctedY !== null && body.velocity.y > 0 ? 0 : body.velocity.y,
+          });
+        }
+      }
+
       if (
         fb.fruitTier === undefined ||
         fb.isStatic ||
