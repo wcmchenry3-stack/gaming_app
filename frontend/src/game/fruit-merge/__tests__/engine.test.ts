@@ -1,11 +1,5 @@
 import Matter from "matter-js";
-import {
-  createEngine,
-  spawnFruitAt,
-  FruitBody,
-  DANGER_LINE_RATIO,
-  EngineSetup,
-} from "../engine";
+import { createEngine, spawnFruitAt, FruitBody, DANGER_LINE_RATIO, EngineSetup } from "../engine";
 import { FRUIT_SETS } from "../../../theme/fruitSets";
 
 const fruitSet = FRUIT_SETS["fruits"];
@@ -23,12 +17,7 @@ let idCounter = 1;
  * - `type: 'body'` is required for Matter.World.add / Composite.allBodies to work.
  * - ageMs defaults to 3000 so the body is past the 2-second grace period.
  */
-function makeFakeBody(
-  tier: number,
-  x: number,
-  y: number,
-  ageMs = 3000
-): FruitBody {
+function makeFakeBody(tier: number, x: number, y: number, ageMs = 3000): FruitBody {
   return {
     id: idCounter++,
     type: "body",
@@ -42,11 +31,7 @@ function makeFakeBody(
   } as unknown as FruitBody;
 }
 
-function fireCollision(
-  engine: Matter.Engine,
-  a: FruitBody,
-  b: FruitBody
-): void {
+function fireCollision(engine: Matter.Engine, a: FruitBody, b: FruitBody): void {
   Matter.Events.trigger(engine as object, "collisionStart", {
     pairs: [{ bodyA: a, bodyB: b }],
   });
@@ -203,9 +188,7 @@ describe("merge detection", () => {
     fireCollision(engine, a, b);
     jest.runAllTimers();
 
-    const fruitBodies = Matter.Composite.allBodies(world).filter(
-      (b) => !b.isStatic
-    );
+    const fruitBodies = Matter.Composite.allBodies(world).filter((b) => !b.isStatic);
     expect(fruitBodies.length).toBe(1);
     expect((fruitBodies[0] as FruitBody).fruitTier).toBe(4);
   });
@@ -218,12 +201,8 @@ describe("merge detection", () => {
     fireCollision(engine, a, b);
     jest.runAllTimers();
 
-    expect(onMerge).toHaveBeenCalledWith(
-      expect.objectContaining({ tier: 10 })
-    );
-    const fruitBodies = Matter.Composite.allBodies(world).filter(
-      (b) => !b.isStatic
-    );
+    expect(onMerge).toHaveBeenCalledWith(expect.objectContaining({ tier: 10 }));
+    const fruitBodies = Matter.Composite.allBodies(world).filter((b) => !b.isStatic);
     expect(fruitBodies.length).toBe(0);
   });
 
@@ -259,12 +238,7 @@ describe("game-over detection", () => {
    * Spawn a real fruit body using spawnFruitAt, then teleport it and adjust
    * its age. We use real bodies so Matter.Composite.allBodies returns them.
    */
-  function spawnAt(
-    world: Matter.World,
-    tier: number,
-    y: number,
-    ageMs = 3000
-  ): FruitBody {
+  function spawnAt(world: Matter.World, tier: number, y: number, ageMs = 3000): FruitBody {
     const def = fruitSet.fruits[tier];
     const body = spawnFruitAt(world, def, fruitSet.id, 150, 500); // spawn safely off-screen
     // Teleport to target position
