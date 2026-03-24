@@ -63,13 +63,13 @@ function FruitMergeGame({ navigation }: Props) {
         canvasRef.current?.announceEvent(t("fruit-merge:event.merged", { fruit: merged.name }));
       }
     },
-    [activeFruitSet]
+    [activeFruitSet, t]
   );
 
   const handleGameOver = useCallback(() => {
     canvasRef.current?.announceEvent(t("fruit-merge:event.gameOver"));
     setGameOver(true);
-  }, []);
+  }, [t]);
 
   const handleTap = useCallback(
     (x: number) => {

@@ -14,7 +14,7 @@
  *   1 — missing or extra keys found (printed to stdout)
  */
 
-import { readFileSync, readdirSync } from "fs";
+import { readFileSync } from "fs";
 import { join, dirname } from "path";
 import { fileURLToPath } from "url";
 import { LOCALES } from "../src/i18n/locales.js";
@@ -30,9 +30,7 @@ function parseArgs() {
   const args = process.argv.slice(2);
   const get = (flag) => {
     const i = args.indexOf(flag);
-    return i !== -1 && args[i + 1] && !args[i + 1].startsWith("--")
-      ? args[i + 1]
-      : null;
+    return i !== -1 && args[i + 1] && !args[i + 1].startsWith("--") ? args[i + 1] : null;
   };
 
   return {
@@ -123,8 +121,7 @@ function main() {
       }
 
       if (missing.length === 0 && extra.length === 0) {
-        const pendingNote =
-          pending.length > 0 ? ` (${pending.length} still need translation)` : "";
+        const pendingNote = pending.length > 0 ? ` (${pending.length} still need translation)` : "";
         console.log(`✓ [${code}/${ns}.json]${pendingNote}`);
       }
     }
@@ -135,7 +132,8 @@ function main() {
     console.error(`Found ${totalIssues} structural issue(s). Run translate.js to fill stubs.`);
     process.exit(1);
   } else {
-    const pendingNote = totalPending > 0 ? ` (${totalPending} keys still marked ${PLACEHOLDER})` : "";
+    const pendingNote =
+      totalPending > 0 ? ` (${totalPending} keys still marked ${PLACEHOLDER})` : "";
     console.log(`All locale files are structurally in sync.${pendingNote}`);
   }
 }
