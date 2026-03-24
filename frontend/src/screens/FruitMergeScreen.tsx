@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { View, Text, Pressable, StyleSheet, LayoutChangeEvent } from "react-native";
+import { useTranslation } from "react-i18next";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { RootStackParamList } from "../../App";
 import { useTheme } from "../theme/ThemeContext";
@@ -21,6 +22,7 @@ type Props = {
 const MAX_CANVAS_WIDTH = 400;
 
 function FruitMergeGame({ navigation }: Props) {
+  const { t } = useTranslation(["fruit-merge", "common"]);
   const { colors, theme, toggle } = useTheme();
   const { activeFruitSet } = useFruitSet();
 
@@ -58,14 +60,14 @@ function FruitMergeGame({ navigation }: Props) {
       setScore((s) => s + scoreForMerge(event.tier));
       const merged = activeFruitSet.fruits[event.tier];
       if (merged) {
-        canvasRef.current?.announceEvent(`Merged! ${merged.name} created.`);
+        canvasRef.current?.announceEvent(t("fruit-merge:event.merged", { fruit: merged.name }));
       }
     },
     [activeFruitSet]
   );
 
   const handleGameOver = useCallback(() => {
-    canvasRef.current?.announceEvent("Game over.");
+    canvasRef.current?.announceEvent(t("fruit-merge:event.gameOver"));
     setGameOver(true);
   }, []);
 
@@ -110,21 +112,23 @@ function FruitMergeGame({ navigation }: Props) {
           onPress={() => navigation.goBack()}
           style={styles.backBtn}
           accessibilityRole="button"
-          accessibilityLabel="Go back to home screen"
+          accessibilityLabel={t("common:nav.backLabel")}
         >
-          <Text style={[styles.backText, { color: colors.textMuted }]}>← Back</Text>
+          <Text style={[styles.backText, { color: colors.textMuted }]}>{t("common:nav.back")}</Text>
         </Pressable>
         <Text style={[styles.title, { color: colors.text }]} accessibilityRole="header">
-          Fruit Merge
+          {t("fruit-merge:game.title")}
         </Text>
         <Pressable
           onPress={toggle}
           style={styles.themeToggle}
           accessibilityRole="button"
-          accessibilityLabel={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
+          accessibilityLabel={t("common:theme.switchTo", {
+            mode: theme === "dark" ? t("common:theme.light") : t("common:theme.dark"),
+          })}
         >
           <Text style={[styles.themeToggleText, { color: colors.textMuted }]}>
-            {theme === "dark" ? "Light" : "Dark"}
+            {theme === "dark" ? t("common:theme.lightShort") : t("common:theme.darkShort")}
           </Text>
         </Pressable>
       </View>

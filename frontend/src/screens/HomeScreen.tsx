@@ -1,9 +1,11 @@
 import React, { useState } from "react";
 import { View, Text, Pressable, StyleSheet, ActivityIndicator } from "react-native";
+import { useTranslation } from "react-i18next";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { RootStackParamList } from "../../App";
 import { api } from "../api/client";
 import { useTheme } from "../theme/ThemeContext";
+import LanguageSwitcher from "../components/LanguageSwitcher";
 
 type Props = {
   navigation: NativeStackNavigationProp<RootStackParamList, "Home">;
@@ -19,6 +21,7 @@ interface GameCard {
 }
 
 export default function HomeScreen({ navigation }: Props) {
+  const { t } = useTranslation(["common", "yahtzee", "fruit-merge", "errors"]);
   const { colors, theme, toggle } = useTheme();
   const [yahtzeeLoading, setYahtzeeLoading] = useState(false);
   const [yahtzeeError, setYahtzeeError] = useState<string | null>(null);
@@ -30,7 +33,7 @@ export default function HomeScreen({ navigation }: Props) {
       const state = await api.newGame();
       navigation.navigate("Game", { initialState: state });
     } catch {
-      setYahtzeeError("Could not connect to backend. Is the server running?");
+      setYahtzeeError(t("errors:backend.connection"));
     } finally {
       setYahtzeeLoading(false);
     }
@@ -39,35 +42,45 @@ export default function HomeScreen({ navigation }: Props) {
   const games: GameCard[] = [
     {
       emoji: "🎲",
-      title: "Yahtzee",
-      description: "Roll dice, score categories, beat your high score.",
+      title: t("yahtzee:game.title"),
+      description: t("yahtzee:game.description"),
       action: startYahtzee,
       loading: yahtzeeLoading,
       error: yahtzeeError,
     },
     {
       emoji: "🍉",
-      title: "Fruit Merge",
-      description: "Drop fruit, merge matches, don't let them overflow.",
+      title: t("fruit-merge:game.title"),
+      description: t("fruit-merge:game.description"),
       action: () => navigation.navigate("FruitMerge"),
     },
   ];
 
+  const playLabels: Record<string, string> = {
+    [t("yahtzee:game.title")]: t("yahtzee:game.playLabel"),
+    [t("fruit-merge:game.title")]: t("fruit-merge:game.playLabel"),
+  };
+
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <Pressable
-        style={styles.themeToggle}
-        onPress={toggle}
-        accessibilityRole="button"
-        accessibilityLabel={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
-      >
-        <Text style={[styles.themeToggleText, { color: colors.textMuted }]}>
-          {theme === "dark" ? "Light mode" : "Dark mode"}
-        </Text>
-      </Pressable>
+      <View style={styles.headerRow}>
+        <Pressable
+          style={styles.themeToggle}
+          onPress={toggle}
+          accessibilityRole="button"
+          accessibilityLabel={t("common:theme.switchTo", {
+            mode: theme === "dark" ? t("common:theme.light") : t("common:theme.dark"),
+          })}
+        >
+          <Text style={[styles.themeToggleText, { color: colors.textMuted }]}>
+            {theme === "dark" ? t("common:theme.light") : t("common:theme.dark")}
+          </Text>
+        </Pressable>
+        <LanguageSwitcher />
+      </View>
 
-      <Text style={[styles.title, { color: colors.text }]}>Gaming App</Text>
-      <Text style={[styles.subtitle, { color: colors.textMuted }]}>Choose a game</Text>
+      <Text style={[styles.title, { color: colors.text }]}>{t("common:app.title")}</Text>
+      <Text style={[styles.subtitle, { color: colors.textMuted }]}>{t("common:app.subtitle")}</Text>
 
       <View style={styles.cards}>
         {games.map((game) => (
@@ -77,7 +90,7 @@ export default function HomeScreen({ navigation }: Props) {
               onPress={game.action}
               disabled={game.loading}
               accessibilityRole="button"
-              accessibilityLabel={`Play ${game.title}`}
+              accessibilityLabel={playLabels[game.title] ?? game.title}
               accessibilityHint={game.description}
               accessibilityState={{ disabled: game.loading, busy: game.loading }}
             >
@@ -111,10 +124,15 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     padding: 24,
   },
-  themeToggle: {
+  headerRow: {
     position: "absolute",
     top: 16,
     right: 16,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  themeToggle: {
     paddingHorizontal: 12,
     paddingVertical: 6,
     minHeight: 44,

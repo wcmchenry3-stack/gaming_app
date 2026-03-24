@@ -1,15 +1,21 @@
 import React from "react";
 import { View, Text, Pressable, StyleSheet } from "react-native";
+import { useTranslation } from "react-i18next";
 import { FRUIT_SETS } from "../../theme/fruitSets";
 import { useFruitSet } from "../../theme/FruitSetContext";
 import { useTheme } from "../../theme/ThemeContext";
 
 export default function ThemeSelector() {
+  const { t } = useTranslation("fruit-merge");
   const { activeFruitSet, setFruitSetById } = useFruitSet();
   const { colors } = useTheme();
 
   return (
-    <View style={styles.row} accessibilityRole="radiogroup" accessibilityLabel="Fruit set theme">
+    <View
+      style={styles.row}
+      accessibilityRole="radiogroup"
+      accessibilityLabel={t("theme.groupLabel")}
+    >
       {Object.values(FRUIT_SETS).map((set) => {
         const active = set.id === activeFruitSet.id;
         return (
@@ -18,7 +24,7 @@ export default function ThemeSelector() {
             onPress={() => setFruitSetById(set.id)}
             accessibilityRole="radio"
             accessibilityState={{ selected: active }}
-            accessibilityLabel={`${set.label} theme`}
+            accessibilityLabel={t("theme.optionLabel", { label: set.label })}
             style={[
               styles.pill,
               {

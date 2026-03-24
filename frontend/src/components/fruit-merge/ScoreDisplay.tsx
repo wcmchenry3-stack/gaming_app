@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import { View, Text, Animated, StyleSheet, AccessibilityInfo } from "react-native";
+import { useTranslation } from "react-i18next";
 import { useTheme } from "../../theme/ThemeContext";
 
 interface Props {
@@ -7,6 +8,7 @@ interface Props {
 }
 
 export default function ScoreDisplay({ score }: Props) {
+  const { t } = useTranslation("fruit-merge");
   const { colors } = useTheme();
   const scale = useRef(new Animated.Value(1)).current;
   const prevScore = useRef(score);
@@ -32,9 +34,9 @@ export default function ScoreDisplay({ score }: Props) {
     <View
       style={[styles.container, { backgroundColor: colors.surface, borderColor: colors.border }]}
       accessibilityLiveRegion="polite"
-      accessibilityLabel={`Score: ${score.toLocaleString()}`}
+      accessibilityLabel={t("score.display", { score: score.toLocaleString() })}
     >
-      <Text style={[styles.label, { color: colors.textMuted }]}>Score</Text>
+      <Text style={[styles.label, { color: colors.textMuted }]}>{t("score.label")}</Text>
       <Animated.Text
         style={[styles.score, { color: colors.accent, transform: [{ scale }] }]}
         importantForAccessibility="no"

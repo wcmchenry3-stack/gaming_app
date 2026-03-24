@@ -8,6 +8,7 @@ import {
   ActivityIndicator,
   Modal,
 } from "react-native";
+import { useTranslation } from "react-i18next";
 import { fruitMergeApi, ScoreEntry } from "../../api/fruitMergeClient";
 import { useTheme } from "../../theme/ThemeContext";
 
@@ -17,6 +18,7 @@ interface Props {
 }
 
 export default function GameOverOverlay({ score, onRestart }: Props) {
+  const { t } = useTranslation("fruit-merge");
   const { colors } = useTheme();
   const [name, setName] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -31,7 +33,7 @@ export default function GameOverOverlay({ score, onRestart }: Props) {
       const entry = await fruitMergeApi.submitScore(name.trim(), score);
       setSubmitted(entry);
     } catch {
-      setError("Could not save score. Check your connection.");
+      setError(t("errors:score.save"));
     } finally {
       setSubmitting(false);
     }
@@ -44,11 +46,11 @@ export default function GameOverOverlay({ score, onRestart }: Props) {
           style={[styles.card, { backgroundColor: colors.modalBg, borderColor: colors.border }]}
         >
           <Text style={[styles.title, { color: colors.text }]} accessibilityRole="header">
-            Game Over
+            {t("gameOver.title")}
           </Text>
           <Text
             style={[styles.score, { color: colors.accent }]}
-            accessibilityLabel={`Your score: ${score.toLocaleString()} points`}
+            accessibilityLabel={t("gameOver.scoreLabel", { score: score.toLocaleString() })}
           >
             {score.toLocaleString()}
           </Text>
@@ -56,7 +58,7 @@ export default function GameOverOverlay({ score, onRestart }: Props) {
             style={[styles.scoreLabel, { color: colors.textMuted }]}
             importantForAccessibility="no"
           >
-            points
+            {t("gameOver.points")}
           </Text>
 
           {!submitted ? (
@@ -70,14 +72,14 @@ export default function GameOverOverlay({ score, onRestart }: Props) {
                     color: colors.text,
                   },
                 ]}
-                placeholder="Enter your name"
+                placeholder={t("gameOver.namePlaceholder")}
                 placeholderTextColor={colors.textMuted}
                 value={name}
                 onChangeText={setName}
                 maxLength={32}
                 editable={!submitting}
-                accessibilityLabel="Your name"
-                accessibilityHint="Enter your name to save your score to the leaderboard"
+                accessibilityLabel={t("gameOver.nameLabel")}
+                accessibilityHint={t("gameOver.nameHint")}
               />
               {error && (
                 <Text
@@ -96,19 +98,19 @@ export default function GameOverOverlay({ score, onRestart }: Props) {
                 onPress={handleSubmit}
                 disabled={submitting || !name.trim()}
                 accessibilityRole="button"
-                accessibilityLabel="Save score"
+                accessibilityLabel={t("gameOver.saveLabel")}
                 accessibilityState={{ disabled: submitting || !name.trim(), busy: submitting }}
               >
                 {submitting ? (
                   <ActivityIndicator color="#fff" />
                 ) : (
-                  <Text style={styles.btnText}>Save Score</Text>
+                  <Text style={styles.btnText}>{t("gameOver.saveButton")}</Text>
                 )}
               </Pressable>
             </>
           ) : (
             <Text style={[styles.saved, { color: colors.bonus }]}>
-              Saved! #{submitted.score.toLocaleString()}
+              {t("gameOver.savedConfirmation", { rank: submitted.score.toLocaleString() })}
             </Text>
           )}
 
@@ -116,9 +118,11 @@ export default function GameOverOverlay({ score, onRestart }: Props) {
             style={[styles.restartBtn, { borderColor: colors.border }]}
             onPress={onRestart}
             accessibilityRole="button"
-            accessibilityLabel="Play again"
+            accessibilityLabel={t("gameOver.playAgain")}
           >
-            <Text style={[styles.restartText, { color: colors.textMuted }]}>Play Again</Text>
+            <Text style={[styles.restartText, { color: colors.textMuted }]}>
+              {t("gameOver.playAgainButton")}
+            </Text>
           </Pressable>
         </View>
       </View>

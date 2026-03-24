@@ -1,5 +1,6 @@
 import React from "react";
 import { View, Text, StyleSheet } from "react-native";
+import { useTranslation } from "react-i18next";
 import { FruitDefinition } from "../../theme/fruitSets";
 import { useTheme } from "../../theme/ThemeContext";
 
@@ -9,16 +10,17 @@ interface Props {
 }
 
 export default function NextFruitPreview({ current, next }: Props) {
+  const { t } = useTranslation("fruit-merge");
   const { colors } = useTheme();
   return (
     <View style={styles.row}>
       <View
         style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.border }]}
         accessible
-        accessibilityLabel={`Dropping next: ${current.name}`}
+        accessibilityLabel={t("preview.droppingNext", { name: current.name })}
       >
         <Text style={styles.label} importantForAccessibility="no">
-          Drop
+          {t("preview.dropLabel")}
         </Text>
         <Text style={styles.emoji} importantForAccessibility="no">
           {current.emoji}
@@ -34,10 +36,10 @@ export default function NextFruitPreview({ current, next }: Props) {
           { backgroundColor: colors.surfaceAlt, borderColor: colors.border },
         ]}
         accessible
-        accessibilityLabel={`Coming up: ${next.name}`}
+        accessibilityLabel={t("preview.comingUp", { name: next.name })}
       >
         <Text style={styles.label} importantForAccessibility="no">
-          Next
+          {t("preview.nextLabel")}
         </Text>
         <Text style={[styles.emoji, styles.nextEmoji]} importantForAccessibility="no">
           {next.emoji}

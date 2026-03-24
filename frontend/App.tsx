@@ -1,4 +1,6 @@
-import React from "react";
+import "./src/i18n/i18n";
+import React, { Suspense } from "react";
+import { ActivityIndicator, View } from "react-native";
 import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import HomeScreen from "./src/screens/HomeScreen";
@@ -6,6 +8,7 @@ import GameScreen from "./src/screens/GameScreen";
 import FruitMergeScreen from "./src/screens/FruitMergeScreen";
 import { GameState } from "./src/api/client";
 import { ThemeProvider } from "./src/theme/ThemeContext";
+import { useHtmlAttributes } from "./src/i18n/useHtmlAttributes";
 
 export type RootStackParamList = {
   Home: undefined;
@@ -15,7 +18,8 @@ export type RootStackParamList = {
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
-export default function App() {
+function AppInner() {
+  useHtmlAttributes();
   return (
     <ThemeProvider>
       <NavigationContainer>
@@ -26,5 +30,19 @@ export default function App() {
         </Stack.Navigator>
       </NavigationContainer>
     </ThemeProvider>
+  );
+}
+
+export default function App() {
+  return (
+    <Suspense
+      fallback={
+        <View style={{ flex: 1 }}>
+          <ActivityIndicator style={{ flex: 1 }} />
+        </View>
+      }
+    >
+      <AppInner />
+    </Suspense>
   );
 }
