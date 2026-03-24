@@ -1,5 +1,12 @@
 import Matter from "matter-js";
-import { createEngine, spawnFruitAt, FruitBody, DANGER_LINE_RATIO, EngineSetup } from "../engine";
+import {
+  createEngine,
+  spawnFruitAt,
+  FruitBody,
+  DANGER_LINE_RATIO,
+  EngineSetup,
+  WALL_THICKNESS,
+} from "../engine";
 import { FRUIT_SETS } from "../../../theme/fruitSets";
 
 const fruitSet = FRUIT_SETS["fruits"];
@@ -305,5 +312,38 @@ describe("game-over detection", () => {
     fireUpdate(engine);
 
     expect(onGameOver).not.toHaveBeenCalled();
+  });
+});
+
+describe("world boundary clamping", () => {
+  it("keeps fruits above the floor if they drift below the playfield", () => {
+    const { engine, world } = setup();
+    const def = fruitSet.fruits[1];
+    const body = spawnFruitAt(world, def, fruitSet.id, 150, 100);
+
+    Matter.Body.setPosition(body, { x: 150, y: H + 20 });
+    Matter.Body.setVelocity(body, { x: 0, y: 12 });
+    fireUpdate(engine);
+
+    expect(body.position.y).toBeLessThanOrEqual(H - def.radius);
+    expect(body.velocity.y).toBeLessThanOrEqual(0);
+  });
+
+  it("keeps fruits inside the left and right walls", () => {
+    const { engine, world } = setup();
+    const def = fruitSet.fruits[1];
+    const body = spawnFruitAt(world, def, fruitSet.id, 150, 100);
+
+    Matter.Body.setPosition(body, { x: WALL_THICKNESS - 8, y: 200 });
+    Matter.Body.setVelocity(body, { x: -5, y: 0 });
+    fireUpdate(engine);
+    expect(body.position.x).toBeGreaterThanOrEqual(WALL_THICKNESS + def.radius);
+    expect(body.velocity.x).toBeGreaterThanOrEqual(0);
+
+    Matter.Body.setPosition(body, { x: W - WALL_THICKNESS + 8, y: 200 });
+    Matter.Body.setVelocity(body, { x: 5, y: 0 });
+    fireUpdate(engine);
+    expect(body.position.x).toBeLessThanOrEqual(W - WALL_THICKNESS - def.radius);
+    expect(body.velocity.x).toBeLessThanOrEqual(0);
   });
 });
