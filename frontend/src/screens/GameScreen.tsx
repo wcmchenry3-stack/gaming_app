@@ -37,7 +37,7 @@ export default function GameScreen({ navigation, route }: Props) {
 
   useEffect(() => {
     fetchPossibleScores(gameState.rolls_used);
-  }, [gameState.rolls_used, gameState.round]);
+  }, [gameState.rolls_used, gameState.round, fetchPossibleScores]);
 
   async function handleRoll(held: boolean[]) {
     setError(null);
