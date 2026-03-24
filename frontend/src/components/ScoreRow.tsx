@@ -1,5 +1,6 @@
 import React from "react";
 import { Pressable, Text, StyleSheet, View } from "react-native";
+import { useTranslation } from "react-i18next";
 import { useTheme } from "../theme/ThemeContext";
 
 interface ScoreRowProps {
@@ -11,9 +12,17 @@ interface ScoreRowProps {
 }
 
 export default function ScoreRow({ label, score, potential, onSelect, canScore }: ScoreRowProps) {
+  const { t } = useTranslation("yahtzee");
   const { colors } = useTheme();
   const isFilled = score !== null;
   const isSelectable = !isFilled && canScore;
+
+  const stateText = isFilled
+    ? t("score.scored", { score })
+    : canScore && potential !== undefined
+      ? t("score.potential", { potential })
+      : t("score.notAvailable");
+  const accessLabel = t("score.label", { category: label, state: stateText });
 
   return (
     <Pressable
@@ -26,6 +35,9 @@ export default function ScoreRow({ label, score, potential, onSelect, canScore }
       ]}
       onPress={isSelectable ? onSelect : undefined}
       disabled={!isSelectable}
+      accessibilityRole="button"
+      accessibilityLabel={accessLabel}
+      accessibilityState={{ disabled: !isSelectable }}
     >
       <Text style={[styles.label, { color: isFilled ? colors.textFilled : colors.text }]}>
         {label}
@@ -50,6 +62,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingHorizontal: 12,
     paddingVertical: 8,
+    minHeight: 44,
     borderBottomWidth: 1,
   },
   label: {

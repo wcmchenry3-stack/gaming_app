@@ -1,5 +1,6 @@
-import React, { useEffect, useRef } from "react";
-import { View, Text, Animated, StyleSheet } from "react-native";
+import React, { useEffect, useRef, useState } from "react";
+import { View, Text, Animated, StyleSheet, AccessibilityInfo } from "react-native";
+import { useTranslation } from "react-i18next";
 import { useTheme } from "../../theme/ThemeContext";
 
 interface Props {
@@ -7,26 +8,39 @@ interface Props {
 }
 
 export default function ScoreDisplay({ score }: Props) {
+  const { t } = useTranslation("fruit-merge");
   const { colors } = useTheme();
   const scale = useRef(new Animated.Value(1)).current;
   const prevScore = useRef(score);
+  const [reduceMotion, setReduceMotion] = useState(false);
+
+  useEffect(() => {
+    AccessibilityInfo.isReduceMotionEnabled().then(setReduceMotion);
+  }, []);
 
   useEffect(() => {
     if (score !== prevScore.current) {
       prevScore.current = score;
-      Animated.sequence([
-        Animated.timing(scale, { toValue: 1.25, duration: 80, useNativeDriver: true }),
-        Animated.timing(scale, { toValue: 1, duration: 120, useNativeDriver: true }),
-      ]).start();
+      if (!reduceMotion) {
+        Animated.sequence([
+          Animated.timing(scale, { toValue: 1.25, duration: 80, useNativeDriver: true }),
+          Animated.timing(scale, { toValue: 1, duration: 120, useNativeDriver: true }),
+        ]).start();
+      }
     }
-  }, [score, scale]);
+  }, [score, scale, reduceMotion]);
 
   return (
     <View
       style={[styles.container, { backgroundColor: colors.surface, borderColor: colors.border }]}
+      accessibilityLiveRegion="polite"
+      accessibilityLabel={t("score.display", { score: score.toLocaleString() })}
     >
-      <Text style={[styles.label, { color: colors.textMuted }]}>Score</Text>
-      <Animated.Text style={[styles.score, { color: colors.accent, transform: [{ scale }] }]}>
+      <Text style={[styles.label, { color: colors.textMuted }]}>{t("score.label")}</Text>
+      <Animated.Text
+        style={[styles.score, { color: colors.accent, transform: [{ scale }] }]}
+        importantForAccessibility="no"
+      >
         {score.toLocaleString()}
       </Animated.Text>
     </View>

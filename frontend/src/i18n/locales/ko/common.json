@@ -1,0 +1,12 @@
+{
+  "app.title": "Gaming App",
+  "app.subtitle": "게임을 선택하세요",
+  "nav.back": "← 뒤로",
+  "nav.backLabel": "홈 화면으로 돌아가기",
+  "theme.light": "라이트 모드",
+  "theme.dark": "다크 모드",
+  "theme.switchTo": "{{mode}} 모드로 전환",
+  "theme.lightShort": "라이트",
+  "theme.darkShort": "다크",
+  "lang.switcherLabel": "언어 선택"
+}

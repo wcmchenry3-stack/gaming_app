@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { View, Text, Pressable, StyleSheet, LayoutChangeEvent } from "react-native";
+import { useTranslation } from "react-i18next";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { RootStackParamList } from "../../App";
 import { useTheme } from "../theme/ThemeContext";
@@ -21,6 +22,7 @@ type Props = {
 const MAX_CANVAS_WIDTH = 400;
 
 function FruitMergeGame({ navigation }: Props) {
+  const { t } = useTranslation(["fruit-merge", "common"]);
   const { colors, theme, toggle } = useTheme();
   const { activeFruitSet } = useFruitSet();
 
@@ -53,13 +55,21 @@ function FruitMergeGame({ navigation }: Props) {
     setCanvasHeight(Math.floor(height));
   }, []);
 
-  const handleMerge = useCallback((event: MergeEvent) => {
-    setScore((s) => s + scoreForMerge(event.tier));
-  }, []);
+  const handleMerge = useCallback(
+    (event: MergeEvent) => {
+      setScore((s) => s + scoreForMerge(event.tier));
+      const merged = activeFruitSet.fruits[event.tier];
+      if (merged) {
+        canvasRef.current?.announceEvent(t("fruit-merge:event.merged", { fruit: merged.name }));
+      }
+    },
+    [activeFruitSet, t]
+  );
 
   const handleGameOver = useCallback(() => {
+    canvasRef.current?.announceEvent(t("fruit-merge:event.gameOver"));
     setGameOver(true);
-  }, []);
+  }, [t]);
 
   const handleTap = useCallback(
     (x: number) => {
@@ -98,13 +108,27 @@ function FruitMergeGame({ navigation }: Props) {
     <View style={[styles.screen, { backgroundColor: colors.background }]}>
       {/* Header */}
       <View style={styles.header}>
-        <Pressable onPress={() => navigation.goBack()} style={styles.backBtn}>
-          <Text style={[styles.backText, { color: colors.textMuted }]}>← Back</Text>
+        <Pressable
+          onPress={() => navigation.goBack()}
+          style={styles.backBtn}
+          accessibilityRole="button"
+          accessibilityLabel={t("common:nav.backLabel")}
+        >
+          <Text style={[styles.backText, { color: colors.textMuted }]}>{t("common:nav.back")}</Text>
         </Pressable>
-        <Text style={[styles.title, { color: colors.text }]}>Fruit Merge</Text>
-        <Pressable onPress={toggle} style={styles.themeToggle}>
+        <Text style={[styles.title, { color: colors.text }]} accessibilityRole="header">
+          {t("fruit-merge:game.title")}
+        </Text>
+        <Pressable
+          onPress={toggle}
+          style={styles.themeToggle}
+          accessibilityRole="button"
+          accessibilityLabel={t("common:theme.switchTo", {
+            mode: theme === "dark" ? t("common:theme.light") : t("common:theme.dark"),
+          })}
+        >
           <Text style={[styles.themeToggleText, { color: colors.textMuted }]}>
-            {theme === "dark" ? "Light" : "Dark"}
+            {theme === "dark" ? t("common:theme.lightShort") : t("common:theme.darkShort")}
           </Text>
         </Pressable>
       </View>
@@ -157,10 +181,10 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     marginBottom: 10,
   },
-  backBtn: { paddingVertical: 6, paddingRight: 12 },
+  backBtn: { paddingVertical: 6, paddingRight: 12, minHeight: 44, justifyContent: "center" },
   backText: { fontSize: 15 },
   title: { fontSize: 20, fontWeight: "700" },
-  themeToggle: { paddingVertical: 6, paddingLeft: 12 },
+  themeToggle: { paddingVertical: 6, paddingLeft: 12, minHeight: 44, justifyContent: "center" },
   themeToggleText: { fontSize: 13 },
   hud: {
     flexDirection: "row",

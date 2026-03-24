@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { View, Text, StyleSheet, Modal, Pressable } from "react-native";
+import { useTranslation } from "react-i18next";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { RouteProp } from "@react-navigation/native";
 import { RootStackParamList } from "../../App";
@@ -14,6 +15,7 @@ type Props = {
 };
 
 export default function GameScreen({ navigation, route }: Props) {
+  const { t } = useTranslation(["yahtzee", "common"]);
   const { colors, theme, toggle } = useTheme();
   const [gameState, setGameState] = useState<GameState>(route.params.initialState);
   const [possibleScores, setPossibleScores] = useState<Record<string, number>>({});
@@ -35,7 +37,7 @@ export default function GameScreen({ navigation, route }: Props) {
 
   useEffect(() => {
     fetchPossibleScores(gameState.rolls_used);
-  }, [gameState.rolls_used, gameState.round]);
+  }, [gameState.rolls_used, gameState.round, fetchPossibleScores]);
 
   async function handleRoll(held: boolean[]) {
     setError(null);
@@ -61,12 +63,29 @@ export default function GameScreen({ navigation, route }: Props) {
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       {/* Header */}
       <View style={[styles.header, { backgroundColor: colors.headerBg }]}>
-        <Text style={styles.headerText}>Round {gameState.round} / 13</Text>
-        <Pressable onPress={toggle} style={styles.themeToggle}>
-          <Text style={styles.themeToggleText}>{theme === "dark" ? "Light" : "Dark"}</Text>
+        <Text style={styles.headerText}>{t("round.header", { round: gameState.round })}</Text>
+        <Pressable
+          onPress={toggle}
+          style={styles.themeToggle}
+          accessibilityRole="button"
+          accessibilityLabel={t("common:theme.switchTo", {
+            mode: theme === "dark" ? t("common:theme.light") : t("common:theme.dark"),
+          })}
+        >
+          <Text style={styles.themeToggleText}>
+            {theme === "dark" ? t("common:theme.lightShort") : t("common:theme.darkShort")}
+          </Text>
         </Pressable>
       </View>
-      {error && <Text style={[styles.errorText, { color: colors.error }]}>{error}</Text>}
+      {error && (
+        <Text
+          style={[styles.errorText, { color: colors.error }]}
+          accessibilityLiveRegion="assertive"
+          accessibilityRole="alert"
+        >
+          {error}
+        </Text>
+      )}
 
       {/* Dice */}
       <DiceRow
@@ -92,24 +111,38 @@ export default function GameScreen({ navigation, route }: Props) {
       </View>
 
       {/* Game Over Modal */}
-      <Modal visible={gameState.game_over} transparent animationType="fade">
+      <Modal
+        visible={gameState.game_over}
+        transparent
+        animationType="fade"
+        accessibilityViewIsModal
+      >
         <View style={styles.modalOverlay}>
           <View style={[styles.modalBox, { backgroundColor: colors.modalBg }]}>
-            <Text style={[styles.modalTitle, { color: colors.text }]}>Game Over!</Text>
-            <Text style={[styles.modalScore, { color: colors.textMuted }]}>Final Score</Text>
-            <Text style={[styles.modalScoreValue, { color: colors.accent }]}>
+            <Text style={[styles.modalTitle, { color: colors.text }]} accessibilityRole="header">
+              {t("gameOver.title")}
+            </Text>
+            <Text style={[styles.modalScore, { color: colors.textMuted }]}>
+              {t("gameOver.finalScore")}
+            </Text>
+            <Text
+              style={[styles.modalScoreValue, { color: colors.accent }]}
+              accessibilityLabel={t("gameOver.scoreLabel", { score: gameState.total_score })}
+            >
               {gameState.total_score}
             </Text>
             {gameState.upper_bonus > 0 && (
               <Text style={[styles.modalBonus, { color: colors.bonus }]}>
-                +35 Upper Bonus included!
+                {t("gameOver.upperBonus")}
               </Text>
             )}
             <Pressable
               style={[styles.modalButton, { backgroundColor: colors.accent }]}
               onPress={() => navigation.navigate("Home")}
+              accessibilityRole="button"
+              accessibilityLabel={t("gameOver.playAgainLabel")}
             >
-              <Text style={styles.modalButtonText}>Play Again</Text>
+              <Text style={styles.modalButtonText}>{t("gameOver.playAgain")}</Text>
             </Pressable>
           </View>
         </View>
@@ -139,6 +172,8 @@ const styles = StyleSheet.create({
     right: 16,
     paddingHorizontal: 10,
     paddingVertical: 4,
+    minHeight: 44,
+    justifyContent: "center",
   },
   themeToggleText: {
     color: "#94a3b8",

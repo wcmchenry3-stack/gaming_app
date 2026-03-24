@@ -1,0 +1,12 @@
+{
+  "app.title": "Gaming App",
+  "app.subtitle": "Elige un juego",
+  "nav.back": "← Atrás",
+  "nav.backLabel": "Volver a la pantalla principal",
+  "theme.light": "Modo claro",
+  "theme.dark": "Modo oscuro",
+  "theme.switchTo": "Cambiar a modo {{mode}}",
+  "theme.lightShort": "Claro",
+  "theme.darkShort": "Oscuro",
+  "lang.switcherLabel": "Seleccionar idioma"
+}

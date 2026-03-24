@@ -1,4 +1,6 @@
-from fastapi import FastAPI, HTTPException
+import os
+
+from fastapi import FastAPI, HTTPException, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 
 from game import YahtzeeGame
@@ -8,12 +10,30 @@ from fruit_merge.router import router as fruit_merge_router
 app = FastAPI(title="Gaming App API")
 app.include_router(fruit_merge_router, prefix="/fruit-merge")
 
+# CORS — scoped to known origins; set ALLOWED_ORIGINS env var (comma-separated) in production
+_raw = os.environ.get("ALLOWED_ORIGINS", "")
+_allowed_origins: list[str] = (
+    [o.strip() for o in _raw.split(",") if o.strip()]
+    if _raw
+    else ["http://localhost:8081", "http://localhost:19006"]
+)
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_origins=_allowed_origins,
+    allow_methods=["GET", "POST"],
+    allow_headers=["Content-Type"],
 )
+
+
+@app.middleware("http")
+async def security_headers(request: Request, call_next) -> Response:
+    response = await call_next(request)
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    response.headers["X-Frame-Options"] = "DENY"
+    response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+    return response
+
 
 game: YahtzeeGame | None = None
 
