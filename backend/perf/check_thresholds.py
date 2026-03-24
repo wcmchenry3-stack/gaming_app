@@ -10,6 +10,7 @@ Reads <prefix>_stats.csv produced by `locust --csv <prefix>` and fails
 The name mapping from Locust request names to threshold scenario keys is
 done by matching on endpoint path substrings — see ENDPOINT_TO_SCENARIO.
 """
+
 import argparse
 import csv
 import json
@@ -69,9 +70,7 @@ def main() -> int:
                 p95_ms = float(p95_raw)
                 limit = slo["p95_ms"]
                 if p95_ms > limit:
-                    failures.append(
-                        f"[{scenario}] {name}: p95={p95_ms:.0f}ms > limit {limit}ms"
-                    )
+                    failures.append(f"[{scenario}] {name}: p95={p95_ms:.0f}ms > limit {limit}ms")
 
             # Error rate check
             req_count_raw = row.get("Request Count", "0").strip()

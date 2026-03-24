@@ -7,6 +7,7 @@ the latency floor for SLO calibration.
 
 Requires an active game: run after POST /game/new.
 """
+
 from locust import TaskSet, task
 
 

@@ -26,6 +26,7 @@ Usage examples:
 See backend/perf/thresholds.json for SLO definitions.
 See docs/PERFORMANCE.md for full documentation.
 """
+
 from locust import HttpUser, between
 
 from scenarios.game_flow import GameFlowTasks
@@ -41,6 +42,7 @@ class YahtzeeGameUser(HttpUser):
     with more than 1 concurrent user will cause state collisions. Always
     run this class with --users 1. See docs/PERFORMANCE.md for details.
     """
+
     tasks = [GameFlowTasks]
     wait_time = between(0.5, 1.5)
 
@@ -51,6 +53,7 @@ class LeaderboardUser(HttpUser):
     These endpoints are the safest to test with multiple concurrent users.
     Run with --users 10 as the baseline.
     """
+
     tasks = [LeaderboardTasks]
     wait_time = between(0.5, 2)
 
@@ -60,5 +63,6 @@ class ReadOnlyUser(HttpUser):
     Simulates a client polling game state. Establishes the latency floor.
     Run with --users 20 to measure read throughput.
     """
+
     tasks = [StatelessReadTasks]
     wait_time = between(1, 3)

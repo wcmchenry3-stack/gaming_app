@@ -4,6 +4,7 @@ Scenario B: Concurrent leaderboard read/write.
 The fruit-merge leaderboard endpoints are the only ones safe to hit with
 multiple concurrent users. Tests that the 10-entry cap holds under load.
 """
+
 import random
 from locust import TaskSet, task
 

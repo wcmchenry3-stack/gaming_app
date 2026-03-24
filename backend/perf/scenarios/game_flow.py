@@ -4,6 +4,7 @@ Scenario A: Full Yahtzee game flow (sequential, single user).
 The backend has one global game instance — running this with more than 1
 concurrent user will cause state collisions. Use --users 1 for this scenario.
 """
+
 from locust import SequentialTaskSet, task
 
 # All 13 scoring categories in order. The flow picks one per round regardless
