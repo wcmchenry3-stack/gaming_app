@@ -1,27 +1,227 @@
 {
-  "game.title": { "component": "HomeScreen", "description": "Name of the Fruit Merge game card.", "tone": "neutral", "characterLimit": 15, "placeholders": [], "doNotTranslate": ["Fruit Merge"], "notes": "Do not translate the game name." },
-  "game.description": { "component": "HomeScreen", "description": "One-line description on the Fruit Merge game card.", "tone": "casual, punchy", "characterLimit": 55, "placeholders": [], "doNotTranslate": [], "notes": null },
-  "game.playLabel": { "component": "HomeScreen", "description": "Accessibility label for the Fruit Merge play button.", "tone": "functional", "characterLimit": 20, "placeholders": [], "doNotTranslate": ["Fruit Merge"], "notes": null },
-  "game.canvasLabel": { "component": "GameCanvas", "description": "Accessible label for the HTML canvas element — describes game and interaction.", "tone": "functional, descriptive", "characterLimit": 100, "placeholders": [], "doNotTranslate": ["Fruit Merge"], "notes": null },
-  "score.label": { "component": "ScoreDisplay", "description": "Small uppercase label above the score number.", "tone": "functional", "characterLimit": 8, "placeholders": [], "doNotTranslate": [], "notes": null },
-  "score.display": { "component": "ScoreDisplay", "description": "Accessibility label for the score display container.", "tone": "functional", "characterLimit": 20, "placeholders": ["{{score}}"], "doNotTranslate": [], "notes": null },
-  "preview.dropLabel": { "component": "NextFruitPreview", "description": "Small label above the current fruit about to be dropped.", "tone": "action, concise", "characterLimit": 8, "placeholders": [], "doNotTranslate": [], "notes": null },
-  "preview.nextLabel": { "component": "NextFruitPreview", "description": "Small label above the upcoming fruit.", "tone": "neutral, concise", "characterLimit": 8, "placeholders": [], "doNotTranslate": [], "notes": null },
-  "preview.droppingNext": { "component": "NextFruitPreview", "description": "Accessibility label for the drop card.", "tone": "functional", "characterLimit": 35, "placeholders": ["{{name}}"], "doNotTranslate": [], "notes": "{{name}} is a fruit name like Cherry — do not translate fruit names." },
-  "preview.comingUp": { "component": "NextFruitPreview", "description": "Accessibility label for the next card.", "tone": "functional", "characterLimit": 30, "placeholders": ["{{name}}"], "doNotTranslate": [], "notes": "{{name}} is a fruit name like Cherry — do not translate fruit names." },
-  "theme.groupLabel": { "component": "ThemeSelector", "description": "Accessibility label for the fruit theme radio group.", "tone": "functional", "characterLimit": 20, "placeholders": [], "doNotTranslate": [], "notes": null },
-  "theme.optionLabel": { "component": "ThemeSelector", "description": "Accessibility label for each fruit theme option.", "tone": "functional", "characterLimit": 25, "placeholders": ["{{label}}"], "doNotTranslate": [], "notes": "{{label}} is the fruit set name (e.g. Fruits, Tropical)." },
-  "event.merged": { "component": "FruitMergeScreen", "description": "Live region announcement when two fruits merge.", "tone": "brief, game feedback", "characterLimit": 30, "placeholders": ["{{fruit}}"], "doNotTranslate": [], "notes": "{{fruit}} is a fruit name — do not translate it." },
-  "event.gameOver": { "component": "FruitMergeScreen", "description": "Live region announcement when the game ends.", "tone": "brief, neutral", "characterLimit": 15, "placeholders": [], "doNotTranslate": [], "notes": null },
-  "gameOver.title": { "component": "GameOverOverlay", "description": "Modal heading when the Fruit Merge game ends.", "tone": "dramatic, concise", "characterLimit": 15, "placeholders": [], "doNotTranslate": [], "notes": null },
-  "gameOver.scoreLabel": { "component": "GameOverOverlay", "description": "Accessibility label for the final score.", "tone": "functional", "characterLimit": 35, "placeholders": ["{{score}}"], "doNotTranslate": [], "notes": null },
-  "gameOver.points": { "component": "GameOverOverlay", "description": "Small label below the score number.", "tone": "neutral", "characterLimit": 10, "placeholders": [], "doNotTranslate": [], "notes": null },
-  "gameOver.namePlaceholder": { "component": "GameOverOverlay", "description": "Placeholder text in the name input field.", "tone": "friendly, instructional", "characterLimit": 25, "placeholders": [], "doNotTranslate": [], "notes": null },
-  "gameOver.nameLabel": { "component": "GameOverOverlay", "description": "Accessibility label for the name input.", "tone": "functional", "characterLimit": 15, "placeholders": [], "doNotTranslate": [], "notes": null },
-  "gameOver.nameHint": { "component": "GameOverOverlay", "description": "Accessibility hint for the name input — explains its purpose.", "tone": "functional, clear", "characterLimit": 70, "placeholders": [], "doNotTranslate": [], "notes": null },
-  "gameOver.saveLabel": { "component": "GameOverOverlay", "description": "Accessibility label for the save score button.", "tone": "functional", "characterLimit": 15, "placeholders": [], "doNotTranslate": [], "notes": null },
-  "gameOver.saveButton": { "component": "GameOverOverlay", "description": "Visible text on the save score button.", "tone": "action", "characterLimit": 15, "placeholders": [], "doNotTranslate": [], "notes": null },
-  "gameOver.savedConfirmation": { "component": "GameOverOverlay", "description": "Confirmation shown after score is saved. {{rank}} is the leaderboard rank number.", "tone": "celebratory, brief", "characterLimit": 20, "placeholders": ["{{rank}}"], "doNotTranslate": [], "notes": null },
-  "gameOver.playAgain": { "component": "GameOverOverlay", "description": "Accessibility label for the play again button.", "tone": "functional", "characterLimit": 15, "placeholders": [], "doNotTranslate": [], "notes": null },
-  "gameOver.playAgainButton": { "component": "GameOverOverlay", "description": "Visible text on the play again button.", "tone": "action, inviting", "characterLimit": 15, "placeholders": [], "doNotTranslate": [], "notes": null }
+  "game.title": {
+    "component": "HomeScreen",
+    "description": "Name of the Fruit Merge game card.",
+    "tone": "neutral",
+    "characterLimit": 15,
+    "placeholders": [],
+    "doNotTranslate": ["Fruit Merge"],
+    "notes": "Do not translate the game name."
+  },
+  "game.description": {
+    "component": "HomeScreen",
+    "description": "One-line description on the Fruit Merge game card.",
+    "tone": "casual, punchy",
+    "characterLimit": 55,
+    "placeholders": [],
+    "doNotTranslate": [],
+    "notes": null
+  },
+  "game.playLabel": {
+    "component": "HomeScreen",
+    "description": "Accessibility label for the Fruit Merge play button.",
+    "tone": "functional",
+    "characterLimit": 20,
+    "placeholders": [],
+    "doNotTranslate": ["Fruit Merge"],
+    "notes": null
+  },
+  "game.canvasLabel": {
+    "component": "GameCanvas",
+    "description": "Accessible label for the HTML canvas element — describes game and interaction.",
+    "tone": "functional, descriptive",
+    "characterLimit": 100,
+    "placeholders": [],
+    "doNotTranslate": ["Fruit Merge"],
+    "notes": null
+  },
+  "score.label": {
+    "component": "ScoreDisplay",
+    "description": "Small uppercase label above the score number.",
+    "tone": "functional",
+    "characterLimit": 8,
+    "placeholders": [],
+    "doNotTranslate": [],
+    "notes": null
+  },
+  "score.display": {
+    "component": "ScoreDisplay",
+    "description": "Accessibility label for the score display container.",
+    "tone": "functional",
+    "characterLimit": 20,
+    "placeholders": ["{{score}}"],
+    "doNotTranslate": [],
+    "notes": null
+  },
+  "preview.dropLabel": {
+    "component": "NextFruitPreview",
+    "description": "Small label above the current fruit about to be dropped.",
+    "tone": "action, concise",
+    "characterLimit": 8,
+    "placeholders": [],
+    "doNotTranslate": [],
+    "notes": null
+  },
+  "preview.nextLabel": {
+    "component": "NextFruitPreview",
+    "description": "Small label above the upcoming fruit.",
+    "tone": "neutral, concise",
+    "characterLimit": 8,
+    "placeholders": [],
+    "doNotTranslate": [],
+    "notes": null
+  },
+  "preview.droppingNext": {
+    "component": "NextFruitPreview",
+    "description": "Accessibility label for the drop card.",
+    "tone": "functional",
+    "characterLimit": 35,
+    "placeholders": ["{{name}}"],
+    "doNotTranslate": [],
+    "notes": "{{name}} is a fruit name like Cherry — do not translate fruit names."
+  },
+  "preview.comingUp": {
+    "component": "NextFruitPreview",
+    "description": "Accessibility label for the next card.",
+    "tone": "functional",
+    "characterLimit": 30,
+    "placeholders": ["{{name}}"],
+    "doNotTranslate": [],
+    "notes": "{{name}} is a fruit name like Cherry — do not translate fruit names."
+  },
+  "theme.groupLabel": {
+    "component": "ThemeSelector",
+    "description": "Accessibility label for the fruit theme radio group.",
+    "tone": "functional",
+    "characterLimit": 20,
+    "placeholders": [],
+    "doNotTranslate": [],
+    "notes": null
+  },
+  "theme.optionLabel": {
+    "component": "ThemeSelector",
+    "description": "Accessibility label for each fruit theme option.",
+    "tone": "functional",
+    "characterLimit": 25,
+    "placeholders": ["{{label}}"],
+    "doNotTranslate": [],
+    "notes": "{{label}} is the fruit set name (e.g. Fruits, Tropical)."
+  },
+  "event.merged": {
+    "component": "FruitMergeScreen",
+    "description": "Live region announcement when two fruits merge.",
+    "tone": "brief, game feedback",
+    "characterLimit": 30,
+    "placeholders": ["{{fruit}}"],
+    "doNotTranslate": [],
+    "notes": "{{fruit}} is a fruit name — do not translate it."
+  },
+  "event.gameOver": {
+    "component": "FruitMergeScreen",
+    "description": "Live region announcement when the game ends.",
+    "tone": "brief, neutral",
+    "characterLimit": 15,
+    "placeholders": [],
+    "doNotTranslate": [],
+    "notes": null
+  },
+  "gameOver.title": {
+    "component": "GameOverOverlay",
+    "description": "Modal heading when the Fruit Merge game ends.",
+    "tone": "dramatic, concise",
+    "characterLimit": 15,
+    "placeholders": [],
+    "doNotTranslate": [],
+    "notes": null
+  },
+  "gameOver.scoreLabel": {
+    "component": "GameOverOverlay",
+    "description": "Accessibility label for the final score.",
+    "tone": "functional",
+    "characterLimit": 35,
+    "placeholders": ["{{score}}"],
+    "doNotTranslate": [],
+    "notes": null
+  },
+  "gameOver.points": {
+    "component": "GameOverOverlay",
+    "description": "Small label below the score number.",
+    "tone": "neutral",
+    "characterLimit": 10,
+    "placeholders": [],
+    "doNotTranslate": [],
+    "notes": null
+  },
+  "gameOver.namePlaceholder": {
+    "component": "GameOverOverlay",
+    "description": "Placeholder text in the name input field.",
+    "tone": "friendly, instructional",
+    "characterLimit": 25,
+    "placeholders": [],
+    "doNotTranslate": [],
+    "notes": null
+  },
+  "gameOver.nameLabel": {
+    "component": "GameOverOverlay",
+    "description": "Accessibility label for the name input.",
+    "tone": "functional",
+    "characterLimit": 15,
+    "placeholders": [],
+    "doNotTranslate": [],
+    "notes": null
+  },
+  "gameOver.nameHint": {
+    "component": "GameOverOverlay",
+    "description": "Accessibility hint for the name input — explains its purpose.",
+    "tone": "functional, clear",
+    "characterLimit": 70,
+    "placeholders": [],
+    "doNotTranslate": [],
+    "notes": null
+  },
+  "gameOver.saveLabel": {
+    "component": "GameOverOverlay",
+    "description": "Accessibility label for the save score button.",
+    "tone": "functional",
+    "characterLimit": 15,
+    "placeholders": [],
+    "doNotTranslate": [],
+    "notes": null
+  },
+  "gameOver.saveButton": {
+    "component": "GameOverOverlay",
+    "description": "Visible text on the save score button.",
+    "tone": "action",
+    "characterLimit": 15,
+    "placeholders": [],
+    "doNotTranslate": [],
+    "notes": null
+  },
+  "gameOver.savedConfirmation": {
+    "component": "GameOverOverlay",
+    "description": "Confirmation shown after score is saved. {{rank}} is the leaderboard rank number.",
+    "tone": "celebratory, brief",
+    "characterLimit": 20,
+    "placeholders": ["{{rank}}"],
+    "doNotTranslate": [],
+    "notes": null
+  },
+  "gameOver.playAgain": {
+    "component": "GameOverOverlay",
+    "description": "Accessibility label for the play again button.",
+    "tone": "functional",
+    "characterLimit": 15,
+    "placeholders": [],
+    "doNotTranslate": [],
+    "notes": null
+  },
+  "gameOver.playAgainButton": {
+    "component": "GameOverOverlay",
+    "description": "Visible text on the play again button.",
+    "tone": "action, inviting",
+    "characterLimit": 15,
+    "placeholders": [],
+    "doNotTranslate": [],
+    "notes": null
+  }
 }

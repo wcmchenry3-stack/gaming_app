@@ -18,6 +18,4 @@ export const LOCALES = [
   { code: "ru", label: "Russian", nativeLabel: "Русский", flag: "🇷🇺", dir: "ltr" },
 ];
 
-export const RTL_LOCALES = new Set(
-  LOCALES.filter((l) => l.dir === "rtl").map((l) => l.code)
-);
+export const RTL_LOCALES = new Set(LOCALES.filter((l) => l.dir === "rtl").map((l) => l.code));

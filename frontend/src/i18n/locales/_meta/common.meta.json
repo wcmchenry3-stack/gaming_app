@@ -1,12 +1,92 @@
 {
-  "app.title": { "component": "HomeScreen", "description": "Main app name displayed on the home screen.", "tone": "neutral", "characterLimit": 20, "placeholders": [], "doNotTranslate": ["Gaming App"], "notes": "Do not translate the app name." },
-  "app.subtitle": { "component": "HomeScreen", "description": "Prompt below the title directing users to pick a game.", "tone": "casual, inviting", "characterLimit": 25, "placeholders": [], "doNotTranslate": [], "notes": null },
-  "nav.back": { "component": "FruitMergeScreen", "description": "Back button label with arrow.", "tone": "functional", "characterLimit": 10, "placeholders": [], "doNotTranslate": [], "notes": "Keep short. The arrow ← may be kept or replaced with the locale's equivalent." },
-  "nav.backLabel": { "component": "FruitMergeScreen", "description": "Accessibility label for the back button.", "tone": "functional", "characterLimit": 40, "placeholders": [], "doNotTranslate": [], "notes": null },
-  "theme.light": { "component": "HomeScreen", "description": "Theme toggle button text for switching to light mode.", "tone": "functional", "characterLimit": 15, "placeholders": [], "doNotTranslate": [], "notes": null },
-  "theme.dark": { "component": "HomeScreen", "description": "Theme toggle button text for switching to dark mode.", "tone": "functional", "characterLimit": 15, "placeholders": [], "doNotTranslate": [], "notes": null },
-  "theme.switchTo": { "component": "HomeScreen/GameScreen/FruitMergeScreen", "description": "Accessibility label for the theme toggle. {{mode}} is 'light' or 'dark'.", "tone": "functional", "characterLimit": 40, "placeholders": ["{{mode}}"], "doNotTranslate": [], "notes": "{{mode}} will already be translated by the time it is interpolated." },
-  "theme.lightShort": { "component": "GameScreen/FruitMergeScreen", "description": "Short version of 'Light mode' for compact header buttons.", "tone": "functional", "characterLimit": 8, "placeholders": [], "doNotTranslate": [], "notes": null },
-  "theme.darkShort": { "component": "GameScreen/FruitMergeScreen", "description": "Short version of 'Dark mode' for compact header buttons.", "tone": "functional", "characterLimit": 8, "placeholders": [], "doNotTranslate": [], "notes": null },
-  "lang.switcherLabel": { "component": "LanguageSwitcher", "description": "Accessibility label for the language selector control.", "tone": "functional", "characterLimit": 25, "placeholders": [], "doNotTranslate": [], "notes": null }
+  "app.title": {
+    "component": "HomeScreen",
+    "description": "Main app name displayed on the home screen.",
+    "tone": "neutral",
+    "characterLimit": 20,
+    "placeholders": [],
+    "doNotTranslate": ["Gaming App"],
+    "notes": "Do not translate the app name."
+  },
+  "app.subtitle": {
+    "component": "HomeScreen",
+    "description": "Prompt below the title directing users to pick a game.",
+    "tone": "casual, inviting",
+    "characterLimit": 25,
+    "placeholders": [],
+    "doNotTranslate": [],
+    "notes": null
+  },
+  "nav.back": {
+    "component": "FruitMergeScreen",
+    "description": "Back button label with arrow.",
+    "tone": "functional",
+    "characterLimit": 10,
+    "placeholders": [],
+    "doNotTranslate": [],
+    "notes": "Keep short. The arrow ← may be kept or replaced with the locale's equivalent."
+  },
+  "nav.backLabel": {
+    "component": "FruitMergeScreen",
+    "description": "Accessibility label for the back button.",
+    "tone": "functional",
+    "characterLimit": 40,
+    "placeholders": [],
+    "doNotTranslate": [],
+    "notes": null
+  },
+  "theme.light": {
+    "component": "HomeScreen",
+    "description": "Theme toggle button text for switching to light mode.",
+    "tone": "functional",
+    "characterLimit": 15,
+    "placeholders": [],
+    "doNotTranslate": [],
+    "notes": null
+  },
+  "theme.dark": {
+    "component": "HomeScreen",
+    "description": "Theme toggle button text for switching to dark mode.",
+    "tone": "functional",
+    "characterLimit": 15,
+    "placeholders": [],
+    "doNotTranslate": [],
+    "notes": null
+  },
+  "theme.switchTo": {
+    "component": "HomeScreen/GameScreen/FruitMergeScreen",
+    "description": "Accessibility label for the theme toggle. {{mode}} is 'light' or 'dark'.",
+    "tone": "functional",
+    "characterLimit": 40,
+    "placeholders": ["{{mode}}"],
+    "doNotTranslate": [],
+    "notes": "{{mode}} will already be translated by the time it is interpolated."
+  },
+  "theme.lightShort": {
+    "component": "GameScreen/FruitMergeScreen",
+    "description": "Short version of 'Light mode' for compact header buttons.",
+    "tone": "functional",
+    "characterLimit": 8,
+    "placeholders": [],
+    "doNotTranslate": [],
+    "notes": null
+  },
+  "theme.darkShort": {
+    "component": "GameScreen/FruitMergeScreen",
+    "description": "Short version of 'Dark mode' for compact header buttons.",
+    "tone": "functional",
+    "characterLimit": 8,
+    "placeholders": [],
+    "doNotTranslate": [],
+    "notes": null
+  },
+  "lang.switcherLabel": {
+    "component": "LanguageSwitcher",
+    "description": "Accessibility label for the language selector control.",
+    "tone": "functional",
+    "characterLimit": 25,
+    "placeholders": [],
+    "doNotTranslate": [],
+    "notes": null
+  }
 }
