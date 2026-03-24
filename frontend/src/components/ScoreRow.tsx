@@ -15,6 +15,13 @@ export default function ScoreRow({ label, score, potential, onSelect, canScore }
   const isFilled = score !== null;
   const isSelectable = !isFilled && canScore;
 
+  const stateText = isFilled
+    ? `scored ${score}`
+    : canScore && potential !== undefined
+      ? `potential score ${potential}, double-tap to score`
+      : "not available";
+  const accessLabel = `${label}: ${stateText}`;
+
   return (
     <Pressable
       style={[
@@ -26,6 +33,9 @@ export default function ScoreRow({ label, score, potential, onSelect, canScore }
       ]}
       onPress={isSelectable ? onSelect : undefined}
       disabled={!isSelectable}
+      accessibilityRole="button"
+      accessibilityLabel={accessLabel}
+      accessibilityState={{ disabled: !isSelectable }}
     >
       <Text style={[styles.label, { color: isFilled ? colors.textFilled : colors.text }]}>
         {label}
@@ -50,6 +60,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingHorizontal: 12,
     paddingVertical: 8,
+    minHeight: 44,
     borderBottomWidth: 1,
   },
   label: {

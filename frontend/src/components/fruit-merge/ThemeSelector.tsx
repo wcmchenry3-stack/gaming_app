@@ -9,13 +9,16 @@ export default function ThemeSelector() {
   const { colors } = useTheme();
 
   return (
-    <View style={styles.row}>
+    <View style={styles.row} accessibilityRole="radiogroup" accessibilityLabel="Fruit set theme">
       {Object.values(FRUIT_SETS).map((set) => {
         const active = set.id === activeFruitSet.id;
         return (
           <Pressable
             key={set.id}
             onPress={() => setFruitSetById(set.id)}
+            accessibilityRole="radio"
+            accessibilityState={{ selected: active }}
+            accessibilityLabel={`${set.label} theme`}
             style={[
               styles.pill,
               {
@@ -47,6 +50,8 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
     borderRadius: 20,
     borderWidth: 1,
+    minHeight: 44,
+    justifyContent: "center",
   },
   pillText: {
     fontSize: 13,

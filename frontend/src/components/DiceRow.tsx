@@ -43,6 +43,7 @@ export default function DiceRow({ dice, rollsUsed, gameOver, onRoll, resetHeld }
         {dice.map((val, i) => (
           <Die
             key={i}
+            index={i}
             value={val}
             held={held[i]}
             onPress={() => toggleHeld(i)}
@@ -50,7 +51,7 @@ export default function DiceRow({ dice, rollsUsed, gameOver, onRoll, resetHeld }
           />
         ))}
       </View>
-      <Text style={[styles.hint, { color: colors.textMuted }]}>
+      <Text style={[styles.hint, { color: colors.textMuted }]} accessibilityLiveRegion="polite">
         {rollsUsed > 0 ? "Tap dice to hold" : "Press Roll to start your turn"}
       </Text>
       <Pressable
@@ -60,6 +61,11 @@ export default function DiceRow({ dice, rollsUsed, gameOver, onRoll, resetHeld }
         ]}
         onPress={handleRoll}
         disabled={!canRoll || rolling}
+        accessibilityRole="button"
+        accessibilityLabel={
+          rolling ? "Rolling" : `Roll dice, ${rollsLeft} roll${rollsLeft === 1 ? "" : "s"} left`
+        }
+        accessibilityState={{ disabled: !canRoll || rolling, busy: rolling }}
       >
         <Text style={styles.rollButtonText}>
           {rolling ? "Rolling..." : `Roll (${rollsLeft} left)`}
