@@ -7,15 +7,24 @@ interface DieProps {
   held: boolean;
   onPress: () => void;
   disabled: boolean;
+  index: number;
 }
 
-export default function Die({ value, held, onPress, disabled }: DieProps) {
+export default function Die({ value, held, onPress, disabled, index }: DieProps) {
   const { colors } = useTheme();
+  const displayValue = value > 0 ? value : "blank";
+  const label = `Die ${index + 1}: showing ${displayValue}${held ? ", held" : ""}`;
 
   return (
     <Pressable
       onPress={onPress}
       disabled={disabled}
+      accessibilityRole="togglebutton"
+      accessibilityState={{ checked: held, disabled }}
+      accessibilityLabel={label}
+      accessibilityHint={
+        disabled ? undefined : held ? "Double-tap to unhold" : "Double-tap to hold"
+      }
       style={[
         styles.die,
         {
@@ -25,6 +34,11 @@ export default function Die({ value, held, onPress, disabled }: DieProps) {
         disabled && styles.disabled,
       ]}
     >
+      {held && (
+        <Text style={styles.heldBadge} importantForAccessibility="no">
+          ✓
+        </Text>
+      )}
       <Text style={[styles.value, { color: colors.text }]}>{value > 0 ? value : "—"}</Text>
     </Pressable>
   );
@@ -45,6 +59,14 @@ const styles = StyleSheet.create({
   },
   value: {
     fontSize: 26,
+    fontWeight: "700",
+  },
+  heldBadge: {
+    position: "absolute",
+    top: 2,
+    right: 4,
+    fontSize: 10,
+    color: "#2563eb",
     fontWeight: "700",
   },
 });

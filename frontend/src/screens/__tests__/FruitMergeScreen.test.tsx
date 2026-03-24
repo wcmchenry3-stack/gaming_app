@@ -35,6 +35,7 @@ jest.mock("../../components/fruit-merge/GameCanvas", () => {
       ReactMod.useImperativeHandle(ref, () => ({
         drop: mockDrop,
         reset: mockReset,
+        announceEvent: jest.fn(),
       }));
       // Expose callbacks as data-* props on a View so tests can reach them
       return ReactMod.createElement("View", {

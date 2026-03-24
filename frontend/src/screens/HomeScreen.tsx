@@ -55,7 +55,12 @@ export default function HomeScreen({ navigation }: Props) {
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <Pressable style={styles.themeToggle} onPress={toggle}>
+      <Pressable
+        style={styles.themeToggle}
+        onPress={toggle}
+        accessibilityRole="button"
+        accessibilityLabel={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
+      >
         <Text style={[styles.themeToggleText, { color: colors.textMuted }]}>
           {theme === "dark" ? "Light mode" : "Dark mode"}
         </Text>
@@ -71,6 +76,10 @@ export default function HomeScreen({ navigation }: Props) {
               style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.border }]}
               onPress={game.action}
               disabled={game.loading}
+              accessibilityRole="button"
+              accessibilityLabel={`Play ${game.title}`}
+              accessibilityHint={game.description}
+              accessibilityState={{ disabled: game.loading, busy: game.loading }}
             >
               <Text style={styles.cardEmoji}>{game.emoji}</Text>
               <View style={styles.cardBody}>
@@ -108,6 +117,8 @@ const styles = StyleSheet.create({
     right: 16,
     paddingHorizontal: 12,
     paddingVertical: 6,
+    minHeight: 44,
+    justifyContent: "center",
   },
   themeToggleText: {
     fontSize: 13,

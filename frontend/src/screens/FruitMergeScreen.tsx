@@ -53,11 +53,19 @@ function FruitMergeGame({ navigation }: Props) {
     setCanvasHeight(Math.floor(height));
   }, []);
 
-  const handleMerge = useCallback((event: MergeEvent) => {
-    setScore((s) => s + scoreForMerge(event.tier));
-  }, []);
+  const handleMerge = useCallback(
+    (event: MergeEvent) => {
+      setScore((s) => s + scoreForMerge(event.tier));
+      const merged = activeFruitSet.fruits[event.tier];
+      if (merged) {
+        canvasRef.current?.announceEvent(`Merged! ${merged.name} created.`);
+      }
+    },
+    [activeFruitSet]
+  );
 
   const handleGameOver = useCallback(() => {
+    canvasRef.current?.announceEvent("Game over.");
     setGameOver(true);
   }, []);
 
@@ -98,11 +106,23 @@ function FruitMergeGame({ navigation }: Props) {
     <View style={[styles.screen, { backgroundColor: colors.background }]}>
       {/* Header */}
       <View style={styles.header}>
-        <Pressable onPress={() => navigation.goBack()} style={styles.backBtn}>
+        <Pressable
+          onPress={() => navigation.goBack()}
+          style={styles.backBtn}
+          accessibilityRole="button"
+          accessibilityLabel="Go back to home screen"
+        >
           <Text style={[styles.backText, { color: colors.textMuted }]}>← Back</Text>
         </Pressable>
-        <Text style={[styles.title, { color: colors.text }]}>Fruit Merge</Text>
-        <Pressable onPress={toggle} style={styles.themeToggle}>
+        <Text style={[styles.title, { color: colors.text }]} accessibilityRole="header">
+          Fruit Merge
+        </Text>
+        <Pressable
+          onPress={toggle}
+          style={styles.themeToggle}
+          accessibilityRole="button"
+          accessibilityLabel={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
+        >
           <Text style={[styles.themeToggleText, { color: colors.textMuted }]}>
             {theme === "dark" ? "Light" : "Dark"}
           </Text>
@@ -157,10 +177,10 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     marginBottom: 10,
   },
-  backBtn: { paddingVertical: 6, paddingRight: 12 },
+  backBtn: { paddingVertical: 6, paddingRight: 12, minHeight: 44, justifyContent: "center" },
   backText: { fontSize: 15 },
   title: { fontSize: 20, fontWeight: "700" },
-  themeToggle: { paddingVertical: 6, paddingLeft: 12 },
+  themeToggle: { paddingVertical: 6, paddingLeft: 12, minHeight: 44, justifyContent: "center" },
   themeToggleText: { fontSize: 13 },
   hud: {
     flexDirection: "row",

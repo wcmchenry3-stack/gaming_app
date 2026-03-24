@@ -38,14 +38,26 @@ export default function GameOverOverlay({ score, onRestart }: Props) {
   }
 
   return (
-    <Modal transparent animationType="fade">
+    <Modal transparent animationType="fade" accessibilityViewIsModal>
       <View style={styles.backdrop}>
         <View
           style={[styles.card, { backgroundColor: colors.modalBg, borderColor: colors.border }]}
         >
-          <Text style={[styles.title, { color: colors.text }]}>Game Over</Text>
-          <Text style={[styles.score, { color: colors.accent }]}>{score.toLocaleString()}</Text>
-          <Text style={[styles.scoreLabel, { color: colors.textMuted }]}>points</Text>
+          <Text style={[styles.title, { color: colors.text }]} accessibilityRole="header">
+            Game Over
+          </Text>
+          <Text
+            style={[styles.score, { color: colors.accent }]}
+            accessibilityLabel={`Your score: ${score.toLocaleString()} points`}
+          >
+            {score.toLocaleString()}
+          </Text>
+          <Text
+            style={[styles.scoreLabel, { color: colors.textMuted }]}
+            importantForAccessibility="no"
+          >
+            points
+          </Text>
 
           {!submitted ? (
             <>
@@ -64,8 +76,18 @@ export default function GameOverOverlay({ score, onRestart }: Props) {
                 onChangeText={setName}
                 maxLength={32}
                 editable={!submitting}
+                accessibilityLabel="Your name"
+                accessibilityHint="Enter your name to save your score to the leaderboard"
               />
-              {error && <Text style={[styles.error, { color: colors.error }]}>{error}</Text>}
+              {error && (
+                <Text
+                  style={[styles.error, { color: colors.error }]}
+                  accessibilityLiveRegion="assertive"
+                  accessibilityRole="alert"
+                >
+                  {error}
+                </Text>
+              )}
               <Pressable
                 style={[
                   styles.btn,
@@ -73,6 +95,9 @@ export default function GameOverOverlay({ score, onRestart }: Props) {
                 ]}
                 onPress={handleSubmit}
                 disabled={submitting || !name.trim()}
+                accessibilityRole="button"
+                accessibilityLabel="Save score"
+                accessibilityState={{ disabled: submitting || !name.trim(), busy: submitting }}
               >
                 {submitting ? (
                   <ActivityIndicator color="#fff" />
@@ -90,6 +115,8 @@ export default function GameOverOverlay({ score, onRestart }: Props) {
           <Pressable
             style={[styles.restartBtn, { borderColor: colors.border }]}
             onPress={onRestart}
+            accessibilityRole="button"
+            accessibilityLabel="Play again"
           >
             <Text style={[styles.restartText, { color: colors.textMuted }]}>Play Again</Text>
           </Pressable>

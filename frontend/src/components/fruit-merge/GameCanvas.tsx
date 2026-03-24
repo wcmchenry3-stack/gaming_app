@@ -15,6 +15,7 @@ import { useTheme } from "../../theme/ThemeContext";
 export interface GameCanvasHandle {
   drop: (def: FruitDefinition, x: number) => void;
   reset: () => void;
+  announceEvent: (message: string) => void;
 }
 
 interface Props {
@@ -225,6 +226,16 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
         reset() {
           initEngine();
         },
+        announceEvent(message: string) {
+          const el = document.getElementById("fruit-merge-announcer");
+          if (el) {
+            // Clear first so re-announcing the same string still triggers the live region
+            el.textContent = "";
+            requestAnimationFrame(() => {
+              el.textContent = message;
+            });
+          }
+        },
       }),
       [initEngine, width]
     );
@@ -236,7 +247,23 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
           ref={canvasRef}
           width={width}
           height={height}
+          aria-label="Fruit Merge game — drop fruits onto the stack to merge matching ones. Tap or click to drop."
+          role="application"
           style={{ display: "block", cursor: "crosshair" }}
+        />
+        {/* Visually hidden live region — narrates merge events and game-over for screen readers */}
+        {/* @ts-expect-error — div is a valid DOM element in Expo Web */}
+        <div
+          id="fruit-merge-announcer"
+          aria-live="polite"
+          aria-atomic="true"
+          style={{
+            position: "absolute",
+            left: -9999,
+            width: 1,
+            height: 1,
+            overflow: "hidden",
+          }}
         />
       </View>
     );
