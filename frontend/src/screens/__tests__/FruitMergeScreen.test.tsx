@@ -21,6 +21,7 @@ const mockDrop = jest.fn();
 const mockReset = jest.fn();
 
 jest.mock("../../components/fruit-merge/GameCanvas", () => {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
   const ReactMod = require("react");
   const MockCanvas = ReactMod.forwardRef(
     (
@@ -34,6 +35,7 @@ jest.mock("../../components/fruit-merge/GameCanvas", () => {
       ReactMod.useImperativeHandle(ref, () => ({
         drop: mockDrop,
         reset: mockReset,
+        announceEvent: jest.fn(),
       }));
       // Expose callbacks as data-* props on a View so tests can reach them
       return ReactMod.createElement("View", {
