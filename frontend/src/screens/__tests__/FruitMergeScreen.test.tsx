@@ -21,6 +21,7 @@ const mockDrop = jest.fn();
 const mockReset = jest.fn();
 
 jest.mock("../../components/fruit-merge/GameCanvas", () => {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
   const ReactMod = require("react");
   const MockCanvas = ReactMod.forwardRef(
     (
