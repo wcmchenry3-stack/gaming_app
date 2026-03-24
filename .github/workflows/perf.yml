@@ -62,125 +62,59 @@ jobs:
           done
           echo "WARNING: Service did not respond after 5 attempts. Proceeding anyway."
 
-  backend-perf:
-    name: Backend load test (Locust)
-    runs-on: ubuntu-latest
+  # Three separate backend scenarios — each calls the shared Locust workflow.
+  # Must run after warm-up; all are informational (continue-on-error in called workflow).
+
+  backend-perf-gameflow:
+    name: Load test — game flow
     needs: warm-up
-    continue-on-error: true   # Never block — informational only
-    steps:
-      - uses: actions/checkout@v4
+    uses: wcmchenry3-stack/.github/.github/workflows/called-perf-backend.yml@main
+    with:
+      working-directory: backend
+      locustfile: perf/locustfile.py
+      thresholds-script: perf/check_thresholds.py
+      target-url: ${{ needs.warm-up.outputs.target_url }}
+      users: 1
+      spawn-rate: 1
+      run-time: 90s
+      user-classes: YahtzeeGameUser
+      csv-prefix: perf-gameflow
 
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-          cache: 'pip'
-          cache-dependency-path: backend/requirements-dev.txt
+  backend-perf-leaderboard:
+    name: Load test — leaderboard concurrent
+    needs: warm-up
+    uses: wcmchenry3-stack/.github/.github/workflows/called-perf-backend.yml@main
+    with:
+      working-directory: backend
+      locustfile: perf/locustfile.py
+      thresholds-script: perf/check_thresholds.py
+      target-url: ${{ needs.warm-up.outputs.target_url }}
+      users: 10
+      spawn-rate: 2
+      run-time: ${{ inputs.run_time || '60s' }}
+      user-classes: LeaderboardUser
+      csv-prefix: perf-leaderboard
 
-      - name: Install Locust
-        run: pip install locust==2.32.4
-
-      - name: Run Locust — game flow (1 user, sequential)
-        working-directory: backend
-        env:
-          TARGET_URL: ${{ needs.warm-up.outputs.target_url }}
-        run: |
-          locust -f perf/locustfile.py \
-            --headless \
-            --users 1 \
-            --spawn-rate 1 \
-            --run-time 90s \
-            --host "$TARGET_URL" \
-            --csv perf-gameflow \
-            --exit-code-on-error 0 \
-            YahtzeeGameUser
-          echo "Game flow run complete."
-
-      - name: Run Locust — leaderboard concurrent
-        working-directory: backend
-        env:
-          TARGET_URL: ${{ needs.warm-up.outputs.target_url }}
-        run: |
-          locust -f perf/locustfile.py \
-            --headless \
-            --users ${{ inputs.users || '10' }} \
-            --spawn-rate 2 \
-            --run-time ${{ inputs.run_time || '60s' }} \
-            --host "$TARGET_URL" \
-            --csv perf-leaderboard \
-            --exit-code-on-error 0 \
-            LeaderboardUser
-          echo "Leaderboard run complete."
-
-      - name: Run Locust — read-only polling
-        working-directory: backend
-        env:
-          TARGET_URL: ${{ needs.warm-up.outputs.target_url }}
-        run: |
-          locust -f perf/locustfile.py \
-            --headless \
-            --users 20 \
-            --spawn-rate 5 \
-            --run-time ${{ inputs.run_time || '60s' }} \
-            --host "$TARGET_URL" \
-            --csv perf-readonly \
-            --exit-code-on-error 0 \
-            ReadOnlyUser
-          echo "Read-only polling run complete."
-
-      - name: Check thresholds
-        working-directory: backend
-        run: |
-          # Merge CSVs under a common prefix for threshold checker
-          python perf/check_thresholds.py --csv perf-gameflow   || FAILED=1
-          python perf/check_thresholds.py --csv perf-leaderboard || FAILED=1
-          python perf/check_thresholds.py --csv perf-readonly    || FAILED=1
-          if [ "${FAILED:-0}" = "1" ]; then
-            echo "::warning::Performance thresholds were breached. See artifacts for details."
-          fi
-
-      - name: Upload Locust results
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: locust-results-${{ github.run_id }}
-          path: |
-            backend/perf-gameflow*.csv
-            backend/perf-leaderboard*.csv
-            backend/perf-readonly*.csv
-          retention-days: 30
+  backend-perf-readonly:
+    name: Load test — read-only polling
+    needs: warm-up
+    uses: wcmchenry3-stack/.github/.github/workflows/called-perf-backend.yml@main
+    with:
+      working-directory: backend
+      locustfile: perf/locustfile.py
+      thresholds-script: perf/check_thresholds.py
+      target-url: ${{ needs.warm-up.outputs.target_url }}
+      users: 20
+      spawn-rate: 5
+      run-time: ${{ inputs.run_time || '60s' }}
+      user-classes: ReadOnlyUser
+      csv-prefix: perf-readonly
 
   frontend-perf:
-    name: Frontend Lighthouse CI
-    runs-on: ubuntu-latest
-    continue-on-error: true   # Never block — informational only
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'npm'
-          cache-dependency-path: frontend/package-lock.json
-
-      - name: Install dependencies
-        working-directory: frontend
-        run: npm ci
-
-      - name: Build Expo web
-        working-directory: frontend
-        env:
-          EXPO_PUBLIC_API_URL: 'https://yahtzee-api.onrender.com'
-        run: npx expo export --platform web
-
-      - name: Run Lighthouse CI
-        working-directory: frontend
-        run: npx lhci autorun --config=lighthouserc.json
-        continue-on-error: true
-
-      - name: Upload Lighthouse results
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: lighthouse-results-${{ github.run_id }}
-          path: frontend/.lighthouseci/
-          retention-days: 30
+    name: Lighthouse CI
+    uses: wcmchenry3-stack/.github/.github/workflows/called-perf-frontend.yml@main
+    with:
+      working-directory: frontend
+      build-command: npx expo export --platform web
+      dist-dir: dist
+      lhci-config: lighthouserc.json
