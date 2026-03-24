@@ -1,0 +1,120 @@
+name: Performance Tests
+
+on:
+  # Nightly against production
+  schedule:
+    - cron: '0 6 * * *'
+
+  # On-demand with configurable parameters
+  workflow_dispatch:
+    inputs:
+      target_url:
+        description: 'Backend URL to test'
+        required: true
+        default: 'https://yahtzee-api.onrender.com'
+      users:
+        description: 'Concurrent users (leaderboard scenario)'
+        required: true
+        default: '10'
+      run_time:
+        description: 'Test duration (e.g. 60s, 2m)'
+        required: true
+        default: '60s'
+
+  # Callable by deploy.yml post-deploy (informational only)
+  workflow_call:
+    inputs:
+      target_url:
+        type: string
+        required: false
+        default: 'https://yahtzee-api.onrender.com'
+
+# No PR trigger — perf tests are never a merge gate.
+
+env:
+  DEFAULT_TARGET_URL: 'https://yahtzee-api.onrender.com'
+
+jobs:
+  warm-up:
+    name: Wake Render service
+    runs-on: ubuntu-latest
+    outputs:
+      target_url: ${{ steps.resolve-url.outputs.url }}
+    steps:
+      - name: Resolve target URL
+        id: resolve-url
+        run: |
+          URL="${{ inputs.target_url || env.DEFAULT_TARGET_URL }}"
+          echo "url=$URL" >> "$GITHUB_OUTPUT"
+
+      - name: Wake Render free-tier instance
+        run: |
+          URL="${{ steps.resolve-url.outputs.url }}"
+          echo "Warming up $URL ..."
+          for i in 1 2 3 4 5; do
+            STATUS=$(curl -s -o /dev/null -w "%{http_code}" --max-time 30 "$URL/game/state" || echo "000")
+            echo "Attempt $i: HTTP $STATUS"
+            if [ "$STATUS" != "000" ] && [ "$STATUS" != "503" ]; then
+              echo "Service is up."
+              exit 0
+            fi
+            sleep 15
+          done
+          echo "WARNING: Service did not respond after 5 attempts. Proceeding anyway."
+
+  # Three separate backend scenarios — each calls the shared Locust workflow.
+  # Must run after warm-up; all are informational (continue-on-error in called workflow).
+
+  backend-perf-gameflow:
+    name: Load test — game flow
+    needs: warm-up
+    uses: wcmchenry3-stack/.github/.github/workflows/called-perf-backend.yml@main
+    with:
+      working-directory: backend
+      locustfile: perf/locustfile.py
+      thresholds-script: perf/check_thresholds.py
+      target-url: ${{ needs.warm-up.outputs.target_url }}
+      users: 1
+      spawn-rate: 1
+      run-time: 90s
+      user-classes: YahtzeeGameUser
+      csv-prefix: perf-gameflow
+
+  backend-perf-leaderboard:
+    name: Load test — leaderboard concurrent
+    needs: warm-up
+    uses: wcmchenry3-stack/.github/.github/workflows/called-perf-backend.yml@main
+    with:
+      working-directory: backend
+      locustfile: perf/locustfile.py
+      thresholds-script: perf/check_thresholds.py
+      target-url: ${{ needs.warm-up.outputs.target_url }}
+      users: 10
+      spawn-rate: 2
+      run-time: ${{ inputs.run_time || '60s' }}
+      user-classes: LeaderboardUser
+      csv-prefix: perf-leaderboard
+
+  backend-perf-readonly:
+    name: Load test — read-only polling
+    needs: warm-up
+    uses: wcmchenry3-stack/.github/.github/workflows/called-perf-backend.yml@main
+    with:
+      working-directory: backend
+      locustfile: perf/locustfile.py
+      thresholds-script: perf/check_thresholds.py
+      target-url: ${{ needs.warm-up.outputs.target_url }}
+      users: 20
+      spawn-rate: 5
+      run-time: ${{ inputs.run_time || '60s' }}
+      user-classes: ReadOnlyUser
+      csv-prefix: perf-readonly
+
+  frontend-perf:
+    name: Lighthouse CI
+    uses: wcmchenry3-stack/.github/.github/workflows/called-perf-frontend.yml@main
+    with:
+      working-directory: frontend
+      build-command: npx expo export --platform web
+      dist-dir: dist
+      lhci-config: lighthouserc.json

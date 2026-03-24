@@ -1,0 +1,38 @@
+{
+  "_comment": "SLOs for Render free-tier deployment. Warm-up must complete before timing starts. See docs/PERFORMANCE.md.",
+  "scenarios": {
+    "game_flow": {
+      "description": "Full 13-round game (single user, sequential)",
+      "users": 1,
+      "p95_ms": 500,
+      "error_rate_pct": 0.0,
+      "endpoints": [
+        "POST /game/new",
+        "POST /game/roll",
+        "GET /game/possible-scores",
+        "POST /game/score",
+        "GET /game/state (final)"
+      ]
+    },
+    "leaderboard": {
+      "description": "Concurrent leaderboard read/write (10 users)",
+      "users": 10,
+      "p95_ms": 300,
+      "error_rate_pct": 1.0,
+      "endpoints": [
+        "POST /fruit-merge/score",
+        "GET /fruit-merge/scores"
+      ]
+    },
+    "stateless_reads": {
+      "description": "Read-only polling (20 users)",
+      "users": 20,
+      "p95_ms": 200,
+      "error_rate_pct": 0.0,
+      "endpoints": [
+        "GET /game/state",
+        "GET /game/possible-scores"
+      ]
+    }
+  }
+}
