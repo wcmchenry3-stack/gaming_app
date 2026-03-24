@@ -1,12 +1,12 @@
 {
   "app.title": "Gaming App",
-  "app.subtitle": "__NEEDS_TRANSLATION__",
-  "nav.back": "__NEEDS_TRANSLATION__",
-  "nav.backLabel": "__NEEDS_TRANSLATION__",
-  "theme.light": "__NEEDS_TRANSLATION__",
-  "theme.dark": "__NEEDS_TRANSLATION__",
-  "theme.switchTo": "__NEEDS_TRANSLATION__",
-  "theme.lightShort": "__NEEDS_TRANSLATION__",
-  "theme.darkShort": "__NEEDS_TRANSLATION__",
-  "lang.switcherLabel": "__NEEDS_TRANSLATION__"
+  "app.subtitle": "ゲームを選ぼう",
+  "nav.back": "← 戻る",
+  "nav.backLabel": "ホーム画面に戻る",
+  "theme.light": "ライトモード",
+  "theme.dark": "ダークモード",
+  "theme.switchTo": "{{mode}}モードに切替",
+  "theme.lightShort": "ライト",
+  "theme.darkShort": "ダーク",
+  "lang.switcherLabel": "言語を選択"
 }

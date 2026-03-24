@@ -1,12 +1,12 @@
 {
   "app.title": "Gaming App",
-  "app.subtitle": "__NEEDS_TRANSLATION__",
-  "nav.back": "__NEEDS_TRANSLATION__",
-  "nav.backLabel": "__NEEDS_TRANSLATION__",
-  "theme.light": "__NEEDS_TRANSLATION__",
-  "theme.dark": "__NEEDS_TRANSLATION__",
-  "theme.switchTo": "__NEEDS_TRANSLATION__",
-  "theme.lightShort": "__NEEDS_TRANSLATION__",
-  "theme.darkShort": "__NEEDS_TRANSLATION__",
-  "lang.switcherLabel": "__NEEDS_TRANSLATION__"
+  "app.subtitle": "اختر لعبة",
+  "nav.back": "← رجوع",
+  "nav.backLabel": "العودة إلى الشاشة الرئيسية",
+  "theme.light": "وضع النهار",
+  "theme.dark": "وضع الليل",
+  "theme.switchTo": "تبديل إلى وضع {{mode}}",
+  "theme.lightShort": "نهار",
+  "theme.darkShort": "ليل",
+  "lang.switcherLabel": "اختر اللغة"
 }

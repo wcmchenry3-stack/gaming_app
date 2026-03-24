@@ -1,12 +1,12 @@
 {
   "app.title": "Gaming App",
-  "app.subtitle": "__NEEDS_TRANSLATION__",
-  "nav.back": "__NEEDS_TRANSLATION__",
-  "nav.backLabel": "__NEEDS_TRANSLATION__",
-  "theme.light": "__NEEDS_TRANSLATION__",
-  "theme.dark": "__NEEDS_TRANSLATION__",
-  "theme.switchTo": "__NEEDS_TRANSLATION__",
-  "theme.lightShort": "__NEEDS_TRANSLATION__",
-  "theme.darkShort": "__NEEDS_TRANSLATION__",
-  "lang.switcherLabel": "__NEEDS_TRANSLATION__"
+  "app.subtitle": "खेल चुनें",
+  "nav.back": "← वापस",
+  "nav.backLabel": "मुख्य स्क्रीन पर लौटें",
+  "theme.light": "लाइट मोड",
+  "theme.dark": "डार्क मोड",
+  "theme.switchTo": "{{mode}} मोड पर स्विच करें",
+  "theme.lightShort": "लाइट",
+  "theme.darkShort": "डार्क",
+  "lang.switcherLabel": "भाषा चुनें"
 }

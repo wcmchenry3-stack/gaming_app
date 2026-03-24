@@ -1,12 +1,12 @@
 {
   "app.title": "Gaming App",
-  "app.subtitle": "__NEEDS_TRANSLATION__",
-  "nav.back": "__NEEDS_TRANSLATION__",
-  "nav.backLabel": "__NEEDS_TRANSLATION__",
-  "theme.light": "__NEEDS_TRANSLATION__",
-  "theme.dark": "__NEEDS_TRANSLATION__",
-  "theme.switchTo": "__NEEDS_TRANSLATION__",
-  "theme.lightShort": "__NEEDS_TRANSLATION__",
-  "theme.darkShort": "__NEEDS_TRANSLATION__",
-  "lang.switcherLabel": "__NEEDS_TRANSLATION__"
+  "app.subtitle": "Escolha um jogo",
+  "nav.back": "← Voltar",
+  "nav.backLabel": "Voltar para a tela inicial",
+  "theme.light": "Modo claro",
+  "theme.dark": "Modo escuro",
+  "theme.switchTo": "Mudar para modo {{mode}}",
+  "theme.lightShort": "Claro",
+  "theme.darkShort": "Escuro",
+  "lang.switcherLabel": "Selecionar idioma"
 }

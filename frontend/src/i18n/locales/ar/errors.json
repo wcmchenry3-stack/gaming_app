@@ -1,4 +1,4 @@
 {
-  "backend.connection": "__NEEDS_TRANSLATION__",
-  "score.save": "__NEEDS_TRANSLATION__"
+  "backend.connection": "لا يمكن الاتصال بالخادم. هل الخادم يعمل؟",
+  "score.save": "تعذر حفظ النتيجة. تحقق من اتصالك."
 }

@@ -1,4 +1,4 @@
 {
-  "backend.connection": "__NEEDS_TRANSLATION__",
-  "score.save": "__NEEDS_TRANSLATION__"
+  "backend.connection": "לא ניתן להתחבר לשרת. האם השרת פועל?",
+  "score.save": "לא ניתן לשמור את הניקוד. בדוק את החיבור שלך."
 }
