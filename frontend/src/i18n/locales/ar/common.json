@@ -1,0 +1,12 @@
+{
+  "app.title": "Gaming App",
+  "app.subtitle": "اختر لعبة",
+  "nav.back": "← رجوع",
+  "nav.backLabel": "العودة إلى الشاشة الرئيسية",
+  "theme.light": "وضع النهار",
+  "theme.dark": "وضع الليل",
+  "theme.switchTo": "تبديل إلى وضع {{mode}}",
+  "theme.lightShort": "نهار",
+  "theme.darkShort": "ليل",
+  "lang.switcherLabel": "اختر اللغة"
+}

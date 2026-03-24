@@ -1,0 +1,12 @@
+{
+  "app.title": "Gaming App",
+  "app.subtitle": "Choose a game",
+  "nav.back": "← Back",
+  "nav.backLabel": "Go back to home screen",
+  "theme.light": "Light mode",
+  "theme.dark": "Dark mode",
+  "theme.switchTo": "Switch to {{mode}} mode",
+  "theme.lightShort": "Light",
+  "theme.darkShort": "Dark",
+  "lang.switcherLabel": "Select language"
+}

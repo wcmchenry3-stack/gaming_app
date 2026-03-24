@@ -1,0 +1,12 @@
+{
+  "app.title": "Gaming App",
+  "app.subtitle": "בחרו משחק",
+  "nav.back": "← חזרה",
+  "nav.backLabel": "חזרה למסך הבית",
+  "theme.light": "מצב בהיר",
+  "theme.dark": "מצב כהה",
+  "theme.switchTo": "החלף למצב {{mode}}",
+  "theme.lightShort": "בהיר",
+  "theme.darkShort": "כהה",
+  "lang.switcherLabel": "בחירת שפה"
+}

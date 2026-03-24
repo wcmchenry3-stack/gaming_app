@@ -1,0 +1,20 @@
+{
+  "backend.connection": {
+    "component": "HomeScreen",
+    "description": "Error shown when the Yahtzee backend API is unreachable.",
+    "tone": "friendly, helpful",
+    "characterLimit": 70,
+    "placeholders": [],
+    "doNotTranslate": [],
+    "notes": null
+  },
+  "score.save": {
+    "component": "GameOverOverlay",
+    "description": "Error shown when the leaderboard score save request fails.",
+    "tone": "friendly, helpful",
+    "characterLimit": 55,
+    "placeholders": [],
+    "doNotTranslate": [],
+    "notes": null
+  }
+}

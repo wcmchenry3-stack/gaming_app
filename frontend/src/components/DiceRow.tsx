@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { View, Pressable, Text, StyleSheet } from "react-native";
+import { useTranslation } from "react-i18next";
 import Die from "./Die";
 import { useTheme } from "../theme/ThemeContext";
 
@@ -12,6 +13,7 @@ interface DiceRowProps {
 }
 
 export default function DiceRow({ dice, rollsUsed, gameOver, onRoll, resetHeld }: DiceRowProps) {
+  const { t } = useTranslation("yahtzee");
   const { colors } = useTheme();
   const [held, setHeld] = useState<boolean[]>([false, false, false, false, false]);
   const [rolling, setRolling] = useState(false);
@@ -52,7 +54,7 @@ export default function DiceRow({ dice, rollsUsed, gameOver, onRoll, resetHeld }
         ))}
       </View>
       <Text style={[styles.hint, { color: colors.textMuted }]} accessibilityLiveRegion="polite">
-        {rollsUsed > 0 ? "Tap dice to hold" : "Press Roll to start your turn"}
+        {rollsUsed > 0 ? t("dice.hintAfterRoll") : t("dice.hintBeforeRoll")}
       </Text>
       <Pressable
         style={[
@@ -63,12 +65,14 @@ export default function DiceRow({ dice, rollsUsed, gameOver, onRoll, resetHeld }
         disabled={!canRoll || rolling}
         accessibilityRole="button"
         accessibilityLabel={
-          rolling ? "Rolling" : `Roll dice, ${rollsLeft} roll${rollsLeft === 1 ? "" : "s"} left`
+          rolling
+            ? t("roll.rollingLabel")
+            : t(`roll.label_${rollsLeft === 1 ? "one" : "other"}`, { count: rollsLeft })
         }
         accessibilityState={{ disabled: !canRoll || rolling, busy: rolling }}
       >
         <Text style={styles.rollButtonText}>
-          {rolling ? "Rolling..." : `Roll (${rollsLeft} left)`}
+          {rolling ? t("roll.rolling") : t("roll.button", { count: rollsLeft })}
         </Text>
       </Pressable>
     </View>
