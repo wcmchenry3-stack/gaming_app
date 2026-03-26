@@ -64,7 +64,7 @@ Locust also has a browser UI. Omit `--headless` to open it at http://localhost:8
 cd frontend
 npm install
 EXPO_PUBLIC_API_URL=https://yahtzee-api.onrender.com npx expo export --platform web
-npx lhci autorun --config=lighthouserc.json
+npx @lhci/cli@0.14.0 autorun --config=lighthouserc.json
 ```
 
 Results are saved to `frontend/.lighthouseci/`. Open any `.html` file in a browser to view the full Lighthouse report.
