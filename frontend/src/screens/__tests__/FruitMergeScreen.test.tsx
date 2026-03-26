@@ -13,6 +13,10 @@ import React from "react";
 import { act, create } from "react-test-renderer";
 import FruitMergeScreen from "../FruitMergeScreen";
 
+jest.mock("../../components/fruit-merge/FruitGlyph", () => "FruitGlyph");
+jest.mock("../../components/fruit-merge/NextFruitPreview", () => "NextFruitPreview");
+jest.mock("../../components/fruit-merge/ThemeSelector", () => "ThemeSelector");
+
 // ---------------------------------------------------------------------------
 // Mock GameCanvas — forwardRef component that exposes drop/reset spies
 // ---------------------------------------------------------------------------
