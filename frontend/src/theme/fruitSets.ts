@@ -1,5 +1,30 @@
 import { ImageSourcePropType } from "react-native";
 
+import cherryIcon from "../../assets/fruit-icons/cherry.png";
+import blueberryIcon from "../../assets/fruit-icons/blueberry.png";
+import lemonIcon from "../../assets/fruit-icons/lemon.png";
+import grapesIcon from "../../assets/fruit-icons/grapes.png";
+import orangeIcon from "../../assets/fruit-icons/orange.png";
+import appleIcon from "../../assets/fruit-icons/apple.png";
+import peachIcon from "../../assets/fruit-icons/peach.png";
+import coconutIcon from "../../assets/fruit-icons/coconut.png";
+import dragonfruitIcon from "../../assets/fruit-icons/dragonfruit.png";
+import pineappleIcon from "../../assets/fruit-icons/pineapple.png";
+import watermelonIcon from "../../assets/fruit-icons/watermelon.png";
+import pumpkinIcon from "../../assets/fruit-icons/pumpkin.png"; // reserved for future use
+import moonIcon from "../../assets/celestial-icons/moon.png";
+import plutoIcon from "../../assets/celestial-icons/pluto.png";
+import mercuryIcon from "../../assets/celestial-icons/mercury.png";
+import marsIcon from "../../assets/celestial-icons/mars.png";
+import venusIcon from "../../assets/celestial-icons/venus.png";
+import earthIcon from "../../assets/celestial-icons/earth.png";
+import neptuneIcon from "../../assets/celestial-icons/neptune.png";
+import uranusIcon from "../../assets/celestial-icons/uranus.png";
+import saturnIcon from "../../assets/celestial-icons/saturn.png";
+import jupiterIcon from "../../assets/celestial-icons/jupiter.png";
+import sunIcon from "../../assets/celestial-icons/sun.png";
+import milkyWayIcon from "../../assets/celestial-icons/milkyway.png"; // reserved for future use
+
 export type FruitTier = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10;
 
 export interface FruitDefinition {
@@ -49,33 +74,33 @@ const SCORE_VALUES: Record<FruitTier, number> = {
 };
 
 const FRUIT_ICONS = {
-  cherry: require("../../assets/fruit-icons/cherry.png"),
-  blueberry: require("../../assets/fruit-icons/blueberry.png"),
-  lemon: require("../../assets/fruit-icons/lemon.png"),
-  grape: require("../../assets/fruit-icons/grapes.png"),
-  orange: require("../../assets/fruit-icons/orange.png"),
-  apple: require("../../assets/fruit-icons/apple.png"),
-  peach: require("../../assets/fruit-icons/peach.png"),
-  coconut: require("../../assets/fruit-icons/coconut.png"),
-  dragonfruit: require("../../assets/fruit-icons/dragonfruit.png"),
-  pineapple: require("../../assets/fruit-icons/pineapple.png"),
-  watermelon: require("../../assets/fruit-icons/watermelon.png"),
-  pumpkin: require("../../assets/fruit-icons/pumpkin.png"),
+  cherry: cherryIcon,
+  blueberry: blueberryIcon,
+  lemon: lemonIcon,
+  grape: grapesIcon,
+  orange: orangeIcon,
+  apple: appleIcon,
+  peach: peachIcon,
+  coconut: coconutIcon,
+  dragonfruit: dragonfruitIcon,
+  pineapple: pineappleIcon,
+  watermelon: watermelonIcon,
+  pumpkin: pumpkinIcon,
 } as const;
 
 const PLANET_ICONS = {
-  moon: require("../../assets/celestial-icons/moon.png"),
-  pluto: require("../../assets/celestial-icons/pluto.png"),
-  mercury: require("../../assets/celestial-icons/mercury.png"),
-  mars: require("../../assets/celestial-icons/mars.png"),
-  venus: require("../../assets/celestial-icons/venus.png"),
-  earth: require("../../assets/celestial-icons/earth.png"),
-  neptune: require("../../assets/celestial-icons/neptune.png"),
-  uranus: require("../../assets/celestial-icons/uranus.png"),
-  saturn: require("../../assets/celestial-icons/saturn.png"),
-  jupiter: require("../../assets/celestial-icons/jupiter.png"),
-  sun: require("../../assets/celestial-icons/sun.png"),
-  milkyWay: require("../../assets/celestial-icons/milkyway.png"),
+  moon: moonIcon,
+  pluto: plutoIcon,
+  mercury: mercuryIcon,
+  mars: marsIcon,
+  venus: venusIcon,
+  earth: earthIcon,
+  neptune: neptuneIcon,
+  uranus: uranusIcon,
+  saturn: saturnIcon,
+  jupiter: jupiterIcon,
+  sun: sunIcon,
+  milkyWay: milkyWayIcon,
 } as const;
 
 export const FRUIT_SETS: Record<string, FruitSet> = {
@@ -282,105 +307,105 @@ export const FRUIT_SETS: Record<string, FruitSet> = {
     id: "planets",
     label: "Planets",
     fruits: [
-        {
-          tier: 0,
-          name: "Moon",
-          icon: PLANET_ICONS.moon,
-          emoji: "🌙",
-          color: "#d1d5db",
-          radius: RADII[0],
-          scoreValue: SCORE_VALUES[0],
-        },
-        {
-          tier: 1,
-          name: "Pluto",
-          icon: PLANET_ICONS.pluto,
-          emoji: "🪨",
-          color: "#94a3b8",
-          radius: RADII[1],
-          scoreValue: SCORE_VALUES[1],
-        },
-        {
-          tier: 2,
-          name: "Mercury",
-          icon: PLANET_ICONS.mercury,
-          emoji: "🪨",
-          color: "#9ca3af",
-          radius: RADII[2],
-          scoreValue: SCORE_VALUES[2],
-        },
-        {
-          tier: 3,
-          name: "Mars",
-          icon: PLANET_ICONS.mars,
-          emoji: "🔴",
-          color: "#dc2626",
-          radius: RADII[3],
-          scoreValue: SCORE_VALUES[3],
-        },
-        {
-          tier: 4,
-          name: "Venus",
-          icon: PLANET_ICONS.venus,
-          emoji: "🟡",
-          color: "#fbbf24",
-          radius: RADII[4],
-          scoreValue: SCORE_VALUES[4],
-        },
-        {
-          tier: 5,
-          name: "Earth",
-          icon: PLANET_ICONS.earth,
-          emoji: "🌍",
-          color: "#2563eb",
-          radius: RADII[5],
-          scoreValue: SCORE_VALUES[5],
-        },
-        {
-          tier: 6,
-          name: "Neptune",
-          icon: PLANET_ICONS.neptune,
-          emoji: "🔵",
-          color: "#1d4ed8",
-          radius: RADII[6],
-          scoreValue: SCORE_VALUES[6],
-        },
-        {
-          tier: 7,
-          name: "Uranus",
-          icon: PLANET_ICONS.uranus,
-          emoji: "🩵",
-          color: "#67e8f9",
-          radius: RADII[7],
-          scoreValue: SCORE_VALUES[7],
-        },
-        {
-          tier: 8,
-          name: "Saturn",
-          icon: PLANET_ICONS.saturn,
-          emoji: "🪐",
-          color: "#ca8a04",
-          radius: RADII[8],
-          scoreValue: SCORE_VALUES[8],
-        },
-        {
-          tier: 9,
-          name: "Jupiter",
-          icon: PLANET_ICONS.jupiter,
-          emoji: "🟠",
-          color: "#ea580c",
-          radius: RADII[9],
-          scoreValue: SCORE_VALUES[9],
-        },
-        {
-          tier: 10,
-          name: "Sun",
-          icon: PLANET_ICONS.sun,
-          emoji: "☀️",
-          color: "#facc15",
-          radius: RADII[10],
-          scoreValue: SCORE_VALUES[10],
-        },
+      {
+        tier: 0,
+        name: "Moon",
+        icon: PLANET_ICONS.moon,
+        emoji: "🌙",
+        color: "#d1d5db",
+        radius: RADII[0],
+        scoreValue: SCORE_VALUES[0],
+      },
+      {
+        tier: 1,
+        name: "Pluto",
+        icon: PLANET_ICONS.pluto,
+        emoji: "🪨",
+        color: "#94a3b8",
+        radius: RADII[1],
+        scoreValue: SCORE_VALUES[1],
+      },
+      {
+        tier: 2,
+        name: "Mercury",
+        icon: PLANET_ICONS.mercury,
+        emoji: "🪨",
+        color: "#9ca3af",
+        radius: RADII[2],
+        scoreValue: SCORE_VALUES[2],
+      },
+      {
+        tier: 3,
+        name: "Mars",
+        icon: PLANET_ICONS.mars,
+        emoji: "🔴",
+        color: "#dc2626",
+        radius: RADII[3],
+        scoreValue: SCORE_VALUES[3],
+      },
+      {
+        tier: 4,
+        name: "Venus",
+        icon: PLANET_ICONS.venus,
+        emoji: "🟡",
+        color: "#fbbf24",
+        radius: RADII[4],
+        scoreValue: SCORE_VALUES[4],
+      },
+      {
+        tier: 5,
+        name: "Earth",
+        icon: PLANET_ICONS.earth,
+        emoji: "🌍",
+        color: "#2563eb",
+        radius: RADII[5],
+        scoreValue: SCORE_VALUES[5],
+      },
+      {
+        tier: 6,
+        name: "Neptune",
+        icon: PLANET_ICONS.neptune,
+        emoji: "🔵",
+        color: "#1d4ed8",
+        radius: RADII[6],
+        scoreValue: SCORE_VALUES[6],
+      },
+      {
+        tier: 7,
+        name: "Uranus",
+        icon: PLANET_ICONS.uranus,
+        emoji: "🩵",
+        color: "#67e8f9",
+        radius: RADII[7],
+        scoreValue: SCORE_VALUES[7],
+      },
+      {
+        tier: 8,
+        name: "Saturn",
+        icon: PLANET_ICONS.saturn,
+        emoji: "🪐",
+        color: "#ca8a04",
+        radius: RADII[8],
+        scoreValue: SCORE_VALUES[8],
+      },
+      {
+        tier: 9,
+        name: "Jupiter",
+        icon: PLANET_ICONS.jupiter,
+        emoji: "🟠",
+        color: "#ea580c",
+        radius: RADII[9],
+        scoreValue: SCORE_VALUES[9],
+      },
+      {
+        tier: 10,
+        name: "Sun",
+        icon: PLANET_ICONS.sun,
+        emoji: "☀️",
+        color: "#facc15",
+        radius: RADII[10],
+        scoreValue: SCORE_VALUES[10],
+      },
     ],
   },
 };
