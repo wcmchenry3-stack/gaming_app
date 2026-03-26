@@ -156,13 +156,19 @@ export function createEngine(
           });
         }
 
-        // Progressive rest-state damping — calms micro-vibrations without affecting active fruit
-        const speed = Math.hypot(body.velocity.x, body.velocity.y);
-        if (speed < REST_SPEED_THRESHOLD) {
+        // Progressive rest-state damping — calms horizontal wobble and spin.
+        // Vertical velocity is intentionally excluded: damping vy fights gravity and
+        // prevents newly-dropped fruits from falling at normal speed.
+        const absVx = Math.abs(body.velocity.x);
+        const absVy = Math.abs(body.velocity.y);
+        if (absVx < REST_SPEED_THRESHOLD) {
           Matter.Body.setVelocity(body, {
             x: body.velocity.x * REST_LINEAR_DAMP,
-            y: body.velocity.y * REST_LINEAR_DAMP,
+            y: body.velocity.y, // leave vertical alone
           });
+        }
+        // Only kill spin when the fruit is truly settled (both axes near zero)
+        if (absVx < REST_SPEED_THRESHOLD && absVy < REST_SPEED_THRESHOLD) {
           Matter.Body.setAngularVelocity(body, body.angularVelocity * REST_ANGULAR_DAMP);
         }
       }
