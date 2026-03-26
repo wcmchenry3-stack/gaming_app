@@ -36,19 +36,23 @@ const canvasImageCache = new Map<string, HTMLImageElement>();
 
 function getCanvasImage(def: FruitDefinition): HTMLImageElement | null {
   if (!def.icon || typeof window === "undefined") return null;
+  try {
+    const asset = RNImage.resolveAssetSource(def.icon);
+    const uri = asset?.uri;
+    if (!uri) return null;
 
-  const asset = RNImage.resolveAssetSource(def.icon);
-  const uri = asset?.uri;
-  if (!uri) return null;
+    const cached = canvasImageCache.get(uri);
+    if (cached) return cached;
 
-  const cached = canvasImageCache.get(uri);
-  if (cached) return cached;
-
-  const image = new window.Image();
-  image.onerror = () => canvasImageCache.delete(uri); // evict on failure so next frame retries
-  image.src = uri;
-  canvasImageCache.set(uri, image);
-  return image;
+    const image = new window.Image();
+    image.onerror = () => canvasImageCache.delete(uri); // evict on failure so next frame retries
+    image.src = uri;
+    canvasImageCache.set(uri, image);
+    return image;
+  } catch {
+    // resolveAssetSource can throw in Expo Web if the asset registry isn't populated
+    return null; // fall through to emoji in drawFruitVisual
+  }
 }
 
 function drawFruitVisual(
