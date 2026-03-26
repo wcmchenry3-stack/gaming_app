@@ -45,6 +45,7 @@ function getCanvasImage(def: FruitDefinition): HTMLImageElement | null {
   if (cached) return cached;
 
   const image = new window.Image();
+  image.onerror = () => canvasImageCache.delete(uri); // evict on failure so next frame retries
   image.src = uri;
   canvasImageCache.set(uri, image);
   return image;
@@ -58,12 +59,17 @@ function drawFruitVisual(
   radius: number
 ) {
   const image = getCanvasImage(def);
-  if (image?.complete) {
+  // naturalWidth > 0 confirms the image loaded successfully (complete=true on broken images too)
+  if (image?.complete && image.naturalWidth > 0) {
     const diameter = radius * 2;
     const inset = diameter * ICON_INSET_RATIO;
     const size = diameter - inset * 2;
-    ctx.drawImage(image, x - size / 2, y - size / 2, size, size);
-    return;
+    try {
+      ctx.drawImage(image, x - size / 2, y - size / 2, size, size);
+      return;
+    } catch {
+      // Image is in broken state — fall through to emoji
+    }
   }
 
   ctx.font = `${Math.round(radius * 1.1)}px serif`;
