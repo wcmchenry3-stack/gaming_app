@@ -85,10 +85,7 @@ export class ControlledSpawnSelector {
           : 1 + (droughtDrops - DROUGHT_BOOST_START_AFTER) * DROUGHT_CORRECTION_STRENGTH;
 
       const recentCount = this.recentHistory.filter((seenTier) => seenTier === tier).length;
-      const recentPenalty = Math.max(
-        0.55,
-        1 - recentCount * RECENT_REPEAT_PENALTY_STRENGTH
-      );
+      const recentPenalty = Math.max(0.55, 1 - recentCount * RECENT_REPEAT_PENALTY_STRENGTH);
 
       const dangerAdjustment =
         dangerLevel > 0 && tier >= DANGER_HIGH_TIER_START
