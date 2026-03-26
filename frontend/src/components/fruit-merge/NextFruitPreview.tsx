@@ -1,7 +1,9 @@
 import React from "react";
 import { View, Text, StyleSheet } from "react-native";
+import { useTranslation } from "react-i18next";
 import { FruitDefinition } from "../../theme/fruitSets";
 import { useTheme } from "../../theme/ThemeContext";
+import FruitGlyph from "./FruitGlyph";
 
 interface Props {
   current: FruitDefinition;
@@ -9,13 +11,22 @@ interface Props {
 }
 
 export default function NextFruitPreview({ current, next }: Props) {
+  const { t } = useTranslation("fruit-merge");
   const { colors } = useTheme();
   return (
     <View style={styles.row}>
-      <View style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-        <Text style={styles.label}>Drop</Text>
-        <Text style={styles.emoji}>{current.emoji}</Text>
-        <Text style={[styles.name, { color: colors.text }]}>{current.name}</Text>
+      <View
+        style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.border }]}
+        accessible
+        accessibilityLabel={t("preview.droppingNext", { name: current.name })}
+      >
+        <Text style={styles.label} importantForAccessibility="no">
+          {t("preview.dropLabel")}
+        </Text>
+        <FruitGlyph fruit={current} size={styles.emoji.fontSize} />
+        <Text style={[styles.name, { color: colors.text }]} importantForAccessibility="no">
+          {current.name}
+        </Text>
       </View>
       <View
         style={[
@@ -23,10 +34,16 @@ export default function NextFruitPreview({ current, next }: Props) {
           styles.nextCard,
           { backgroundColor: colors.surfaceAlt, borderColor: colors.border },
         ]}
+        accessible
+        accessibilityLabel={t("preview.comingUp", { name: next.name })}
       >
-        <Text style={styles.label}>Next</Text>
-        <Text style={[styles.emoji, styles.nextEmoji]}>{next.emoji}</Text>
-        <Text style={[styles.name, { color: colors.textMuted }]}>{next.name}</Text>
+        <Text style={styles.label} importantForAccessibility="no">
+          {t("preview.nextLabel")}
+        </Text>
+        <FruitGlyph fruit={next} size={styles.nextEmoji.fontSize} />
+        <Text style={[styles.name, { color: colors.textMuted }]} importantForAccessibility="no">
+          {next.name}
+        </Text>
       </View>
     </View>
   );

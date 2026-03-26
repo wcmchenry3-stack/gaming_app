@@ -13,6 +13,10 @@ import React from "react";
 import { act, create } from "react-test-renderer";
 import FruitMergeScreen from "../FruitMergeScreen";
 
+jest.mock("../../components/fruit-merge/FruitGlyph", () => "FruitGlyph");
+jest.mock("../../components/fruit-merge/NextFruitPreview", () => "NextFruitPreview");
+jest.mock("../../components/fruit-merge/ThemeSelector", () => "ThemeSelector");
+
 // ---------------------------------------------------------------------------
 // Mock GameCanvas — forwardRef component that exposes drop/reset spies
 // ---------------------------------------------------------------------------
@@ -68,9 +72,7 @@ function renderScreen() {
 
   // Trigger onLayout so the canvas renders (containerWidth/canvasHeight default to 0)
   act(() => {
-    const outer = renderer.root.findAll(
-      (node) => node.props.onLayout !== undefined
-    )[0];
+    const outer = renderer.root.findAll((node) => node.props.onLayout !== undefined)[0];
     outer.props.onLayout({
       nativeEvent: { layout: { width: 300, height: 600 } },
     });
@@ -81,9 +83,7 @@ function renderScreen() {
 
 /** Find the mock canvas node by testID */
 function findCanvas(renderer: ReturnType<typeof create>) {
-  return renderer.root.findAll(
-    (node) => node.props.testID === "mock-canvas"
-  )[0];
+  return renderer.root.findAll((node) => node.props.testID === "mock-canvas")[0];
 }
 
 // ---------------------------------------------------------------------------
@@ -175,9 +175,7 @@ describe("FruitMergeGame", () => {
     });
 
     // Call onRestart directly via GameOverOverlay's prop (avoids traversing Modal internals)
-    const overlay = renderer.root.findAll(
-      (node) => typeof node.props.onRestart === "function"
-    )[0];
+    const overlay = renderer.root.findAll((node) => typeof node.props.onRestart === "function")[0];
 
     act(() => {
       overlay.props.onRestart();

@@ -1,0 +1,12 @@
+{
+  "app.title": "Gaming App",
+  "app.subtitle": "选择游戏",
+  "nav.back": "← 返回",
+  "nav.backLabel": "返回主屏幕",
+  "theme.light": "浅色模式",
+  "theme.dark": "深色模式",
+  "theme.switchTo": "切换到{{mode}}模式",
+  "theme.lightShort": "浅色",
+  "theme.darkShort": "深色",
+  "lang.switcherLabel": "选择语言"
+}

@@ -1,0 +1,12 @@
+{
+  "app.title": "Gaming App",
+  "app.subtitle": "Wähle ein Spiel",
+  "nav.back": "← Zurück",
+  "nav.backLabel": "Zurück zum Startbildschirm",
+  "theme.light": "Helles Design",
+  "theme.dark": "Dunkles Design",
+  "theme.switchTo": "Wechsle zu {{mode}}",
+  "theme.lightShort": "Hell",
+  "theme.darkShort": "Dunkel",
+  "lang.switcherLabel": "Sprache wählen"
+}

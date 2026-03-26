@@ -8,6 +8,7 @@ import {
   ActivityIndicator,
   Modal,
 } from "react-native";
+import { useTranslation } from "react-i18next";
 import { fruitMergeApi, ScoreEntry } from "../../api/fruitMergeClient";
 import { useTheme } from "../../theme/ThemeContext";
 
@@ -17,6 +18,7 @@ interface Props {
 }
 
 export default function GameOverOverlay({ score, onRestart }: Props) {
+  const { t } = useTranslation("fruit-merge");
   const { colors } = useTheme();
   const [name, setName] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -31,21 +33,33 @@ export default function GameOverOverlay({ score, onRestart }: Props) {
       const entry = await fruitMergeApi.submitScore(name.trim(), score);
       setSubmitted(entry);
     } catch {
-      setError("Could not save score. Check your connection.");
+      setError(t("errors:score.save"));
     } finally {
       setSubmitting(false);
     }
   }
 
   return (
-    <Modal transparent animationType="fade">
+    <Modal transparent animationType="fade" accessibilityViewIsModal>
       <View style={styles.backdrop}>
         <View
           style={[styles.card, { backgroundColor: colors.modalBg, borderColor: colors.border }]}
         >
-          <Text style={[styles.title, { color: colors.text }]}>Game Over</Text>
-          <Text style={[styles.score, { color: colors.accent }]}>{score.toLocaleString()}</Text>
-          <Text style={[styles.scoreLabel, { color: colors.textMuted }]}>points</Text>
+          <Text style={[styles.title, { color: colors.text }]} accessibilityRole="header">
+            {t("gameOver.title")}
+          </Text>
+          <Text
+            style={[styles.score, { color: colors.accent }]}
+            accessibilityLabel={t("gameOver.scoreLabel", { score: score.toLocaleString() })}
+          >
+            {score.toLocaleString()}
+          </Text>
+          <Text
+            style={[styles.scoreLabel, { color: colors.textMuted }]}
+            importantForAccessibility="no"
+          >
+            {t("gameOver.points")}
+          </Text>
 
           {!submitted ? (
             <>
@@ -58,14 +72,24 @@ export default function GameOverOverlay({ score, onRestart }: Props) {
                     color: colors.text,
                   },
                 ]}
-                placeholder="Enter your name"
+                placeholder={t("gameOver.namePlaceholder")}
                 placeholderTextColor={colors.textMuted}
                 value={name}
                 onChangeText={setName}
                 maxLength={32}
                 editable={!submitting}
+                accessibilityLabel={t("gameOver.nameLabel")}
+                accessibilityHint={t("gameOver.nameHint")}
               />
-              {error && <Text style={[styles.error, { color: colors.error }]}>{error}</Text>}
+              {error && (
+                <Text
+                  style={[styles.error, { color: colors.error }]}
+                  accessibilityLiveRegion="assertive"
+                  accessibilityRole="alert"
+                >
+                  {error}
+                </Text>
+              )}
               <Pressable
                 style={[
                   styles.btn,
@@ -73,25 +97,32 @@ export default function GameOverOverlay({ score, onRestart }: Props) {
                 ]}
                 onPress={handleSubmit}
                 disabled={submitting || !name.trim()}
+                accessibilityRole="button"
+                accessibilityLabel={t("gameOver.saveLabel")}
+                accessibilityState={{ disabled: submitting || !name.trim(), busy: submitting }}
               >
                 {submitting ? (
                   <ActivityIndicator color="#fff" />
                 ) : (
-                  <Text style={styles.btnText}>Save Score</Text>
+                  <Text style={styles.btnText}>{t("gameOver.saveButton")}</Text>
                 )}
               </Pressable>
             </>
           ) : (
             <Text style={[styles.saved, { color: colors.bonus }]}>
-              Saved! #{submitted.score.toLocaleString()}
+              {t("gameOver.savedConfirmation", { rank: submitted.score.toLocaleString() })}
             </Text>
           )}
 
           <Pressable
             style={[styles.restartBtn, { borderColor: colors.border }]}
             onPress={onRestart}
+            accessibilityRole="button"
+            accessibilityLabel={t("gameOver.playAgain")}
           >
-            <Text style={[styles.restartText, { color: colors.textMuted }]}>Play Again</Text>
+            <Text style={[styles.restartText, { color: colors.textMuted }]}>
+              {t("gameOver.playAgainButton")}
+            </Text>
           </Pressable>
         </View>
       </View>

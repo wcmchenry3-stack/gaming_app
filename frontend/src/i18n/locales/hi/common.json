@@ -1,0 +1,12 @@
+{
+  "app.title": "Gaming App",
+  "app.subtitle": "खेल चुनें",
+  "nav.back": "← वापस",
+  "nav.backLabel": "मुख्य स्क्रीन पर लौटें",
+  "theme.light": "लाइट मोड",
+  "theme.dark": "डार्क मोड",
+  "theme.switchTo": "{{mode}} मोड पर स्विच करें",
+  "theme.lightShort": "लाइट",
+  "theme.darkShort": "डार्क",
+  "lang.switcherLabel": "भाषा चुनें"
+}

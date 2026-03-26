@@ -1,5 +1,5 @@
 import React, { useRef, useEffect, useCallback, forwardRef, useImperativeHandle } from "react";
-import { View, StyleSheet } from "react-native";
+import { View, StyleSheet, Image as RNImage } from "react-native";
 import Matter from "matter-js";
 import {
   createEngine,
@@ -11,10 +11,12 @@ import {
 } from "../../game/fruit-merge/engine";
 import { FruitSet, FruitDefinition } from "../../theme/fruitSets";
 import { useTheme } from "../../theme/ThemeContext";
+import { useTranslation } from "react-i18next";
 
 export interface GameCanvasHandle {
   drop: (def: FruitDefinition, x: number) => void;
   reset: () => void;
+  announceEvent: (message: string) => void;
 }
 
 interface Props {
@@ -29,6 +31,46 @@ interface Props {
 
 // Fruits spawn just inside the top of the container
 const DROP_Y = 30;
+const ICON_INSET_RATIO = 0.12;
+const canvasImageCache = new Map<string, HTMLImageElement>();
+
+function getCanvasImage(def: FruitDefinition): HTMLImageElement | null {
+  if (!def.icon || typeof window === "undefined") return null;
+
+  const asset = RNImage.resolveAssetSource(def.icon);
+  const uri = asset?.uri;
+  if (!uri) return null;
+
+  const cached = canvasImageCache.get(uri);
+  if (cached) return cached;
+
+  const image = new window.Image();
+  image.src = uri;
+  canvasImageCache.set(uri, image);
+  return image;
+}
+
+function drawFruitVisual(
+  ctx: CanvasRenderingContext2D,
+  def: FruitDefinition,
+  x: number,
+  y: number,
+  radius: number
+) {
+  const image = getCanvasImage(def);
+  if (image?.complete) {
+    const diameter = radius * 2;
+    const inset = diameter * ICON_INSET_RATIO;
+    const size = diameter - inset * 2;
+    ctx.drawImage(image, x - size / 2, y - size / 2, size, size);
+    return;
+  }
+
+  ctx.font = `${Math.round(radius * 1.1)}px serif`;
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillText(def.emoji, x, y);
+}
 
 const GameCanvas = forwardRef<GameCanvasHandle, Props>(
   ({ fruitSet, nextDef, onMerge, onGameOver, onTap, width, height }, ref) => {
@@ -37,6 +79,7 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
     const rafRef = useRef<number>(0);
     const pointerXRef = useRef<number | null>(null);
     const { colors } = useTheme();
+    const { t } = useTranslation("fruit-merge");
 
     // Refs for props that change frequently — prevent engine re-creation
     const nextDefRef = useRef(nextDef);
@@ -133,10 +176,7 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
           ctx.arc(clamped, DROP_Y, nd.radius, 0, Math.PI * 2);
           ctx.fillStyle = nd.color;
           ctx.fill();
-          ctx.font = `${Math.round(nd.radius * 1.1)}px serif`;
-          ctx.textAlign = "center";
-          ctx.textBaseline = "middle";
-          ctx.fillText(nd.emoji, clamped, DROP_Y);
+          drawFruitVisual(ctx, nd, clamped, DROP_Y, nd.radius);
           ctx.restore();
         }
 
@@ -155,11 +195,7 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
           ctx.arc(x, y, r, 0, Math.PI * 2);
           ctx.fillStyle = def.color;
           ctx.fill();
-
-          ctx.font = `${Math.round(r * 1.1)}px serif`;
-          ctx.textAlign = "center";
-          ctx.textBaseline = "middle";
-          ctx.fillText(def.emoji, x, y);
+          drawFruitVisual(ctx, def, x, y, r);
         }
 
         rafRef.current = requestAnimationFrame(renderFrame);
@@ -225,6 +261,16 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
         reset() {
           initEngine();
         },
+        announceEvent(message: string) {
+          const el = document.getElementById("fruit-merge-announcer");
+          if (el) {
+            // Clear first so re-announcing the same string still triggers the live region
+            el.textContent = "";
+            requestAnimationFrame(() => {
+              el.textContent = message;
+            });
+          }
+        },
       }),
       [initEngine, width]
     );
@@ -236,7 +282,23 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
           ref={canvasRef}
           width={width}
           height={height}
+          aria-label={t("game.canvasLabel")}
+          role="application"
           style={{ display: "block", cursor: "crosshair" }}
+        />
+        {/* Visually hidden live region — narrates merge events and game-over for screen readers */}
+        {/* @ts-expect-error — div is a valid DOM element in Expo Web */}
+        <div
+          id="fruit-merge-announcer"
+          aria-live="polite"
+          aria-atomic="true"
+          style={{
+            position: "absolute",
+            left: -9999,
+            width: 1,
+            height: 1,
+            overflow: "hidden",
+          }}
         />
       </View>
     );

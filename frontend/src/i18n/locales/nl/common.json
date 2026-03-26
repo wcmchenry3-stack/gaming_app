@@ -1,0 +1,12 @@
+{
+  "app.title": "Gaming App",
+  "app.subtitle": "Kies een spel",
+  "nav.back": "← Terug",
+  "nav.backLabel": "Ga terug naar startscherm",
+  "theme.light": "Lichte modus",
+  "theme.dark": "Donkere modus",
+  "theme.switchTo": "Schakel naar {{mode}} modus",
+  "theme.lightShort": "Licht",
+  "theme.darkShort": "Donker",
+  "lang.switcherLabel": "Kies taal"
+}

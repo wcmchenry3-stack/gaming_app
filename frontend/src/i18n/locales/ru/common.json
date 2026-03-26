@@ -1,0 +1,12 @@
+{
+  "app.title": "Gaming App",
+  "app.subtitle": "Выберите игру",
+  "nav.back": "← Назад",
+  "nav.backLabel": "Вернуться на главный экран",
+  "theme.light": "Светлая тема",
+  "theme.dark": "Тёмная тема",
+  "theme.switchTo": "Переключить на {{mode}}",
+  "theme.lightShort": "Светл.",
+  "theme.darkShort": "Тёмн.",
+  "lang.switcherLabel": "Выбор языка"
+}

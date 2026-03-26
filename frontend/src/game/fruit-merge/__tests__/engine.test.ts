@@ -5,6 +5,7 @@ import {
   FruitBody,
   DANGER_LINE_RATIO,
   EngineSetup,
+  WALL_THICKNESS,
 } from "../engine";
 import { FRUIT_SETS } from "../../../theme/fruitSets";
 
@@ -23,12 +24,7 @@ let idCounter = 1;
  * - `type: 'body'` is required for Matter.World.add / Composite.allBodies to work.
  * - ageMs defaults to 3000 so the body is past the 2-second grace period.
  */
-function makeFakeBody(
-  tier: number,
-  x: number,
-  y: number,
-  ageMs = 3000
-): FruitBody {
+function makeFakeBody(tier: number, x: number, y: number, ageMs = 3000): FruitBody {
   return {
     id: idCounter++,
     type: "body",
@@ -42,11 +38,7 @@ function makeFakeBody(
   } as unknown as FruitBody;
 }
 
-function fireCollision(
-  engine: Matter.Engine,
-  a: FruitBody,
-  b: FruitBody
-): void {
+function fireCollision(engine: Matter.Engine, a: FruitBody, b: FruitBody): void {
   Matter.Events.trigger(engine as object, "collisionStart", {
     pairs: [{ bodyA: a, bodyB: b }],
   });
@@ -203,9 +195,7 @@ describe("merge detection", () => {
     fireCollision(engine, a, b);
     jest.runAllTimers();
 
-    const fruitBodies = Matter.Composite.allBodies(world).filter(
-      (b) => !b.isStatic
-    );
+    const fruitBodies = Matter.Composite.allBodies(world).filter((b) => !b.isStatic);
     expect(fruitBodies.length).toBe(1);
     expect((fruitBodies[0] as FruitBody).fruitTier).toBe(4);
   });
@@ -218,12 +208,8 @@ describe("merge detection", () => {
     fireCollision(engine, a, b);
     jest.runAllTimers();
 
-    expect(onMerge).toHaveBeenCalledWith(
-      expect.objectContaining({ tier: 10 })
-    );
-    const fruitBodies = Matter.Composite.allBodies(world).filter(
-      (b) => !b.isStatic
-    );
+    expect(onMerge).toHaveBeenCalledWith(expect.objectContaining({ tier: 10 }));
+    const fruitBodies = Matter.Composite.allBodies(world).filter((b) => !b.isStatic);
     expect(fruitBodies.length).toBe(0);
   });
 
@@ -259,12 +245,7 @@ describe("game-over detection", () => {
    * Spawn a real fruit body using spawnFruitAt, then teleport it and adjust
    * its age. We use real bodies so Matter.Composite.allBodies returns them.
    */
-  function spawnAt(
-    world: Matter.World,
-    tier: number,
-    y: number,
-    ageMs = 3000
-  ): FruitBody {
+  function spawnAt(world: Matter.World, tier: number, y: number, ageMs = 3000): FruitBody {
     const def = fruitSet.fruits[tier];
     const body = spawnFruitAt(world, def, fruitSet.id, 150, 500); // spawn safely off-screen
     // Teleport to target position
@@ -331,5 +312,38 @@ describe("game-over detection", () => {
     fireUpdate(engine);
 
     expect(onGameOver).not.toHaveBeenCalled();
+  });
+});
+
+describe("world boundary clamping", () => {
+  it("keeps fruits above the floor if they drift below the playfield", () => {
+    const { engine, world } = setup();
+    const def = fruitSet.fruits[1];
+    const body = spawnFruitAt(world, def, fruitSet.id, 150, 100);
+
+    Matter.Body.setPosition(body, { x: 150, y: H + 20 });
+    Matter.Body.setVelocity(body, { x: 0, y: 12 });
+    fireUpdate(engine);
+
+    expect(body.position.y).toBeLessThanOrEqual(H - def.radius);
+    expect(body.velocity.y).toBeLessThanOrEqual(0);
+  });
+
+  it("keeps fruits inside the left and right walls", () => {
+    const { engine, world } = setup();
+    const def = fruitSet.fruits[1];
+    const body = spawnFruitAt(world, def, fruitSet.id, 150, 100);
+
+    Matter.Body.setPosition(body, { x: WALL_THICKNESS - 8, y: 200 });
+    Matter.Body.setVelocity(body, { x: -5, y: 0 });
+    fireUpdate(engine);
+    expect(body.position.x).toBeGreaterThanOrEqual(WALL_THICKNESS + def.radius);
+    expect(body.velocity.x).toBeGreaterThanOrEqual(0);
+
+    Matter.Body.setPosition(body, { x: W - WALL_THICKNESS + 8, y: 200 });
+    Matter.Body.setVelocity(body, { x: 5, y: 0 });
+    fireUpdate(engine);
+    expect(body.position.x).toBeLessThanOrEqual(W - WALL_THICKNESS - def.radius);
+    expect(body.velocity.x).toBeLessThanOrEqual(0);
   });
 });

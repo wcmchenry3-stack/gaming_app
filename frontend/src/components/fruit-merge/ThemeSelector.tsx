@@ -1,21 +1,31 @@
 import React from "react";
 import { View, Text, Pressable, StyleSheet } from "react-native";
+import { useTranslation } from "react-i18next";
 import { FRUIT_SETS } from "../../theme/fruitSets";
 import { useFruitSet } from "../../theme/FruitSetContext";
 import { useTheme } from "../../theme/ThemeContext";
+import FruitGlyph from "./FruitGlyph";
 
 export default function ThemeSelector() {
+  const { t } = useTranslation("fruit-merge");
   const { activeFruitSet, setFruitSetById } = useFruitSet();
   const { colors } = useTheme();
 
   return (
-    <View style={styles.row}>
+    <View
+      style={styles.row}
+      accessibilityRole="radiogroup"
+      accessibilityLabel={t("theme.groupLabel")}
+    >
       {Object.values(FRUIT_SETS).map((set) => {
         const active = set.id === activeFruitSet.id;
         return (
           <Pressable
             key={set.id}
             onPress={() => setFruitSetById(set.id)}
+            accessibilityRole="radio"
+            accessibilityState={{ selected: active }}
+            accessibilityLabel={t("theme.optionLabel", { label: set.label })}
             style={[
               styles.pill,
               {
@@ -24,9 +34,12 @@ export default function ThemeSelector() {
               },
             ]}
           >
-            <Text style={[styles.pillText, { color: active ? "#fff" : colors.textMuted }]}>
-              {set.fruits[10].emoji} {set.label}
-            </Text>
+            <View style={styles.pillContent}>
+              <FruitGlyph fruit={set.fruits[10]} size={18} />
+              <Text style={[styles.pillText, { color: active ? "#fff" : colors.textMuted }]}>
+                {set.label}
+              </Text>
+            </View>
           </Pressable>
         );
       })}
@@ -47,9 +60,16 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
     borderRadius: 20,
     borderWidth: 1,
+    minHeight: 44,
+    justifyContent: "center",
   },
   pillText: {
     fontSize: 13,
     fontWeight: "600",
+  },
+  pillContent: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
   },
 });
