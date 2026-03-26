@@ -3,6 +3,7 @@ import { View, Text, StyleSheet } from "react-native";
 import { useTranslation } from "react-i18next";
 import { FruitDefinition } from "../../theme/fruitSets";
 import { useTheme } from "../../theme/ThemeContext";
+import FruitGlyph from "./FruitGlyph";
 
 interface Props {
   current: FruitDefinition;
@@ -22,9 +23,7 @@ export default function NextFruitPreview({ current, next }: Props) {
         <Text style={styles.label} importantForAccessibility="no">
           {t("preview.dropLabel")}
         </Text>
-        <Text style={styles.emoji} importantForAccessibility="no">
-          {current.emoji}
-        </Text>
+        <FruitGlyph fruit={current} size={styles.emoji.fontSize} />
         <Text style={[styles.name, { color: colors.text }]} importantForAccessibility="no">
           {current.name}
         </Text>
@@ -41,9 +40,7 @@ export default function NextFruitPreview({ current, next }: Props) {
         <Text style={styles.label} importantForAccessibility="no">
           {t("preview.nextLabel")}
         </Text>
-        <Text style={[styles.emoji, styles.nextEmoji]} importantForAccessibility="no">
-          {next.emoji}
-        </Text>
+        <FruitGlyph fruit={next} size={styles.nextEmoji.fontSize} />
         <Text style={[styles.name, { color: colors.textMuted }]} importantForAccessibility="no">
           {next.name}
         </Text>

@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 import { FRUIT_SETS } from "../../theme/fruitSets";
 import { useFruitSet } from "../../theme/FruitSetContext";
 import { useTheme } from "../../theme/ThemeContext";
+import FruitGlyph from "./FruitGlyph";
 
 export default function ThemeSelector() {
   const { t } = useTranslation("fruit-merge");
@@ -33,9 +34,12 @@ export default function ThemeSelector() {
               },
             ]}
           >
-            <Text style={[styles.pillText, { color: active ? "#fff" : colors.textMuted }]}>
-              {set.fruits[10].emoji} {set.label}
-            </Text>
+            <View style={styles.pillContent}>
+              <FruitGlyph fruit={set.fruits[10]} size={18} />
+              <Text style={[styles.pillText, { color: active ? "#fff" : colors.textMuted }]}>
+                {set.label}
+              </Text>
+            </View>
           </Pressable>
         );
       })}
@@ -62,5 +66,10 @@ const styles = StyleSheet.create({
   pillText: {
     fontSize: 13,
     fontWeight: "600",
+  },
+  pillContent: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
   },
 });
