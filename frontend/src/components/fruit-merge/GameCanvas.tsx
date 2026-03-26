@@ -11,6 +11,7 @@ import {
 } from "../../game/fruit-merge/engine";
 import { FruitSet, FruitDefinition } from "../../theme/fruitSets";
 import { useTheme } from "../../theme/ThemeContext";
+import { useTranslation } from "react-i18next";
 
 export interface GameCanvasHandle {
   drop: (def: FruitDefinition, x: number) => void;
@@ -38,6 +39,7 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
     const rafRef = useRef<number>(0);
     const pointerXRef = useRef<number | null>(null);
     const { colors } = useTheme();
+    const { t } = useTranslation("fruit-merge");
 
     // Refs for props that change frequently — prevent engine re-creation
     const nextDefRef = useRef(nextDef);
@@ -247,7 +249,7 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
           ref={canvasRef}
           width={width}
           height={height}
-          aria-label="Fruit Merge game — drop fruits onto the stack to merge matching ones. Tap or click to drop."
+          aria-label={t("game.canvasLabel")}
           role="application"
           style={{ display: "block", cursor: "crosshair" }}
         />
