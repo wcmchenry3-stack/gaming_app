@@ -32,16 +32,16 @@ function loadedImage(naturalWidth = 64): HTMLImageElement {
 }
 
 describe("drawFruitBody", () => {
-  it("clips to the circle and draws the image at full diameter when the image is ready", () => {
+  it("draws the image at full diameter without clipping when the image is ready", () => {
     const ctx = makeMockCtx();
     const image = loadedImage();
     drawFruitBody(ctx, def, 100, 200, 20, image);
 
-    expect(ctx.arc).toHaveBeenCalledWith(100, 200, 20, 0, Math.PI * 2);
-    expect(ctx.clip).toHaveBeenCalled();
-    // drawn at IMAGE_SCALE (1.25) × diameter: drawR = 25, so x-drawR=75, y-drawR=175, size=50
-    expect(ctx.drawImage).toHaveBeenCalledWith(image, 75, 175, 50, 50);
-    expect(ctx.fill).not.toHaveBeenCalled(); // no solid-color fill under the image
+    // drawImage(image, x-r, y-r, 2r, 2r) — IMAGE_SCALE=1.0, r=20
+    expect(ctx.drawImage).toHaveBeenCalledWith(image, 80, 180, 40, 40);
+    expect(ctx.clip).not.toHaveBeenCalled(); // no circle clipping
+    expect(ctx.fill).not.toHaveBeenCalled(); // no solid-color fill
+    expect(ctx.save).not.toHaveBeenCalled(); // no state save needed
   });
 
   it("draws a colored circle and emoji when image is null", () => {
@@ -75,7 +75,14 @@ describe("drawFruitBody", () => {
     expect(ctx.fillText).toHaveBeenCalledWith(def.emoji, 100, 200);
   });
 
-  it("always wraps drawing in save/restore", () => {
+  it("does not call save/restore when drawing an image (no state changes)", () => {
+    const ctx = makeMockCtx();
+    drawFruitBody(ctx, def, 100, 200, 20, loadedImage());
+    expect(ctx.save).not.toHaveBeenCalled();
+    expect(ctx.restore).not.toHaveBeenCalled();
+  });
+
+  it("wraps the fallback circle in save/restore to isolate state changes", () => {
     const ctx = makeMockCtx();
     drawFruitBody(ctx, def, 100, 200, 20, null);
     expect(ctx.save).toHaveBeenCalled();
