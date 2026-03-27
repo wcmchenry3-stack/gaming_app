@@ -10,7 +10,9 @@ import {
   DANGER_LINE_RATIO,
 } from "../../game/fruit-merge/engine";
 import { FruitSet, FruitDefinition } from "../../theme/fruitSets";
+import { getAssetByID } from "@react-native/assets-registry/registry";
 import { useTheme } from "../../theme/ThemeContext";
+import { useTranslation } from "react-i18next";
 
 export interface GameCanvasHandle {
   drop: (def: FruitDefinition, x: number) => void;
@@ -30,6 +32,75 @@ interface Props {
 
 // Fruits spawn just inside the top of the container
 const DROP_Y = 30;
+const ICON_INSET_RATIO = 0.12;
+const canvasImageCache = new Map<string, HTMLImageElement>();
+
+// Resolve a canvas-drawable URI from an ImageSourcePropType icon.
+// Metro (Expo Web) represents PNG imports as numbers (asset IDs).
+// react-native-web's Image.resolveAssetSource returns null for numbers,
+// so we query the @react-native/assets-registry directly to reconstruct
+// the URL that Metro is already serving.
+function resolveIconUri(icon: NonNullable<FruitDefinition["icon"]>): string | null {
+  if (typeof icon === "string") return icon;
+  if (typeof icon === "object" && "uri" in icon) return (icon as { uri: string }).uri;
+  if (typeof icon === "number") {
+    try {
+      const asset = getAssetByID(icon);
+      if (!asset) return null;
+      return `${window.location.origin}${asset.httpServerLocation}/${asset.name}.${asset.type}`;
+    } catch {
+      return null;
+    }
+  }
+  return null;
+}
+
+function getCanvasImage(def: FruitDefinition): HTMLImageElement | null {
+  if (!def.icon || typeof window === "undefined") return null;
+  try {
+    const uri = resolveIconUri(def.icon);
+    if (!uri) return null;
+
+    const cached = canvasImageCache.get(uri);
+    if (cached) return cached;
+
+    const image = new window.Image();
+    image.onerror = () => canvasImageCache.delete(uri); // evict on failure so next frame retries
+    image.src = uri;
+    canvasImageCache.set(uri, image);
+    return image;
+  } catch {
+    // resolveAssetSource can throw in Expo Web if the asset registry isn't populated
+    return null; // fall through to emoji in drawFruitVisual
+  }
+}
+
+function drawFruitVisual(
+  ctx: CanvasRenderingContext2D,
+  def: FruitDefinition,
+  x: number,
+  y: number,
+  radius: number
+) {
+  const image = getCanvasImage(def);
+  // naturalWidth > 0 confirms the image loaded successfully (complete=true on broken images too)
+  if (image?.complete && image.naturalWidth > 0) {
+    const diameter = radius * 2;
+    const inset = diameter * ICON_INSET_RATIO;
+    const size = diameter - inset * 2;
+    try {
+      ctx.drawImage(image, x - size / 2, y - size / 2, size, size);
+      return;
+    } catch {
+      // Image is in broken state — fall through to emoji
+    }
+  }
+
+  ctx.font = `${Math.round(radius * 1.1)}px serif`;
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillText(def.emoji, x, y);
+}
 
 const GameCanvas = forwardRef<GameCanvasHandle, Props>(
   ({ fruitSet, nextDef, onMerge, onGameOver, onTap, width, height }, ref) => {
@@ -38,6 +109,7 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
     const rafRef = useRef<number>(0);
     const pointerXRef = useRef<number | null>(null);
     const { colors } = useTheme();
+    const { t } = useTranslation("fruit-merge");
 
     // Refs for props that change frequently — prevent engine re-creation
     const nextDefRef = useRef(nextDef);
@@ -134,10 +206,7 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
           ctx.arc(clamped, DROP_Y, nd.radius, 0, Math.PI * 2);
           ctx.fillStyle = nd.color;
           ctx.fill();
-          ctx.font = `${Math.round(nd.radius * 1.1)}px serif`;
-          ctx.textAlign = "center";
-          ctx.textBaseline = "middle";
-          ctx.fillText(nd.emoji, clamped, DROP_Y);
+          drawFruitVisual(ctx, nd, clamped, DROP_Y, nd.radius);
           ctx.restore();
         }
 
@@ -156,11 +225,7 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
           ctx.arc(x, y, r, 0, Math.PI * 2);
           ctx.fillStyle = def.color;
           ctx.fill();
-
-          ctx.font = `${Math.round(r * 1.1)}px serif`;
-          ctx.textAlign = "center";
-          ctx.textBaseline = "middle";
-          ctx.fillText(def.emoji, x, y);
+          drawFruitVisual(ctx, def, x, y, r);
         }
 
         rafRef.current = requestAnimationFrame(renderFrame);
@@ -247,7 +312,7 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
           ref={canvasRef}
           width={width}
           height={height}
-          aria-label="Fruit Merge game — drop fruits onto the stack to merge matching ones. Tap or click to drop."
+          aria-label={t("game.canvasLabel")}
           role="application"
           style={{ display: "block", cursor: "crosshair" }}
         />

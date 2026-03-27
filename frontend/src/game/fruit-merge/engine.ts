@@ -6,6 +6,21 @@ export const WALL_THICKNESS = 16;
 export const DANGER_LINE_RATIO = 0.18; // 18% from top — game over if settled fruit crosses this
 const GAME_OVER_GRACE_MS = 2000; // ignore newly-dropped fruit for 2 seconds
 
+// --- Physics tuning constants ---
+const FRUIT_RESTITUTION = 0.15; // was 0.3 — halves retained bounce energy; micro-bounces die out fast
+const FRUIT_FRICTION = 0.5; // unchanged
+const FRUIT_FRICTION_AIR = 0.015; // was 0.01 — 50% more baseline air drag; falls still feel fast
+const FRUIT_DENSITY = 0.002; // unchanged
+
+// Rest-state progressive damping — applied in afterUpdate only when body speed is low.
+// Bodies above REST_SPEED_THRESHOLD (freefall, post-merge) receive zero extra damping.
+const REST_SPEED_THRESHOLD = 0.5; // px/tick — below this, resting damping kicks in
+const REST_LINEAR_DAMP = 0.85; // multiplier on linear velocity per tick when at rest
+const REST_ANGULAR_DAMP = 0.75; // more aggressive than linear — spin is the most distracting artifact
+
+// Merge chain-reaction: wake sleeping neighbors within this radius so pile rebalances
+const MERGE_WAKE_RADIUS_FACTOR = 3.5; // × merged-fruit radius
+
 export interface FruitBody extends Matter.Body {
   fruitTier: FruitTier;
   fruitSetId: string;
@@ -33,7 +48,7 @@ export function createEngine(
   onMerge: (event: MergeEvent) => void,
   onGameOver: () => void
 ): EngineSetup {
-  const engine = Matter.Engine.create({ gravity: { y: 2 } });
+  const engine = Matter.Engine.create({ gravity: { y: 2 }, enableSleeping: true });
   const world = engine.world;
 
   // Walls sit INSIDE the canvas so physics and rendering match.
@@ -88,6 +103,16 @@ export function createEngine(
         if (tier < 10) {
           const nextDef = fruitSet.fruits[(tier + 1) as FruitTier];
           spawnFruitAt(world, nextDef, fruitSet.id, midX, midY);
+
+          // Wake sleeping bodies near the merge so chain reactions fire correctly
+          const wakeRadius = nextDef.radius * MERGE_WAKE_RADIUS_FACTOR;
+          for (const b of Matter.Composite.allBodies(world)) {
+            const fb2 = b as FruitBody;
+            if (fb2.fruitTier === undefined || fb2.isStatic) continue;
+            if (Math.hypot(b.position.x - midX, b.position.y - midY) <= wakeRadius) {
+              Matter.Sleeping.set(b, false);
+            }
+          }
         }
       }, 0);
     }
@@ -130,6 +155,22 @@ export function createEngine(
             y: correctedY !== null && body.velocity.y > 0 ? 0 : body.velocity.y,
           });
         }
+
+        // Progressive rest-state damping — calms horizontal wobble and spin.
+        // Vertical velocity is intentionally excluded: damping vy fights gravity and
+        // prevents newly-dropped fruits from falling at normal speed.
+        const absVx = Math.abs(body.velocity.x);
+        const absVy = Math.abs(body.velocity.y);
+        if (absVx < REST_SPEED_THRESHOLD) {
+          Matter.Body.setVelocity(body, {
+            x: body.velocity.x * REST_LINEAR_DAMP,
+            y: body.velocity.y, // leave vertical alone
+          });
+        }
+        // Only kill spin when the fruit is truly settled (both axes near zero)
+        if (absVx < REST_SPEED_THRESHOLD && absVy < REST_SPEED_THRESHOLD) {
+          Matter.Body.setAngularVelocity(body, body.angularVelocity * REST_ANGULAR_DAMP);
+        }
       }
 
       if (
@@ -170,10 +211,10 @@ export function spawnFruitAt(
   y: number
 ): FruitBody {
   const body = Matter.Bodies.circle(x, y, def.radius, {
-    restitution: 0.3,
-    friction: 0.5,
-    frictionAir: 0.01,
-    density: 0.002,
+    restitution: FRUIT_RESTITUTION,
+    friction: FRUIT_FRICTION,
+    frictionAir: FRUIT_FRICTION_AIR,
+    density: FRUIT_DENSITY,
     label: `fruit-${def.tier}`,
   }) as FruitBody;
 

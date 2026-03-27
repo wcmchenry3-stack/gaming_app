@@ -35,6 +35,16 @@ describe("fruitSets structure", () => {
         }
       });
 
+      it("assigns image assets only to the fruit icon set", () => {
+        for (const fruit of set.fruits) {
+          if (setId === "fruits" || setId === "planets") {
+            expect(fruit.icon).toBeTruthy();
+          } else {
+            expect(fruit.icon).toBeUndefined();
+          }
+        }
+      });
+
       it("radii increase monotonically with tier", () => {
         const sorted = [...set.fruits].sort((a, b) => a.tier - b.tier);
         for (let i = 1; i < sorted.length; i++) {
@@ -57,5 +67,21 @@ describe("fruitSets structure", () => {
       const radii = sets.map((s) => s.fruits[tier].radius);
       expect(new Set(radii).size).toBe(1);
     }
+  });
+
+  it("uses the requested smallest-to-largest order for planets", () => {
+    expect(FRUIT_SETS.planets.fruits.map((fruit) => fruit.name)).toEqual([
+      "Moon",
+      "Pluto",
+      "Mercury",
+      "Mars",
+      "Venus",
+      "Earth",
+      "Neptune",
+      "Uranus",
+      "Saturn",
+      "Jupiter",
+      "Sun",
+    ]);
   });
 });
