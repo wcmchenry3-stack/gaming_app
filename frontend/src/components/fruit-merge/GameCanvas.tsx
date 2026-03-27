@@ -1,5 +1,26 @@
-import React, { useRef, useEffect, useCallback, forwardRef, useImperativeHandle } from "react";
-import { View, StyleSheet } from "react-native";
+import React, {
+  forwardRef,
+  useCallback,
+  useEffect,
+  useImperativeHandle,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
+import { AccessibilityInfo } from "react-native";
+import {
+  Canvas,
+  Circle,
+  DashPathEffect,
+  Fill,
+  Group,
+  Image as SkiaImage,
+  Path,
+  Rect,
+  Skia,
+} from "@shopify/react-native-skia";
+import type { SkImage } from "@shopify/react-native-skia";
+import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import Matter from "matter-js";
 import {
   createEngine,
@@ -9,11 +30,12 @@ import {
   WALL_THICKNESS,
   DANGER_LINE_RATIO,
 } from "../../game/fruit-merge/engine";
-import { FruitSet, FruitDefinition } from "../../theme/fruitSets";
-import { drawFruitBody } from "./canvasRenderer";
-import { getAssetByID } from "@react-native/assets-registry/registry";
+import { FruitDefinition, FruitSet } from "../../theme/fruitSets";
 import { useTheme } from "../../theme/ThemeContext";
 import { useTranslation } from "react-i18next";
+
+// Fruits spawn just inside the top of the container
+const DROP_Y = 30;
 
 export interface GameCanvasHandle {
   drop: (def: FruitDefinition, x: number) => void;
@@ -23,280 +45,233 @@ export interface GameCanvasHandle {
 
 interface Props {
   fruitSet: FruitSet;
-  nextDef: FruitDefinition; // current fruit about to be dropped (for ghost indicator)
+  nextDef: FruitDefinition;
   onMerge: (event: MergeEvent) => void;
   onGameOver: () => void;
   onTap: (x: number) => void;
   width: number;
   height: number;
+  /** Images indexed by tier for the currently active fruit set. */
+  images: (SkImage | null)[];
 }
 
-// Fruits spawn just inside the top of the container
-const DROP_Y = 30;
-const canvasImageCache = new Map<string, HTMLImageElement>();
+interface BodySnapshot {
+  id: number;
+  x: number;
+  y: number;
+  tier: number;
+}
 
-// Resolve a canvas-drawable URI from an ImageSourcePropType icon.
-// Metro (Expo Web) represents PNG imports as numbers (asset IDs).
-// react-native-web's Image.resolveAssetSource returns null for numbers,
-// so we query the @react-native/assets-registry directly to reconstruct
-// the URL that Metro is already serving.
-function resolveIconUri(icon: NonNullable<FruitDefinition["icon"]>): string | null {
-  if (typeof icon === "string") return icon;
-  if (typeof icon === "object" && "uri" in icon) return (icon as { uri: string }).uri;
-  if (typeof icon === "number") {
-    try {
-      const asset = getAssetByID(icon);
-      if (!asset) return null;
-      return `${window.location.origin}${asset.httpServerLocation}/${asset.name}.${asset.type}`;
-    } catch {
-      return null;
-    }
+// ---------------------------------------------------------------------------
+// FruitBodySkia — renders a single fruit as Skia JSX
+// ---------------------------------------------------------------------------
+interface FruitBodyProps {
+  x: number;
+  y: number;
+  radius: number;
+  color: string;
+  image: SkImage | null;
+  binBackground: string;
+}
+
+function FruitBodySkia({ x, y, radius, color, image, binBackground }: FruitBodyProps) {
+  if (image) {
+    return (
+      <Group>
+        {/* Background circle so PNG transparent areas show the bin colour */}
+        <Circle cx={x} cy={y} r={radius} color={binBackground} />
+        <SkiaImage
+          image={image}
+          x={x - radius}
+          y={y - radius}
+          width={radius * 2}
+          height={radius * 2}
+          fit="contain"
+        />
+      </Group>
+    );
   }
-  return null;
+  // Fallback: coloured circle (gems, or while image is still loading)
+  return <Circle cx={x} cy={y} r={radius} color={color} />;
 }
 
-function getCanvasImage(def: FruitDefinition): HTMLImageElement | null {
-  if (!def.icon || typeof window === "undefined") return null;
-  try {
-    const uri = resolveIconUri(def.icon);
-    if (!uri) return null;
-
-    const cached = canvasImageCache.get(uri);
-    if (cached) return cached;
-
-    const image = new window.Image();
-    image.onerror = () => canvasImageCache.delete(uri); // evict on failure so next frame retries
-    image.src = uri;
-    canvasImageCache.set(uri, image);
-    return image;
-  } catch {
-    // resolveAssetSource can throw in Expo Web if the asset registry isn't populated
-    return null; // fall through to emoji in drawFruitVisual
-  }
-}
-
-
+// ---------------------------------------------------------------------------
+// GameCanvas
+// ---------------------------------------------------------------------------
 const GameCanvas = forwardRef<GameCanvasHandle, Props>(
-  ({ fruitSet, nextDef, onMerge, onGameOver, onTap, width, height }, ref) => {
-    const canvasRef = useRef<HTMLCanvasElement>(null);
-    const engineRef = useRef<ReturnType<typeof createEngine> | null>(null);
-    const rafRef = useRef<number>(0);
-    const pointerXRef = useRef<number | null>(null);
+  ({ fruitSet, nextDef, onMerge, onGameOver, onTap, width, height, images }, ref) => {
     const { colors } = useTheme();
     const { t } = useTranslation("fruit-merge");
 
-    // Refs for props that change frequently — prevent engine re-creation
+    const [bodies, setBodies] = useState<BodySnapshot[]>([]);
+    const [pointerX, setPointerX] = useState<number | null>(null);
+
+    const engineRef = useRef<ReturnType<typeof createEngine> | null>(null);
+
+    // Stable refs for callbacks — engine re-creation is avoided on prop changes
     const nextDefRef = useRef(nextDef);
     const onMergeRef = useRef(onMerge);
     const onGameOverRef = useRef(onGameOver);
-    const onTapRef = useRef(onTap);
     const fruitSetRef = useRef(fruitSet);
 
-    useEffect(() => {
-      nextDefRef.current = nextDef;
-    }, [nextDef]);
-    useEffect(() => {
-      onMergeRef.current = onMerge;
-    }, [onMerge]);
-    useEffect(() => {
-      onGameOverRef.current = onGameOver;
-    }, [onGameOver]);
-    useEffect(() => {
-      onTapRef.current = onTap;
-    }, [onTap]);
-    useEffect(() => {
-      fruitSetRef.current = fruitSet;
-    }, [fruitSet]);
+    useEffect(() => { nextDefRef.current = nextDef; }, [nextDef]);
+    useEffect(() => { onMergeRef.current = onMerge; }, [onMerge]);
+    useEffect(() => { onGameOverRef.current = onGameOver; }, [onGameOver]);
+    useEffect(() => { fruitSetRef.current = fruitSet; }, [fruitSet]);
 
-    // initEngine only re-runs when canvas dimensions or fruit skin changes.
-    // Callbacks (onMerge, onGameOver, onTap, nextDef) are accessed via refs.
     const initEngine = useCallback(() => {
-      if (!canvasRef.current) return;
-
-      if (engineRef.current) {
-        engineRef.current.cleanup();
-        cancelAnimationFrame(rafRef.current);
-      }
-
-      const canvas = canvasRef.current;
-      canvas.width = width;
-      canvas.height = height;
+      engineRef.current?.cleanup();
 
       engineRef.current = createEngine(
         width,
         height,
-        fruitSetRef.current,
+        fruitSet,
         (e) => onMergeRef.current(e),
         () => onGameOverRef.current()
       );
 
-      const ctx = canvas.getContext("2d")!;
       const { engine } = engineRef.current;
-      const dangerY = height * DANGER_LINE_RATIO;
 
-      function renderFrame() {
-        ctx.clearRect(0, 0, width, height);
+      // Sync physics state into React state after each step so Skia re-draws
+      Matter.Events.on(engine, "afterUpdate", () => {
+        const snapshot: BodySnapshot[] = Matter.Composite.allBodies(engine.world)
+          .filter(
+            (b) =>
+              !(b as FruitBody).isStatic &&
+              (b as FruitBody).fruitTier !== undefined
+          )
+          .map((b) => ({
+            id: b.id,
+            x: b.position.x,
+            y: b.position.y,
+            tier: (b as FruitBody).fruitTier,
+          }));
+        setBodies(snapshot);
+      });
 
-        // --- Walls ---
-        ctx.fillStyle = colors.border;
-        ctx.fillRect(0, 0, WALL_THICKNESS, height); // left
-        ctx.fillRect(width - WALL_THICKNESS, 0, WALL_THICKNESS, height); // right
-        ctx.fillRect(0, height - WALL_THICKNESS, width, WALL_THICKNESS); // floor
-
-        // --- Danger line ---
-        ctx.save();
-        ctx.strokeStyle = "rgba(239,68,68,0.4)";
-        ctx.lineWidth = 1;
-        ctx.setLineDash([6, 4]);
-        ctx.beginPath();
-        ctx.moveTo(WALL_THICKNESS, dangerY);
-        ctx.lineTo(width - WALL_THICKNESS, dangerY);
-        ctx.stroke();
-        ctx.restore();
-
-        // --- Drop indicator (ghost + guide line) ---
-        const px = pointerXRef.current;
-        const nd = nextDefRef.current;
-        if (px !== null) {
-          const clamped = Math.max(
-            WALL_THICKNESS + nd.radius,
-            Math.min(width - WALL_THICKNESS - nd.radius, px)
-          );
-          // Vertical guide
-          ctx.save();
-          ctx.strokeStyle = "rgba(255,255,255,0.12)";
-          ctx.lineWidth = 1;
-          ctx.setLineDash([4, 6]);
-          ctx.beginPath();
-          ctx.moveTo(clamped, dangerY);
-          ctx.lineTo(clamped, height - WALL_THICKNESS);
-          ctx.stroke();
-          ctx.restore();
-
-          // Ghost fruit
-          ctx.save();
-          ctx.globalAlpha = 0.4;
-          drawFruitBody(ctx, nd, clamped, DROP_Y, nd.radius, getCanvasImage(nd), colors.fruitBackground);
-          ctx.restore();
-        }
-
-        // --- Fruit bodies ---
-        const bodies = Matter.Composite.allBodies(engine.world);
-        for (const body of bodies) {
-          if (body.isStatic) continue;
-          const fb = body as FruitBody;
-          const def = fruitSetRef.current.fruits[fb.fruitTier];
-          if (!def) continue;
-
-          const { x, y } = body.position;
-          const r = def.radius;
-
-          drawFruitBody(ctx, def, x, y, r, getCanvasImage(def), colors.fruitBackground);
-        }
-
-        rafRef.current = requestAnimationFrame(renderFrame);
-      }
-
-      rafRef.current = requestAnimationFrame(renderFrame);
-    }, [width, height, colors.border, colors.fruitBackground]); // fruitSet skin switch is handled via reset() in FruitMergeScreen
-
-    // Canvas native event listeners — avoids React Native Pressable layout issues on web
-    useEffect(() => {
-      const canvas = canvasRef.current;
-      if (!canvas) return;
-
-      const onClick = (e: MouseEvent) => {
-        const rect = canvas.getBoundingClientRect();
-        onTapRef.current(e.clientX - rect.left);
-      };
-      const onPointerMove = (e: PointerEvent) => {
-        const rect = canvas.getBoundingClientRect();
-        pointerXRef.current = e.clientX - rect.left;
-      };
-      const onPointerLeave = () => {
-        pointerXRef.current = null;
-      };
-      const onTouchEnd = (e: TouchEvent) => {
-        e.preventDefault();
-        const rect = canvas.getBoundingClientRect();
-        const t = e.changedTouches[0];
-        if (t) onTapRef.current(t.clientX - rect.left);
-      };
-
-      canvas.addEventListener("click", onClick);
-      canvas.addEventListener("pointermove", onPointerMove);
-      canvas.addEventListener("pointerleave", onPointerLeave);
-      canvas.addEventListener("touchend", onTouchEnd, { passive: false });
-      return () => {
-        canvas.removeEventListener("click", onClick);
-        canvas.removeEventListener("pointermove", onPointerMove);
-        canvas.removeEventListener("pointerleave", onPointerLeave);
-        canvas.removeEventListener("touchend", onTouchEnd);
-      };
-    }, []); // listeners never need to be re-registered — they read from refs
+      setBodies([]);
+    }, [width, height, fruitSet]);
 
     useEffect(() => {
       initEngine();
-      return () => {
-        engineRef.current?.cleanup();
-        cancelAnimationFrame(rafRef.current);
-      };
+      return () => { engineRef.current?.cleanup(); };
     }, [initEngine]);
 
     useImperativeHandle(
       ref,
       () => ({
-        drop(def: FruitDefinition, x: number) {
+        drop(def, x) {
           if (!engineRef.current) return;
-          const clamped = Math.max(
-            WALL_THICKNESS + def.radius,
-            Math.min(width - WALL_THICKNESS - def.radius, x)
-          );
+          const clamped = clamp(x, WALL_THICKNESS + def.radius, width - WALL_THICKNESS - def.radius);
           dropFruit(engineRef.current.world, def, fruitSetRef.current.id, clamped, DROP_Y);
         },
         reset() {
           initEngine();
         },
-        announceEvent(message: string) {
-          const el = document.getElementById("fruit-merge-announcer");
-          if (el) {
-            // Clear first so re-announcing the same string still triggers the live region
-            el.textContent = "";
-            requestAnimationFrame(() => {
-              el.textContent = message;
-            });
-          }
+        announceEvent(message) {
+          AccessibilityInfo.announceForAccessibility(message);
         },
       }),
       [initEngine, width]
     );
 
+    // ----- Derived geometry -----
+    const dangerY = height * DANGER_LINE_RATIO;
+
+    const dangerPath = useMemo(() => {
+      const p = Skia.Path.Make();
+      p.moveTo(WALL_THICKNESS, dangerY);
+      p.lineTo(width - WALL_THICKNESS, dangerY);
+      return p;
+    }, [width, dangerY]);
+
+    // Ghost indicator — clamped drop position
+    const ghostCx =
+      pointerX !== null
+        ? clamp(pointerX, WALL_THICKNESS + nextDef.radius, width - WALL_THICKNESS - nextDef.radius)
+        : null;
+
+    const guidePath = useMemo(() => {
+      if (ghostCx === null) return null;
+      const p = Skia.Path.Make();
+      p.moveTo(ghostCx, dangerY);
+      p.lineTo(ghostCx, height - WALL_THICKNESS);
+      return p;
+    }, [ghostCx, dangerY, height]);
+
+    // ----- Gestures (run on JS thread — no Reanimated worklet needed) -----
+    const tapGesture = Gesture.Tap()
+      .runOnJS(true)
+      .onEnd((e, success) => {
+        if (success) onTap(e.x);
+      });
+
+    const panGesture = Gesture.Pan()
+      .runOnJS(true)
+      .onBegin((e) => setPointerX(e.x))
+      .onChange((e) => setPointerX(e.x))
+      .onFinalize(() => setPointerX(null));
+
+    const composed = Gesture.Simultaneous(tapGesture, panGesture);
+
+    // ----- Render -----
+    const ghostImage = images[nextDef.tier] ?? null;
+
     return (
-      <View style={[styles.wrapper, { width, height, backgroundColor: colors.fruitBackground }]}>
-        {/* @ts-expect-error — canvas is a valid DOM element in Expo Web */}
-        <canvas
-          ref={canvasRef}
-          width={width}
-          height={height}
-          aria-label={t("game.canvasLabel")}
-          role="application"
-          style={{ display: "block", cursor: "crosshair" }}
-        />
-        {/* Visually hidden live region — narrates merge events and game-over for screen readers */}
-        {/* @ts-expect-error — div is a valid DOM element in Expo Web */}
-        <div
-          id="fruit-merge-announcer"
-          aria-live="polite"
-          aria-atomic="true"
-          style={{
-            position: "absolute",
-            left: -9999,
-            width: 1,
-            height: 1,
-            overflow: "hidden",
-          }}
-        />
-      </View>
+      <GestureDetector gesture={composed}>
+        <Canvas
+          style={{ width, height, borderRadius: 12, overflow: "hidden" }}
+          accessibilityLabel={t("game.canvasLabel")}
+          accessibilityRole="none"
+        >
+          {/* Background */}
+          <Fill color={colors.fruitBackground} />
+
+          {/* Walls */}
+          <Rect x={0} y={0} width={WALL_THICKNESS} height={height} color={colors.border} />
+          <Rect x={width - WALL_THICKNESS} y={0} width={WALL_THICKNESS} height={height} color={colors.border} />
+          <Rect x={0} y={height - WALL_THICKNESS} width={width} height={WALL_THICKNESS} color={colors.border} />
+
+          {/* Danger line */}
+          <Path path={dangerPath} color="rgba(239,68,68,0.4)" style="stroke" strokeWidth={1}>
+            <DashPathEffect intervals={[6, 4]} phase={0} />
+          </Path>
+
+          {/* Ghost drop indicator */}
+          {ghostCx !== null && guidePath !== null && (
+            <Group opacity={0.4}>
+              <Path path={guidePath} color="rgba(255,255,255,0.12)" style="stroke" strokeWidth={1}>
+                <DashPathEffect intervals={[4, 6]} phase={0} />
+              </Path>
+              <FruitBodySkia
+                x={ghostCx}
+                y={DROP_Y}
+                radius={nextDef.radius}
+                color={nextDef.color}
+                image={ghostImage}
+                binBackground={colors.fruitBackground}
+              />
+            </Group>
+          )}
+
+          {/* Live fruit bodies */}
+          {bodies.map((body) => {
+            const def = fruitSet.fruits[body.tier];
+            if (!def) return null;
+            return (
+              <FruitBodySkia
+                key={body.id}
+                x={body.x}
+                y={body.y}
+                radius={def.radius}
+                color={def.color}
+                image={images[body.tier] ?? null}
+                binBackground={colors.fruitBackground}
+              />
+            );
+          })}
+        </Canvas>
+      </GestureDetector>
     );
   }
 );
@@ -304,9 +279,6 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
 GameCanvas.displayName = "GameCanvas";
 export default GameCanvas;
 
-const styles = StyleSheet.create({
-  wrapper: {
-    borderRadius: 12,
-    overflow: "hidden",
-  },
-});
+function clamp(value: number, min: number, max: number) {
+  return Math.max(min, Math.min(max, value));
+}

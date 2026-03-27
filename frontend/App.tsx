@@ -1,6 +1,7 @@
 import "./src/i18n/i18n";
 import React, { Suspense } from "react";
 import { ActivityIndicator, View } from "react-native";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import HomeScreen from "./src/screens/HomeScreen";
@@ -35,14 +36,16 @@ function AppInner() {
 
 export default function App() {
   return (
-    <Suspense
-      fallback={
-        <View style={{ flex: 1 }}>
-          <ActivityIndicator style={{ flex: 1 }} />
-        </View>
-      }
-    >
-      <AppInner />
-    </Suspense>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <Suspense
+        fallback={
+          <View style={{ flex: 1 }}>
+            <ActivityIndicator style={{ flex: 1 }} />
+          </View>
+        }
+      >
+        <AppInner />
+      </Suspense>
+    </GestureHandlerRootView>
   );
 }
