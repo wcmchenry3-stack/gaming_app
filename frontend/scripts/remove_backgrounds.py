@@ -11,9 +11,12 @@ Usage
 
 Algorithm
 ---------
-1. Sample the background colour from 3×3 pixel regions at all four corners.
-2. For every pixel compute the Euclidean RGB distance from that background.
-3. Apply a two-threshold alpha fade:
+1. Sample the background colour from 3×3 pixel regions at each of the four
+   corners separately, producing up to four reference colours.
+2. For every pixel compute the Euclidean RGB distance to the NEAREST corner
+   reference.  This handles images where the background colour isn't uniform
+   (e.g. gray-white in three corners but pure-white in the fourth).
+3. Apply a two-threshold alpha fade using that minimum distance:
      dist < HARD_THRESHOLD  → alpha = 0   (definitely background)
      dist < SOFT_THRESHOLD  → alpha lerped 0→original (anti-aliased edge)
      dist >= SOFT_THRESHOLD → alpha unchanged (definitely foreground)
@@ -23,9 +26,7 @@ file is assumed to have already been processed and is skipped.
 """
 
 import math
-import struct
 import sys
-import zlib
 from pathlib import Path
 
 HARD_THRESHOLD = 25  # pixels closer than this to background → fully transparent
@@ -44,20 +45,29 @@ DEFAULT_DIRS = [
 # Core algorithm (operates on raw RGBA pixel lists for testability)
 # ---------------------------------------------------------------------------
 
-def _sample_background(pixels: list[tuple[int, int, int, int]], width: int, height: int) -> tuple[float, float, float]:
-    """Return the average RGB of the 3×3 pixel regions at all four image corners."""
+def _sample_background(pixels: list[tuple[int, int, int, int]], width: int, height: int) -> list[tuple[float, float, float]]:
+    """
+    Return one average RGB colour per corner (top-left, top-right, bottom-left,
+    bottom-right), each averaged over a 3×3 pixel sample region.
+
+    Using per-corner references rather than a single global average handles
+    images where the background colour varies across the image (e.g. one corner
+    is gray-white while another is pure white).
+    """
     sample_size = min(3, width, height)
-    corners = []
+    result = []
     for row_start in (0, height - sample_size):
         for col_start in (0, width - sample_size):
+            samples = []
             for r in range(row_start, row_start + sample_size):
                 for c in range(col_start, col_start + sample_size):
                     px = pixels[r * width + c]
-                    corners.append(px[:3])
-    avg_r = sum(p[0] for p in corners) / len(corners)
-    avg_g = sum(p[1] for p in corners) / len(corners)
-    avg_b = sum(p[2] for p in corners) / len(corners)
-    return avg_r, avg_g, avg_b
+                    samples.append(px[:3])
+            avg_r = sum(p[0] for p in samples) / len(samples)
+            avg_g = sum(p[1] for p in samples) / len(samples)
+            avg_b = sum(p[2] for p in samples) / len(samples)
+            result.append((avg_r, avg_g, avg_b))
+    return result
 
 
 def _is_already_transparent(pixels: list[tuple[int, int, int, int]], width: int, height: int) -> bool:
@@ -93,11 +103,14 @@ def remove_background(
     -------
     New flat list of (R, G, B, A) with modified alpha values.
     """
-    bg_r, bg_g, bg_b = _sample_background(pixels, width, height)
+    bg_refs = _sample_background(pixels, width, height)
     soft_range = soft_threshold - hard_threshold
     result = []
     for r, g, b, a in pixels:
-        dist = math.sqrt((r - bg_r) ** 2 + (g - bg_g) ** 2 + (b - bg_b) ** 2)
+        dist = min(
+            math.sqrt((r - bg_r) ** 2 + (g - bg_g) ** 2 + (b - bg_b) ** 2)
+            for bg_r, bg_g, bg_b in bg_refs
+        )
         if dist < hard_threshold:
             result.append((r, g, b, 0))
         elif dist < soft_threshold:

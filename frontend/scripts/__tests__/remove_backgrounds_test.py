@@ -53,29 +53,47 @@ def _set_pixel(
 # ---------------------------------------------------------------------------
 
 class TestSampleBackground:
-    def test_uniform_image_returns_fill_colour(self):
+    def test_uniform_image_returns_four_identical_colours(self):
         pixels = _flat_image(10, 10, (210, 210, 207, 255))
-        bg = _sample_background(pixels, 10, 10)
-        assert bg == pytest.approx((210.0, 210.0, 207.0), abs=0.1)
+        refs = _sample_background(pixels, 10, 10)
+        assert len(refs) == 4
+        for ref in refs:
+            assert ref == pytest.approx((210.0, 210.0, 207.0), abs=0.1)
 
-    def test_samples_all_four_corners(self):
-        # Corner pixels are red, center is green — background should average near red
+    def test_each_corner_sampled_independently(self):
+        # Paint TL red, leave all other corners green — refs should contain
+        # one near-red entry and three near-green entries.
         pixels = _flat_image(10, 10, (0, 200, 0, 255))
-        # Paint all corner 3×3 regions red
         for row in range(3):
             for col in range(3):
-                for r_start in (0, 7):
-                    for c_start in (0, 7):
-                        idx = (r_start + row) * 10 + (c_start + col)
-                        pixels[idx] = (200, 0, 0, 255)
-        bg = _sample_background(pixels, 10, 10)
-        assert bg[0] > 150  # red channel dominates
-        assert bg[1] < 50   # green channel minimal
+                pixels[row * 10 + col] = (200, 0, 0, 255)  # TL only
+        refs = _sample_background(pixels, 10, 10)
+        assert len(refs) == 4
+        red_refs = [r for r in refs if r[0] > 150]
+        green_refs = [r for r in refs if r[1] > 150]
+        assert len(red_refs) == 1    # only TL corner is red
+        assert len(green_refs) == 3  # other three corners are green
+
+    def test_non_uniform_background_each_corner_independent(self):
+        """Key regression: BL corner pure-white while others are gray."""
+        pixels = _flat_image(10, 10, (210, 210, 207, 255))
+        # Paint BL corner pure white
+        for row in range(7, 10):
+            for col in range(0, 3):
+                pixels[row * 10 + col] = (255, 255, 255, 255)
+        refs = _sample_background(pixels, 10, 10)
+        # One ref should be near-white, three near-gray
+        white_refs = [r for r in refs if r[0] > 240]
+        gray_refs = [r for r in refs if r[0] < 220]
+        assert len(white_refs) == 1
+        assert len(gray_refs) == 3
 
     def test_tiny_image_does_not_crash(self):
         pixels = _flat_image(2, 2, (100, 100, 100, 255))
-        bg = _sample_background(pixels, 2, 2)
-        assert bg == pytest.approx((100.0, 100.0, 100.0))
+        refs = _sample_background(pixels, 2, 2)
+        assert len(refs) == 4
+        for ref in refs:
+            assert ref == pytest.approx((100.0, 100.0, 100.0))
 
 
 # ---------------------------------------------------------------------------
@@ -199,3 +217,31 @@ class TestRemoveBackground:
 
         assert result_default[5 * 10 + 5][3] == 0     # within default hard zone
         assert result_tiny[5 * 10 + 5][3] > 0         # outside tiny hard zone
+
+    def test_non_uniform_background_all_corners_cleared(self):
+        """
+        Regression: BL corner pure-white while other corners are gray.
+        With the old single-average approach, BL pure-white pixels had distance
+        ~80 from the gray average and landed in the soft zone (alpha=144).
+        With per-corner references, they match the BL reference at distance ~0
+        → alpha=0.
+        """
+        gray = (210, 210, 207, 255)
+        white = (255, 255, 255, 255)
+        pixels = _flat_image(10, 10, gray)
+        # Paint BL corner pure white (rows 7-9, cols 0-2)
+        for row in range(7, 10):
+            for col in range(0, 3):
+                pixels[row * 10 + col] = white
+        # Place a bright-red fruit pixel in the center
+        pixels = _set_pixel(pixels, 10, 5, 5, (204, 52, 64, 255))
+
+        result = remove_background(pixels, 10, 10)
+
+        # All four true corners must be transparent
+        assert result[0][3] == 0             # TL
+        assert result[9][3] == 0             # TR
+        assert result[7 * 10][3] == 0        # BL (was pure white — regression check)
+        assert result[9 * 10 + 9][3] == 0    # BR
+        # Fruit pixel must remain opaque
+        assert result[5 * 10 + 5][3] == 255
