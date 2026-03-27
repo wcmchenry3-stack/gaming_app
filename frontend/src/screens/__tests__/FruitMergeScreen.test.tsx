@@ -17,6 +17,9 @@ jest.mock("../../components/fruit-merge/FruitGlyph", () => "FruitGlyph");
 jest.mock("../../components/fruit-merge/NextFruitPreview", () => "NextFruitPreview");
 jest.mock("../../components/fruit-merge/ThemeSelector", () => "ThemeSelector");
 
+// Skia requires a native module — mock the whole package in Jest
+jest.mock("@shopify/react-native-skia", () => ({}));
+
 // ---------------------------------------------------------------------------
 // Mock GameCanvas — forwardRef component that exposes drop/reset spies
 // ---------------------------------------------------------------------------
