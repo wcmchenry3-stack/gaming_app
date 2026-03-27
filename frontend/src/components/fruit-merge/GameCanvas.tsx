@@ -176,7 +176,7 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
           // Ghost fruit
           ctx.save();
           ctx.globalAlpha = 0.4;
-          drawFruitBody(ctx, nd, clamped, DROP_Y, nd.radius, getCanvasImage(nd));
+          drawFruitBody(ctx, nd, clamped, DROP_Y, nd.radius, getCanvasImage(nd), colors.fruitBackground);
           ctx.restore();
         }
 
@@ -191,7 +191,7 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
           const { x, y } = body.position;
           const r = def.radius;
 
-          drawFruitBody(ctx, def, x, y, r, getCanvasImage(def));
+          drawFruitBody(ctx, def, x, y, r, getCanvasImage(def), colors.fruitBackground);
         }
 
         rafRef.current = requestAnimationFrame(renderFrame);

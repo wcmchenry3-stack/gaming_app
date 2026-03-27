@@ -7,10 +7,10 @@ const IMAGE_SCALE = 1.0;
 /**
  * Draw a single fruit body onto the canvas.
  *
- * When a loaded image is supplied it is drawn at IMAGE_SCALE × diameter centered
- * on the physics body position. Transparent areas in the PNG show the canvas
- * background, so non-circular fruits (grapes, pineapple, cherry) render in their
- * natural shape rather than being clipped to a circle disk.
+ * When a loaded image is supplied, a circle matching the physics body is first
+ * filled with binBackground so that transparent areas of the PNG (e.g. gaps
+ * between grapes, the leaf on a pineapple) show the bin color rather than
+ * whatever fruit happens to be behind them. The PNG is then drawn on top.
  *
  * Falls back to a filled circle + emoji for gems (no icon) and for any
  * frame where the image has not yet finished loading.
@@ -21,10 +21,20 @@ export function drawFruitBody(
   x: number,
   y: number,
   radius: number,
-  image: HTMLImageElement | null
+  image: HTMLImageElement | null,
+  binBackground: string
 ): void {
   if (image?.complete && image.naturalWidth > 0) {
     try {
+      // Fill the physics-circle with the bin background first so transparent
+      // PNG pixels show the bin color, not whatever fruit is behind this one.
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(x, y, radius, 0, Math.PI * 2);
+      ctx.fillStyle = binBackground;
+      ctx.fill();
+      ctx.restore();
+
       const drawR = radius * IMAGE_SCALE;
       ctx.drawImage(image, x - drawR, y - drawR, drawR * 2, drawR * 2);
       return;

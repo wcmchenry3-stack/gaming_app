@@ -10,6 +10,8 @@ const def: FruitDefinition = {
   scoreValue: 1,
 };
 
+const BIN_BG = "#0f172a";
+
 function makeMockCtx() {
   return {
     save: jest.fn(),
@@ -32,21 +34,22 @@ function loadedImage(naturalWidth = 64): HTMLImageElement {
 }
 
 describe("drawFruitBody", () => {
-  it("draws the image at full diameter without clipping when the image is ready", () => {
+  it("fills a background circle then draws the image without clipping when image is ready", () => {
     const ctx = makeMockCtx();
     const image = loadedImage();
-    drawFruitBody(ctx, def, 100, 200, 20, image);
+    drawFruitBody(ctx, def, 100, 200, 20, image, BIN_BG);
 
-    // drawImage(image, x-r, y-r, 2r, 2r) — IMAGE_SCALE=1.0, r=20
+    // Background circle filled first so transparent PNG areas show the bin color
+    expect(ctx.arc).toHaveBeenCalledWith(100, 200, 20, 0, Math.PI * 2);
+    expect(ctx.fill).toHaveBeenCalledTimes(1);
+    // PNG drawn at IMAGE_SCALE=1.0: x-r=80, y-r=180, 2r=40
     expect(ctx.drawImage).toHaveBeenCalledWith(image, 80, 180, 40, 40);
-    expect(ctx.clip).not.toHaveBeenCalled(); // no circle clipping
-    expect(ctx.fill).not.toHaveBeenCalled(); // no solid-color fill
-    expect(ctx.save).not.toHaveBeenCalled(); // no state save needed
+    expect(ctx.clip).not.toHaveBeenCalled();
   });
 
   it("draws a colored circle and emoji when image is null", () => {
     const ctx = makeMockCtx();
-    drawFruitBody(ctx, def, 100, 200, 20, null);
+    drawFruitBody(ctx, def, 100, 200, 20, null, BIN_BG);
 
     expect(ctx.clip).not.toHaveBeenCalled();
     expect(ctx.fill).toHaveBeenCalled();
@@ -57,7 +60,7 @@ describe("drawFruitBody", () => {
   it("draws a colored circle and emoji when the image has not finished loading", () => {
     const ctx = makeMockCtx();
     const image = { complete: false, naturalWidth: 0 } as HTMLImageElement;
-    drawFruitBody(ctx, def, 100, 200, 20, image);
+    drawFruitBody(ctx, def, 100, 200, 20, image, BIN_BG);
 
     expect(ctx.clip).not.toHaveBeenCalled();
     expect(ctx.fill).toHaveBeenCalled();
@@ -69,22 +72,22 @@ describe("drawFruitBody", () => {
     (ctx.drawImage as jest.Mock).mockImplementation(() => {
       throw new Error("broken image");
     });
-    drawFruitBody(ctx, def, 100, 200, 20, loadedImage());
+    drawFruitBody(ctx, def, 100, 200, 20, loadedImage(), BIN_BG);
 
     expect(ctx.fill).toHaveBeenCalled();
     expect(ctx.fillText).toHaveBeenCalledWith(def.emoji, 100, 200);
   });
 
-  it("does not call save/restore when drawing an image (no state changes)", () => {
+  it("wraps the background fill in save/restore to isolate state changes", () => {
     const ctx = makeMockCtx();
-    drawFruitBody(ctx, def, 100, 200, 20, loadedImage());
-    expect(ctx.save).not.toHaveBeenCalled();
-    expect(ctx.restore).not.toHaveBeenCalled();
+    drawFruitBody(ctx, def, 100, 200, 20, loadedImage(), BIN_BG);
+    expect(ctx.save).toHaveBeenCalled();
+    expect(ctx.restore).toHaveBeenCalled();
   });
 
   it("wraps the fallback circle in save/restore to isolate state changes", () => {
     const ctx = makeMockCtx();
-    drawFruitBody(ctx, def, 100, 200, 20, null);
+    drawFruitBody(ctx, def, 100, 200, 20, null, BIN_BG);
     expect(ctx.save).toHaveBeenCalled();
     expect(ctx.restore).toHaveBeenCalled();
   });
