@@ -10,6 +10,7 @@ import {
   DANGER_LINE_RATIO,
 } from "../../game/fruit-merge/engine";
 import { FruitSet, FruitDefinition } from "../../theme/fruitSets";
+import { drawFruitBody } from "./canvasRenderer";
 import { getAssetByID } from "@react-native/assets-registry/registry";
 import { useTheme } from "../../theme/ThemeContext";
 import { useTranslation } from "react-i18next";
@@ -32,7 +33,6 @@ interface Props {
 
 // Fruits spawn just inside the top of the container
 const DROP_Y = 30;
-const ICON_INSET_RATIO = 0.12;
 const canvasImageCache = new Map<string, HTMLImageElement>();
 
 // Resolve a canvas-drawable URI from an ImageSourcePropType icon.
@@ -75,32 +75,6 @@ function getCanvasImage(def: FruitDefinition): HTMLImageElement | null {
   }
 }
 
-function drawFruitVisual(
-  ctx: CanvasRenderingContext2D,
-  def: FruitDefinition,
-  x: number,
-  y: number,
-  radius: number
-) {
-  const image = getCanvasImage(def);
-  // naturalWidth > 0 confirms the image loaded successfully (complete=true on broken images too)
-  if (image?.complete && image.naturalWidth > 0) {
-    const diameter = radius * 2;
-    const inset = diameter * ICON_INSET_RATIO;
-    const size = diameter - inset * 2;
-    try {
-      ctx.drawImage(image, x - size / 2, y - size / 2, size, size);
-      return;
-    } catch {
-      // Image is in broken state — fall through to emoji
-    }
-  }
-
-  ctx.font = `${Math.round(radius * 1.1)}px serif`;
-  ctx.textAlign = "center";
-  ctx.textBaseline = "middle";
-  ctx.fillText(def.emoji, x, y);
-}
 
 const GameCanvas = forwardRef<GameCanvasHandle, Props>(
   ({ fruitSet, nextDef, onMerge, onGameOver, onTap, width, height }, ref) => {
@@ -202,11 +176,7 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
           // Ghost fruit
           ctx.save();
           ctx.globalAlpha = 0.4;
-          ctx.beginPath();
-          ctx.arc(clamped, DROP_Y, nd.radius, 0, Math.PI * 2);
-          ctx.fillStyle = nd.color;
-          ctx.fill();
-          drawFruitVisual(ctx, nd, clamped, DROP_Y, nd.radius);
+          drawFruitBody(ctx, nd, clamped, DROP_Y, nd.radius, getCanvasImage(nd));
           ctx.restore();
         }
 
@@ -221,11 +191,7 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
           const { x, y } = body.position;
           const r = def.radius;
 
-          ctx.beginPath();
-          ctx.arc(x, y, r, 0, Math.PI * 2);
-          ctx.fillStyle = def.color;
-          ctx.fill();
-          drawFruitVisual(ctx, def, x, y, r);
+          drawFruitBody(ctx, def, x, y, r, getCanvasImage(def));
         }
 
         rafRef.current = requestAnimationFrame(renderFrame);
