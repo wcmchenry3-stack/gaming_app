@@ -198,7 +198,7 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
       }
 
       rafRef.current = requestAnimationFrame(renderFrame);
-    }, [width, height, colors.border]); // fruitSet skin switch is handled via reset() in FruitMergeScreen
+    }, [width, height, colors.border, colors.fruitBackground]); // fruitSet skin switch is handled via reset() in FruitMergeScreen
 
     // Canvas native event listeners — avoids React Native Pressable layout issues on web
     useEffect(() => {
