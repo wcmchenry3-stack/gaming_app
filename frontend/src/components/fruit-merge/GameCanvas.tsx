@@ -1,5 +1,5 @@
 import React, { useRef, useEffect, useCallback, forwardRef, useImperativeHandle } from "react";
-import { View, StyleSheet, Image as RNImage } from "react-native";
+import { View, StyleSheet } from "react-native";
 import Matter from "matter-js";
 import {
   createEngine,
@@ -10,6 +10,7 @@ import {
   DANGER_LINE_RATIO,
 } from "../../game/fruit-merge/engine";
 import { FruitSet, FruitDefinition } from "../../theme/fruitSets";
+import { getAssetByID } from "@react-native/assets-registry/registry";
 import { useTheme } from "../../theme/ThemeContext";
 import { useTranslation } from "react-i18next";
 
@@ -34,20 +35,44 @@ const DROP_Y = 30;
 const ICON_INSET_RATIO = 0.12;
 const canvasImageCache = new Map<string, HTMLImageElement>();
 
+// Resolve a canvas-drawable URI from an ImageSourcePropType icon.
+// Metro (Expo Web) represents PNG imports as numbers (asset IDs).
+// react-native-web's Image.resolveAssetSource returns null for numbers,
+// so we query the @react-native/assets-registry directly to reconstruct
+// the URL that Metro is already serving.
+function resolveIconUri(icon: NonNullable<FruitDefinition["icon"]>): string | null {
+  if (typeof icon === "string") return icon;
+  if (typeof icon === "object" && "uri" in icon) return (icon as { uri: string }).uri;
+  if (typeof icon === "number") {
+    try {
+      const asset = getAssetByID(icon);
+      if (!asset) return null;
+      return `${window.location.origin}${asset.httpServerLocation}/${asset.name}.${asset.type}`;
+    } catch {
+      return null;
+    }
+  }
+  return null;
+}
+
 function getCanvasImage(def: FruitDefinition): HTMLImageElement | null {
   if (!def.icon || typeof window === "undefined") return null;
+  try {
+    const uri = resolveIconUri(def.icon);
+    if (!uri) return null;
 
-  const asset = RNImage.resolveAssetSource(def.icon);
-  const uri = asset?.uri;
-  if (!uri) return null;
+    const cached = canvasImageCache.get(uri);
+    if (cached) return cached;
 
-  const cached = canvasImageCache.get(uri);
-  if (cached) return cached;
-
-  const image = new window.Image();
-  image.src = uri;
-  canvasImageCache.set(uri, image);
-  return image;
+    const image = new window.Image();
+    image.onerror = () => canvasImageCache.delete(uri); // evict on failure so next frame retries
+    image.src = uri;
+    canvasImageCache.set(uri, image);
+    return image;
+  } catch {
+    // resolveAssetSource can throw in Expo Web if the asset registry isn't populated
+    return null; // fall through to emoji in drawFruitVisual
+  }
 }
 
 function drawFruitVisual(
@@ -58,12 +83,17 @@ function drawFruitVisual(
   radius: number
 ) {
   const image = getCanvasImage(def);
-  if (image?.complete) {
+  // naturalWidth > 0 confirms the image loaded successfully (complete=true on broken images too)
+  if (image?.complete && image.naturalWidth > 0) {
     const diameter = radius * 2;
     const inset = diameter * ICON_INSET_RATIO;
     const size = diameter - inset * 2;
-    ctx.drawImage(image, x - size / 2, y - size / 2, size, size);
-    return;
+    try {
+      ctx.drawImage(image, x - size / 2, y - size / 2, size, size);
+      return;
+    } catch {
+      // Image is in broken state — fall through to emoji
+    }
   }
 
   ctx.font = `${Math.round(radius * 1.1)}px serif`;
