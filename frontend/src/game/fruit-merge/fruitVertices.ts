@@ -3,6 +3,15 @@ import planetVerticesRaw from "../../../assets/planet-vertices.json";
 
 export type VertexPoint = { x: number; y: number };
 
+// Evenly downsample a convex-hull vertex array to at most maxCount vertices.
+// Bounds the number of collision faces per body, preventing excessive angular
+// impulses from high-vertex hulls (grapes, pineapple, etc.).
+function simplifyVertices(verts: VertexPoint[], maxCount: number): VertexPoint[] {
+  if (verts.length <= maxCount) return verts;
+  const step = verts.length / maxCount;
+  return Array.from({ length: maxCount }, (_, i) => verts[Math.floor(i * step)]);
+}
+
 /**
  * Return normalized convex-hull vertices for a fruit, or null if the set
  * has no PNG assets (e.g. gems) or fewer than 3 vertices were extracted.
@@ -24,5 +33,5 @@ export function getVerticesForFruit(
 
   const raw = map[nameKey];
   if (!raw || raw.length < 3) return null;
-  return raw.map(([x, y]) => ({ x, y }));
+  return simplifyVertices(raw.map(([x, y]) => ({ x, y })), 12);
 }

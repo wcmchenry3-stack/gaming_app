@@ -143,28 +143,34 @@ export function createEngine(
     for (const body of Matter.Composite.allBodies(world)) {
       const fb = body as FruitBody;
       if (fb.fruitTier !== undefined && !fb.isStatic) {
-        const radius = fb.fruitRadius ?? 0;
         let correctedX: number | null = null;
         let correctedY: number | null = null;
 
-        if (body.position.x - radius < leftBoundary) {
-          correctedX = leftBoundary + radius;
-        } else if (body.position.x + radius > rightBoundary) {
-          correctedX = rightBoundary - radius;
+        const bLeft = body.bounds.min.x;
+        const bRight = body.bounds.max.x;
+        const bBottom = body.bounds.max.y;
+
+        if (bLeft < leftBoundary) {
+          correctedX = body.position.x + (leftBoundary - bLeft);
+        } else if (bRight > rightBoundary) {
+          correctedX = body.position.x - (bRight - rightBoundary);
         }
 
-        if (body.position.y + radius > floorY) {
-          correctedY = floorY - radius;
+        if (bBottom > floorY) {
+          correctedY = body.position.y - (bBottom - floorY);
         }
 
         if (correctedX !== null || correctedY !== null) {
-          Matter.Body.setPosition(body, {
-            x: correctedX ?? body.position.x,
-            y: correctedY ?? body.position.y,
-          });
+          // Zero velocity on corrected axes BEFORE setPosition so that the
+          // subsequent Bounds.update (called inside setPosition) computes
+          // bounds without a velocity extension on those axes.
           Matter.Body.setVelocity(body, {
             x: correctedX !== null ? 0 : body.velocity.x,
             y: correctedY !== null && body.velocity.y > 0 ? 0 : body.velocity.y,
+          });
+          Matter.Body.setPosition(body, {
+            x: correctedX ?? body.position.x,
+            y: correctedY ?? body.position.y,
           });
         }
 
@@ -194,7 +200,7 @@ export function createEngine(
         continue;
 
       // Top of the fruit body
-      if (body.position.y - (fb.fruitRadius ?? 0) < dangerY) {
+      if (body.bounds.min.y < dangerY) {
         gameOverFired = true;
         onGameOver();
         return;
@@ -236,6 +242,10 @@ export function spawnFruitAt(
     // Scale unit-normalized vertices by the fruit's physics radius
     const scaled = vertices.map((v) => ({ x: v.x * def.radius, y: v.y * def.radius }));
     body = Matter.Bodies.fromVertices(x, y, scaled, physicsOptions);
+  // fromVertices shifts position using the area-weighted centroid internally,
+  // which differs from the arithmetic-mean centroid our Python extractor uses.
+  // Force the body back to the intended spawn point.
+  Matter.Body.setPosition(body, { x, y });
   } else {
     body = Matter.Bodies.circle(x, y, def.radius, physicsOptions);
   }

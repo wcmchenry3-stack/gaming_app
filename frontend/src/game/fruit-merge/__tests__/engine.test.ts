@@ -368,6 +368,36 @@ describe("spawnFruitAt — polygon body creation", () => {
     expect((body as unknown as { circleRadius?: number }).circleRadius).toBeDefined();
   });
 
+  it("polygon body position matches requested (x, y) after fromVertices centroid correction", () => {
+    const { world } = setup();
+    const def = fruitSet.fruits[2]; // Lemon, radius 33
+    const asymmetricVerts = [
+      { x: -1, y: -0.3 },
+      { x: 0.2, y: -1 },
+      { x: 1, y: 0.1 },
+      { x: 0.5, y: 1 },
+      { x: -0.8, y: 0.7 },
+    ];
+    const body = spawnFruitAt(world, def, fruitSet.id, 150, 200, asymmetricVerts);
+    expect(body.position.x).toBeCloseTo(150, 0); // within ±0.5px
+    expect(body.position.y).toBeCloseTo(200, 0);
+  });
+
+  it("polygon body bounds stay within container after clamping", () => {
+    const { engine, world } = setup();
+    const def = fruitSet.fruits[2];
+    const squareVerts = [
+      { x: -1, y: -1 },
+      { x: 1, y: -1 },
+      { x: 1, y: 1 },
+      { x: -1, y: 1 },
+    ];
+    const body = spawnFruitAt(world, def, fruitSet.id, 150, 300, squareVerts);
+    Matter.Body.setPosition(body, { x: WALL_THICKNESS - 5, y: 300 });
+    fireUpdate(engine);
+    expect(body.bounds.min.x).toBeGreaterThanOrEqual(WALL_THICKNESS);
+  });
+
   it("BodySnapshot type includes angle field", () => {
     // Compile-time check: ensure BodySnapshot has angle
     const snap: BodySnapshot = { id: 1, x: 100, y: 200, tier: 3, angle: 0.5 };
@@ -385,7 +415,7 @@ describe("world boundary clamping", () => {
     Matter.Body.setVelocity(body, { x: 0, y: 12 });
     fireUpdate(engine);
 
-    expect(body.position.y).toBeLessThanOrEqual(H - def.radius);
+    expect(body.bounds.max.y).toBeLessThanOrEqual(H);
     expect(body.velocity.y).toBeLessThanOrEqual(0);
   });
 
@@ -397,13 +427,13 @@ describe("world boundary clamping", () => {
     Matter.Body.setPosition(body, { x: WALL_THICKNESS - 8, y: 200 });
     Matter.Body.setVelocity(body, { x: -5, y: 0 });
     fireUpdate(engine);
-    expect(body.position.x).toBeGreaterThanOrEqual(WALL_THICKNESS + def.radius);
+    expect(body.bounds.min.x).toBeGreaterThanOrEqual(WALL_THICKNESS);
     expect(body.velocity.x).toBeGreaterThanOrEqual(0);
 
     Matter.Body.setPosition(body, { x: W - WALL_THICKNESS + 8, y: 200 });
     Matter.Body.setVelocity(body, { x: 5, y: 0 });
     fireUpdate(engine);
-    expect(body.position.x).toBeLessThanOrEqual(W - WALL_THICKNESS - def.radius);
+    expect(body.bounds.max.x).toBeLessThanOrEqual(W - WALL_THICKNESS);
     expect(body.velocity.x).toBeLessThanOrEqual(0);
   });
 });

@@ -20,6 +20,11 @@ jest.mock("../../../../assets/fruit-vertices.json", () => ({
     [-0.6, 0.2],
   ],
   too_few: [[-0.5, 0.0], [0.5, 0.0]], // only 2 points → should return null
+  // 20-vertex circle approximation — exercises the simplifyVertices path (>12)
+  pineapple: Array.from({ length: 20 }, (_, i) => {
+    const a = (i / 20) * Math.PI * 2;
+    return [Math.cos(a) * 0.9, Math.sin(a) * 0.9];
+  }),
 }));
 
 jest.mock("../../../../assets/planet-vertices.json", () => ({
@@ -75,5 +80,21 @@ describe("getVerticesForFruit", () => {
 
   it("returns null for an unknown set id", () => {
     expect(getVerticesForFruit("unknown_set", "cherry")).toBeNull();
+  });
+
+  // --- vertex simplification ---
+
+  it("returns at most 12 vertices when raw hull has more than 12 points", () => {
+    const verts = getVerticesForFruit("fruits", "pineapple");
+    expect(verts).not.toBeNull();
+    expect(verts!.length).toBeLessThanOrEqual(12);
+  });
+
+  it("simplified vertices all lie within the unit circle (max_dist ≤ 1.0)", () => {
+    const verts = getVerticesForFruit("fruits", "pineapple");
+    expect(verts).not.toBeNull();
+    for (const pt of verts!) {
+      expect(Math.hypot(pt.x, pt.y)).toBeLessThanOrEqual(1.0 + Number.EPSILON);
+    }
   });
 });
