@@ -1,5 +1,5 @@
 import React, { useRef, useEffect, useCallback, forwardRef, useImperativeHandle } from "react";
-import { View, StyleSheet, Image as RNImage } from "react-native";
+import { View, StyleSheet } from "react-native";
 import Matter from "matter-js";
 import {
   createEngine,
@@ -10,6 +10,7 @@ import {
   DANGER_LINE_RATIO,
 } from "../../game/fruit-merge/engine";
 import { FruitSet, FruitDefinition } from "../../theme/fruitSets";
+import { getAssetByID } from "@react-native/assets-registry/registry";
 import { useTheme } from "../../theme/ThemeContext";
 import { useTranslation } from "react-i18next";
 
@@ -34,11 +35,30 @@ const DROP_Y = 30;
 const ICON_INSET_RATIO = 0.12;
 const canvasImageCache = new Map<string, HTMLImageElement>();
 
+// Resolve a canvas-drawable URI from an ImageSourcePropType icon.
+// Metro (Expo Web) represents PNG imports as numbers (asset IDs).
+// react-native-web's Image.resolveAssetSource returns null for numbers,
+// so we query the @react-native/assets-registry directly to reconstruct
+// the URL that Metro is already serving.
+function resolveIconUri(icon: NonNullable<FruitDefinition["icon"]>): string | null {
+  if (typeof icon === "string") return icon;
+  if (typeof icon === "object" && "uri" in icon) return (icon as { uri: string }).uri;
+  if (typeof icon === "number") {
+    try {
+      const asset = getAssetByID(icon);
+      if (!asset) return null;
+      return `${window.location.origin}${asset.httpServerLocation}/${asset.name}.${asset.type}`;
+    } catch {
+      return null;
+    }
+  }
+  return null;
+}
+
 function getCanvasImage(def: FruitDefinition): HTMLImageElement | null {
   if (!def.icon || typeof window === "undefined") return null;
   try {
-    const asset = RNImage.resolveAssetSource(def.icon);
-    const uri = asset?.uri;
+    const uri = resolveIconUri(def.icon);
     if (!uri) return null;
 
     const cached = canvasImageCache.get(uri);
