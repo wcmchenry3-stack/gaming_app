@@ -11,7 +11,8 @@
     "lint": "eslint .",
     "format:check": "prettier --check .",
     "translate": "node scripts/translate.js",
-    "check-i18n": "node scripts/check-i18n-strings.js"
+    "check-i18n": "node scripts/check-i18n-strings.js",
+    "process-assets": "python scripts/remove_backgrounds.py"
   },
   "jest": {
     "preset": "jest-expo",
