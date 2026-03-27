@@ -3,6 +3,7 @@ import {
   createEngine,
   spawnFruitAt,
   FruitBody,
+  BodySnapshot,
   DANGER_LINE_RATIO,
   EngineSetup,
   WALL_THICKNESS,
@@ -33,7 +34,7 @@ function makeFakeBody(tier: number, x: number, y: number, ageMs = 3000): FruitBo
     isMerging: false,
     isStatic: false,
     createdAt: Date.now() - ageMs,
-    circleRadius: fruitSet.fruits[tier].radius,
+    fruitRadius: fruitSet.fruits[tier].radius,
     position: { x, y },
   } as unknown as FruitBody;
 }
@@ -312,6 +313,65 @@ describe("game-over detection", () => {
     fireUpdate(engine);
 
     expect(onGameOver).not.toHaveBeenCalled();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// spawnFruitAt — polygon vs circle body creation
+// ---------------------------------------------------------------------------
+
+describe("spawnFruitAt — polygon body creation", () => {
+  const SQUARE_VERTS = [
+    { x: -1, y: -1 },
+    { x: 1, y: -1 },
+    { x: 1, y: 1 },
+    { x: -1, y: 1 },
+  ];
+
+  it("always sets fruitRadius to def.radius regardless of body type", () => {
+    const { world } = setup();
+    const def = fruitSet.fruits[2];
+
+    const circleBody = spawnFruitAt(world, def, fruitSet.id, 150, 100);
+    expect(circleBody.fruitRadius).toBe(def.radius);
+
+    const polyBody = spawnFruitAt(world, def, fruitSet.id, 150, 200, SQUARE_VERTS);
+    expect(polyBody.fruitRadius).toBe(def.radius);
+  });
+
+  it("polygon body has fruitRadius set while circle body has a positive circleRadius", () => {
+    const { world } = setup();
+    const def = fruitSet.fruits[1];
+
+    const circleBody = spawnFruitAt(world, def, fruitSet.id, 150, 100);
+    expect((circleBody as unknown as { circleRadius?: number }).circleRadius).toBeGreaterThan(0);
+
+    const polyBody = spawnFruitAt(world, def, fruitSet.id, 150, 200, SQUARE_VERTS);
+    // fruitRadius is always reliable regardless of body type
+    expect(polyBody.fruitRadius).toBe(def.radius);
+  });
+
+  it("falls back to circle when vertices array has fewer than 3 points", () => {
+    const { world } = setup();
+    const def = fruitSet.fruits[0];
+    const tooFew = [{ x: 0, y: 0 }, { x: 1, y: 0 }];
+    const body = spawnFruitAt(world, def, fruitSet.id, 150, 100, tooFew);
+    // Circle body always has circleRadius
+    expect((body as unknown as { circleRadius?: number }).circleRadius).toBeDefined();
+    expect(body.fruitRadius).toBe(def.radius);
+  });
+
+  it("falls back to circle when vertices is null", () => {
+    const { world } = setup();
+    const def = fruitSet.fruits[0];
+    const body = spawnFruitAt(world, def, fruitSet.id, 150, 100, null);
+    expect((body as unknown as { circleRadius?: number }).circleRadius).toBeDefined();
+  });
+
+  it("BodySnapshot type includes angle field", () => {
+    // Compile-time check: ensure BodySnapshot has angle
+    const snap: BodySnapshot = { id: 1, x: 100, y: 200, tier: 3, angle: 0.5 };
+    expect(snap.angle).toBe(0.5);
   });
 });
 

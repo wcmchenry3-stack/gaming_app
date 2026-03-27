@@ -1,5 +1,6 @@
 import Matter from "matter-js";
 import { FruitDefinition, FruitSet, FruitTier } from "../../theme/fruitSets";
+import { getVerticesForFruit, VertexPoint } from "./fruitVertices";
 
 export const WALL_THICKNESS = 16;
 // Fruits drop into the top of the container; danger line sits below the drop zone
@@ -26,6 +27,15 @@ export interface FruitBody extends Matter.Body {
   fruitSetId: string;
   isMerging: boolean;
   createdAt: number;
+  fruitRadius: number; // always set; replaces circleRadius (undefined on polygon bodies)
+}
+
+export interface BodySnapshot {
+  id: number;
+  x: number;
+  y: number;
+  tier: number;
+  angle: number; // body rotation in radians — used to orient PNG images in renderers
 }
 
 export interface MergeEvent {
@@ -102,7 +112,9 @@ export function createEngine(
 
         if (tier < 10) {
           const nextDef = fruitSet.fruits[(tier + 1) as FruitTier];
-          spawnFruitAt(world, nextDef, fruitSet.id, midX, midY);
+          const nameKey = nextDef.nameKey ?? nextDef.name.toLowerCase();
+          const verts = getVerticesForFruit(fruitSet.id, nameKey);
+          spawnFruitAt(world, nextDef, fruitSet.id, midX, midY, verts);
 
           // Wake sleeping bodies near the merge so chain reactions fire correctly
           const wakeRadius = nextDef.radius * MERGE_WAKE_RADIUS_FACTOR;
@@ -131,7 +143,7 @@ export function createEngine(
     for (const body of Matter.Composite.allBodies(world)) {
       const fb = body as FruitBody;
       if (fb.fruitTier !== undefined && !fb.isStatic) {
-        const radius = fb.circleRadius ?? 0;
+        const radius = fb.fruitRadius ?? 0;
         let correctedX: number | null = null;
         let correctedY: number | null = null;
 
@@ -181,8 +193,8 @@ export function createEngine(
       )
         continue;
 
-      // Top of the fruit circle
-      if (body.position.y - (fb.circleRadius ?? 0) < dangerY) {
+      // Top of the fruit body
+      if (body.position.y - (fb.fruitRadius ?? 0) < dangerY) {
         gameOverFired = true;
         onGameOver();
         return;
@@ -208,23 +220,35 @@ export function spawnFruitAt(
   def: FruitDefinition,
   fruitSetId: string,
   x: number,
-  y: number
+  y: number,
+  vertices?: VertexPoint[] | null,
 ): FruitBody {
-  const body = Matter.Bodies.circle(x, y, def.radius, {
+  const physicsOptions = {
     restitution: FRUIT_RESTITUTION,
     friction: FRUIT_FRICTION,
     frictionAir: FRUIT_FRICTION_AIR,
     density: FRUIT_DENSITY,
     label: `fruit-${def.tier}`,
-  }) as FruitBody;
+  };
 
-  body.fruitTier = def.tier;
-  body.fruitSetId = fruitSetId;
-  body.isMerging = false;
-  body.createdAt = Date.now();
+  let body: Matter.Body;
+  if (vertices && vertices.length >= 3) {
+    // Scale unit-normalized vertices by the fruit's physics radius
+    const scaled = vertices.map((v) => ({ x: v.x * def.radius, y: v.y * def.radius }));
+    body = Matter.Bodies.fromVertices(x, y, scaled, physicsOptions);
+  } else {
+    body = Matter.Bodies.circle(x, y, def.radius, physicsOptions);
+  }
 
-  Matter.World.add(world, body);
-  return body;
+  const fb = body as FruitBody;
+  fb.fruitTier = def.tier;
+  fb.fruitSetId = fruitSetId;
+  fb.isMerging = false;
+  fb.createdAt = Date.now();
+  fb.fruitRadius = def.radius;
+
+  Matter.World.add(world, fb);
+  return fb;
 }
 
 export function dropFruit(
@@ -232,7 +256,8 @@ export function dropFruit(
   def: FruitDefinition,
   fruitSetId: string,
   x: number,
-  spawnY: number
+  spawnY: number,
+  vertices?: VertexPoint[] | null,
 ): FruitBody {
-  return spawnFruitAt(world, def, fruitSetId, x, spawnY);
+  return spawnFruitAt(world, def, fruitSetId, x, spawnY, vertices);
 }

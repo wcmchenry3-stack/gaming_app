@@ -30,6 +30,7 @@ export type FruitTier = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10;
 export interface FruitDefinition {
   tier: FruitTier;
   name: string;
+  nameKey?: string; // JSON vertex-lookup key when it differs from name.toLowerCase()
   emoji: string;
   icon?: ImageSourcePropType;
   color: string;
@@ -138,6 +139,7 @@ export const FRUIT_SETS: Record<string, FruitSet> = {
       {
         tier: 3,
         name: "Grape",
+        nameKey: "grapes", // PNG filename is grapes.png, not grape.png
         icon: FRUIT_ICONS.grape,
         emoji: "🍇",
         color: "#7c3aed",

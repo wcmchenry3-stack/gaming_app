@@ -12,7 +12,8 @@
     "format:check": "prettier --check .",
     "translate": "node scripts/translate.js",
     "check-i18n": "node scripts/check-i18n-strings.js",
-    "process-assets": "python scripts/remove_backgrounds.py"
+    "process-assets": "python scripts/remove_backgrounds.py",
+    "extract-vertices": "python scripts/extract_vertices.py"
   },
   "jest": {
     "preset": "jest-expo",

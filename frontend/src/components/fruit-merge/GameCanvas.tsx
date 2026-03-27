@@ -31,10 +31,12 @@ import {
   createEngine,
   dropFruit,
   FruitBody,
+  BodySnapshot,
   MergeEvent,
   WALL_THICKNESS,
   DANGER_LINE_RATIO,
 } from "../../game/fruit-merge/engine";
+import { getVerticesForFruit } from "../../game/fruit-merge/fruitVertices";
 import { FruitDefinition, FruitSet } from "../../theme/fruitSets";
 import { useTheme } from "../../theme/ThemeContext";
 import { useTranslation } from "react-i18next";
@@ -58,36 +60,28 @@ interface Props {
   height: number;
 }
 
-interface BodySnapshot {
-  id: number;
-  x: number;
-  y: number;
-  tier: number;
-}
-
 function FruitBodySkia({
   x,
   y,
   radius,
   color,
   image,
-  binBackground,
+  angle,
 }: {
   x: number;
   y: number;
   radius: number;
   color: string;
   image: SkImage | null;
-  binBackground: string;
+  angle: number;
 }) {
   if (image) {
     return (
-      <Group>
-        <Circle cx={x} cy={y} r={radius} color={binBackground} />
+      <Group transform={[{ translateX: x }, { translateY: y }, { rotate: angle }]}>
         <SkiaImage
           image={image}
-          x={x - radius}
-          y={y - radius}
+          x={-radius}
+          y={-radius}
           width={radius * 2}
           height={radius * 2}
           fit="contain"
@@ -144,6 +138,7 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
               x: b.position.x,
               y: b.position.y,
               tier: (b as FruitBody).fruitTier,
+              angle: b.angle,
             }))
         );
       });
@@ -167,7 +162,9 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
             WALL_THICKNESS + def.radius,
             width - WALL_THICKNESS - def.radius
           );
-          dropFruit(engineRef.current.world, def, fruitSetRef.current.id, clamped, DROP_Y);
+          const nameKey = def.nameKey ?? def.name.toLowerCase();
+          const verts = getVerticesForFruit(fruitSetRef.current.id, nameKey);
+          dropFruit(engineRef.current.world, def, fruitSetRef.current.id, clamped, DROP_Y, verts);
         },
         reset() {
           initEngine();
@@ -250,7 +247,7 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
                 radius={nextDef.radius}
                 color={nextDef.color}
                 image={images[nextDef.tier] ?? null}
-                binBackground={colors.fruitBackground}
+                angle={0}
               />
             </Group>
           )}
@@ -265,7 +262,7 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
                 radius={def.radius}
                 color={def.color}
                 image={images[body.tier] ?? null}
-                binBackground={colors.fruitBackground}
+                angle={body.angle}
               />
             );
           })}
