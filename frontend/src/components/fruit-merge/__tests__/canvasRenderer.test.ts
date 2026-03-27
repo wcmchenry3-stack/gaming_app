@@ -39,8 +39,8 @@ describe("drawFruitBody", () => {
 
     expect(ctx.arc).toHaveBeenCalledWith(100, 200, 20, 0, Math.PI * 2);
     expect(ctx.clip).toHaveBeenCalled();
-    // full diameter: drawImage(image, x-r, y-r, 2r, 2r)
-    expect(ctx.drawImage).toHaveBeenCalledWith(image, 80, 180, 40, 40);
+    // drawn at IMAGE_SCALE (1.25) × diameter: drawR = 25, so x-drawR=75, y-drawR=175, size=50
+    expect(ctx.drawImage).toHaveBeenCalledWith(image, 75, 175, 50, 50);
     expect(ctx.fill).not.toHaveBeenCalled(); // no solid-color fill under the image
   });
 
