@@ -9,7 +9,6 @@ import { FruitQueue } from "../game/fruit-merge/fruitQueue";
 import { MergeEvent } from "../game/fruit-merge/engine";
 import { scoreForMerge } from "../game/fruit-merge/scoring";
 import GameCanvas, { GameCanvasHandle } from "../components/fruit-merge/GameCanvas";
-import { useFruitImages, getImagesForSet } from "../theme/useFruitImages";
 import NextFruitPreview from "../components/fruit-merge/NextFruitPreview";
 import ScoreDisplay from "../components/fruit-merge/ScoreDisplay";
 import ThemeSelector from "../components/fruit-merge/ThemeSelector";
@@ -26,9 +25,6 @@ function FruitMergeGame({ navigation }: Props) {
   const { t } = useTranslation(["fruit-merge", "common"]);
   const { colors, theme, toggle } = useTheme();
   const { activeFruitSet } = useFruitSet();
-
-  const allImages = useFruitImages();
-  const images = getImagesForSet(allImages, activeFruitSet.id);
 
   const [score, setScore] = useState(0);
   const [gameOver, setGameOver] = useState(false);
@@ -157,7 +153,6 @@ function FruitMergeGame({ navigation }: Props) {
             onTap={handleTap}
             width={canvasWidth}
             height={canvasHeight}
-            images={images}
           />
         )}
       </View>

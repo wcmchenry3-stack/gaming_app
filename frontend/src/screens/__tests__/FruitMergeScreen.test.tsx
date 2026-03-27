@@ -20,16 +20,6 @@ jest.mock("../../components/fruit-merge/ThemeSelector", () => "ThemeSelector");
 // Skia requires a native module — mock the whole package in Jest
 jest.mock("@shopify/react-native-skia", () => ({}));
 
-// useFruitImages calls useImage (Skia) — return null images for all tiers
-jest.mock("../../theme/useFruitImages", () => ({
-  useFruitImages: () => ({
-    fruits: Array(11).fill(null),
-    planets: Array(11).fill(null),
-    gems: Array(11).fill(null),
-  }),
-  getImagesForSet: () => Array(11).fill(null),
-}));
-
 // ---------------------------------------------------------------------------
 // Mock GameCanvas — forwardRef component that exposes drop/reset spies
 // ---------------------------------------------------------------------------
