@@ -74,7 +74,19 @@ export function useFruitImages(): FruitSetImages {
   const sun = useImage(sunIcon);
 
   return {
-    fruits: [cherry, blueberry, lemon, grape, orange, apple, peach, coconut, dragonfruit, pineapple, watermelon],
+    fruits: [
+      cherry,
+      blueberry,
+      lemon,
+      grape,
+      orange,
+      apple,
+      peach,
+      coconut,
+      dragonfruit,
+      pineapple,
+      watermelon,
+    ],
     planets: [moon, pluto, mercury, mars, venus, earth, neptune, uranus, saturn, jupiter, sun],
     gems: [null, null, null, null, null, null, null, null, null, null, null],
   };
@@ -83,8 +95,11 @@ export function useFruitImages(): FruitSetImages {
 /** Returns the image array for the given fruit set id. */
 export function getImagesForSet(allImages: FruitSetImages, setId: string): (SkImage | null)[] {
   switch (setId) {
-    case "fruits": return allImages.fruits;
-    case "planets": return allImages.planets;
-    default: return allImages.gems;
+    case "fruits":
+      return allImages.fruits;
+    case "planets":
+      return allImages.planets;
+    default:
+      return allImages.gems;
   }
 }

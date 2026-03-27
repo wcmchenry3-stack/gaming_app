@@ -115,14 +115,22 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
     const onGameOverRef = useRef(onGameOver);
     const fruitSetRef = useRef(fruitSet);
 
-    useEffect(() => { onMergeRef.current = onMerge; }, [onMerge]);
-    useEffect(() => { onGameOverRef.current = onGameOver; }, [onGameOver]);
-    useEffect(() => { fruitSetRef.current = fruitSet; }, [fruitSet]);
+    useEffect(() => {
+      onMergeRef.current = onMerge;
+    }, [onMerge]);
+    useEffect(() => {
+      onGameOverRef.current = onGameOver;
+    }, [onGameOver]);
+    useEffect(() => {
+      fruitSetRef.current = fruitSet;
+    }, [fruitSet]);
 
     const initEngine = useCallback(() => {
       engineRef.current?.cleanup();
       engineRef.current = createEngine(
-        width, height, fruitSet,
+        width,
+        height,
+        fruitSet,
         (e) => onMergeRef.current(e),
         () => onGameOverRef.current()
       );
@@ -131,7 +139,12 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
         setBodies(
           Matter.Composite.allBodies(engine.world)
             .filter((b) => !(b as FruitBody).isStatic && (b as FruitBody).fruitTier !== undefined)
-            .map((b) => ({ id: b.id, x: b.position.x, y: b.position.y, tier: (b as FruitBody).fruitTier }))
+            .map((b) => ({
+              id: b.id,
+              x: b.position.x,
+              y: b.position.y,
+              tier: (b as FruitBody).fruitTier,
+            }))
         );
       });
       setBodies([]);
@@ -139,18 +152,32 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
 
     useEffect(() => {
       initEngine();
-      return () => { engineRef.current?.cleanup(); };
+      return () => {
+        engineRef.current?.cleanup();
+      };
     }, [initEngine]);
 
-    useImperativeHandle(ref, () => ({
-      drop(def, x) {
-        if (!engineRef.current) return;
-        const clamped = clamp(x, WALL_THICKNESS + def.radius, width - WALL_THICKNESS - def.radius);
-        dropFruit(engineRef.current.world, def, fruitSetRef.current.id, clamped, DROP_Y);
-      },
-      reset() { initEngine(); },
-      announceEvent(message) { AccessibilityInfo.announceForAccessibility(message); },
-    }), [initEngine, width]);
+    useImperativeHandle(
+      ref,
+      () => ({
+        drop(def, x) {
+          if (!engineRef.current) return;
+          const clamped = clamp(
+            x,
+            WALL_THICKNESS + def.radius,
+            width - WALL_THICKNESS - def.radius
+          );
+          dropFruit(engineRef.current.world, def, fruitSetRef.current.id, clamped, DROP_Y);
+        },
+        reset() {
+          initEngine();
+        },
+        announceEvent(message) {
+          AccessibilityInfo.announceForAccessibility(message);
+        },
+      }),
+      [initEngine, width]
+    );
 
     const dangerY = height * DANGER_LINE_RATIO;
 
@@ -161,9 +188,10 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
       return p;
     }, [width, dangerY]);
 
-    const ghostCx = pointerX !== null
-      ? clamp(pointerX, WALL_THICKNESS + nextDef.radius, width - WALL_THICKNESS - nextDef.radius)
-      : null;
+    const ghostCx =
+      pointerX !== null
+        ? clamp(pointerX, WALL_THICKNESS + nextDef.radius, width - WALL_THICKNESS - nextDef.radius)
+        : null;
 
     const guidePath = useMemo(() => {
       if (ghostCx === null) return null;
@@ -173,8 +201,13 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
       return p;
     }, [ghostCx, dangerY, height]);
 
-    const tapGesture = Gesture.Tap().runOnJS(true).onEnd((e, ok) => { if (ok) onTap(e.x); });
-    const panGesture = Gesture.Pan().runOnJS(true)
+    const tapGesture = Gesture.Tap()
+      .runOnJS(true)
+      .onEnd((e, ok) => {
+        if (ok) onTap(e.x);
+      });
+    const panGesture = Gesture.Pan()
+      .runOnJS(true)
       .onBegin((e) => setPointerX(e.x))
       .onChange((e) => setPointerX(e.x))
       .onFinalize(() => setPointerX(null));
@@ -189,8 +222,20 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
         >
           <Fill color={colors.fruitBackground} />
           <Rect x={0} y={0} width={WALL_THICKNESS} height={height} color={colors.border} />
-          <Rect x={width - WALL_THICKNESS} y={0} width={WALL_THICKNESS} height={height} color={colors.border} />
-          <Rect x={0} y={height - WALL_THICKNESS} width={width} height={WALL_THICKNESS} color={colors.border} />
+          <Rect
+            x={width - WALL_THICKNESS}
+            y={0}
+            width={WALL_THICKNESS}
+            height={height}
+            color={colors.border}
+          />
+          <Rect
+            x={0}
+            y={height - WALL_THICKNESS}
+            width={width}
+            height={WALL_THICKNESS}
+            color={colors.border}
+          />
           <Path path={dangerPath} color="rgba(239,68,68,0.4)" style="stroke" strokeWidth={1}>
             <DashPathEffect intervals={[6, 4]} phase={0} />
           </Path>
@@ -199,16 +244,29 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
               <Path path={guidePath} color="rgba(255,255,255,0.12)" style="stroke" strokeWidth={1}>
                 <DashPathEffect intervals={[4, 6]} phase={0} />
               </Path>
-              <FruitBodySkia x={ghostCx} y={DROP_Y} radius={nextDef.radius}
-                color={nextDef.color} image={images[nextDef.tier] ?? null} binBackground={colors.fruitBackground} />
+              <FruitBodySkia
+                x={ghostCx}
+                y={DROP_Y}
+                radius={nextDef.radius}
+                color={nextDef.color}
+                image={images[nextDef.tier] ?? null}
+                binBackground={colors.fruitBackground}
+              />
             </Group>
           )}
           {bodies.map((body) => {
             const def = fruitSet.fruits[body.tier];
             if (!def) return null;
             return (
-              <FruitBodySkia key={body.id} x={body.x} y={body.y} radius={def.radius}
-                color={def.color} image={images[body.tier] ?? null} binBackground={colors.fruitBackground} />
+              <FruitBodySkia
+                key={body.id}
+                x={body.x}
+                y={body.y}
+                radius={def.radius}
+                color={def.color}
+                image={images[body.tier] ?? null}
+                binBackground={colors.fruitBackground}
+              />
             );
           })}
         </Canvas>

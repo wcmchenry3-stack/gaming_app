@@ -3,13 +3,7 @@
  * Rendered via HTML Canvas 2D API.
  * Metro automatically uses this file on web; GameCanvas.tsx is used on native.
  */
-import React, {
-  forwardRef,
-  useCallback,
-  useEffect,
-  useImperativeHandle,
-  useRef,
-} from "react";
+import React, { forwardRef, useCallback, useEffect, useImperativeHandle, useRef } from "react";
 import { View, AccessibilityInfo } from "react-native";
 import { Asset } from "expo-asset";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
@@ -94,11 +88,21 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
     const pointerXRef = useRef<number | null>(null);
     const htmlImagesRef = useRef<(HTMLImageElement | null)[]>([]);
 
-    useEffect(() => { onMergeRef.current = onMerge; }, [onMerge]);
-    useEffect(() => { onGameOverRef.current = onGameOver; }, [onGameOver]);
-    useEffect(() => { fruitSetRef.current = fruitSet; }, [fruitSet]);
-    useEffect(() => { colorsRef.current = colors; }, [colors]);
-    useEffect(() => { nextDefRef.current = nextDef; }, [nextDef]);
+    useEffect(() => {
+      onMergeRef.current = onMerge;
+    }, [onMerge]);
+    useEffect(() => {
+      onGameOverRef.current = onGameOver;
+    }, [onGameOver]);
+    useEffect(() => {
+      fruitSetRef.current = fruitSet;
+    }, [fruitSet]);
+    useEffect(() => {
+      colorsRef.current = colors;
+    }, [colors]);
+    useEffect(() => {
+      nextDefRef.current = nextDef;
+    }, [nextDef]);
 
     // Load HTMLImageElements for the current fruit set via expo-asset
     useEffect(() => {
@@ -119,7 +123,10 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
               await new Promise<void>((resolve) => {
                 const img = new window.Image();
                 img.src = uri;
-                img.onload = () => { if (!cancelled) images[i] = img; resolve(); };
+                img.onload = () => {
+                  if (!cancelled) images[i] = img;
+                  resolve();
+                };
                 img.onerror = () => resolve();
               });
             } catch {
@@ -129,7 +136,9 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
         );
       })();
 
-      return () => { cancelled = true; };
+      return () => {
+        cancelled = true;
+      };
     }, [fruitSet]);
 
     // Stable draw function — reads everything from refs to avoid recreating the RAF loop
@@ -184,7 +193,14 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
         ctx.moveTo(ghostCx, dangerY);
         ctx.lineTo(ghostCx, height - WALL_THICKNESS);
         ctx.stroke();
-        drawFruitBody(ctx, nd, ghostCx, DROP_Y, htmlImagesRef.current[nd.tier] ?? null, c.fruitBackground);
+        drawFruitBody(
+          ctx,
+          nd,
+          ghostCx,
+          DROP_Y,
+          htmlImagesRef.current[nd.tier] ?? null,
+          c.fruitBackground
+        );
         ctx.restore();
       }
 
@@ -192,18 +208,29 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
       for (const body of bodiesRef.current) {
         const def = fs.fruits[body.tier];
         if (!def) continue;
-        drawFruitBody(ctx, def, body.x, body.y, htmlImagesRef.current[body.tier] ?? null, c.fruitBackground);
+        drawFruitBody(
+          ctx,
+          def,
+          body.x,
+          body.y,
+          htmlImagesRef.current[body.tier] ?? null,
+          c.fruitBackground
+        );
       }
     }, [width, height]); // width/height trigger engine reset anyway, so deps here are stable
 
     // Keep latest draw in a ref so the RAF loop never needs to be torn down
     const drawRef = useRef(draw);
-    useEffect(() => { drawRef.current = draw; }, [draw]);
+    useEffect(() => {
+      drawRef.current = draw;
+    }, [draw]);
 
     const initEngine = useCallback(() => {
       engineRef.current?.cleanup();
       engineRef.current = createEngine(
-        width, height, fruitSet,
+        width,
+        height,
+        fruitSet,
         (e) => onMergeRef.current(e),
         () => onGameOverRef.current()
       );
@@ -211,14 +238,21 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
       Matter.Events.on(engine, "afterUpdate", () => {
         bodiesRef.current = Matter.Composite.allBodies(engine.world)
           .filter((b) => !(b as FruitBody).isStatic && (b as FruitBody).fruitTier !== undefined)
-          .map((b) => ({ id: b.id, x: b.position.x, y: b.position.y, tier: (b as FruitBody).fruitTier }));
+          .map((b) => ({
+            id: b.id,
+            x: b.position.x,
+            y: b.position.y,
+            tier: (b as FruitBody).fruitTier,
+          }));
       });
       bodiesRef.current = [];
     }, [width, height, fruitSet]);
 
     useEffect(() => {
       initEngine();
-      return () => { engineRef.current?.cleanup(); };
+      return () => {
+        engineRef.current?.cleanup();
+      };
     }, [initEngine]);
 
     // Single long-lived RAF loop
@@ -232,21 +266,44 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
       return () => cancelAnimationFrame(id);
     }, []); // intentionally empty — loop lives for component lifetime
 
-    useImperativeHandle(ref, () => ({
-      drop(def, x) {
-        if (!engineRef.current) return;
-        const clamped = clamp(x, WALL_THICKNESS + def.radius, width - WALL_THICKNESS - def.radius);
-        dropFruit(engineRef.current.world, def, fruitSetRef.current.id, clamped, DROP_Y);
-      },
-      reset() { initEngine(); },
-      announceEvent(message) { AccessibilityInfo.announceForAccessibility(message); },
-    }), [initEngine, width]);
+    useImperativeHandle(
+      ref,
+      () => ({
+        drop(def, x) {
+          if (!engineRef.current) return;
+          const clamped = clamp(
+            x,
+            WALL_THICKNESS + def.radius,
+            width - WALL_THICKNESS - def.radius
+          );
+          dropFruit(engineRef.current.world, def, fruitSetRef.current.id, clamped, DROP_Y);
+        },
+        reset() {
+          initEngine();
+        },
+        announceEvent(message) {
+          AccessibilityInfo.announceForAccessibility(message);
+        },
+      }),
+      [initEngine, width]
+    );
 
-    const tapGesture = Gesture.Tap().runOnJS(true).onEnd((e, ok) => { if (ok) onTap(e.x); });
-    const panGesture = Gesture.Pan().runOnJS(true)
-      .onBegin((e) => { pointerXRef.current = e.x; })
-      .onChange((e) => { pointerXRef.current = e.x; })
-      .onFinalize(() => { pointerXRef.current = null; });
+    const tapGesture = Gesture.Tap()
+      .runOnJS(true)
+      .onEnd((e, ok) => {
+        if (ok) onTap(e.x);
+      });
+    const panGesture = Gesture.Pan()
+      .runOnJS(true)
+      .onBegin((e) => {
+        pointerXRef.current = e.x;
+      })
+      .onChange((e) => {
+        pointerXRef.current = e.x;
+      })
+      .onFinalize(() => {
+        pointerXRef.current = null;
+      });
     const composed = Gesture.Simultaneous(tapGesture, panGesture);
 
     return (
