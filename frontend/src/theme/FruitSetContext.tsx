@@ -1,4 +1,5 @@
-import React, { createContext, useContext, useState } from "react";
+import React, { createContext, useContext, useEffect, useState } from "react";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { FruitSet, FRUIT_SETS, DEFAULT_FRUIT_SET } from "./fruitSets";
 
 const STORAGE_KEY = "gaming_app_fruit_set";
@@ -14,22 +15,17 @@ const FruitSetContext = createContext<FruitSetContextValue>({
 });
 
 export function FruitSetProvider({ children }: { children: React.ReactNode }) {
-  const [activeId, setActiveId] = useState<string>(() => {
-    try {
-      const stored = localStorage.getItem(STORAGE_KEY);
-      return stored && FRUIT_SETS[stored] ? stored : DEFAULT_FRUIT_SET;
-    } catch {
-      return DEFAULT_FRUIT_SET;
-    }
-  });
+  const [activeId, setActiveId] = useState<string>(DEFAULT_FRUIT_SET);
+
+  useEffect(() => {
+    AsyncStorage.getItem(STORAGE_KEY).then((stored) => {
+      if (stored && FRUIT_SETS[stored]) setActiveId(stored);
+    });
+  }, []);
 
   function setFruitSetById(id: string) {
     if (!FRUIT_SETS[id]) return;
-    try {
-      localStorage.setItem(STORAGE_KEY, id);
-    } catch {
-      /* storage unavailable */
-    }
+    AsyncStorage.setItem(STORAGE_KEY, id);
     setActiveId(id);
   }
 

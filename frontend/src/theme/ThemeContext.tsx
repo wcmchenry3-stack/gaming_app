@@ -1,4 +1,5 @@
-import React, { createContext, useContext, useState } from "react";
+import React, { createContext, useContext, useEffect, useState } from "react";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export type Theme = "dark" | "light";
 
@@ -117,22 +118,18 @@ const ThemeContext = createContext<ThemeContextValue>({
 });
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [theme, setTheme] = useState<Theme>(() => {
-    try {
-      return (localStorage.getItem(STORAGE_KEY) as Theme) ?? "dark";
-    } catch {
-      return "dark";
-    }
-  });
+  const [theme, setTheme] = useState<Theme>("dark");
+
+  useEffect(() => {
+    AsyncStorage.getItem(STORAGE_KEY).then((stored) => {
+      if (stored === "dark" || stored === "light") setTheme(stored);
+    });
+  }, []);
 
   function toggle() {
     setTheme((t) => {
       const next = t === "dark" ? "light" : "dark";
-      try {
-        localStorage.setItem(STORAGE_KEY, next);
-      } catch {
-        /* storage unavailable */
-      }
+      AsyncStorage.setItem(STORAGE_KEY, next);
       return next;
     });
   }
