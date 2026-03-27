@@ -1,6 +1,11 @@
 // Gesture handler requires native setup in Jest
 import "react-native-gesture-handler/jestSetup";
 
+// AsyncStorage mock (replaces localStorage in ThemeContext / FruitSetContext)
+jest.mock("@react-native-async-storage/async-storage", () =>
+  require("@react-native-async-storage/async-storage/jest/async-storage-mock")
+);
+
 import i18n from "i18next";
 import { initReactI18next } from "react-i18next";
 
