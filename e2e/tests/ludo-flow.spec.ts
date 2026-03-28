@@ -207,7 +207,7 @@ test.describe("Ludo — navigation and smoke tests", () => {
       timeout: 10_000,
     });
 
-    await page.getByRole("button", { name: "Back" }).click();
+    await page.getByRole("button", { name: /back/i }).click();
 
     await expect(page.getByText("Gaming App").first()).toBeVisible({ timeout: 5_000 });
   });

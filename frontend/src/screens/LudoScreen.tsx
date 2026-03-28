@@ -89,10 +89,7 @@ export default function LudoScreen({ navigation }: Props) {
   const isHumanTurn = state?.current_player === HUMAN_PLAYER;
   const showRollBtn = state?.phase === "roll" && isHumanTurn && !loading;
   const showSelector =
-    state?.phase === "move" &&
-    isHumanTurn &&
-    (state.valid_moves?.length ?? 0) > 1 &&
-    !loading;
+    state?.phase === "move" && isHumanTurn && (state.valid_moves?.length ?? 0) > 1 && !loading;
 
   if (!state && loading) {
     return (
@@ -115,7 +112,9 @@ export default function LudoScreen({ navigation }: Props) {
           <Text style={[styles.headerBtnText, { color: colors.textMuted }]}>‹</Text>
         </Pressable>
 
-        <Text style={[styles.title, { color: colors.text }]} accessibilityRole="header">{t("ludo:game.title")}</Text>
+        <Text style={[styles.title, { color: colors.text }]} accessibilityRole="header">
+          {t("ludo:game.title")}
+        </Text>
 
         <Pressable
           style={styles.headerBtn}
@@ -140,10 +139,7 @@ export default function LudoScreen({ navigation }: Props) {
         </Text>
       )}
 
-      <ScrollView
-        contentContainerStyle={styles.content}
-        showsVerticalScrollIndicator={false}
-      >
+      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         {state && (
           <>
             {/* Board */}
@@ -200,9 +196,7 @@ export default function LudoScreen({ navigation }: Props) {
             )}
 
             {/* Error display */}
-            {error && (
-              <Text style={[styles.error, { color: colors.error }]}>{error}</Text>
-            )}
+            {error && <Text style={[styles.error, { color: colors.error }]}>{error}</Text>}
           </>
         )}
       </ScrollView>

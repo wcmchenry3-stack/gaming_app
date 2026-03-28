@@ -23,9 +23,7 @@ export default function DiceDisplay({ value, extraTurn }: Props) {
         {value != null ? DIE_FACES[value - 1] : "?"}
       </Text>
       {extraTurn && (
-        <Text style={[styles.badge, { color: colors.accent }]}>
-          {t("die.extraTurn")}
-        </Text>
+        <Text style={[styles.badge, { color: colors.accent }]}>{t("die.extraTurn")}</Text>
       )}
     </View>
   );

@@ -30,15 +30,24 @@ interface Props {
 
 function cellBg(role: CellRole, colors: ReturnType<typeof useTheme>["colors"]): string {
   switch (role) {
-    case "home_base_red": return PLAYER_HOME_BG.red;
-    case "home_base_yellow": return PLAYER_HOME_BG.yellow;
-    case "home_base_unused": return colors.surface;
-    case "home_col_red": return "#ef9a9a";
-    case "home_col_yellow": return "#fff176";
-    case "safe": return "#c8e6c9"; // light green star
-    case "center": return "#e8eaf6";
-    case "track": return colors.surface;
-    default: return colors.background;
+    case "home_base_red":
+      return PLAYER_HOME_BG.red;
+    case "home_base_yellow":
+      return PLAYER_HOME_BG.yellow;
+    case "home_base_unused":
+      return colors.surface;
+    case "home_col_red":
+      return "#ef9a9a";
+    case "home_col_yellow":
+      return "#fff176";
+    case "safe":
+      return "#c8e6c9"; // light green star
+    case "center":
+      return "#e8eaf6";
+    case "track":
+      return colors.surface;
+    default:
+      return colors.background;
   }
 }
 

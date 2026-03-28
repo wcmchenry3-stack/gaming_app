@@ -11,7 +11,13 @@ interface Props {
   onHome: () => void;
 }
 
-export default function LudoGameOverModal({ visible, winner, humanPlayer, onPlayAgain, onHome }: Props) {
+export default function LudoGameOverModal({
+  visible,
+  winner,
+  humanPlayer,
+  onPlayAgain,
+  onHome,
+}: Props) {
   const { t } = useTranslation("ludo");
   const { colors } = useTheme();
 
@@ -21,15 +27,11 @@ export default function LudoGameOverModal({ visible, winner, humanPlayer, onPlay
     <Modal visible={visible} transparent animationType="fade">
       <View style={styles.overlay}>
         <View style={[styles.card, { backgroundColor: colors.surface }]}>
-          <Text style={[styles.title, { color: colors.text }]}>
-            {t("gameOver.title")}
-          </Text>
+          <Text style={[styles.title, { color: colors.text }]}>{t("gameOver.title")}</Text>
           <Text style={[styles.result, { color: colors.accent }]}>
             {humanWon ? t("gameOver.youWin") : t("gameOver.cpuWins")}
           </Text>
-          <Text style={[styles.body, { color: colors.textMuted }]}>
-            {t("gameOver.body")}
-          </Text>
+          <Text style={[styles.body, { color: colors.textMuted }]}>{t("gameOver.body")}</Text>
 
           <Pressable
             style={[styles.btn, { backgroundColor: colors.accent }]}
@@ -48,9 +50,7 @@ export default function LudoGameOverModal({ visible, winner, humanPlayer, onPlay
             accessibilityRole="button"
             accessibilityLabel={t("gameOver.homeLabel")}
           >
-            <Text style={[styles.btnText, { color: colors.text }]}>
-              {t("gameOver.home")}
-            </Text>
+            <Text style={[styles.btnText, { color: colors.text }]}>{t("gameOver.home")}</Text>
           </Pressable>
         </View>
       </View>
