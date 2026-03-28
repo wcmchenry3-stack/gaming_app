@@ -83,7 +83,7 @@ test.describe("Accessibility — Fruit Merge screen", () => {
   test("no critical/serious axe violations on Fruit Merge screen", async ({ page }) => {
     await page.goto("/");
     await page.getByRole("button", { name: "Play Fruit Merge" }).click();
-    await expect(page.getByText("Fruit Merge")).toBeVisible({ timeout: 10000 });
+    await expect(page.getByRole("heading", { name: "Fruit Merge" })).toBeVisible({ timeout: 10000 });
 
     await assertNoA11yViolations(
       new AxeBuilder({ page })

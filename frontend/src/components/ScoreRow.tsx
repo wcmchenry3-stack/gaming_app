@@ -46,7 +46,7 @@ export default function ScoreRow({ label, score, potential, onSelect, canScore }
         {isFilled ? (
           <Text style={[styles.score, { color: colors.textFilled }]}>{score}</Text>
         ) : canScore && potential !== undefined ? (
-          <Text style={[styles.potential, { color: colors.accent }]}>{potential}</Text>
+          <Text style={[styles.potential, { color: colors.potential }]}>{potential}</Text>
         ) : (
           <Text style={[styles.dash, { color: colors.border }]}>—</Text>
         )}
