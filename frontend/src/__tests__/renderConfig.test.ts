@@ -3,13 +3,12 @@
  *
  * render.yaml deployment config guard
  * ------------------------------------
- * Verifies that EXPO_PUBLIC_API_URL is set to a hardcoded full HTTPS URL
- * rather than a bare hostname from a fromService reference.
+ * Verifies that the frontend build uses fetch-render-env.js to dynamically
+ * resolve the API URL via the Render API, rather than hardcoding it or using
+ * Render's fromService reference (which returns a bare slug, not a full URL).
  *
  * Regression test for the production bug where all API-dependent games
- * (Yahtzee, Blackjack, Ludo) failed with ERR_NAME_NOT_RESOLVED because
- * Render's fromService resolved to the internal hostname "yahtzee-api"
- * instead of the public URL "https://yahtzee-api.onrender.com".
+ * (Yahtzee, Blackjack, Ludo) failed with ERR_NAME_NOT_RESOLVED.
  */
 
 import * as fs from "fs";
@@ -19,12 +18,18 @@ const renderYamlPath = path.resolve(__dirname, "../../../render.yaml");
 const renderYaml = fs.readFileSync(renderYamlPath, "utf-8");
 
 describe("render.yaml deployment configuration", () => {
-  it("EXPO_PUBLIC_API_URL is set to a hardcoded full HTTPS URL", () => {
-    // Match: EXPO_PUBLIC_API_URL followed by value: https://...
-    const valueMatch = renderYaml.match(/EXPO_PUBLIC_API_URL[\s\S]*?value:\s*(https?:\/\/\S+)/);
-    expect(valueMatch).not.toBeNull();
-    const url = valueMatch![1];
-    expect(url).toMatch(/^https:\/\/.+/);
+  it("frontend buildCommand runs fetch-render-env.js before expo export", () => {
+    // The script queries the Render API at build time so the URL is always correct.
+    // Find the line that contains expo export and assert the script precedes it.
+    const scriptIdx = renderYaml.indexOf("fetch-render-env.js");
+    const exportIdx = renderYaml.indexOf("expo export");
+    expect(scriptIdx).toBeGreaterThan(-1);
+    expect(exportIdx).toBeGreaterThan(scriptIdx);
+  });
+
+  it("EXPO_PUBLIC_API_URL is not hardcoded in render.yaml", () => {
+    // The value must come from the Render API at build time, not be baked into render.yaml.
+    expect(renderYaml).not.toMatch(/EXPO_PUBLIC_API_URL[\s\S]*?value:\s*https?:\/\//);
   });
 
   it("no fromService env var uses property: host (internal-only hostname)", () => {

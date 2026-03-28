@@ -10,15 +10,23 @@ services:
       - key: PYTHON_VERSION
         value: 3.11.0
       - key: ALLOWED_ORIGINS
-        value: https://yahtzee-frontend.onrender.com
+        fromService:
+          name: yahtzee-frontend
+          type: web
+          property: url
 
   # --- Expo Web static frontend ---
   - type: web
     name: yahtzee-frontend
     runtime: static
     rootDir: frontend
-    buildCommand: npm ci && npx expo export --platform web
+    # fetch-render-env.js queries the Render API for the API service's public URL
+    # and writes EXPO_PUBLIC_API_URL to .env before Expo bakes it into the bundle.
+    # RENDER_API_KEY must be set as a secret env var in the Render dashboard.
+    buildCommand: npm ci && node scripts/fetch-render-env.js && npx expo export --platform web
     staticPublishPath: dist
     envVars:
-      - key: EXPO_PUBLIC_API_URL
-        value: https://yahtzee-api.onrender.com
+      - key: RENDER_API_SERVICE_NAME
+        value: yahtzee-api
+      - key: RENDER_API_KEY
+        sync: false
