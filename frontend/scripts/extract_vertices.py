@@ -24,7 +24,7 @@ JSON format
   { "cherry": [[-0.12, 0.95], [0.38, 0.82], ...], "apple": [...], ... }
 
 Each vertex array is the convex hull of the opaque pixels, normalized so that:
-  - centroid = (0, 0)
+  - area-weighted centroid = (0, 0)  ← matches Matter.js Vertices.centre
   - max distance from centroid = 1.0
 
 Scale by the fruit's physics radius at runtime to get world-space vertices.
@@ -111,21 +111,51 @@ def _graham_scan(points: list[tuple[float, float]]) -> list[tuple[float, float]]
     return stack if len(stack) >= 3 else []
 
 
+def _area_centroid(hull: list[tuple[float, float]]) -> tuple[float, float]:
+    """
+    Compute the area-weighted (polygon) centroid of a convex hull.
+
+    Uses the standard shoelace formula — the same method Matter.js uses
+    internally in Vertices.centre().  For symmetric shapes the result equals
+    the arithmetic mean; for asymmetric shapes (grapes, cherry, apple, …) it
+    can differ significantly.
+
+    Falls back to the arithmetic mean for degenerate cases (near-zero area).
+    """
+    n = len(hull)
+    area = cx = cy = 0.0
+    for i in range(n):
+        j = (i + 1) % n
+        cross = hull[i][0] * hull[j][1] - hull[j][0] * hull[i][1]
+        area += cross
+        cx += (hull[i][0] + hull[j][0]) * cross
+        cy += (hull[i][1] + hull[j][1]) * cross
+    area /= 2.0
+    if abs(area) < 1e-10:
+        # Degenerate polygon — fall back to arithmetic mean
+        return sum(p[0] for p in hull) / n, sum(p[1] for p in hull) / n
+    return cx / (6 * area), cy / (6 * area)
+
+
 def _normalize_hull(
     hull: list[tuple[float, float]],
 ) -> list[tuple[float, float]]:
     """
     Normalize hull vertices so that:
-      - centroid is at (0, 0)
+      - area-weighted centroid is at (0, 0)  ← matches Matter.js Vertices.centre
       - maximum distance from centroid is 1.0
+
+    Using the area-weighted centroid (rather than the arithmetic mean) ensures
+    that when Matter.js calls setVertices() internally during fromVertices(),
+    its own centroid recentering is a no-op — the body ends up exactly at the
+    requested spawn position regardless of shape asymmetry.
 
     Returns [] if hull is empty or all vertices are coincident.
     """
     if not hull:
         return []
 
-    cx = sum(p[0] for p in hull) / len(hull)
-    cy = sum(p[1] for p in hull) / len(hull)
+    cx, cy = _area_centroid(hull)
 
     centered = [(p[0] - cx, p[1] - cy) for p in hull]
 

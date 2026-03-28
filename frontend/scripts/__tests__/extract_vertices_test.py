@@ -13,6 +13,7 @@ import pytest
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from extract_vertices import (  # noqa: E402
+    _area_centroid,
     _graham_scan,
     _normalize_hull,
     _opaque_pixels,
@@ -149,6 +150,43 @@ class TestGrahamScan:
 
 
 # ---------------------------------------------------------------------------
+# _area_centroid
+# ---------------------------------------------------------------------------
+
+class TestAreaCentroid:
+    def test_square_matches_arithmetic_mean(self):
+        """For a symmetric square the area centroid equals the arithmetic mean."""
+        hull = [(0.0, 0.0), (4.0, 0.0), (4.0, 4.0), (0.0, 4.0)]
+        cx, cy = _area_centroid(hull)
+        assert abs(cx - 2.0) < 1e-9
+        assert abs(cy - 2.0) < 1e-9
+
+    def test_right_triangle_centroid(self):
+        """Right triangle with vertices (0,0),(6,0),(0,4) → centroid at (2, 4/3)."""
+        hull = [(0.0, 0.0), (6.0, 0.0), (0.0, 4.0)]
+        cx, cy = _area_centroid(hull)
+        assert abs(cx - 2.0) < 1e-6
+        assert abs(cy - 4.0 / 3.0) < 1e-6
+
+    def test_asymmetric_differs_from_arithmetic_mean(self):
+        """For a clearly asymmetric polygon, area centroid != arithmetic mean."""
+        # L-shaped convex hull approximation — wide base, narrow top-right
+        hull = [(0.0, 0.0), (9.0, 0.0), (9.0, 1.0), (1.0, 1.0), (1.0, 5.0), (0.0, 5.0)]
+        cx_area, cy_area = _area_centroid(hull)
+        cx_arith = sum(p[0] for p in hull) / len(hull)
+        cy_arith = sum(p[1] for p in hull) / len(hull)
+        # They should differ by more than a rounding error
+        assert abs(cx_area - cx_arith) > 0.5 or abs(cy_area - cy_arith) > 0.5
+
+    def test_degenerate_collinear_falls_back_to_arithmetic_mean(self):
+        """Three collinear points have zero area — fallback to arithmetic mean."""
+        hull = [(0.0, 0.0), (2.0, 0.0), (4.0, 0.0)]
+        cx, cy = _area_centroid(hull)
+        assert abs(cx - 2.0) < 1e-9
+        assert abs(cy - 0.0) < 1e-9
+
+
+# ---------------------------------------------------------------------------
 # _normalize_hull
 # ---------------------------------------------------------------------------
 
@@ -156,11 +194,20 @@ class TestNormalizeHull:
     def test_empty_input_returns_empty(self):
         assert _normalize_hull([]) == []
 
-    def test_centroid_at_origin(self):
+    def test_area_centroid_at_origin_symmetric(self):
+        """For a symmetric square, area centroid (= arithmetic mean) should be at origin."""
         hull = [(0.0, 0.0), (4.0, 0.0), (4.0, 4.0), (0.0, 4.0)]
         normalized = _normalize_hull(hull)
-        cx = sum(p[0] for p in normalized) / len(normalized)
-        cy = sum(p[1] for p in normalized) / len(normalized)
+        cx, cy = _area_centroid(normalized)
+        assert abs(cx) < 1e-9
+        assert abs(cy) < 1e-9
+
+    def test_area_centroid_at_origin_asymmetric(self):
+        """For an asymmetric triangle, area centroid of result must be at origin."""
+        hull = [(0.0, 0.0), (6.0, 0.0), (0.0, 4.0)]  # right triangle
+        normalized = _normalize_hull(hull)
+        assert normalized
+        cx, cy = _area_centroid(normalized)
         assert abs(cx) < 1e-9
         assert abs(cy) < 1e-9
 
@@ -215,12 +262,12 @@ class TestExtractHull:
             assert math.hypot(pt[0], pt[1]) <= 1.0 + 1e-9
 
     def test_circle_hull_centroid_near_origin(self):
+        """Area centroid of a circle hull should be near origin after normalization."""
         size = 50
         pixels = _circle_pixels(size, size, radius=20.0)
         hull = extract_hull(pixels, size, size)
         assert hull
-        cx = sum(p[0] for p in hull) / len(hull)
-        cy = sum(p[1] for p in hull) / len(hull)
+        cx, cy = _area_centroid(hull)
         assert abs(cx) < 0.1
         assert abs(cy) < 0.1
 
