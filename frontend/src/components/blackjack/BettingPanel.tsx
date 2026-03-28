@@ -73,24 +73,17 @@ export default function BettingPanel({ chips, onDeal, loading, error }: Props) {
       </View>
 
       <Pressable
-        style={[
-          styles.dealBtn,
-          { backgroundColor: canDeal ? colors.accent : colors.border },
-        ]}
+        style={[styles.dealBtn, { backgroundColor: canDeal ? colors.accent : colors.border }]}
         onPress={() => onDeal(bet)}
         disabled={!canDeal}
         accessibilityRole="button"
         accessibilityLabel={t("actions.dealLabel", { amount: bet })}
         accessibilityState={{ disabled: !canDeal, busy: loading }}
       >
-        <Text style={[styles.dealBtnText, { color: colors.surface }]}>
-          {t("actions.deal")}
-        </Text>
+        <Text style={[styles.dealBtnText, { color: colors.surface }]}>{t("actions.deal")}</Text>
       </Pressable>
 
-      {error && (
-        <Text style={[styles.error, { color: colors.error }]}>{error}</Text>
-      )}
+      {error && <Text style={[styles.error, { color: colors.error }]}>{error}</Text>}
     </View>
   );
 }

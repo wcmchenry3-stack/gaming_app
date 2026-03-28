@@ -37,8 +37,7 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
 }
 
 export const blackjackApi = {
-  newSession: () =>
-    request<BlackjackState>("/blackjack/new", { method: "POST" }),
+  newSession: () => request<BlackjackState>("/blackjack/new", { method: "POST" }),
 
   getState: () => request<BlackjackState>("/blackjack/state"),
 
@@ -52,9 +51,7 @@ export const blackjackApi = {
 
   stand: () => request<BlackjackState>("/blackjack/stand", { method: "POST" }),
 
-  doubleDown: () =>
-    request<BlackjackState>("/blackjack/double-down", { method: "POST" }),
+  doubleDown: () => request<BlackjackState>("/blackjack/double-down", { method: "POST" }),
 
-  newHand: () =>
-    request<BlackjackState>("/blackjack/new-hand", { method: "POST" }),
+  newHand: () => request<BlackjackState>("/blackjack/new-hand", { method: "POST" }),
 };

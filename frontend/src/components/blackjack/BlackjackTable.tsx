@@ -16,11 +16,7 @@ export default function BlackjackTable({ playerHand, dealerHand, phase }: Props)
 
   return (
     <View style={styles.container}>
-      <HandDisplay
-        hand={dealerHand}
-        label={t("hand.dealer")}
-        concealed={isPlayerPhase}
-      />
+      <HandDisplay hand={dealerHand} label={t("hand.dealer")} concealed={isPlayerPhase} />
       <View style={styles.divider} />
       <HandDisplay hand={playerHand} label={t("hand.player")} />
     </View>

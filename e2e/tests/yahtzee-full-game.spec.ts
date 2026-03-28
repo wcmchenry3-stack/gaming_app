@@ -27,10 +27,10 @@ const CATEGORY_LABELS: Record<string, string> = {
   sixes: "Sixes",
   three_of_a_kind: "Three of a Kind",
   four_of_a_kind: "Four of a Kind",
-  full_house: "Full House",
-  small_straight: "Sm. Straight",
-  large_straight: "Lg. Straight",
-  yahtzee: "Yahtzee",
+  full_house: "Full House (25)",
+  small_straight: "Sm. Straight (30)",
+  large_straight: "Lg. Straight (40)",
+  yahtzee: "Yahtzee! (50)",
   chance: "Chance",
 };
 

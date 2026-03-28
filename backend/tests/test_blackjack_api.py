@@ -8,7 +8,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 import blackjack.router as blackjack_router_module
-from blackjack.game import BlackjackGame, Card
+from blackjack.game import Card
 from main import app
 
 client = TestClient(app)

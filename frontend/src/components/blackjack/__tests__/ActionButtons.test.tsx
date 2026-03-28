@@ -32,9 +32,7 @@ describe("ActionButtons", () => {
 
   it("Double Down has enabled accessibility label when doubleDownAvailable is true", () => {
     const { getByLabelText } = renderButtons(true);
-    expect(
-      getByLabelText("Double down — double bet and take one card")
-    ).toBeTruthy();
+    expect(getByLabelText("Double down — double bet and take one card")).toBeTruthy();
   });
 
   it("Double Down button has accessibilityState disabled=true when unavailable", () => {

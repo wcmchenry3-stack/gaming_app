@@ -83,7 +83,8 @@ test.describe("Language switcher", () => {
   });
 
   test("switching language and back to English restores English copy", async ({ page }) => {
-    const switcher = page.getByRole("combobox", { name: /language/i });
+    // Use the <select> element directly — its accessible name changes locale after selection
+    const switcher = page.locator("select").first();
 
     await switcher.selectOption("es");
     await expect(page.getByRole("button", { name: "Jugar Yahtzee" })).toBeVisible({

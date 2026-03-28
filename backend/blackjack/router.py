@@ -29,7 +29,6 @@ def _hand_response(cards, conceal_hole: bool = False) -> HandResponse:
             card_responses.append(CardResponse(rank=card.rank, suit=card.suit))
 
     # Value is 0 when hole card is concealed to prevent inference
-    visible_cards = [c for c in cards[1:]] if conceal_hole else list(cards)
     value = 0 if conceal_hole else hand_value(list(cards))
 
     return HandResponse(cards=card_responses, value=value)

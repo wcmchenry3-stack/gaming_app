@@ -15,9 +15,7 @@ export default function HandDisplay({ hand, label, concealed = false }: Props) {
   const { t } = useTranslation("blackjack");
   const { colors } = useTheme();
 
-  const valueText = concealed
-    ? t("hand.valueHidden")
-    : t("hand.value", { value: hand.value });
+  const valueText = concealed ? t("hand.valueHidden") : t("hand.value", { value: hand.value });
 
   return (
     <View style={styles.container}>

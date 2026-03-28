@@ -14,14 +14,11 @@ export default function GameOverModal({ visible, onPlayAgain, onHome }: Props) {
   const { colors } = useTheme();
 
   return (
-    <Modal
-      visible={visible}
-      transparent
-      animationType="fade"
-      accessibilityViewIsModal
-    >
+    <Modal visible={visible} transparent animationType="fade" accessibilityViewIsModal>
       <View style={styles.overlay}>
-        <View style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+        <View
+          style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.border }]}
+        >
           <Text style={[styles.title, { color: colors.text }]}>{t("gameOver.title")}</Text>
           <Text style={[styles.body, { color: colors.textMuted }]}>{t("gameOver.body")}</Text>
 
@@ -31,7 +28,9 @@ export default function GameOverModal({ visible, onPlayAgain, onHome }: Props) {
             accessibilityRole="button"
             accessibilityLabel={t("gameOver.playAgainLabel")}
           >
-            <Text style={[styles.btnText, { color: colors.surface }]}>{t("gameOver.playAgain")}</Text>
+            <Text style={[styles.btnText, { color: colors.surface }]}>
+              {t("gameOver.playAgain")}
+            </Text>
           </Pressable>
 
           <Pressable

@@ -29,10 +29,18 @@ export default function BlackjackScreen({ navigation }: Props) {
     setLoading(true);
     blackjackApi
       .newSession()
-      .then((s) => { if (active) setState(s); })
-      .catch(() => { if (active) setError(t("errors:backend.connection")); })
-      .finally(() => { if (active) setLoading(false); });
-    return () => { active = false; };
+      .then((s) => {
+        if (active) setState(s);
+      })
+      .catch(() => {
+        if (active) setError(t("errors:backend.connection"));
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+    return () => {
+      active = false;
+    };
   }, [t]);
 
   const call = useCallback(

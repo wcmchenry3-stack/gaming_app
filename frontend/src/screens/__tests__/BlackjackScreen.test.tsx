@@ -115,11 +115,17 @@ beforeEach(() => {
 describe("BlackjackScreen — initial load", () => {
   it("shows loading indicator while session is being created", async () => {
     let resolve!: (v: ReturnType<typeof makeBettingState>) => void;
-    mockApi.newSession.mockReturnValue(new Promise((r) => { resolve = r; }));
+    mockApi.newSession.mockReturnValue(
+      new Promise((r) => {
+        resolve = r;
+      })
+    );
     const { UNSAFE_getByType } = renderScreen();
     await waitFor(() => expect(UNSAFE_getByType(ActivityIndicator)).toBeTruthy());
     // clean up
-    await act(async () => { resolve(makeBettingState()); });
+    await act(async () => {
+      resolve(makeBettingState());
+    });
   });
 
   it("renders BettingPanel after session created", async () => {
@@ -141,7 +147,9 @@ describe("BlackjackScreen — betting phase", () => {
     mockApi.placeBet.mockResolvedValue(makePlayerState());
     const { findByText } = renderScreen();
     const dealBtn = await findByText("Deal");
-    await act(async () => { fireEvent.press(dealBtn); });
+    await act(async () => {
+      fireEvent.press(dealBtn);
+    });
     expect(mockApi.placeBet).toHaveBeenCalledTimes(1);
   });
 });
@@ -159,7 +167,9 @@ describe("BlackjackScreen — player phase", () => {
     mockApi.hit.mockResolvedValue(makePlayerState());
     const { findByText } = renderScreen();
     const hitBtn = await findByText("Hit");
-    await act(async () => { fireEvent.press(hitBtn); });
+    await act(async () => {
+      fireEvent.press(hitBtn);
+    });
     expect(mockApi.hit).toHaveBeenCalledTimes(1);
   });
 
@@ -168,7 +178,9 @@ describe("BlackjackScreen — player phase", () => {
     mockApi.stand.mockResolvedValue(makeResultState());
     const { findByText } = renderScreen();
     const standBtn = await findByText("Stand");
-    await act(async () => { fireEvent.press(standBtn); });
+    await act(async () => {
+      fireEvent.press(standBtn);
+    });
     expect(mockApi.stand).toHaveBeenCalledTimes(1);
   });
 
@@ -177,7 +189,9 @@ describe("BlackjackScreen — player phase", () => {
     mockApi.doubleDown.mockResolvedValue(makeResultState());
     const { findByText } = renderScreen();
     const ddBtn = await findByText("Double Down");
-    await act(async () => { fireEvent.press(ddBtn); });
+    await act(async () => {
+      fireEvent.press(ddBtn);
+    });
     expect(mockApi.doubleDown).toHaveBeenCalledTimes(1);
   });
 
@@ -207,7 +221,9 @@ describe("BlackjackScreen — result phase", () => {
     mockApi.newHand.mockResolvedValue(makeBettingState());
     const { findByText } = renderScreen();
     const btn = await findByText("Next Hand");
-    await act(async () => { fireEvent.press(btn); });
+    await act(async () => {
+      fireEvent.press(btn);
+    });
     expect(mockApi.newHand).toHaveBeenCalledTimes(1);
   });
 });
@@ -223,7 +239,9 @@ describe("BlackjackScreen — game over", () => {
     mockApi.newSession.mockResolvedValue(makeResultState({ game_over: true, chips: 0 }));
     const { findByText } = renderScreen();
     const btn = await findByText("Play Again");
-    await act(async () => { fireEvent.press(btn); });
+    await act(async () => {
+      fireEvent.press(btn);
+    });
     // newSession called once for mount + once for play again
     expect(mockApi.newSession).toHaveBeenCalledTimes(2);
   });

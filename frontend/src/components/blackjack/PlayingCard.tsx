@@ -27,7 +27,11 @@ export default function PlayingCard({ card }: Props) {
   if (card.face_down) {
     return (
       <View
-        style={[styles.card, styles.faceDown, { borderColor: colors.border, backgroundColor: colors.surface }]}
+        style={[
+          styles.card,
+          styles.faceDown,
+          { borderColor: colors.border, backgroundColor: colors.surface },
+        ]}
         accessibilityLabel={t("card.faceDown")}
         accessibilityRole="image"
       >
