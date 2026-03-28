@@ -1,11 +1,12 @@
 """Integration tests for Ludo FastAPI endpoints."""
+
 import pytest
 from fastapi.testclient import TestClient
 from unittest.mock import patch
 
 from main import app
 import ludo.router as ludo_router_module
-from ludo.game import FINISH, HOME_COL_START, HOME_COL_ENTRY_OUTER, PLAYER_ENTRY, new_game
+from ludo.game import PLAYER_ENTRY, new_game
 
 client = TestClient(app)
 
@@ -217,6 +218,8 @@ class TestRestart:
 class TestCapture:
     def test_capture_sends_opponent_to_base(self):
         from ludo.game import SAFE_SQUARES
+        from unittest.mock import patch
+
         # Find a non-safe square to stage the capture
         target = next(s for s in range(1, 52) if s not in SAFE_SQUARES)
         g = new_game()
@@ -226,7 +229,9 @@ class TestCapture:
         g.die_value = 1
         g.valid_moves = [0]
         _inject(g)
-        resp = client.post("/ludo/move", json={"piece_index": 0})
+        # Patch random so CPU rolls 1 — all yellow pieces in base, no valid moves → skip
+        with patch("ludo.game.random.randint", return_value=1):
+            resp = client.post("/ludo/move", json={"piece_index": 0})
         assert resp.status_code == 200
         data = resp.json()
         yellow_state = next(ps for ps in data["player_states"] if ps["player_id"] == "yellow")

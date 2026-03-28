@@ -9,10 +9,9 @@ interface Props {
   playerStates: PlayerStateResponse[];
   currentPlayer: string;
   humanPlayer: string;
-  cpuPlayer: string | null;
 }
 
-export default function PlayerStatus({ playerStates, currentPlayer, humanPlayer, cpuPlayer }: Props) {
+export default function PlayerStatus({ playerStates, currentPlayer, humanPlayer }: Props) {
   const { t } = useTranslation("ludo");
   const { colors } = useTheme();
 

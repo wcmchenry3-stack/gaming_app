@@ -161,7 +161,6 @@ export default function LudoScreen({ navigation }: Props) {
               playerStates={state.player_states}
               currentPlayer={state.current_player}
               humanPlayer={HUMAN_PLAYER}
-              cpuPlayer={state.cpu_player}
             />
 
             {/* Die display */}

@@ -7,7 +7,9 @@ class MoveRequest(BaseModel):
 
 class PieceResponse(BaseModel):
     index: int
-    position: int  # -1=base, 0-51=outer track, 52-57=red home col, 64-69=yellow home col, 100=finished
+    position: (
+        int  # -1=base, 0-51=outer track, 52-57=red home col, 64-69=yellow home col, 100=finished
+    )
     is_home: bool
     is_finished: bool
 

@@ -1,4 +1,5 @@
 """Unit tests for LudoGame game logic."""
+
 import pytest
 from unittest.mock import patch
 
@@ -13,7 +14,6 @@ from ludo.game import (
     _advance,
     new_game,
 )
-
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -242,7 +242,9 @@ class TestMovePiece:
     def test_capture_sends_opponent_to_base(self):
         # Find a non-safe, non-zero outer track square for the capture
         target = next(s for s in range(1, 52) if s not in SAFE_SQUARES)
-        g = _make_game(red=[target - 1, -1, -1, -1], yellow=[target, -1, -1, -1], die=1, phase="move")
+        g = _make_game(
+            red=[target - 1, -1, -1, -1], yellow=[target, -1, -1, -1], die=1, phase="move"
+        )
         g.valid_moves = [0]
         g.move_piece(0)
         assert g.pieces["red"][0] == target
