@@ -119,15 +119,15 @@ describe("api BASE_URL configuration", () => {
     );
   });
 
-  it("prepends https:// when EXPO_PUBLIC_API_URL is a bare hostname (Render property: host)", async () => {
-    // Render's property: host injects just the service name, e.g. "yahtzee-api".
-    // The client must still prepend https:// so the URL is at least syntactically valid.
-    process.env.EXPO_PUBLIC_API_URL = "yahtzee-api";
+  it("builds a full onrender.com URL when EXPO_PUBLIC_API_URL is a bare slug (Render fromService)", async () => {
+    // Render's fromService with property: url injects a bare subdomain slug,
+    // e.g. "yahtzee-api-fql1" — no https:// and no .onrender.com suffix.
+    process.env.EXPO_PUBLIC_API_URL = "yahtzee-api-fql1";
     // eslint-disable-next-line @typescript-eslint/no-require-imports
     const { api: freshApi } = require("../client") as typeof import("../client");
     await freshApi.newGame();
     const calledUrl = (global.fetch as jest.Mock).mock.calls[0][0] as string;
-    expect(calledUrl).toMatch(/^https:\/\//);
+    expect(calledUrl).toMatch(/^https:\/\/yahtzee-api-fql1\.onrender\.com/);
   });
 
   it("falls back to http://localhost:8000 when EXPO_PUBLIC_API_URL is not set", async () => {
