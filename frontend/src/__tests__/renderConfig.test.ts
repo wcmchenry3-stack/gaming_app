@@ -21,9 +21,7 @@ const renderYaml = fs.readFileSync(renderYamlPath, "utf-8");
 describe("render.yaml deployment configuration", () => {
   it("EXPO_PUBLIC_API_URL uses property: url, not property: host", () => {
     // Find the EXPO_PUBLIC_API_URL block and assert it uses "url" not "host"
-    const envVarBlock = renderYaml.match(
-      /EXPO_PUBLIC_API_URL[\s\S]*?property:\s*(\w+)/
-    );
+    const envVarBlock = renderYaml.match(/EXPO_PUBLIC_API_URL[\s\S]*?property:\s*(\w+)/);
     expect(envVarBlock).not.toBeNull();
     const propertyValue = envVarBlock![1];
     expect(propertyValue).toBe("url");
