@@ -415,7 +415,7 @@ describe("world boundary clamping", () => {
     Matter.Body.setVelocity(body, { x: 0, y: 12 });
     fireUpdate(engine);
 
-    expect(body.bounds.max.y).toBeLessThanOrEqual(H);
+    expect(body.bounds.max.y).toBeLessThanOrEqual(H - WALL_THICKNESS); // top of visual floor bar
     expect(body.velocity.y).toBeLessThanOrEqual(0);
   });
 

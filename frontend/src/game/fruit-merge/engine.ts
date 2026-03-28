@@ -63,7 +63,8 @@ export function createEngine(
 
   // Walls sit INSIDE the canvas so physics and rendering match.
   // Left wall inner surface = WALL_THICKNESS; right = W - WALL_THICKNESS.
-  const floor = Matter.Bodies.rectangle(W / 2, H + WALL_THICKNESS / 2, W, WALL_THICKNESS, {
+  // Floor top surface at H - WALL_THICKNESS, matching the visual floor bar drawn by the renderer.
+  const floor = Matter.Bodies.rectangle(W / 2, H - WALL_THICKNESS / 2, W, WALL_THICKNESS, {
     isStatic: true,
     label: "floor",
   });
@@ -134,7 +135,7 @@ export function createEngine(
   const dangerY = H * DANGER_LINE_RATIO;
   const leftBoundary = WALL_THICKNESS;
   const rightBoundary = W - WALL_THICKNESS;
-  const floorY = H;
+  const floorY = H - WALL_THICKNESS; // top surface of the visual floor bar
   let gameOverFired = false;
 
   Matter.Events.on(engine, "afterUpdate", () => {
