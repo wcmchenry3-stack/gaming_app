@@ -8,6 +8,7 @@ import HomeScreen from "./src/screens/HomeScreen";
 import GameScreen from "./src/screens/GameScreen";
 import FruitMergeScreen from "./src/screens/FruitMergeScreen";
 import BlackjackScreen from "./src/screens/BlackjackScreen";
+import LudoScreen from "./src/screens/LudoScreen";
 import { GameState } from "./src/api/client";
 import { ThemeProvider } from "./src/theme/ThemeContext";
 import { useHtmlAttributes } from "./src/i18n/useHtmlAttributes";
@@ -17,6 +18,7 @@ export type RootStackParamList = {
   Game: { initialState: GameState };
   FruitMerge: undefined;
   Blackjack: undefined;
+  Ludo: undefined;
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -31,6 +33,7 @@ function AppInner() {
           <Stack.Screen name="Game" component={GameScreen} />
           <Stack.Screen name="FruitMerge" component={FruitMergeScreen} />
           <Stack.Screen name="Blackjack" component={BlackjackScreen} />
+          <Stack.Screen name="Ludo" component={LudoScreen} />
         </Stack.Navigator>
       </NavigationContainer>
     </ThemeProvider>
