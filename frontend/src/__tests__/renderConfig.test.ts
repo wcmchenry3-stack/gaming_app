@@ -3,13 +3,13 @@
  *
  * render.yaml deployment config guard
  * ------------------------------------
- * Verifies that EXPO_PUBLIC_API_URL is sourced from a service using
- * `property: url` (the public HTTPS URL) rather than `property: host`
- * (the Render-internal hostname that is not DNS-resolvable from browsers).
+ * Verifies that EXPO_PUBLIC_API_URL is set to a hardcoded full HTTPS URL
+ * rather than a bare hostname from a fromService reference.
  *
  * Regression test for the production bug where all API-dependent games
  * (Yahtzee, Blackjack, Ludo) failed with ERR_NAME_NOT_RESOLVED because
- * `property: host` injected a bare hostname like "yahtzee-api".
+ * Render's fromService resolved to the internal hostname "yahtzee-api"
+ * instead of the public URL "https://yahtzee-api.onrender.com".
  */
 
 import * as fs from "fs";
@@ -19,12 +19,12 @@ const renderYamlPath = path.resolve(__dirname, "../../../render.yaml");
 const renderYaml = fs.readFileSync(renderYamlPath, "utf-8");
 
 describe("render.yaml deployment configuration", () => {
-  it("EXPO_PUBLIC_API_URL uses property: url, not property: host", () => {
-    // Find the EXPO_PUBLIC_API_URL block and assert it uses "url" not "host"
-    const envVarBlock = renderYaml.match(/EXPO_PUBLIC_API_URL[\s\S]*?property:\s*(\w+)/);
-    expect(envVarBlock).not.toBeNull();
-    const propertyValue = envVarBlock![1];
-    expect(propertyValue).toBe("url");
+  it("EXPO_PUBLIC_API_URL is set to a hardcoded full HTTPS URL", () => {
+    // Match: EXPO_PUBLIC_API_URL followed by value: https://...
+    const valueMatch = renderYaml.match(/EXPO_PUBLIC_API_URL[\s\S]*?value:\s*(https?:\/\/\S+)/);
+    expect(valueMatch).not.toBeNull();
+    const url = valueMatch![1];
+    expect(url).toMatch(/^https:\/\/.+/);
   });
 
   it("no fromService env var uses property: host (internal-only hostname)", () => {
