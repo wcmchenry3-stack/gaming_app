@@ -51,3 +51,7 @@ jobs:
     with:
       working-directory: frontend
     secrets: inherit
+
+  openai-policy:
+    uses: wcmchenry3-stack/.github/.github/workflows/called-openai-policy.yml@main
+    secrets: inherit
