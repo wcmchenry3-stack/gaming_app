@@ -131,10 +131,13 @@ function main() {
   if (totalIssues > 0) {
     console.error(`Found ${totalIssues} structural issue(s). Run translate.js to fill stubs.`);
     process.exit(1);
+  } else if (totalPending > 0) {
+    console.error(
+      `Found ${totalPending} key(s) still marked ${PLACEHOLDER}. Run: npm run translate -- --locale <code> --namespace <ns>`
+    );
+    process.exit(1);
   } else {
-    const pendingNote =
-      totalPending > 0 ? ` (${totalPending} keys still marked ${PLACEHOLDER})` : "";
-    console.log(`All locale files are structurally in sync.${pendingNote}`);
+    console.log(`All locale files are structurally in sync and fully translated.`);
   }
 }
 
