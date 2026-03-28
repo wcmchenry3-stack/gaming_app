@@ -115,7 +115,7 @@ export default function LudoScreen({ navigation }: Props) {
           <Text style={[styles.headerBtnText, { color: colors.textMuted }]}>‹</Text>
         </Pressable>
 
-        <Text style={[styles.title, { color: colors.text }]}>{t("ludo:game.title")}</Text>
+        <Text style={[styles.title, { color: colors.text }]} accessibilityRole="header">{t("ludo:game.title")}</Text>
 
         <Pressable
           style={styles.headerBtn}

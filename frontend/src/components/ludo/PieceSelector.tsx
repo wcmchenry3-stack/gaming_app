@@ -25,7 +25,7 @@ export default function PieceSelector({ validMoves, playerColor, onSelect, loadi
           onPress={() => onSelect(idx)}
           disabled={loading}
           accessibilityRole="button"
-          accessibilityLabel={t("actions.movePieceLabel", { index: idx + 1 })}
+          accessibilityLabel={t("actions.movePiece", { index: idx + 1 })}
           accessibilityState={{ disabled: loading }}
         >
           <Text style={[styles.btnText, { color: colors.surface }]}>

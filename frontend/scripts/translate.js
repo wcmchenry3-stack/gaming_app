@@ -132,8 +132,8 @@ async function callOpenAI(systemPrompt, userPrompt, model) {
   }
 
   const MAX_RETRIES = 5;
-  let attempt = 0;
-  while (true) {
+  let lastError = null;
+  for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
     const response = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -143,6 +143,7 @@ async function callOpenAI(systemPrompt, userPrompt, model) {
       body: JSON.stringify({
         model,
         temperature: 0.2,
+        max_completion_tokens: 4096,
         messages: [
           { role: "system", content: systemPrompt },
           { role: "user", content: userPrompt },
@@ -152,13 +153,10 @@ async function callOpenAI(systemPrompt, userPrompt, model) {
 
     // Retry on 429 RateLimitError with exponential backoff
     if (response.status === 429) {
-      attempt++;
-      if (attempt >= MAX_RETRIES) {
-        throw new Error(`OpenAI RateLimitError: exceeded ${MAX_RETRIES} retry attempts`);
-      }
-      const backoff = Math.pow(2, attempt) * 1000;
-      console.warn(`Rate limit hit (429). Retrying in ${backoff / 1000}s (attempt ${attempt}/${MAX_RETRIES})...`);
+      const backoff = Math.pow(2, attempt + 1) * 1000;
+      console.warn(`Rate limit hit (429). Retrying in ${backoff / 1000}s (attempt ${attempt + 1}/${MAX_RETRIES})...`);
       await new Promise((resolve) => setTimeout(resolve, backoff));
+      lastError = new Error(`OpenAI RateLimitError after ${MAX_RETRIES} retries`);
       continue;
     }
 
@@ -170,6 +168,7 @@ async function callOpenAI(systemPrompt, userPrompt, model) {
     const data = await response.json();
     return data.choices[0].message.content.trim();
   }
+  throw lastError ?? new Error(`OpenAI RateLimitError: exceeded ${MAX_RETRIES} retry attempts`);
 }
 
 // ─── Validation ───────────────────────────────────────────────────────────────
