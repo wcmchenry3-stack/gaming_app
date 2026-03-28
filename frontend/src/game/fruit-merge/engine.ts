@@ -6,14 +6,13 @@ export const WALL_THICKNESS = 16;
 export const DANGER_LINE_RATIO = 0.18; // 18% from top — game over if settled fruit crosses this
 const GAME_OVER_GRACE_MS = 2000; // ignore newly-dropped fruit for 2 seconds
 
-// --- Physics tuning constants (aligned with Suika Game / Matter.js clone references) ---
-const FRUIT_RESTITUTION = 0.45;
-const FRUIT_FRICTION = 0.05;
+// --- Physics tuning constants ---
+// Low restitution = THUD feel (original Suika); fruits barely bounce.
+// Moderate friction = fruits grip each other and settle into place.
+const FRUIT_RESTITUTION = 0.1;
+const FRUIT_FRICTION = 0.3;
 const FRUIT_FRICTION_AIR = 0.01;
 const FRUIT_DENSITY = 0.001;
-
-// Merge chain-reaction: wake sleeping neighbors within this radius so pile rebalances
-const MERGE_WAKE_RADIUS_FACTOR = 3.5; // × merged-fruit radius
 
 export interface FruitBody extends Matter.Body {
   fruitTier: FruitTier;
@@ -53,7 +52,7 @@ export function createEngine(
 ): EngineSetup {
   const engine = Matter.Engine.create({
     gravity: { y: 1.5 },
-    enableSleeping: true,
+    enableSleeping: false, // sleeping bodies can freeze mid-air; ~30 fruits is fine without it
     positionIterations: 8,
     velocityIterations: 8,
   });
@@ -112,16 +111,6 @@ export function createEngine(
         if (tier < 10) {
           const nextDef = fruitSet.fruits[(tier + 1) as FruitTier];
           spawnFruitAt(world, nextDef, fruitSet.id, midX, midY);
-
-          // Wake sleeping bodies near the merge so chain reactions fire correctly
-          const wakeRadius = nextDef.radius * MERGE_WAKE_RADIUS_FACTOR;
-          for (const b of Matter.Composite.allBodies(world)) {
-            const fb2 = b as FruitBody;
-            if (fb2.fruitTier === undefined || fb2.isStatic) continue;
-            if (Math.hypot(b.position.x - midX, b.position.y - midY) <= wakeRadius) {
-              Matter.Sleeping.set(b, false);
-            }
-          }
         }
       }, 0);
     }
