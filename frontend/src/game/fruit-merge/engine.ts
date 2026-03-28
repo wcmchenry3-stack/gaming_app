@@ -65,7 +65,7 @@ let _rapierPromise: Promise<RapierLib> | null = null;
 async function getRapier(): Promise<RapierLib> {
   if (!_rapierPromise) {
     _rapierPromise = (async () => {
-      // eslint-disable-next-line @typescript-eslint/no-var-requires
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
       const mod = require("@dimforge/rapier2d-compat") as { default?: RapierLib } | RapierLib;
       const R = (mod as { default?: RapierLib }).default ?? (mod as RapierLib);
       await R.init();

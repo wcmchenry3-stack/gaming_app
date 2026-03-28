@@ -14,13 +14,10 @@ import {
   WALL_THICKNESS,
 } from "../engine";
 import { FRUIT_SETS } from "../../../theme/fruitSets";
-import {
-  MockWorld,
-  MockCollider,
-} from "../../../../__mocks__/@dimforge/rapier2d-compat";
+import { MockWorld } from "../../../../__mocks__/@dimforge/rapier2d-compat";
 
 // Access the live mock module so tests can inspect call counts
-// eslint-disable-next-line @typescript-eslint/no-var-requires
+// eslint-disable-next-line @typescript-eslint/no-require-imports
 const RAPIER_MOCK = require("@dimforge/rapier2d-compat").default;
 
 const fruitSet = FRUIT_SETS["fruits"];
@@ -217,7 +214,7 @@ describe("merge detection", () => {
 // ---------------------------------------------------------------------------
 
 describe("game-over detection", () => {
-  const dangerY = H * DANGER_LINE_RATIO; // 108px
+  // dangerY = H * DANGER_LINE_RATIO = 108px; used as reference in test comments below
 
   it("fires onGameOver when a settled fruit is above the danger line", async () => {
     const onGameOver = jest.fn();
