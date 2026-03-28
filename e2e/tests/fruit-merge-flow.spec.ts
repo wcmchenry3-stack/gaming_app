@@ -29,7 +29,7 @@ test.describe("Fruit Merge — navigation and smoke tests", () => {
 
   test("navigates from Home to Fruit Merge screen", async ({ page }) => {
     await page.goto("/");
-    await expect(page.getByText("Gaming App")).toBeVisible();
+    await expect(page.getByText("Gaming App").first()).toBeVisible();
 
     await page.getByRole("button", { name: "Play Fruit Merge" }).click();
 
@@ -95,7 +95,7 @@ test.describe("Fruit Merge — navigation and smoke tests", () => {
     // Click back
     await page.getByRole("button", { name: /back/i }).click();
 
-    await expect(page.getByText("Gaming App")).toBeVisible({ timeout: 5000 });
+    await expect(page.getByText("Gaming App").first()).toBeVisible({ timeout: 5000 });
     await expect(page.getByText("Choose a game")).toBeVisible();
   });
 });
