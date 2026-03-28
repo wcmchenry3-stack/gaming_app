@@ -22,7 +22,19 @@ Algorithm
      dist >= SOFT_THRESHOLD → alpha unchanged (definitely foreground)
 
 The script is *idempotent*: if any corner pixel already has alpha < 200 the
-file is assumed to have already been processed and is skipped.
+file is assumed to have already been processed and is skipped (color mode only).
+
+Modes
+-----
+  color   — colour-distance background removal. Suitable for sprites that have a
+             solid or near-solid opaque background (fruit icons). Samples up to
+             four corner regions for reference background colours.
+
+  circle  — circular alpha mask. Suitable for spherical assets (planets/moons)
+             where the subject fills the frame and the "background" corner pixels
+             are part of the subject's atmosphere rather than a solid backdrop.
+             The colour-distance approach incorrectly makes interior pixels
+             semi-transparent for these images; a circle mask is exact.
 """
 
 import math
@@ -32,12 +44,16 @@ from pathlib import Path
 HARD_THRESHOLD = 25  # pixels closer than this to background → fully transparent
 SOFT_THRESHOLD = 80  # pixels beyond this from background → fully opaque
 
-# Default asset directories (relative to this script's parent / frontend root)
+# Circular-mask parameters (used for celestial-icons)
+CIRCLE_RADIUS_FACTOR = 0.48   # planet radius as fraction of min(w,h)
+CIRCLE_FEATHER_FACTOR = 0.01  # soft-edge width as fraction of min(w,h)
+
+# Default asset directories with their processing mode
 _SCRIPT_DIR = Path(__file__).resolve().parent
 _FRONTEND_DIR = _SCRIPT_DIR.parent
-DEFAULT_DIRS = [
-    _FRONTEND_DIR / "assets" / "fruit-icons",
-    _FRONTEND_DIR / "assets" / "celestial-icons",
+DEFAULT_DIRS: list[tuple[Path, str]] = [
+    (_FRONTEND_DIR / "assets" / "fruit-icons",    "color"),
+    (_FRONTEND_DIR / "assets" / "celestial-icons", "circle"),
 ]
 
 
@@ -80,6 +96,50 @@ def _is_already_transparent(pixels: list[tuple[int, int, int, int]], width: int,
                     if pixels[r * width + c][3] < 200:
                         return True
     return False
+
+
+def apply_circle_mask(
+    pixels: list[tuple[int, int, int, int]],
+    width: int,
+    height: int,
+    radius_factor: float = CIRCLE_RADIUS_FACTOR,
+    feather_factor: float = CIRCLE_FEATHER_FACTOR,
+) -> list[tuple[int, int, int, int]]:
+    """
+    Apply a circular alpha mask centred on the image.
+
+    Used for spherical assets (planets/celestial bodies) where the planet fills
+    most of the square frame.  The colour-distance approach incorrectly makes
+    interior planet pixels semi-transparent because the planet's limb/atmosphere
+    is often close in colour to the sampled corner "background".  A circle mask
+    avoids this: pixels inside the inscribed circle stay opaque, pixels outside
+    fade to transparent, with a soft feathered edge.
+
+    Parameters
+    ----------
+    radius_factor  : planet radius as a fraction of min(width, height).
+                     0.48 keeps 96% of the inscribed circle, cutting only
+                     transparent corner space.
+    feather_factor : width of the soft edge as a fraction of min(width, height).
+    """
+    cx, cy = width / 2.0, height / 2.0
+    r = min(width, height) * radius_factor
+    feather = max(1.0, min(width, height) * feather_factor)
+    result = []
+    for idx in range(len(pixels)):
+        row = idx // width
+        col = idx % width
+        dist = math.hypot(col - cx, row - cy)
+        px_r, px_g, px_b, px_a = pixels[idx]
+        if dist <= r - feather:
+            result.append((px_r, px_g, px_b, px_a))
+        elif dist <= r + feather:
+            t = (r + feather - dist) / (2.0 * feather)
+            t = max(0.0, min(1.0, t))
+            result.append((px_r, px_g, px_b, int(px_a * t)))
+        else:
+            result.append((px_r, px_g, px_b, 0))
+    return result
 
 
 def remove_background(
@@ -152,38 +212,43 @@ def _save_rgba(path: Path, pixels: list[tuple[int, int, int, int]], width: int, 
 # File-level processing
 # ---------------------------------------------------------------------------
 
-def process_file(path: Path) -> str:
+def process_file(path: Path, mode: str = "color") -> str:
     """
-    Process a single PNG file in place.
+    Process a single PNG file in place using the given mode.
+
+    mode="color"  — colour-distance background removal (fruits).
+    mode="circle" — circular alpha mask (celestial/spherical assets).
 
     Returns a human-readable status string.
     """
     pixels, width, height = _load_rgba(path)
 
-    if _is_already_transparent(pixels, width, height):
-        return f"{path.name} — skipped (already transparent)"
-
-    processed = remove_background(pixels, width, height)
+    if mode == "circle":
+        processed = apply_circle_mask(pixels, width, height)
+    else:
+        if _is_already_transparent(pixels, width, height):
+            return f"{path.name} — skipped (already transparent)"
+        processed = remove_background(pixels, width, height)
 
     cleared = sum(1 for orig, new in zip(pixels, processed) if orig[3] > 0 and new[3] == 0)
     pct = cleared / (width * height) * 100
 
     _save_rgba(path, processed, width, height)
-    return f"{path.name} — {pct:.1f}% pixels cleared"
+    return f"{path.name} ({mode}) — {pct:.1f}% pixels cleared"
 
 
-def process_path(target: Path) -> list[str]:
+def process_path(target: Path, mode: str = "color") -> list[str]:
     """Process a single file or all PNGs in a directory. Returns status lines."""
     if target.is_file():
         if target.suffix.lower() != ".png":
             return [f"Skipped (not a PNG): {target}"]
-        return [process_file(target)]
+        return [process_file(target, mode)]
 
     if target.is_dir():
         pngs = sorted(target.glob("*.png"))
         if not pngs:
             return [f"No PNG files found in {target}"]
-        return [process_file(p) for p in pngs]
+        return [process_file(p, mode) for p in pngs]
 
     return [f"Path not found: {target}"]
 
@@ -193,11 +258,37 @@ def process_path(target: Path) -> list[str]:
 # ---------------------------------------------------------------------------
 
 def main() -> None:
-    targets = [Path(arg) for arg in sys.argv[1:]] if len(sys.argv) > 1 else DEFAULT_DIRS
+    """
+    Usage
+    -----
+      python remove_backgrounds.py                        # process DEFAULT_DIRS
+      python remove_backgrounds.py <path>                 # color mode (default)
+      python remove_backgrounds.py <path> --mode circle   # circular mask mode
+      python remove_backgrounds.py <path> --mode color    # explicit color mode
+
+    When processing a new asset set, pass --mode circle for spherical subjects
+    (planets, balls, coins, …) or --mode color for flat sprites with solid
+    opaque backgrounds (fruits, gems, …). Add the new directory to DEFAULT_DIRS
+    with the appropriate mode so future unattended runs pick it up automatically.
+    """
+    if len(sys.argv) > 1:
+        # Parse CLI: path [--mode <mode>]
+        args = sys.argv[1:]
+        mode = "color"
+        if "--mode" in args:
+            idx = args.index("--mode")
+            mode = args[idx + 1]
+            args = [a for i, a in enumerate(args) if i not in (idx, idx + 1)]
+        if not args:
+            print("Usage: remove_backgrounds.py <path> [--mode color|circle]", file=sys.stderr)
+            sys.exit(1)
+        targets = [(Path(a), mode) for a in args]
+    else:
+        targets = DEFAULT_DIRS
 
     all_results = []
-    for target in targets:
-        all_results.extend(process_path(target))
+    for target, mode in targets:
+        all_results.extend(process_path(target, mode))
 
     for line in all_results:
         print(line)

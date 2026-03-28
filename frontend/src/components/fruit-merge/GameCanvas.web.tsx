@@ -12,10 +12,12 @@ import {
   createEngine,
   dropFruit,
   FruitBody,
+  BodySnapshot,
   MergeEvent,
   WALL_THICKNESS,
   DANGER_LINE_RATIO,
 } from "../../game/fruit-merge/engine";
+import { getVerticesForFruit } from "../../game/fruit-merge/fruitVertices";
 import { FruitDefinition, FruitSet } from "../../theme/fruitSets";
 import { useTheme } from "../../theme/ThemeContext";
 import { useTranslation } from "react-i18next";
@@ -38,13 +40,6 @@ interface Props {
   height: number;
 }
 
-interface BodySnapshot {
-  id: number;
-  x: number;
-  y: number;
-  tier: number;
-}
-
 function clamp(value: number, min: number, max: number) {
   return Math.max(min, Math.min(max, value));
 }
@@ -54,16 +49,16 @@ function drawFruitBody(
   def: FruitDefinition,
   x: number,
   y: number,
-  image: HTMLImageElement | null,
-  binBackground: string
+  angle: number,
+  image: HTMLImageElement | null
 ) {
   const r = def.radius;
   if (image && image.complete && image.naturalWidth > 0) {
-    ctx.fillStyle = binBackground;
-    ctx.beginPath();
-    ctx.arc(x, y, r, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.drawImage(image, x - r, y - r, r * 2, r * 2);
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.rotate(angle);
+    ctx.drawImage(image, -r, -r, r * 2, r * 2);
+    ctx.restore();
   } else {
     ctx.fillStyle = def.color;
     ctx.beginPath();
@@ -198,8 +193,8 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
           nd,
           ghostCx,
           DROP_Y,
-          htmlImagesRef.current[nd.tier] ?? null,
-          c.fruitBackground
+          0, // ghost has no rotation
+          htmlImagesRef.current[nd.tier] ?? null
         );
         ctx.restore();
       }
@@ -213,8 +208,8 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
           def,
           body.x,
           body.y,
-          htmlImagesRef.current[body.tier] ?? null,
-          c.fruitBackground
+          body.angle,
+          htmlImagesRef.current[body.tier] ?? null
         );
       }
     }, [width, height]); // width/height trigger engine reset anyway, so deps here are stable
@@ -243,6 +238,7 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
             x: b.position.x,
             y: b.position.y,
             tier: (b as FruitBody).fruitTier,
+            angle: b.angle,
           }));
       });
       bodiesRef.current = [];
@@ -276,7 +272,9 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
             WALL_THICKNESS + def.radius,
             width - WALL_THICKNESS - def.radius
           );
-          dropFruit(engineRef.current.world, def, fruitSetRef.current.id, clamped, DROP_Y);
+          const nameKey = def.nameKey ?? def.name.toLowerCase();
+          const verts = getVerticesForFruit(fruitSetRef.current.id, nameKey);
+          dropFruit(engineRef.current.world, def, fruitSetRef.current.id, clamped, DROP_Y, verts);
         },
         reset() {
           initEngine();

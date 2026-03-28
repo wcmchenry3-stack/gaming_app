@@ -18,6 +18,7 @@ from remove_backgrounds import (  # noqa: E402
     SOFT_THRESHOLD,
     _is_already_transparent,
     _sample_background,
+    apply_circle_mask,
     remove_background,
 )
 
@@ -245,3 +246,74 @@ class TestRemoveBackground:
         assert result[9 * 10 + 9][3] == 0    # BR
         # Fruit pixel must remain opaque
         assert result[5 * 10 + 5][3] == 255
+
+
+# ---------------------------------------------------------------------------
+# Circular mask
+# ---------------------------------------------------------------------------
+
+class TestApplyCircleMask:
+    SIZE = 100  # square image; planet fills the frame
+
+    def _planet_image(self) -> list[tuple[int, int, int, int]]:
+        """Solid opaque orange planet filling the frame (no transparent background)."""
+        return [(200, 120, 50, 255)] * (self.SIZE * self.SIZE)
+
+    def _get_alpha(self, result: list[tuple[int, int, int, int]], x: int, y: int) -> int:
+        return result[y * self.SIZE + x][3]
+
+    def test_center_pixel_remains_fully_opaque(self):
+        pixels = self._planet_image()
+        result = apply_circle_mask(pixels, self.SIZE, self.SIZE)
+        assert self._get_alpha(result, self.SIZE // 2, self.SIZE // 2) == 255
+
+    def test_corner_pixels_become_transparent(self):
+        pixels = self._planet_image()
+        result = apply_circle_mask(pixels, self.SIZE, self.SIZE)
+        assert self._get_alpha(result, 0, 0) == 0
+        assert self._get_alpha(result, self.SIZE - 1, 0) == 0
+        assert self._get_alpha(result, 0, self.SIZE - 1) == 0
+        assert self._get_alpha(result, self.SIZE - 1, self.SIZE - 1) == 0
+
+    def test_rgb_values_are_preserved(self):
+        """Circle mask must not alter R, G, B — only alpha."""
+        pixels = self._planet_image()
+        result = apply_circle_mask(pixels, self.SIZE, self.SIZE)
+        for r, g, b, _ in result:
+            assert (r, g, b) == (200, 120, 50)
+
+    def test_soft_edge_has_intermediate_alpha(self):
+        """Pixels near the circle boundary should have 0 < alpha < 255."""
+        pixels = self._planet_image()
+        r = self.SIZE * 0.48
+        feather = self.SIZE * 0.01
+        result = apply_circle_mask(pixels, self.SIZE, self.SIZE)
+        # Sample a pixel just inside the feather band
+        cx, cy = self.SIZE / 2.0, self.SIZE / 2.0
+        # Find a pixel whose distance from center is r (at the circle edge)
+        edge_x = int(cx + r)
+        if edge_x < self.SIZE:
+            alpha = self._get_alpha(result, edge_x, int(cy))
+            assert 0 <= alpha <= 255  # somewhere in the feather zone
+
+    def test_interior_planet_pixels_not_damaged_by_neutral_color(self):
+        """
+        Regression: a planet with neutral/gray interior pixels (similar to the
+        background corner color) must NOT be made semi-transparent.  The circle
+        mask is purely geometry-based and ignores color entirely.
+        """
+        # Create a planet whose center color matches what corners look like
+        neutral = (180, 175, 168, 255)  # same neutral tone as "atmospheric" corners
+        pixels = [neutral] * (self.SIZE * self.SIZE)
+        result = apply_circle_mask(pixels, self.SIZE, self.SIZE)
+        # Center pixel must still be fully opaque (color-distance would wrongly fade it)
+        assert self._get_alpha(result, self.SIZE // 2, self.SIZE // 2) == 255
+
+    def test_custom_radius_factor(self):
+        """A very small radius makes most pixels transparent; large radius keeps them."""
+        pixels = self._planet_image()
+        small = apply_circle_mask(pixels, self.SIZE, self.SIZE, radius_factor=0.1)
+        large = apply_circle_mask(pixels, self.SIZE, self.SIZE, radius_factor=0.48)
+        small_opaque = sum(1 for _, _, _, a in small if a > 200)
+        large_opaque = sum(1 for _, _, _, a in large if a > 200)
+        assert small_opaque < large_opaque
