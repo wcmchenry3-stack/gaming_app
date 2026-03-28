@@ -19,7 +19,10 @@ jest.mock("../../../../assets/fruit-vertices.json", () => ({
     [0.0, 0.8],
     [-0.6, 0.2],
   ],
-  too_few: [[-0.5, 0.0], [0.5, 0.0]], // only 2 points → should return null
+  too_few: [
+    [-0.5, 0.0],
+    [0.5, 0.0],
+  ], // only 2 points → should return null
   // 20-vertex circle approximation — exercises the simplifyVertices path (>12)
   pineapple: Array.from({ length: 20 }, (_, i) => {
     const a = (i / 20) * Math.PI * 2;

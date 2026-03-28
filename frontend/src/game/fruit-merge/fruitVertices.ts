@@ -22,10 +22,7 @@ function simplifyVertices(verts: VertexPoint[], maxCount: number): VertexPoint[]
  * Vertices are centroid-centred and scaled so max distance from origin = 1.0.
  * Multiply each component by def.radius to get world-space coordinates.
  */
-export function getVerticesForFruit(
-  setId: string,
-  nameKey: string,
-): VertexPoint[] | null {
+export function getVerticesForFruit(setId: string, nameKey: string): VertexPoint[] | null {
   let map: Record<string, [number, number][]> | null = null;
   if (setId === "fruits") map = fruitVerticesRaw;
   else if (setId === "planets") map = planetVerticesRaw;
@@ -33,5 +30,8 @@ export function getVerticesForFruit(
 
   const raw = map[nameKey];
   if (!raw || raw.length < 3) return null;
-  return simplifyVertices(raw.map(([x, y]) => ({ x, y })), 12);
+  return simplifyVertices(
+    raw.map(([x, y]) => ({ x, y })),
+    12
+  );
 }

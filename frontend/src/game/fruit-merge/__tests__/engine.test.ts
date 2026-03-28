@@ -354,7 +354,10 @@ describe("spawnFruitAt — polygon body creation", () => {
   it("falls back to circle when vertices array has fewer than 3 points", () => {
     const { world } = setup();
     const def = fruitSet.fruits[0];
-    const tooFew = [{ x: 0, y: 0 }, { x: 1, y: 0 }];
+    const tooFew = [
+      { x: 0, y: 0 },
+      { x: 1, y: 0 },
+    ];
     const body = spawnFruitAt(world, def, fruitSet.id, 150, 100, tooFew);
     // Circle body always has circleRadius
     expect((body as unknown as { circleRadius?: number }).circleRadius).toBeDefined();

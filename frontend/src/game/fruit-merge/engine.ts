@@ -228,7 +228,7 @@ export function spawnFruitAt(
   fruitSetId: string,
   x: number,
   y: number,
-  vertices?: VertexPoint[] | null,
+  vertices?: VertexPoint[] | null
 ): FruitBody {
   const physicsOptions = {
     restitution: FRUIT_RESTITUTION,
@@ -243,10 +243,10 @@ export function spawnFruitAt(
     // Scale unit-normalized vertices by the fruit's physics radius
     const scaled = vertices.map((v) => ({ x: v.x * def.radius, y: v.y * def.radius }));
     body = Matter.Bodies.fromVertices(x, y, scaled, physicsOptions);
-  // fromVertices shifts position using the area-weighted centroid internally,
-  // which differs from the arithmetic-mean centroid our Python extractor uses.
-  // Force the body back to the intended spawn point.
-  Matter.Body.setPosition(body, { x, y });
+    // fromVertices shifts position using the area-weighted centroid internally,
+    // which differs from the arithmetic-mean centroid our Python extractor uses.
+    // Force the body back to the intended spawn point.
+    Matter.Body.setPosition(body, { x, y });
   } else {
     body = Matter.Bodies.circle(x, y, def.radius, physicsOptions);
   }
@@ -268,7 +268,7 @@ export function dropFruit(
   fruitSetId: string,
   x: number,
   spawnY: number,
-  vertices?: VertexPoint[] | null,
+  vertices?: VertexPoint[] | null
 ): FruitBody {
   return spawnFruitAt(world, def, fruitSetId, x, spawnY, vertices);
 }
