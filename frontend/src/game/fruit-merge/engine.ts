@@ -207,8 +207,8 @@ export async function createEngine(
 
       const posA = rba.translation();
       const posB = rbb.translation();
-      const midX = ((posA.x + posB.x) / 2) / SCALE; // back to pixels
-      const midY = ((posA.y + posB.y) / 2) / SCALE;
+      const midX = (posA.x + posB.x) / 2 / SCALE; // back to pixels
+      const midY = (posA.y + posB.y) / 2 / SCALE;
 
       removeBody(ha);
       removeBody(hb);
