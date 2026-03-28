@@ -19,9 +19,7 @@ export default function FruitGlyph({ fruit, size }: Props) {
           style={styles.icon}
           resizeMode="contain"
           accessibilityIgnoresInvertColors
-          onError={() =>
-            console.warn(`FruitGlyph: failed to load icon for "${fruit.name}"`)
-          }
+          onError={() => console.warn(`FruitGlyph: failed to load icon for "${fruit.name}"`)}
         />
       </View>
     );
