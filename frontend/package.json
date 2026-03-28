@@ -24,6 +24,10 @@
       "**/__tests__/**/*.test.ts",
       "**/__tests__/**/*.test.tsx"
     ],
+    "testPathIgnorePatterns": [
+      "/node_modules/",
+      "\\.worktrees/"
+    ],
     "transformIgnorePatterns": [
       "node_modules/(?!((jest-)?react-native|@react-native(-community)?)|expo(nent)?|@expo(nent)?/.*|react-navigation|@react-navigation/.*|i18next|react-i18next|i18next-resources-to-backend|@dimforge)"
     ],

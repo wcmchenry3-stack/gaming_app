@@ -4,7 +4,7 @@ import { getVerticesForFruit } from "./fruitVertices";
 export const WALL_THICKNESS = 16;
 // Fruits drop into the top of the container; danger line sits below the drop zone
 export const DANGER_LINE_RATIO = 0.18; // 18% from top — game over if settled fruit crosses this
-const GAME_OVER_GRACE_MS = 2000; // ignore newly-dropped fruit for 2 seconds
+const GAME_OVER_GRACE_MS = 3000; // ignore newly-dropped fruit for 3 seconds
 
 // --- Physics tuning constants ---
 // Low restitution = THUD feel (original Suika); fruits barely bounce.
@@ -16,7 +16,7 @@ const FRUIT_DENSITY = 1.0;
 // Scale factor: 1 Rapier unit = SCALE pixels.
 // Using SI-like units (100px ≈ 1m) with standard gravity gives natural fall speed.
 const SCALE = 0.01; // px → Rapier units (÷ by SCALE when reading back)
-const GRAVITY_Y = 9.81; // m/s² in Rapier units — tune visually if needed
+const GRAVITY_Y = 14.0; // m/s² in Rapier units (~1.4g) — tune visually if needed
 
 export interface FruitBody {
   handle: number; // Rapier rigid body handle
@@ -42,8 +42,11 @@ export interface MergeEvent {
 }
 
 export interface EngineHandle {
-  /** Advance physics one step and return current body positions in pixels. */
-  step: () => BodySnapshot[];
+  /** Advance physics one step and return current body positions in pixels.
+   *  @param dt  Elapsed time in seconds since the last step. When provided,
+   *             overrides Rapier's fixed timestep so physics runs at wall-clock
+   *             speed regardless of display refresh rate. */
+  step: (dt?: number) => BodySnapshot[];
   /** Drop a fruit at the given pixel coordinates. */
   drop: (def: FruitDefinition, fruitSetId: string, x: number, y: number) => void;
   cleanup: () => void;
@@ -220,7 +223,11 @@ export async function createEngine(
   }
 
   return {
-    step(): BodySnapshot[] {
+    step(dt?: number): BodySnapshot[] {
+      if (dt !== undefined) {
+        // Clamp: min 1/120s (avoid micro-steps), max 1/30s (avoid spiral of death on slow frames)
+        world.integrationParameters.dt = Math.max(1 / 120, Math.min(dt, 1 / 30));
+      }
       world.step(eventQueue);
 
       // Drain collision events → queue same-tier pairs for merging

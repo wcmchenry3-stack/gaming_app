@@ -79,6 +79,7 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
     const bodiesRef = useRef<BodySnapshot[]>([]);
     const pointerXRef = useRef<number | null>(null);
     const htmlImagesRef = useRef<(HTMLImageElement | null)[]>([]);
+    const lastFrameTimeRef = useRef<number>(0); // tracks last RAF timestamp for elapsed-time physics
 
     useEffect(() => {
       onMergeRef.current = onMerge;
@@ -237,12 +238,17 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
       };
     }, [initEngine]);
 
-    // Single long-lived RAF loop: steps physics then draws
+    // Single long-lived RAF loop: steps physics then draws.
+    // Uses the RAF timestamp to compute elapsed time so physics runs at real
+    // wall-clock speed regardless of display refresh rate (60 Hz, 120 Hz, etc.).
     useEffect(() => {
       let id: number;
-      function loop() {
+      function loop(timestamp: number) {
+        if (lastFrameTimeRef.current === 0) lastFrameTimeRef.current = timestamp;
+        const elapsed = (timestamp - lastFrameTimeRef.current) / 1000; // seconds
+        lastFrameTimeRef.current = timestamp;
         if (engineRef.current) {
-          bodiesRef.current = engineRef.current.step();
+          bodiesRef.current = engineRef.current.step(elapsed);
         }
         drawRef.current();
         id = requestAnimationFrame(loop);

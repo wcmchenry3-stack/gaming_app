@@ -102,6 +102,7 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
     const [pointerX, setPointerX] = useState<number | null>(null);
 
     const engineRef = useRef<EngineHandle | null>(null);
+    const lastFrameTimeRef = useRef<number>(0); // tracks last RAF timestamp for elapsed-time physics
     const onMergeRef = useRef(onMerge);
     const onGameOverRef = useRef(onGameOver);
     const fruitSetRef = useRef(fruitSet);
@@ -137,11 +138,16 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
     }, [initEngine]);
 
     // RAF loop drives physics steps and triggers re-renders
+    // RAF loop: steps physics with wall-clock elapsed time so speed is
+    // frame-rate-independent (60 Hz, 120 Hz, etc.).
     useEffect(() => {
       let id: number;
-      function loop() {
+      function loop(timestamp: number) {
+        if (lastFrameTimeRef.current === 0) lastFrameTimeRef.current = timestamp;
+        const elapsed = (timestamp - lastFrameTimeRef.current) / 1000; // seconds
+        lastFrameTimeRef.current = timestamp;
         if (engineRef.current) {
-          setBodies(engineRef.current.step());
+          setBodies(engineRef.current.step(elapsed));
         }
         id = requestAnimationFrame(loop);
       }
