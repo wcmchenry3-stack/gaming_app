@@ -23,7 +23,7 @@ test.describe("Yahtzee — error recovery", () => {
     await expect(page.getByText(/connection/i)).toBeVisible({ timeout: 5000 });
 
     // Still on Home (no navigation happened)
-    await expect(page.getByText("Gaming App")).toBeVisible();
+    await expect(page.getByText("Gaming App").first()).toBeVisible();
   });
 
   test("recovers and starts game after initial 503", async ({ page }) => {
@@ -78,6 +78,6 @@ test.describe("Yahtzee — error recovery", () => {
     // Navigate back
     await page.getByRole("button", { name: /back/i }).click();
 
-    await expect(page.getByText("Gaming App")).toBeVisible();
+    await expect(page.getByText("Gaming App").first()).toBeVisible();
   });
 });

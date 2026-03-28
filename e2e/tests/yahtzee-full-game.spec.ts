@@ -41,7 +41,7 @@ test.describe("Yahtzee — full 13-round game journey", () => {
   });
 
   test("navigates from Home to Game on Play Yahtzee click", async ({ page }) => {
-    await expect(page.getByText("Gaming App")).toBeVisible();
+    await expect(page.getByText("Gaming App").first()).toBeVisible();
     await page.getByRole("button", { name: "Play Yahtzee" }).click();
     await expect(page.getByText("Round 1 / 13")).toBeVisible();
   });
@@ -55,8 +55,8 @@ test.describe("Yahtzee — full 13-round game journey", () => {
     await expect(rollBtn).toBeVisible();
     await rollBtn.click();
 
-    // After rolling, dice values should appear (1–5 from mock)
-    await expect(page.getByText(/1/)).toBeVisible();
+    // After rolling, dice values should appear (mock returns [1,2,3,4,5])
+    await expect(page.getByRole("button", { name: /Die 1: showing 1/ })).toBeVisible();
   });
 
   test("scoring a category advances the round", async ({ page }) => {
@@ -104,8 +104,7 @@ test.describe("Yahtzee — full 13-round game journey", () => {
     await expect(page.getByText("Game Over!")).toBeVisible();
     await page.getByRole("button", { name: /Play Again/i }).click();
 
-    // Should be back at Home
-    await expect(page.getByText("Gaming App")).toBeVisible();
-    await expect(page.getByText("Choose a game")).toBeVisible();
+    // Should be back at Home — use the Play Yahtzee button which is interactive on Home
+    await expect(page.getByRole("button", { name: "Play Yahtzee" }).first()).toBeVisible({ timeout: 10000 });
   });
 });

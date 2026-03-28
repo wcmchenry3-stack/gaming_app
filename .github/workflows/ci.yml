@@ -99,4 +99,6 @@ jobs:
 
   openai-policy:
     uses: wcmchenry3-stack/.github/.github/workflows/called-openai-policy.yml@main
+    with:
+      allowed-repos: wcmchenry3-stack/gaming_app
     secrets: inherit
