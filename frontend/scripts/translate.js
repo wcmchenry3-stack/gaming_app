@@ -154,7 +154,9 @@ async function callOpenAI(systemPrompt, userPrompt, model) {
     // Retry on 429 RateLimitError with exponential backoff
     if (response.status === 429) {
       const backoff = Math.pow(2, attempt + 1) * 1000;
-      console.warn(`Rate limit hit (429). Retrying in ${backoff / 1000}s (attempt ${attempt + 1}/${MAX_RETRIES})...`);
+      console.warn(
+        `Rate limit hit (429). Retrying in ${backoff / 1000}s (attempt ${attempt + 1}/${MAX_RETRIES})...`
+      );
       await new Promise((resolve) => setTimeout(resolve, backoff));
       lastError = new Error(`OpenAI RateLimitError after ${MAX_RETRIES} retries`);
       continue;

@@ -105,9 +105,9 @@ export default function LudoScreen({ navigation }: Props) {
       <View style={styles.header}>
         <Pressable
           style={styles.headerBtn}
-          onPress={() => navigation.navigate("Home")}
+          onPress={() => navigation.goBack()}
           accessibilityRole="button"
-          accessibilityLabel={t("common:nav.back")}
+          accessibilityLabel={t("common:nav.backLabel")}
         >
           <Text style={[styles.headerBtnText, { color: colors.textMuted }]}>‹</Text>
         </Pressable>
