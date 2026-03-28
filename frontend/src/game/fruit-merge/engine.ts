@@ -1,5 +1,5 @@
-import Matter from "matter-js";
 import { FruitDefinition, FruitSet, FruitTier } from "../../theme/fruitSets";
+import { getVerticesForFruit } from "./fruitVertices";
 
 export const WALL_THICKNESS = 16;
 // Fruits drop into the top of the container; danger line sits below the drop zone
@@ -11,218 +11,291 @@ const GAME_OVER_GRACE_MS = 2000; // ignore newly-dropped fruit for 2 seconds
 // Moderate friction = fruits grip each other and settle into place.
 const FRUIT_RESTITUTION = 0.1;
 const FRUIT_FRICTION = 0.3;
-const FRUIT_FRICTION_AIR = 0.01;
-const FRUIT_DENSITY = 0.001;
+const FRUIT_DENSITY = 1.0;
 
-export interface FruitBody extends Matter.Body {
+// Scale factor: 1 Rapier unit = SCALE pixels.
+// Using SI-like units (100px ≈ 1m) with standard gravity gives natural fall speed.
+const SCALE = 0.01; // px → Rapier units (÷ by SCALE when reading back)
+const GRAVITY_Y = 9.81; // m/s² in Rapier units — tune visually if needed
+
+export interface FruitBody {
+  handle: number; // Rapier rigid body handle
   fruitTier: FruitTier;
   fruitSetId: string;
   isMerging: boolean;
   createdAt: number;
-  fruitRadius: number; // always set; used by renderers to determine draw radius
+  fruitRadius: number; // in pixels
 }
 
 export interface BodySnapshot {
   id: number;
-  x: number;
-  y: number;
+  x: number; // pixels
+  y: number; // pixels
   tier: number;
-  angle: number; // body rotation in radians — used to orient PNG images in renderers
+  angle: number; // radians
 }
 
 export interface MergeEvent {
   tier: FruitTier;
-  x: number;
-  y: number;
+  x: number; // pixels
+  y: number; // pixels
 }
 
-export interface EngineSetup {
-  engine: Matter.Engine;
-  world: Matter.World;
-  runner: Matter.Runner;
+export interface EngineHandle {
+  /** Advance physics one step and return current body positions in pixels. */
+  step: () => BodySnapshot[];
+  /** Drop a fruit at the given pixel coordinates. */
+  drop: (def: FruitDefinition, fruitSetId: string, x: number, y: number) => void;
   cleanup: () => void;
 }
 
-export function createEngine(
+// Legacy alias used by tests and components
+export type EngineSetup = EngineHandle;
+
+// Import type only for typing purposes (no runtime import at module level)
+import type RAPIER_TYPE from "@dimforge/rapier2d-compat";
+type RapierLib = typeof RAPIER_TYPE;
+
+// WASM is loaded lazily on first createEngine call; promise is cached after that.
+// Uses require() rather than import() so Jest's module mock system intercepts it.
+let _rapierPromise: Promise<RapierLib> | null = null;
+async function getRapier(): Promise<RapierLib> {
+  if (!_rapierPromise) {
+    _rapierPromise = (async () => {
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
+      const mod = require("@dimforge/rapier2d-compat") as { default?: RapierLib } | RapierLib;
+      const R = (mod as { default?: RapierLib }).default ?? (mod as RapierLib);
+      await R.init();
+      return R;
+    })();
+  }
+  return _rapierPromise;
+}
+
+export async function createEngine(
   W: number,
   H: number,
   fruitSet: FruitSet,
   onMerge: (event: MergeEvent) => void,
   onGameOver: () => void
-): EngineSetup {
-  const engine = Matter.Engine.create({
-    gravity: { y: 1.5 },
-    enableSleeping: false, // sleeping bodies can freeze mid-air; ~30 fruits is fine without it
-    positionIterations: 8,
-    velocityIterations: 8,
-  });
-  const world = engine.world;
+): Promise<EngineHandle> {
+  const R = await getRapier();
 
-  // Walls sit INSIDE the canvas so physics and rendering match.
-  // Left wall inner surface = WALL_THICKNESS; right = W - WALL_THICKNESS.
-  // Floor top surface at H - WALL_THICKNESS, matching the visual floor bar drawn by the renderer.
-  const floor = Matter.Bodies.rectangle(W / 2, H - WALL_THICKNESS / 2, W, WALL_THICKNESS, {
-    isStatic: true,
-    label: "floor",
-  });
-  const wallLeft = Matter.Bodies.rectangle(WALL_THICKNESS / 2, H / 2, WALL_THICKNESS, H * 2, {
-    isStatic: true,
-    label: "wall",
-  });
-  const wallRight = Matter.Bodies.rectangle(W - WALL_THICKNESS / 2, H / 2, WALL_THICKNESS, H * 2, {
-    isStatic: true,
-    label: "wall",
-  });
-  Matter.World.add(world, [floor, wallLeft, wallRight]);
+  const world = new R.World({ x: 0.0, y: GRAVITY_Y });
+  const eventQueue = new R.EventQueue(true);
 
-  // Merge detection
-  const mergeSet = new Set<string>();
+  // fruitMap: rigidBody.handle → FruitBody metadata
+  const fruitMap = new Map<number, FruitBody>();
+  // collider.handle → rigidBody.handle (for collision event lookup)
+  const colliderToBody = new Map<number, number>();
 
-  Matter.Events.on(engine, "collisionStart", (event) => {
-    for (const pair of event.pairs) {
-      const a = pair.bodyA as FruitBody;
-      const b = pair.bodyB as FruitBody;
+  // --- Static walls and floor ---
+  // Rapier cuboid takes half-extents, so divide sizes by 2.
+  // Positions are the centre of each wall.
 
-      if (
-        a.fruitTier === undefined ||
-        b.fruitTier === undefined ||
-        a.fruitTier !== b.fruitTier ||
-        a.isMerging ||
-        b.isMerging
-      )
-        continue;
+  // Floor (top surface at H - WALL_THICKNESS)
+  world.createCollider(
+    R.ColliderDesc.cuboid((W / 2) * SCALE, (WALL_THICKNESS / 2) * SCALE).setTranslation(
+      (W / 2) * SCALE,
+      (H - WALL_THICKNESS / 2) * SCALE
+    )
+  );
+  // Left wall (inner surface at WALL_THICKNESS)
+  world.createCollider(
+    R.ColliderDesc.cuboid((WALL_THICKNESS / 2) * SCALE, H * SCALE).setTranslation(
+      (WALL_THICKNESS / 2) * SCALE,
+      (H / 2) * SCALE
+    )
+  );
+  // Right wall (inner surface at W - WALL_THICKNESS)
+  world.createCollider(
+    R.ColliderDesc.cuboid((WALL_THICKNESS / 2) * SCALE, H * SCALE).setTranslation(
+      (W - WALL_THICKNESS / 2) * SCALE,
+      (H / 2) * SCALE
+    )
+  );
 
-      const key = [a.id, b.id].sort().join("-");
-      if (mergeSet.has(key)) continue;
-      mergeSet.add(key);
-
-      a.isMerging = true;
-      b.isMerging = true;
-
-      const tier = a.fruitTier;
-      const midX = (a.position.x + b.position.x) / 2;
-      const midY = (a.position.y + b.position.y) / 2;
-
-      setTimeout(() => {
-        mergeSet.delete(key);
-        Matter.World.remove(world, [a, b]);
-        onMerge({ tier, x: midX, y: midY });
-
-        if (tier < 10) {
-          const nextDef = fruitSet.fruits[(tier + 1) as FruitTier];
-          spawnFruitAt(world, nextDef, fruitSet.id, midX, midY);
-        }
-      }, 0);
-    }
-  });
-
-  // Game-over: a settled fruit (alive > grace period) above the danger line
-  const dangerY = H * DANGER_LINE_RATIO;
-  const leftBoundary = WALL_THICKNESS;
-  const rightBoundary = W - WALL_THICKNESS;
-  const floorY = H - WALL_THICKNESS; // top surface of the visual floor bar
+  const dangerY = H * DANGER_LINE_RATIO; // pixels
   let gameOverFired = false;
 
-  Matter.Events.on(engine, "afterUpdate", () => {
-    if (gameOverFired) return;
-    const now = Date.now();
-    for (const body of Matter.Composite.allBodies(world)) {
-      const fb = body as FruitBody;
-      if (fb.fruitTier !== undefined && !fb.isStatic) {
-        let correctedX: number | null = null;
-        let correctedY: number | null = null;
+  // Merges are queued during collision events and processed synchronously after draining.
+  const mergeQueue: Array<[number, number]> = [];
 
-        const bLeft = body.bounds.min.x;
-        const bRight = body.bounds.max.x;
-        const bBottom = body.bounds.max.y;
+  function spawnAt(def: FruitDefinition, setId: string, x: number, y: number): FruitBody {
+    const rbDesc = R.RigidBodyDesc.dynamic().setTranslation(x * SCALE, y * SCALE);
+    const rb = world.createRigidBody(rbDesc);
 
-        if (bLeft < leftBoundary) {
-          correctedX = body.position.x + (leftBoundary - bLeft);
-        } else if (bRight > rightBoundary) {
-          correctedX = body.position.x - (bRight - rightBoundary);
-        }
+    const nameKey = (def as { nameKey?: string }).nameKey ?? def.name.toLowerCase();
+    const verts = getVerticesForFruit(setId, nameKey);
 
-        if (bBottom > floorY) {
-          correctedY = body.position.y - (bBottom - floorY);
-        }
+    let collider: RAPIER_TYPE.Collider;
 
-        if (correctedX !== null || correctedY !== null) {
-          // Zero velocity on corrected axes BEFORE setPosition so that the
-          // subsequent Bounds.update (called inside setPosition) computes
-          // bounds without a velocity extension on those axes.
-          Matter.Body.setVelocity(body, {
-            x: correctedX !== null ? 0 : body.velocity.x,
-            y: correctedY !== null && body.velocity.y > 0 ? 0 : body.velocity.y,
-          });
-          Matter.Body.setPosition(body, {
-            x: correctedX ?? body.position.x,
-            y: correctedY ?? body.position.y,
-          });
-        }
-      }
-
-      if (
-        fb.fruitTier === undefined ||
-        fb.isStatic ||
-        fb.isMerging ||
-        now - fb.createdAt < GAME_OVER_GRACE_MS
-      )
-        continue;
-
-      // Top of the fruit body
-      if (body.bounds.min.y < dangerY) {
-        gameOverFired = true;
-        onGameOver();
-        return;
-      }
+    if (verts && verts.length >= 3) {
+      const flat = new Float32Array(verts.length * 2);
+      verts.forEach(({ x: vx, y: vy }, i) => {
+        flat[i * 2] = vx * def.radius * SCALE;
+        flat[i * 2 + 1] = vy * def.radius * SCALE;
+      });
+      const hullDesc = R.ColliderDesc.convexHull(flat);
+      const desc = hullDesc
+        ? hullDesc
+            .setRestitution(FRUIT_RESTITUTION)
+            .setFriction(FRUIT_FRICTION)
+            .setDensity(FRUIT_DENSITY)
+            .setActiveEvents(R.ActiveEvents.COLLISION_EVENTS)
+        : R.ColliderDesc.ball(def.radius * SCALE)
+            .setRestitution(FRUIT_RESTITUTION)
+            .setFriction(FRUIT_FRICTION)
+            .setDensity(FRUIT_DENSITY)
+            .setActiveEvents(R.ActiveEvents.COLLISION_EVENTS);
+      collider = world.createCollider(desc, rb);
+    } else {
+      collider = world.createCollider(
+        R.ColliderDesc.ball(def.radius * SCALE)
+          .setRestitution(FRUIT_RESTITUTION)
+          .setFriction(FRUIT_FRICTION)
+          .setDensity(FRUIT_DENSITY)
+          .setActiveEvents(R.ActiveEvents.COLLISION_EVENTS),
+        rb
+      );
     }
-  });
 
-  const runner = Matter.Runner.create();
-  Matter.Runner.run(runner, engine);
-
-  function cleanup() {
-    Matter.Runner.stop(runner);
-    Matter.Events.off(engine, "collisionStart");
-    Matter.Events.off(engine, "afterUpdate");
-    Matter.Engine.clear(engine);
+    const fb: FruitBody = {
+      handle: rb.handle,
+      fruitTier: def.tier,
+      fruitSetId: setId,
+      isMerging: false,
+      createdAt: Date.now(),
+      fruitRadius: def.radius,
+    };
+    fruitMap.set(rb.handle, fb);
+    colliderToBody.set(collider.handle, rb.handle);
+    return fb;
   }
 
-  return { engine, world, runner, cleanup };
+  function removeBody(bodyHandle: number): void {
+    const rb = world.getRigidBody(bodyHandle);
+    if (rb) {
+      // Unmap all colliders attached to this body
+      const numColliders = rb.numColliders();
+      for (let i = 0; i < numColliders; i++) {
+        const c = rb.collider(i);
+        colliderToBody.delete(c.handle);
+      }
+      world.removeRigidBody(rb);
+    }
+    fruitMap.delete(bodyHandle);
+  }
+
+  function processMerges(): void {
+    for (const [ha, hb] of mergeQueue) {
+      const fa = fruitMap.get(ha);
+      const fb = fruitMap.get(hb);
+      if (!fa || !fb || fa.isMerging || fb.isMerging) continue;
+      if (fa.fruitTier !== fb.fruitTier) continue;
+
+      fa.isMerging = true;
+      fb.isMerging = true;
+
+      const tier = fa.fruitTier;
+      const rba = world.getRigidBody(ha);
+      const rbb = world.getRigidBody(hb);
+      if (!rba || !rbb) continue;
+
+      const posA = rba.translation();
+      const posB = rbb.translation();
+      const midX = ((posA.x + posB.x) / 2) / SCALE; // back to pixels
+      const midY = ((posA.y + posB.y) / 2) / SCALE;
+
+      removeBody(ha);
+      removeBody(hb);
+      onMerge({ tier, x: midX, y: midY });
+
+      if (tier < 10) {
+        const nextDef = fruitSet.fruits[(tier + 1) as FruitTier];
+        spawnAt(nextDef, fruitSet.id, midX, midY);
+      }
+    }
+    mergeQueue.length = 0;
+  }
+
+  return {
+    step(): BodySnapshot[] {
+      world.step(eventQueue);
+
+      // Drain collision events → queue same-tier pairs for merging
+      eventQueue.drainCollisionEvents((h1: number, h2: number, started: boolean) => {
+        if (!started) return;
+        const rbh1 = colliderToBody.get(h1);
+        const rbh2 = colliderToBody.get(h2);
+        if (rbh1 === undefined || rbh2 === undefined) return;
+        const fa = fruitMap.get(rbh1);
+        const fb = fruitMap.get(rbh2);
+        if (!fa || !fb || fa.isMerging || fb.isMerging) return;
+        if (fa.fruitTier === fb.fruitTier) {
+          mergeQueue.push([rbh1, rbh2]);
+        }
+      });
+
+      processMerges();
+
+      // Game-over: a settled fruit (past grace period) with its top above the danger line
+      if (!gameOverFired) {
+        const now = Date.now();
+        fruitMap.forEach((fb, handle) => {
+          if (gameOverFired || fb.isMerging) return;
+          if (now - fb.createdAt < GAME_OVER_GRACE_MS) return;
+          const rb = world.getRigidBody(handle);
+          if (!rb) return;
+          const pos = rb.translation();
+          const topY = pos.y / SCALE - fb.fruitRadius; // top edge in pixels
+          if (topY < dangerY) {
+            gameOverFired = true;
+            onGameOver();
+          }
+        });
+      }
+
+      // Collect body snapshots (pixel coordinates)
+      const snapshots: BodySnapshot[] = [];
+      fruitMap.forEach((fb, handle) => {
+        const rb = world.getRigidBody(handle);
+        if (!rb) return;
+        const pos = rb.translation();
+        snapshots.push({
+          id: handle,
+          x: pos.x / SCALE,
+          y: pos.y / SCALE,
+          tier: fb.fruitTier,
+          angle: rb.rotation(),
+        });
+      });
+      return snapshots;
+    },
+
+    drop(def: FruitDefinition, fruitSetId: string, x: number, y: number): void {
+      spawnAt(def, fruitSetId, x, y);
+    },
+
+    cleanup(): void {
+      fruitMap.clear();
+      colliderToBody.clear();
+      eventQueue.free();
+      world.free();
+    },
+  };
 }
 
-export function spawnFruitAt(
-  world: Matter.World,
-  def: FruitDefinition,
-  fruitSetId: string,
-  x: number,
-  y: number
-): FruitBody {
-  const body = Matter.Bodies.circle(x, y, def.radius, {
-    restitution: FRUIT_RESTITUTION,
-    friction: FRUIT_FRICTION,
-    frictionAir: FRUIT_FRICTION_AIR,
-    density: FRUIT_DENSITY,
-    label: `fruit-${def.tier}`,
-  });
-
-  const fb = body as FruitBody;
-  fb.fruitTier = def.tier;
-  fb.fruitSetId = fruitSetId;
-  fb.isMerging = false;
-  fb.createdAt = Date.now();
-  fb.fruitRadius = def.radius;
-
-  Matter.World.add(world, fb);
-  return fb;
-}
-
+/**
+ * Convenience wrapper kept for backward compatibility with canvas components.
+ * Prefer calling engineHandle.drop() directly.
+ */
 export function dropFruit(
-  world: Matter.World,
+  engineHandle: EngineHandle,
   def: FruitDefinition,
   fruitSetId: string,
   x: number,
   spawnY: number
-): FruitBody {
-  return spawnFruitAt(world, def, fruitSetId, x, spawnY);
+): void {
+  engineHandle.drop(def, fruitSetId, x, spawnY);
 }

@@ -26,11 +26,9 @@ import {
 } from "@shopify/react-native-skia";
 import type { SkImage } from "@shopify/react-native-skia";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
-import Matter from "matter-js";
 import {
   createEngine,
-  dropFruit,
-  FruitBody,
+  EngineHandle,
   BodySnapshot,
   MergeEvent,
   WALL_THICKNESS,
@@ -103,7 +101,7 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
     const [bodies, setBodies] = useState<BodySnapshot[]>([]);
     const [pointerX, setPointerX] = useState<number | null>(null);
 
-    const engineRef = useRef<ReturnType<typeof createEngine> | null>(null);
+    const engineRef = useRef<EngineHandle | null>(null);
     const onMergeRef = useRef(onMerge);
     const onGameOverRef = useRef(onGameOver);
     const fruitSetRef = useRef(fruitSet);
@@ -118,30 +116,17 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
       fruitSetRef.current = fruitSet;
     }, [fruitSet]);
 
-    const initEngine = useCallback(() => {
+    const initEngine = useCallback(async () => {
       engineRef.current?.cleanup();
-      engineRef.current = createEngine(
+      engineRef.current = null;
+      setBodies([]);
+      engineRef.current = await createEngine(
         width,
         height,
         fruitSet,
         (e) => onMergeRef.current(e),
         () => onGameOverRef.current()
       );
-      const { engine } = engineRef.current;
-      Matter.Events.on(engine, "afterUpdate", () => {
-        setBodies(
-          Matter.Composite.allBodies(engine.world)
-            .filter((b) => !(b as FruitBody).isStatic && (b as FruitBody).fruitTier !== undefined)
-            .map((b) => ({
-              id: b.id,
-              x: b.position.x,
-              y: b.position.y,
-              tier: (b as FruitBody).fruitTier,
-              angle: b.angle,
-            }))
-        );
-      });
-      setBodies([]);
     }, [width, height, fruitSet]);
 
     useEffect(() => {
@@ -150,6 +135,19 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
         engineRef.current?.cleanup();
       };
     }, [initEngine]);
+
+    // RAF loop drives physics steps and triggers re-renders
+    useEffect(() => {
+      let id: number;
+      function loop() {
+        if (engineRef.current) {
+          setBodies(engineRef.current.step());
+        }
+        id = requestAnimationFrame(loop);
+      }
+      id = requestAnimationFrame(loop);
+      return () => cancelAnimationFrame(id);
+    }, []); // intentionally empty — loop lives for component lifetime
 
     useImperativeHandle(
       ref,
@@ -161,7 +159,7 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
             WALL_THICKNESS + def.radius,
             width - WALL_THICKNESS - def.radius
           );
-          dropFruit(engineRef.current.world, def, fruitSetRef.current.id, clamped, DROP_Y);
+          engineRef.current.drop(def, fruitSetRef.current.id, clamped, DROP_Y);
         },
         reset() {
           initEngine();
