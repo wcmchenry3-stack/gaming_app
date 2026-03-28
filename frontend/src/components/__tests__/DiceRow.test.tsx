@@ -46,8 +46,7 @@ describe("DiceRow", () => {
 
   it("dice are disabled before the first roll (rollsUsed === 0)", () => {
     const { getAllByRole } = renderDiceRow({ rollsUsed: 0 });
-    // Die uses accessibilityRole="togglebutton"
-    const dice = getAllByRole("togglebutton");
+    const dice = getAllByRole("button", { name: /^die \d/i });
     dice.forEach((die) => expect(die).toBeDisabled());
   });
 
@@ -55,7 +54,7 @@ describe("DiceRow", () => {
     const onRoll = jest.fn().mockResolvedValue(undefined);
     const { getAllByRole, getByRole } = renderDiceRow({ rollsUsed: 1, onRoll });
     // Hold die at index 0
-    fireEvent.press(getAllByRole("togglebutton")[0]);
+    fireEvent.press(getAllByRole("button", { name: /^die \d/i })[0]);
     await act(async () => {
       fireEvent.press(getByRole("button", { name: /roll dice/i }));
     });
@@ -70,7 +69,7 @@ describe("DiceRow", () => {
       resetHeld: false,
     });
     // Hold die 0
-    fireEvent.press(getAllByRole("togglebutton")[0]);
+    fireEvent.press(getAllByRole("button", { name: /^die \d/i })[0]);
     // Simulate resetHeld toggle (e.g., after scoring)
     rerender(
       <ThemeProvider>

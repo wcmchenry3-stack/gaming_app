@@ -62,7 +62,7 @@ const dark: Colors = {
   text: COLORS.slate100,
   textMuted: COLORS.slate400,
   textFilled: COLORS.slate600,
-  accent: COLORS.blue500,
+  accent: COLORS.blue600,
   heldBg: "#1e3a5f", // bespoke — no direct Tailwind match
   heldBorder: COLORS.blue500,
   dieBg: COLORS.slate800,

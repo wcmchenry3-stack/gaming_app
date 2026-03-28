@@ -58,7 +58,7 @@ export default function Scorecard({
   const canScore = rollsUsed > 0 && !gameOver;
 
   return (
-    <ScrollView style={[styles.container, { borderColor: colors.border }]}>
+    <ScrollView focusable style={[styles.container, { borderColor: colors.border }]}>
       <Text style={[styles.sectionHeader, { backgroundColor: colors.sectionHeaderBg }]}>
         {t("section.upper")}
       </Text>

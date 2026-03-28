@@ -22,7 +22,7 @@ export default function Die({ value, held, onPress, disabled, index }: DieProps)
     <Pressable
       onPress={onPress}
       disabled={disabled}
-      accessibilityRole="togglebutton"
+      accessibilityRole="button"
       accessibilityState={{ checked: held, disabled }}
       accessibilityLabel={label}
       accessibilityHint={disabled ? undefined : held ? t("dice.unholdHint") : t("dice.holdHint")}
