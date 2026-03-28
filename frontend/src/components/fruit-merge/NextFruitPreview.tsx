@@ -63,9 +63,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     minWidth: 80,
   },
-  nextCard: {
-    opacity: 0.75,
-  },
+  nextCard: {},
   label: {
     fontSize: 10,
     color: "#94a3b8",

@@ -24,7 +24,7 @@ export default function ThemeSelector() {
             key={set.id}
             onPress={() => setFruitSetById(set.id)}
             accessibilityRole="radio"
-            accessibilityState={{ selected: active }}
+            accessibilityState={{ checked: active }}
             accessibilityLabel={t("theme.optionLabel", { label: set.label })}
             style={[
               styles.pill,

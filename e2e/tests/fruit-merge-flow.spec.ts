@@ -34,7 +34,7 @@ test.describe("Fruit Merge — navigation and smoke tests", () => {
     await page.getByRole("button", { name: "Play Fruit Merge" }).click();
 
     // Fruit Merge screen title or canvas should appear
-    await expect(page.getByText("Fruit Merge")).toBeVisible({ timeout: 10000 });
+    await expect(page.getByRole("heading", { name: "Fruit Merge" })).toBeVisible({ timeout: 10000 });
   });
 
   test("score display is visible on the Fruit Merge screen", async ({ page }) => {
@@ -42,7 +42,7 @@ test.describe("Fruit Merge — navigation and smoke tests", () => {
     await page.getByRole("button", { name: "Play Fruit Merge" }).click();
 
     // Score display should show "Score" label
-    await expect(page.getByText(/Score/i)).toBeVisible({ timeout: 10000 });
+    await expect(page.getByText("Score", { exact: true })).toBeVisible({ timeout: 10000 });
   });
 
   test("tapping the canvas does not crash the app", async ({ page }) => {
@@ -63,7 +63,7 @@ test.describe("Fruit Merge — navigation and smoke tests", () => {
 
     // Wait 2 seconds and verify the score element still exists (no crash)
     await page.waitForTimeout(2000);
-    await expect(page.getByText(/Score/i)).toBeVisible();
+    await expect(page.getByText("Score", { exact: true })).toBeVisible();
   });
 
   test("multiple taps do not cause a crash or navigation", async ({ page }) => {
@@ -83,14 +83,14 @@ test.describe("Fruit Merge — navigation and smoke tests", () => {
     }
 
     // App should still be on FruitMerge screen
-    await expect(page.getByText(/Score/i)).toBeVisible();
+    await expect(page.getByText("Score", { exact: true })).toBeVisible();
     await expect(page.url()).toContain(page.url()); // still on same page
   });
 
   test("back button from Fruit Merge returns to Home", async ({ page }) => {
     await page.goto("/");
     await page.getByRole("button", { name: "Play Fruit Merge" }).click();
-    await expect(page.getByText("Fruit Merge")).toBeVisible({ timeout: 10000 });
+    await expect(page.getByRole("heading", { name: "Fruit Merge" })).toBeVisible({ timeout: 10000 });
 
     // Click back
     await page.getByRole("button", { name: /back/i }).click();
