@@ -36,10 +36,7 @@ function getWorld(): MockWorld {
   return results[results.length - 1].value as MockWorld;
 }
 
-async function buildEngine(
-  onMerge = jest.fn(),
-  onGameOver = jest.fn(),
-): Promise<EngineHandle> {
+async function buildEngine(onMerge = jest.fn(), onGameOver = jest.fn()): Promise<EngineHandle> {
   return createEngine(W, H, fruitSet, onMerge, onGameOver);
 }
 
@@ -297,7 +294,7 @@ describe("determinism", () => {
         H,
         fruitSet,
         (e: { tier: number }) => events.push(e.tier),
-        jest.fn(),
+        jest.fn()
       );
       const world = getWorld();
 

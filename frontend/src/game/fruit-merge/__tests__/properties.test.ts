@@ -34,17 +34,15 @@ describe("scoreForMerge — property tests", () => {
       fc.property(fc.integer({ min: 0, max: 9 }), (tier) => {
         const score = scoreForMerge(tier as FruitTier);
         return score > 0 && Number.isInteger(score);
-      }),
+      })
     );
   });
 
   it("each tier 0–9 doubles the previous tier's score (geometric progression)", () => {
     fc.assert(
       fc.property(fc.integer({ min: 0, max: 8 }), (tier) => {
-        return (
-          scoreForMerge((tier + 1) as FruitTier) === scoreForMerge(tier as FruitTier) * 2
-        );
-      }),
+        return scoreForMerge((tier + 1) as FruitTier) === scoreForMerge(tier as FruitTier) * 2;
+      })
     );
   });
 
@@ -53,7 +51,7 @@ describe("scoreForMerge — property tests", () => {
     fc.assert(
       fc.property(fc.constant(10 as FruitTier), (tier) => {
         return scoreForMerge(tier) === 256;
-      }),
+      })
     );
   });
 
@@ -76,7 +74,7 @@ describe("selectWeightedTier — property tests", () => {
       fc.property(fc.float({ min: 0, max: 1, noNaN: true }), (rngValue) => {
         const tier = selectWeightedTier(BASE_SPAWN_WEIGHTS, () => rngValue);
         return tier >= 0 && tier <= MAX_SPAWN_TIER;
-      }),
+      })
     );
   });
 
@@ -93,8 +91,8 @@ describe("selectWeightedTier — property tests", () => {
         (weights, rngValue) => {
           const tier = selectWeightedTier(weights, () => rngValue);
           return tier >= 0 && tier <= MAX_SPAWN_TIER;
-        },
-      ),
+        }
+      )
     );
   });
 
@@ -104,7 +102,7 @@ describe("selectWeightedTier — property tests", () => {
         const allZero = new Array(5).fill(0);
         const tier = selectWeightedTier(allZero, () => rngValue);
         return tier >= 0 && tier <= MAX_SPAWN_TIER;
-      }),
+      })
     );
   });
 });
@@ -127,8 +125,8 @@ describe("ControlledSpawnSelector — property tests", () => {
             if (tier < 0 || tier > MAX_SPAWN_TIER) return false;
           }
           return true;
-        },
-      ),
+        }
+      )
     );
   });
 
@@ -145,8 +143,8 @@ describe("ControlledSpawnSelector — property tests", () => {
             if (!Number.isInteger(tier)) return false;
           }
           return true;
-        },
-      ),
+        }
+      )
     );
   });
 
@@ -164,9 +162,9 @@ describe("ControlledSpawnSelector — property tests", () => {
           const run1 = runWithSeed(seed);
           const run2 = runWithSeed(seed);
           return run1.every((tier, i) => tier === run2[i]);
-        },
+        }
       ),
-      { numRuns: 30 }, // fewer because each run is O(drops)
+      { numRuns: 30 } // fewer because each run is O(drops)
     );
   });
 });
@@ -191,7 +189,7 @@ describe("simulateSpawns — distribution property tests", () => {
           return Math.abs(observed - expected) < 0.3; // generous tolerance
         });
       }),
-      { numRuns: 20 }, // each run simulates 1000 drops
+      { numRuns: 20 } // each run simulates 1000 drops
     );
   });
 
@@ -205,8 +203,8 @@ describe("simulateSpawns — distribution property tests", () => {
         (sequence) => {
           const stats = analyzeSpawnSequence(sequence);
           return stats.longestRepeatStreak >= 1;
-        },
-      ),
+        }
+      )
     );
   });
 
@@ -221,8 +219,8 @@ describe("simulateSpawns — distribution property tests", () => {
           const stats = analyzeSpawnSequence(sequence);
           const total = stats.frequencyByTier.reduce((a, b) => a + b, 0);
           return total === sequence.length;
-        },
-      ),
+        }
+      )
     );
   });
 });
@@ -241,7 +239,7 @@ describe("FruitQueue — property tests", () => {
         }
         const tier = q.peek();
         return tier >= 0 && tier <= MAX_SPAWN_TIER;
-      }),
+      })
     );
   });
 
@@ -254,7 +252,7 @@ describe("FruitQueue — property tests", () => {
         }
         const tier = q.peekNext();
         return tier >= 0 && tier <= MAX_SPAWN_TIER;
-      }),
+      })
     );
   });
 
@@ -272,7 +270,7 @@ describe("FruitQueue — property tests", () => {
           if (q.peek() !== expectedAfterConsume) return false;
         }
         return true;
-      }),
+      })
     );
   });
 
@@ -286,7 +284,7 @@ describe("FruitQueue — property tests", () => {
           if (peeked !== consumed) return false;
         }
         return true;
-      }),
+      })
     );
   });
 });
@@ -308,8 +306,8 @@ describe("createSeededRng — determinism", () => {
             if (rng1() !== rng2()) return false;
           }
           return true;
-        },
-      ),
+        }
+      )
     );
   });
 
@@ -325,8 +323,8 @@ describe("createSeededRng — determinism", () => {
             if (v < 0 || v >= 1) return false;
           }
           return true;
-        },
-      ),
+        }
+      )
     );
   });
 });

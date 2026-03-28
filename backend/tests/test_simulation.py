@@ -49,9 +49,7 @@ def play_full_game(seed: int | None = None) -> YahtzeeGame:
     """
     rng = random.Random(seed)
     g = YahtzeeGame()
-    with unittest.mock.patch(
-        "random.randint", side_effect=lambda a, b: rng.randint(a, b)
-    ):
+    with unittest.mock.patch("random.randint", side_effect=lambda a, b: rng.randint(a, b)):
         for _ in range(13):
             g.roll([False] * 5)
             ps = g.possible_scores()
@@ -100,9 +98,7 @@ class TestDirectSimulation:
 
     def test_upper_subtotal_matches_scores(self):
         g = play_full_game(seed=42)
-        expected = sum(
-            v for k, v in g.scores.items() if k in UPPER_CATEGORIES and v is not None
-        )
+        expected = sum(v for k, v in g.scores.items() if k in UPPER_CATEGORIES and v is not None)
         assert g.upper_subtotal() == expected
 
     def test_total_score_equals_filled_plus_bonus(self):
@@ -205,9 +201,9 @@ class TestAPISimulation:
         for i, cat in enumerate(CATEGORIES):
             self._roll()
             ps = self._possible()
-            assert len(ps) == 13 - i, (
-                f"Round {i + 1}: expected {13 - i} possible scores, got {len(ps)}"
-            )
+            assert (
+                len(ps) == 13 - i
+            ), f"Round {i + 1}: expected {13 - i} possible scores, got {len(ps)}"
             self._score(cat)
 
     def test_round_increments_each_turn(self):

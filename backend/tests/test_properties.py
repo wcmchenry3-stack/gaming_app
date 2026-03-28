@@ -166,9 +166,9 @@ def test_second_roll_preserves_held_dice(held):
     g.roll(held)  # second roll — respects held
     for i, h in enumerate(held):
         if h:
-            assert g.dice[i] == first_dice[i], (
-                f"Die {i} should have been held at {first_dice[i]} but became {g.dice[i]}"
-            )
+            assert (
+                g.dice[i] == first_dice[i]
+            ), f"Die {i} should have been held at {first_dice[i]} but became {g.dice[i]}"
 
 
 # ---------------------------------------------------------------------------
