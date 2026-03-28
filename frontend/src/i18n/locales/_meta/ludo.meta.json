@@ -1,0 +1,380 @@
+{
+  "game.title": {
+    "component": "HomeScreen",
+    "description": "Name of the Ludo game card on the home screen.",
+    "tone": "neutral",
+    "characterLimit": 8,
+    "placeholders": [],
+    "doNotTranslate": ["Ludo"],
+    "notes": "Do not translate the game name."
+  },
+  "game.description": {
+    "component": "HomeScreen",
+    "description": "One-line description on the Ludo game card.",
+    "tone": "casual, punchy",
+    "characterLimit": 55,
+    "placeholders": [],
+    "doNotTranslate": [],
+    "notes": null
+  },
+  "game.playLabel": {
+    "component": "HomeScreen",
+    "description": "Accessibility label for the Ludo play button.",
+    "tone": "functional",
+    "characterLimit": 20,
+    "placeholders": [],
+    "doNotTranslate": ["Ludo"],
+    "notes": null
+  },
+  "phase.roll": {
+    "component": "LudoScreen",
+    "description": "Phase indicator shown to the player during the roll phase.",
+    "tone": "instructional",
+    "characterLimit": 30,
+    "placeholders": [],
+    "doNotTranslate": [],
+    "notes": null
+  },
+  "phase.move": {
+    "component": "LudoScreen",
+    "description": "Phase indicator shown when the player must choose a piece to move.",
+    "tone": "instructional",
+    "characterLimit": 25,
+    "placeholders": [],
+    "doNotTranslate": [],
+    "notes": null
+  },
+  "phase.game_over": {
+    "component": "LudoScreen",
+    "description": "Phase indicator shown when the game has ended.",
+    "tone": "neutral",
+    "characterLimit": 12,
+    "placeholders": [],
+    "doNotTranslate": [],
+    "notes": null
+  },
+  "actions.roll": {
+    "component": "LudoScreen",
+    "description": "Button label to roll the die.",
+    "tone": "action",
+    "characterLimit": 8,
+    "placeholders": [],
+    "doNotTranslate": [],
+    "notes": null
+  },
+  "actions.rollLabel": {
+    "component": "LudoScreen",
+    "description": "Accessibility label for the Roll button.",
+    "tone": "functional",
+    "characterLimit": 30,
+    "placeholders": [],
+    "doNotTranslate": [],
+    "notes": null
+  },
+  "actions.movePiece": {
+    "component": "PieceSelector",
+    "description": "Button label and accessibility label for moving a specific piece. index is 1-based.",
+    "tone": "action",
+    "characterLimit": 20,
+    "placeholders": ["index"],
+    "doNotTranslate": [],
+    "notes": null
+  },
+  "actions.movePieceLabel": {
+    "component": "PieceSelector",
+    "description": "Accessibility label for the move piece button (lowercase variant).",
+    "tone": "functional",
+    "characterLimit": 25,
+    "placeholders": ["index"],
+    "doNotTranslate": [],
+    "notes": null
+  },
+  "actions.newGame": {
+    "component": "GameOverModal",
+    "description": "Button label to start a new game.",
+    "tone": "action",
+    "characterLimit": 12,
+    "placeholders": [],
+    "doNotTranslate": [],
+    "notes": null
+  },
+  "actions.newGameLabel": {
+    "component": "GameOverModal",
+    "description": "Accessibility label for the New Game button.",
+    "tone": "functional",
+    "characterLimit": 30,
+    "placeholders": [],
+    "doNotTranslate": [],
+    "notes": null
+  },
+  "actions.quit": {
+    "component": "LudoScreen",
+    "description": "Button label to quit and return home.",
+    "tone": "neutral",
+    "characterLimit": 8,
+    "placeholders": [],
+    "doNotTranslate": [],
+    "notes": null
+  },
+  "actions.quitLabel": {
+    "component": "LudoScreen",
+    "description": "Accessibility label for the Quit button.",
+    "tone": "functional",
+    "characterLimit": 30,
+    "placeholders": [],
+    "doNotTranslate": [],
+    "notes": null
+  },
+  "player.you": {
+    "component": "PlayerStatus",
+    "description": "Label identifying the human player.",
+    "tone": "neutral",
+    "characterLimit": 6,
+    "placeholders": [],
+    "doNotTranslate": [],
+    "notes": null
+  },
+  "player.cpu": {
+    "component": "PlayerStatus",
+    "description": "Label identifying the CPU player.",
+    "tone": "neutral",
+    "characterLimit": 6,
+    "placeholders": [],
+    "doNotTranslate": ["CPU"],
+    "notes": "CPU is an abbreviation — do not translate."
+  },
+  "player.red": {
+    "component": "PlayerStatus",
+    "description": "Color name for the red player.",
+    "tone": "neutral",
+    "characterLimit": 8,
+    "placeholders": [],
+    "doNotTranslate": [],
+    "notes": null
+  },
+  "player.yellow": {
+    "component": "PlayerStatus",
+    "description": "Color name for the yellow player.",
+    "tone": "neutral",
+    "characterLimit": 10,
+    "placeholders": [],
+    "doNotTranslate": [],
+    "notes": null
+  },
+  "status.piecesInBase": {
+    "component": "PlayerStatus",
+    "description": "Shows how many pieces are still in the home base (not yet on the board).",
+    "tone": "neutral",
+    "characterLimit": 15,
+    "placeholders": ["count"],
+    "doNotTranslate": [],
+    "notes": null
+  },
+  "status.piecesFinished": {
+    "component": "PlayerStatus",
+    "description": "Shows how many pieces have reached the center (finished).",
+    "tone": "neutral",
+    "characterLimit": 15,
+    "placeholders": ["count"],
+    "doNotTranslate": [],
+    "notes": null
+  },
+  "status.yourTurn": {
+    "component": "LudoScreen",
+    "description": "Status text shown when it is the human player's turn.",
+    "tone": "neutral",
+    "characterLimit": 12,
+    "placeholders": [],
+    "doNotTranslate": [],
+    "notes": null
+  },
+  "status.cpuTurn": {
+    "component": "LudoScreen",
+    "description": "Status text shown when it is the CPU's turn.",
+    "tone": "neutral",
+    "characterLimit": 14,
+    "placeholders": [],
+    "doNotTranslate": ["CPU"],
+    "notes": "CPU is an abbreviation — do not translate."
+  },
+  "die.value": {
+    "component": "DiceDisplay",
+    "description": "Shows what number was rolled on the die.",
+    "tone": "neutral",
+    "characterLimit": 20,
+    "placeholders": ["value"],
+    "doNotTranslate": [],
+    "notes": null
+  },
+  "die.extraTurn": {
+    "component": "DiceDisplay",
+    "description": "Badge shown when a 6 is rolled granting an extra turn.",
+    "tone": "celebratory",
+    "characterLimit": 15,
+    "placeholders": [],
+    "doNotTranslate": [],
+    "notes": null
+  },
+  "die.noMoves": {
+    "component": "LudoScreen",
+    "description": "Notice shown when the player has no valid moves and their turn is skipped.",
+    "tone": "neutral",
+    "characterLimit": 40,
+    "placeholders": [],
+    "doNotTranslate": [],
+    "notes": null
+  },
+  "die.face1": {
+    "component": "DiceDisplay",
+    "description": "Unicode die face symbol for 1.",
+    "tone": "neutral",
+    "characterLimit": 2,
+    "placeholders": [],
+    "doNotTranslate": ["⚀"],
+    "notes": "Do not translate — keep the Unicode die symbol."
+  },
+  "die.face2": {
+    "component": "DiceDisplay",
+    "description": "Unicode die face symbol for 2.",
+    "tone": "neutral",
+    "characterLimit": 2,
+    "placeholders": [],
+    "doNotTranslate": ["⚁"],
+    "notes": "Do not translate — keep the Unicode die symbol."
+  },
+  "die.face3": {
+    "component": "DiceDisplay",
+    "description": "Unicode die face symbol for 3.",
+    "tone": "neutral",
+    "characterLimit": 2,
+    "placeholders": [],
+    "doNotTranslate": ["⚂"],
+    "notes": "Do not translate — keep the Unicode die symbol."
+  },
+  "die.face4": {
+    "component": "DiceDisplay",
+    "description": "Unicode die face symbol for 4.",
+    "tone": "neutral",
+    "characterLimit": 2,
+    "placeholders": [],
+    "doNotTranslate": ["⚃"],
+    "notes": "Do not translate — keep the Unicode die symbol."
+  },
+  "die.face5": {
+    "component": "DiceDisplay",
+    "description": "Unicode die face symbol for 5.",
+    "tone": "neutral",
+    "characterLimit": 2,
+    "placeholders": [],
+    "doNotTranslate": ["⚄"],
+    "notes": "Do not translate — keep the Unicode die symbol."
+  },
+  "die.face6": {
+    "component": "DiceDisplay",
+    "description": "Unicode die face symbol for 6.",
+    "tone": "neutral",
+    "characterLimit": 2,
+    "placeholders": [],
+    "doNotTranslate": ["⚅"],
+    "notes": "Do not translate — keep the Unicode die symbol."
+  },
+  "event.capture": {
+    "component": "LudoScreen",
+    "description": "Event notice shown when a piece captures an opponent's piece.",
+    "tone": "action",
+    "characterLimit": 12,
+    "placeholders": [],
+    "doNotTranslate": [],
+    "notes": null
+  },
+  "event.extraTurn": {
+    "component": "LudoScreen",
+    "description": "Event notice shown when a 6 is rolled granting another roll.",
+    "tone": "celebratory",
+    "characterLimit": 30,
+    "placeholders": [],
+    "doNotTranslate": [],
+    "notes": null
+  },
+  "gameOver.title": {
+    "component": "GameOverModal",
+    "description": "Title of the game-over modal.",
+    "tone": "neutral",
+    "characterLimit": 12,
+    "placeholders": [],
+    "doNotTranslate": [],
+    "notes": null
+  },
+  "gameOver.youWin": {
+    "component": "GameOverModal",
+    "description": "Message shown in the game-over modal when the human player wins.",
+    "tone": "celebratory",
+    "characterLimit": 14,
+    "placeholders": [],
+    "doNotTranslate": [],
+    "notes": null
+  },
+  "gameOver.cpuWins": {
+    "component": "GameOverModal",
+    "description": "Message shown in the game-over modal when the CPU wins.",
+    "tone": "sympathetic",
+    "characterLimit": 14,
+    "placeholders": [],
+    "doNotTranslate": ["CPU"],
+    "notes": "CPU is an abbreviation — do not translate."
+  },
+  "gameOver.body": {
+    "component": "GameOverModal",
+    "description": "Body text of the game-over modal explaining the result.",
+    "tone": "neutral",
+    "characterLimit": 50,
+    "placeholders": [],
+    "doNotTranslate": [],
+    "notes": null
+  },
+  "gameOver.playAgain": {
+    "component": "GameOverModal",
+    "description": "Button label to start a new Ludo game.",
+    "tone": "action",
+    "characterLimit": 14,
+    "placeholders": [],
+    "doNotTranslate": [],
+    "notes": null
+  },
+  "gameOver.playAgainLabel": {
+    "component": "GameOverModal",
+    "description": "Accessibility label for the Play Again button.",
+    "tone": "functional",
+    "characterLimit": 40,
+    "placeholders": [],
+    "doNotTranslate": ["Ludo"],
+    "notes": null
+  },
+  "gameOver.home": {
+    "component": "GameOverModal",
+    "description": "Button label to return to the home screen.",
+    "tone": "neutral",
+    "characterLimit": 8,
+    "placeholders": [],
+    "doNotTranslate": [],
+    "notes": null
+  },
+  "gameOver.homeLabel": {
+    "component": "GameOverModal",
+    "description": "Accessibility label for the Home button in the game-over modal.",
+    "tone": "functional",
+    "characterLimit": 40,
+    "placeholders": [],
+    "doNotTranslate": [],
+    "notes": null
+  },
+  "board.pieceLabel": {
+    "component": "LudoBoard",
+    "description": "Accessibility label for a piece on the board. player is the color name, index is 1-based.",
+    "tone": "functional",
+    "characterLimit": 25,
+    "placeholders": ["player", "index"],
+    "doNotTranslate": [],
+    "notes": null
+  }
+}
