@@ -36,7 +36,6 @@ import {
   WALL_THICKNESS,
   DANGER_LINE_RATIO,
 } from "../../game/fruit-merge/engine";
-import { getVerticesForFruit } from "../../game/fruit-merge/fruitVertices";
 import { FruitDefinition, FruitSet } from "../../theme/fruitSets";
 import { useTheme } from "../../theme/ThemeContext";
 import { useTranslation } from "react-i18next";
@@ -162,9 +161,7 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
             WALL_THICKNESS + def.radius,
             width - WALL_THICKNESS - def.radius
           );
-          const nameKey = def.nameKey ?? def.name.toLowerCase();
-          const verts = getVerticesForFruit(fruitSetRef.current.id, nameKey);
-          dropFruit(engineRef.current.world, def, fruitSetRef.current.id, clamped, DROP_Y, verts);
+          dropFruit(engineRef.current.world, def, fruitSetRef.current.id, clamped, DROP_Y);
         },
         reset() {
           initEngine();
