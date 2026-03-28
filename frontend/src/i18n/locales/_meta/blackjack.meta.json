@@ -1,0 +1,443 @@
+{
+  "game.title": {
+    "component": "HomeScreen",
+    "description": "Name of the Blackjack game card on the home screen.",
+    "tone": "neutral",
+    "characterLimit": 12,
+    "placeholders": [],
+    "doNotTranslate": ["Blackjack"],
+    "notes": "Do not translate the game name."
+  },
+  "game.description": {
+    "component": "HomeScreen",
+    "description": "One-line description on the Blackjack game card.",
+    "tone": "casual, punchy",
+    "characterLimit": 55,
+    "placeholders": [],
+    "doNotTranslate": [],
+    "notes": null
+  },
+  "game.playLabel": {
+    "component": "HomeScreen",
+    "description": "Accessibility label for the Blackjack play button.",
+    "tone": "functional",
+    "characterLimit": 20,
+    "placeholders": [],
+    "doNotTranslate": ["Blackjack"],
+    "notes": null
+  },
+  "chips.display": {
+    "component": "BettingPanel",
+    "description": "Displays the player's current chip count.",
+    "tone": "neutral",
+    "characterLimit": 20,
+    "placeholders": ["chips"],
+    "doNotTranslate": [],
+    "notes": null
+  },
+  "chips.accessibilityLabel": {
+    "component": "BettingPanel",
+    "description": "Screen reader label for chip count.",
+    "tone": "functional",
+    "characterLimit": 40,
+    "placeholders": ["chips"],
+    "doNotTranslate": [],
+    "notes": null
+  },
+  "bet.label": {
+    "component": "BettingPanel",
+    "description": "Label above the bet amount input.",
+    "tone": "neutral",
+    "characterLimit": 10,
+    "placeholders": [],
+    "doNotTranslate": [],
+    "notes": null
+  },
+  "bet.decreaseLabel": {
+    "component": "BettingPanel",
+    "description": "Accessibility label for the decrease bet button (−10).",
+    "tone": "functional",
+    "characterLimit": 30,
+    "placeholders": [],
+    "doNotTranslate": [],
+    "notes": null
+  },
+  "bet.increaseLabel": {
+    "component": "BettingPanel",
+    "description": "Accessibility label for the increase bet button (+10).",
+    "tone": "functional",
+    "characterLimit": 30,
+    "placeholders": [],
+    "doNotTranslate": [],
+    "notes": null
+  },
+  "bet.accessibilityLabel": {
+    "component": "BettingPanel",
+    "description": "Screen reader label for the current bet stepper value.",
+    "tone": "functional",
+    "characterLimit": 40,
+    "placeholders": ["amount"],
+    "doNotTranslate": [],
+    "notes": null
+  },
+  "actions.deal": {
+    "component": "BettingPanel",
+    "description": "Button label to deal cards and start a hand.",
+    "tone": "action",
+    "characterLimit": 10,
+    "placeholders": [],
+    "doNotTranslate": [],
+    "notes": null
+  },
+  "actions.dealLabel": {
+    "component": "BettingPanel",
+    "description": "Accessibility label for the Deal button.",
+    "tone": "functional",
+    "characterLimit": 50,
+    "placeholders": ["amount"],
+    "doNotTranslate": [],
+    "notes": null
+  },
+  "actions.hit": {
+    "component": "ActionButtons",
+    "description": "Button label to take another card.",
+    "tone": "action",
+    "characterLimit": 8,
+    "placeholders": [],
+    "doNotTranslate": [],
+    "notes": null
+  },
+  "actions.hitLabel": {
+    "component": "ActionButtons",
+    "description": "Accessibility label for the Hit button.",
+    "tone": "functional",
+    "characterLimit": 40,
+    "placeholders": [],
+    "doNotTranslate": [],
+    "notes": null
+  },
+  "actions.stand": {
+    "component": "ActionButtons",
+    "description": "Button label to end the player's turn.",
+    "tone": "action",
+    "characterLimit": 10,
+    "placeholders": [],
+    "doNotTranslate": [],
+    "notes": null
+  },
+  "actions.standLabel": {
+    "component": "ActionButtons",
+    "description": "Accessibility label for the Stand button.",
+    "tone": "functional",
+    "characterLimit": 40,
+    "placeholders": [],
+    "doNotTranslate": [],
+    "notes": null
+  },
+  "actions.doubleDown": {
+    "component": "ActionButtons",
+    "description": "Button label to double the bet and take one card.",
+    "tone": "action",
+    "characterLimit": 14,
+    "placeholders": [],
+    "doNotTranslate": [],
+    "notes": null
+  },
+  "actions.doubleDownLabel": {
+    "component": "ActionButtons",
+    "description": "Accessibility label for the Double Down button when enabled.",
+    "tone": "functional",
+    "characterLimit": 60,
+    "placeholders": [],
+    "doNotTranslate": [],
+    "notes": null
+  },
+  "actions.doubleDownDisabledLabel": {
+    "component": "ActionButtons",
+    "description": "Accessibility label for the Double Down button when disabled.",
+    "tone": "functional",
+    "characterLimit": 40,
+    "placeholders": [],
+    "doNotTranslate": [],
+    "notes": null
+  },
+  "actions.nextHand": {
+    "component": "BlackjackScreen",
+    "description": "Button label to start the next hand after result.",
+    "tone": "action",
+    "characterLimit": 12,
+    "placeholders": [],
+    "doNotTranslate": [],
+    "notes": null
+  },
+  "actions.nextHandLabel": {
+    "component": "BlackjackScreen",
+    "description": "Accessibility label for the Next Hand button.",
+    "tone": "functional",
+    "characterLimit": 40,
+    "placeholders": [],
+    "doNotTranslate": [],
+    "notes": null
+  },
+  "actions.quit": {
+    "component": "BlackjackScreen",
+    "description": "Button label to quit the game and return home.",
+    "tone": "neutral",
+    "characterLimit": 8,
+    "placeholders": [],
+    "doNotTranslate": [],
+    "notes": null
+  },
+  "actions.quitLabel": {
+    "component": "BlackjackScreen",
+    "description": "Accessibility label for the Quit button.",
+    "tone": "functional",
+    "characterLimit": 40,
+    "placeholders": [],
+    "doNotTranslate": [],
+    "notes": null
+  },
+  "hand.player": {
+    "component": "HandDisplay",
+    "description": "Label above the player's hand of cards.",
+    "tone": "neutral",
+    "characterLimit": 12,
+    "placeholders": [],
+    "doNotTranslate": [],
+    "notes": null
+  },
+  "hand.dealer": {
+    "component": "HandDisplay",
+    "description": "Label above the dealer's hand of cards.",
+    "tone": "neutral",
+    "characterLimit": 14,
+    "placeholders": [],
+    "doNotTranslate": [],
+    "notes": null
+  },
+  "hand.value": {
+    "component": "HandDisplay",
+    "description": "Displays the numeric value of a hand.",
+    "tone": "neutral",
+    "characterLimit": 15,
+    "placeholders": ["value"],
+    "doNotTranslate": [],
+    "notes": null
+  },
+  "hand.valueHidden": {
+    "component": "HandDisplay",
+    "description": "Shown when dealer's hand value is hidden (hole card concealed).",
+    "tone": "neutral",
+    "characterLimit": 12,
+    "placeholders": [],
+    "doNotTranslate": [],
+    "notes": null
+  },
+  "card.accessibilityLabel": {
+    "component": "PlayingCard",
+    "description": "Screen reader label for a visible playing card.",
+    "tone": "functional",
+    "characterLimit": 30,
+    "placeholders": ["rank", "suit"],
+    "doNotTranslate": [],
+    "notes": "rank and suit are interpolated; suit uses card.suit.* keys."
+  },
+  "card.faceDown": {
+    "component": "PlayingCard",
+    "description": "Screen reader label for a face-down card.",
+    "tone": "functional",
+    "characterLimit": 20,
+    "placeholders": [],
+    "doNotTranslate": [],
+    "notes": null
+  },
+  "card.suit.spades": {
+    "component": "PlayingCard",
+    "description": "Name of the Spades suit for screen reader use.",
+    "tone": "neutral",
+    "characterLimit": 10,
+    "placeholders": [],
+    "doNotTranslate": [],
+    "notes": null
+  },
+  "card.suit.hearts": {
+    "component": "PlayingCard",
+    "description": "Name of the Hearts suit for screen reader use.",
+    "tone": "neutral",
+    "characterLimit": 10,
+    "placeholders": [],
+    "doNotTranslate": [],
+    "notes": null
+  },
+  "card.suit.diamonds": {
+    "component": "PlayingCard",
+    "description": "Name of the Diamonds suit for screen reader use.",
+    "tone": "neutral",
+    "characterLimit": 10,
+    "placeholders": [],
+    "doNotTranslate": [],
+    "notes": null
+  },
+  "card.suit.clubs": {
+    "component": "PlayingCard",
+    "description": "Name of the Clubs suit for screen reader use.",
+    "tone": "neutral",
+    "characterLimit": 10,
+    "placeholders": [],
+    "doNotTranslate": [],
+    "notes": null
+  },
+  "outcome.blackjack": {
+    "component": "ResultBanner",
+    "description": "Result banner when player gets a natural blackjack.",
+    "tone": "celebratory",
+    "characterLimit": 12,
+    "placeholders": [],
+    "doNotTranslate": ["Blackjack"],
+    "notes": null
+  },
+  "outcome.win": {
+    "component": "ResultBanner",
+    "description": "Result banner when player wins.",
+    "tone": "celebratory",
+    "characterLimit": 10,
+    "placeholders": [],
+    "doNotTranslate": [],
+    "notes": null
+  },
+  "outcome.push": {
+    "component": "ResultBanner",
+    "description": "Result banner when the hand is a tie (push).",
+    "tone": "neutral",
+    "characterLimit": 8,
+    "placeholders": [],
+    "doNotTranslate": [],
+    "notes": null
+  },
+  "outcome.lose": {
+    "component": "ResultBanner",
+    "description": "Result banner when player loses.",
+    "tone": "sympathetic",
+    "characterLimit": 10,
+    "placeholders": [],
+    "doNotTranslate": [],
+    "notes": null
+  },
+  "payout.positive": {
+    "component": "ResultBanner",
+    "description": "Payout display when player wins chips (positive).",
+    "tone": "celebratory",
+    "characterLimit": 20,
+    "placeholders": ["amount"],
+    "doNotTranslate": [],
+    "notes": "Leading + sign should be preserved if possible."
+  },
+  "payout.negative": {
+    "component": "ResultBanner",
+    "description": "Payout display when player loses chips (negative). amount is already negative.",
+    "tone": "sympathetic",
+    "characterLimit": 20,
+    "placeholders": ["amount"],
+    "doNotTranslate": [],
+    "notes": null
+  },
+  "payout.zero": {
+    "component": "ResultBanner",
+    "description": "Payout display for a push (no chips exchanged).",
+    "tone": "neutral",
+    "characterLimit": 12,
+    "placeholders": [],
+    "doNotTranslate": [],
+    "notes": null
+  },
+  "payout.accessibilityLabel": {
+    "component": "ResultBanner",
+    "description": "Screen reader label for the payout value.",
+    "tone": "functional",
+    "characterLimit": 40,
+    "placeholders": ["amount"],
+    "doNotTranslate": [],
+    "notes": null
+  },
+  "phase.betting": {
+    "component": "BlackjackScreen",
+    "description": "Phase indicator shown to the player during the betting phase.",
+    "tone": "instructional",
+    "characterLimit": 20,
+    "placeholders": [],
+    "doNotTranslate": [],
+    "notes": null
+  },
+  "phase.player": {
+    "component": "BlackjackScreen",
+    "description": "Phase indicator shown during the player's turn.",
+    "tone": "instructional",
+    "characterLimit": 14,
+    "placeholders": [],
+    "doNotTranslate": [],
+    "notes": null
+  },
+  "phase.result": {
+    "component": "BlackjackScreen",
+    "description": "Phase indicator shown after the round is resolved.",
+    "tone": "neutral",
+    "characterLimit": 14,
+    "placeholders": [],
+    "doNotTranslate": [],
+    "notes": null
+  },
+  "gameOver.title": {
+    "component": "GameOverModal",
+    "description": "Title of the game-over modal when the player runs out of chips.",
+    "tone": "sympathetic",
+    "characterLimit": 16,
+    "placeholders": [],
+    "doNotTranslate": [],
+    "notes": null
+  },
+  "gameOver.body": {
+    "component": "GameOverModal",
+    "description": "Body text of the game-over modal.",
+    "tone": "sympathetic, encouraging",
+    "characterLimit": 60,
+    "placeholders": [],
+    "doNotTranslate": [],
+    "notes": null
+  },
+  "gameOver.playAgain": {
+    "component": "GameOverModal",
+    "description": "Button to start a new session from the game-over modal.",
+    "tone": "action",
+    "characterLimit": 12,
+    "placeholders": [],
+    "doNotTranslate": [],
+    "notes": null
+  },
+  "gameOver.playAgainLabel": {
+    "component": "GameOverModal",
+    "description": "Accessibility label for the Play Again button.",
+    "tone": "functional",
+    "characterLimit": 50,
+    "placeholders": [],
+    "doNotTranslate": [],
+    "notes": null
+  },
+  "gameOver.home": {
+    "component": "GameOverModal",
+    "description": "Button to return to the home screen from the game-over modal.",
+    "tone": "neutral",
+    "characterLimit": 8,
+    "placeholders": [],
+    "doNotTranslate": [],
+    "notes": null
+  },
+  "gameOver.homeLabel": {
+    "component": "GameOverModal",
+    "description": "Accessibility label for the Home button in the game-over modal.",
+    "tone": "functional",
+    "characterLimit": 40,
+    "placeholders": [],
+    "doNotTranslate": [],
+    "notes": null
+  }
+}
