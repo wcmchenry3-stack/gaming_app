@@ -53,7 +53,7 @@ test.describe("Yahtzee — full 13-round game journey", () => {
     // Scorecard should show "Ones" as a tappable category
     const onesRow = page.getByText("Ones").first();
     await expect(onesRow).toBeVisible();
-    await onesRow.dblclick(); // double-tap to score
+    await onesRow.click(); // single click to score
 
     await expect(page.getByText("Round 2 / 13")).toBeVisible();
   });
@@ -70,7 +70,7 @@ test.describe("Yahtzee — full 13-round game journey", () => {
       const category = CATEGORIES[round];
       // Each category row has its translated label; "ones" → "Ones", etc.
       const label = category.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
-      await page.getByText(label).first().dblclick();
+      await page.getByText(label).first().click();
     }
 
     await expect(page.getByText("Game Over!")).toBeVisible();
@@ -85,7 +85,7 @@ test.describe("Yahtzee — full 13-round game journey", () => {
       await page.getByRole("button", { name: /Roll/i }).click();
       const category = CATEGORIES[round];
       const label = category.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
-      await page.getByText(label).first().dblclick();
+      await page.getByText(label).first().click();
     }
 
     await expect(page.getByText("Game Over!")).toBeVisible();

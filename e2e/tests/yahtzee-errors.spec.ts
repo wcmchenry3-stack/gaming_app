@@ -57,7 +57,7 @@ test.describe("Yahtzee — error recovery", () => {
 
     // Attempt to score without rolling — tap "Ones"
     const onesRow = page.getByText("Ones").first();
-    await onesRow.dblclick();
+    await onesRow.click();
 
     // Error should appear in UI
     await expect(page.getByText(/Must roll/i)).toBeVisible({ timeout: 5000 });
