@@ -4,7 +4,7 @@ import resourcesToBackend from "i18next-resources-to-backend";
 import * as Localization from "expo-localization";
 import { LOCALES } from "./locales";
 
-type Namespace = "common" | "yahtzee" | "fruit-merge" | "errors" | "blackjack";
+type Namespace = "common" | "yahtzee" | "fruit-merge" | "errors" | "blackjack" | "ludo";
 type TranslationModule = Promise<{ default: Record<string, string> }>;
 
 // Resolve the best supported locale from the device's preference list
@@ -28,6 +28,7 @@ const localeLoaders: Record<string, Record<Namespace, () => TranslationModule>> 
     "fruit-merge": () => import("./locales/en/fruit-merge.json") as TranslationModule,
     errors: () => import("./locales/en/errors.json") as TranslationModule,
     blackjack: () => import("./locales/en/blackjack.json") as TranslationModule,
+    ludo: () => import("./locales/en/ludo.json") as TranslationModule,
   },
   "fr-CA": {
     common: () => import("./locales/fr-CA/common.json") as TranslationModule,
@@ -35,6 +36,7 @@ const localeLoaders: Record<string, Record<Namespace, () => TranslationModule>> 
     "fruit-merge": () => import("./locales/fr-CA/fruit-merge.json") as TranslationModule,
     errors: () => import("./locales/fr-CA/errors.json") as TranslationModule,
     blackjack: () => import("./locales/fr-CA/blackjack.json") as TranslationModule,
+    ludo: () => import("./locales/fr-CA/ludo.json") as TranslationModule,
   },
   es: {
     common: () => import("./locales/es/common.json") as TranslationModule,
@@ -42,6 +44,7 @@ const localeLoaders: Record<string, Record<Namespace, () => TranslationModule>> 
     "fruit-merge": () => import("./locales/es/fruit-merge.json") as TranslationModule,
     errors: () => import("./locales/es/errors.json") as TranslationModule,
     blackjack: () => import("./locales/es/blackjack.json") as TranslationModule,
+    ludo: () => import("./locales/es/ludo.json") as TranslationModule,
   },
   hi: {
     common: () => import("./locales/hi/common.json") as TranslationModule,
@@ -49,6 +52,7 @@ const localeLoaders: Record<string, Record<Namespace, () => TranslationModule>> 
     "fruit-merge": () => import("./locales/hi/fruit-merge.json") as TranslationModule,
     errors: () => import("./locales/hi/errors.json") as TranslationModule,
     blackjack: () => import("./locales/hi/blackjack.json") as TranslationModule,
+    ludo: () => import("./locales/hi/ludo.json") as TranslationModule,
   },
   ar: {
     common: () => import("./locales/ar/common.json") as TranslationModule,
@@ -56,6 +60,7 @@ const localeLoaders: Record<string, Record<Namespace, () => TranslationModule>> 
     "fruit-merge": () => import("./locales/ar/fruit-merge.json") as TranslationModule,
     errors: () => import("./locales/ar/errors.json") as TranslationModule,
     blackjack: () => import("./locales/ar/blackjack.json") as TranslationModule,
+    ludo: () => import("./locales/ar/ludo.json") as TranslationModule,
   },
   zh: {
     common: () => import("./locales/zh/common.json") as TranslationModule,
@@ -63,6 +68,7 @@ const localeLoaders: Record<string, Record<Namespace, () => TranslationModule>> 
     "fruit-merge": () => import("./locales/zh/fruit-merge.json") as TranslationModule,
     errors: () => import("./locales/zh/errors.json") as TranslationModule,
     blackjack: () => import("./locales/zh/blackjack.json") as TranslationModule,
+    ludo: () => import("./locales/zh/ludo.json") as TranslationModule,
   },
   ja: {
     common: () => import("./locales/ja/common.json") as TranslationModule,
@@ -70,6 +76,7 @@ const localeLoaders: Record<string, Record<Namespace, () => TranslationModule>> 
     "fruit-merge": () => import("./locales/ja/fruit-merge.json") as TranslationModule,
     errors: () => import("./locales/ja/errors.json") as TranslationModule,
     blackjack: () => import("./locales/ja/blackjack.json") as TranslationModule,
+    ludo: () => import("./locales/ja/ludo.json") as TranslationModule,
   },
   ko: {
     common: () => import("./locales/ko/common.json") as TranslationModule,
@@ -77,6 +84,7 @@ const localeLoaders: Record<string, Record<Namespace, () => TranslationModule>> 
     "fruit-merge": () => import("./locales/ko/fruit-merge.json") as TranslationModule,
     errors: () => import("./locales/ko/errors.json") as TranslationModule,
     blackjack: () => import("./locales/ko/blackjack.json") as TranslationModule,
+    ludo: () => import("./locales/ko/ludo.json") as TranslationModule,
   },
   pt: {
     common: () => import("./locales/pt/common.json") as TranslationModule,
@@ -84,6 +92,7 @@ const localeLoaders: Record<string, Record<Namespace, () => TranslationModule>> 
     "fruit-merge": () => import("./locales/pt/fruit-merge.json") as TranslationModule,
     errors: () => import("./locales/pt/errors.json") as TranslationModule,
     blackjack: () => import("./locales/pt/blackjack.json") as TranslationModule,
+    ludo: () => import("./locales/pt/ludo.json") as TranslationModule,
   },
   he: {
     common: () => import("./locales/he/common.json") as TranslationModule,
@@ -91,6 +100,7 @@ const localeLoaders: Record<string, Record<Namespace, () => TranslationModule>> 
     "fruit-merge": () => import("./locales/he/fruit-merge.json") as TranslationModule,
     errors: () => import("./locales/he/errors.json") as TranslationModule,
     blackjack: () => import("./locales/he/blackjack.json") as TranslationModule,
+    ludo: () => import("./locales/he/ludo.json") as TranslationModule,
   },
   de: {
     common: () => import("./locales/de/common.json") as TranslationModule,
@@ -98,6 +108,7 @@ const localeLoaders: Record<string, Record<Namespace, () => TranslationModule>> 
     "fruit-merge": () => import("./locales/de/fruit-merge.json") as TranslationModule,
     errors: () => import("./locales/de/errors.json") as TranslationModule,
     blackjack: () => import("./locales/de/blackjack.json") as TranslationModule,
+    ludo: () => import("./locales/de/ludo.json") as TranslationModule,
   },
   nl: {
     common: () => import("./locales/nl/common.json") as TranslationModule,
@@ -105,6 +116,7 @@ const localeLoaders: Record<string, Record<Namespace, () => TranslationModule>> 
     "fruit-merge": () => import("./locales/nl/fruit-merge.json") as TranslationModule,
     errors: () => import("./locales/nl/errors.json") as TranslationModule,
     blackjack: () => import("./locales/nl/blackjack.json") as TranslationModule,
+    ludo: () => import("./locales/nl/ludo.json") as TranslationModule,
   },
   ru: {
     common: () => import("./locales/ru/common.json") as TranslationModule,
@@ -112,6 +124,7 @@ const localeLoaders: Record<string, Record<Namespace, () => TranslationModule>> 
     "fruit-merge": () => import("./locales/ru/fruit-merge.json") as TranslationModule,
     errors: () => import("./locales/ru/errors.json") as TranslationModule,
     blackjack: () => import("./locales/ru/blackjack.json") as TranslationModule,
+    ludo: () => import("./locales/ru/ludo.json") as TranslationModule,
   },
 };
 
@@ -129,7 +142,7 @@ i18n
     lng: resolveLocale(),
     fallbackLng: "en",
     supportedLngs: LOCALES.map((l) => l.code),
-    ns: ["common", "yahtzee", "fruit-merge", "errors", "blackjack"],
+    ns: ["common", "yahtzee", "fruit-merge", "errors", "blackjack", "ludo"],
     defaultNS: "common",
     interpolation: { escapeValue: false },
     react: { useSuspense: true },

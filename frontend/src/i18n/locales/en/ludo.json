@@ -1,0 +1,52 @@
+{
+  "game.title": "Ludo",
+  "game.description": "Race your pieces to the center.",
+  "game.playLabel": "Play Ludo",
+
+  "phase.roll": "Your turn — roll the die",
+  "phase.move": "Choose a piece to move",
+  "phase.game_over": "Game over",
+
+  "actions.roll": "Roll",
+  "actions.rollLabel": "Roll the die",
+  "actions.movePiece": "Move Piece {{index}}",
+  "actions.movePieceLabel": "Move piece {{index}}",
+  "actions.newGame": "New Game",
+  "actions.newGameLabel": "Start a new game",
+  "actions.quit": "Quit",
+  "actions.quitLabel": "Return to home screen",
+
+  "player.you": "You",
+  "player.cpu": "CPU",
+  "player.red": "Red",
+  "player.yellow": "Yellow",
+
+  "status.piecesInBase": "{{count}} in base",
+  "status.piecesFinished": "{{count}} finished",
+  "status.yourTurn": "Your turn",
+  "status.cpuTurn": "CPU's turn",
+
+  "die.value": "Rolled a {{value}}",
+  "die.extraTurn": "Roll again!",
+  "die.noMoves": "No valid moves — turn skipped",
+  "die.face1": "⚀",
+  "die.face2": "⚁",
+  "die.face3": "⚂",
+  "die.face4": "⚃",
+  "die.face5": "⚄",
+  "die.face6": "⚅",
+
+  "event.capture": "Captured!",
+  "event.extraTurn": "Rolled a 6 — roll again!",
+
+  "gameOver.title": "Game Over",
+  "gameOver.youWin": "You Win!",
+  "gameOver.cpuWins": "CPU Wins!",
+  "gameOver.body": "All pieces reached the center.",
+  "gameOver.playAgain": "Play Again",
+  "gameOver.playAgainLabel": "Start a new Ludo game",
+  "gameOver.home": "Home",
+  "gameOver.homeLabel": "Return to home screen",
+
+  "board.pieceLabel": "{{player}} piece {{index}}"
+}

@@ -52,7 +52,7 @@ function parseArgs() {
         .map((l) => l.code)
         .join(" | ")}`
     );
-    console.error("  Namespaces:  common | yahtzee | fruit-merge | errors | blackjack");
+    console.error("  Namespaces:  common | yahtzee | fruit-merge | errors | blackjack | ludo");
     process.exit(1);
   }
 
@@ -131,29 +131,46 @@ async function callOpenAI(systemPrompt, userPrompt, model) {
     );
   }
 
-  const response = await fetch("https://api.openai.com/v1/chat/completions", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${apiKey}`,
-    },
-    body: JSON.stringify({
-      model,
-      temperature: 0.2,
-      messages: [
-        { role: "system", content: systemPrompt },
-        { role: "user", content: userPrompt },
-      ],
-    }),
-  });
+  const MAX_RETRIES = 5;
+  let lastError = null;
+  for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
+    const response = await fetch("https://api.openai.com/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({
+        model,
+        temperature: 0.2,
+        max_completion_tokens: 4096,
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: userPrompt },
+        ],
+      }),
+    });
 
-  if (!response.ok) {
-    const err = await response.text();
-    throw new Error(`OpenAI API error ${response.status}: ${err}`);
+    // Retry on 429 RateLimitError with exponential backoff
+    if (response.status === 429) {
+      const backoff = Math.pow(2, attempt + 1) * 1000;
+      console.warn(
+        `Rate limit hit (429). Retrying in ${backoff / 1000}s (attempt ${attempt + 1}/${MAX_RETRIES})...`
+      );
+      await new Promise((resolve) => setTimeout(resolve, backoff));
+      lastError = new Error(`OpenAI RateLimitError after ${MAX_RETRIES} retries`);
+      continue;
+    }
+
+    if (!response.ok) {
+      const err = await response.text();
+      throw new Error(`OpenAI API error ${response.status}: ${err}`);
+    }
+
+    const data = await response.json();
+    return data.choices[0].message.content.trim();
   }
-
-  const data = await response.json();
-  return data.choices[0].message.content.trim();
+  throw lastError ?? new Error(`OpenAI RateLimitError: exceeded ${MAX_RETRIES} retry attempts`);
 }
 
 // ─── Validation ───────────────────────────────────────────────────────────────

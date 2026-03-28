@@ -7,10 +7,12 @@ from game import YahtzeeGame
 from models import GameStateResponse, PossibleScoresResponse, RollRequest, ScoreRequest
 from fruit_merge.router import router as fruit_merge_router
 from blackjack.router import router as blackjack_router
+from ludo.router import router as ludo_router
 
 app = FastAPI(title="Gaming App API")
 app.include_router(fruit_merge_router, prefix="/fruit-merge")
 app.include_router(blackjack_router, prefix="/blackjack")
+app.include_router(ludo_router, prefix="/ludo")
 
 # CORS — scoped to known origins; set ALLOWED_ORIGINS env var (comma-separated) in production
 _raw = os.environ.get("ALLOWED_ORIGINS", "")
