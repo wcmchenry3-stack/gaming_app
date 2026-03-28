@@ -59,7 +59,10 @@ def test_at_most_one_soft_ace(hand):
     if ace_count == 0:
         return
     # Compute the hard total (all aces = 1)
-    hard_total = sum(1 if c.rank == "A" else (10 if c.rank in ("J", "Q", "K", "10") else int(c.rank)) for c in hand)
+    hard_total = sum(
+        1 if c.rank == "A" else (10 if c.rank in ("J", "Q", "K", "10") else int(c.rank))
+        for c in hand
+    )
     # The soft premium is total - hard_total; it can only be a multiple of 10
     # and at most 10 (one ace as 11 instead of 1 = +10)
     soft_premium = total - hard_total

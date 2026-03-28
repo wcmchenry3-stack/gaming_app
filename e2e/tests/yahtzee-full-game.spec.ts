@@ -17,6 +17,23 @@ const CATEGORIES = [
   "small_straight", "large_straight", "yahtzee", "chance",
 ];
 
+// Maps category keys to the English i18n display text shown in the scorecard
+const CATEGORY_LABELS: Record<string, string> = {
+  ones: "Ones",
+  twos: "Twos",
+  threes: "Threes",
+  fours: "Fours",
+  fives: "Fives",
+  sixes: "Sixes",
+  three_of_a_kind: "Three of a Kind",
+  four_of_a_kind: "Four of a Kind",
+  full_house: "Full House",
+  small_straight: "Sm. Straight",
+  large_straight: "Lg. Straight",
+  yahtzee: "Yahtzee",
+  chance: "Chance",
+};
+
 test.describe("Yahtzee — full 13-round game journey", () => {
   test.beforeEach(async ({ page }) => {
     await installYahtzeeGameMock(page);
@@ -66,10 +83,7 @@ test.describe("Yahtzee — full 13-round game journey", () => {
       await expect(page.getByText(`Round ${round + 1} / 13`)).toBeVisible();
       await page.getByRole("button", { name: /Roll/i }).click();
 
-      // Double-tap the first available unfilled category
-      const category = CATEGORIES[round];
-      // Each category row has its translated label; "ones" → "Ones", etc.
-      const label = category.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+      const label = CATEGORY_LABELS[CATEGORIES[round]];
       await page.getByText(label).first().click();
     }
 
@@ -83,8 +97,7 @@ test.describe("Yahtzee — full 13-round game journey", () => {
     // Fast-forward through all 13 rounds
     for (let round = 0; round < 13; round++) {
       await page.getByRole("button", { name: /Roll/i }).click();
-      const category = CATEGORIES[round];
-      const label = category.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+      const label = CATEGORY_LABELS[CATEGORIES[round]];
       await page.getByText(label).first().click();
     }
 

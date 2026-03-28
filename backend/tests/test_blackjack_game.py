@@ -77,9 +77,7 @@ class TestIsNaturalBlackjack:
         assert is_natural_blackjack([Card("♥", "K"), Card("♠", "A")])
 
     def test_21_three_cards_not_blackjack(self):
-        assert not is_natural_blackjack(
-            [Card("♠", "7"), Card("♥", "7"), Card("♦", "7")]
-        )
+        assert not is_natural_blackjack([Card("♠", "7"), Card("♥", "7"), Card("♦", "7")])
 
     def test_two_cards_not_21(self):
         assert not is_natural_blackjack([Card("♠", "9"), Card("♥", "8")])

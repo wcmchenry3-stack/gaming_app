@@ -66,10 +66,8 @@ test.describe("Language switcher", () => {
     const switcher = page.getByRole("combobox", { name: /language/i });
     await switcher.selectOption("es");
 
-    // Spanish locale: "game.playLabel" = "Jugar Yahtzee" (or similar)
-    // Common: "app.title" = "Gaming App" stays the same (proper noun)
-    // Yahtzee: "game.playLabel" should be Spanish
-    await expect(page.getByRole("button", { name: /Jugar/i })).toBeVisible({
+    // Spanish locale: "game.playLabel" = "Jugar Yahtzee"
+    await expect(page.getByRole("button", { name: "Jugar Yahtzee" })).toBeVisible({
       timeout: 3000,
     });
   });
@@ -79,7 +77,7 @@ test.describe("Language switcher", () => {
     await switcher.selectOption("de");
 
     // German: "game.playLabel" for yahtzee
-    await expect(page.getByRole("button", { name: /Spielen/i })).toBeVisible({
+    await expect(page.getByRole("button", { name: "Yahtzee spielen" })).toBeVisible({
       timeout: 3000,
     });
   });
@@ -88,7 +86,7 @@ test.describe("Language switcher", () => {
     const switcher = page.getByRole("combobox", { name: /language/i });
 
     await switcher.selectOption("es");
-    await expect(page.getByRole("button", { name: /Jugar/i })).toBeVisible({
+    await expect(page.getByRole("button", { name: "Jugar Yahtzee" })).toBeVisible({
       timeout: 3000,
     });
 

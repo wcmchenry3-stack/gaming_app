@@ -55,7 +55,9 @@ test.describe("Yahtzee — error recovery", () => {
     await page.getByRole("button", { name: "Play Yahtzee" }).click();
     await expect(page.getByText("Round 1 / 13")).toBeVisible();
 
-    // Attempt to score without rolling — tap "Ones"
+    // Roll first so the scorecard row is enabled, then attempt to score —
+    // the score endpoint is mocked to return 400 regardless
+    await page.getByRole("button", { name: /Roll/i }).click();
     const onesRow = page.getByText("Ones").first();
     await onesRow.click();
 

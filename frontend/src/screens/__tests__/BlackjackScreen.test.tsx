@@ -1,4 +1,5 @@
 import React from "react";
+import { ActivityIndicator } from "react-native";
 import { render, fireEvent, waitFor, act } from "@testing-library/react-native";
 import BlackjackScreen from "../BlackjackScreen";
 import { ThemeProvider } from "../../theme/ThemeContext";
@@ -116,7 +117,6 @@ describe("BlackjackScreen — initial load", () => {
     let resolve!: (v: ReturnType<typeof makeBettingState>) => void;
     mockApi.newSession.mockReturnValue(new Promise((r) => { resolve = r; }));
     const { UNSAFE_getByType } = renderScreen();
-    const { ActivityIndicator } = require("react-native");
     await waitFor(() => expect(UNSAFE_getByType(ActivityIndicator)).toBeTruthy());
     // clean up
     await act(async () => { resolve(makeBettingState()); });
