@@ -52,7 +52,7 @@ function parseArgs() {
         .map((l) => l.code)
         .join(" | ")}`
     );
-    console.error("  Namespaces:  common | yahtzee | fruit-merge | errors");
+    console.error("  Namespaces:  common | yahtzee | fruit-merge | errors | blackjack");
     process.exit(1);
   }
 

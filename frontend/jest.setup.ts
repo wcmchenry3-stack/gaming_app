@@ -13,11 +13,12 @@ import common from "./src/i18n/locales/en/common.json";
 import yahtzee from "./src/i18n/locales/en/yahtzee.json";
 import fruitMerge from "./src/i18n/locales/en/fruit-merge.json";
 import errors from "./src/i18n/locales/en/errors.json";
+import blackjack from "./src/i18n/locales/en/blackjack.json";
 
 i18n.use(initReactI18next).init({
   lng: "en",
   fallbackLng: "en",
-  ns: ["common", "yahtzee", "fruit-merge", "errors"],
+  ns: ["common", "yahtzee", "fruit-merge", "errors", "blackjack"],
   defaultNS: "common",
   resources: {
     en: {
@@ -25,6 +26,7 @@ i18n.use(initReactI18next).init({
       yahtzee,
       "fruit-merge": fruitMerge,
       errors,
+      blackjack,
     },
   },
   interpolation: { escapeValue: false },

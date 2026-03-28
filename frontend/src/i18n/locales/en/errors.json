@@ -1,4 +1,4 @@
 {
-  "backend.connection": "Could not connect to backend. Is the server running?",
+  "backend.connection": "Connection error. Could not reach the backend.",
   "score.save": "Could not save score. Check your connection."
 }

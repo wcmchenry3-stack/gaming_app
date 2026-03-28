@@ -12,6 +12,7 @@ export interface Colors {
   textMuted: string;
   textFilled: string;
   accent: string;
+  potential: string;
   heldBg: string;
   heldBorder: string;
   dieBg: string;
@@ -44,6 +45,7 @@ const COLORS = {
   slate950: "#020617", // custom deepest dark
   // Blue
   blue100: "#dbeafe",
+  blue400: "#60a5fa",
   blue500: "#3b82f6",
   blue600: "#2563eb",
   // Semantic
@@ -62,7 +64,8 @@ const dark: Colors = {
   text: COLORS.slate100,
   textMuted: COLORS.slate400,
   textFilled: COLORS.slate600,
-  accent: COLORS.blue500,
+  accent: COLORS.blue600,
+  potential: COLORS.blue400, // blue400 on slate800 ≈ 5.25:1 — passes WCAG AA
   heldBg: "#1e3a5f", // bespoke — no direct Tailwind match
   heldBorder: COLORS.blue500,
   dieBg: COLORS.slate800,
@@ -87,6 +90,7 @@ const light: Colors = {
   textMuted: COLORS.slate500,
   textFilled: COLORS.slate400,
   accent: COLORS.blue600,
+  potential: COLORS.blue600, // blue600 on white ≈ 4.71:1 — passes WCAG AA
   heldBg: COLORS.blue100,
   heldBorder: COLORS.blue600,
   dieBg: COLORS.white,

@@ -302,7 +302,7 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
         <View
           style={{ width, height, borderRadius: 12, overflow: "hidden" }}
           accessibilityLabel={t("game.canvasLabel")}
-          accessibilityRole="none"
+          accessibilityRole="image"
         >
           <canvas
             ref={canvasRef}

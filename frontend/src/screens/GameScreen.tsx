@@ -63,6 +63,14 @@ export default function GameScreen({ navigation, route }: Props) {
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       {/* Header */}
       <View style={[styles.header, { backgroundColor: colors.headerBg }]}>
+        <Pressable
+          onPress={() => navigation.goBack()}
+          style={styles.backBtn}
+          accessibilityRole="button"
+          accessibilityLabel={t("common:nav.backLabel")}
+        >
+          <Text style={styles.backText}>{t("common:nav.back")}</Text>
+        </Pressable>
         <Text style={styles.headerText}>{t("round.header", { round: gameState.round })}</Text>
         <Pressable
           onPress={toggle}
@@ -73,7 +81,7 @@ export default function GameScreen({ navigation, route }: Props) {
           })}
         >
           <Text style={styles.themeToggleText}>
-            {theme === "dark" ? t("common:theme.lightShort") : t("common:theme.darkShort")}
+            {theme === "dark" ? t("common:theme.light") : t("common:theme.dark")}
           </Text>
         </Pressable>
       </View>
@@ -167,9 +175,17 @@ const styles = StyleSheet.create({
     flex: 1,
     textAlign: "center",
   },
+  backBtn: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    minHeight: 44,
+    justifyContent: "center",
+  },
+  backText: {
+    color: "#94a3b8",
+    fontSize: 13,
+  },
   themeToggle: {
-    position: "absolute",
-    right: 16,
     paddingHorizontal: 10,
     paddingVertical: 4,
     minHeight: 44,

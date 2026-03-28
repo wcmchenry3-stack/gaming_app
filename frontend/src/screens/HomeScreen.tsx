@@ -21,7 +21,7 @@ interface GameCard {
 }
 
 export default function HomeScreen({ navigation }: Props) {
-  const { t } = useTranslation(["common", "yahtzee", "fruit-merge", "errors"]);
+  const { t } = useTranslation(["common", "yahtzee", "fruit-merge", "blackjack", "errors"]);
   const { colors, theme, toggle } = useTheme();
   const [yahtzeeLoading, setYahtzeeLoading] = useState(false);
   const [yahtzeeError, setYahtzeeError] = useState<string | null>(null);
@@ -54,11 +54,18 @@ export default function HomeScreen({ navigation }: Props) {
       description: t("fruit-merge:game.description"),
       action: () => navigation.navigate("FruitMerge"),
     },
+    {
+      emoji: "🃏",
+      title: t("blackjack:game.title"),
+      description: t("blackjack:game.description"),
+      action: () => navigation.navigate("Blackjack"),
+    },
   ];
 
   const playLabels: Record<string, string> = {
     [t("yahtzee:game.title")]: t("yahtzee:game.playLabel"),
     [t("fruit-merge:game.title")]: t("fruit-merge:game.playLabel"),
+    [t("blackjack:game.title")]: t("blackjack:game.playLabel"),
   };
 
   return (
