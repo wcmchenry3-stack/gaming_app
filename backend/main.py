@@ -14,10 +14,20 @@ app.include_router(fruit_merge_router, prefix="/fruit-merge")
 app.include_router(blackjack_router, prefix="/blackjack")
 app.include_router(ludo_router, prefix="/ludo")
 
-# CORS — scoped to known origins; set ALLOWED_ORIGINS env var (comma-separated) in production
+
+# CORS — scoped to known origins; set ALLOWED_ORIGINS env var (comma-separated) in production.
+# Render's fromService with property: url returns a bare subdomain slug (e.g. "yahtzee-frontend-xyz")
+# rather than a full URL, so we normalise it to https://<slug>.onrender.com when needed.
+def _normalise_origin(origin: str) -> str:
+    origin = origin.strip()
+    if "://" not in origin:
+        return f"https://{origin}.onrender.com"
+    return origin
+
+
 _raw = os.environ.get("ALLOWED_ORIGINS", "")
 _allowed_origins: list[str] = (
-    [o.strip() for o in _raw.split(",") if o.strip()]
+    [_normalise_origin(o) for o in _raw.split(",") if o.strip()]
     if _raw
     else ["http://localhost:8081", "http://localhost:19006"]
 )
