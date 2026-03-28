@@ -96,3 +96,7 @@ jobs:
           name: playwright-report
           path: e2e/playwright-report/
           retention-days: 7
+
+  openai-policy:
+    uses: wcmchenry3-stack/.github/.github/workflows/called-openai-policy.yml@main
+    secrets: inherit
