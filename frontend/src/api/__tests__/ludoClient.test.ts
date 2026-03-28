@@ -1,6 +1,6 @@
-import { api } from "../client";
+import { ludoApi } from "../ludoClient";
 
-describe("api client", () => {
+describe("ludoApi endpoints", () => {
   const mockFetch = jest.fn();
 
   beforeEach(() => {
@@ -16,55 +16,51 @@ describe("api client", () => {
     } as Response);
   }
 
-  it("newGame POSTs to /game/new", async () => {
-    respondWith({ dice: [1, 2, 3, 4, 5] });
-    await api.newGame();
+  it("newSession POSTs to /ludo/new", async () => {
+    respondWith({ phase: "roll" });
+    await ludoApi.newSession();
     expect(mockFetch).toHaveBeenCalledWith(
-      expect.stringContaining("/game/new"),
+      expect.stringContaining("/ludo/new"),
       expect.objectContaining({ method: "POST" })
     );
   });
 
-  it("getState GETs /game/state", async () => {
-    respondWith({ dice: [1, 1, 1, 1, 1] });
-    await api.getState();
+  it("getState GETs /ludo/state", async () => {
+    respondWith({ phase: "roll" });
+    await ludoApi.getState();
     expect(mockFetch).toHaveBeenCalledWith(
-      expect.stringContaining("/game/state"),
+      expect.stringContaining("/ludo/state"),
       expect.any(Object)
     );
   });
 
-  it("roll POSTs held array to /game/roll", async () => {
-    const held = [true, false, true, false, false];
-    respondWith({ dice: [1, 2, 3, 4, 5] });
-    await api.roll(held);
+  it("roll POSTs to /ludo/roll", async () => {
+    respondWith({ phase: "move", die_value: 4 });
+    await ludoApi.roll();
     expect(mockFetch).toHaveBeenCalledWith(
-      expect.stringContaining("/game/roll"),
+      expect.stringContaining("/ludo/roll"),
+      expect.objectContaining({ method: "POST" })
+    );
+  });
+
+  it("move POSTs piece_index to /ludo/move", async () => {
+    respondWith({ phase: "roll" });
+    await ludoApi.move(2);
+    expect(mockFetch).toHaveBeenCalledWith(
+      expect.stringContaining("/ludo/move"),
       expect.objectContaining({
         method: "POST",
-        body: JSON.stringify({ held }),
+        body: JSON.stringify({ piece_index: 2 }),
       })
     );
   });
 
-  it("score POSTs category to /game/score", async () => {
-    respondWith({ dice: [1, 2, 3, 4, 5] });
-    await api.score("ones");
+  it("newGame POSTs to /ludo/new-game", async () => {
+    respondWith({ phase: "roll" });
+    await ludoApi.newGame();
     expect(mockFetch).toHaveBeenCalledWith(
-      expect.stringContaining("/game/score"),
-      expect.objectContaining({
-        method: "POST",
-        body: JSON.stringify({ category: "ones" }),
-      })
-    );
-  });
-
-  it("possibleScores GETs /game/possible-scores", async () => {
-    respondWith({ possible_scores: { ones: 3 } });
-    await api.possibleScores();
-    expect(mockFetch).toHaveBeenCalledWith(
-      expect.stringContaining("/game/possible-scores"),
-      expect.any(Object)
+      expect.stringContaining("/ludo/new-game"),
+      expect.objectContaining({ method: "POST" })
     );
   });
 
@@ -72,9 +68,9 @@ describe("api client", () => {
     mockFetch.mockResolvedValueOnce({
       ok: false,
       statusText: "Bad Request",
-      json: () => Promise.resolve({ detail: "Game not found" }),
+      json: () => Promise.resolve({ detail: "No active game" }),
     } as Response);
-    await expect(api.getState()).rejects.toThrow("Game not found");
+    await expect(ludoApi.getState()).rejects.toThrow("No active game");
   });
 
   it("falls back to statusText when error body has no detail", async () => {
@@ -83,7 +79,7 @@ describe("api client", () => {
       statusText: "Internal Server Error",
       json: () => Promise.reject(new Error("parse error")),
     } as Response);
-    await expect(api.getState()).rejects.toThrow("Internal Server Error");
+    await expect(ludoApi.getState()).rejects.toThrow("Internal Server Error");
   });
 });
 
@@ -92,7 +88,7 @@ describe("api client", () => {
 // where Render injects a bare internal hostname (e.g. "yahtzee-api") that
 // resolves only inside Render's network, not from user browsers.
 // ---------------------------------------------------------------------------
-describe("api BASE_URL configuration", () => {
+describe("ludoApi BASE_URL configuration", () => {
   const originalEnv = process.env;
 
   beforeEach(() => {
@@ -100,7 +96,7 @@ describe("api BASE_URL configuration", () => {
     process.env = { ...originalEnv };
     global.fetch = jest.fn().mockResolvedValue({
       ok: true,
-      json: () => Promise.resolve({ dice: [1, 2, 3, 4, 5] }),
+      json: () => Promise.resolve({ phase: "roll" }),
     } as Response);
   });
 
@@ -111,8 +107,8 @@ describe("api BASE_URL configuration", () => {
   it("uses EXPO_PUBLIC_API_URL when it is a full https URL (Render property: url)", async () => {
     process.env.EXPO_PUBLIC_API_URL = "https://yahtzee-api.onrender.com";
     // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const { api: freshApi } = require("../client") as typeof import("../client");
-    await freshApi.newGame();
+    const { ludoApi: api } = require("../ludoClient") as typeof import("../ludoClient");
+    await api.newSession();
     expect(global.fetch as jest.Mock).toHaveBeenCalledWith(
       expect.stringContaining("https://yahtzee-api.onrender.com"),
       expect.any(Object)
@@ -124,8 +120,8 @@ describe("api BASE_URL configuration", () => {
     // The client must still prepend https:// so the URL is at least syntactically valid.
     process.env.EXPO_PUBLIC_API_URL = "yahtzee-api";
     // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const { api: freshApi } = require("../client") as typeof import("../client");
-    await freshApi.newGame();
+    const { ludoApi: api } = require("../ludoClient") as typeof import("../ludoClient");
+    await api.newSession();
     const calledUrl = (global.fetch as jest.Mock).mock.calls[0][0] as string;
     expect(calledUrl).toMatch(/^https:\/\//);
   });
@@ -133,8 +129,8 @@ describe("api BASE_URL configuration", () => {
   it("falls back to http://localhost:8000 when EXPO_PUBLIC_API_URL is not set", async () => {
     delete process.env.EXPO_PUBLIC_API_URL;
     // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const { api: freshApi } = require("../client") as typeof import("../client");
-    await freshApi.newGame();
+    const { ludoApi: api } = require("../ludoClient") as typeof import("../ludoClient");
+    await api.newSession();
     expect(global.fetch as jest.Mock).toHaveBeenCalledWith(
       expect.stringContaining("http://localhost:8000"),
       expect.any(Object)
