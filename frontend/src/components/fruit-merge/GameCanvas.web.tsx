@@ -7,11 +7,9 @@ import React, { forwardRef, useCallback, useEffect, useImperativeHandle, useRef 
 import { View, AccessibilityInfo } from "react-native";
 import { Asset } from "expo-asset";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
-import Matter from "matter-js";
 import {
   createEngine,
-  dropFruit,
-  FruitBody,
+  EngineHandle,
   BodySnapshot,
   MergeEvent,
   WALL_THICKNESS,
@@ -72,7 +70,7 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
     const { t } = useTranslation("fruit-merge");
 
     const canvasRef = useRef<HTMLCanvasElement>(null);
-    const engineRef = useRef<ReturnType<typeof createEngine> | null>(null);
+    const engineRef = useRef<EngineHandle | null>(null);
     const onMergeRef = useRef(onMerge);
     const onGameOverRef = useRef(onGameOver);
     const fruitSetRef = useRef(fruitSet);
@@ -81,6 +79,7 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
     const bodiesRef = useRef<BodySnapshot[]>([]);
     const pointerXRef = useRef<number | null>(null);
     const htmlImagesRef = useRef<(HTMLImageElement | null)[]>([]);
+    const lastFrameTimeRef = useRef<number>(0); // tracks last RAF timestamp for elapsed-time physics
 
     useEffect(() => {
       onMergeRef.current = onMerge;
@@ -219,28 +218,17 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
       drawRef.current = draw;
     }, [draw]);
 
-    const initEngine = useCallback(() => {
+    const initEngine = useCallback(async () => {
       engineRef.current?.cleanup();
-      engineRef.current = createEngine(
+      engineRef.current = null;
+      bodiesRef.current = [];
+      engineRef.current = await createEngine(
         width,
         height,
         fruitSet,
         (e) => onMergeRef.current(e),
         () => onGameOverRef.current()
       );
-      const { engine } = engineRef.current;
-      Matter.Events.on(engine, "afterUpdate", () => {
-        bodiesRef.current = Matter.Composite.allBodies(engine.world)
-          .filter((b) => !(b as FruitBody).isStatic && (b as FruitBody).fruitTier !== undefined)
-          .map((b) => ({
-            id: b.id,
-            x: b.position.x,
-            y: b.position.y,
-            tier: (b as FruitBody).fruitTier,
-            angle: b.angle,
-          }));
-      });
-      bodiesRef.current = [];
     }, [width, height, fruitSet]);
 
     useEffect(() => {
@@ -250,10 +238,18 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
       };
     }, [initEngine]);
 
-    // Single long-lived RAF loop
+    // Single long-lived RAF loop: steps physics then draws.
+    // Uses the RAF timestamp to compute elapsed time so physics runs at real
+    // wall-clock speed regardless of display refresh rate (60 Hz, 120 Hz, etc.).
     useEffect(() => {
       let id: number;
-      function loop() {
+      function loop(timestamp: number) {
+        if (lastFrameTimeRef.current === 0) lastFrameTimeRef.current = timestamp;
+        const elapsed = (timestamp - lastFrameTimeRef.current) / 1000; // seconds
+        lastFrameTimeRef.current = timestamp;
+        if (engineRef.current) {
+          bodiesRef.current = engineRef.current.step(elapsed);
+        }
         drawRef.current();
         id = requestAnimationFrame(loop);
       }
@@ -271,7 +267,7 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
             WALL_THICKNESS + def.radius,
             width - WALL_THICKNESS - def.radius
           );
-          dropFruit(engineRef.current.world, def, fruitSetRef.current.id, clamped, DROP_Y);
+          engineRef.current.drop(def, fruitSetRef.current.id, clamped, DROP_Y);
         },
         reset() {
           initEngine();

@@ -1,0 +1,124 @@
+/**
+ * Manual Jest mock for @dimforge/rapier2d-compat.
+ * Implements just enough of the Rapier API for engine.test.ts.
+ */
+
+export class MockRigidBody {
+  handle: number;
+  _x: number;
+  _y: number;
+  _angle = 0;
+  _colliders: MockCollider[] = [];
+
+  constructor(handle: number, x: number, y: number) {
+    this.handle = handle;
+    this._x = x;
+    this._y = y;
+  }
+
+  translation() {
+    return { x: this._x, y: this._y };
+  }
+  rotation() {
+    return this._angle;
+  }
+  numColliders() {
+    return this._colliders.length;
+  }
+  collider(i: number) {
+    return this._colliders[i];
+  }
+  _addCollider(c: MockCollider) {
+    this._colliders.push(c);
+  }
+}
+
+export class MockCollider {
+  handle: number;
+  constructor(handle: number) {
+    this.handle = handle;
+  }
+}
+
+export class MockEventQueue {
+  _events: Array<[number, number, boolean]> = [];
+  free() {}
+  _push(h1: number, h2: number, started: boolean) {
+    this._events.push([h1, h2, started]);
+  }
+  drainCollisionEvents(cb: (h1: number, h2: number, started: boolean) => void) {
+    const evts = this._events.splice(0);
+    for (const [h1, h2, s] of evts) cb(h1, h2, s);
+  }
+}
+
+export class MockWorld {
+  _bodies = new Map<number, MockRigidBody>();
+  _bodyHandleCounter = 0;
+  _colliderHandleCounter = 1000;
+  _activeEventQueue: MockEventQueue | null = null;
+
+  createRigidBody(desc: { x: number; y: number }) {
+    const handle = this._bodyHandleCounter++;
+    const rb = new MockRigidBody(handle, desc.x, desc.y);
+    this._bodies.set(handle, rb);
+    return rb;
+  }
+
+  createCollider(_desc: unknown, rb?: MockRigidBody) {
+    const handle = this._colliderHandleCounter++;
+    const c = new MockCollider(handle);
+    if (rb) rb._addCollider(c);
+    return c;
+  }
+
+  getRigidBody(handle: number) {
+    return this._bodies.get(handle) ?? null;
+  }
+
+  removeRigidBody(rb: MockRigidBody) {
+    this._bodies.delete(rb.handle);
+  }
+
+  step(eq: MockEventQueue) {
+    this._activeEventQueue = eq;
+  }
+
+  free() {}
+
+  /** Test helper: trigger a collision event between two collider handles. */
+  _fireCollision(h1: number, h2: number) {
+    this._activeEventQueue?._push(h1, h2, true);
+  }
+}
+
+const mockColliderDescBuilder = () => ({
+  setRestitution: () => mockColliderDescBuilder(),
+  setFriction: () => mockColliderDescBuilder(),
+  setDensity: () => mockColliderDescBuilder(),
+  setActiveEvents: () => mockColliderDescBuilder(),
+  setTranslation: () => mockColliderDescBuilder(),
+});
+
+const RAPIER_MOCK = {
+  init: jest.fn().mockResolvedValue(undefined),
+  World: jest.fn().mockImplementation(() => new MockWorld()),
+  EventQueue: jest.fn().mockImplementation(() => new MockEventQueue()),
+  RigidBodyDesc: {
+    dynamic: () => ({
+      setTranslation: (x: number, y: number) => ({ x, y }),
+    }),
+  },
+  ColliderDesc: {
+    ball: jest.fn().mockImplementation(() => mockColliderDescBuilder()),
+    cuboid: jest.fn().mockImplementation(() => mockColliderDescBuilder()),
+    convexHull: jest.fn().mockImplementation((pts: Float32Array) => {
+      if (!pts || pts.length < 6) return null;
+      return mockColliderDescBuilder();
+    }),
+  },
+  ActiveEvents: { COLLISION_EVENTS: 1 },
+};
+
+export default RAPIER_MOCK;
+module.exports = { __esModule: true, default: RAPIER_MOCK, ...RAPIER_MOCK };

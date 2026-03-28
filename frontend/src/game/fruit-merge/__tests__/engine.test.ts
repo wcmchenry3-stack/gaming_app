@@ -1,14 +1,24 @@
-import Matter from "matter-js";
+/**
+ * engine.test.ts — Rapier2D engine unit tests
+ *
+ * Uses the manual mock at frontend/__mocks__/@dimforge/rapier2d-compat.ts
+ * so that tests run in Node.js without any WASM binary.
+ */
+jest.mock("@dimforge/rapier2d-compat");
+
 import {
   createEngine,
-  spawnFruitAt,
-  FruitBody,
+  EngineHandle,
   BodySnapshot,
   DANGER_LINE_RATIO,
-  EngineSetup,
   WALL_THICKNESS,
 } from "../engine";
 import { FRUIT_SETS } from "../../../theme/fruitSets";
+import { MockWorld } from "../../../../__mocks__/@dimforge/rapier2d-compat";
+
+// Access the live mock module so tests can inspect call counts
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const RAPIER_MOCK = require("@dimforge/rapier2d-compat").default;
 
 const fruitSet = FRUIT_SETS["fruits"];
 const W = 300;
@@ -18,98 +28,94 @@ const H = 600;
 // Helpers
 // ---------------------------------------------------------------------------
 
-let idCounter = 1;
-
-/**
- * Build a minimal FruitBody stub.
- * - `type: 'body'` is required for Matter.World.add / Composite.allBodies to work.
- * - ageMs defaults to 3000 so the body is past the 2-second grace period.
- */
-function makeFakeBody(tier: number, x: number, y: number, ageMs = 3000): FruitBody {
-  return {
-    id: idCounter++,
-    type: "body",
-    fruitTier: tier,
-    fruitSetId: fruitSet.id,
-    isMerging: false,
-    isStatic: false,
-    createdAt: Date.now() - ageMs,
-    fruitRadius: fruitSet.fruits[tier].radius,
-    position: { x, y },
-  } as unknown as FruitBody;
+/** Return the MockWorld instance created by the most recent createEngine call. */
+function getWorld(): MockWorld {
+  const results = (RAPIER_MOCK.World as jest.Mock).mock.results;
+  return results[results.length - 1].value as MockWorld;
 }
 
-function fireCollision(engine: Matter.Engine, a: FruitBody, b: FruitBody): void {
-  Matter.Events.trigger(engine as object, "collisionStart", {
-    pairs: [{ bodyA: a, bodyB: b }],
-  });
-}
-
-function fireUpdate(engine: Matter.Engine): void {
-  Matter.Events.trigger(engine as object, "afterUpdate", {});
+async function buildEngine(onMerge = jest.fn(), onGameOver = jest.fn()): Promise<EngineHandle> {
+  return createEngine(W, H, fruitSet, onMerge, onGameOver);
 }
 
 // ---------------------------------------------------------------------------
 // Setup / Teardown
-//
-// We stop the runner (so physics never ticks) but keep event listeners alive.
-// Full cleanup is deferred to afterEach so handlers are present during tests.
 // ---------------------------------------------------------------------------
-
-let current: EngineSetup & {
-  onMerge: jest.Mock;
-  onGameOver: jest.Mock;
-};
-
-function setup(): typeof current {
-  const onMerge = jest.fn();
-  const onGameOver = jest.fn();
-  const es = createEngine(W, H, fruitSet, onMerge, onGameOver);
-  // Stop the physics runner — we fire events manually in every test.
-  Matter.Runner.stop(es.runner);
-  current = { ...es, onMerge, onGameOver };
-  return current;
-}
-
-beforeEach(() => {
-  jest.useFakeTimers();
-});
 
 afterEach(() => {
-  current?.cleanup();
-  jest.useRealTimers();
+  jest.clearAllMocks();
 });
 
 // ---------------------------------------------------------------------------
-// spawnFruitAt
+// createEngine basics
 // ---------------------------------------------------------------------------
 
-describe("spawnFruitAt", () => {
-  it("returns a body with the correct tier and fruitSetId", () => {
-    const { world } = setup();
-    const def = fruitSet.fruits[2];
-    const body = spawnFruitAt(world, def, fruitSet.id, 150, 100);
-
-    expect(body.fruitTier).toBe(2);
-    expect(body.fruitSetId).toBe(fruitSet.id);
-    expect(body.isMerging).toBe(false);
+describe("createEngine", () => {
+  it("resolves to an EngineHandle with step, drop, and cleanup", async () => {
+    const handle = await buildEngine();
+    expect(typeof handle.step).toBe("function");
+    expect(typeof handle.drop).toBe("function");
+    expect(typeof handle.cleanup).toBe("function");
   });
 
-  it("sets createdAt close to Date.now()", () => {
-    const { world } = setup();
-    const before = Date.now();
-    const body = spawnFruitAt(world, fruitSet.fruits[0], fruitSet.id, 150, 100);
+  it("creates 3 static wall/floor colliders via cuboid", async () => {
+    await buildEngine();
+    expect(RAPIER_MOCK.ColliderDesc.cuboid).toHaveBeenCalledTimes(3);
+  });
+});
 
-    expect(body.createdAt).toBeGreaterThanOrEqual(before);
-    expect(body.createdAt).toBeLessThanOrEqual(Date.now());
+// ---------------------------------------------------------------------------
+// step() — basic
+// ---------------------------------------------------------------------------
+
+describe("step", () => {
+  it("returns empty array when no fruits have been dropped", async () => {
+    const handle = await buildEngine();
+    expect(handle.step()).toEqual([]);
   });
 
-  it("adds the body to the world", () => {
-    const { world } = setup();
-    const body = spawnFruitAt(world, fruitSet.fruits[1], fruitSet.id, 150, 100);
-    const allBodies = Matter.Composite.allBodies(world);
+  it("returns a snapshot for each dropped fruit", async () => {
+    const handle = await buildEngine();
+    handle.drop(fruitSet.fruits[0], fruitSet.id, 150, 100);
+    handle.drop(fruitSet.fruits[1], fruitSet.id, 160, 100);
+    expect(handle.step()).toHaveLength(2);
+  });
 
-    expect(allBodies).toContain(body);
+  it("snapshot positions are close to drop coordinates (pixels)", async () => {
+    const handle = await buildEngine();
+    handle.drop(fruitSet.fruits[2], fruitSet.id, 150, 100);
+    const [snap] = handle.step();
+    expect(snap.x).toBeCloseTo(150, 0);
+    expect(snap.y).toBeCloseTo(100, 0);
+  });
+
+  it("snapshot has id, tier, and angle fields", async () => {
+    const handle = await buildEngine();
+    handle.drop(fruitSet.fruits[3], fruitSet.id, 150, 200);
+    const [snap] = handle.step() as BodySnapshot[];
+    expect(snap).toHaveProperty("id");
+    expect(snap.tier).toBe(3);
+    expect(typeof snap.angle).toBe("number");
+  });
+});
+
+// ---------------------------------------------------------------------------
+// drop()
+// ---------------------------------------------------------------------------
+
+describe("drop", () => {
+  it("spawns a fruit visible in the next step", async () => {
+    const handle = await buildEngine();
+    handle.drop(fruitSet.fruits[1], fruitSet.id, 150, 100);
+    const snaps = handle.step();
+    expect(snaps).toHaveLength(1);
+    expect(snaps[0].tier).toBe(1);
+  });
+
+  it("uses ball collider for sets without vertex data (gems)", async () => {
+    const handle = await createEngine(W, H, FRUIT_SETS["gems"], jest.fn(), jest.fn());
+    handle.drop(FRUIT_SETS["gems"].fruits[0], "gems", 150, 100);
+    expect(RAPIER_MOCK.ColliderDesc.ball).toHaveBeenCalled();
   });
 });
 
@@ -118,119 +124,85 @@ describe("spawnFruitAt", () => {
 // ---------------------------------------------------------------------------
 
 describe("merge detection", () => {
-  it("calls onMerge when two same-tier fruits collide", () => {
-    const { engine, onMerge } = setup();
+  it("calls onMerge when two same-tier fruits collide", async () => {
+    const onMerge = jest.fn();
+    const handle = await createEngine(W, H, fruitSet, onMerge, jest.fn());
+    const world = getWorld();
 
-    const a = makeFakeBody(1, 100, 300);
-    const b = makeFakeBody(1, 110, 300);
-    fireCollision(engine, a, b);
-    jest.runAllTimers();
+    handle.drop(fruitSet.fruits[1], fruitSet.id, 100, 300);
+    handle.drop(fruitSet.fruits[1], fruitSet.id, 110, 300);
+    handle.step(); // register bodies; world assigns collider handles 1003 & 1004
+
+    // Wall colliders get 1000–1002; fruit colliders get 1003–1004
+    world._fireCollision(1003, 1004);
+    handle.step();
 
     expect(onMerge).toHaveBeenCalledTimes(1);
     expect(onMerge).toHaveBeenCalledWith(expect.objectContaining({ tier: 1 }));
   });
 
-  it("reports the midpoint of the two bodies", () => {
-    const { engine, onMerge } = setup();
+  it("does NOT call onMerge for different-tier fruits", async () => {
+    const onMerge = jest.fn();
+    const handle = await createEngine(W, H, fruitSet, onMerge, jest.fn());
+    const world = getWorld();
 
-    const a = makeFakeBody(0, 100, 200);
-    const b = makeFakeBody(0, 140, 260);
-    fireCollision(engine, a, b);
-    jest.runAllTimers();
+    handle.drop(fruitSet.fruits[0], fruitSet.id, 100, 300);
+    handle.drop(fruitSet.fruits[2], fruitSet.id, 110, 300);
+    handle.step();
 
-    expect(onMerge).toHaveBeenCalledWith({ tier: 0, x: 120, y: 230 });
-  });
-
-  it("does NOT call onMerge for different-tier fruits", () => {
-    const { engine, onMerge } = setup();
-
-    const a = makeFakeBody(1, 100, 300);
-    const b = makeFakeBody(2, 110, 300);
-    fireCollision(engine, a, b);
-    jest.runAllTimers();
+    world._fireCollision(1003, 1004);
+    handle.step();
 
     expect(onMerge).not.toHaveBeenCalled();
   });
 
-  it("does NOT call onMerge if bodyA.isMerging is true", () => {
-    const { engine, onMerge } = setup();
+  it("merges only once even if the same pair fires twice", async () => {
+    const onMerge = jest.fn();
+    const handle = await createEngine(W, H, fruitSet, onMerge, jest.fn());
+    const world = getWorld();
 
-    const a = makeFakeBody(2, 100, 300);
-    const b = makeFakeBody(2, 110, 300);
-    a.isMerging = true;
-    fireCollision(engine, a, b);
-    jest.runAllTimers();
+    handle.drop(fruitSet.fruits[2], fruitSet.id, 100, 300);
+    handle.drop(fruitSet.fruits[2], fruitSet.id, 110, 300);
+    handle.step();
 
-    expect(onMerge).not.toHaveBeenCalled();
-  });
-
-  it("does NOT call onMerge if bodyB.isMerging is true", () => {
-    const { engine, onMerge } = setup();
-
-    const a = makeFakeBody(3, 100, 300);
-    const b = makeFakeBody(3, 110, 300);
-    b.isMerging = true;
-    fireCollision(engine, a, b);
-    jest.runAllTimers();
-
-    expect(onMerge).not.toHaveBeenCalled();
-  });
-
-  it("calls onMerge only once when the same pair fires twice (mergeSet dedup)", () => {
-    const { engine, onMerge } = setup();
-
-    const a = makeFakeBody(1, 100, 300);
-    const b = makeFakeBody(1, 110, 300);
-    fireCollision(engine, a, b);
-    fireCollision(engine, a, b); // same pair again — should be skipped
-    jest.runAllTimers();
+    world._fireCollision(1003, 1004);
+    world._fireCollision(1003, 1004); // duplicate
+    handle.step();
 
     expect(onMerge).toHaveBeenCalledTimes(1);
   });
 
-  it("adds a new tier+1 fruit to the world when tier < 10", () => {
-    const { engine, world } = setup();
+  it("spawns a tier+1 fruit after merge when tier < 10", async () => {
+    const onMerge = jest.fn();
+    const handle = await createEngine(W, H, fruitSet, onMerge, jest.fn());
+    const world = getWorld();
 
-    const a = makeFakeBody(3, 100, 300);
-    const b = makeFakeBody(3, 110, 300);
-    fireCollision(engine, a, b);
-    jest.runAllTimers();
+    handle.drop(fruitSet.fruits[3], fruitSet.id, 100, 300);
+    handle.drop(fruitSet.fruits[3], fruitSet.id, 110, 300);
+    handle.step();
 
-    const fruitBodies = Matter.Composite.allBodies(world).filter((b) => !b.isStatic);
-    expect(fruitBodies.length).toBe(1);
-    expect((fruitBodies[0] as FruitBody).fruitTier).toBe(4);
+    world._fireCollision(1003, 1004);
+    handle.step();
+
+    expect(onMerge).toHaveBeenCalledWith(expect.objectContaining({ tier: 3 }));
+    const tiers = handle.step().map((s) => s.tier);
+    expect(tiers).toContain(4);
   });
 
-  it("does NOT add a new fruit when tier 10 (watermelon disappears)", () => {
-    const { engine, world, onMerge } = setup();
+  it("does NOT spawn a new fruit when merging tier 10 (watermelon disappears)", async () => {
+    const onMerge = jest.fn();
+    const handle = await createEngine(W, H, fruitSet, onMerge, jest.fn());
+    const world = getWorld();
 
-    const a = makeFakeBody(10, 150, 300);
-    const b = makeFakeBody(10, 160, 300);
-    fireCollision(engine, a, b);
-    jest.runAllTimers();
+    handle.drop(fruitSet.fruits[10], fruitSet.id, 100, 300);
+    handle.drop(fruitSet.fruits[10], fruitSet.id, 110, 300);
+    handle.step();
+
+    world._fireCollision(1003, 1004);
+    handle.step();
 
     expect(onMerge).toHaveBeenCalledWith(expect.objectContaining({ tier: 10 }));
-    const fruitBodies = Matter.Composite.allBodies(world).filter((b) => !b.isStatic);
-    expect(fruitBodies.length).toBe(0);
-  });
-
-  it("handles two separate pairs colliding in the same event independently", () => {
-    const { engine, onMerge } = setup();
-
-    const a1 = makeFakeBody(0, 100, 300);
-    const b1 = makeFakeBody(0, 110, 300);
-    const a2 = makeFakeBody(2, 150, 300);
-    const b2 = makeFakeBody(2, 160, 300);
-
-    Matter.Events.trigger(engine as object, "collisionStart", {
-      pairs: [
-        { bodyA: a1, bodyB: b1 },
-        { bodyA: a2, bodyB: b2 },
-      ],
-    });
-    jest.runAllTimers();
-
-    expect(onMerge).toHaveBeenCalledTimes(2);
+    expect(handle.step()).toHaveLength(0);
   });
 });
 
@@ -239,133 +211,96 @@ describe("merge detection", () => {
 // ---------------------------------------------------------------------------
 
 describe("game-over detection", () => {
-  // At H=600, danger line is at 600 * 0.18 = 108px from the top.
-  const dangerY = H * DANGER_LINE_RATIO;
+  // dangerY = H * DANGER_LINE_RATIO = 108px; used as reference in test comments below
 
-  /**
-   * Spawn a real fruit body using spawnFruitAt, then teleport it and adjust
-   * its age. We use real bodies so Matter.Composite.allBodies returns them.
-   */
-  function spawnAt(world: Matter.World, tier: number, y: number, ageMs = 3000): FruitBody {
-    const def = fruitSet.fruits[tier];
-    const body = spawnFruitAt(world, def, fruitSet.id, 150, 500); // spawn safely off-screen
-    // Teleport to target position
-    Matter.Body.setPosition(body, { x: 150, y });
-    body.createdAt = Date.now() - ageMs;
-    return body;
-  }
+  it("fires onGameOver when a settled fruit is above the danger line", async () => {
+    const onGameOver = jest.fn();
+    const handle = await createEngine(W, H, fruitSet, jest.fn(), onGameOver);
 
-  it("fires onGameOver when a settled fruit is above the danger line", () => {
-    const { engine, world, onGameOver } = setup();
+    // tier-0 radius = 18. Top = y - 18. For top < dangerY (108): y < 126.
+    // Spawn at y=50 (top = 32, well above the danger line).
+    handle.drop(fruitSet.fruits[0], fruitSet.id, 150, 50);
+    handle.step(); // freshly created — within grace period, no game over yet
 
-    // Top of fruit = position.y - radius. With tier-0 radius=18, positioning
-    // at dangerY - 1 puts the top at dangerY - 19, which is above dangerY.
-    spawnAt(world, 0, dangerY - 1);
-    fireUpdate(engine);
+    expect(onGameOver).not.toHaveBeenCalled();
+
+    // Advance time past the 2-second grace period
+    jest.useFakeTimers();
+    jest.setSystemTime(Date.now() + 3000);
+    handle.step();
+    jest.useRealTimers();
 
     expect(onGameOver).toHaveBeenCalledTimes(1);
   });
 
-  it("does NOT fire onGameOver during the grace period (newly dropped fruit)", () => {
-    const { engine, world, onGameOver } = setup();
+  it("does NOT fire onGameOver during the grace period", async () => {
+    const onGameOver = jest.fn();
+    const handle = await createEngine(W, H, fruitSet, jest.fn(), onGameOver);
 
-    // Same dangerous position but only 500ms old — within the 2s grace period
-    spawnAt(world, 0, dangerY - 1, 500);
-    fireUpdate(engine);
-
-    expect(onGameOver).not.toHaveBeenCalled();
-  });
-
-  it("does NOT fire onGameOver when fruit is safely below the danger line", () => {
-    const { engine, world, onGameOver } = setup();
-
-    spawnAt(world, 0, dangerY + 100);
-    fireUpdate(engine);
+    handle.drop(fruitSet.fruits[0], fruitSet.id, 150, 50);
+    handle.step(); // within 2s grace period
 
     expect(onGameOver).not.toHaveBeenCalled();
   });
 
-  it("does NOT fire onGameOver for a fruit with isMerging=true", () => {
-    const { engine, world, onGameOver } = setup();
+  it("does NOT fire onGameOver when fruit is safely below the danger line", async () => {
+    const onGameOver = jest.fn();
+    const handle = await createEngine(W, H, fruitSet, jest.fn(), onGameOver);
 
-    const body = spawnAt(world, 0, dangerY - 1);
-    body.isMerging = true;
-    fireUpdate(engine);
+    // tier-0 radius=18, y=300 → top = 282 > dangerY (108) → safe
+    handle.drop(fruitSet.fruits[0], fruitSet.id, 150, 300);
+
+    jest.useFakeTimers();
+    jest.setSystemTime(Date.now() + 3000);
+    handle.step();
+    jest.useRealTimers();
 
     expect(onGameOver).not.toHaveBeenCalled();
   });
 
-  it("fires onGameOver only once even if multiple fruits are above the danger line", () => {
-    const { engine, world, onGameOver } = setup();
+  it("fires onGameOver only once across multiple steps", async () => {
+    const onGameOver = jest.fn();
+    const handle = await createEngine(W, H, fruitSet, jest.fn(), onGameOver);
 
-    spawnAt(world, 0, dangerY - 1);
-    spawnAt(world, 0, dangerY - 1);
-    fireUpdate(engine);
-    fireUpdate(engine); // second tick — gameOverFired flag should block re-fire
+    handle.drop(fruitSet.fruits[0], fruitSet.id, 150, 50);
+
+    jest.useFakeTimers();
+    jest.setSystemTime(Date.now() + 3000);
+    handle.step();
+    handle.step(); // second step should not re-fire
+    jest.useRealTimers();
 
     expect(onGameOver).toHaveBeenCalledTimes(1);
-  });
-
-  it("does NOT fire onGameOver for static bodies (walls/floor)", () => {
-    const { engine, onGameOver } = setup();
-
-    // Walls and floor are already in the world — just trigger an update
-    fireUpdate(engine);
-
-    expect(onGameOver).not.toHaveBeenCalled();
   });
 });
 
 // ---------------------------------------------------------------------------
-// spawnFruitAt — circle body properties
+// cleanup
 // ---------------------------------------------------------------------------
 
-describe("spawnFruitAt — circle body", () => {
-  it("spawns a circle body with a positive circleRadius", () => {
-    const { world } = setup();
-    const def = fruitSet.fruits[1];
-    const body = spawnFruitAt(world, def, fruitSet.id, 150, 100);
-    const circleRadius = (body as unknown as { circleRadius?: number }).circleRadius;
-    expect(circleRadius).toBeGreaterThan(0);
-    expect(body.fruitRadius).toBe(def.radius);
+describe("cleanup", () => {
+  it("frees the world without throwing", async () => {
+    const handle = await buildEngine();
+    expect(() => handle.cleanup()).not.toThrow();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Exported types / constants
+// ---------------------------------------------------------------------------
+
+describe("exported constants and types", () => {
+  it("WALL_THICKNESS is a positive number", () => {
+    expect(WALL_THICKNESS).toBeGreaterThan(0);
+  });
+
+  it("DANGER_LINE_RATIO is between 0 and 1", () => {
+    expect(DANGER_LINE_RATIO).toBeGreaterThan(0);
+    expect(DANGER_LINE_RATIO).toBeLessThan(1);
   });
 
   it("BodySnapshot type includes angle field", () => {
-    // Compile-time check: ensure BodySnapshot has angle
     const snap: BodySnapshot = { id: 1, x: 100, y: 200, tier: 3, angle: 0.5 };
     expect(snap.angle).toBe(0.5);
-  });
-});
-
-describe("world boundary clamping", () => {
-  it("keeps fruits above the floor if they drift below the playfield", () => {
-    const { engine, world } = setup();
-    const def = fruitSet.fruits[1];
-    const body = spawnFruitAt(world, def, fruitSet.id, 150, 100);
-
-    Matter.Body.setPosition(body, { x: 150, y: H + 20 });
-    Matter.Body.setVelocity(body, { x: 0, y: 12 });
-    fireUpdate(engine);
-
-    expect(body.bounds.max.y).toBeLessThanOrEqual(H - WALL_THICKNESS); // top of visual floor bar
-    expect(body.velocity.y).toBeLessThanOrEqual(0);
-  });
-
-  it("keeps fruits inside the left and right walls", () => {
-    const { engine, world } = setup();
-    const def = fruitSet.fruits[1];
-    const body = spawnFruitAt(world, def, fruitSet.id, 150, 100);
-
-    Matter.Body.setPosition(body, { x: WALL_THICKNESS - 8, y: 200 });
-    Matter.Body.setVelocity(body, { x: -5, y: 0 });
-    fireUpdate(engine);
-    expect(body.bounds.min.x).toBeGreaterThanOrEqual(WALL_THICKNESS);
-    expect(body.velocity.x).toBeGreaterThanOrEqual(0);
-
-    Matter.Body.setPosition(body, { x: W - WALL_THICKNESS + 8, y: 200 });
-    Matter.Body.setVelocity(body, { x: 5, y: 0 });
-    fireUpdate(engine);
-    expect(body.bounds.max.x).toBeLessThanOrEqual(W - WALL_THICKNESS);
-    expect(body.velocity.x).toBeLessThanOrEqual(0);
   });
 });
