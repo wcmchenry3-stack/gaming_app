@@ -21,7 +21,4 @@ services:
     staticPublishPath: dist
     envVars:
       - key: EXPO_PUBLIC_API_URL
-        fromService:
-          name: yahtzee-api
-          type: web
-          property: url
+        value: https://yahtzee-api.onrender.com
