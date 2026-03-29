@@ -1,9 +1,10 @@
 import "./src/i18n/i18n";
 import React, { Suspense } from "react";
-import { ActivityIndicator, View } from "react-native";
+import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
+import * as Sentry from "@sentry/react-native";
 import HomeScreen from "./src/screens/HomeScreen";
 import GameScreen from "./src/screens/GameScreen";
 import FruitMergeScreen from "./src/screens/FruitMergeScreen";
@@ -12,6 +13,11 @@ import LudoScreen from "./src/screens/LudoScreen";
 import { GameState } from "./src/api/client";
 import { ThemeProvider } from "./src/theme/ThemeContext";
 import { useHtmlAttributes } from "./src/i18n/useHtmlAttributes";
+
+Sentry.init({
+  dsn: process.env.EXPO_PUBLIC_SENTRY_DSN,
+  enabled: !__DEV__,
+});
 
 export type RootStackParamList = {
   Home: undefined;
@@ -22,6 +28,15 @@ export type RootStackParamList = {
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
+
+function AppCrashFallback() {
+  return (
+    <View style={styles.crash}>
+      <Text style={styles.crashText}>Something went wrong.</Text>
+      <Text style={styles.crashHint}>Please force-quit and reopen the app.</Text>
+    </View>
+  );
+}
 
 function AppInner() {
   useHtmlAttributes();
@@ -40,18 +55,41 @@ function AppInner() {
   );
 }
 
-export default function App() {
+function App() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
-      <Suspense
-        fallback={
-          <View style={{ flex: 1 }}>
-            <ActivityIndicator style={{ flex: 1 }} />
-          </View>
-        }
-      >
-        <AppInner />
-      </Suspense>
+      <Sentry.ErrorBoundary fallback={<AppCrashFallback />}>
+        <Suspense
+          fallback={
+            <View style={{ flex: 1 }}>
+              <ActivityIndicator style={{ flex: 1 }} />
+            </View>
+          }
+        >
+          <AppInner />
+        </Suspense>
+      </Sentry.ErrorBoundary>
     </GestureHandlerRootView>
   );
 }
+
+const styles = StyleSheet.create({
+  crash: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    padding: 24,
+    backgroundColor: "#fff",
+  },
+  crashText: {
+    fontSize: 18,
+    fontWeight: "600",
+    marginBottom: 8,
+  },
+  crashHint: {
+    fontSize: 14,
+    color: "#666",
+  },
+});
+
+export default Sentry.wrap(App);

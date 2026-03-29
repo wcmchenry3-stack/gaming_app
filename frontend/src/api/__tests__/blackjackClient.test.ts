@@ -132,13 +132,13 @@ describe("blackjackApi BASE_URL configuration", () => {
     );
   });
 
-  it("prepends https:// when EXPO_PUBLIC_API_URL is a bare hostname", async () => {
-    process.env.EXPO_PUBLIC_API_URL = "yahtzee-api";
+  it("builds a full onrender.com URL when EXPO_PUBLIC_API_URL is a bare slug", async () => {
+    process.env.EXPO_PUBLIC_API_URL = "yahtzee-api-fql1";
     const { blackjackApi: api } =
       require("../blackjackClient") as typeof import("../blackjackClient");
     await api.newSession();
     const calledUrl = (global.fetch as jest.Mock).mock.calls[0][0] as string;
-    expect(calledUrl).toMatch(/^https:\/\//);
+    expect(calledUrl).toMatch(/^https:\/\/yahtzee-api-fql1\.onrender\.com/);
   });
 
   it("falls back to http://localhost:8000 when EXPO_PUBLIC_API_URL is not set", async () => {

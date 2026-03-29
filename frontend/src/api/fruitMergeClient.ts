@@ -1,5 +1,5 @@
 const _apiUrl = process.env.EXPO_PUBLIC_API_URL ?? "http://localhost:8000";
-const BASE_URL = _apiUrl.startsWith("http") ? _apiUrl : `https://${_apiUrl}`;
+const BASE_URL = _apiUrl.startsWith("http") ? _apiUrl : `https://${_apiUrl}.onrender.com`;
 
 export interface ScoreEntry {
   player_name: string;
