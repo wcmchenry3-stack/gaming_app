@@ -1,0 +1,39 @@
+{
+  "cli": {
+    "version": ">= 15.0.0",
+    "appVersionSource": "local"
+  },
+  "build": {
+    "development": {
+      "developmentClient": true,
+      "distribution": "internal",
+      "ios": {
+        "simulator": true
+      }
+    },
+    "preview": {
+      "distribution": "internal",
+      "ios": {
+        "simulator": false
+      }
+    },
+    "production": {
+      "autoIncrement": true,
+      "env": {
+        "EXPO_PUBLIC_API_URL": "yahtzee-api"
+      },
+      "ios": {
+        "image": "latest"
+      }
+    }
+  },
+  "submit": {
+    "production": {
+      "ios": {
+        "appleId": "FILL_IN_YOUR_APPLE_ID",
+        "ascAppId": "FILL_IN_AFTER_ASC_SETUP",
+        "appleTeamId": "FILL_IN_YOUR_TEAM_ID"
+      }
+    }
+  }
+}
