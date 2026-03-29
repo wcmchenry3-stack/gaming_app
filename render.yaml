@@ -10,10 +10,7 @@ services:
       - key: PYTHON_VERSION
         value: 3.11.0
       - key: ALLOWED_ORIGINS
-        fromService:
-          name: yahtzee-frontend
-          type: web
-          property: url
+        value: "https://games.buffingchi.com,https://yahtzee-frontend-l24f.onrender.com"
 
   # --- Expo Web static frontend ---
   - type: web
