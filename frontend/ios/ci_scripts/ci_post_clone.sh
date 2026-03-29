@@ -15,10 +15,6 @@ echo "npm:  $(npm --version) at $(which npm)"
 
 # -------------------------------------------------------
 # 2. Tell Xcode build phases where to find node
-#    - .xcode.env.local: sourced by "Bundle React Native
-#      code and images" phase to set NODE_BINARY
-#    - profile files: ensures login shells (bash -l) used
-#      by the [Expo] Configure project phase find node
 # -------------------------------------------------------
 NODE_BIN=$(which node)
 cd "$CI_PRIMARY_REPOSITORY_PATH/frontend/ios"
@@ -36,20 +32,22 @@ cd "$CI_PRIMARY_REPOSITORY_PATH/frontend"
 npm install
 
 # -------------------------------------------------------
-# 4. Install CocoaPods dependencies
+# 4. Install CocoaPods (fresh install to fix paths)
+#    The committed Pods have hardcoded local machine paths
+#    (e.g. HERMES_CLI_PATH). Removing and reinstalling
+#    regenerates xcconfigs with correct CI runner paths.
 # -------------------------------------------------------
 cd "$CI_PRIMARY_REPOSITORY_PATH/frontend/ios"
+rm -rf Pods
 which pod || brew install cocoapods
 pod install
 
 # -------------------------------------------------------
-# 5. Verify everything is in place for the build
+# 5. Verify HERMES_CLI_PATH is correct
 # -------------------------------------------------------
 echo "=== Pre-build verification ==="
-echo "node_modules exists: $(test -d "$CI_PRIMARY_REPOSITORY_PATH/frontend/node_modules" && echo YES || echo NO)"
-echo "Pods exists: $(test -d "$CI_PRIMARY_REPOSITORY_PATH/frontend/ios/Pods" && echo YES || echo NO)"
-echo ".xcode.env.local: $(cat "$CI_PRIMARY_REPOSITORY_PATH/frontend/ios/.xcode.env.local")"
-echo "entry file check:"
-"$NODE_BIN" -e "console.log(require('expo/scripts/resolveAppEntry'))" "$CI_PRIMARY_REPOSITORY_PATH/frontend" ios absolute || echo "WARN: entry file resolution failed"
+HERMES_PATH=$(grep HERMES_CLI_PATH "Pods/Target Support Files/Pods-GamingApp/Pods-GamingApp.release.xcconfig" || echo "NOT FOUND")
+echo "HERMES_CLI_PATH: $HERMES_PATH"
+echo "node_modules: $(test -d "$CI_PRIMARY_REPOSITORY_PATH/frontend/node_modules" && echo YES || echo NO)"
 
 echo "=== ci_post_clone.sh complete ==="
