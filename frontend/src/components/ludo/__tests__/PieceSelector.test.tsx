@@ -3,11 +3,7 @@ import { render, fireEvent } from "@testing-library/react-native";
 import PieceSelector from "../PieceSelector";
 import { ThemeProvider } from "../../../theme/ThemeContext";
 
-function renderSelector(
-  validMoves: number[],
-  onSelect = jest.fn(),
-  loading = false
-) {
+function renderSelector(validMoves: number[], onSelect = jest.fn(), loading = false) {
   return render(
     <ThemeProvider>
       <PieceSelector

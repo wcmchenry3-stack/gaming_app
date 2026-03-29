@@ -88,8 +88,6 @@ describe("HomeScreen — game cards", () => {
     });
     const { getByLabelText } = renderScreen(nav);
     fireEvent.press(getByLabelText("Play Yahtzee"));
-    await waitFor(() =>
-      expect(nav.navigate).toHaveBeenCalledWith("Game", expect.any(Object))
-    );
+    await waitFor(() => expect(nav.navigate).toHaveBeenCalledWith("Game", expect.any(Object)));
   });
 });

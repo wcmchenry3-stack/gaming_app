@@ -95,10 +95,16 @@ beforeEach(() => {
 describe("LudoScreen — initial load", () => {
   it("shows loading indicator while session is being created", async () => {
     let resolve!: (v: ReturnType<typeof makeRollState>) => void;
-    mockApi.newSession.mockReturnValue(new Promise((r) => { resolve = r; }));
+    mockApi.newSession.mockReturnValue(
+      new Promise((r) => {
+        resolve = r;
+      })
+    );
     const { UNSAFE_getByType } = renderScreen();
     await waitFor(() => expect(UNSAFE_getByType(ActivityIndicator)).toBeTruthy());
-    await act(async () => { resolve(makeRollState()); });
+    await act(async () => {
+      resolve(makeRollState());
+    });
   });
 
   it("shows Roll button after session loads with roll phase", async () => {

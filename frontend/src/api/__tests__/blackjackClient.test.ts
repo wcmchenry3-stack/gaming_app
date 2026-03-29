@@ -123,7 +123,8 @@ describe("blackjackApi BASE_URL configuration", () => {
   it("uses EXPO_PUBLIC_API_URL when it is a full https URL", async () => {
     process.env.EXPO_PUBLIC_API_URL = "https://yahtzee-api.onrender.com";
     // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const { blackjackApi: api } = require("../blackjackClient") as typeof import("../blackjackClient");
+    const { blackjackApi: api } =
+      require("../blackjackClient") as typeof import("../blackjackClient");
     await api.newSession();
     expect(global.fetch as jest.Mock).toHaveBeenCalledWith(
       expect.stringContaining("https://yahtzee-api.onrender.com"),
@@ -134,7 +135,8 @@ describe("blackjackApi BASE_URL configuration", () => {
   it("prepends https:// when EXPO_PUBLIC_API_URL is a bare hostname", async () => {
     process.env.EXPO_PUBLIC_API_URL = "yahtzee-api";
     // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const { blackjackApi: api } = require("../blackjackClient") as typeof import("../blackjackClient");
+    const { blackjackApi: api } =
+      require("../blackjackClient") as typeof import("../blackjackClient");
     await api.newSession();
     const calledUrl = (global.fetch as jest.Mock).mock.calls[0][0] as string;
     expect(calledUrl).toMatch(/^https:\/\//);
@@ -143,7 +145,8 @@ describe("blackjackApi BASE_URL configuration", () => {
   it("falls back to http://localhost:8000 when EXPO_PUBLIC_API_URL is not set", async () => {
     delete process.env.EXPO_PUBLIC_API_URL;
     // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const { blackjackApi: api } = require("../blackjackClient") as typeof import("../blackjackClient");
+    const { blackjackApi: api } =
+      require("../blackjackClient") as typeof import("../blackjackClient");
     await api.newSession();
     expect(global.fetch as jest.Mock).toHaveBeenCalledWith(
       expect.stringContaining("http://localhost:8000"),
