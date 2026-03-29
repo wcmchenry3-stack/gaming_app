@@ -126,13 +126,13 @@ describe("ludoApi BASE_URL configuration", () => {
     expect(calledUrl).toMatch(/^https:\/\/yahtzee-api-fql1\.onrender\.com/);
   });
 
-  it("falls back to https://yahtzee-api-fql1.onrender.com when EXPO_PUBLIC_API_URL is not set", async () => {
+  it("falls back to http://localhost:8000 when EXPO_PUBLIC_API_URL is not set", async () => {
     delete process.env.EXPO_PUBLIC_API_URL;
     // eslint-disable-next-line @typescript-eslint/no-require-imports
     const { ludoApi: api } = require("../ludoClient") as typeof import("../ludoClient");
     await api.newSession();
     expect(global.fetch as jest.Mock).toHaveBeenCalledWith(
-      expect.stringContaining("https://yahtzee-api-fql1.onrender.com"),
+      expect.stringContaining("http://localhost:8000"),
       expect.any(Object)
     );
   });

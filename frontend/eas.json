@@ -10,12 +10,12 @@
     "preview": {
       "distribution": "internal",
       "env": {
-        "EXPO_PUBLIC_API_URL": "https://yahtzee-api-fql1.onrender.com"
+        "EXPO_PUBLIC_API_URL": "https://games-api.buffingchi.com"
       }
     },
     "production": {
       "env": {
-        "EXPO_PUBLIC_API_URL": "https://yahtzee-api-fql1.onrender.com"
+        "EXPO_PUBLIC_API_URL": "https://games-api.buffingchi.com"
       }
     }
   }

@@ -1,5 +1,4 @@
-const _apiUrl =
-  process.env.EXPO_PUBLIC_API_URL ?? "https://yahtzee-api-fql1.onrender.com";
+const _apiUrl = process.env.EXPO_PUBLIC_API_URL ?? "http://localhost:8000";
 // Render's fromService can inject a bare subdomain slug (e.g. "yahtzee-api-fql1")
 // without a protocol or the .onrender.com suffix. Normalise to a full URL.
 const BASE_URL = _apiUrl.startsWith("http") ? _apiUrl : `https://${_apiUrl}.onrender.com`;
