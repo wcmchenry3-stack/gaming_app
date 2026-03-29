@@ -74,6 +74,8 @@ jobs:
       - name: Build Expo web
         run: npx expo export --platform web
         working-directory: frontend
+        env:
+          EXPO_PUBLIC_API_URL: http://localhost:8000
 
       - name: Install E2E deps
         run: npm ci
