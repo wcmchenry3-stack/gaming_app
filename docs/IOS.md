@@ -1,15 +1,15 @@
-# iOS Build — Xcode (Direct)
+# iOS Build — Xcode Cloud
 
 ## How iOS is built
 
-This project builds iOS **directly in Xcode**. EAS Build (Expo Application Services) is **not used**.
+This project builds iOS via **Xcode Cloud** (Apple's CI/CD in App Store Connect). EAS Build is **not used**.
 
 ## What this means
 
 - `frontend/ios/` is **committed to the repo** — it is NOT gitignored and NOT generated at build time
-- `expo prebuild` is **not** part of the build process
-- Builds are triggered from Xcode (locally or via CI with `xcodebuild`)
-- The workspace is `frontend/ios/GamingApp.xcworkspace`
+- Xcode Cloud checks out the repo and expects `frontend/ios/GamingApp.xcworkspace` to exist
+- The `/Volumes/workspace/repository/` path in build logs is **Xcode Cloud infrastructure**, not EAS
+- Builds are triggered through App Store Connect
 
 ## If the ios/ folder is missing
 
@@ -30,8 +30,9 @@ Builds will remain Xcode-direct even then unless explicitly decided otherwise.
 
 ## CI / CD
 
-The GitHub Actions `ci.yml` does not run iOS builds. iOS builds run via Xcode directly.
-If a CI iOS build step is added in future, it must call `xcodebuild` (not `eas build`).
+iOS builds run via **Xcode Cloud** (App Store Connect), not GitHub Actions.
+GitHub Actions `ci.yml` does not include an iOS build step.
+The `/Volumes/workspace/repository/` path in Xcode Cloud logs is Apple's runner — not EAS.
 
 ## Do not suggest
 
