@@ -7,18 +7,21 @@ echo "=== Xcode Cloud: ci_post_clone.sh ==="
 # 1. Install Node.js (not pre-installed on Xcode Cloud)
 # -------------------------------------------------------
 brew install node
-echo "Node: $(node --version) at $(which node)"
+NODE_PATH=$(which node)
+echo "Node: $(node --version) at $NODE_PATH"
 
 # -------------------------------------------------------
-# 2. Tell Xcode build phases where to find node
-#    Build phases source .xcode.env / .xcode.env.local
-#    to locate NODE_BINARY. Without this, the "Bundle
-#    React Native code and images" phase fails.
+# 2. Make node available to ALL Xcode build phase scripts
+#    - .xcode.env.local: sourced by "Bundle React Native
+#      code and images" phase to set NODE_BINARY
+#    - symlink to /usr/local/bin: ensures node is on PATH
+#      for any build phase that runs via `bash -l` (e.g.
+#      the [Expo] Configure project phase)
 # -------------------------------------------------------
-NODE_PATH=$(which node)
 cd "$CI_PRIMARY_REPOSITORY_PATH/frontend/ios"
 echo "export NODE_BINARY=$NODE_PATH" > .xcode.env.local
-echo "Wrote .xcode.env.local -> NODE_BINARY=$NODE_PATH"
+ln -sf "$NODE_PATH" /usr/local/bin/node
+echo "Wrote .xcode.env.local and symlinked node to /usr/local/bin"
 
 # -------------------------------------------------------
 # 3. Install JavaScript dependencies
