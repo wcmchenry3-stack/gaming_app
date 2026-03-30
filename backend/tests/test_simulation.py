@@ -12,6 +12,7 @@ a time.  Two layers are covered:
 
 import random
 import unittest.mock
+import uuid
 
 import pytest
 from fastapi.testclient import TestClient
@@ -26,13 +27,16 @@ from main import app
 
 client = TestClient(app)
 
+TEST_SESSION_ID = str(uuid.uuid4())
+SESSION_HEADERS = {"X-Session-ID": TEST_SESSION_ID}
+
 
 @pytest.fixture(autouse=True)
 def reset_game():
-    """Reset global game state before and after each test."""
-    main_module.game = None
+    """Reset session state before and after each test."""
+    main_module._sessions.clear()
     yield
-    main_module.game = None
+    main_module._sessions.clear()
 
 
 # ---------------------------------------------------------------------------
@@ -152,30 +156,57 @@ class TestDirectSimulation:
 
 
 class TestAPISimulation:
-    """Drive a full 13-round game through the HTTP API."""
+    """Drive a full 13-round game through the HTTP API.
+
+    Each helper resets the rate-limiter before calling the endpoint.
+    This is intentional: simulation tests exercise game-state transitions,
+    not rate limiting (which is covered separately in test_security.py).
+    Without the resets, accumulated decorator registrations from
+    test_security.py's importlib.reload calls would halve the effective
+    limit and cause spurious 429s within multi-round tests.
+    """
+
+    @staticmethod
+    def _rl_reset():
+        from limiter import limiter
+
+        limiter.reset()
 
     def _new(self) -> dict:
-        res = client.post("/game/new")
+        self._rl_reset()
+        res = client.post("/game/new", headers=SESSION_HEADERS)
         assert res.status_code == 200
         return res.json()
 
     def _roll(self, held: list[bool] | None = None) -> dict:
-        res = client.post("/game/roll", json={"held": held or [False] * 5})
+        self._rl_reset()
+        res = client.post(
+            "/game/roll",
+            json={"held": held or [False] * 5},
+            headers=SESSION_HEADERS,
+        )
         assert res.status_code == 200
         return res.json()
 
     def _score(self, category: str) -> dict:
-        res = client.post("/game/score", json={"category": category})
+        self._rl_reset()
+        res = client.post(
+            "/game/score",
+            json={"category": category},
+            headers=SESSION_HEADERS,
+        )
         assert res.status_code == 200
         return res.json()
 
     def _state(self) -> dict:
-        res = client.get("/game/state")
+        self._rl_reset()
+        res = client.get("/game/state", headers=SESSION_HEADERS)
         assert res.status_code == 200
         return res.json()
 
     def _possible(self) -> dict:
-        res = client.get("/game/possible-scores")
+        self._rl_reset()
+        res = client.get("/game/possible-scores", headers=SESSION_HEADERS)
         assert res.status_code == 200
         return res.json()["possible_scores"]
 
@@ -246,7 +277,11 @@ class TestAPISimulation:
         for cat in CATEGORIES:
             self._roll()
             self._score(cat)
-        res = client.post("/game/roll", json={"held": [False] * 5})
+        res = client.post(
+            "/game/roll",
+            json={"held": [False] * 5},
+            headers=SESSION_HEADERS,
+        )
         assert res.status_code == 400
 
     def test_400_on_score_after_game_over(self):
@@ -257,5 +292,9 @@ class TestAPISimulation:
             self._score(cat)
         # Need a roll_used > 0 to reach the game_over check (not the must-roll check)
         # Manually set rolls_used won't work via API — the endpoint raises game_over first
-        res = client.post("/game/score", json={"category": "chance"})
+        res = client.post(
+            "/game/score",
+            json={"category": "chance"},
+            headers=SESSION_HEADERS,
+        )
         assert res.status_code == 400

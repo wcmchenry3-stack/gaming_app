@@ -1,26 +1,36 @@
-from fastapi import APIRouter, HTTPException
+from collections import OrderedDict
 
+from fastapi import APIRouter, HTTPException, Request
+
+from limiter import limiter
+from session import get_session_id
 from .game import LudoGame, new_game
 from .models import LudoStateResponse, MoveRequest, PieceResponse, PlayerStateResponse
 
 router = APIRouter()
 
-_game: LudoGame | None = None
+_MAX_SESSIONS = 500
+_sessions: OrderedDict[str, LudoGame] = OrderedDict()
 
 
 def reset_game() -> None:
-    """Test helper — clears in-memory game state."""
-    global _game
-    _game = None
+    """Test helper — clears all in-memory session state."""
+    _sessions.clear()
 
 
-def _require_game() -> LudoGame:
-    if _game is None:
+def _evict_if_full() -> None:
+    while len(_sessions) >= _MAX_SESSIONS:
+        _sessions.popitem(last=False)
+
+
+def _require_game(session_id: str) -> LudoGame:
+    game = _sessions.get(session_id)
+    if game is None:
         raise HTTPException(
             status_code=404,
             detail="No game in progress. POST /ludo/new first.",
         )
-    return _game
+    return game
 
 
 def _state_response(game: LudoGame) -> LudoStateResponse:
@@ -59,49 +69,55 @@ def _state_response(game: LudoGame) -> LudoStateResponse:
 
 
 @router.post("/new", response_model=LudoStateResponse)
-def new_game_endpoint() -> LudoStateResponse:
-    global _game
-    _game = new_game()
-    return _state_response(_game)
+@limiter.limit("10/minute")
+def new_game_endpoint(request: Request) -> LudoStateResponse:
+    sid = get_session_id(request)
+    _evict_if_full()
+    _sessions[sid] = new_game()
+    return _state_response(_sessions[sid])
 
 
 @router.get("/state", response_model=LudoStateResponse)
-def get_state() -> LudoStateResponse:
-    game = _require_game()
-    return _state_response(game)
+@limiter.limit("60/minute")
+def get_state(request: Request) -> LudoStateResponse:
+    sid = get_session_id(request)
+    return _state_response(_require_game(sid))
 
 
 @router.post("/roll", response_model=LudoStateResponse)
-def roll() -> LudoStateResponse:
-    game = _require_game()
+@limiter.limit("30/minute")
+def roll(request: Request) -> LudoStateResponse:
+    sid = get_session_id(request)
+    game = _require_game(sid)
     try:
         game.roll()
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
-    # If human had no valid moves, turn auto-advanced to CPU
     if game.current_player == game.cpu_player and game.phase != "game_over":
         game.cpu_take_turn()
     return _state_response(game)
 
 
 @router.post("/move", response_model=LudoStateResponse)
-def move(request: MoveRequest) -> LudoStateResponse:
-    game = _require_game()
+@limiter.limit("30/minute")
+def move(request: Request, body: MoveRequest) -> LudoStateResponse:
+    sid = get_session_id(request)
+    game = _require_game(sid)
     try:
-        game.move_piece(request.piece_index)
+        game.move_piece(body.piece_index)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
-    # After human's move, if it's now the CPU's turn, run it
     if game.current_player == game.cpu_player and game.phase != "game_over":
         game.cpu_take_turn()
     return _state_response(game)
 
 
 @router.post("/new-game", response_model=LudoStateResponse)
-def restart() -> LudoStateResponse:
-    game = _require_game()
+@limiter.limit("10/minute")
+def restart(request: Request) -> LudoStateResponse:
+    sid = get_session_id(request)
+    game = _require_game(sid)
     if game.phase != "game_over":
         raise HTTPException(status_code=400, detail="Game is not over yet.")
-    global _game
-    _game = new_game()
-    return _state_response(_game)
+    _sessions[sid] = new_game()
+    return _state_response(_sessions[sid])

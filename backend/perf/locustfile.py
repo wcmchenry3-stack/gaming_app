@@ -1,11 +1,12 @@
 """
-Yahtzee Game — Locust performance test entry point.
+Gaming App — Locust performance test entry point.
 
-Three user classes covering distinct load scenarios:
+User classes:
 
-  YahtzeeGameUser   — full 13-round game flow (sequential, --users 1 only)
+  YahtzeeGameUser   — full 13-round game flow (session-isolated; safe with multiple users)
   LeaderboardUser   — concurrent leaderboard read/write (--users 10)
   ReadOnlyUser      — polling GET endpoints (--users 20)
+  RateLimitVerifyUser — intentionally exhausts rate limits to verify 429 + Retry-After
 
 Usage examples:
 
@@ -14,10 +15,20 @@ Usage examples:
          --run-time 120s --host http://localhost:8000 \
          YahtzeeGameUser
 
+  # Multi-user game flow (session isolation means no collisions):
+  locust -f perf/locustfile.py --headless --users 5 --spawn-rate 1 \
+         --run-time 60s --host http://localhost:8000 \
+         YahtzeeGameUser
+
   # Leaderboard concurrent load (local):
   locust -f perf/locustfile.py --headless --users 10 --spawn-rate 2 \
          --run-time 60s --host http://localhost:8000 \
          LeaderboardUser
+
+  # Rate limit verification:
+  locust -f perf/locustfile.py --headless --users 1 --spawn-rate 1 \
+         --run-time 30s --host http://localhost:8000 \
+         RateLimitVerifyUser
 
   # All scenarios together (default):
   locust -f perf/locustfile.py --headless --users 5 --spawn-rate 1 \
@@ -32,15 +43,13 @@ from locust import HttpUser, between
 from scenarios.game_flow import GameFlowTasks
 from scenarios.leaderboard import LeaderboardTasks
 from scenarios.stateless_reads import StatelessReadTasks
+from scenarios.rate_limit_test import RateLimitTasks
 
 
 class YahtzeeGameUser(HttpUser):
     """
     Simulates one player completing a full 13-round game.
-
-    IMPORTANT: The backend has a single global game instance. Running this
-    with more than 1 concurrent user will cause state collisions. Always
-    run this class with --users 1. See docs/PERFORMANCE.md for details.
+    Session isolation allows multiple concurrent users without state collisions.
     """
 
     tasks = [GameFlowTasks]
@@ -66,3 +75,13 @@ class ReadOnlyUser(HttpUser):
 
     tasks = [StatelessReadTasks]
     wait_time = between(1, 3)
+
+
+class RateLimitVerifyUser(HttpUser):
+    """
+    Verifies rate limiting fires correctly (429 + Retry-After).
+    Run with --users 1 (sequential) for clean per-request status codes.
+    """
+
+    tasks = [RateLimitTasks]
+    wait_time = between(0, 0.1)  # No wait — hammer as fast as possible

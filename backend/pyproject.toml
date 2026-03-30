@@ -2,6 +2,7 @@
 markers = [
     "security: security-focused tests (CORS, headers, injection)",
 ]
+testpaths = ["tests"]
 addopts = "--cov=. --cov-report=term-missing --cov-fail-under=80"
 
 [tool.coverage.run]

@@ -5,7 +5,7 @@ services:
     runtime: python
     rootDir: backend
     buildCommand: pip install -r requirements.txt
-    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
+    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT --timeout-keep-alive 5 --limit-max-requests 10000
     envVars:
       - key: PYTHON_VERSION
         value: 3.11.0
@@ -27,3 +27,18 @@ services:
         value: yahtzee-api
       - key: RENDER_API_KEY
         sync: false
+    headers:
+      - path: /*
+        name: Content-Security-Policy
+        # 'unsafe-inline' for script/style is required by Expo Web's output format (inlined styles
+        # and event handlers). This is an accepted exception pending upstream Expo fix.
+        value: "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; connect-src 'self' https://yahtzee-api.onrender.com https://games.buffingchi.com; img-src 'self' data: blob:; font-src 'self' data:; frame-ancestors 'none'"
+      - path: /*
+        name: X-Content-Type-Options
+        value: nosniff
+      - path: /*
+        name: X-Frame-Options
+        value: DENY
+      - path: /*
+        name: Referrer-Policy
+        value: strict-origin-when-cross-origin

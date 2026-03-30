@@ -1,9 +1,11 @@
 """
 Scenario A: Full Yahtzee game flow (sequential, single user).
 
-The backend has one global game instance — running this with more than 1
-concurrent user will cause state collisions. Use --users 1 for this scenario.
+Each user generates a unique session ID so multiple concurrent users
+don't collide on shared game state.
 """
+
+import uuid
 
 from locust import SequentialTaskSet, task
 
@@ -31,10 +33,12 @@ class GameFlowTasks(SequentialTaskSet):
 
     def on_start(self):
         self._round = 0
+        self._session_id = str(uuid.uuid4())
+        self._headers = {"X-Session-ID": self._session_id}
 
     @task
     def new_game(self):
-        with self.client.post("/game/new", name="POST /game/new") as resp:
+        with self.client.post("/game/new", headers=self._headers, name="POST /game/new") as resp:
             resp.raise_for_status()
         self._round = 0
 
@@ -92,7 +96,9 @@ class GameFlowTasks(SequentialTaskSet):
 
     @task
     def verify_game_over(self):
-        with self.client.get("/game/state", name="GET /game/state (final)") as resp:
+        with self.client.get(
+            "/game/state", headers=self._headers, name="GET /game/state (final)"
+        ) as resp:
             resp.raise_for_status()
             data = resp.json()
             if not data.get("game_over"):
@@ -105,12 +111,14 @@ class GameFlowTasks(SequentialTaskSet):
         with self.client.post(
             "/game/roll",
             json={"held": held},
+            headers=self._headers,
             name="POST /game/roll",
         ) as resp:
             resp.raise_for_status()
 
         with self.client.get(
             "/game/possible-scores",
+            headers=self._headers,
             name="GET /game/possible-scores",
         ) as resp:
             resp.raise_for_status()
@@ -118,6 +126,7 @@ class GameFlowTasks(SequentialTaskSet):
         with self.client.post(
             "/game/score",
             json={"category": CATEGORIES[round_index]},
+            headers=self._headers,
             name="POST /game/score",
         ) as resp:
             resp.raise_for_status()

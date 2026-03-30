@@ -1,0 +1,32 @@
+# OWASP ZAP Baseline Scan Configuration
+# Tuned for the Gaming App JSON API (no HTML pages to crawl).
+# Referenced by deploy.yml via called-deploy-render.yml zap-target-url parameter.
+env:
+  contexts:
+    - name: "Gaming App API"
+      urls:
+        - "https://yahtzee-api.onrender.com"
+      includePaths:
+        - "https://yahtzee-api.onrender.com/.*"
+      excludePaths:
+        # OpenAPI docs are not a production attack surface
+        - "https://yahtzee-api.onrender.com/docs"
+        - "https://yahtzee-api.onrender.com/redoc"
+        - "https://yahtzee-api.onrender.com/openapi.json"
+  parameters:
+    failOnError: true
+    failOnWarning: false
+    progressToStdout: true
+
+jobs:
+  - type: passiveScan-wait
+    parameters:
+      maxDuration: 5
+
+  - type: activeScan
+    parameters:
+      context: "Gaming App API"
+      maxRuleDurationInMins: 5
+      maxScanDurationInMins: 20
+      addQueryParam: false
+      defaultPolicy: "API Scan"

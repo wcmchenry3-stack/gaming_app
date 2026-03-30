@@ -1,7 +1,21 @@
+import AsyncStorage from "@react-native-async-storage/async-storage";
+
 const _apiUrl = process.env.EXPO_PUBLIC_API_URL ?? "http://localhost:8000";
 // Render's fromService can inject a bare subdomain slug (e.g. "yahtzee-api-fql1")
 // without a protocol or the .onrender.com suffix. Normalise to a full URL.
 const BASE_URL = _apiUrl.startsWith("http") ? _apiUrl : `https://${_apiUrl}.onrender.com`;
+
+const SESSION_KEY = "game_session_id";
+
+async function getOrCreateSessionId(): Promise<string> {
+  let sid = await AsyncStorage.getItem(SESSION_KEY);
+  if (!sid) {
+    // crypto.randomUUID() is available in React Native (Hermes) and modern browsers
+    sid = crypto.randomUUID();
+    await AsyncStorage.setItem(SESSION_KEY, sid);
+  }
+  return sid;
+}
 
 export interface GameState {
   dice: number[];
@@ -20,8 +34,12 @@ export interface PossibleScores {
 }
 
 async function request<T>(path: string, options?: RequestInit): Promise<T> {
+  const sessionId = await getOrCreateSessionId();
   const res = await fetch(`${BASE_URL}${path}`, {
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json",
+      "X-Session-ID": sessionId,
+    },
     ...options,
   });
   if (!res.ok) {

@@ -226,7 +226,7 @@ class TestScoring:
 
     def test_unknown_category_raises(self):
         g = make_game([1, 2, 3, 4, 5])
-        with pytest.raises(ValueError, match="Unknown category"):
+        with pytest.raises(ValueError, match="Unknown scoring category"):
             g.score("bogus")
 
     def test_game_over_after_13_rounds(self):
