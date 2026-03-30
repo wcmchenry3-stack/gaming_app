@@ -26,13 +26,23 @@ echo "export PATH=\"/usr/local/bin:/opt/homebrew/bin:\$PATH\"" >> "$HOME/.bash_p
 echo "export PATH=\"/usr/local/bin:/opt/homebrew/bin:\$PATH\"" >> "$HOME/.zprofile"
 
 # -------------------------------------------------------
-# 3. Install JavaScript dependencies
+# 3. Write environment variables for the JS bundle
 # -------------------------------------------------------
 cd "$CI_PRIMARY_REPOSITORY_PATH/frontend"
+cat > .env <<'DOTENV'
+EXPO_PUBLIC_API_URL=https://yahtzee-api.onrender.com
+EXPO_PUBLIC_SENTRY_DSN=https://4e8b2bd816cbce3f73b0cd6923530d53@o4511129011093504.ingest.us.sentry.io/4511129020334080
+DOTENV
+echo "=== .env written ==="
+cat .env
+
+# -------------------------------------------------------
+# 4. Install JavaScript dependencies
+# -------------------------------------------------------
 npm install
 
 # -------------------------------------------------------
-# 4. Install CocoaPods (fresh install to fix paths)
+# 5. Install CocoaPods (fresh install to fix paths)
 #    The committed Pods have hardcoded local machine paths
 #    (e.g. HERMES_CLI_PATH). Removing and reinstalling
 #    regenerates xcconfigs with correct CI runner paths.
@@ -43,7 +53,7 @@ which pod || brew install cocoapods
 pod install
 
 # -------------------------------------------------------
-# 5. Verify HERMES_CLI_PATH is correct
+# 6. Verify HERMES_CLI_PATH is correct
 # -------------------------------------------------------
 echo "=== Pre-build verification ==="
 HERMES_PATH=$(grep HERMES_CLI_PATH "Pods/Target Support Files/Pods-GamingApp/Pods-GamingApp.release.xcconfig" || echo "NOT FOUND")
