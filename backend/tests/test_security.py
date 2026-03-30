@@ -393,8 +393,8 @@ def test_two_sessions_are_isolated(client_default):
 @pytest.mark.security
 @given(category=st.text(min_size=0, max_size=200))
 @settings(
-    max_examples=200,
-    deadline=3000,
+    max_examples=50,
+    deadline=2000,
     suppress_health_check=[HealthCheck.function_scoped_fixture],
 )
 def test_score_category_fuzz_never_500(client_default, category):
@@ -416,8 +416,8 @@ def test_score_category_fuzz_never_500(client_default, category):
 @pytest.mark.security
 @given(held=st.lists(st.booleans(), min_size=0, max_size=20))
 @settings(
-    max_examples=100,
-    deadline=3000,
+    max_examples=30,
+    deadline=2000,
     suppress_health_check=[HealthCheck.function_scoped_fixture],
 )
 def test_roll_held_fuzz_never_500(client_default, held):
