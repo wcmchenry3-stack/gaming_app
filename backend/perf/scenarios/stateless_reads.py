@@ -8,17 +8,25 @@ the latency floor for SLO calibration.
 Requires an active game: run after POST /game/new.
 """
 
+import uuid
+
 from locust import TaskSet, task
 
 
 class StatelessReadTasks(TaskSet):
     def on_start(self):
         """Ensure a game exists before polling."""
-        self.client.post("/game/new", name="POST /game/new (setup)")
+        self._session_id = str(uuid.uuid4())
+        self._headers = {"X-Session-ID": self._session_id}
+        self.client.post(
+            "/game/new", headers=self._headers, name="POST /game/new (setup)"
+        )
 
     @task(3)
     def get_state(self):
-        with self.client.get("/game/state", name="GET /game/state") as resp:
+        with self.client.get(
+            "/game/state", headers=self._headers, name="GET /game/state"
+        ) as resp:
             resp.raise_for_status()
 
     @task(1)
@@ -26,6 +34,7 @@ class StatelessReadTasks(TaskSet):
         # possible-scores returns empty dict before rolling — that's valid (200)
         with self.client.get(
             "/game/possible-scores",
+            headers=self._headers,
             name="GET /game/possible-scores",
         ) as resp:
             resp.raise_for_status()

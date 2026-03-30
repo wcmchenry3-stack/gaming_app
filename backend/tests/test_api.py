@@ -1,3 +1,5 @@
+import uuid
+
 import pytest
 from fastapi.testclient import TestClient
 import main as main_module
@@ -5,17 +7,21 @@ from main import app
 
 client = TestClient(app)
 
+# Fixed session ID used by all test helpers in this module
+TEST_SESSION_ID = str(uuid.uuid4())
+SESSION_HEADERS = {"X-Session-ID": TEST_SESSION_ID}
+
 
 @pytest.fixture(autouse=True)
 def reset_game():
-    """Reset global game state before each test."""
-    main_module.game = None
+    """Reset session state before each test."""
+    main_module._sessions.clear()
     yield
-    main_module.game = None
+    main_module._sessions.clear()
 
 
 def _new_game() -> dict:
-    res = client.post("/game/new")
+    res = client.post("/game/new", headers=SESSION_HEADERS)
     assert res.status_code == 200
     return res.json()
 
@@ -23,12 +29,12 @@ def _new_game() -> dict:
 def _roll(held: list[bool] = None) -> dict:
     if held is None:
         held = [False] * 5
-    res = client.post("/game/roll", json={"held": held})
+    res = client.post("/game/roll", json={"held": held}, headers=SESSION_HEADERS)
     return res
 
 
 def _score(category: str) -> dict:
-    return client.post("/game/score", json={"category": category})
+    return client.post("/game/score", json={"category": category}, headers=SESSION_HEADERS)
 
 
 # ---------------------------------------------------------------------------
@@ -57,6 +63,14 @@ class TestNewGame:
         assert state["round"] == 1
         assert state["scores"]["chance"] is None
 
+    def test_400_missing_session_id(self):
+        res = client.post("/game/new")
+        assert res.status_code == 400
+
+    def test_400_invalid_session_id(self):
+        res = client.post("/game/new", headers={"X-Session-ID": "not-a-uuid"})
+        assert res.status_code == 400
+
 
 # ---------------------------------------------------------------------------
 # GET /game/state
@@ -65,12 +79,12 @@ class TestNewGame:
 
 class TestGetState:
     def test_404_without_game(self):
-        res = client.get("/game/state")
+        res = client.get("/game/state", headers=SESSION_HEADERS)
         assert res.status_code == 404
 
     def test_returns_current_state(self):
         _new_game()
-        res = client.get("/game/state")
+        res = client.get("/game/state", headers=SESSION_HEADERS)
         assert res.status_code == 200
         assert res.json()["round"] == 1
 
@@ -95,7 +109,9 @@ class TestRoll:
 
     def test_invalid_held_length(self):
         _new_game()
-        res = client.post("/game/roll", json={"held": [False, False]})
+        res = client.post(
+            "/game/roll", json={"held": [False, False]}, headers=SESSION_HEADERS
+        )
         assert res.status_code == 422
 
     def test_400_after_three_rolls(self):
@@ -109,9 +125,7 @@ class TestRoll:
 
     def test_held_respected_on_second_roll(self):
         _new_game()
-        _roll()  # first roll — all dice random
-        # Force known dice via direct state manipulation isn't possible via API,
-        # but we can confirm rolls_used increments and held is echoed back
+        _roll()
         state = _roll([True, True, False, False, False]).json()
         assert state["rolls_used"] == 2
         assert state["held"] == [True, True, False, False, False]
@@ -145,7 +159,6 @@ class TestScore:
         _new_game()
         _roll()
         _score("chance")
-        # Start next turn
         _roll()
         res = _score("chance")
         assert res.status_code == 400
@@ -156,7 +169,13 @@ class TestScore:
         _roll()
         res = _score("bogus_category")
         assert res.status_code == 400
-        assert "Unknown category" in res.json()["detail"]
+        assert "Unknown scoring category" in res.json()["detail"]
+
+    def test_unknown_category_does_not_echo_input(self):
+        _new_game()
+        _roll()
+        res = _score("bogus_category")
+        assert "bogus_category" not in res.json()["detail"]
 
     def test_game_over_after_all_categories(self):
         _new_game()
@@ -178,7 +197,7 @@ class TestScore:
         for cat in categories:
             _roll()
             _score(cat)
-        state = client.get("/game/state").json()
+        state = client.get("/game/state", headers=SESSION_HEADERS).json()
         assert state["game_over"] is True
 
 
@@ -189,28 +208,72 @@ class TestScore:
 
 class TestPossibleScores:
     def test_404_without_game(self):
-        res = client.get("/game/possible-scores")
+        res = client.get("/game/possible-scores", headers=SESSION_HEADERS)
         assert res.status_code == 404
 
     def test_empty_before_rolling(self):
         _new_game()
-        res = client.get("/game/possible-scores")
+        res = client.get("/game/possible-scores", headers=SESSION_HEADERS)
         assert res.status_code == 200
         assert res.json()["possible_scores"] == {}
 
     def test_returns_scores_after_roll(self):
         _new_game()
         _roll()
-        res = client.get("/game/possible-scores")
+        res = client.get("/game/possible-scores", headers=SESSION_HEADERS)
         assert res.status_code == 200
         ps = res.json()["possible_scores"]
-        assert len(ps) == 13  # all categories unfilled
+        assert len(ps) == 13
 
     def test_excludes_already_scored(self):
         _new_game()
         _roll()
         _score("chance")
         _roll()
-        ps = client.get("/game/possible-scores").json()["possible_scores"]
+        ps = client.get(
+            "/game/possible-scores", headers=SESSION_HEADERS
+        ).json()["possible_scores"]
         assert "chance" not in ps
         assert len(ps) == 12
+
+
+# ---------------------------------------------------------------------------
+# Session isolation
+# ---------------------------------------------------------------------------
+
+
+class TestSessionIsolation:
+    def test_two_sessions_are_independent(self):
+        sid1 = str(uuid.uuid4())
+        sid2 = str(uuid.uuid4())
+        client.post("/game/new", headers={"X-Session-ID": sid1})
+        client.post("/game/new", headers={"X-Session-ID": sid2})
+        client.post(
+            "/game/roll",
+            json={"held": [False] * 5},
+            headers={"X-Session-ID": sid1},
+        )
+        state2 = client.get("/game/state", headers={"X-Session-ID": sid2}).json()
+        assert state2["rolls_used"] == 0
+
+    def test_session_lru_eviction(self):
+        import main as m
+        import unittest.mock as mock
+
+        # Patch _MAX_SESSIONS to 3 so we can trigger eviction without rate limit
+        with mock.patch.object(m, "_MAX_SESSIONS", 3):
+            for _ in range(4):
+                client.post("/game/new", headers={"X-Session-ID": str(uuid.uuid4())})
+        assert len(m._sessions) <= 3
+
+    def test_evicted_session_returns_404(self):
+        import main as m
+        import unittest.mock as mock
+
+        first_sid = str(uuid.uuid4())
+        client.post("/game/new", headers={"X-Session-ID": first_sid})
+        with mock.patch.object(m, "_MAX_SESSIONS", 3):
+            for _ in range(3):
+                client.post("/game/new", headers={"X-Session-ID": str(uuid.uuid4())})
+        res = client.get("/game/state", headers={"X-Session-ID": first_sid})
+        assert res.status_code == 404

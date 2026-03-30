@@ -29,6 +29,10 @@ See [~/.claude/standards/testing.md](~/.claude/standards/testing.md) + [`docs/TE
 cd backend && python -m pytest tests/ -v
 ```
 
+## iOS Builds
+**Xcode Cloud (App Store Connect) — EAS Build is NOT used.** `frontend/ios/` is committed to the repo, not generated at build time. `/Volumes/workspace/repository/` in build logs is Apple's Xcode Cloud runner.
+See [`docs/IOS.md`](docs/IOS.md). Do not suggest `eas build`, `prebuildCommand`, or treating `ios/` as ephemeral.
+
 ## Deployment
 See [`docs/RENDER.md`](docs/RENDER.md) for Render hosting setup.
 

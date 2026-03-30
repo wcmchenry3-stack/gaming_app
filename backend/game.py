@@ -55,9 +55,9 @@ class YahtzeeGame:
         if self.game_over:
             raise ValueError("Game is over.")
         if category not in CATEGORIES:
-            raise ValueError(f"Unknown category: {category}")
+            raise ValueError("Unknown scoring category.")
         if self.scores[category] is not None:
-            raise ValueError(f"Category '{category}' already scored.")
+            raise ValueError("Category already scored.")
         if self.rolls_used == 0:
             raise ValueError("Must roll at least once before scoring.")
 

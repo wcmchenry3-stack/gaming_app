@@ -4,6 +4,8 @@ API integration tests for the blackjack endpoints.
 Uses FastAPI TestClient — no WASM or real network needed.
 """
 
+import uuid
+
 import pytest
 from fastapi.testclient import TestClient
 
@@ -12,6 +14,10 @@ from blackjack.game import Card
 from main import app
 
 client = TestClient(app)
+
+# Fixed session ID used by all test helpers in this module
+TEST_SESSION_ID = str(uuid.uuid4())
+SESSION_HEADERS = {"X-Session-ID": TEST_SESSION_ID}
 
 
 @pytest.fixture(autouse=True)
@@ -26,34 +32,38 @@ def reset():
 # ---------------------------------------------------------------------------
 
 
+def _current_game():
+    return blackjack_router_module._sessions.get(TEST_SESSION_ID)
+
+
 def new_game():
-    return client.post("/blackjack/new")
+    return client.post("/blackjack/new", headers=SESSION_HEADERS)
 
 
 def bet(amount=100):
-    return client.post("/blackjack/bet", json={"amount": amount})
+    return client.post("/blackjack/bet", json={"amount": amount}, headers=SESSION_HEADERS)
 
 
 def hit():
-    return client.post("/blackjack/hit")
+    return client.post("/blackjack/hit", headers=SESSION_HEADERS)
 
 
 def stand():
-    return client.post("/blackjack/stand")
+    return client.post("/blackjack/stand", headers=SESSION_HEADERS)
 
 
 def double_down():
-    return client.post("/blackjack/double-down")
+    return client.post("/blackjack/double-down", headers=SESSION_HEADERS)
 
 
 def new_hand():
-    return client.post("/blackjack/new-hand")
+    return client.post("/blackjack/new-hand", headers=SESSION_HEADERS)
 
 
 def _inject_player_phase(chips=1000, bet_amount=100):
     """Bypass place_bet to put the game directly into player phase."""
     new_game()
-    g = blackjack_router_module._game
+    g = _current_game()
     g.chips = chips
     g.bet = bet_amount
     g._player_hand = [Card("♠", "7"), Card("♥", "8")]
@@ -63,7 +73,7 @@ def _inject_player_phase(chips=1000, bet_amount=100):
 
 def _inject_result_phase(chips=900, bet_amount=100, outcome="lose", payout=-100):
     new_game()
-    g = blackjack_router_module._game
+    g = _current_game()
     g.chips = chips
     g.bet = bet_amount
     g._player_hand = [Card("♠", "7"), Card("♥", "8")]
@@ -107,15 +117,15 @@ class TestNewGame:
 
 class TestGetState:
     def test_404_without_game(self):
-        assert client.get("/blackjack/state").status_code == 404
+        assert client.get("/blackjack/state", headers=SESSION_HEADERS).status_code == 404
 
     def test_200_with_game(self):
         new_game()
-        assert client.get("/blackjack/state").status_code == 200
+        assert client.get("/blackjack/state", headers=SESSION_HEADERS).status_code == 200
 
     def test_state_matches_new_game(self):
         new_game()
-        data = client.get("/blackjack/state").json()
+        data = client.get("/blackjack/state", headers=SESSION_HEADERS).json()
         assert data["chips"] == 1000
         assert data["phase"] == "betting"
 
@@ -133,7 +143,6 @@ class TestPlaceBet:
     def test_valid_bet_deals_two_cards_to_player(self):
         new_game()
         data = bet(100).json()
-        # Phase is player or result; in either case player has 2 cards
         assert len(data["player_hand"]["cards"]) == 2
 
     def test_valid_bet_deals_two_cards_to_dealer(self):
@@ -159,7 +168,7 @@ class TestPlaceBet:
 
     def test_insufficient_chips_returns_400(self):
         new_game()
-        blackjack_router_module._game.chips = 50
+        _current_game().chips = 50
         assert bet(100).status_code == 400
 
     def test_404_without_game(self):
@@ -186,7 +195,6 @@ class TestHit:
     def test_player_gets_extra_card(self):
         _inject_player_phase()
         data = hit().json()
-        # The player should now have at least 3 cards (or be in result if busted)
         assert len(data["player_hand"]["cards"]) >= 2
 
 
@@ -253,12 +261,12 @@ class TestDoubleDown:
 
     def test_double_down_insufficient_chips_returns_400(self):
         _inject_player_phase(chips=150, bet_amount=100)
-        blackjack_router_module._game.chips = 50
+        _current_game().chips = 50
         assert double_down().status_code == 400
 
     def test_double_down_not_on_three_cards_returns_400(self):
         _inject_player_phase(chips=500, bet_amount=100)
-        blackjack_router_module._game._player_hand.append(Card("♠", "2"))
+        _current_game()._player_hand.append(Card("♠", "2"))
         assert double_down().status_code == 400
 
 
@@ -298,7 +306,7 @@ class TestNewHand:
 class TestHoleCardConcealment:
     def test_dealer_hole_card_face_down_during_player_phase(self):
         _inject_player_phase()
-        data = client.get("/blackjack/state").json()
+        data = client.get("/blackjack/state", headers=SESSION_HEADERS).json()
         assert data["phase"] == "player"
         dealer_cards = data["dealer_hand"]["cards"]
         assert dealer_cards[0]["face_down"] is True
@@ -306,12 +314,12 @@ class TestHoleCardConcealment:
 
     def test_dealer_hand_value_zero_during_player_phase(self):
         _inject_player_phase()
-        data = client.get("/blackjack/state").json()
+        data = client.get("/blackjack/state", headers=SESSION_HEADERS).json()
         assert data["dealer_hand"]["value"] == 0
 
     def test_no_face_down_cards_in_result_phase(self):
         _inject_result_phase()
-        data = client.get("/blackjack/state").json()
+        data = client.get("/blackjack/state", headers=SESSION_HEADERS).json()
         dealer_cards = data["dealer_hand"]["cards"]
         assert all(not c["face_down"] for c in dealer_cards)
 
@@ -324,19 +332,18 @@ class TestHoleCardConcealment:
 class TestGameOver:
     def test_game_over_when_chips_zero_in_result(self):
         _inject_result_phase(chips=0, outcome="lose", payout=-100)
-        data = client.get("/blackjack/state").json()
+        data = client.get("/blackjack/state", headers=SESSION_HEADERS).json()
         assert data["game_over"] is True
 
     def test_not_game_over_with_chips_remaining(self):
         _inject_result_phase(chips=500, outcome="win", payout=100)
-        data = client.get("/blackjack/state").json()
+        data = client.get("/blackjack/state", headers=SESSION_HEADERS).json()
         assert data["game_over"] is False
 
     def test_not_game_over_during_betting_even_if_chips_zero(self):
         new_game()
-        blackjack_router_module._game.chips = 0
-        data = client.get("/blackjack/state").json()
-        # game_over only fires in result phase
+        _current_game().chips = 0
+        data = client.get("/blackjack/state", headers=SESSION_HEADERS).json()
         assert data["game_over"] is False
 
 
@@ -348,16 +355,16 @@ class TestGameOver:
 class TestDoubleDownAvailable:
     def test_true_when_two_cards_and_enough_chips(self):
         _inject_player_phase(chips=500, bet_amount=100)
-        data = client.get("/blackjack/state").json()
+        data = client.get("/blackjack/state", headers=SESSION_HEADERS).json()
         assert data["double_down_available"] is True
 
     def test_false_when_not_in_player_phase(self):
         new_game()
-        data = client.get("/blackjack/state").json()
+        data = client.get("/blackjack/state", headers=SESSION_HEADERS).json()
         assert data["double_down_available"] is False
 
     def test_false_when_insufficient_chips(self):
         _inject_player_phase(chips=50, bet_amount=100)
-        blackjack_router_module._game.chips = 50  # less than bet
-        data = client.get("/blackjack/state").json()
+        _current_game().chips = 50
+        data = client.get("/blackjack/state", headers=SESSION_HEADERS).json()
         assert data["double_down_available"] is False

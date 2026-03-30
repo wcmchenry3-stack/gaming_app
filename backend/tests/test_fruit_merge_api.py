@@ -75,7 +75,10 @@ class TestGetScores:
         assert scores[2]["score"] == 100
 
     def test_capped_at_ten_entries(self):
+        from limiter import limiter
+
         for i in range(15):
+            limiter.reset()  # bypass rate limit — this test targets cap logic, not limiting
             _submit(f"Player{i}", i * 10)
         scores = client.get("/fruit-merge/scores").json()["scores"]
         assert len(scores) == 10
