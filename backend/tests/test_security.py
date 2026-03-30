@@ -50,9 +50,7 @@ def _new_game(client, session_id):
 def _roll(client, session_id, held=None):
     if held is None:
         held = [False] * 5
-    return client.post(
-        "/game/roll", json={"held": held}, headers={"X-Session-ID": session_id}
-    )
+    return client.post("/game/roll", json={"held": held}, headers={"X-Session-ID": session_id})
 
 
 # ---------------------------------------------------------------------------
@@ -134,10 +132,7 @@ def test_cors_prod_allows_frontend(client_prod):
             "X-Session-ID": sid,
         },
     )
-    assert (
-        res.headers.get("access-control-allow-origin")
-        == "https://yahtzee-frontend.onrender.com"
-    )
+    assert res.headers.get("access-control-allow-origin") == "https://yahtzee-frontend.onrender.com"
 
 
 @pytest.mark.security
@@ -283,9 +278,7 @@ def test_duplicate_category_error_is_fixed_string(client_default):
     sid = _sid()
     _new_game(client_default, sid)
     _roll(client_default, sid)
-    client_default.post(
-        "/game/score", json={"category": "chance"}, headers={"X-Session-ID": sid}
-    )
+    client_default.post("/game/score", json={"category": "chance"}, headers={"X-Session-ID": sid})
     _roll(client_default, sid)
     res = client_default.post(
         "/game/score", json={"category": "chance"}, headers={"X-Session-ID": sid}
@@ -335,8 +328,7 @@ def test_normal_body_not_rejected(client_default):
 def test_rate_limit_returns_429_after_threshold(client_default):
     """POST /game/new has a 10/minute limit; 11th request must be 429."""
     responses = [
-        client_default.post("/game/new", headers={"X-Session-ID": _sid()})
-        for _ in range(11)
+        client_default.post("/game/new", headers={"X-Session-ID": _sid()}) for _ in range(11)
     ]
     assert any(r.status_code == 429 for r in responses)
 
@@ -345,8 +337,7 @@ def test_rate_limit_returns_429_after_threshold(client_default):
 def test_rate_limit_429_has_retry_after(client_default):
     """429 responses must include Retry-After header."""
     responses = [
-        client_default.post("/game/new", headers={"X-Session-ID": _sid()})
-        for _ in range(11)
+        client_default.post("/game/new", headers={"X-Session-ID": _sid()}) for _ in range(11)
     ]
     rate_limited = [r for r in responses if r.status_code == 429]
     assert rate_limited, "Expected at least one 429"
@@ -390,9 +381,7 @@ def test_two_sessions_are_isolated(client_default):
     _new_game(client_default, sid1)
     _new_game(client_default, sid2)
     _roll(client_default, sid1)
-    state2 = client_default.get(
-        "/game/state", headers={"X-Session-ID": sid2}
-    ).json()
+    state2 = client_default.get("/game/state", headers={"X-Session-ID": sid2}).json()
     assert state2["rolls_used"] == 0
 
 

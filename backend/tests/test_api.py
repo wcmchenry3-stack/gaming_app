@@ -109,9 +109,7 @@ class TestRoll:
 
     def test_invalid_held_length(self):
         _new_game()
-        res = client.post(
-            "/game/roll", json={"held": [False, False]}, headers=SESSION_HEADERS
-        )
+        res = client.post("/game/roll", json={"held": [False, False]}, headers=SESSION_HEADERS)
         assert res.status_code == 422
 
     def test_400_after_three_rolls(self):
@@ -230,9 +228,7 @@ class TestPossibleScores:
         _roll()
         _score("chance")
         _roll()
-        ps = client.get(
-            "/game/possible-scores", headers=SESSION_HEADERS
-        ).json()["possible_scores"]
+        ps = client.get("/game/possible-scores", headers=SESSION_HEADERS).json()["possible_scores"]
         assert "chance" not in ps
         assert len(ps) == 12
 

@@ -178,9 +178,7 @@ def _evict_if_full() -> None:
 def _get_game(session_id: str) -> YahtzeeGame:
     game = _sessions.get(session_id)
     if game is None:
-        raise HTTPException(
-            status_code=404, detail="No game in progress. POST /game/new first."
-        )
+        raise HTTPException(status_code=404, detail="No game in progress. POST /game/new first.")
     return game
 
 

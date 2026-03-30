@@ -38,9 +38,7 @@ class GameFlowTasks(SequentialTaskSet):
 
     @task
     def new_game(self):
-        with self.client.post(
-            "/game/new", headers=self._headers, name="POST /game/new"
-        ) as resp:
+        with self.client.post("/game/new", headers=self._headers, name="POST /game/new") as resp:
             resp.raise_for_status()
         self._round = 0
 

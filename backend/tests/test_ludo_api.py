@@ -150,16 +150,12 @@ class TestMove:
 
     def test_422_on_invalid_piece_index(self):
         _new_game()
-        resp = client.post(
-            "/ludo/move", json={"piece_index": 5}, headers=SESSION_HEADERS
-        )
+        resp = client.post("/ludo/move", json={"piece_index": 5}, headers=SESSION_HEADERS)
         assert resp.status_code == 422
 
     def test_422_on_negative_index(self):
         _new_game()
-        resp = client.post(
-            "/ludo/move", json={"piece_index": -1}, headers=SESSION_HEADERS
-        )
+        resp = client.post("/ludo/move", json={"piece_index": -1}, headers=SESSION_HEADERS)
         assert resp.status_code == 422
 
     def test_move_piece_from_base(self):
@@ -169,9 +165,7 @@ class TestMove:
         g.valid_moves = [0]
         _inject(g)
         with patch("ludo.game.random.randint", return_value=3):
-            resp = client.post(
-                "/ludo/move", json={"piece_index": 0}, headers=SESSION_HEADERS
-            )
+            resp = client.post("/ludo/move", json={"piece_index": 0}, headers=SESSION_HEADERS)
         assert resp.status_code == 200
         data = resp.json()
         red_state = next(ps for ps in data["player_states"] if ps["player_id"] == "red")
@@ -187,9 +181,7 @@ class TestMove:
         g.valid_moves = [0]
         _inject(g)
         with patch("ludo.game.random.randint", return_value=2):
-            resp = client.post(
-                "/ludo/move", json={"piece_index": 0}, headers=SESSION_HEADERS
-            )
+            resp = client.post("/ludo/move", json={"piece_index": 0}, headers=SESSION_HEADERS)
         assert resp.status_code == 200
         data = resp.json()
         assert data["current_player"] == "red"
@@ -242,12 +234,8 @@ class TestCapture:
         g.valid_moves = [0]
         _inject(g)
         with patch("ludo.game.random.randint", return_value=1):
-            resp = client.post(
-                "/ludo/move", json={"piece_index": 0}, headers=SESSION_HEADERS
-            )
+            resp = client.post("/ludo/move", json={"piece_index": 0}, headers=SESSION_HEADERS)
         assert resp.status_code == 200
         data = resp.json()
-        yellow_state = next(
-            ps for ps in data["player_states"] if ps["player_id"] == "yellow"
-        )
+        yellow_state = next(ps for ps in data["player_states"] if ps["player_id"] == "yellow")
         assert yellow_state["pieces"][0]["position"] == -1

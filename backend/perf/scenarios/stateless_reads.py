@@ -18,15 +18,11 @@ class StatelessReadTasks(TaskSet):
         """Ensure a game exists before polling."""
         self._session_id = str(uuid.uuid4())
         self._headers = {"X-Session-ID": self._session_id}
-        self.client.post(
-            "/game/new", headers=self._headers, name="POST /game/new (setup)"
-        )
+        self.client.post("/game/new", headers=self._headers, name="POST /game/new (setup)")
 
     @task(3)
     def get_state(self):
-        with self.client.get(
-            "/game/state", headers=self._headers, name="GET /game/state"
-        ) as resp:
+        with self.client.get("/game/state", headers=self._headers, name="GET /game/state") as resp:
             resp.raise_for_status()
 
     @task(1)

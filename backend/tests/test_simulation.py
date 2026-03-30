@@ -169,6 +169,7 @@ class TestAPISimulation:
     @staticmethod
     def _rl_reset():
         from limiter import limiter
+
         limiter.reset()
 
     def _new(self) -> dict:
