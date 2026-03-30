@@ -11,6 +11,10 @@ from slowapi.errors import RateLimitExceeded
 from slowapi.middleware import SlowAPIMiddleware
 from starlette.middleware.base import BaseHTTPMiddleware
 
+import sentry_sdk
+from sentry_sdk.integrations.fastapi import FastApiIntegration
+from sentry_sdk.integrations.starlette import StarletteIntegration
+
 from game import YahtzeeGame
 from limiter import _real_ip, limiter
 from models import GameStateResponse, PossibleScoresResponse, RollRequest, ScoreRequest
@@ -25,6 +29,18 @@ from ludo.router import router as ludo_router
 
 logging.basicConfig(level=logging.INFO, format="%(message)s")
 _audit_log = logging.getLogger("audit")
+
+# ---------------------------------------------------------------------------
+# Sentry — no-op when SENTRY_DSN is unset (local dev)
+# ---------------------------------------------------------------------------
+
+_sentry_dsn = os.environ.get("SENTRY_DSN")
+if _sentry_dsn:
+    sentry_sdk.init(
+        dsn=_sentry_dsn,
+        integrations=[StarletteIntegration(), FastApiIntegration()],
+        traces_sample_rate=0.1,
+    )
 
 # ---------------------------------------------------------------------------
 # App
