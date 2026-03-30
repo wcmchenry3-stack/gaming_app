@@ -16,7 +16,7 @@ Usage:
 
 import uuid
 
-from locust import HttpUser, SequentialTaskSet, between, task
+from locust import SequentialTaskSet, task
 
 
 class RateLimitTasks(SequentialTaskSet):

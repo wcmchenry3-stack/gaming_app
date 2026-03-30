@@ -173,7 +173,7 @@ def test_cors_post_new_game_blocked_origin(client_default):
 def test_cors_post_roll_allowed(client_default):
     sid = _sid()
     _new_game(client_default, sid)
-    res = _roll(client_default, sid)
+    _roll(client_default, sid)
     # Add Origin for this check
     res2 = client_default.post(
         "/game/roll",
