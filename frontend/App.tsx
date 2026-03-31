@@ -1,6 +1,6 @@
 import "./src/i18n/i18n";
 import React, { Suspense } from "react";
-import { ActivityIndicator, Platform, StyleSheet, Text, View } from "react-native";
+import { ActivityIndicator, Platform, Pressable, StyleSheet, Text, View } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
@@ -47,11 +47,13 @@ export type RootStackParamList = {
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
-function AppCrashFallback() {
+function AppCrashFallback({ resetError }: { resetError: () => void }) {
   return (
     <View style={styles.crash}>
       <Text style={styles.crashText}>Something went wrong.</Text>
-      <Text style={styles.crashHint}>Please force-quit and reopen the app.</Text>
+      <Pressable style={styles.retryButton} onPress={resetError}>
+        <Text style={styles.retryText}>Try again</Text>
+      </Pressable>
     </View>
   );
 }
@@ -76,7 +78,7 @@ function AppInner() {
 function App() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
-      <Sentry.ErrorBoundary fallback={<AppCrashFallback />}>
+      <Sentry.ErrorBoundary fallback={(props) => <AppCrashFallback {...props} />}>
         <Suspense
           fallback={
             <View style={{ flex: 1 }}>
@@ -102,11 +104,18 @@ const styles = StyleSheet.create({
   crashText: {
     fontSize: 18,
     fontWeight: "600",
-    marginBottom: 8,
+    marginBottom: 24,
   },
-  crashHint: {
+  retryButton: {
+    backgroundColor: "#1a1a2e",
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 8,
+  },
+  retryText: {
+    color: "#fff",
+    fontWeight: "600",
     fontSize: 14,
-    color: "#666",
   },
 });
 
