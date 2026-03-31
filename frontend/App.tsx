@@ -1,6 +1,6 @@
 import "./src/i18n/i18n";
 import React, { Suspense } from "react";
-import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
+import { ActivityIndicator, Platform, StyleSheet, Text, View } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
@@ -14,17 +14,27 @@ import { GameState } from "./src/api/client";
 import { ThemeProvider } from "./src/theme/ThemeContext";
 import { useHtmlAttributes } from "./src/i18n/useHtmlAttributes";
 
-try {
-  Sentry.init({
-    dsn: "https://4e8b2bd816cbce3f73b0cd6923530d53@o4511129011093504.ingest.us.sentry.io/4511129020334080",
-    sendDefaultPii: true,
-    enableLogs: true,
-    replaysSessionSampleRate: 0.1,
-    replaysOnErrorSampleRate: 1,
-    integrations: [Sentry.mobileReplayIntegration(), Sentry.feedbackIntegration()],
-  });
-} catch (e) {
-  console.warn("Sentry.init failed:", e);
+const dsn = process.env.EXPO_PUBLIC_SENTRY_DSN;
+
+if (!dsn) {
+  console.error("[Sentry] EXPO_PUBLIC_SENTRY_DSN is not set — error reporting disabled.");
+} else {
+  try {
+    Sentry.init({
+      dsn,
+      sendDefaultPii: true,
+      enableLogs: true,
+      replaysSessionSampleRate: 0.1,
+      replaysOnErrorSampleRate: 1,
+      // mobileReplayIntegration and feedbackIntegration are native-only;
+      // they throw on web and would silently prevent Sentry from initialising.
+      integrations: Platform.OS !== "web"
+        ? [Sentry.mobileReplayIntegration(), Sentry.feedbackIntegration()]
+        : [],
+    });
+  } catch (e) {
+    console.error("[Sentry] init failed:", e);
+  }
 }
 
 export type RootStackParamList = {
