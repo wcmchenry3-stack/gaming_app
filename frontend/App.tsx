@@ -28,9 +28,10 @@ if (!dsn) {
       replaysOnErrorSampleRate: 1,
       // mobileReplayIntegration and feedbackIntegration are native-only;
       // they throw on web and would silently prevent Sentry from initialising.
-      integrations: Platform.OS !== "web"
-        ? [Sentry.mobileReplayIntegration(), Sentry.feedbackIntegration()]
-        : [],
+      integrations:
+        Platform.OS !== "web"
+          ? [Sentry.mobileReplayIntegration(), Sentry.feedbackIntegration()]
+          : [],
     });
   } catch (e) {
     console.error("[Sentry] init failed:", e);
