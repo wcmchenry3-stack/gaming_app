@@ -48,7 +48,7 @@ npm install
 #    regenerates xcconfigs with correct CI runner paths.
 # -------------------------------------------------------
 cd "$CI_PRIMARY_REPOSITORY_PATH/frontend/ios"
-rm -rf Pods
+rm -rf Pods Podfile.lock
 which pod || brew install cocoapods
 
 # Retry pod install up to 3 times — Xcode Cloud runners occasionally
