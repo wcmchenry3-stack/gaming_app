@@ -23,5 +23,6 @@
   "gameOver.saveButton": "Score opslaan",
   "gameOver.savedConfirmation": "Opgeslagen! #{{rank}}",
   "gameOver.playAgain": "Opnieuw spelen",
-  "gameOver.playAgainButton": "Nog een keer"
+  "gameOver.playAgainButton": "Nog een keer",
+  "game.engineUnsupported": "Dit spel wordt niet ondersteund op dit apparaat."
 }

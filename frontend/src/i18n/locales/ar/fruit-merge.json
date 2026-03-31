@@ -23,5 +23,6 @@
   "gameOver.saveButton": "احفظ النتيجة",
   "gameOver.savedConfirmation": "تم الحفظ! #{{rank}}",
   "gameOver.playAgain": "العب مجددًا",
-  "gameOver.playAgainButton": "العب مرة أخرى"
+  "gameOver.playAgainButton": "العب مرة أخرى",
+  "game.engineUnsupported": "هذه اللعبة غير مدعومة على هذا الجهاز."
 }

@@ -12,7 +12,7 @@ import React, {
   useRef,
   useState,
 } from "react";
-import { AccessibilityInfo } from "react-native";
+import { AccessibilityInfo, View, Text, StyleSheet } from "react-native";
 import {
   Canvas,
   Circle,
@@ -100,6 +100,7 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
 
     const [bodies, setBodies] = useState<BodySnapshot[]>([]);
     const [pointerX, setPointerX] = useState<number | null>(null);
+    const [engineError, setEngineError] = useState<string | null>(null);
 
     const engineRef = useRef<EngineHandle | null>(null);
     const lastFrameTimeRef = useRef<number>(0); // tracks last RAF timestamp for elapsed-time physics
@@ -121,13 +122,18 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
       engineRef.current?.cleanup();
       engineRef.current = null;
       setBodies([]);
-      engineRef.current = await createEngine(
-        width,
-        height,
-        fruitSet,
-        (e) => onMergeRef.current(e),
-        () => onGameOverRef.current()
-      );
+      setEngineError(null);
+      try {
+        engineRef.current = await createEngine(
+          width,
+          height,
+          fruitSet,
+          (e) => onMergeRef.current(e),
+          () => onGameOverRef.current()
+        );
+      } catch (err) {
+        setEngineError(err instanceof Error ? err.message : String(err));
+      }
     }, [width, height, fruitSet]);
 
     useEffect(() => {
@@ -198,6 +204,14 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
       p.lineTo(ghostCx, height - WALL_THICKNESS);
       return p;
     }, [ghostCx, dangerY, height]);
+
+    if (engineError) {
+      return (
+        <View style={[styles.errorContainer, { width, height }]}>
+          <Text style={styles.errorText}>{t("game.engineUnsupported")}</Text>
+        </View>
+      );
+    }
 
     const tapGesture = Gesture.Tap()
       .runOnJS(true)
@@ -279,3 +293,18 @@ export default GameCanvas;
 function clamp(value: number, min: number, max: number) {
   return Math.max(min, Math.min(max, value));
 }
+
+const styles = StyleSheet.create({
+  errorContainer: {
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: 12,
+    backgroundColor: "#1a1a2e",
+  },
+  errorText: {
+    color: "#aaa",
+    fontSize: 14,
+    textAlign: "center",
+    paddingHorizontal: 24,
+  },
+});

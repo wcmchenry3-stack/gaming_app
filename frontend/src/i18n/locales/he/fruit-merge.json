@@ -23,5 +23,6 @@
   "gameOver.saveButton": "שמור ניקוד",
   "gameOver.savedConfirmation": "נשמר! #{{rank}}",
   "gameOver.playAgain": "שחק שוב",
-  "gameOver.playAgainButton": "שחק שוב"
+  "gameOver.playAgainButton": "שחק שוב",
+  "game.engineUnsupported": "משחק זה אינו נתמך במכשיר זה."
 }

@@ -23,5 +23,6 @@
   "gameOver.saveButton": "Punkte sichern",
   "gameOver.savedConfirmation": "Gespeichert! #{{rank}}",
   "gameOver.playAgain": "Nochmal spielen",
-  "gameOver.playAgainButton": "Nochmal!"
+  "gameOver.playAgainButton": "Nochmal!",
+  "game.engineUnsupported": "Dieses Spiel wird auf diesem Gerät nicht unterstützt."
 }

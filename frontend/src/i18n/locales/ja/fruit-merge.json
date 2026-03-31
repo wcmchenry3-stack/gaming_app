@@ -23,5 +23,6 @@
   "gameOver.saveButton": "スコア保存",
   "gameOver.savedConfirmation": "保存完了！#{{rank}}",
   "gameOver.playAgain": "もう一度プレイ",
-  "gameOver.playAgainButton": "再挑戦"
+  "gameOver.playAgainButton": "再挑戦",
+  "game.engineUnsupported": "このゲームはこのデバイスではサポートされていません。"
 }

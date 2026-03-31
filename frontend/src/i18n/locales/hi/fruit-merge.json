@@ -23,5 +23,6 @@
   "gameOver.saveButton": "स्कोर सेव",
   "gameOver.savedConfirmation": "सेव्ड! #{{rank}}",
   "gameOver.playAgain": "फिर से खेलें",
-  "gameOver.playAgainButton": "फिर से खेलें"
+  "gameOver.playAgainButton": "फिर से खेलें",
+  "game.engineUnsupported": "यह गेम इस डिवाइस पर समर्थित नहीं है।"
 }
