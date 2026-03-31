@@ -14,10 +14,14 @@ import { GameState } from "./src/api/client";
 import { ThemeProvider } from "./src/theme/ThemeContext";
 import { useHtmlAttributes } from "./src/i18n/useHtmlAttributes";
 
-Sentry.init({
-  dsn: process.env.EXPO_PUBLIC_SENTRY_DSN,
-  enabled: !__DEV__,
-});
+try {
+  Sentry.init({
+    dsn: process.env.EXPO_PUBLIC_SENTRY_DSN,
+    enabled: !__DEV__,
+  });
+} catch (e) {
+  console.warn("Sentry.init failed:", e);
+}
 
 export type RootStackParamList = {
   Home: undefined;
