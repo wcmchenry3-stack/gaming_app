@@ -4,7 +4,7 @@ import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
-import * as Sentry from "./src/utils/sentry";
+import * as Sentry from "@sentry/react-native";
 import HomeScreen from "./src/screens/HomeScreen";
 import GameScreen from "./src/screens/GameScreen";
 import FruitMergeScreen from "./src/screens/FruitMergeScreen";
@@ -16,8 +16,12 @@ import { useHtmlAttributes } from "./src/i18n/useHtmlAttributes";
 
 try {
   Sentry.init({
-    dsn: process.env.EXPO_PUBLIC_SENTRY_DSN,
-    enabled: !__DEV__,
+    dsn: "https://4e8b2bd816cbce3f73b0cd6923530d53@o4511129011093504.ingest.us.sentry.io/4511129020334080",
+    sendDefaultPii: true,
+    enableLogs: true,
+    replaysSessionSampleRate: 0.1,
+    replaysOnErrorSampleRate: 1,
+    integrations: [Sentry.mobileReplayIntegration(), Sentry.feedbackIntegration()],
   });
 } catch (e) {
   console.warn("Sentry.init failed:", e);
