@@ -18,9 +18,11 @@ export function FruitSetProvider({ children }: { children: React.ReactNode }) {
   const [activeId, setActiveId] = useState<string>(DEFAULT_FRUIT_SET);
 
   useEffect(() => {
-    AsyncStorage.getItem(STORAGE_KEY).then((stored) => {
-      if (stored && FRUIT_SETS[stored]) setActiveId(stored);
-    });
+    AsyncStorage.getItem(STORAGE_KEY)
+      .then((stored) => {
+        if (stored && FRUIT_SETS[stored]) setActiveId(stored);
+      })
+      .catch(() => {});
   }, []);
 
   function setFruitSetById(id: string) {
