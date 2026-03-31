@@ -6,6 +6,7 @@ import GameScreen from "./src/screens/GameScreen";
 import FruitMergeScreen from "./src/screens/FruitMergeScreen";
 import { GameState } from "./src/api/client";
 import { ThemeProvider } from "./src/theme/ThemeContext";
+import { ErrorBoundary } from "./src/components/ErrorBoundary";
 
 export type RootStackParamList = {
   Home: undefined;
@@ -17,14 +18,16 @@ const Stack = createNativeStackNavigator<RootStackParamList>();
 
 export default function App() {
   return (
-    <ThemeProvider>
-      <NavigationContainer>
-        <Stack.Navigator screenOptions={{ headerShown: false }}>
-          <Stack.Screen name="Home" component={HomeScreen} />
-          <Stack.Screen name="Game" component={GameScreen} />
-          <Stack.Screen name="FruitMerge" component={FruitMergeScreen} />
-        </Stack.Navigator>
-      </NavigationContainer>
-    </ThemeProvider>
+    <ErrorBoundary>
+      <ThemeProvider>
+        <NavigationContainer>
+          <Stack.Navigator screenOptions={{ headerShown: false }}>
+            <Stack.Screen name="Home" component={HomeScreen} />
+            <Stack.Screen name="Game" component={GameScreen} />
+            <Stack.Screen name="FruitMerge" component={FruitMergeScreen} />
+          </Stack.Navigator>
+        </NavigationContainer>
+      </ThemeProvider>
+    </ErrorBoundary>
   );
 }
