@@ -1,6 +1,6 @@
 {
   "name": "React-jsinspectortracing",
-  "version": "0.83.2",
+  "version": "0.83.4",
   "summary": "Experimental performance tooling for React Native DevTools",
   "homepage": "https://reactnative.dev/",
   "license": "MIT",
@@ -10,7 +10,7 @@
   },
   "source": {
     "git": "https://github.com/facebook/react-native.git",
-    "tag": "v0.83.2"
+    "tag": "v0.83.4"
   },
   "source_files": "*.h",
   "header_dir": "jsinspector-modern/tracing",

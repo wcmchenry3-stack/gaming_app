@@ -1,6 +1,6 @@
 {
   "name": "React-CoreModules",
-  "version": "0.83.2",
+  "version": "0.83.4",
   "summary": "-",
   "homepage": "https://reactnative.dev/",
   "license": "MIT",
@@ -11,7 +11,7 @@
   "compiler_flags": "-Wno-nullability-completeness",
   "source": {
     "git": "https://github.com/facebook/react-native.git",
-    "tag": "v0.83.2"
+    "tag": "v0.83.4"
   },
   "source_files": "**/*.h",
   "ios": {
@@ -41,16 +41,16 @@
   "frameworks": "UIKit",
   "dependencies": {
     "RCTTypeSafety": [
-      "0.83.2"
+      "0.83.4"
     ],
     "React-Core/CoreModulesHeaders": [
-      "0.83.2"
+      "0.83.4"
     ],
     "React-RCTImage": [
-      "0.83.2"
+      "0.83.4"
     ],
     "React-jsi": [
-      "0.83.2"
+      "0.83.4"
     ],
     "React-RCTBlob": [],
     "React-debug": [],

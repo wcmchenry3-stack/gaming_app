@@ -1,6 +1,6 @@
 import "./src/i18n/i18n";
 import React, { Suspense } from "react";
-import { ActivityIndicator, Platform, Pressable, StyleSheet, Text, View } from "react-native";
+import { ActivityIndicator, Pressable, StyleSheet, Text, View } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
@@ -23,15 +23,6 @@ if (!dsn) {
     Sentry.init({
       dsn,
       sendDefaultPii: true,
-      enableLogs: true,
-      replaysSessionSampleRate: 0.1,
-      replaysOnErrorSampleRate: 1,
-      // mobileReplayIntegration and feedbackIntegration are native-only;
-      // they throw on web and would silently prevent Sentry from initialising.
-      integrations:
-        Platform.OS !== "web"
-          ? [Sentry.mobileReplayIntegration(), Sentry.feedbackIntegration()]
-          : [],
     });
   } catch (e) {
     console.error("[Sentry] init failed:", e);
