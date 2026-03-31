@@ -1,6 +1,6 @@
 import "./src/i18n/i18n";
 import React, { Suspense } from "react";
-import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
+import { ActivityIndicator, Platform, Pressable, StyleSheet, Text, View } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
@@ -14,17 +14,28 @@ import { GameState } from "./src/api/client";
 import { ThemeProvider } from "./src/theme/ThemeContext";
 import { useHtmlAttributes } from "./src/i18n/useHtmlAttributes";
 
-try {
-  Sentry.init({
-    dsn: "https://4e8b2bd816cbce3f73b0cd6923530d53@o4511129011093504.ingest.us.sentry.io/4511129020334080",
-    sendDefaultPii: true,
-    enableLogs: true,
-    replaysSessionSampleRate: 0.1,
-    replaysOnErrorSampleRate: 1,
-    integrations: [Sentry.mobileReplayIntegration(), Sentry.feedbackIntegration()],
-  });
-} catch (e) {
-  console.warn("Sentry.init failed:", e);
+const dsn = process.env.EXPO_PUBLIC_SENTRY_DSN;
+
+if (!dsn) {
+  console.error("[Sentry] EXPO_PUBLIC_SENTRY_DSN is not set — error reporting disabled.");
+} else {
+  try {
+    Sentry.init({
+      dsn,
+      sendDefaultPii: true,
+      enableLogs: true,
+      replaysSessionSampleRate: 0.1,
+      replaysOnErrorSampleRate: 1,
+      // mobileReplayIntegration and feedbackIntegration are native-only;
+      // they throw on web and would silently prevent Sentry from initialising.
+      integrations:
+        Platform.OS !== "web"
+          ? [Sentry.mobileReplayIntegration(), Sentry.feedbackIntegration()]
+          : [],
+    });
+  } catch (e) {
+    console.error("[Sentry] init failed:", e);
+  }
 }
 
 export type RootStackParamList = {
@@ -37,11 +48,13 @@ export type RootStackParamList = {
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
-function AppCrashFallback() {
+function AppCrashFallback({ resetError }: { resetError: () => void }) {
   return (
     <View style={styles.crash}>
       <Text style={styles.crashText}>Something went wrong.</Text>
-      <Text style={styles.crashHint}>Please force-quit and reopen the app.</Text>
+      <Pressable style={styles.retryButton} onPress={resetError}>
+        <Text style={styles.retryText}>Try again</Text>
+      </Pressable>
     </View>
   );
 }
@@ -66,7 +79,7 @@ function AppInner() {
 function App() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
-      <Sentry.ErrorBoundary fallback={<AppCrashFallback />}>
+      <Sentry.ErrorBoundary fallback={(props) => <AppCrashFallback {...props} />}>
         <Suspense
           fallback={
             <View style={{ flex: 1 }}>
@@ -92,11 +105,18 @@ const styles = StyleSheet.create({
   crashText: {
     fontSize: 18,
     fontWeight: "600",
-    marginBottom: 8,
+    marginBottom: 24,
   },
-  crashHint: {
+  retryButton: {
+    backgroundColor: "#1a1a2e",
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 8,
+  },
+  retryText: {
+    color: "#fff",
+    fontWeight: "600",
     fontSize: 14,
-    color: "#666",
   },
 });
 
