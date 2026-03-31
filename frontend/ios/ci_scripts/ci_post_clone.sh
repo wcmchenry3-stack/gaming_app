@@ -48,9 +48,23 @@ npm install
 #    regenerates xcconfigs with correct CI runner paths.
 # -------------------------------------------------------
 cd "$CI_PRIMARY_REPOSITORY_PATH/frontend/ios"
-rm -rf Pods
+rm -rf Pods Podfile.lock
 which pod || brew install cocoapods
-pod install
+
+# Retry pod install up to 3 times — Xcode Cloud runners occasionally
+# time out reaching cdn.cocoapods.org on the first attempt.
+for attempt in 1 2 3; do
+  echo "=== pod install attempt $attempt ==="
+  if pod install; then
+    break
+  fi
+  if [ "$attempt" -eq 3 ]; then
+    echo "pod install failed after 3 attempts"
+    exit 1
+  fi
+  echo "pod install failed, retrying in 10s..."
+  sleep 10
+done
 
 # -------------------------------------------------------
 # 6. Verify HERMES_CLI_PATH is correct
