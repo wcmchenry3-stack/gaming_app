@@ -116,6 +116,14 @@ jobs:
         run: node scripts/check-i18n-strings.js
         working-directory: frontend
 
+  ios-build-check:
+    uses: wcmchenry3-stack/.github/.github/workflows/called-ios-build-check.yml@main
+    with:
+      working-directory: frontend
+      workspace-name: 'GamingApp.xcworkspace'
+      scheme: 'GamingApp'
+    secrets: inherit
+
   openai-policy:
     uses: wcmchenry3-stack/.github/.github/workflows/called-openai-policy.yml@main
     secrets: inherit
