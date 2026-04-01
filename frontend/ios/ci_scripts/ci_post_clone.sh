@@ -37,9 +37,9 @@ echo "=== .env written ==="
 cat .env
 
 # -------------------------------------------------------
-# 4. Install JavaScript dependencies
+# 4. Install JavaScript dependencies (npm ci for lockfile integrity)
 # -------------------------------------------------------
-npm install
+npm ci
 
 # -------------------------------------------------------
 # 5. Install CocoaPods (fresh install to fix paths)
