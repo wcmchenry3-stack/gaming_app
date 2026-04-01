@@ -1,6 +1,17 @@
 // Gesture handler requires native setup in Jest
 import "react-native-gesture-handler/jestSetup";
 
+// Sentry mock — @sentry/react-native ships ESM that Jest can't transform
+jest.mock("@sentry/react-native", () => ({
+  captureException: jest.fn(),
+  captureMessage: jest.fn(),
+  addBreadcrumb: jest.fn(),
+  init: jest.fn(),
+  wrap: (c: unknown) => c,
+  ReactNavigationInstrumentation: jest.fn(),
+  ReactNativeTracing: jest.fn(),
+}));
+
 // AsyncStorage mock (replaces localStorage in ThemeContext / FruitSetContext)
 import mockAsyncStorage from "@react-native-async-storage/async-storage/jest/async-storage-mock";
 jest.mock("@react-native-async-storage/async-storage", () => mockAsyncStorage);
