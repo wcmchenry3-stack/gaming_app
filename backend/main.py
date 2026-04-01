@@ -271,3 +271,14 @@ def possible_scores(request: Request) -> PossibleScoresResponse:
 @limiter.limit("120/minute")
 def health(request: Request) -> dict:
     return {"status": "ok"}
+
+
+# ---------------------------------------------------------------------------
+# Test-only route — confirms Sentry captures unhandled exceptions
+# ---------------------------------------------------------------------------
+
+if os.getenv("ENVIRONMENT") == "test":
+
+    @app.get("/debug/error")
+    def trigger_error(request: Request) -> None:
+        raise RuntimeError("Intentional test error for Sentry verification")
