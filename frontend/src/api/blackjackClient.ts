@@ -1,5 +1,15 @@
+import * as Sentry from "@sentry/react-native";
+import { Platform } from "react-native";
+import { getOrCreateSessionId } from "./client";
+
 const _apiUrl = process.env.EXPO_PUBLIC_API_URL ?? "http://localhost:8000";
 const BASE_URL = _apiUrl.startsWith("http") ? _apiUrl : `https://${_apiUrl}.onrender.com`;
+
+Sentry.addBreadcrumb({
+  category: "api.config",
+  message: `Blackjack API: BASE_URL=${BASE_URL}, platform=${Platform.OS}`,
+  level: "info",
+});
 
 export interface CardResponse {
   rank: string;
@@ -25,15 +35,37 @@ export interface BlackjackState {
 }
 
 async function request<T>(path: string, options?: RequestInit): Promise<T> {
-  const res = await fetch(`${BASE_URL}${path}`, {
-    headers: { "Content-Type": "application/json" },
-    ...options,
+  const url = `${BASE_URL}${path}`;
+  Sentry.addBreadcrumb({
+    category: "api.request",
+    message: `${options?.method ?? "GET"} ${url}`,
+    level: "info",
   });
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({ detail: res.statusText }));
-    throw new Error(err.detail ?? "Request failed");
+  try {
+    const sessionId = await getOrCreateSessionId();
+    const res = await fetch(url, {
+      headers: { "Content-Type": "application/json", "X-Session-ID": sessionId },
+      ...options,
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ detail: res.statusText }));
+      const msg = err.detail ?? "Request failed";
+      Sentry.captureMessage(`API error: ${options?.method ?? "GET"} ${path} → ${res.status}`, {
+        level: "warning",
+        extra: { url, status: res.status, detail: msg, platform: Platform.OS },
+      });
+      throw new Error(msg);
+    }
+    return res.json();
+  } catch (e) {
+    if (e instanceof TypeError) {
+      Sentry.captureException(e, {
+        extra: { url, platform: Platform.OS, method: options?.method ?? "GET" },
+        tags: { api: "blackjack", errorType: "network" },
+      });
+    }
+    throw e;
   }
-  return res.json();
 }
 
 export const blackjackApi = {

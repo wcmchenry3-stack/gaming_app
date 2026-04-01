@@ -174,6 +174,7 @@ const styles = StyleSheet.create({
   screen: {
     flex: 1,
     padding: 16,
+    paddingTop: 48,
   },
   header: {
     flexDirection: "row",
