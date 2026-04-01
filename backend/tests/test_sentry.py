@@ -89,7 +89,7 @@ class TestSentryUnit:
         from httpx import ASGITransport, AsyncClient
         from main import app
 
-        transport = ASGITransport(app=app)
+        transport = ASGITransport(app=app, raise_app_exceptions=False)
         async with AsyncClient(transport=transport, base_url="http://test") as client:
             resp = await client.get(
                 "/debug/error",
