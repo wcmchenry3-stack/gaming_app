@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { View, Text, Pressable, StyleSheet, ActivityIndicator } from "react-native";
+import { View, Text, Pressable, StyleSheet, ActivityIndicator, Platform } from "react-native";
 import { useTranslation } from "react-i18next";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import * as Sentry from "@sentry/react-native";
@@ -19,6 +19,7 @@ interface GameCard {
   action: () => void;
   loading?: boolean;
   error?: string | null;
+  badge?: string;
 }
 
 export default function HomeScreen({ navigation }: Props) {
@@ -58,6 +59,7 @@ export default function HomeScreen({ navigation }: Props) {
       title: t("fruit-merge:game.title"),
       description: t("fruit-merge:game.description"),
       action: () => navigation.navigate("FruitMerge"),
+      badge: Platform.OS !== "web" ? t("fruit-merge:game.webOnly") : undefined,
     },
     {
       emoji: "🃏",
@@ -115,7 +117,14 @@ export default function HomeScreen({ navigation }: Props) {
             >
               <Text style={styles.cardEmoji}>{game.emoji}</Text>
               <View style={styles.cardBody}>
-                <Text style={[styles.cardTitle, { color: colors.text }]}>{game.title}</Text>
+                <View style={styles.cardTitleRow}>
+                  <Text style={[styles.cardTitle, { color: colors.text }]}>{game.title}</Text>
+                  {game.badge && (
+                    <View style={[styles.badge, { backgroundColor: colors.textMuted }]}>
+                      <Text style={styles.badgeText}>{game.badge}</Text>
+                    </View>
+                  )}
+                </View>
                 <Text style={[styles.cardDesc, { color: colors.textMuted }]}>
                   {game.description}
                 </Text>
@@ -188,10 +197,27 @@ const styles = StyleSheet.create({
   cardBody: {
     flex: 1,
   },
+  cardTitleRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
   cardTitle: {
     fontSize: 18,
     fontWeight: "700",
     marginBottom: 2,
+  },
+  badge: {
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
+    marginBottom: 2,
+  },
+  badgeText: {
+    fontSize: 10,
+    fontWeight: "700",
+    color: "#fff",
+    textTransform: "uppercase",
   },
   cardDesc: {
     fontSize: 13,

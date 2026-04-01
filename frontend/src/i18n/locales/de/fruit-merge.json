@@ -24,5 +24,6 @@
   "gameOver.savedConfirmation": "Gespeichert! #{{rank}}",
   "gameOver.playAgain": "Nochmal spielen",
   "gameOver.playAgainButton": "Nochmal!",
-  "game.engineUnsupported": "Dieses Spiel wird auf diesem Gerät nicht unterstützt."
+  "game.engineUnsupported": "Dieses Spiel wird auf diesem Gerät nicht unterstützt.",
+  "game.webOnly": "Nur Web"
 }
