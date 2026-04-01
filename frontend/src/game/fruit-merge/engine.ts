@@ -65,6 +65,12 @@ let _rapierPromise: Promise<RapierLib> | null = null;
 async function getRapier(): Promise<RapierLib> {
   if (!_rapierPromise) {
     _rapierPromise = (async () => {
+      // Hermes (React Native's JS engine on iOS/Android) does not support WebAssembly.
+      // Fail fast with a clear message rather than letting rapier throw a cryptic
+      // ReferenceError deep inside its WASM loader.
+      if (typeof WebAssembly === "undefined") {
+        throw new Error("WebAssembly is not available in this environment (Hermes)");
+      }
       // eslint-disable-next-line @typescript-eslint/no-require-imports
       const mod = require("@dimforge/rapier2d-compat") as { default?: RapierLib } | RapierLib;
       const R = (mod as { default?: RapierLib }).default ?? (mod as RapierLib);

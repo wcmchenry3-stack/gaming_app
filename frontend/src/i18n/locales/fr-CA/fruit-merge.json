@@ -23,5 +23,6 @@
   "gameOver.saveButton": "Sauvegarder",
   "gameOver.savedConfirmation": "Enregistré! #{{rank}}",
   "gameOver.playAgain": "Rejouer",
-  "gameOver.playAgainButton": "Rejouer"
+  "gameOver.playAgainButton": "Rejouer",
+  "game.engineUnsupported": "Ce jeu n'est pas disponible sur cet appareil."
 }
