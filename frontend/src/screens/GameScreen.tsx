@@ -160,7 +160,7 @@ export default function GameScreen({ navigation, route }: Props) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1 },
+  container: { flex: 1, paddingTop: 48 },
   header: {
     flexDirection: "row",
     alignItems: "center",

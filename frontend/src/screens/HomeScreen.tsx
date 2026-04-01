@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { View, Text, Pressable, StyleSheet, ActivityIndicator } from "react-native";
 import { useTranslation } from "react-i18next";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import * as Sentry from "@sentry/react-native";
 import { RootStackParamList } from "../../App";
 import { api } from "../api/client";
 import { useTheme } from "../theme/ThemeContext";
@@ -32,7 +33,11 @@ export default function HomeScreen({ navigation }: Props) {
     try {
       const state = await api.newGame();
       navigation.navigate("Game", { initialState: state });
-    } catch {
+    } catch (e) {
+      Sentry.captureException(e, {
+        tags: { screen: "HomeScreen", game: "yahtzee" },
+        extra: { action: "startYahtzee" },
+      });
       setYahtzeeError(t("errors:backend.connection"));
     } finally {
       setYahtzeeLoading(false);
