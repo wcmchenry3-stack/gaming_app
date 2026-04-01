@@ -30,9 +30,7 @@ class TestSentryUnit:
         if not dsn:
             pytest.skip("SENTRY_DSN not set (expected in CI)")
         assert dsn.startswith("https://"), f"DSN should start with https://, got: {dsn[:20]}..."
-        assert ".sentry.io" in dsn or ".ingest." in dsn, (
-            "DSN should contain a Sentry ingest domain"
-        )
+        assert ".sentry.io" in dsn or ".ingest." in dsn, "DSN should contain a Sentry ingest domain"
 
     def test_sentry_sdk_importable(self):
         """sentry-sdk should be installed and importable."""
@@ -56,16 +54,16 @@ class TestSentryUnit:
         """Traces sample rate should be configured (not 0 or 1.0 in prod)."""
         source = _MAIN_PY.read_text()
         assert "traces_sample_rate" in source, "traces_sample_rate should be set"
-        assert "traces_sample_rate=1.0" not in source, (
-            "traces_sample_rate should not be 1.0 in production"
-        )
+        assert (
+            "traces_sample_rate=1.0" not in source
+        ), "traces_sample_rate should not be 1.0 in production"
 
     def test_sentry_conditional_on_dsn(self):
         """Sentry init should be gated on SENTRY_DSN being set."""
         source = _MAIN_PY.read_text()
-        assert "if _sentry_dsn:" in source or "if _sentry_dsn" in source, (
-            "Sentry init should be conditional on DSN being set"
-        )
+        assert (
+            "if _sentry_dsn:" in source or "if _sentry_dsn" in source
+        ), "Sentry init should be conditional on DSN being set"
 
     def test_sentry_captures_callable(self):
         """Verify that Sentry's core capture functions are available."""
@@ -76,9 +74,7 @@ class TestSentryUnit:
         """main.py should have a test-only /debug/error route."""
         source = _MAIN_PY.read_text()
         assert "/debug/error" in source, "main.py should define a /debug/error route"
-        assert 'ENVIRONMENT' in source, (
-            "/debug/error should be gated on ENVIRONMENT env var"
-        )
+        assert "ENVIRONMENT" in source, "/debug/error should be gated on ENVIRONMENT env var"
 
     @pytest.mark.skipif(
         sys.version_info < (3, 10),
