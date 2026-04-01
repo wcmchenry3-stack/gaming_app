@@ -12,6 +12,21 @@ jobs:
     uses: wcmchenry3-stack/.github/.github/workflows/called-gate-main-source.yml@main
     secrets: inherit
 
+  backend-health:
+    uses: wcmchenry3-stack/.github/.github/workflows/called-backend-health.yml@main
+    with:
+      backend-url: 'https://yahtzee-api.onrender.com'
+      health-path: '/health'
+      probe-path: '/game/state'
+      probe-expected-status: '400'
+    secrets: inherit
+
+  expo-compat:
+    uses: wcmchenry3-stack/.github/.github/workflows/called-expo-compat.yml@main
+    with:
+      working-directory: frontend
+    secrets: inherit
+
   secret-scan:
     uses: wcmchenry3-stack/.github/.github/workflows/called-secret-scan.yml@main
     secrets: inherit
