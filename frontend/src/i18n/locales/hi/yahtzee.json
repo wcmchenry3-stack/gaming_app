@@ -43,5 +43,7 @@
   "gameOver.scoreLabel": "अंतिम स्कोर: {{score}}",
   "gameOver.upperBonus": "+35 ऊपरी बोनस मिला!",
   "gameOver.playAgain": "फिर से खेलें",
-  "gameOver.playAgainLabel": "फिर से खेलें — होम स्क्रीन पर लौटें"
+  "gameOver.playAgainLabel": "नया खेल शुरू करें",
+  "gameOver.dismiss": "नहीं धन्यवाद",
+  "gameOver.dismissLabel": "बंद करें और वर्तमान स्कोर दिखाए रखें"
 }

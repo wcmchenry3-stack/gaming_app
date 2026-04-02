@@ -11,6 +11,7 @@ jest.mock("../../api/client", () => ({
     roll: jest.fn(),
     score: jest.fn(),
     possibleScores: jest.fn(),
+    newGame: jest.fn(),
   },
 }));
 
@@ -140,11 +141,23 @@ describe("GameScreen", () => {
     expect(getByText("250")).toBeTruthy();
   });
 
-  it("play again button navigates home", async () => {
-    const { getByRole } = renderScreen({ game_over: true, total_score: 100 });
+  it("play again button starts a new game in place", async () => {
+    const freshState = makeState({ rolls_used: 0, round: 1, total_score: 0 });
+    mockApi.newGame.mockResolvedValue(freshState);
+    const { getByRole, getByText } = renderScreen({ game_over: true, total_score: 100 });
     await act(async () => {
       fireEvent.press(getByRole("button", { name: /play again/i }));
     });
-    expect(mockNavigation.navigate).toHaveBeenCalledWith("Home");
+    expect(mockApi.newGame).toHaveBeenCalled();
+    expect(mockNavigation.navigate).not.toHaveBeenCalled();
+    expect(getByText(/round.*1/i)).toBeTruthy();
+  });
+
+  it("dismiss button closes modal and keeps final score", async () => {
+    const { getByRole, queryByText } = renderScreen({ game_over: true, total_score: 200 });
+    await act(async () => {
+      fireEvent.press(getByRole("button", { name: /dismiss/i }));
+    });
+    expect(queryByText(/game over/i)).toBeNull();
   });
 });

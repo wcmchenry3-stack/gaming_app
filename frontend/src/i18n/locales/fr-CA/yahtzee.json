@@ -43,5 +43,7 @@
   "gameOver.scoreLabel": "Score final : {{score}}",
   "gameOver.upperBonus": "+35 Bonus inclus!",
   "gameOver.playAgain": "Rejouer",
-  "gameOver.playAgainLabel": "Rejouer — retour à l'accueil"
+  "gameOver.playAgainLabel": "Commencer une nouvelle partie",
+  "gameOver.dismiss": "Non merci",
+  "gameOver.dismissLabel": "Fermer et garder le score actuel visible"
 }

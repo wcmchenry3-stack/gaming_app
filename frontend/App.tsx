@@ -2,6 +2,7 @@ import "./src/i18n/i18n";
 import React, { Suspense } from "react";
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
+import { SafeAreaProvider } from "react-native-safe-area-context";
 import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import * as Sentry from "@sentry/react-native";
@@ -69,19 +70,21 @@ function AppInner() {
 
 function App() {
   return (
-    <GestureHandlerRootView style={{ flex: 1 }}>
-      <Sentry.ErrorBoundary fallback={(props) => <AppCrashFallback {...props} />}>
-        <Suspense
-          fallback={
-            <View style={{ flex: 1 }}>
-              <ActivityIndicator style={{ flex: 1 }} />
-            </View>
-          }
-        >
-          <AppInner />
-        </Suspense>
-      </Sentry.ErrorBoundary>
-    </GestureHandlerRootView>
+    <SafeAreaProvider>
+      <GestureHandlerRootView style={{ flex: 1 }}>
+        <Sentry.ErrorBoundary fallback={(props) => <AppCrashFallback {...props} />}>
+          <Suspense
+            fallback={
+              <View style={{ flex: 1 }}>
+                <ActivityIndicator style={{ flex: 1 }} />
+              </View>
+            }
+          >
+            <AppInner />
+          </Suspense>
+        </Sentry.ErrorBoundary>
+      </GestureHandlerRootView>
+    </SafeAreaProvider>
   );
 }
 

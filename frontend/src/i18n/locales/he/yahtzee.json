@@ -43,5 +43,7 @@
   "gameOver.scoreLabel": "ניקוד סופי: {{score}}",
   "gameOver.upperBonus": "+35 בונוס עליון!",
   "gameOver.playAgain": "שחק שוב",
-  "gameOver.playAgainLabel": "שחק שוב — חזרה למסך הבית"
+  "gameOver.playAgainLabel": "התחל משחק חדש",
+  "gameOver.dismiss": "לא תודה",
+  "gameOver.dismissLabel": "סגור והשאר את הניקוד הנוכחי גלוי"
 }

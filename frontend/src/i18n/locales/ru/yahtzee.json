@@ -43,5 +43,7 @@
   "gameOver.scoreLabel": "Итог: {{score}}",
   "gameOver.upperBonus": "+35 бонус за верх!",
   "gameOver.playAgain": "Играть снова",
-  "gameOver.playAgainLabel": "Играть снова — на главный экран"
+  "gameOver.playAgainLabel": "Начать новую игру",
+  "gameOver.dismiss": "Нет, спасибо",
+  "gameOver.dismissLabel": "Закрыть и оставить текущий счёт видимым"
 }

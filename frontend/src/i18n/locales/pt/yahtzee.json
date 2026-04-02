@@ -43,5 +43,7 @@
   "gameOver.scoreLabel": "Pontuação final: {{score}}",
   "gameOver.upperBonus": "+35 Bônus Superior incluso!",
   "gameOver.playAgain": "Jogar de Novo",
-  "gameOver.playAgainLabel": "Jogar novamente — voltar ao início"
+  "gameOver.playAgainLabel": "Iniciar um novo jogo",
+  "gameOver.dismiss": "Não, obrigado",
+  "gameOver.dismissLabel": "Fechar e manter a pontuação atual visível"
 }

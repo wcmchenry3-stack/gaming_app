@@ -91,7 +91,7 @@ test.describe("Yahtzee — full 13-round game journey", () => {
     await expect(page.getByText(/Final Score/i)).toBeVisible();
   });
 
-  test("Play Again from game-over modal returns to Home", async ({ page }) => {
+  test("Play Again from game-over modal starts a new game in place", async ({ page }) => {
     await page.getByRole("button", { name: "Play Yahtzee" }).click();
 
     // Fast-forward through all 13 rounds
@@ -102,9 +102,27 @@ test.describe("Yahtzee — full 13-round game journey", () => {
     }
 
     await expect(page.getByText("Game Over!")).toBeVisible();
-    await page.getByRole("button", { name: /Play Again/i }).click();
+    await page.getByRole("button", { name: /start a new game/i }).click();
 
-    // Should be back at Home — use the Play Yahtzee button which is interactive on Home
-    await expect(page.getByRole("button", { name: "Play Yahtzee" }).first()).toBeVisible({ timeout: 10000 });
+    // Should stay on the game screen with a fresh round 1
+    await expect(page.getByText(/Round 1/i)).toBeVisible({ timeout: 10000 });
+    await expect(page.getByRole("button", { name: /Roll/i })).toBeVisible();
+  });
+
+  test("No Thanks dismisses game-over modal and keeps score visible", async ({ page }) => {
+    await page.getByRole("button", { name: "Play Yahtzee" }).click();
+
+    // Fast-forward through all 13 rounds
+    for (let round = 0; round < 13; round++) {
+      await page.getByRole("button", { name: /Roll/i }).click();
+      const label = CATEGORY_LABELS[CATEGORIES[round]];
+      await page.getByText(label).first().click();
+    }
+
+    await expect(page.getByText("Game Over!")).toBeVisible();
+    await page.getByRole("button", { name: /dismiss/i }).click();
+
+    // Modal should be dismissed, game screen still showing
+    await expect(page.getByText("Game Over!")).not.toBeVisible();
   });
 });
