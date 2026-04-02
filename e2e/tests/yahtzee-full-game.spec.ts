@@ -102,7 +102,7 @@ test.describe("Yahtzee — full 13-round game journey", () => {
     }
 
     await expect(page.getByText("Game Over!")).toBeVisible();
-    await page.getByRole("button", { name: /Play Again/i }).click();
+    await page.getByRole("button", { name: /start a new game/i }).click();
 
     // Should stay on the game screen with a fresh round 1
     await expect(page.getByText(/Round 1/i)).toBeVisible({ timeout: 10000 });
@@ -120,7 +120,7 @@ test.describe("Yahtzee — full 13-round game journey", () => {
     }
 
     await expect(page.getByText("Game Over!")).toBeVisible();
-    await page.getByRole("button", { name: /No Thanks/i }).click();
+    await page.getByRole("button", { name: /dismiss/i }).click();
 
     // Modal should be dismissed, game screen still showing
     await expect(page.getByText("Game Over!")).not.toBeVisible();
