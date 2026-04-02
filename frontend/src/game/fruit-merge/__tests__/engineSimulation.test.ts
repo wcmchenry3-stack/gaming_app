@@ -17,10 +17,11 @@
  */
 jest.mock("@dimforge/rapier2d-compat");
 
-// eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
+/* eslint-disable @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires */
 const _engine: typeof import("../engine") = require(
   require("path").resolve(__dirname, "..", "engine.ts")
 );
+/* eslint-enable @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires */
 const { createEngine } = _engine;
 import type { EngineHandle } from "../engine.shared";
 import { scoreForMerge } from "../scoring";
