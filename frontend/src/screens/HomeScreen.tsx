@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { View, Text, Pressable, StyleSheet, ActivityIndicator, Platform } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTranslation } from "react-i18next";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import * as Sentry from "@sentry/react-native";
@@ -25,6 +26,7 @@ interface GameCard {
 export default function HomeScreen({ navigation }: Props) {
   const { t } = useTranslation(["common", "yahtzee", "fruit-merge", "blackjack", "ludo", "errors"]);
   const { colors, theme, toggle } = useTheme();
+  const insets = useSafeAreaInsets();
   const [yahtzeeLoading, setYahtzeeLoading] = useState(false);
   const [yahtzeeError, setYahtzeeError] = useState<string | null>(null);
 
@@ -84,7 +86,7 @@ export default function HomeScreen({ navigation }: Props) {
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <View style={styles.headerRow}>
+      <View style={[styles.headerRow, { top: insets.top + 8 }]}>
         <Pressable
           style={styles.themeToggle}
           onPress={toggle}
@@ -154,7 +156,6 @@ const styles = StyleSheet.create({
   },
   headerRow: {
     position: "absolute",
-    top: 16,
     right: 16,
     flexDirection: "row",
     alignItems: "center",
