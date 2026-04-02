@@ -43,5 +43,7 @@
   "gameOver.scoreLabel": "Endstand: {{score}}",
   "gameOver.upperBonus": "+35 Oberer Bonus erhalten!",
   "gameOver.playAgain": "Nochmal",
-  "gameOver.playAgainLabel": "Nochmal spielen — zurück zum Start"
+  "gameOver.playAgainLabel": "Ein neues Spiel starten",
+  "gameOver.dismiss": "Nein danke",
+  "gameOver.dismissLabel": "Schließen und aktuelle Punktzahl sichtbar lassen"
 }

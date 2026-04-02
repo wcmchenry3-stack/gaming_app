@@ -146,11 +146,31 @@ export default function GameScreen({ navigation, route }: Props) {
             )}
             <Pressable
               style={[styles.modalButton, { backgroundColor: colors.accent }]}
-              onPress={() => navigation.navigate("Home")}
+              onPress={async () => {
+                try {
+                  const newState = await api.newGame();
+                  setGameState(newState);
+                  setPossibleScores({});
+                  setResetHeld((r) => !r);
+                  setError(null);
+                } catch (e: unknown) {
+                  setError(e instanceof Error ? e.message : String(e));
+                }
+              }}
               accessibilityRole="button"
               accessibilityLabel={t("gameOver.playAgainLabel")}
             >
               <Text style={styles.modalButtonText}>{t("gameOver.playAgain")}</Text>
+            </Pressable>
+            <Pressable
+              style={[styles.modalDismissButton]}
+              onPress={() => setGameState((s) => ({ ...s, game_over: false }))}
+              accessibilityRole="button"
+              accessibilityLabel={t("gameOver.dismissLabel")}
+            >
+              <Text style={[styles.modalDismissText, { color: colors.textMuted }]}>
+                {t("gameOver.dismiss")}
+              </Text>
             </Pressable>
           </View>
         </View>
@@ -245,5 +265,14 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontSize: 16,
     fontWeight: "700",
+  },
+  modalDismissButton: {
+    paddingHorizontal: 32,
+    paddingVertical: 12,
+    marginTop: 8,
+  },
+  modalDismissText: {
+    fontSize: 14,
+    fontWeight: "600",
   },
 });

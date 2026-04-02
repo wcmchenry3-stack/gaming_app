@@ -43,5 +43,7 @@
   "gameOver.scoreLabel": "النتيجة النهائية: {{score}}",
   "gameOver.upperBonus": "مبروك! +35 نقاط إضافية!",
   "gameOver.playAgain": "العب مجددًا",
-  "gameOver.playAgainLabel": "العب مجددًا — العودة للشاشة الرئيسية"
+  "gameOver.playAgainLabel": "ابدأ لعبة جديدة",
+  "gameOver.dismiss": "لا شكرًا",
+  "gameOver.dismissLabel": "إغلاق وإبقاء النتيجة الحالية ظاهرة"
 }

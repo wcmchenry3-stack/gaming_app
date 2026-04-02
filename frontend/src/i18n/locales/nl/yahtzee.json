@@ -43,5 +43,7 @@
   "gameOver.scoreLabel": "Eindscore: {{score}}",
   "gameOver.upperBonus": "+35 Bonus bovenin!",
   "gameOver.playAgain": "Opnieuw",
-  "gameOver.playAgainLabel": "Opnieuw spelen — terug naar start"
+  "gameOver.playAgainLabel": "Een nieuw spel starten",
+  "gameOver.dismiss": "Nee bedankt",
+  "gameOver.dismissLabel": "Sluiten en huidige score zichtbaar houden"
 }

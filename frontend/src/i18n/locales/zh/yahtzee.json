@@ -43,5 +43,7 @@
   "gameOver.scoreLabel": "最终得分：{{score}}",
   "gameOver.upperBonus": "获得上分奖励+35！",
   "gameOver.playAgain": "再玩一次",
-  "gameOver.playAgainLabel": "再玩一次 — 返回主页"
+  "gameOver.playAgainLabel": "开始新游戏",
+  "gameOver.dismiss": "不用了",
+  "gameOver.dismissLabel": "关闭并保持当前分数可见"
 }

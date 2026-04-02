@@ -43,5 +43,7 @@
   "gameOver.scoreLabel": "Final score: {{score}}",
   "gameOver.upperBonus": "+35 Upper Bonus included!",
   "gameOver.playAgain": "Play Again",
-  "gameOver.playAgainLabel": "Play again — return to home screen"
+  "gameOver.playAgainLabel": "Start a new game",
+  "gameOver.dismiss": "No Thanks",
+  "gameOver.dismissLabel": "Dismiss and keep current score visible"
 }

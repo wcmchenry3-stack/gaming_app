@@ -43,5 +43,7 @@
   "gameOver.scoreLabel": "최종 점수: {{score}}",
   "gameOver.upperBonus": "+35 상단 보너스 획득!",
   "gameOver.playAgain": "다시 하기",
-  "gameOver.playAgainLabel": "다시 하기 — 홈 화면으로 돌아가기"
+  "gameOver.playAgainLabel": "새 게임 시작",
+  "gameOver.dismiss": "괜찮습니다",
+  "gameOver.dismissLabel": "닫고 현재 점수를 계속 표시"
 }
