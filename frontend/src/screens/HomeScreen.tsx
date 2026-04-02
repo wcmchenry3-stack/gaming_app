@@ -61,7 +61,7 @@ export default function HomeScreen({ navigation }: Props) {
       title: t("fruit-merge:game.title"),
       description: t("fruit-merge:game.description"),
       action: () => navigation.navigate("FruitMerge"),
-      badge: Platform.OS !== "web" ? t("fruit-merge:game.webOnly") : undefined,
+      badge: undefined,
     },
     {
       emoji: "🃏",

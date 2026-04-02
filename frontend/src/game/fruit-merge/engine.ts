@@ -1,59 +1,36 @@
-import { FruitDefinition, FruitSet, FruitTier } from "../../theme/fruitSets";
+import { FruitSet } from "../../theme/fruitSets";
 import { getVerticesForFruit } from "./fruitVertices";
 
-export const WALL_THICKNESS = 16;
-// Fruits drop into the top of the container; danger line sits below the drop zone
-export const DANGER_LINE_RATIO = 0.18; // 18% from top — game over if settled fruit crosses this
-const GAME_OVER_GRACE_MS = 3000; // ignore newly-dropped fruit for 3 seconds
+// Re-export all shared types and constants so existing imports from './engine' keep working
+export {
+  WALL_THICKNESS,
+  DANGER_LINE_RATIO,
+  GAME_OVER_GRACE_MS,
+  FRUIT_RESTITUTION,
+  FRUIT_FRICTION,
+  FRUIT_DENSITY,
+  SCALE,
+  GRAVITY_Y,
+} from "./engine.shared";
+export type {
+  FruitBody,
+  BodySnapshot,
+  MergeEvent,
+  EngineHandle,
+  EngineSetup,
+} from "./engine.shared";
 
-// --- Physics tuning constants ---
-// Low restitution = THUD feel (original Suika); fruits barely bounce.
-// Moderate friction = fruits grip each other and settle into place.
-const FRUIT_RESTITUTION = 0.1;
-const FRUIT_FRICTION = 0.3;
-const FRUIT_DENSITY = 1.0;
-
-// Scale factor: 1 Rapier unit = SCALE pixels.
-// Using SI-like units (100px ≈ 1m) with standard gravity gives natural fall speed.
-const SCALE = 0.01; // px → Rapier units (÷ by SCALE when reading back)
-const GRAVITY_Y = 14.0; // m/s² in Rapier units (~1.4g) — tune visually if needed
-
-export interface FruitBody {
-  handle: number; // Rapier rigid body handle
-  fruitTier: FruitTier;
-  fruitSetId: string;
-  isMerging: boolean;
-  createdAt: number;
-  fruitRadius: number; // in pixels
-}
-
-export interface BodySnapshot {
-  id: number;
-  x: number; // pixels
-  y: number; // pixels
-  tier: number;
-  angle: number; // radians
-}
-
-export interface MergeEvent {
-  tier: FruitTier;
-  x: number; // pixels
-  y: number; // pixels
-}
-
-export interface EngineHandle {
-  /** Advance physics one step and return current body positions in pixels.
-   *  @param dt  Elapsed time in seconds since the last step. When provided,
-   *             overrides Rapier's fixed timestep so physics runs at wall-clock
-   *             speed regardless of display refresh rate. */
-  step: (dt?: number) => BodySnapshot[];
-  /** Drop a fruit at the given pixel coordinates. */
-  drop: (def: FruitDefinition, fruitSetId: string, x: number, y: number) => void;
-  cleanup: () => void;
-}
-
-// Legacy alias used by tests and components
-export type EngineSetup = EngineHandle;
+import {
+  GAME_OVER_GRACE_MS,
+  FRUIT_RESTITUTION,
+  FRUIT_FRICTION,
+  FRUIT_DENSITY,
+  SCALE,
+  GRAVITY_Y,
+  WALL_THICKNESS,
+  DANGER_LINE_RATIO,
+} from "./engine.shared";
+import type { FruitBody, BodySnapshot, MergeEvent, EngineHandle } from "./engine.shared";
 
 // Import type only for typing purposes (no runtime import at module level)
 import type RAPIER_TYPE from "@dimforge/rapier2d-compat";
