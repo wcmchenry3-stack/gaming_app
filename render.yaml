@@ -23,6 +23,11 @@ services:
     buildCommand: npm ci && node scripts/fetch-render-env.js && npx expo export --platform web
     staticPublishPath: dist
     envVars:
+      - key: EXPO_PUBLIC_API_URL
+        fromService:
+          name: yahtzee-api
+          type: web
+          property: host
       - key: RENDER_API_SERVICE_NAME
         value: yahtzee-api
       - key: RENDER_API_KEY

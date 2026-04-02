@@ -4,10 +4,12 @@
  * and writes EXPO_PUBLIC_API_URL to .env so Expo bakes the correct value
  * into the static bundle at build time.
  *
- * Required env vars (set in Render dashboard, not render.yaml):
- *   RENDER_API_KEY          — Render API key (sensitive, never commit)
+ * If EXPO_PUBLIC_API_URL is already set (e.g. via render.yaml fromService or
+ * the Render dashboard), the script writes it to .env and exits immediately
+ * without calling the Render API.
  *
- * Optional env vars:
+ * Fallback env vars (only used when EXPO_PUBLIC_API_URL is not set):
+ *   RENDER_API_KEY          — Render API key (sensitive, never commit)
  *   RENDER_API_SERVICE_NAME — name of the API service to look up (default: "yahtzee-api")
  *
  * Usage (called automatically by render.yaml buildCommand):
@@ -16,13 +18,23 @@
 
 import { writeFileSync } from "fs";
 
+// If EXPO_PUBLIC_API_URL is already set (e.g. via the Render dashboard),
+// write it straight to .env and skip the API lookup entirely.
+const existingUrl = process.env.EXPO_PUBLIC_API_URL;
+if (existingUrl) {
+  writeFileSync(".env", `EXPO_PUBLIC_API_URL=${existingUrl}\n`);
+  console.log(`✓ EXPO_PUBLIC_API_URL=${existingUrl} (from environment)`);
+  process.exit(0);
+}
+
 const API_KEY = process.env.RENDER_API_KEY;
 const SERVICE_NAME = process.env.RENDER_API_SERVICE_NAME ?? "yahtzee-api";
 
 if (!API_KEY) {
   console.error(
-    "Error: RENDER_API_KEY is not set.\n" +
-      "Add it as a secret env var on the yahtzee-frontend service in the Render dashboard."
+    "Error: RENDER_API_KEY is not set and EXPO_PUBLIC_API_URL is not set.\n" +
+      "Set EXPO_PUBLIC_API_URL directly, or add RENDER_API_KEY as a secret env var\n" +
+      "on the yahtzee-frontend service in the Render dashboard."
   );
   process.exit(1);
 }
