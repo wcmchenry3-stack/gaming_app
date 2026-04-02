@@ -10,10 +10,20 @@
  *
  * Uses the manual Rapier2D mock at frontend/__mocks__/@dimforge/rapier2d-compat.ts
  * so no WASM binary is required.
+ *
+ * jest-expo defaults to iOS/native platform, so haste resolves "../engine" to
+ * engine.native.ts (matter.js).  We explicitly load engine.ts (Rapier/web) via
+ * an absolute path to bypass haste platform resolution.
  */
 jest.mock("@dimforge/rapier2d-compat");
 
-import { createEngine, EngineHandle } from "../engine";
+/* eslint-disable @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires */
+const _engine: typeof import("../engine") = require(
+  require("path").resolve(__dirname, "..", "engine.ts")
+);
+/* eslint-enable @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires */
+const { createEngine } = _engine;
+import type { EngineHandle } from "../engine.shared";
 import { scoreForMerge } from "../scoring";
 import { FRUIT_SETS } from "../../../theme/fruitSets";
 import { MockWorld } from "../../../../__mocks__/@dimforge/rapier2d-compat";

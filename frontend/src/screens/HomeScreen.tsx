@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { View, Text, Pressable, StyleSheet, ActivityIndicator, Platform } from "react-native";
+import { View, Text, Pressable, StyleSheet, ActivityIndicator } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTranslation } from "react-i18next";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
@@ -61,7 +61,7 @@ export default function HomeScreen({ navigation }: Props) {
       title: t("fruit-merge:game.title"),
       description: t("fruit-merge:game.description"),
       action: () => navigation.navigate("FruitMerge"),
-      badge: Platform.OS !== "web" ? t("fruit-merge:game.webOnly") : undefined,
+      badge: undefined,
     },
     {
       emoji: "🃏",
