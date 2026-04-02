@@ -14,7 +14,7 @@ const H = 600;
 
 async function buildEngine(
   onMerge = jest.fn(),
-  onGameOver = jest.fn(),
+  onGameOver = jest.fn()
 ): Promise<EngineHandle & { _onMerge: jest.Mock; _onGameOver: jest.Mock }> {
   const handle = await createEngine(W, H, fruitSet, onMerge, onGameOver);
   return Object.assign(handle, { _onMerge: onMerge, _onGameOver: onGameOver });

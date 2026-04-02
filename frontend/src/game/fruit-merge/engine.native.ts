@@ -41,7 +41,7 @@ export async function createEngine(
   H: number,
   fruitSet: FruitSet,
   onMerge: (event: MergeEvent) => void,
-  onGameOver: () => void,
+  onGameOver: () => void
 ): Promise<EngineHandle> {
   const engine = Matter.Engine.create({
     gravity: { x: 0, y: MATTER_GRAVITY_Y },
@@ -53,27 +53,18 @@ export async function createEngine(
   const fruitMap = new Map<number, FruitBody>();
 
   // --- Static walls and floor ---
-  const floor = Matter.Bodies.rectangle(
-    W / 2,
-    H - WALL_THICKNESS / 2,
-    W,
-    WALL_THICKNESS,
-    { isStatic: true, friction: FRUIT_FRICTION },
-  );
-  const leftWall = Matter.Bodies.rectangle(
-    WALL_THICKNESS / 2,
-    H / 2,
-    WALL_THICKNESS,
-    H,
-    { isStatic: true, friction: FRUIT_FRICTION },
-  );
-  const rightWall = Matter.Bodies.rectangle(
-    W - WALL_THICKNESS / 2,
-    H / 2,
-    WALL_THICKNESS,
-    H,
-    { isStatic: true, friction: FRUIT_FRICTION },
-  );
+  const floor = Matter.Bodies.rectangle(W / 2, H - WALL_THICKNESS / 2, W, WALL_THICKNESS, {
+    isStatic: true,
+    friction: FRUIT_FRICTION,
+  });
+  const leftWall = Matter.Bodies.rectangle(WALL_THICKNESS / 2, H / 2, WALL_THICKNESS, H, {
+    isStatic: true,
+    friction: FRUIT_FRICTION,
+  });
+  const rightWall = Matter.Bodies.rectangle(W - WALL_THICKNESS / 2, H / 2, WALL_THICKNESS, H, {
+    isStatic: true,
+    friction: FRUIT_FRICTION,
+  });
   Matter.Composite.add(world, [floor, leftWall, rightWall]);
 
   const dangerY = H * DANGER_LINE_RATIO;
@@ -214,7 +205,7 @@ export function dropFruit(
   def: FruitDefinition,
   fruitSetId: string,
   x: number,
-  spawnY: number,
+  spawnY: number
 ): void {
   engineHandle.drop(def, fruitSetId, x, spawnY);
 }
