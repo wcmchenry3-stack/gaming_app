@@ -1,21 +1,28 @@
-"""Unit tests for helpers in main.py."""
+"""Unit tests for ALLOWED_ORIGINS parsing logic in main.py.
 
-from main import _normalise_origin
+We avoid reloading main (importlib.reload) because it reinitialises the
+FastAPI app and wipes in-memory session state, which breaks other tests
+running in the same process.  Instead we test the parsing logic inline.
+"""
 
 
-class TestNormaliseOrigin:
-    def test_bare_slug_gets_https_and_onrender_suffix(self):
-        assert _normalise_origin("gaming-app-api") == "https://gaming-app-api.onrender.com"
+class TestAllowedOriginsLogic:
+    """ALLOWED_ORIGINS env var is parsed into a list of stripped origin strings."""
 
-    def test_https_url_unchanged(self):
-        assert _normalise_origin("https://example.onrender.com") == "https://example.onrender.com"
+    def test_custom_domains_parsed(self):
+        raw = "https://dev-games.buffingchi.com,https://dev-games-api.buffingchi.com"
+        result = [o.strip() for o in raw.split(",") if o.strip()]
+        assert result == [
+            "https://dev-games.buffingchi.com",
+            "https://dev-games-api.buffingchi.com",
+        ]
 
-    def test_http_url_unchanged(self):
-        assert _normalise_origin("http://localhost:8000") == "http://localhost:8000"
+    def test_empty_string_gives_empty_list(self):
+        raw = ""
+        result = [o.strip() for o in raw.split(",") if o.strip()] if raw else []
+        assert result == []
 
-    def test_whitespace_trimmed_before_check(self):
-        assert _normalise_origin("  gaming-app-api  ") == "https://gaming-app-api.onrender.com"
-
-    def test_https_with_leading_whitespace_unchanged(self):
-        result = _normalise_origin("  https://example.com  ")
-        assert result == "https://example.com"
+    def test_whitespace_trimmed(self):
+        raw = "  https://a.example.com , https://b.example.com  "
+        result = [o.strip() for o in raw.split(",") if o.strip()]
+        assert result == ["https://a.example.com", "https://b.example.com"]

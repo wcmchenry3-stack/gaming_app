@@ -122,23 +122,23 @@ describe("blackjackApi BASE_URL configuration", () => {
   });
 
   it("uses EXPO_PUBLIC_API_URL when it is a full https URL", async () => {
-    process.env.EXPO_PUBLIC_API_URL = "https://gaming-app-api.onrender.com";
+    process.env.EXPO_PUBLIC_API_URL = "https://dev-games-api.buffingchi.com";
     const { blackjackApi: api } =
       require("../blackjackClient") as typeof import("../blackjackClient");
     await api.newSession();
     expect(global.fetch as jest.Mock).toHaveBeenCalledWith(
-      expect.stringContaining("https://gaming-app-api.onrender.com"),
+      expect.stringContaining("https://dev-games-api.buffingchi.com"),
       expect.any(Object)
     );
   });
 
-  it("builds a full onrender.com URL when EXPO_PUBLIC_API_URL is a bare slug", async () => {
-    process.env.EXPO_PUBLIC_API_URL = "gaming-app-api-fql1";
+  it("prepends https:// when EXPO_PUBLIC_API_URL has no protocol", async () => {
+    process.env.EXPO_PUBLIC_API_URL = "dev-games-api.buffingchi.com";
     const { blackjackApi: api } =
       require("../blackjackClient") as typeof import("../blackjackClient");
     await api.newSession();
     const calledUrl = (global.fetch as jest.Mock).mock.calls[0][0] as string;
-    expect(calledUrl).toMatch(/^https:\/\/gaming-app-api-fql1\.onrender\.com/);
+    expect(calledUrl).toMatch(/^https:\/\/dev-games-api\.buffingchi\.com/);
   });
 
   it("falls back to http://localhost:8000 when EXPO_PUBLIC_API_URL is not set", async () => {

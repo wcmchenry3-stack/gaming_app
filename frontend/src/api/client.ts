@@ -3,9 +3,7 @@ import * as Sentry from "@sentry/react-native";
 import { Platform } from "react-native";
 
 const _apiUrl = process.env.EXPO_PUBLIC_API_URL ?? "http://localhost:8000";
-// Render's fromService can inject a bare subdomain slug (e.g. "gaming-app-api")
-// without a protocol or the .onrender.com suffix. Normalise to a full URL.
-const BASE_URL = _apiUrl.startsWith("http") ? _apiUrl : `https://${_apiUrl}.onrender.com`;
+const BASE_URL = _apiUrl.startsWith("http") ? _apiUrl : `https://${_apiUrl}`;
 
 Sentry.addBreadcrumb({
   category: "api.config",

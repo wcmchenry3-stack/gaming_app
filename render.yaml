@@ -17,20 +17,14 @@ services:
     name: gaming-app-frontend
     runtime: static
     rootDir: frontend
-    # fetch-render-env.js queries the Render API for the API service's public URL
-    # and writes EXPO_PUBLIC_API_URL to .env before Expo bakes it into the bundle.
-    # RENDER_API_KEY must be set as a secret env var in the Render dashboard.
+    # fetch-render-env.js merges EXPO_PUBLIC_API_URL (and SENTRY_DSN if set)
+    # into .env before Expo bakes them into the static bundle.
     buildCommand: npm ci && node scripts/fetch-render-env.js && npx expo export --platform web
     staticPublishPath: dist
     envVars:
       - key: EXPO_PUBLIC_API_URL
-        fromService:
-          name: gaming-app-api
-          type: web
-          property: host
-      - key: RENDER_API_SERVICE_NAME
-        value: gaming-app-api
-      - key: RENDER_API_KEY
+        value: "https://dev-games-api.buffingchi.com"
+      - key: EXPO_PUBLIC_SENTRY_DSN
         sync: false
     headers:
       - path: /*

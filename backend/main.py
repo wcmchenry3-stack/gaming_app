@@ -80,21 +80,12 @@ app.add_exception_handler(RateLimitExceeded, _rate_limit_handler)
 
 # ---------------------------------------------------------------------------
 # CORS — scoped to known origins; set ALLOWED_ORIGINS env var (comma-separated)
-# in production. Render's fromService with property: url returns a bare
-# subdomain slug so we normalise it to https://<slug>.onrender.com when needed.
+# in production with full URLs (e.g. "https://dev-games.buffingchi.com").
 # ---------------------------------------------------------------------------
-
-
-def _normalise_origin(origin: str) -> str:
-    origin = origin.strip()
-    if "://" not in origin:
-        return f"https://{origin}.onrender.com"
-    return origin
-
 
 _raw = os.environ.get("ALLOWED_ORIGINS", "")
 _allowed_origins: list[str] = (
-    [_normalise_origin(o) for o in _raw.split(",") if o.strip()]
+    [o.strip() for o in _raw.split(",") if o.strip()]
     if _raw
     else ["http://localhost:8081", "http://localhost:19006"]
 )
