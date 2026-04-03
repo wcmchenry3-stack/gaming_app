@@ -78,8 +78,7 @@ describe("cascadeApi BASE_URL configuration", () => {
 
   it("uses EXPO_PUBLIC_API_URL when it is a full https URL", async () => {
     process.env.EXPO_PUBLIC_API_URL = "https://dev-games-api.buffingchi.com";
-    const { cascadeApi: api } =
-      require("../cascadeClient") as typeof import("../cascadeClient");
+    const { cascadeApi: api } = require("../cascadeClient") as typeof import("../cascadeClient");
     await api.getLeaderboard();
     expect(global.fetch as jest.Mock).toHaveBeenCalledWith(
       expect.stringContaining("https://dev-games-api.buffingchi.com"),
@@ -89,8 +88,7 @@ describe("cascadeApi BASE_URL configuration", () => {
 
   it("prepends https:// when EXPO_PUBLIC_API_URL has no protocol", async () => {
     process.env.EXPO_PUBLIC_API_URL = "dev-games-api.buffingchi.com";
-    const { cascadeApi: api } =
-      require("../cascadeClient") as typeof import("../cascadeClient");
+    const { cascadeApi: api } = require("../cascadeClient") as typeof import("../cascadeClient");
     await api.getLeaderboard();
     const calledUrl = (global.fetch as jest.Mock).mock.calls[0][0] as string;
     expect(calledUrl).toMatch(/^https:\/\/dev-games-api\.buffingchi\.com/);
@@ -98,8 +96,7 @@ describe("cascadeApi BASE_URL configuration", () => {
 
   it("falls back to http://localhost:8000 when EXPO_PUBLIC_API_URL is not set", async () => {
     delete process.env.EXPO_PUBLIC_API_URL;
-    const { cascadeApi: api } =
-      require("../cascadeClient") as typeof import("../cascadeClient");
+    const { cascadeApi: api } = require("../cascadeClient") as typeof import("../cascadeClient");
     await api.getLeaderboard();
     expect(global.fetch as jest.Mock).toHaveBeenCalledWith(
       expect.stringContaining("http://localhost:8000"),
