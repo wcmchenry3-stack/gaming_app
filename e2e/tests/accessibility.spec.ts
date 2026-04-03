@@ -69,9 +69,9 @@ test.describe("Accessibility — Yacht game screen", () => {
   });
 });
 
-test.describe("Accessibility — Fruit Merge screen", () => {
+test.describe("Accessibility — Cascade screen", () => {
   test.beforeEach(async ({ page }) => {
-    await page.route(`${API_BASE}/fruit-merge/**`, async (route) => {
+    await page.route(`${API_BASE}/cascade/**`, async (route) => {
       await route.fulfill({
         status: 200,
         contentType: "application/json",
@@ -80,10 +80,10 @@ test.describe("Accessibility — Fruit Merge screen", () => {
     });
   });
 
-  test("no critical/serious axe violations on Fruit Merge screen", async ({ page }) => {
+  test("no critical/serious axe violations on Cascade screen", async ({ page }) => {
     await page.goto("/");
-    await page.getByRole("button", { name: "Play Fruit Merge" }).click();
-    await expect(page.getByRole("heading", { name: "Fruit Merge" })).toBeVisible({ timeout: 10000 });
+    await page.getByRole("button", { name: "Play Cascade" }).click();
+    await expect(page.getByRole("heading", { name: "Cascade" })).toBeVisible({ timeout: 10000 });
 
     await assertNoA11yViolations(
       new AxeBuilder({ page })

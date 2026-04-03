@@ -22,7 +22,7 @@ import { initReactI18next } from "react-i18next";
 // English namespace fixtures for testing
 import common from "./src/i18n/locales/en/common.json";
 import yacht from "./src/i18n/locales/en/yacht.json";
-import fruitMerge from "./src/i18n/locales/en/fruit-merge.json";
+import cascade from "./src/i18n/locales/en/cascade.json";
 import errors from "./src/i18n/locales/en/errors.json";
 import blackjack from "./src/i18n/locales/en/blackjack.json";
 import ludo from "./src/i18n/locales/en/ludo.json";
@@ -30,13 +30,13 @@ import ludo from "./src/i18n/locales/en/ludo.json";
 i18n.use(initReactI18next).init({
   lng: "en",
   fallbackLng: "en",
-  ns: ["common", "yacht", "fruit-merge", "errors", "blackjack", "ludo"],
+  ns: ["common", "yacht", "cascade", "errors", "blackjack", "ludo"],
   defaultNS: "common",
   resources: {
     en: {
       common,
       yacht,
-      "fruit-merge": fruitMerge,
+      cascade,
       errors,
       blackjack,
       ludo,

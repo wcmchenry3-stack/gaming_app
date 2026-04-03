@@ -8,7 +8,7 @@ interface Props {
 }
 
 export default function ScoreDisplay({ score }: Props) {
-  const { t } = useTranslation("fruit-merge");
+  const { t } = useTranslation("cascade");
   const { colors } = useTheme();
   const scale = useRef(new Animated.Value(1)).current;
   const prevScore = useRef(score);

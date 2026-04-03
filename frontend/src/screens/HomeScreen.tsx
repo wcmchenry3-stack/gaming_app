@@ -24,7 +24,7 @@ interface GameCard {
 }
 
 export default function HomeScreen({ navigation }: Props) {
-  const { t } = useTranslation(["common", "yacht", "fruit-merge", "blackjack", "ludo", "errors"]);
+  const { t } = useTranslation(["common", "yacht", "cascade", "blackjack", "ludo", "errors"]);
   const { colors, theme, toggle } = useTheme();
   const insets = useSafeAreaInsets();
   const [yachtLoading, setYachtLoading] = useState(false);
@@ -58,9 +58,9 @@ export default function HomeScreen({ navigation }: Props) {
     },
     {
       emoji: "🍉",
-      title: t("fruit-merge:game.title"),
-      description: t("fruit-merge:game.description"),
-      action: () => navigation.navigate("FruitMerge"),
+      title: t("cascade:game.title"),
+      description: t("cascade:game.description"),
+      action: () => navigation.navigate("Cascade"),
       badge: undefined,
     },
     {
@@ -79,7 +79,7 @@ export default function HomeScreen({ navigation }: Props) {
 
   const playLabels: Record<string, string> = {
     [t("yacht:game.title")]: t("yacht:game.playLabel"),
-    [t("fruit-merge:game.title")]: t("fruit-merge:game.playLabel"),
+    [t("cascade:game.title")]: t("cascade:game.playLabel"),
     [t("blackjack:game.title")]: t("blackjack:game.playLabel"),
     [t("ludo:game.title")]: t("ludo:game.playLabel"),
   };

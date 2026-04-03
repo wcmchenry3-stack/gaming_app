@@ -18,7 +18,7 @@
     "notes": null
   },
   "nav.back": {
-    "component": "FruitMergeScreen",
+    "component": "CascadeScreen",
     "description": "Back button label with arrow.",
     "tone": "functional",
     "characterLimit": 10,
@@ -27,7 +27,7 @@
     "notes": "Keep short. The arrow ← may be kept or replaced with the locale's equivalent."
   },
   "nav.backLabel": {
-    "component": "FruitMergeScreen",
+    "component": "CascadeScreen",
     "description": "Accessibility label for the back button.",
     "tone": "functional",
     "characterLimit": 40,
@@ -54,7 +54,7 @@
     "notes": null
   },
   "theme.switchTo": {
-    "component": "HomeScreen/GameScreen/FruitMergeScreen",
+    "component": "HomeScreen/GameScreen/CascadeScreen",
     "description": "Accessibility label for the theme toggle. {{mode}} is 'light' or 'dark'.",
     "tone": "functional",
     "characterLimit": 40,
@@ -63,7 +63,7 @@
     "notes": "{{mode}} will already be translated by the time it is interpolated."
   },
   "theme.lightShort": {
-    "component": "GameScreen/FruitMergeScreen",
+    "component": "GameScreen/CascadeScreen",
     "description": "Short version of 'Light mode' for compact header buttons.",
     "tone": "functional",
     "characterLimit": 8,
@@ -72,7 +72,7 @@
     "notes": null
   },
   "theme.darkShort": {
-    "component": "GameScreen/FruitMergeScreen",
+    "component": "GameScreen/CascadeScreen",
     "description": "Short version of 'Dark mode' for compact header buttons.",
     "tone": "functional",
     "characterLimit": 8,

@@ -7,7 +7,7 @@ const BASE_URL = _apiUrl.startsWith("http") ? _apiUrl : `https://${_apiUrl}`;
 
 Sentry.addBreadcrumb({
   category: "api.config",
-  message: `FruitMerge API: BASE_URL=${BASE_URL}, platform=${Platform.OS}`,
+  message: `Cascade API: BASE_URL=${BASE_URL}, platform=${Platform.OS}`,
   level: "info",
 });
 
@@ -47,19 +47,19 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
     if (e instanceof TypeError) {
       Sentry.captureException(e, {
         extra: { url, platform: Platform.OS, method: options?.method ?? "GET" },
-        tags: { api: "fruit-merge", errorType: "network" },
+        tags: { api: "cascade", errorType: "network" },
       });
     }
     throw e;
   }
 }
 
-export const fruitMergeApi = {
+export const cascadeApi = {
   submitScore: (player_name: string, score: number) =>
-    request<ScoreEntry>("/fruit-merge/score", {
+    request<ScoreEntry>("/cascade/score", {
       method: "POST",
       body: JSON.stringify({ player_name, score }),
     }),
 
-  getLeaderboard: () => request<LeaderboardResponse>("/fruit-merge/scores"),
+  getLeaderboard: () => request<LeaderboardResponse>("/cascade/scores"),
 };

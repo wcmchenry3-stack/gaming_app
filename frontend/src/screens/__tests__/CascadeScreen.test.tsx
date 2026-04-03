@@ -1,8 +1,8 @@
 /**
- * Tests for FruitMergeGame tap/cooldown/restart logic.
+ * Tests for CascadeGame tap/cooldown/restart logic.
  *
  * GameCanvas (which uses HTMLCanvas + Matter.js) is mocked out entirely.
- * We focus on the state and ref logic in FruitMergeGame:
+ * We focus on the state and ref logic in CascadeGame:
  *   - score starts at 0
  *   - handleTap cooldown blocks double-drops within 400ms
  *   - handleTap is blocked when game is over
@@ -11,11 +11,11 @@
 
 import React from "react";
 import { act, create } from "react-test-renderer";
-import FruitMergeScreen from "../FruitMergeScreen";
+import CascadeScreen from "../CascadeScreen";
 
-jest.mock("../../components/fruit-merge/FruitGlyph", () => "FruitGlyph");
-jest.mock("../../components/fruit-merge/NextFruitPreview", () => "NextFruitPreview");
-jest.mock("../../components/fruit-merge/ThemeSelector", () => "ThemeSelector");
+jest.mock("../../components/cascade/FruitGlyph", () => "FruitGlyph");
+jest.mock("../../components/cascade/NextFruitPreview", () => "NextFruitPreview");
+jest.mock("../../components/cascade/ThemeSelector", () => "ThemeSelector");
 
 // Skia requires a native module — mock the whole package in Jest
 jest.mock("@shopify/react-native-skia", () => ({}));
@@ -27,7 +27,7 @@ jest.mock("@shopify/react-native-skia", () => ({}));
 const mockDrop = jest.fn();
 const mockReset = jest.fn();
 
-jest.mock("../../components/fruit-merge/GameCanvas", () => {
+jest.mock("../../components/cascade/GameCanvas", () => {
   // eslint-disable-next-line @typescript-eslint/no-require-imports
   const ReactMod = require("react");
   const MockCanvas = ReactMod.forwardRef(
@@ -60,7 +60,7 @@ jest.mock("../../components/fruit-merge/GameCanvas", () => {
 
 // Mock navigation
 const mockNavigation = { goBack: jest.fn() } as unknown as Parameters<
-  typeof FruitMergeScreen
+  typeof CascadeScreen
 >[0]["navigation"];
 
 // ---------------------------------------------------------------------------
@@ -70,7 +70,7 @@ const mockNavigation = { goBack: jest.fn() } as unknown as Parameters<
 function renderScreen() {
   let renderer!: ReturnType<typeof create>;
   act(() => {
-    renderer = create(<FruitMergeScreen navigation={mockNavigation} />);
+    renderer = create(<CascadeScreen navigation={mockNavigation} />);
   });
 
   // Trigger onLayout so the canvas renders (containerWidth/canvasHeight default to 0)
@@ -107,7 +107,7 @@ afterEach(() => {
 // Tests
 // ---------------------------------------------------------------------------
 
-describe("FruitMergeGame", () => {
+describe("CascadeGame", () => {
   it("score starts at 0", () => {
     const renderer = renderScreen();
     expect(JSON.stringify(renderer.toJSON())).toContain('"0"');

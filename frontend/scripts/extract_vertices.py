@@ -4,7 +4,7 @@ extract_vertices.py
 ===================
 Extract convex-hull polygon vertices from processed PNG sprite assets.
 
-The output JSON is used at runtime by the fruit-merge physics engine to create
+The output JSON is used at runtime by the cascade physics engine to create
 polygon-shaped Matter.js bodies that match the actual fruit/planet outlines,
 replacing the previous circle-only approach.
 

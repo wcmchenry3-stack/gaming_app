@@ -1,6 +1,6 @@
-import { fruitMergeApi } from "../fruitMergeClient";
+import { cascadeApi } from "../cascadeClient";
 
-describe("fruitMergeApi endpoints", () => {
+describe("cascadeApi endpoints", () => {
   const mockFetch = jest.fn();
 
   beforeEach(() => {
@@ -16,11 +16,11 @@ describe("fruitMergeApi endpoints", () => {
     } as Response);
   }
 
-  it("submitScore POSTs player_name and score to /fruit-merge/score", async () => {
+  it("submitScore POSTs player_name and score to /cascade/score", async () => {
     respondWith({ player_name: "Alice", score: 500 });
-    await fruitMergeApi.submitScore("Alice", 500);
+    await cascadeApi.submitScore("Alice", 500);
     expect(mockFetch).toHaveBeenCalledWith(
-      expect.stringContaining("/fruit-merge/score"),
+      expect.stringContaining("/cascade/score"),
       expect.objectContaining({
         method: "POST",
         body: JSON.stringify({ player_name: "Alice", score: 500 }),
@@ -28,11 +28,11 @@ describe("fruitMergeApi endpoints", () => {
     );
   });
 
-  it("getLeaderboard GETs /fruit-merge/scores", async () => {
+  it("getLeaderboard GETs /cascade/scores", async () => {
     respondWith({ scores: [] });
-    await fruitMergeApi.getLeaderboard();
+    await cascadeApi.getLeaderboard();
     expect(mockFetch).toHaveBeenCalledWith(
-      expect.stringContaining("/fruit-merge/scores"),
+      expect.stringContaining("/cascade/scores"),
       expect.any(Object)
     );
   });
@@ -43,7 +43,7 @@ describe("fruitMergeApi endpoints", () => {
       statusText: "Bad Request",
       json: () => Promise.resolve({ detail: "Invalid score" }),
     } as Response);
-    await expect(fruitMergeApi.submitScore("Bob", -1)).rejects.toThrow("Invalid score");
+    await expect(cascadeApi.submitScore("Bob", -1)).rejects.toThrow("Invalid score");
   });
 
   it("falls back to statusText when error body has no detail", async () => {
@@ -52,7 +52,7 @@ describe("fruitMergeApi endpoints", () => {
       statusText: "Internal Server Error",
       json: () => Promise.reject(new Error("parse error")),
     } as Response);
-    await expect(fruitMergeApi.getLeaderboard()).rejects.toThrow("Internal Server Error");
+    await expect(cascadeApi.getLeaderboard()).rejects.toThrow("Internal Server Error");
   });
 });
 
@@ -60,7 +60,7 @@ describe("fruitMergeApi endpoints", () => {
 // BASE_URL configuration
 // ---------------------------------------------------------------------------
 /* eslint-disable @typescript-eslint/no-require-imports */
-describe("fruitMergeApi BASE_URL configuration", () => {
+describe("cascadeApi BASE_URL configuration", () => {
   const originalEnv = process.env;
 
   beforeEach(() => {
@@ -78,8 +78,8 @@ describe("fruitMergeApi BASE_URL configuration", () => {
 
   it("uses EXPO_PUBLIC_API_URL when it is a full https URL", async () => {
     process.env.EXPO_PUBLIC_API_URL = "https://dev-games-api.buffingchi.com";
-    const { fruitMergeApi: api } =
-      require("../fruitMergeClient") as typeof import("../fruitMergeClient");
+    const { cascadeApi: api } =
+      require("../cascadeClient") as typeof import("../cascadeClient");
     await api.getLeaderboard();
     expect(global.fetch as jest.Mock).toHaveBeenCalledWith(
       expect.stringContaining("https://dev-games-api.buffingchi.com"),
@@ -89,8 +89,8 @@ describe("fruitMergeApi BASE_URL configuration", () => {
 
   it("prepends https:// when EXPO_PUBLIC_API_URL has no protocol", async () => {
     process.env.EXPO_PUBLIC_API_URL = "dev-games-api.buffingchi.com";
-    const { fruitMergeApi: api } =
-      require("../fruitMergeClient") as typeof import("../fruitMergeClient");
+    const { cascadeApi: api } =
+      require("../cascadeClient") as typeof import("../cascadeClient");
     await api.getLeaderboard();
     const calledUrl = (global.fetch as jest.Mock).mock.calls[0][0] as string;
     expect(calledUrl).toMatch(/^https:\/\/dev-games-api\.buffingchi\.com/);
@@ -98,8 +98,8 @@ describe("fruitMergeApi BASE_URL configuration", () => {
 
   it("falls back to http://localhost:8000 when EXPO_PUBLIC_API_URL is not set", async () => {
     delete process.env.EXPO_PUBLIC_API_URL;
-    const { fruitMergeApi: api } =
-      require("../fruitMergeClient") as typeof import("../fruitMergeClient");
+    const { cascadeApi: api } =
+      require("../cascadeClient") as typeof import("../cascadeClient");
     await api.getLeaderboard();
     expect(global.fetch as jest.Mock).toHaveBeenCalledWith(
       expect.stringContaining("http://localhost:8000"),

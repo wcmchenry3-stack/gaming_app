@@ -20,8 +20,8 @@
       "p95_ms": 300,
       "error_rate_pct": 1.0,
       "endpoints": [
-        "POST /fruit-merge/score",
-        "GET /fruit-merge/scores"
+        "POST /cascade/score",
+        "GET /cascade/scores"
       ]
     },
     "stateless_reads": {

@@ -19,7 +19,7 @@ python -m pytest tests/ -v
 # By file
 python -m pytest tests/test_game.py -v       # Yacht game logic
 python -m pytest tests/test_api.py -v        # Yacht API endpoints
-python -m pytest tests/test_fruit_merge_api.py -v  # Fruit Merge leaderboard API
+python -m pytest tests/test_cascade_api.py -v  # Cascade leaderboard API
 
 # With coverage
 python -m pytest tests/ -v --cov=. --cov-report=term-missing
@@ -31,7 +31,7 @@ backend/tests/
 ├── __init__.py
 ├── test_game.py              # YachtGame unit tests — all 13 scoring categories
 ├── test_api.py               # Yacht FastAPI endpoints via TestClient
-└── test_fruit_merge_api.py   # Fruit Merge leaderboard endpoints via TestClient
+└── test_cascade_api.py   # Cascade leaderboard endpoints via TestClient
 ```
 
 ### What's Tested
@@ -47,9 +47,9 @@ backend/tests/
 **test_api.py**
 - `POST /game/new`, `GET /game/state`, `POST /game/roll`, `POST /game/score`, `GET /game/possible-scores`
 
-**test_fruit_merge_api.py**
-- `POST /fruit-merge/score` — valid submission (201), invalid payloads (422)
-- `GET /fruit-merge/scores` — empty initially, sorted descending, capped at 10
+**test_cascade_api.py**
+- `POST /cascade/score` — valid submission (201), invalid payloads (422)
+- `GET /cascade/scores` — empty initially, sorted descending, capped at 10
 
 ### Notes
 - API tests use FastAPI's `TestClient` (no running server needed).
@@ -73,7 +73,7 @@ npm test
 ### Structure
 ```
 frontend/src/
-├── game/fruit-merge/__tests__/
+├── game/cascade/__tests__/
 │   ├── scoring.test.ts     # scoreForMerge() pure function
 │   └── fruitQueue.test.ts  # FruitQueue peek/consume/bounds
 └── theme/__tests__/

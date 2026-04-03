@@ -1,8 +1,8 @@
 {
-  "game.title": "Fruit Merge",
-  "game.description": "Drop fruit, merge matches, don't let them overflow.",
-  "game.playLabel": "Play Fruit Merge",
-  "game.canvasLabel": "Fruit Merge game — drop fruits onto the stack to merge matching ones. Tap or click to drop.",
+  "game.title": "Cascade",
+  "game.description": "Drop, merge, and chain — don't let them overflow.",
+  "game.playLabel": "Play Cascade",
+  "game.canvasLabel": "Cascade game — drop objects onto the stack to merge matching ones. Tap or click to drop.",
   "score.label": "Score",
   "score.display": "Score: {{score}}",
   "preview.dropLabel": "Drop",
