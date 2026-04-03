@@ -113,6 +113,8 @@ export default function GameScreen({ navigation, route }: Props) {
           gameOver={gameState.game_over}
           upperSubtotal={gameState.upper_subtotal}
           upperBonus={gameState.upper_bonus}
+          yachtBonusCount={gameState.yacht_bonus_count}
+          yachtBonusTotal={gameState.yacht_bonus_total}
           totalScore={gameState.total_score}
           onScore={handleScore}
         />
@@ -142,6 +144,14 @@ export default function GameScreen({ navigation, route }: Props) {
             {gameState.upper_bonus > 0 && (
               <Text style={[styles.modalBonus, { color: colors.bonus }]}>
                 {t("gameOver.upperBonus")}
+              </Text>
+            )}
+            {gameState.yacht_bonus_total > 0 && (
+              <Text style={[styles.modalBonus, { color: colors.bonus }]}>
+                {t("gameOver.yachtBonus", {
+                  count: gameState.yacht_bonus_count,
+                  total: gameState.yacht_bonus_total,
+                })}
               </Text>
             )}
             <Pressable

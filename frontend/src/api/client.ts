@@ -43,6 +43,8 @@ export interface GameState {
   game_over: boolean;
   upper_subtotal: number;
   upper_bonus: number;
+  yacht_bonus_count: number;
+  yacht_bonus_total: number;
   total_score: number;
 }
 

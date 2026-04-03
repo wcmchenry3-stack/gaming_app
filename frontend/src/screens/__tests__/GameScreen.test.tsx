@@ -46,6 +46,8 @@ function makeState(overrides: Record<string, unknown> = {}) {
     game_over: false,
     upper_subtotal: 0,
     upper_bonus: 0,
+    yacht_bonus_count: 0,
+    yacht_bonus_total: 0,
     total_score: 0,
     ...overrides,
   };

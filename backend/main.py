@@ -197,6 +197,8 @@ def _state_response(game: YachtGame) -> GameStateResponse:
         game_over=game.game_over,
         upper_subtotal=game.upper_subtotal(),
         upper_bonus=game.upper_bonus(),
+        yacht_bonus_count=game.yacht_bonus_count,
+        yacht_bonus_total=game.yacht_bonus_total(),
         total_score=game.total_score(),
     )
 
