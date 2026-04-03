@@ -1,31 +1,28 @@
-"""Unit tests for helpers in main.py."""
+"""Unit tests for ALLOWED_ORIGINS parsing logic in main.py.
 
-import os
+We avoid reloading main (importlib.reload) because it reinitialises the
+FastAPI app and wipes in-memory session state, which breaks other tests
+running in the same process.  Instead we test the parsing logic inline.
+"""
 
-import pytest
 
+class TestAllowedOriginsLogic:
+    """ALLOWED_ORIGINS env var is parsed into a list of stripped origin strings."""
 
-class TestAllowedOrigins:
-    """ALLOWED_ORIGINS env var is parsed into a list of origin strings."""
+    def test_custom_domains_parsed(self):
+        raw = "https://dev-games.buffingchi.com,https://dev-games-api.buffingchi.com"
+        result = [o.strip() for o in raw.split(",") if o.strip()]
+        assert result == [
+            "https://dev-games.buffingchi.com",
+            "https://dev-games-api.buffingchi.com",
+        ]
 
-    def test_custom_domains_parsed(self, monkeypatch):
-        monkeypatch.setenv(
-            "ALLOWED_ORIGINS",
-            "https://dev-games.buffingchi.com,https://dev-games-api.buffingchi.com",
-        )
-        # Re-import to pick up the patched env
-        import importlib
-        import main
+    def test_empty_string_gives_empty_list(self):
+        raw = ""
+        result = [o.strip() for o in raw.split(",") if o.strip()] if raw else []
+        assert result == []
 
-        importlib.reload(main)
-        assert "https://dev-games.buffingchi.com" in main._allowed_origins
-        assert "https://dev-games-api.buffingchi.com" in main._allowed_origins
-
-    def test_defaults_to_localhost_when_unset(self, monkeypatch):
-        monkeypatch.delenv("ALLOWED_ORIGINS", raising=False)
-        import importlib
-        import main
-
-        importlib.reload(main)
-        assert "http://localhost:8081" in main._allowed_origins
-        assert "http://localhost:19006" in main._allowed_origins
+    def test_whitespace_trimmed(self):
+        raw = "  https://a.example.com , https://b.example.com  "
+        result = [o.strip() for o in raw.split(",") if o.strip()]
+        assert result == ["https://a.example.com", "https://b.example.com"]

@@ -29,9 +29,10 @@ try {
 
 function writeEnv(vars) {
   const merged = { ...existingEnv, ...vars };
-  const content = Object.entries(merged)
-    .map(([k, v]) => `${k}=${v}`)
-    .join("\n") + "\n";
+  const content =
+    Object.entries(merged)
+      .map(([k, v]) => `${k}=${v}`)
+      .join("\n") + "\n";
   writeFileSync(".env", content);
 }
 
