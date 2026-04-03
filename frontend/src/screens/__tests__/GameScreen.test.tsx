@@ -40,7 +40,7 @@ function makeState(overrides: Record<string, unknown> = {}) {
       full_house: null,
       small_straight: null,
       large_straight: null,
-      yahtzee: null,
+      yacht: null,
       chance: null,
     },
     game_over: false,

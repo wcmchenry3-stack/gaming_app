@@ -8,7 +8,7 @@
  */
 
 import { test, expect } from "@playwright/test";
-import { installYahtzeeGameMock } from "./helpers/api-mock";
+import { installYachtGameMock } from "./helpers/api-mock";
 
 test.describe("Theme toggle", () => {
   test.beforeEach(async ({ page }) => {
@@ -32,8 +32,8 @@ test.describe("Theme toggle", () => {
     expect(newLabel).not.toBe(initialLabel);
   });
 
-  test("theme toggle persists into Yahtzee game screen", async ({ page }) => {
-    await installYahtzeeGameMock(page);
+  test("theme toggle persists into Yacht game screen", async ({ page }) => {
+    await installYachtGameMock(page);
 
     // Switch theme first
     const toggle = page.getByRole("button", { name: /mode/i });
@@ -41,7 +41,7 @@ test.describe("Theme toggle", () => {
     const themeAfterToggle = await toggle.textContent();
 
     // Navigate to game
-    await page.getByRole("button", { name: "Play Yahtzee" }).click();
+    await page.getByRole("button", { name: "Play Yacht" }).click();
     await expect(page.getByText("Round 1 / 13")).toBeVisible();
 
     // The game screen also has a theme toggle; its label should match
@@ -66,8 +66,8 @@ test.describe("Language switcher", () => {
     const switcher = page.getByRole("combobox", { name: /language/i });
     await switcher.selectOption("es");
 
-    // Spanish locale: "game.playLabel" = "Jugar Yahtzee"
-    await expect(page.getByRole("button", { name: "Jugar Yahtzee" })).toBeVisible({
+    // Spanish locale: "game.playLabel" = "Jugar Yacht"
+    await expect(page.getByRole("button", { name: "Jugar Yacht" })).toBeVisible({
       timeout: 3000,
     });
   });
@@ -76,8 +76,8 @@ test.describe("Language switcher", () => {
     const switcher = page.getByRole("combobox", { name: /language/i });
     await switcher.selectOption("de");
 
-    // German: "game.playLabel" for yahtzee
-    await expect(page.getByRole("button", { name: "Yahtzee spielen" })).toBeVisible({
+    // German: "game.playLabel" for yacht
+    await expect(page.getByRole("button", { name: "Yacht spielen" })).toBeVisible({
       timeout: 3000,
     });
   });
@@ -87,12 +87,12 @@ test.describe("Language switcher", () => {
     const switcher = page.locator("select").first();
 
     await switcher.selectOption("es");
-    await expect(page.getByRole("button", { name: "Jugar Yahtzee" })).toBeVisible({
+    await expect(page.getByRole("button", { name: "Jugar Yacht" })).toBeVisible({
       timeout: 3000,
     });
 
     await switcher.selectOption("en");
-    await expect(page.getByRole("button", { name: "Play Yahtzee" })).toBeVisible({
+    await expect(page.getByRole("button", { name: "Play Yacht" })).toBeVisible({
       timeout: 3000,
     });
   });

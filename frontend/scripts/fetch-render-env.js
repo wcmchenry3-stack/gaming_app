@@ -10,7 +10,7 @@
  *
  * Fallback env vars (only used when EXPO_PUBLIC_API_URL is not set):
  *   RENDER_API_KEY          — Render API key (sensitive, never commit)
- *   RENDER_API_SERVICE_NAME — name of the API service to look up (default: "yahtzee-api")
+ *   RENDER_API_SERVICE_NAME — name of the API service to look up (default: "gaming-app-api")
  *
  * Usage (called automatically by render.yaml buildCommand):
  *   node scripts/fetch-render-env.js
@@ -28,13 +28,13 @@ if (existingUrl) {
 }
 
 const API_KEY = process.env.RENDER_API_KEY;
-const SERVICE_NAME = process.env.RENDER_API_SERVICE_NAME ?? "yahtzee-api";
+const SERVICE_NAME = process.env.RENDER_API_SERVICE_NAME ?? "gaming-app-api";
 
 if (!API_KEY) {
   console.error(
     "Error: RENDER_API_KEY is not set and EXPO_PUBLIC_API_URL is not set.\n" +
       "Set EXPO_PUBLIC_API_URL directly, or add RENDER_API_KEY as a secret env var\n" +
-      "on the yahtzee-frontend service in the Render dashboard."
+      "on the gaming-app-frontend service in the Render dashboard."
   );
   process.exit(1);
 }

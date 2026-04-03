@@ -10,7 +10,7 @@
 
 import { test, expect } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
-import { installYahtzeeGameMock } from "./helpers/api-mock";
+import { installYachtGameMock } from "./helpers/api-mock";
 
 const API_BASE = "http://localhost:8000";
 
@@ -43,12 +43,12 @@ test.describe("Accessibility — Home screen", () => {
   });
 });
 
-test.describe("Accessibility — Yahtzee game screen", () => {
+test.describe("Accessibility — Yacht game screen", () => {
   test("no critical/serious axe violations on Game screen (pre-roll)", async ({ page }) => {
-    await installYahtzeeGameMock(page);
+    await installYachtGameMock(page);
     await page.goto("/");
 
-    await page.getByRole("button", { name: "Play Yahtzee" }).click();
+    await page.getByRole("button", { name: "Play Yacht" }).click();
     await expect(page.getByText("Round 1 / 13")).toBeVisible();
 
     await assertNoA11yViolations(
@@ -57,10 +57,10 @@ test.describe("Accessibility — Yahtzee game screen", () => {
   });
 
   test("no critical/serious axe violations on Game screen (post-roll)", async ({ page }) => {
-    await installYahtzeeGameMock(page);
+    await installYachtGameMock(page);
     await page.goto("/");
 
-    await page.getByRole("button", { name: "Play Yahtzee" }).click();
+    await page.getByRole("button", { name: "Play Yacht" }).click();
     await page.getByRole("button", { name: /Roll/i }).click();
 
     await assertNoA11yViolations(

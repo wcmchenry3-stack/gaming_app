@@ -5,7 +5,7 @@ import HomeScreen from "../HomeScreen";
 import { ThemeProvider } from "../../theme/ThemeContext";
 
 // ---------------------------------------------------------------------------
-// Mock the Yahtzee API client
+// Mock the Yacht API client
 // ---------------------------------------------------------------------------
 jest.mock("../../api/client", () => ({
   api: {
@@ -54,7 +54,7 @@ describe("HomeScreen — game cards", () => {
   it("renders all four game cards", () => {
     const nav = mockNav();
     const { getByLabelText } = renderScreen(nav);
-    expect(getByLabelText("Play Yahtzee")).toBeTruthy();
+    expect(getByLabelText("Play Yacht")).toBeTruthy();
     expect(getByLabelText("Play Fruit Merge")).toBeTruthy();
     expect(getByLabelText("Play Blackjack")).toBeTruthy();
     expect(getByLabelText("Play Ludo")).toBeTruthy();
@@ -81,7 +81,7 @@ describe("HomeScreen — game cards", () => {
     expect(nav.navigate).toHaveBeenCalledWith("Ludo");
   });
 
-  it("calls api.newGame and navigates to Game when Yahtzee card pressed", async () => {
+  it("calls api.newGame and navigates to Game when Yacht card pressed", async () => {
     const nav = mockNav();
     mockApi.newGame.mockResolvedValue({
       dice: [1, 2, 3, 4, 5],
@@ -95,7 +95,7 @@ describe("HomeScreen — game cards", () => {
       total_score: 0,
     });
     const { getByLabelText } = renderScreen(nav);
-    fireEvent.press(getByLabelText("Play Yahtzee"));
+    fireEvent.press(getByLabelText("Play Yacht"));
     await waitFor(() => expect(nav.navigate).toHaveBeenCalledWith("Game", expect.any(Object)));
   });
 });

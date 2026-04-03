@@ -14,19 +14,19 @@
 export const glossary = {
   // ─── Game brands ─────────────────────────────────────────────────────────
 
-  Yahtzee: {
+  Yacht: {
     category: "brand",
     doNotTranslate: true,
-    reason: "Registered trademark of Hasbro. Must not be translated.",
+    reason: "Game name. Must not be translated.",
     definition: "Classic dice game where players roll five dice to score combinations.",
     notes: "Always capitalize exactly as shown.",
   },
 
-  "Yahtzee!": {
+  "Yacht!": {
     category: "game",
     doNotTranslate: true,
     reason: "The scoring category worth 50 points. Translating would confuse game mechanics.",
-    definition: "A scoring category in the Yahtzee game — achieved by rolling five of a kind.",
+    definition: "A scoring category in the Yacht game — achieved by rolling five of a kind.",
     notes: "Includes the exclamation mark. Keep as-is in all locales.",
   },
 

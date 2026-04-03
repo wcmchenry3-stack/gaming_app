@@ -11,7 +11,7 @@ on:
       target_url:
         description: 'Backend URL to test'
         required: true
-        default: 'https://yahtzee-api.onrender.com'
+        default: 'https://dev-games-api.buffingchi.com'
       users:
         description: 'Concurrent users (leaderboard scenario)'
         required: true
@@ -27,12 +27,12 @@ on:
       target_url:
         type: string
         required: false
-        default: 'https://yahtzee-api.onrender.com'
+        default: 'https://dev-games-api.buffingchi.com'
 
 # No PR trigger — perf tests are never a merge gate.
 
 env:
-  DEFAULT_TARGET_URL: 'https://yahtzee-api.onrender.com'
+  DEFAULT_TARGET_URL: 'https://dev-games-api.buffingchi.com'
 
 jobs:
   warm-up:
@@ -77,7 +77,7 @@ jobs:
       users: 1
       spawn-rate: 1
       run-time: 90s
-      user-classes: YahtzeeGameUser
+      user-classes: YachtGameUser
       csv-prefix: perf-gameflow
 
   backend-perf-leaderboard:

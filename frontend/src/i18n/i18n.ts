@@ -4,7 +4,7 @@ import resourcesToBackend from "i18next-resources-to-backend";
 import * as Localization from "expo-localization";
 import { LOCALES } from "./locales";
 
-type Namespace = "common" | "yahtzee" | "fruit-merge" | "errors" | "blackjack" | "ludo";
+type Namespace = "common" | "yacht" | "fruit-merge" | "errors" | "blackjack" | "ludo";
 type TranslationModule = Promise<{ default: Record<string, string> }>;
 
 // Resolve the best supported locale from the device's preference list
@@ -24,7 +24,7 @@ function resolveLocale(): string {
 const localeLoaders: Record<string, Record<Namespace, () => TranslationModule>> = {
   en: {
     common: () => import("./locales/en/common.json") as TranslationModule,
-    yahtzee: () => import("./locales/en/yahtzee.json") as TranslationModule,
+    yacht: () => import("./locales/en/yacht.json") as TranslationModule,
     "fruit-merge": () => import("./locales/en/fruit-merge.json") as TranslationModule,
     errors: () => import("./locales/en/errors.json") as TranslationModule,
     blackjack: () => import("./locales/en/blackjack.json") as TranslationModule,
@@ -32,7 +32,7 @@ const localeLoaders: Record<string, Record<Namespace, () => TranslationModule>> 
   },
   "fr-CA": {
     common: () => import("./locales/fr-CA/common.json") as TranslationModule,
-    yahtzee: () => import("./locales/fr-CA/yahtzee.json") as TranslationModule,
+    yacht: () => import("./locales/fr-CA/yacht.json") as TranslationModule,
     "fruit-merge": () => import("./locales/fr-CA/fruit-merge.json") as TranslationModule,
     errors: () => import("./locales/fr-CA/errors.json") as TranslationModule,
     blackjack: () => import("./locales/fr-CA/blackjack.json") as TranslationModule,
@@ -40,7 +40,7 @@ const localeLoaders: Record<string, Record<Namespace, () => TranslationModule>> 
   },
   es: {
     common: () => import("./locales/es/common.json") as TranslationModule,
-    yahtzee: () => import("./locales/es/yahtzee.json") as TranslationModule,
+    yacht: () => import("./locales/es/yacht.json") as TranslationModule,
     "fruit-merge": () => import("./locales/es/fruit-merge.json") as TranslationModule,
     errors: () => import("./locales/es/errors.json") as TranslationModule,
     blackjack: () => import("./locales/es/blackjack.json") as TranslationModule,
@@ -48,7 +48,7 @@ const localeLoaders: Record<string, Record<Namespace, () => TranslationModule>> 
   },
   hi: {
     common: () => import("./locales/hi/common.json") as TranslationModule,
-    yahtzee: () => import("./locales/hi/yahtzee.json") as TranslationModule,
+    yacht: () => import("./locales/hi/yacht.json") as TranslationModule,
     "fruit-merge": () => import("./locales/hi/fruit-merge.json") as TranslationModule,
     errors: () => import("./locales/hi/errors.json") as TranslationModule,
     blackjack: () => import("./locales/hi/blackjack.json") as TranslationModule,
@@ -56,7 +56,7 @@ const localeLoaders: Record<string, Record<Namespace, () => TranslationModule>> 
   },
   ar: {
     common: () => import("./locales/ar/common.json") as TranslationModule,
-    yahtzee: () => import("./locales/ar/yahtzee.json") as TranslationModule,
+    yacht: () => import("./locales/ar/yacht.json") as TranslationModule,
     "fruit-merge": () => import("./locales/ar/fruit-merge.json") as TranslationModule,
     errors: () => import("./locales/ar/errors.json") as TranslationModule,
     blackjack: () => import("./locales/ar/blackjack.json") as TranslationModule,
@@ -64,7 +64,7 @@ const localeLoaders: Record<string, Record<Namespace, () => TranslationModule>> 
   },
   zh: {
     common: () => import("./locales/zh/common.json") as TranslationModule,
-    yahtzee: () => import("./locales/zh/yahtzee.json") as TranslationModule,
+    yacht: () => import("./locales/zh/yacht.json") as TranslationModule,
     "fruit-merge": () => import("./locales/zh/fruit-merge.json") as TranslationModule,
     errors: () => import("./locales/zh/errors.json") as TranslationModule,
     blackjack: () => import("./locales/zh/blackjack.json") as TranslationModule,
@@ -72,7 +72,7 @@ const localeLoaders: Record<string, Record<Namespace, () => TranslationModule>> 
   },
   ja: {
     common: () => import("./locales/ja/common.json") as TranslationModule,
-    yahtzee: () => import("./locales/ja/yahtzee.json") as TranslationModule,
+    yacht: () => import("./locales/ja/yacht.json") as TranslationModule,
     "fruit-merge": () => import("./locales/ja/fruit-merge.json") as TranslationModule,
     errors: () => import("./locales/ja/errors.json") as TranslationModule,
     blackjack: () => import("./locales/ja/blackjack.json") as TranslationModule,
@@ -80,7 +80,7 @@ const localeLoaders: Record<string, Record<Namespace, () => TranslationModule>> 
   },
   ko: {
     common: () => import("./locales/ko/common.json") as TranslationModule,
-    yahtzee: () => import("./locales/ko/yahtzee.json") as TranslationModule,
+    yacht: () => import("./locales/ko/yacht.json") as TranslationModule,
     "fruit-merge": () => import("./locales/ko/fruit-merge.json") as TranslationModule,
     errors: () => import("./locales/ko/errors.json") as TranslationModule,
     blackjack: () => import("./locales/ko/blackjack.json") as TranslationModule,
@@ -88,7 +88,7 @@ const localeLoaders: Record<string, Record<Namespace, () => TranslationModule>> 
   },
   pt: {
     common: () => import("./locales/pt/common.json") as TranslationModule,
-    yahtzee: () => import("./locales/pt/yahtzee.json") as TranslationModule,
+    yacht: () => import("./locales/pt/yacht.json") as TranslationModule,
     "fruit-merge": () => import("./locales/pt/fruit-merge.json") as TranslationModule,
     errors: () => import("./locales/pt/errors.json") as TranslationModule,
     blackjack: () => import("./locales/pt/blackjack.json") as TranslationModule,
@@ -96,7 +96,7 @@ const localeLoaders: Record<string, Record<Namespace, () => TranslationModule>> 
   },
   he: {
     common: () => import("./locales/he/common.json") as TranslationModule,
-    yahtzee: () => import("./locales/he/yahtzee.json") as TranslationModule,
+    yacht: () => import("./locales/he/yacht.json") as TranslationModule,
     "fruit-merge": () => import("./locales/he/fruit-merge.json") as TranslationModule,
     errors: () => import("./locales/he/errors.json") as TranslationModule,
     blackjack: () => import("./locales/he/blackjack.json") as TranslationModule,
@@ -104,7 +104,7 @@ const localeLoaders: Record<string, Record<Namespace, () => TranslationModule>> 
   },
   de: {
     common: () => import("./locales/de/common.json") as TranslationModule,
-    yahtzee: () => import("./locales/de/yahtzee.json") as TranslationModule,
+    yacht: () => import("./locales/de/yacht.json") as TranslationModule,
     "fruit-merge": () => import("./locales/de/fruit-merge.json") as TranslationModule,
     errors: () => import("./locales/de/errors.json") as TranslationModule,
     blackjack: () => import("./locales/de/blackjack.json") as TranslationModule,
@@ -112,7 +112,7 @@ const localeLoaders: Record<string, Record<Namespace, () => TranslationModule>> 
   },
   nl: {
     common: () => import("./locales/nl/common.json") as TranslationModule,
-    yahtzee: () => import("./locales/nl/yahtzee.json") as TranslationModule,
+    yacht: () => import("./locales/nl/yacht.json") as TranslationModule,
     "fruit-merge": () => import("./locales/nl/fruit-merge.json") as TranslationModule,
     errors: () => import("./locales/nl/errors.json") as TranslationModule,
     blackjack: () => import("./locales/nl/blackjack.json") as TranslationModule,
@@ -120,7 +120,7 @@ const localeLoaders: Record<string, Record<Namespace, () => TranslationModule>> 
   },
   ru: {
     common: () => import("./locales/ru/common.json") as TranslationModule,
-    yahtzee: () => import("./locales/ru/yahtzee.json") as TranslationModule,
+    yacht: () => import("./locales/ru/yacht.json") as TranslationModule,
     "fruit-merge": () => import("./locales/ru/fruit-merge.json") as TranslationModule,
     errors: () => import("./locales/ru/errors.json") as TranslationModule,
     blackjack: () => import("./locales/ru/blackjack.json") as TranslationModule,
@@ -142,7 +142,7 @@ i18n
     lng: resolveLocale(),
     fallbackLng: "en",
     supportedLngs: LOCALES.map((l) => l.code),
-    ns: ["common", "yahtzee", "fruit-merge", "errors", "blackjack", "ludo"],
+    ns: ["common", "yacht", "fruit-merge", "errors", "blackjack", "ludo"],
     defaultNS: "common",
     interpolation: { escapeValue: false },
     react: { useSuspense: true },

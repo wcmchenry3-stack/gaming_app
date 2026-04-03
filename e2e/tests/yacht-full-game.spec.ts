@@ -1,20 +1,20 @@
 /**
- * yahtzee-full-game.spec.ts
+ * yacht-full-game.spec.ts
  *
- * E2E user journey: play a complete 13-round Yahtzee game.
- * The Yahtzee backend is mocked via page.route() — no live server needed.
+ * E2E user journey: play a complete 13-round Yacht game.
+ * The Yacht backend is mocked via page.route() — no live server needed.
  *
  * Journey:
- *   Home → click "Play Yahtzee" → 13× (roll + score "Ones") → Game Over modal → Play Again → Home
+ *   Home → click "Play Yacht" → 13× (roll + score "Ones") → Game Over modal → Play Again → Home
  */
 
 import { test, expect } from "@playwright/test";
-import { installYahtzeeGameMock } from "./helpers/api-mock";
+import { installYachtGameMock } from "./helpers/api-mock";
 
 const CATEGORIES = [
   "ones", "twos", "threes", "fours", "fives", "sixes",
   "three_of_a_kind", "four_of_a_kind", "full_house",
-  "small_straight", "large_straight", "yahtzee", "chance",
+  "small_straight", "large_straight", "yacht", "chance",
 ];
 
 // Maps category keys to the English i18n display text shown in the scorecard
@@ -30,24 +30,24 @@ const CATEGORY_LABELS: Record<string, string> = {
   full_house: "Full House (25)",
   small_straight: "Sm. Straight (30)",
   large_straight: "Lg. Straight (40)",
-  yahtzee: "Yahtzee! (50)",
+  yacht: "Yacht! (50)",
   chance: "Chance",
 };
 
-test.describe("Yahtzee — full 13-round game journey", () => {
+test.describe("Yacht — full 13-round game journey", () => {
   test.beforeEach(async ({ page }) => {
-    await installYahtzeeGameMock(page);
+    await installYachtGameMock(page);
     await page.goto("/");
   });
 
-  test("navigates from Home to Game on Play Yahtzee click", async ({ page }) => {
+  test("navigates from Home to Game on Play Yacht click", async ({ page }) => {
     await expect(page.getByText("Gaming App").first()).toBeVisible();
-    await page.getByRole("button", { name: "Play Yahtzee" }).click();
+    await page.getByRole("button", { name: "Play Yacht" }).click();
     await expect(page.getByText("Round 1 / 13")).toBeVisible();
   });
 
   test("Roll button appears and responds", async ({ page }) => {
-    await page.getByRole("button", { name: "Play Yahtzee" }).click();
+    await page.getByRole("button", { name: "Play Yacht" }).click();
     await expect(page.getByText("Round 1 / 13")).toBeVisible();
 
     // Roll button shows remaining roll count (3 left on first turn)
@@ -60,7 +60,7 @@ test.describe("Yahtzee — full 13-round game journey", () => {
   });
 
   test("scoring a category advances the round", async ({ page }) => {
-    await page.getByRole("button", { name: "Play Yahtzee" }).click();
+    await page.getByRole("button", { name: "Play Yacht" }).click();
     await expect(page.getByText("Round 1 / 13")).toBeVisible();
 
     // Roll first
@@ -76,7 +76,7 @@ test.describe("Yahtzee — full 13-round game journey", () => {
   });
 
   test("game-over modal appears after 13 rounds", async ({ page }) => {
-    await page.getByRole("button", { name: "Play Yahtzee" }).click();
+    await page.getByRole("button", { name: "Play Yacht" }).click();
 
     // Play through all 13 rounds
     for (let round = 0; round < 13; round++) {
@@ -92,7 +92,7 @@ test.describe("Yahtzee — full 13-round game journey", () => {
   });
 
   test("Play Again from game-over modal starts a new game in place", async ({ page }) => {
-    await page.getByRole("button", { name: "Play Yahtzee" }).click();
+    await page.getByRole("button", { name: "Play Yacht" }).click();
 
     // Fast-forward through all 13 rounds
     for (let round = 0; round < 13; round++) {
@@ -110,7 +110,7 @@ test.describe("Yahtzee — full 13-round game journey", () => {
   });
 
   test("No Thanks dismisses game-over modal and keeps score visible", async ({ page }) => {
-    await page.getByRole("button", { name: "Play Yahtzee" }).click();
+    await page.getByRole("button", { name: "Play Yacht" }).click();
 
     // Fast-forward through all 13 rounds
     for (let round = 0; round < 13; round++) {

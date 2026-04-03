@@ -15,7 +15,7 @@ type Props = {
 };
 
 export default function GameScreen({ navigation, route }: Props) {
-  const { t } = useTranslation(["yahtzee", "common"]);
+  const { t } = useTranslation(["yacht", "common"]);
   const { colors, theme, toggle } = useTheme();
   const [gameState, setGameState] = useState<GameState>(route.params.initialState);
   const [possibleScores, setPossibleScores] = useState<Record<string, number>>({});

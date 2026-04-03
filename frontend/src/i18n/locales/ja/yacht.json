@@ -1,7 +1,7 @@
 {
-  "game.title": "Yahtzee",
+  "game.title": "Yacht",
   "game.description": "サイコロを振って、スコアを競おう！",
-  "game.playLabel": "Yahtzeeをプレイ",
+  "game.playLabel": "Yachtをプレイ",
   "round.header": "ラウンド {{round}} / 13",
   "section.upper": "上部セクション",
   "section.lower": "下部セクション",
@@ -20,7 +20,7 @@
   "category.fullHouse": "フルハウス(25)",
   "category.smallStraight": "小ストレート(30)",
   "category.largeStraight": "大ストレート(40)",
-  "category.yahtzee": "Yahtzee! (50)",
+  "category.yacht": "Yacht! (50)",
   "category.chance": "チャンス",
   "score.scored": "{{score}} 点獲得済み",
   "score.potential": "可能得点 {{potential}}、ダブルタップで得点",

@@ -4,10 +4,10 @@
 
 Two services are deployed via the `render.yaml` blueprint at the repo root:
 
-| Service | Type | URL |
-|---------|------|-----|
-| `yahtzee-api` | Python Web Service | `https://yahtzee-api.onrender.com` |
-| `yahtzee-frontend` | Static Site | `https://yahtzee-frontend.onrender.com` |
+| Service | Type | Custom Domain |
+|---------|------|---------------|
+| `gaming-app-api` | Python Web Service | `https://dev-games-api.buffingchi.com` |
+| `gaming-app-frontend` | Static Site | `https://dev-games.buffingchi.com` |
 
 The frontend's `EXPO_PUBLIC_API_URL` is automatically wired to the backend's URL by the blueprint.
 
@@ -15,7 +15,7 @@ The frontend's `EXPO_PUBLIC_API_URL` is automatically wired to the backend's URL
 
 1. Push your code to GitHub (or confirm it's already there).
 2. Go to [render.com](https://render.com) → **New** → **Blueprint**.
-3. Connect your GitHub repo: `wcmchenry3-stack/yahtzee_game`.
+3. Connect your GitHub repo: `wcmchenry3-stack/gaming_app`.
 4. Render will detect `render.yaml` and preview both services.
 5. Click **Apply** — Render builds and deploys both services.
 
@@ -41,9 +41,9 @@ reference on `EXPO_PUBLIC_API_URL` to match, or the frontend build will fail.
 
 | Variable | Service | Value |
 |----------|---------|-------|
-| `EXPO_PUBLIC_API_URL` | yahtzee-frontend | Auto-set from `yahtzee-api` URL |
-| `PYTHON_VERSION` | yahtzee-api | `3.12.0` |
+| `EXPO_PUBLIC_API_URL` | gaming-app-frontend | Auto-set from `gaming-app-api` URL |
+| `PYTHON_VERSION` | gaming-app-api | `3.11.0` |
 
 To override `EXPO_PUBLIC_API_URL` manually (e.g., custom domain):
-Render Dashboard → `yahtzee-frontend` → Environment → set the variable directly.
+Render Dashboard → `gaming-app-frontend` → Environment → set the variable directly.
 The static site must be redeployed after changing it (env vars are baked in at build time).

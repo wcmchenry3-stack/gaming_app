@@ -15,7 +15,7 @@ import sentry_sdk
 from sentry_sdk.integrations.fastapi import FastApiIntegration
 from sentry_sdk.integrations.starlette import StarletteIntegration
 
-from game import YahtzeeGame
+from game import YachtGame
 from limiter import _real_ip, limiter
 from models import GameStateResponse, PossibleScoresResponse, RollRequest, ScoreRequest
 from session import get_session_id
@@ -168,7 +168,7 @@ async def security_headers(request: Request, call_next) -> Response:
     response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
     response.headers["Content-Security-Policy"] = (
         "default-src 'none'; "
-        "connect-src 'self' https://yahtzee-api.onrender.com https://games.buffingchi.com; "
+        "connect-src 'self' https://dev-games-api.buffingchi.com https://dev-games.buffingchi.com; "
         "frame-ancestors 'none'"
     )
     if "server" in response.headers:
@@ -177,11 +177,11 @@ async def security_headers(request: Request, call_next) -> Response:
 
 
 # ---------------------------------------------------------------------------
-# Session-isolated Yahtzee state
+# Session-isolated Yacht state
 # ---------------------------------------------------------------------------
 
 _MAX_SESSIONS = 500
-_sessions: OrderedDict[str, YahtzeeGame | None] = OrderedDict()
+_sessions: OrderedDict[str, YachtGame | None] = OrderedDict()
 
 
 def _evict_if_full() -> None:
@@ -189,14 +189,14 @@ def _evict_if_full() -> None:
         _sessions.popitem(last=False)
 
 
-def _get_game(session_id: str) -> YahtzeeGame:
+def _get_game(session_id: str) -> YachtGame:
     game = _sessions.get(session_id)
     if game is None:
         raise HTTPException(status_code=404, detail="No game in progress. POST /game/new first.")
     return game
 
 
-def _state_response(game: YahtzeeGame) -> GameStateResponse:
+def _state_response(game: YachtGame) -> GameStateResponse:
     return GameStateResponse(
         dice=game.dice,
         held=game.held,
@@ -220,7 +220,7 @@ def _state_response(game: YahtzeeGame) -> GameStateResponse:
 def new_game(request: Request) -> GameStateResponse:
     sid = get_session_id(request)
     _evict_if_full()
-    _sessions[sid] = YahtzeeGame()
+    _sessions[sid] = YachtGame()
     return _state_response(_sessions[sid])
 
 

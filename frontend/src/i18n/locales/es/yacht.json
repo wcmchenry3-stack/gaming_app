@@ -1,7 +1,7 @@
 {
-  "game.title": "Yahtzee",
+  "game.title": "Yacht",
   "game.description": "Lanza dados, suma puntos, supera tu récord.",
-  "game.playLabel": "Jugar Yahtzee",
+  "game.playLabel": "Jugar Yacht",
   "round.header": "Ronda {{round}} / 13",
   "section.upper": "Sección Alta",
   "section.lower": "Sección Baja",
@@ -20,7 +20,7 @@
   "category.fullHouse": "Full (25)",
   "category.smallStraight": "Esc. Pequeña (30)",
   "category.largeStraight": "Esc. Grande (40)",
-  "category.yahtzee": "Yahtzee! (50)",
+  "category.yacht": "Yacht! (50)",
   "category.chance": "Oportunidad",
   "score.scored": "anotado {{score}}",
   "score.potential": "posible {{potential}}, toca dos veces para anotar",

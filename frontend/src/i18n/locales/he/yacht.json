@@ -1,7 +1,7 @@
 {
-  "game.title": "Yahtzee",
+  "game.title": "Yacht",
   "game.description": "גלגלו קוביות, צברו נקודות, שברו שיאים!",
-  "game.playLabel": "שחק Yahtzee",
+  "game.playLabel": "שחק Yacht",
   "round.header": "סיבוב {{round}} מתוך 13",
   "section.upper": "חלק עליון",
   "section.lower": "חלק תחתון",
@@ -20,7 +20,7 @@
   "category.fullHouse": "פול האוס (25)",
   "category.smallStraight": "סטרייט קטן (30)",
   "category.largeStraight": "סטרייט גדול (40)",
-  "category.yahtzee": "Yahtzee! (50)",
+  "category.yacht": "Yacht! (50)",
   "category.chance": "סיכוי",
   "score.scored": "ניקוד {{score}}",
   "score.potential": "ניקוד אפשרי {{potential}}, הקש פעמיים לניקוד",

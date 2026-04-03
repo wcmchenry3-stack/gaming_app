@@ -1,14 +1,14 @@
 import pytest
-from game import YahtzeeGame, _calculate_score
+from game import YachtGame, _calculate_score
 
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
 
 
-def make_game(dice: list[int], rolls_used: int = 1) -> YahtzeeGame:
+def make_game(dice: list[int], rolls_used: int = 1) -> YachtGame:
     """Return a game with dice pre-set and rolls_used set (skips randomness)."""
-    g = YahtzeeGame()
+    g = YachtGame()
     g.dice = dice
     g.rolls_used = rolls_used
     return g
@@ -57,7 +57,7 @@ class TestThreeOfAKind:
     def test_four_also_qualifies(self):
         assert _calculate_score("three_of_a_kind", [4, 4, 4, 4, 1]) == 17
 
-    def test_yahtzee_also_qualifies(self):
+    def test_yacht_also_qualifies(self):
         assert _calculate_score("three_of_a_kind", [5, 5, 5, 5, 5]) == 25
 
     def test_miss(self):
@@ -68,7 +68,7 @@ class TestFourOfAKind:
     def test_hit(self):
         assert _calculate_score("four_of_a_kind", [6, 6, 6, 6, 2]) == 26
 
-    def test_yahtzee_also_qualifies(self):
+    def test_yacht_also_qualifies(self):
         assert _calculate_score("four_of_a_kind", [3, 3, 3, 3, 3]) == 15
 
     def test_miss_three(self):
@@ -85,7 +85,7 @@ class TestFullHouse:
     def test_miss_four_of_a_kind(self):
         assert _calculate_score("full_house", [4, 4, 4, 4, 1]) == 0
 
-    def test_miss_yahtzee(self):
+    def test_miss_yacht(self):
         assert _calculate_score("full_house", [5, 5, 5, 5, 5]) == 0
 
     def test_miss_no_pair(self):
@@ -123,12 +123,12 @@ class TestLargeStraight:
         assert _calculate_score("large_straight", [1, 2, 3, 3, 5]) == 0
 
 
-class TestYahtzee:
+class TestYacht:
     def test_hit(self):
-        assert _calculate_score("yahtzee", [4, 4, 4, 4, 4]) == 50
+        assert _calculate_score("yacht", [4, 4, 4, 4, 4]) == 50
 
     def test_miss(self):
-        assert _calculate_score("yahtzee", [4, 4, 4, 4, 3]) == 0
+        assert _calculate_score("yacht", [4, 4, 4, 4, 3]) == 0
 
 
 class TestChance:
@@ -146,14 +146,14 @@ class TestChance:
 
 class TestRoll:
     def test_first_roll_sets_dice(self):
-        g = YahtzeeGame()
+        g = YachtGame()
         g.roll([False] * 5)
         assert all(1 <= d <= 6 for d in g.dice)
         assert g.rolls_used == 1
 
     def test_first_roll_ignores_held(self):
         """Even if held=[True,...], first roll of a turn rerolls everything."""
-        g = YahtzeeGame()
+        g = YachtGame()
         g.dice = [6, 6, 6, 6, 6]
         # Can't hold before rolling, but pass True anyway — should be ignored
         g.roll([True, True, True, True, True])
@@ -161,7 +161,7 @@ class TestRoll:
         assert g.rolls_used == 1
 
     def test_held_dice_preserved(self):
-        g = YahtzeeGame()
+        g = YachtGame()
         g.roll([False] * 5)  # first roll
         g.dice = [6, 6, 1, 1, 1]  # force known state
         g.roll([True, True, False, False, False])  # hold first two
@@ -169,14 +169,14 @@ class TestRoll:
         assert g.dice[1] == 6
 
     def test_rolls_used_increments(self):
-        g = YahtzeeGame()
+        g = YachtGame()
         g.roll([False] * 5)
         assert g.rolls_used == 1
         g.roll([False] * 5)
         assert g.rolls_used == 2
 
     def test_cannot_roll_after_three(self):
-        g = YahtzeeGame()
+        g = YachtGame()
         for _ in range(3):
             g.roll([False] * 5)
         with pytest.raises(ValueError, match="No rolls remaining"):
@@ -212,7 +212,7 @@ class TestScoring:
         assert g.dice == [0, 0, 0, 0, 0]
 
     def test_cannot_score_before_rolling(self):
-        g = YahtzeeGame()
+        g = YachtGame()
         with pytest.raises(ValueError, match="Must roll"):
             g.score("ones")
 
@@ -230,7 +230,7 @@ class TestScoring:
             g.score("bogus")
 
     def test_game_over_after_13_rounds(self):
-        g = YahtzeeGame()
+        g = YachtGame()
         for cat in [
             "ones",
             "twos",
@@ -243,7 +243,7 @@ class TestScoring:
             "full_house",
             "small_straight",
             "large_straight",
-            "yahtzee",
+            "yacht",
             "chance",
         ]:
             g.dice = [1, 2, 3, 4, 5]
@@ -265,7 +265,7 @@ class TestScoring:
 
 
 class TestUpperBonus:
-    def _fill_upper(self, g: YahtzeeGame, ones=3, twos=6, threes=9, fours=12, fives=15, sixes=18):
+    def _fill_upper(self, g: YachtGame, ones=3, twos=6, threes=9, fours=12, fives=15, sixes=18):
         """Directly set upper scores to given values (default sums to 63)."""
         g.scores["ones"] = ones
         g.scores["twos"] = twos
@@ -275,27 +275,27 @@ class TestUpperBonus:
         g.scores["sixes"] = sixes
 
     def test_bonus_triggers_at_63(self):
-        g = YahtzeeGame()
+        g = YachtGame()
         self._fill_upper(g)  # default = 63
         assert g.upper_bonus() == 35
 
     def test_bonus_triggers_above_63(self):
-        g = YahtzeeGame()
+        g = YachtGame()
         self._fill_upper(g, sixes=30)  # 3+6+9+12+15+30 = 75
         assert g.upper_bonus() == 35
 
     def test_no_bonus_below_63(self):
-        g = YahtzeeGame()
+        g = YachtGame()
         self._fill_upper(g, ones=0)  # 0+6+9+12+15+18 = 60
         assert g.upper_bonus() == 0
 
     def test_no_bonus_while_upper_incomplete(self):
-        g = YahtzeeGame()
+        g = YachtGame()
         g.scores["ones"] = 3  # only ones filled
         assert g.upper_bonus() == 0
 
     def test_total_score_includes_bonus(self):
-        g = YahtzeeGame()
+        g = YachtGame()
         self._fill_upper(g)  # 63 pts → +35 bonus
         g.scores["chance"] = 20
         assert g.total_score() == 63 + 35 + 20
@@ -317,6 +317,6 @@ class TestPossibleScores:
     def test_correct_value(self):
         g = make_game([6, 6, 6, 6, 6])
         ps = g.possible_scores()
-        assert ps["yahtzee"] == 50
+        assert ps["yacht"] == 50
         assert ps["sixes"] == 30
         assert ps["chance"] == 30

@@ -1,7 +1,7 @@
 /**
- * Reusable API mock helpers for Yahtzee backend endpoints.
+ * Reusable API mock helpers for Yacht backend endpoints.
  *
- * The Yahtzee frontend calls http://localhost:8000 (EXPO_PUBLIC_API_URL default).
+ * The Yacht frontend calls http://localhost:8000 (EXPO_PUBLIC_API_URL default).
  * All helpers use page.route() to intercept these calls so tests are hermetic.
  */
 
@@ -24,7 +24,7 @@ export interface GameState {
 const CATEGORIES = [
   "ones", "twos", "threes", "fours", "fives", "sixes",
   "three_of_a_kind", "four_of_a_kind", "full_house",
-  "small_straight", "large_straight", "yahtzee", "chance",
+  "small_straight", "large_straight", "yacht", "chance",
 ];
 
 function blankState(round = 1): GameState {
@@ -56,7 +56,7 @@ function rolledState(round = 1): GameState {
  * - GET  /game/possible-scores → all 13 categories with value 15
  * - POST /game/score        → advances round; game_over when round > 13
  */
-export async function installYahtzeeGameMock(page: Page): Promise<void> {
+export async function installYachtGameMock(page: Page): Promise<void> {
   let round = 1;
   const scored: Record<string, number> = {};
 

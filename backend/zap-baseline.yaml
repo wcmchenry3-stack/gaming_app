@@ -5,14 +5,14 @@ env:
   contexts:
     - name: "Gaming App API"
       urls:
-        - "https://yahtzee-api.onrender.com"
+        - "https://dev-games-api.buffingchi.com"
       includePaths:
-        - "https://yahtzee-api.onrender.com/.*"
+        - "https://dev-games-api.buffingchi.com/.*"
       excludePaths:
         # OpenAPI docs are not a production attack surface
-        - "https://yahtzee-api.onrender.com/docs"
-        - "https://yahtzee-api.onrender.com/redoc"
-        - "https://yahtzee-api.onrender.com/openapi.json"
+        - "https://dev-games-api.buffingchi.com/docs"
+        - "https://dev-games-api.buffingchi.com/redoc"
+        - "https://dev-games-api.buffingchi.com/openapi.json"
   parameters:
     failOnError: true
     failOnWarning: false

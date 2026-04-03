@@ -17,8 +17,8 @@ cd backend && python -m pip install -r requirements.txt
 python -m pytest tests/ -v
 
 # By file
-python -m pytest tests/test_game.py -v       # Yahtzee game logic
-python -m pytest tests/test_api.py -v        # Yahtzee API endpoints
+python -m pytest tests/test_game.py -v       # Yacht game logic
+python -m pytest tests/test_api.py -v        # Yacht API endpoints
 python -m pytest tests/test_fruit_merge_api.py -v  # Fruit Merge leaderboard API
 
 # With coverage
@@ -29,8 +29,8 @@ python -m pytest tests/ -v --cov=. --cov-report=term-missing
 ```
 backend/tests/
 ├── __init__.py
-├── test_game.py              # YahtzeeGame unit tests — all 13 scoring categories
-├── test_api.py               # Yahtzee FastAPI endpoints via TestClient
+├── test_game.py              # YachtGame unit tests — all 13 scoring categories
+├── test_api.py               # Yacht FastAPI endpoints via TestClient
 └── test_fruit_merge_api.py   # Fruit Merge leaderboard endpoints via TestClient
 ```
 

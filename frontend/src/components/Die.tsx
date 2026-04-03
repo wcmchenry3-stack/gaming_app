@@ -12,7 +12,7 @@ interface DieProps {
 }
 
 export default function Die({ value, held, onPress, disabled, index }: DieProps) {
-  const { t } = useTranslation("yahtzee");
+  const { t } = useTranslation("yacht");
   const { colors } = useTheme();
   const displayValue = value > 0 ? value : t("dice.labelBlank");
   const heldSuffix = held ? t("dice.heldSuffix") : "";

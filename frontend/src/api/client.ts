@@ -3,13 +3,13 @@ import * as Sentry from "@sentry/react-native";
 import { Platform } from "react-native";
 
 const _apiUrl = process.env.EXPO_PUBLIC_API_URL ?? "http://localhost:8000";
-// Render's fromService can inject a bare subdomain slug (e.g. "yahtzee-api-fql1")
+// Render's fromService can inject a bare subdomain slug (e.g. "gaming-app-api")
 // without a protocol or the .onrender.com suffix. Normalise to a full URL.
 const BASE_URL = _apiUrl.startsWith("http") ? _apiUrl : `https://${_apiUrl}.onrender.com`;
 
 Sentry.addBreadcrumb({
   category: "api.config",
-  message: `Yahtzee API: BASE_URL=${BASE_URL}, raw=${_apiUrl}, platform=${Platform.OS}`,
+  message: `Gaming App API: BASE_URL=${BASE_URL}, raw=${_apiUrl}, platform=${Platform.OS}`,
   level: "info",
 });
 
@@ -83,7 +83,7 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
       // Network/fetch failures (e.g. DNS, timeout, ATS block)
       Sentry.captureException(e, {
         extra: { url, platform: Platform.OS, method: options?.method ?? "GET" },
-        tags: { api: "yahtzee", errorType: "network" },
+        tags: { api: "gaming-app", errorType: "network" },
       });
     }
     throw e;

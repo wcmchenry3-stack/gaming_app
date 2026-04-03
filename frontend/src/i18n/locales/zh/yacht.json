@@ -1,7 +1,7 @@
 {
-  "game.title": "Yahtzee",
+  "game.title": "Yacht",
   "game.description": "掷骰子，计分，挑战高分！",
-  "game.playLabel": "开始Yahtzee",
+  "game.playLabel": "开始Yacht",
   "round.header": "第{{round}}局 / 13",
   "section.upper": "上半区",
   "section.lower": "下半区",
@@ -20,7 +20,7 @@
   "category.fullHouse": "葫芦(25)",
   "category.smallStraight": "小顺(30)",
   "category.largeStraight": "大顺(40)",
-  "category.yahtzee": "Yahtzee! (50)",
+  "category.yacht": "Yacht! (50)",
   "category.chance": "机会",
   "score.scored": "得分 {{score}}",
   "score.potential": "潜在得分 {{potential}}，双击得分",

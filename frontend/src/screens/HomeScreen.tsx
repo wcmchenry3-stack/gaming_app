@@ -24,37 +24,37 @@ interface GameCard {
 }
 
 export default function HomeScreen({ navigation }: Props) {
-  const { t } = useTranslation(["common", "yahtzee", "fruit-merge", "blackjack", "ludo", "errors"]);
+  const { t } = useTranslation(["common", "yacht", "fruit-merge", "blackjack", "ludo", "errors"]);
   const { colors, theme, toggle } = useTheme();
   const insets = useSafeAreaInsets();
-  const [yahtzeeLoading, setYahtzeeLoading] = useState(false);
-  const [yahtzeeError, setYahtzeeError] = useState<string | null>(null);
+  const [yachtLoading, setYachtLoading] = useState(false);
+  const [yachtError, setYachtError] = useState<string | null>(null);
 
-  async function startYahtzee() {
-    setYahtzeeLoading(true);
-    setYahtzeeError(null);
+  async function startYacht() {
+    setYachtLoading(true);
+    setYachtError(null);
     try {
       const state = await api.newGame();
       navigation.navigate("Game", { initialState: state });
     } catch (e) {
       Sentry.captureException(e, {
-        tags: { screen: "HomeScreen", game: "yahtzee" },
-        extra: { action: "startYahtzee" },
+        tags: { screen: "HomeScreen", game: "yacht" },
+        extra: { action: "startYacht" },
       });
-      setYahtzeeError(t("errors:backend.connection"));
+      setYachtError(t("errors:backend.connection"));
     } finally {
-      setYahtzeeLoading(false);
+      setYachtLoading(false);
     }
   }
 
   const games: GameCard[] = [
     {
       emoji: "🎲",
-      title: t("yahtzee:game.title"),
-      description: t("yahtzee:game.description"),
-      action: startYahtzee,
-      loading: yahtzeeLoading,
-      error: yahtzeeError,
+      title: t("yacht:game.title"),
+      description: t("yacht:game.description"),
+      action: startYacht,
+      loading: yachtLoading,
+      error: yachtError,
     },
     {
       emoji: "🍉",
@@ -78,7 +78,7 @@ export default function HomeScreen({ navigation }: Props) {
   ];
 
   const playLabels: Record<string, string> = {
-    [t("yahtzee:game.title")]: t("yahtzee:game.playLabel"),
+    [t("yacht:game.title")]: t("yacht:game.playLabel"),
     [t("fruit-merge:game.title")]: t("fruit-merge:game.playLabel"),
     [t("blackjack:game.title")]: t("blackjack:game.playLabel"),
     [t("ludo:game.title")]: t("ludo:game.playLabel"),

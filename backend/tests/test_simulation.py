@@ -1,11 +1,11 @@
 """
-Simulation tests — full 13-round Yahtzee lifecycle.
+Simulation tests — full 13-round Yacht lifecycle.
 
 These tests drive the game through complete playthroughs (all 13 rounds) to
 catch state-machine bugs that unit tests miss by only exercising one step at
 a time.  Two layers are covered:
 
-  1. Direct YahtzeeGame — fast, no HTTP overhead, seeded for determinism.
+  1. Direct YachtGame — fast, no HTTP overhead, seeded for determinism.
   2. FastAPI TestClient — verifies the HTTP layer doesn't corrupt state across
      all 13 round transitions.
 """
@@ -18,7 +18,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 import main as main_module
-from game import CATEGORIES, UPPER_CATEGORIES, YahtzeeGame
+from game import CATEGORIES, UPPER_CATEGORIES, YachtGame
 from main import app
 
 # ---------------------------------------------------------------------------
@@ -44,7 +44,7 @@ def reset_game():
 # ---------------------------------------------------------------------------
 
 
-def play_full_game(seed: int | None = None) -> YahtzeeGame:
+def play_full_game(seed: int | None = None) -> YachtGame:
     """Drive a complete 13-round game using the greedy best-score strategy.
 
     Patches ``random.randint`` with a seeded RNG so results are reproducible.
@@ -52,7 +52,7 @@ def play_full_game(seed: int | None = None) -> YahtzeeGame:
     chosen — ties broken by iteration order of CATEGORIES.
     """
     rng = random.Random(seed)
-    g = YahtzeeGame()
+    g = YachtGame()
     with unittest.mock.patch("random.randint", side_effect=lambda a, b: rng.randint(a, b)):
         for _ in range(13):
             g.roll([False] * 5)
@@ -85,7 +85,7 @@ class TestDirectSimulation:
         assert g.total_score() >= 0
 
     def test_total_score_within_theoretical_bounds(self):
-        # Theoretical max without yahtzee bonuses:
+        # Theoretical max without yacht bonuses:
         # Upper: 5+10+15+20+25+30 = 105 + 35 bonus = 140
         # Lower: 30 + 40 + 25 + 30 + 40 + 50 + 30 = 245
         # Hard ceiling with a generous margin: 1575
@@ -130,7 +130,7 @@ class TestDirectSimulation:
     # ------------------------------------------------------------------
 
     def test_multiple_games_independent(self):
-        """Each YahtzeeGame instance is independent; playing one doesn't affect another."""
+        """Each YachtGame instance is independent; playing one does not affect another."""
         g1 = play_full_game(seed=1)
         g2 = play_full_game(seed=2)
         # Both finished; they're separate objects

@@ -15,7 +15,7 @@ const ALL_CATEGORIES = [
   "full_house",
   "small_straight",
   "large_straight",
-  "yahtzee",
+  "yacht",
   "chance",
 ];
 

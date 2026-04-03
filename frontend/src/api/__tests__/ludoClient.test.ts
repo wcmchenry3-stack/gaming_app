@@ -85,7 +85,7 @@ describe("ludoApi endpoints", () => {
 
 // ---------------------------------------------------------------------------
 // BASE_URL configuration — guards against the property: host regression
-// where Render injects a bare internal hostname (e.g. "yahtzee-api") that
+// where Render injects a bare internal hostname (e.g. "gaming-app-api") that
 // resolves only inside Render's network, not from user browsers.
 // ---------------------------------------------------------------------------
 describe("ludoApi BASE_URL configuration", () => {
@@ -105,25 +105,25 @@ describe("ludoApi BASE_URL configuration", () => {
   });
 
   it("uses EXPO_PUBLIC_API_URL when it is a full https URL (Render property: url)", async () => {
-    process.env.EXPO_PUBLIC_API_URL = "https://yahtzee-api.onrender.com";
+    process.env.EXPO_PUBLIC_API_URL = "https://gaming-app-api.onrender.com";
     // eslint-disable-next-line @typescript-eslint/no-require-imports
     const { ludoApi: api } = require("../ludoClient") as typeof import("../ludoClient");
     await api.newSession();
     expect(global.fetch as jest.Mock).toHaveBeenCalledWith(
-      expect.stringContaining("https://yahtzee-api.onrender.com"),
+      expect.stringContaining("https://gaming-app-api.onrender.com"),
       expect.any(Object)
     );
   });
 
   it("builds a full onrender.com URL when EXPO_PUBLIC_API_URL is a bare slug (Render fromService)", async () => {
-    // Render's fromService can inject a bare subdomain slug, e.g. "yahtzee-api-fql1".
+    // Render's fromService can inject a bare subdomain slug, e.g. "gaming-app-api-fql1".
     // The client must append .onrender.com so the URL resolves from outside Render's network.
-    process.env.EXPO_PUBLIC_API_URL = "yahtzee-api-fql1";
+    process.env.EXPO_PUBLIC_API_URL = "gaming-app-api-fql1";
     // eslint-disable-next-line @typescript-eslint/no-require-imports
     const { ludoApi: api } = require("../ludoClient") as typeof import("../ludoClient");
     await api.newSession();
     const calledUrl = (global.fetch as jest.Mock).mock.calls[0][0] as string;
-    expect(calledUrl).toMatch(/^https:\/\/yahtzee-api-fql1\.onrender\.com/);
+    expect(calledUrl).toMatch(/^https:\/\/gaming-app-api-fql1\.onrender\.com/);
   });
 
   it("falls back to http://localhost:8000 when EXPO_PUBLIC_API_URL is not set", async () => {

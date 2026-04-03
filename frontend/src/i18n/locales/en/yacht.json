@@ -1,7 +1,7 @@
 {
-  "game.title": "Yahtzee",
+  "game.title": "Yacht",
   "game.description": "Roll dice, score categories, beat your high score.",
-  "game.playLabel": "Play Yahtzee",
+  "game.playLabel": "Play Yacht",
   "round.header": "Round {{round}} / 13",
   "section.upper": "Upper Section",
   "section.lower": "Lower Section",
@@ -20,7 +20,7 @@
   "category.fullHouse": "Full House (25)",
   "category.smallStraight": "Sm. Straight (30)",
   "category.largeStraight": "Lg. Straight (40)",
-  "category.yahtzee": "Yahtzee! (50)",
+  "category.yacht": "Yacht! (50)",
   "category.chance": "Chance",
   "score.scored": "scored {{score}}",
   "score.potential": "potential score {{potential}}, double-tap to score",

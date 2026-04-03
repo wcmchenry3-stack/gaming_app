@@ -17,7 +17,7 @@ jobs:
   backend-health:
     uses: wcmchenry3-stack/.github/.github/workflows/called-backend-health.yml@main
     with:
-      backend-url: 'https://yahtzee-api.onrender.com'
+      backend-url: 'https://dev-games-api.buffingchi.com'
       health-path: '/health'
       probe-path: '/game/state'
       probe-expected-status: '400'

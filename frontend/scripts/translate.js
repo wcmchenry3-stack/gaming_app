@@ -7,7 +7,7 @@
  *
  * Flags:
  *   --locale     Target locale code (fr-CA | es | hi | ar | zh | ja | ko | pt | he | de | nl | ru)
- *   --namespace  Translation namespace (common | yahtzee | fruit-merge | errors)
+ *   --namespace  Translation namespace (common | yacht | fruit-merge | errors)
  *   --model      OpenAI model to use (default: gpt-4o)
  *   --dry-run    Preview what would be sent; do not call API or write files
  *   --force      Re-translate ALL keys, not just __NEEDS_TRANSLATION__ ones
@@ -52,7 +52,7 @@ function parseArgs() {
         .map((l) => l.code)
         .join(" | ")}`
     );
-    console.error("  Namespaces:  common | yahtzee | fruit-merge | errors | blackjack | ludo");
+    console.error("  Namespaces:  common | yacht | fruit-merge | errors | blackjack | ludo");
     process.exit(1);
   }
 
@@ -100,7 +100,7 @@ function buildSystemPrompt(localeConfig) {
 
 Target locale: ${localeConfig.code} — ${localeConfig.nativeLabel} (${localeConfig.label})
 
-ABOUT THE APP: A gaming app containing two games — Yahtzee (a classic dice game) and Fruit Merge (a physics-based fruit dropping game). The tone is casual, fun, and encouraging. UI strings should feel like they belong in a polished mobile game, not a corporate app.
+ABOUT THE APP: A gaming app containing two games — Yacht (a classic dice game) and Fruit Merge (a physics-based fruit dropping game). The tone is casual, fun, and encouraging. UI strings should feel like they belong in a polished mobile game, not a corporate app.
 
 ADAPTATION GUIDELINES:
 - Do NOT translate literally — adapt so it feels natural in ${localeConfig.nativeLabel} gaming contexts
