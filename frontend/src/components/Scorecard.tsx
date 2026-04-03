@@ -39,6 +39,8 @@ interface ScorecardProps {
   gameOver: boolean;
   upperSubtotal: number;
   upperBonus: number;
+  yachtBonusCount: number;
+  yachtBonusTotal: number;
   totalScore: number;
   onScore: (category: string) => void;
 }
@@ -50,6 +52,8 @@ export default function Scorecard({
   gameOver,
   upperSubtotal,
   upperBonus,
+  yachtBonusCount,
+  yachtBonusTotal,
   totalScore,
   onScore,
 }: ScorecardProps) {
@@ -99,6 +103,22 @@ export default function Scorecard({
           onSelect={() => onScore(key)}
         />
       ))}
+
+      {yachtBonusCount > 0 && (
+        <View
+          style={[
+            styles.bonusRow,
+            { backgroundColor: colors.bonusBg, borderBottomColor: colors.border },
+          ]}
+        >
+          <Text style={[styles.bonusLabel, { color: colors.textMuted }]}>
+            {t("bonus.yachtLabel")}
+          </Text>
+          <Text style={[styles.bonusValue, { color: colors.bonus }]}>
+            {t("bonus.yachtValue", { count: yachtBonusCount, total: yachtBonusTotal })}
+          </Text>
+        </View>
+      )}
 
       <View style={[styles.totalRow, { backgroundColor: colors.totalBg }]}>
         <Text style={styles.totalLabel}>{t("section.total")}</Text>

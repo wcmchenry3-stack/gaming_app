@@ -108,7 +108,7 @@ class TestDirectSimulation:
     def test_total_score_equals_filled_plus_bonus(self):
         g = play_full_game(seed=42)
         filled = sum(v for v in g.scores.values() if v is not None)
-        assert g.total_score() == filled + g.upper_bonus()
+        assert g.total_score() == filled + g.upper_bonus() + g.yacht_bonus_total()
 
     # ------------------------------------------------------------------
     # Determinism

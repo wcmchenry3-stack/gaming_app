@@ -19,6 +19,8 @@ class GameStateResponse(BaseModel):
     game_over: bool
     upper_subtotal: int
     upper_bonus: int
+    yacht_bonus_count: int
+    yacht_bonus_total: int
     total_score: int
 
 

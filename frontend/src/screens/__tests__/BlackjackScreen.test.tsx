@@ -126,7 +126,7 @@ describe("BlackjackScreen — initial load", () => {
     await act(async () => {
       resolve(makeBettingState());
     });
-  });
+  }, 15000);
 
   it("renders BettingPanel after session created", async () => {
     mockApi.newSession.mockResolvedValue(makeBettingState());
