@@ -107,7 +107,7 @@ const light: Colors = {
 };
 
 const PALETTES = { dark, light };
-const STORAGE_KEY = "yahtzee_theme";
+const STORAGE_KEY = "gaming_app_theme";
 
 interface ThemeContextValue {
   theme: Theme;

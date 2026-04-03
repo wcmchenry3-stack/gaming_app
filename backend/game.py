@@ -15,7 +15,7 @@ CATEGORIES = [
     "full_house",
     "small_straight",
     "large_straight",
-    "yahtzee",
+    "yacht",
     "chance",
 ]
 
@@ -25,7 +25,7 @@ UPPER_BONUS_VALUE = 35
 
 
 @dataclass
-class YahtzeeGame:
+class YachtGame:
     dice: list[int] = field(default_factory=lambda: [0, 0, 0, 0, 0])
     held: list[bool] = field(default_factory=lambda: [False] * 5)
     rolls_used: int = 0
@@ -121,7 +121,7 @@ def _calculate_score(category: str, dice: list[int]) -> int:
     elif category == "large_straight":
         unique = sorted(set(dice))
         return 40 if _has_run(unique, 5) else 0
-    elif category == "yahtzee":
+    elif category == "yacht":
         return 50 if len(counts) == 1 else 0
     elif category == "chance":
         return sum(dice)

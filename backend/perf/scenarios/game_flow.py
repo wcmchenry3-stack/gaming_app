@@ -1,5 +1,5 @@
 """
-Scenario A: Full Yahtzee game flow (sequential, single user).
+Scenario A: Full Yacht game flow (sequential, single user).
 
 Each user generates a unique session ID so multiple concurrent users
 don't collide on shared game state.
@@ -23,13 +23,13 @@ CATEGORIES = [
     "full_house",
     "small_straight",
     "large_straight",
-    "yahtzee",
+    "yacht",
     "chance",
 ]
 
 
 class GameFlowTasks(SequentialTaskSet):
-    """Complete a full 13-round Yahtzee game sequentially."""
+    """Complete a full 13-round Yacht game sequentially."""
 
     def on_start(self):
         self._round = 0

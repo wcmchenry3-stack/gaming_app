@@ -1,16 +1,16 @@
 {
   "game.title": {
     "component": "HomeScreen",
-    "description": "Name of the Yahtzee game card on the home screen.",
+    "description": "Name of the Yacht game card on the home screen.",
     "tone": "neutral",
     "characterLimit": 10,
     "placeholders": [],
-    "doNotTranslate": ["Yahtzee"],
+    "doNotTranslate": ["Yacht"],
     "notes": "Do not translate the game name."
   },
   "game.description": {
     "component": "HomeScreen",
-    "description": "One-line description on the Yahtzee game card.",
+    "description": "One-line description on the Yacht game card.",
     "tone": "casual, punchy",
     "characterLimit": 55,
     "placeholders": [],
@@ -19,11 +19,11 @@
   },
   "game.playLabel": {
     "component": "HomeScreen",
-    "description": "Accessibility label for the Yahtzee play button.",
+    "description": "Accessibility label for the Yacht play button.",
     "tone": "functional",
     "characterLimit": 20,
     "placeholders": [],
-    "doNotTranslate": ["Yahtzee"],
+    "doNotTranslate": ["Yacht"],
     "notes": null
   },
   "round.header": {
@@ -188,14 +188,14 @@
     "doNotTranslate": [],
     "notes": "Keep abbreviated form. (40) is the point value."
   },
-  "category.yahtzee": {
+  "category.yacht": {
     "component": "Scorecard",
     "description": "Scoring category — five dice all the same. Worth 50 points.",
     "tone": "game term",
     "characterLimit": 15,
     "placeholders": [],
-    "doNotTranslate": ["Yahtzee!"],
-    "notes": "Do not translate 'Yahtzee!' — it is both the game name and the category name."
+    "doNotTranslate": ["Yacht!"],
+    "notes": "Do not translate 'Yacht!' — it is both the game name and the category name."
   },
   "category.chance": {
     "component": "Scorecard",
@@ -343,7 +343,7 @@
   },
   "gameOver.title": {
     "component": "GameScreen modal",
-    "description": "Modal title when the Yahtzee game ends after 13 rounds.",
+    "description": "Modal title when the Yacht game ends after 13 rounds.",
     "tone": "celebratory, punchy",
     "characterLimit": 15,
     "placeholders": [],

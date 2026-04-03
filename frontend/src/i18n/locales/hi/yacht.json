@@ -1,7 +1,7 @@
 {
-  "game.title": "Yahtzee",
+  "game.title": "Yacht",
   "game.description": "पासा घुमाओ, स्कोर बनाओ, रिकॉर्ड तोड़ो!",
-  "game.playLabel": "Yahtzee खेलें",
+  "game.playLabel": "Yacht खेलें",
   "round.header": "राउंड {{round}} / 13",
   "section.upper": "ऊपरी सेक्शन",
   "section.lower": "निचला सेक्शन",
@@ -20,7 +20,7 @@
   "category.fullHouse": "फुल हाउस (25)",
   "category.smallStraight": "छोटा स्ट्रेट (30)",
   "category.largeStraight": "बड़ा स्ट्रेट (40)",
-  "category.yahtzee": "Yahtzee! (50)",
+  "category.yacht": "Yacht! (50)",
   "category.chance": "मौका",
   "score.scored": "{{score}} अंक",
   "score.potential": "संभावित अंक {{potential}}, स्कोर करने के लिए डबल-टैप करें",

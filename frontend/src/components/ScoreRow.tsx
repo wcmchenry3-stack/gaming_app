@@ -12,7 +12,7 @@ interface ScoreRowProps {
 }
 
 export default function ScoreRow({ label, score, potential, onSelect, canScore }: ScoreRowProps) {
-  const { t } = useTranslation("yahtzee");
+  const { t } = useTranslation("yacht");
   const { colors } = useTheme();
   const isFilled = score !== null;
   const isSelectable = !isFilled && canScore;

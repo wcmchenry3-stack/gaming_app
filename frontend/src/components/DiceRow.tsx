@@ -13,7 +13,7 @@ interface DiceRowProps {
 }
 
 export default function DiceRow({ dice, rollsUsed, gameOver, onRoll, resetHeld }: DiceRowProps) {
-  const { t } = useTranslation("yahtzee");
+  const { t } = useTranslation("yacht");
   const { colors } = useTheme();
   const [held, setHeld] = useState<boolean[]>([false, false, false, false, false]);
   const [rolling, setRolling] = useState(false);

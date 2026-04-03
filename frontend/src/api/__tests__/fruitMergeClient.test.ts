@@ -77,23 +77,23 @@ describe("fruitMergeApi BASE_URL configuration", () => {
   });
 
   it("uses EXPO_PUBLIC_API_URL when it is a full https URL", async () => {
-    process.env.EXPO_PUBLIC_API_URL = "https://yahtzee-api.onrender.com";
+    process.env.EXPO_PUBLIC_API_URL = "https://gaming-app-api.onrender.com";
     const { fruitMergeApi: api } =
       require("../fruitMergeClient") as typeof import("../fruitMergeClient");
     await api.getLeaderboard();
     expect(global.fetch as jest.Mock).toHaveBeenCalledWith(
-      expect.stringContaining("https://yahtzee-api.onrender.com"),
+      expect.stringContaining("https://gaming-app-api.onrender.com"),
       expect.any(Object)
     );
   });
 
   it("builds a full onrender.com URL when EXPO_PUBLIC_API_URL is a bare slug", async () => {
-    process.env.EXPO_PUBLIC_API_URL = "yahtzee-api-fql1";
+    process.env.EXPO_PUBLIC_API_URL = "gaming-app-api-fql1";
     const { fruitMergeApi: api } =
       require("../fruitMergeClient") as typeof import("../fruitMergeClient");
     await api.getLeaderboard();
     const calledUrl = (global.fetch as jest.Mock).mock.calls[0][0] as string;
-    expect(calledUrl).toMatch(/^https:\/\/yahtzee-api-fql1\.onrender\.com/);
+    expect(calledUrl).toMatch(/^https:\/\/gaming-app-api-fql1\.onrender\.com/);
   });
 
   it("falls back to http://localhost:8000 when EXPO_PUBLIC_API_URL is not set", async () => {

@@ -8,7 +8,7 @@ import { join } from "path";
  * frontend/dist/.  In CI the build step runs separately before this job.
  * Locally, run `cd frontend && npx expo export --platform web` once first.
  *
- * The Yahtzee backend API (http://localhost:8000) is mocked via
+ * The Yacht backend API (http://localhost:8000) is mocked via
  * page.route() in each test — no live backend is required.
  */
 export default defineConfig({

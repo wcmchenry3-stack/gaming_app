@@ -14,7 +14,7 @@ import os
 from hypothesis import HealthCheck, given, settings
 from hypothesis import strategies as st
 
-from game import CATEGORIES, YahtzeeGame, _calculate_score
+from game import CATEGORIES, YachtGame, _calculate_score
 
 # ---------------------------------------------------------------------------
 # Hypothesis profiles
@@ -66,9 +66,9 @@ def test_chance_always_equals_sum(dice):
 
 
 @given(dice=dice_st)
-def test_yahtzee_is_binary(dice):
-    """Yahtzee score is either 50 or 0."""
-    result = _calculate_score("yahtzee", dice)
+def test_yacht_is_binary(dice):
+    """Yacht score is either 50 or 0."""
+    result = _calculate_score("yacht", dice)
     assert result in (0, 50)
 
 
@@ -151,7 +151,7 @@ def test_three_of_a_kind_never_exceeds_four_of_a_kind_score(dice):
 @given(held=held_st)
 def test_roll_always_produces_valid_dice(held):
     """After any roll, all dice are in [1, 6]."""
-    g = YahtzeeGame()
+    g = YachtGame()
     g.roll(held)  # first roll ignores held; rolls_used goes 0→1
     assert all(1 <= d <= 6 for d in g.dice)
     assert g.rolls_used == 1
@@ -160,7 +160,7 @@ def test_roll_always_produces_valid_dice(held):
 @given(held=held_st)
 def test_second_roll_preserves_held_dice(held):
     """On the second roll, dice flagged held must keep their first-roll value."""
-    g = YahtzeeGame()
+    g = YachtGame()
     g.roll([False] * 5)  # first roll — sets dice
     first_dice = g.dice[:]
     g.roll(held)  # second roll — respects held
@@ -179,7 +179,7 @@ def test_second_roll_preserves_held_dice(held):
 @given(categories=all_categories_st)
 def test_scoring_all_13_categories_always_ends_game(categories):
     """Scoring every category in any order always produces game_over=True."""
-    g = YahtzeeGame()
+    g = YachtGame()
     for cat in categories:
         g.dice = [1, 2, 3, 4, 5]  # valid dice; value doesn't affect termination
         g.rolls_used = 1
@@ -191,7 +191,7 @@ def test_scoring_all_13_categories_always_ends_game(categories):
 @given(categories=all_categories_st)
 def test_all_scores_filled_after_full_game(categories):
     """After a full 13-round game all score slots are filled (not None)."""
-    g = YahtzeeGame()
+    g = YachtGame()
     for cat in categories:
         g.dice = [1, 2, 3, 4, 5]
         g.rolls_used = 1
@@ -202,7 +202,7 @@ def test_all_scores_filled_after_full_game(categories):
 @given(dice=dice_st, category=category_st)
 def test_possible_scores_value_matches_calculate_score(dice, category):
     """possible_scores() must return the same value as _calculate_score() directly."""
-    g = YahtzeeGame()
+    g = YachtGame()
     g.dice = dice
     g.rolls_used = 1
     # Only check unfilled categories (all are unfilled on a fresh game)
@@ -213,7 +213,7 @@ def test_possible_scores_value_matches_calculate_score(dice, category):
 @given(dice=dice_st)
 def test_total_score_is_non_negative_at_any_point(dice):
     """total_score never goes negative regardless of what categories are scored."""
-    g = YahtzeeGame()
+    g = YachtGame()
     for cat in CATEGORIES:
         g.dice = dice
         g.rolls_used = 1
@@ -224,7 +224,7 @@ def test_total_score_is_non_negative_at_any_point(dice):
 @given(categories=all_categories_st)
 def test_upper_bonus_correct_at_game_end(categories):
     """Upper bonus is 35 iff all upper categories are filled and subtotal >= 63."""
-    g = YahtzeeGame()
+    g = YachtGame()
     for cat in categories:
         g.dice = [1, 2, 3, 4, 5]
         g.rolls_used = 1

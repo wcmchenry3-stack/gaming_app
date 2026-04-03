@@ -1,7 +1,7 @@
 services:
   # --- Python FastAPI backend ---
   - type: web
-    name: yahtzee-api
+    name: gaming-app-api
     runtime: python
     rootDir: backend
     buildCommand: pip install -r requirements.txt
@@ -10,11 +10,11 @@ services:
       - key: PYTHON_VERSION
         value: 3.11.0
       - key: ALLOWED_ORIGINS
-        value: "https://games.buffingchi.com,https://yahtzee-frontend-l24f.onrender.com"
+        value: "https://dev-games.buffingchi.com,https://dev-games-api.buffingchi.com"
 
   # --- Expo Web static frontend ---
   - type: web
-    name: yahtzee-frontend
+    name: gaming-app-frontend
     runtime: static
     rootDir: frontend
     # fetch-render-env.js queries the Render API for the API service's public URL
@@ -25,11 +25,11 @@ services:
     envVars:
       - key: EXPO_PUBLIC_API_URL
         fromService:
-          name: yahtzee-api
+          name: gaming-app-api
           type: web
           property: host
       - key: RENDER_API_SERVICE_NAME
-        value: yahtzee-api
+        value: gaming-app-api
       - key: RENDER_API_KEY
         sync: false
     headers:
@@ -37,7 +37,7 @@ services:
         name: Content-Security-Policy
         # 'unsafe-inline' for script/style is required by Expo Web's output format (inlined styles
         # and event handlers). This is an accepted exception pending upstream Expo fix.
-        value: "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; connect-src 'self' https://yahtzee-api.onrender.com https://games.buffingchi.com; img-src 'self' data: blob:; font-src 'self' data:; frame-ancestors 'none'"
+        value: "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; connect-src 'self' https://dev-games-api.buffingchi.com https://dev-games.buffingchi.com; img-src 'self' data: blob:; font-src 'self' data:; frame-ancestors 'none'"
       - path: /*
         name: X-Content-Type-Options
         value: nosniff

@@ -1,7 +1,7 @@
 {
-  "game.title": "Yahtzee",
+  "game.title": "Yacht",
   "game.description": "Бросай кости, набирай очки, побей рекорд!",
-  "game.playLabel": "Играть в Yahtzee",
+  "game.playLabel": "Играть в Yacht",
   "round.header": "Раунд {{round}} из 13",
   "section.upper": "Верхняя часть",
   "section.lower": "Нижняя часть",
@@ -20,7 +20,7 @@
   "category.fullHouse": "Фулл-хаус (25)",
   "category.smallStraight": "Мал. стрейт (30)",
   "category.largeStraight": "Бол. стрейт (40)",
-  "category.yahtzee": "Yahtzee! (50)",
+  "category.yacht": "Yacht! (50)",
   "category.chance": "Шанс",
   "score.scored": "забито {{score}}",
   "score.potential": "возможные очки {{potential}}, дважды нажмите для записи",

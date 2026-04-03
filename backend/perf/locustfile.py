@@ -3,7 +3,7 @@ Gaming App — Locust performance test entry point.
 
 User classes:
 
-  YahtzeeGameUser   — full 13-round game flow (session-isolated; safe with multiple users)
+  YachtGameUser     — full 13-round game flow (session-isolated; safe with multiple users)
   LeaderboardUser   — concurrent leaderboard read/write (--users 10)
   ReadOnlyUser      — polling GET endpoints (--users 20)
   RateLimitVerifyUser — intentionally exhausts rate limits to verify 429 + Retry-After
@@ -13,12 +13,12 @@ Usage examples:
   # Single-user game flow (local):
   locust -f perf/locustfile.py --headless --users 1 --spawn-rate 1 \
          --run-time 120s --host http://localhost:8000 \
-         YahtzeeGameUser
+         YachtGameUser
 
   # Multi-user game flow (session isolation means no collisions):
   locust -f perf/locustfile.py --headless --users 5 --spawn-rate 1 \
          --run-time 60s --host http://localhost:8000 \
-         YahtzeeGameUser
+         YachtGameUser
 
   # Leaderboard concurrent load (local):
   locust -f perf/locustfile.py --headless --users 10 --spawn-rate 2 \
@@ -46,7 +46,7 @@ from scenarios.stateless_reads import StatelessReadTasks
 from scenarios.rate_limit_test import RateLimitTasks
 
 
-class YahtzeeGameUser(HttpUser):
+class YachtGameUser(HttpUser):
     """
     Simulates one player completing a full 13-round game.
     Session isolation allows multiple concurrent users without state collisions.

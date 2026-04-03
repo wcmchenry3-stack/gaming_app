@@ -27,7 +27,7 @@ def client_prod():
     reload so accumulated registration counters don't bleed into subsequent tests."""
     from limiter import limiter
 
-    os.environ["ALLOWED_ORIGINS"] = "https://yahtzee-frontend.onrender.com"
+    os.environ["ALLOWED_ORIGINS"] = "https://dev-games.buffingchi.com"
     import main as m
 
     importlib.reload(m)
@@ -128,11 +128,11 @@ def test_cors_prod_allows_frontend(client_prod):
     res = client_prod.get(
         "/game/state",
         headers={
-            "Origin": "https://yahtzee-frontend.onrender.com",
+            "Origin": "https://dev-games.buffingchi.com",
             "X-Session-ID": sid,
         },
     )
-    assert res.headers.get("access-control-allow-origin") == "https://yahtzee-frontend.onrender.com"
+    assert res.headers.get("access-control-allow-origin") == "https://dev-games.buffingchi.com"
 
 
 @pytest.mark.security

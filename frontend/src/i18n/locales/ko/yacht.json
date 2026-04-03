@@ -1,7 +1,7 @@
 {
-  "game.title": "Yahtzee",
+  "game.title": "Yacht",
   "game.description": "주사위 굴려 점수 획득, 최고 점수 도전!",
-  "game.playLabel": "Yahtzee 플레이",
+  "game.playLabel": "Yacht 플레이",
   "round.header": "라운드 {{round}} / 13",
   "section.upper": "상단 점수",
   "section.lower": "하단 점수",
@@ -20,7 +20,7 @@
   "category.fullHouse": "풀하우스 (25)",
   "category.smallStraight": "스몰 스트레이트 (30)",
   "category.largeStraight": "라지 스트레이트 (40)",
-  "category.yahtzee": "Yahtzee! (50)",
+  "category.yacht": "Yacht! (50)",
   "category.chance": "찬스",
   "score.scored": "{{score}}점 기록됨",
   "score.potential": "가능 점수 {{potential}}, 더블탭하여 기록",

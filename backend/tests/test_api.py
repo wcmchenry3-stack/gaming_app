@@ -189,7 +189,7 @@ class TestScore:
             "full_house",
             "small_straight",
             "large_straight",
-            "yahtzee",
+            "yacht",
             "chance",
         ]
         for cat in categories:

@@ -1,7 +1,7 @@
 {
-  "game.title": "Yahtzee",
+  "game.title": "Yacht",
   "game.description": "Lancez les dés, marquez des points, battez votre record.",
-  "game.playLabel": "Jouer à Yahtzee",
+  "game.playLabel": "Jouer à Yacht",
   "round.header": "Tour {{round}} / 13",
   "section.upper": "Section Haute",
   "section.lower": "Section Basse",
@@ -20,7 +20,7 @@
   "category.fullHouse": "Full (25)",
   "category.smallStraight": "Pt. Suite (30)",
   "category.largeStraight": "Suite max (40)",
-  "category.yahtzee": "Yahtzee! (50)",
+  "category.yacht": "Yacht! (50)",
   "category.chance": "Chance",
   "score.scored": "score {{score}}",
   "score.potential": "score potentiel {{potential}}, double-tapez pour marquer",

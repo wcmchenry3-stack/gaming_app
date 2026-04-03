@@ -1,4 +1,4 @@
-# Yahtzee Game — Claude Guide
+# BC Games — Claude Guide
 <!-- Global standards: ~/.claude/CLAUDE.md and ~/.claude/standards/ -->
 
 ## Stack
@@ -41,5 +41,5 @@ See [`docs/RENDER.md`](docs/RENDER.md) for Render hosting setup.
 - Frontend replaces state wholesale from each API response.
 - Scoring category keys: `ones` `twos` `threes` `fours` `fives` `sixes`
   `three_of_a_kind` `four_of_a_kind` `full_house` `small_straight`
-  `large_straight` `yahtzee` `chance`
+  `large_straight` `yacht` `chance`
 - `EXPO_PUBLIC_API_URL` env var overrides `BASE_URL` in `frontend/src/api/client.ts`.

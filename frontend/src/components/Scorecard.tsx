@@ -11,7 +11,7 @@ const LOWER_CATEGORY_KEYS = [
   "full_house",
   "small_straight",
   "large_straight",
-  "yahtzee",
+  "yacht",
   "chance",
 ] as const;
 
@@ -28,7 +28,7 @@ const CATEGORY_I18N_KEY: Record<string, string> = {
   full_house: "category.fullHouse",
   small_straight: "category.smallStraight",
   large_straight: "category.largeStraight",
-  yahtzee: "category.yahtzee",
+  yacht: "category.yacht",
   chance: "category.chance",
 };
 
@@ -53,7 +53,7 @@ export default function Scorecard({
   totalScore,
   onScore,
 }: ScorecardProps) {
-  const { t } = useTranslation("yahtzee");
+  const { t } = useTranslation("yacht");
   const { colors } = useTheme();
   const canScore = rollsUsed > 0 && !gameOver;
 

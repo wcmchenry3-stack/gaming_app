@@ -32,7 +32,7 @@ cd backend
 locust -f perf/locustfile.py \
   --headless --users 1 --spawn-rate 1 --run-time 60s \
   --host http://localhost:8000 --csv perf-gameflow \
-  YahtzeeGameUser
+  YachtGameUser
 
 # Leaderboard — 10 concurrent users
 locust -f perf/locustfile.py \
@@ -63,7 +63,7 @@ Locust also has a browser UI. Omit `--headless` to open it at http://localhost:8
 ```bash
 cd frontend
 npm install
-EXPO_PUBLIC_API_URL=https://yahtzee-api.onrender.com npx expo export --platform web
+EXPO_PUBLIC_API_URL=https://dev-games-api.buffingchi.com npx expo export --platform web
 npx @lhci/cli@0.14.0 autorun --config=lighthouserc.json
 ```
 
@@ -114,9 +114,9 @@ Artifacts (Locust CSVs and Lighthouse HTML reports) are retained for 30 days.
 
 ### Single global game instance
 
-The Yahtzee backend has one global `game` variable. It is **not concurrent-safe**. Running the game flow with more than 1 user will cause state collisions (mixed round counts, wrong phase errors). This is expected and documented, not a bug in the tests.
+The Yacht backend has one global `game` variable. It is **not concurrent-safe**. Running the game flow with more than 1 user will cause state collisions (mixed round counts, wrong phase errors). This is expected and documented, not a bug in the tests.
 
-The `YahtzeeGameUser` class must always be run with `--users 1`. Concurrent stress testing only applies to the leaderboard endpoints.
+The `YachtGameUser` class must always be run with `--users 1`. Concurrent stress testing only applies to the leaderboard endpoints.
 
 ### Render free-tier cold starts
 

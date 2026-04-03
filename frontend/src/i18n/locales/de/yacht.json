@@ -1,7 +1,7 @@
 {
-  "game.title": "Yahtzee",
+  "game.title": "Yacht",
   "game.description": "Würfeln, punkten, Highscore knacken!",
-  "game.playLabel": "Yahtzee spielen",
+  "game.playLabel": "Yacht spielen",
   "round.header": "Runde {{round}} / 13",
   "section.upper": "Obere Sektion",
   "section.lower": "Untere Sektion",
@@ -20,7 +20,7 @@
   "category.fullHouse": "Full House (25)",
   "category.smallStraight": "Kl. Straße (30)",
   "category.largeStraight": "Gr. Straße (40)",
-  "category.yahtzee": "Yahtzee! (50)",
+  "category.yacht": "Yacht! (50)",
   "category.chance": "Chance",
   "score.scored": "Punkte: {{score}}",
   "score.potential": "Mögliche Punkte: {{potential}}, doppelt tippen zum Werten",

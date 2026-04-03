@@ -1,7 +1,7 @@
 {
-  "game.title": "Yahtzee",
+  "game.title": "Yacht",
   "game.description": "Gooi dobbelstenen, scoor en verbeter je score!",
-  "game.playLabel": "Speel Yahtzee",
+  "game.playLabel": "Speel Yacht",
   "round.header": "Ronde {{round}} / 13",
   "section.upper": "Bovenste Deel",
   "section.lower": "Onderste Deel",
@@ -20,7 +20,7 @@
   "category.fullHouse": "Full House (25)",
   "category.smallStraight": "Kleine Straat (30)",
   "category.largeStraight": "Grote Straat (40)",
-  "category.yahtzee": "Yahtzee! (50)",
+  "category.yacht": "Yacht! (50)",
   "category.chance": "Kans",
   "score.scored": "gescoord {{score}}",
   "score.potential": "mogelijke score {{potential}}, dubbel tik om te scoren",
