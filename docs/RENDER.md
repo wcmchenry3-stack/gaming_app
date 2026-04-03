@@ -34,16 +34,16 @@ The first request after sleep takes ~30 seconds. Upgrade to a paid plan to avoid
 **In-memory state:** The backend holds game state in memory. Any redeploy or spin-down
 resets any game in progress. A future improvement would be to add a database.
 
-**Service names:** If you rename services in `render.yaml`, update the `fromService.name`
-reference on `EXPO_PUBLIC_API_URL` to match, or the frontend build will fail.
+**Custom domain:** `EXPO_PUBLIC_API_URL` is set directly in `render.yaml` to the custom
+domain (`https://dev-games-api.buffingchi.com`). If the domain changes, update it there
+and in `ALLOWED_ORIGINS` on the backend service.
 
 ## Environment Variables
 
 | Variable | Service | Value |
 |----------|---------|-------|
-| `EXPO_PUBLIC_API_URL` | gaming-app-frontend | Auto-set from `gaming-app-api` URL |
+| `EXPO_PUBLIC_API_URL` | gaming-app-frontend | `https://dev-games-api.buffingchi.com` (set in `render.yaml`) |
+| `EXPO_PUBLIC_SENTRY_DSN` | gaming-app-frontend | Secret — set in Render dashboard |
 | `PYTHON_VERSION` | gaming-app-api | `3.11.0` |
 
-To override `EXPO_PUBLIC_API_URL` manually (e.g., custom domain):
-Render Dashboard → `gaming-app-frontend` → Environment → set the variable directly.
-The static site must be redeployed after changing it (env vars are baked in at build time).
+Env vars are baked into the static bundle at build time. If you change them, redeploy the frontend.

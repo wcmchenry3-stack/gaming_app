@@ -108,26 +108,24 @@ describe("api BASE_URL configuration", () => {
     process.env = originalEnv;
   });
 
-  it("uses EXPO_PUBLIC_API_URL when it is a full https URL (Render property: url)", async () => {
-    process.env.EXPO_PUBLIC_API_URL = "https://gaming-app-api.onrender.com";
+  it("uses EXPO_PUBLIC_API_URL when it is a full https URL", async () => {
+    process.env.EXPO_PUBLIC_API_URL = "https://dev-games-api.buffingchi.com";
     // eslint-disable-next-line @typescript-eslint/no-require-imports
     const { api: freshApi } = require("../client") as typeof import("../client");
     await freshApi.newGame();
     expect(global.fetch as jest.Mock).toHaveBeenCalledWith(
-      expect.stringContaining("https://gaming-app-api.onrender.com"),
+      expect.stringContaining("https://dev-games-api.buffingchi.com"),
       expect.any(Object)
     );
   });
 
-  it("builds a full onrender.com URL when EXPO_PUBLIC_API_URL is a bare slug (Render fromService)", async () => {
-    // Render's fromService with property: url injects a bare subdomain slug,
-    // e.g. "gaming-app-api-fql1" — no https:// and no .onrender.com suffix.
-    process.env.EXPO_PUBLIC_API_URL = "gaming-app-api-fql1";
+  it("prepends https:// when EXPO_PUBLIC_API_URL has no protocol", async () => {
+    process.env.EXPO_PUBLIC_API_URL = "dev-games-api.buffingchi.com";
     // eslint-disable-next-line @typescript-eslint/no-require-imports
     const { api: freshApi } = require("../client") as typeof import("../client");
     await freshApi.newGame();
     const calledUrl = (global.fetch as jest.Mock).mock.calls[0][0] as string;
-    expect(calledUrl).toMatch(/^https:\/\/gaming-app-api-fql1\.onrender\.com/);
+    expect(calledUrl).toBe("https://dev-games-api.buffingchi.com/game/new");
   });
 
   it("falls back to http://localhost:8000 when EXPO_PUBLIC_API_URL is not set", async () => {
