@@ -11,7 +11,7 @@ interface Props {
 }
 
 export default function NextFruitPreview({ current, next }: Props) {
-  const { t } = useTranslation("fruit-merge");
+  const { t } = useTranslation("cascade");
   const { colors } = useTheme();
   return (
     <View style={styles.row}>

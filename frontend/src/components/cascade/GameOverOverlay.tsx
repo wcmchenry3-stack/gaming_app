@@ -9,7 +9,7 @@ import {
   Modal,
 } from "react-native";
 import { useTranslation } from "react-i18next";
-import { fruitMergeApi, ScoreEntry } from "../../api/fruitMergeClient";
+import { cascadeApi, ScoreEntry } from "../../api/cascadeClient";
 import { useTheme } from "../../theme/ThemeContext";
 
 interface Props {
@@ -18,7 +18,7 @@ interface Props {
 }
 
 export default function GameOverOverlay({ score, onRestart }: Props) {
-  const { t } = useTranslation("fruit-merge");
+  const { t } = useTranslation("cascade");
   const { colors } = useTheme();
   const [name, setName] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -30,7 +30,7 @@ export default function GameOverOverlay({ score, onRestart }: Props) {
     setSubmitting(true);
     setError(null);
     try {
-      const entry = await fruitMergeApi.submitScore(name.trim(), score);
+      const entry = await cascadeApi.submitScore(name.trim(), score);
       setSubmitted(entry);
     } catch {
       setError(t("errors:score.save"));

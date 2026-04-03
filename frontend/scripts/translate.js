@@ -7,7 +7,7 @@
  *
  * Flags:
  *   --locale     Target locale code (fr-CA | es | hi | ar | zh | ja | ko | pt | he | de | nl | ru)
- *   --namespace  Translation namespace (common | yacht | fruit-merge | errors)
+ *   --namespace  Translation namespace (common | yacht | cascade | errors)
  *   --model      OpenAI model to use (default: gpt-4o)
  *   --dry-run    Preview what would be sent; do not call API or write files
  *   --force      Re-translate ALL keys, not just __NEEDS_TRANSLATION__ ones
@@ -52,7 +52,7 @@ function parseArgs() {
         .map((l) => l.code)
         .join(" | ")}`
     );
-    console.error("  Namespaces:  common | yacht | fruit-merge | errors | blackjack | ludo");
+    console.error("  Namespaces:  common | yacht | cascade | errors | blackjack | ludo");
     process.exit(1);
   }
 

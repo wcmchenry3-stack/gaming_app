@@ -6,7 +6,7 @@
  *   node scripts/check-i18n-strings.js [--namespace <ns>] [--locale <code>]
  *
  * Flags:
- *   --namespace  Filter to a single namespace (common | yacht | fruit-merge | errors)
+ *   --namespace  Filter to a single namespace (common | yacht | cascade | errors)
  *   --locale     Filter to a single locale code
  *
  * Exit codes:
@@ -21,7 +21,7 @@ import { LOCALES } from "../src/i18n/locales.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const LOCALES_DIR = join(__dirname, "../src/i18n/locales");
-const NAMESPACES = ["common", "yacht", "fruit-merge", "errors", "blackjack", "ludo"];
+const NAMESPACES = ["common", "yacht", "cascade", "errors", "blackjack", "ludo"];
 const PLACEHOLDER = "__NEEDS_TRANSLATION__";
 
 // ─── CLI ─────────────────────────────────────────────────────────────────────

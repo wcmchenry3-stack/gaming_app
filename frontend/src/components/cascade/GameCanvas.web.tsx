@@ -14,7 +14,7 @@ import {
   MergeEvent,
   WALL_THICKNESS,
   DANGER_LINE_RATIO,
-} from "../../game/fruit-merge/engine";
+} from "../../game/cascade/engine";
 import { FruitDefinition, FruitSet } from "../../theme/fruitSets";
 import { useTheme } from "../../theme/ThemeContext";
 import { useTranslation } from "react-i18next";
@@ -67,7 +67,7 @@ function drawFruitBody(
 const GameCanvas = forwardRef<GameCanvasHandle, Props>(
   ({ fruitSet, nextDef, onMerge, onGameOver, onTap, width, height }, ref) => {
     const { colors } = useTheme();
-    const { t } = useTranslation("fruit-merge");
+    const { t } = useTranslation("cascade");
 
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const engineRef = useRef<EngineHandle | null>(null);

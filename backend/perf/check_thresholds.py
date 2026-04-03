@@ -20,7 +20,7 @@ from pathlib import Path
 # Map Locust request name substrings → threshold scenario key.
 # Order matters: more specific patterns first.
 ENDPOINT_TO_SCENARIO: list[tuple[str, str]] = [
-    ("/fruit-merge/", "leaderboard"),
+    ("/cascade/", "leaderboard"),
     ("/game/new", "game_flow"),
     ("/game/roll", "game_flow"),
     ("/game/score", "game_flow"),

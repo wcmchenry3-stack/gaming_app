@@ -346,11 +346,11 @@ def test_rate_limit_429_has_retry_after(client_default):
 
 
 @pytest.mark.security
-def test_fruit_merge_score_strict_limit(client_default):
-    """POST /fruit-merge/score has a 5/minute limit."""
+def test_cascade_score_strict_limit(client_default):
+    """POST /cascade/score has a 5/minute limit."""
     responses = [
         client_default.post(
-            "/fruit-merge/score",
+            "/cascade/score",
             json={"player_name": "tester", "score": i},
         )
         for i in range(7)

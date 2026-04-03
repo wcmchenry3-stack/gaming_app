@@ -8,7 +8,7 @@ import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import * as Sentry from "@sentry/react-native";
 import HomeScreen from "./src/screens/HomeScreen";
 import GameScreen from "./src/screens/GameScreen";
-import FruitMergeScreen from "./src/screens/FruitMergeScreen";
+import CascadeScreen from "./src/screens/CascadeScreen";
 import BlackjackScreen from "./src/screens/BlackjackScreen";
 import LudoScreen from "./src/screens/LudoScreen";
 import { GameState } from "./src/api/client";
@@ -33,7 +33,7 @@ if (!dsn) {
 export type RootStackParamList = {
   Home: undefined;
   Game: { initialState: GameState };
-  FruitMerge: undefined;
+  Cascade: undefined;
   Blackjack: undefined;
   Ludo: undefined;
 };
@@ -59,7 +59,7 @@ function AppInner() {
         <Stack.Navigator screenOptions={{ headerShown: false }}>
           <Stack.Screen name="Home" component={HomeScreen} />
           <Stack.Screen name="Game" component={GameScreen} />
-          <Stack.Screen name="FruitMerge" component={FruitMergeScreen} />
+          <Stack.Screen name="Cascade" component={CascadeScreen} />
           <Stack.Screen name="Blackjack" component={BlackjackScreen} />
           <Stack.Screen name="Ludo" component={LudoScreen} />
         </Stack.Navigator>

@@ -19,7 +19,7 @@ from game import YachtGame
 from limiter import _real_ip, limiter
 from models import GameStateResponse, PossibleScoresResponse, RollRequest, ScoreRequest
 from session import get_session_id
-from fruit_merge.router import router as fruit_merge_router
+from cascade.router import router as cascade_router
 from blackjack.router import router as blackjack_router
 from ludo.router import router as ludo_router
 
@@ -47,7 +47,7 @@ if _sentry_dsn:
 # ---------------------------------------------------------------------------
 
 app = FastAPI(title="Gaming App API")
-app.include_router(fruit_merge_router, prefix="/fruit-merge")
+app.include_router(cascade_router, prefix="/cascade")
 app.include_router(blackjack_router, prefix="/blackjack")
 app.include_router(ludo_router, prefix="/ludo")
 

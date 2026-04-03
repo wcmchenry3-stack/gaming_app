@@ -33,7 +33,7 @@ import {
   MergeEvent,
   WALL_THICKNESS,
   DANGER_LINE_RATIO,
-} from "../../game/fruit-merge/engine";
+} from "../../game/cascade/engine";
 import { FruitDefinition, FruitSet } from "../../theme/fruitSets";
 import { useTheme } from "../../theme/ThemeContext";
 import { useTranslation } from "react-i18next";
@@ -92,7 +92,7 @@ function FruitBodySkia({
 const GameCanvas = forwardRef<GameCanvasHandle, Props>(
   ({ fruitSet, nextDef, onMerge, onGameOver, onTap, width, height }, ref) => {
     const { colors } = useTheme();
-    const { t } = useTranslation("fruit-merge");
+    const { t } = useTranslation("cascade");
 
     // Load all fruit/planet images via Skia (native only)
     const allImages = useFruitImages();

@@ -1,16 +1,16 @@
 {
   "game.title": {
     "component": "HomeScreen",
-    "description": "Name of the Fruit Merge game card.",
+    "description": "Name of the Cascade game card.",
     "tone": "neutral",
     "characterLimit": 15,
     "placeholders": [],
-    "doNotTranslate": ["Fruit Merge"],
+    "doNotTranslate": ["Cascade"],
     "notes": "Do not translate the game name."
   },
   "game.description": {
     "component": "HomeScreen",
-    "description": "One-line description on the Fruit Merge game card.",
+    "description": "One-line description on the Cascade game card.",
     "tone": "casual, punchy",
     "characterLimit": 55,
     "placeholders": [],
@@ -19,11 +19,11 @@
   },
   "game.playLabel": {
     "component": "HomeScreen",
-    "description": "Accessibility label for the Fruit Merge play button.",
+    "description": "Accessibility label for the Cascade play button.",
     "tone": "functional",
     "characterLimit": 20,
     "placeholders": [],
-    "doNotTranslate": ["Fruit Merge"],
+    "doNotTranslate": ["Cascade"],
     "notes": null
   },
   "game.canvasLabel": {
@@ -32,7 +32,7 @@
     "tone": "functional, descriptive",
     "characterLimit": 100,
     "placeholders": [],
-    "doNotTranslate": ["Fruit Merge"],
+    "doNotTranslate": ["Cascade"],
     "notes": null
   },
   "score.label": {
@@ -108,7 +108,7 @@
     "notes": "{{label}} is the fruit set name (e.g. Fruits, Tropical)."
   },
   "event.merged": {
-    "component": "FruitMergeScreen",
+    "component": "CascadeScreen",
     "description": "Live region announcement when two fruits merge.",
     "tone": "brief, game feedback",
     "characterLimit": 30,
@@ -117,7 +117,7 @@
     "notes": "{{fruit}} is a fruit name — do not translate it."
   },
   "event.gameOver": {
-    "component": "FruitMergeScreen",
+    "component": "CascadeScreen",
     "description": "Live region announcement when the game ends.",
     "tone": "brief, neutral",
     "characterLimit": 15,
@@ -127,7 +127,7 @@
   },
   "gameOver.title": {
     "component": "GameOverOverlay",
-    "description": "Modal heading when the Fruit Merge game ends.",
+    "description": "Modal heading when the Cascade game ends.",
     "tone": "dramatic, concise",
     "characterLimit": 15,
     "placeholders": [],

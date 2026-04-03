@@ -5,24 +5,24 @@ import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { RootStackParamList } from "../../App";
 import { useTheme } from "../theme/ThemeContext";
 import { FruitSetProvider, useFruitSet } from "../theme/FruitSetContext";
-import { FruitQueue } from "../game/fruit-merge/fruitQueue";
-import { MergeEvent } from "../game/fruit-merge/engine";
-import { scoreForMerge } from "../game/fruit-merge/scoring";
-import GameCanvas, { GameCanvasHandle } from "../components/fruit-merge/GameCanvas";
-import NextFruitPreview from "../components/fruit-merge/NextFruitPreview";
-import ScoreDisplay from "../components/fruit-merge/ScoreDisplay";
-import ThemeSelector from "../components/fruit-merge/ThemeSelector";
-import GameOverOverlay from "../components/fruit-merge/GameOverOverlay";
+import { FruitQueue } from "../game/cascade/fruitQueue";
+import { MergeEvent } from "../game/cascade/engine";
+import { scoreForMerge } from "../game/cascade/scoring";
+import GameCanvas, { GameCanvasHandle } from "../components/cascade/GameCanvas";
+import NextFruitPreview from "../components/cascade/NextFruitPreview";
+import ScoreDisplay from "../components/cascade/ScoreDisplay";
+import ThemeSelector from "../components/cascade/ThemeSelector";
+import GameOverOverlay from "../components/cascade/GameOverOverlay";
 
 type Props = {
-  navigation: NativeStackNavigationProp<RootStackParamList, "FruitMerge">;
+  navigation: NativeStackNavigationProp<RootStackParamList, "Cascade">;
 };
 
 // Max container width — keeps the game portrait-shaped on wide screens
 const MAX_CANVAS_WIDTH = 400;
 
-function FruitMergeGame({ navigation }: Props) {
-  const { t } = useTranslation(["fruit-merge", "common"]);
+function CascadeGame({ navigation }: Props) {
+  const { t } = useTranslation(["cascade", "common"]);
   const { colors, theme, toggle } = useTheme();
   const { activeFruitSet } = useFruitSet();
 
@@ -60,14 +60,14 @@ function FruitMergeGame({ navigation }: Props) {
       setScore((s) => s + scoreForMerge(event.tier));
       const merged = activeFruitSet.fruits[event.tier];
       if (merged) {
-        canvasRef.current?.announceEvent(t("fruit-merge:event.merged", { fruit: merged.name }));
+        canvasRef.current?.announceEvent(t("cascade:event.merged", { fruit: merged.name }));
       }
     },
     [activeFruitSet, t]
   );
 
   const handleGameOver = useCallback(() => {
-    canvasRef.current?.announceEvent(t("fruit-merge:event.gameOver"));
+    canvasRef.current?.announceEvent(t("cascade:event.gameOver"));
     setGameOver(true);
   }, [t]);
 
@@ -117,7 +117,7 @@ function FruitMergeGame({ navigation }: Props) {
           <Text style={[styles.backText, { color: colors.textMuted }]}>{t("common:nav.back")}</Text>
         </Pressable>
         <Text style={[styles.title, { color: colors.text }]} accessibilityRole="header">
-          {t("fruit-merge:game.title")}
+          {t("cascade:game.title")}
         </Text>
         <Pressable
           onPress={toggle}
@@ -162,10 +162,10 @@ function FruitMergeGame({ navigation }: Props) {
   );
 }
 
-export default function FruitMergeScreen(props: Props) {
+export default function CascadeScreen(props: Props) {
   return (
     <FruitSetProvider>
-      <FruitMergeGame {...props} />
+      <CascadeGame {...props} />
     </FruitSetProvider>
   );
 }

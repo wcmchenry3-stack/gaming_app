@@ -7,7 +7,7 @@ import { useTheme } from "../../theme/ThemeContext";
 import FruitGlyph from "./FruitGlyph";
 
 export default function ThemeSelector() {
-  const { t } = useTranslation("fruit-merge");
+  const { t } = useTranslation("cascade");
   const { activeFruitSet, setFruitSetById } = useFruitSet();
   const { colors } = useTheme();
 

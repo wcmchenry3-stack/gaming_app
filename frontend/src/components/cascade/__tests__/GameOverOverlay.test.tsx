@@ -8,14 +8,14 @@
 import React from "react";
 import { render, fireEvent, waitFor, screen } from "@testing-library/react-native";
 import GameOverOverlay from "../GameOverOverlay";
-import { fruitMergeApi } from "../../../api/fruitMergeClient";
+import { cascadeApi } from "../../../api/cascadeClient";
 
 // ---------------------------------------------------------------------------
 // Mocks
 // ---------------------------------------------------------------------------
 
-jest.mock("../../../api/fruitMergeClient", () => ({
-  fruitMergeApi: {
+jest.mock("../../../api/cascadeClient", () => ({
+  cascadeApi: {
     submitScore: jest.fn(),
   },
 }));
@@ -38,7 +38,7 @@ jest.mock("../../../theme/ThemeContext", () => ({
   }),
 }));
 
-const mockSubmitScore = fruitMergeApi.submitScore as jest.Mock;
+const mockSubmitScore = cascadeApi.submitScore as jest.Mock;
 
 function renderOverlay(score = 1234, onRestart = jest.fn()) {
   return render(<GameOverOverlay score={score} onRestart={onRestart} />);
