@@ -43,8 +43,8 @@ jobs:
   local-path-check:
     uses: wcmchenry3-stack/.github/.github/workflows/called-local-path-check.yml@main
     with:
-      scan-paths: 'frontend/ios/GamingApp.xcodeproj'
-      file-patterns: '*.pbxproj,*.xcconfig'
+      scan-paths: 'frontend/ios/GamingApp.xcodeproj,frontend/android'
+      file-patterns: '*.pbxproj,*.xcconfig,*.gradle,*.properties'
     secrets: inherit
 
   # --- Existing checks ------------------------------------------------------
@@ -157,7 +157,48 @@ jobs:
     uses: wcmchenry3-stack/.github/.github/workflows/called-openai-policy.yml@main
     secrets: inherit
 
-  # --- Phase 5: Xcode build validation (macOS, moderate) --------------------
+  # --- Phase 5: Android JS bundle validation (Linux, fast) -------------------
+  # Catches silent bundling failures BEFORE they reach EAS Build.
+  # The Android build check below only compiles in Debug mode (skips bundling),
+  # so it cannot detect issues with the JS bundler or entry-point resolution.
+
+  android-bundle-check:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - name: Install dependencies
+        run: npm ci
+      - name: Create Android JS bundle
+        run: |
+          ENTRY_FILE=$(node -e "require('expo/scripts/resolveAppEntry')" . android absolute | tail -n 1)
+          npx expo export:embed \
+            --platform android \
+            --dev false \
+            --entry-file "$ENTRY_FILE" \
+            --bundle-output /tmp/index.android.bundle \
+            --assets-dest /tmp/assets
+      - name: Validate bundle
+        run: |
+          if [ ! -f /tmp/index.android.bundle ]; then
+            echo "::error::index.android.bundle was not created — the Android app will crash on launch"
+            exit 1
+          fi
+          BUNDLE_SIZE=$(stat --printf="%s" /tmp/index.android.bundle)
+          if [ "$BUNDLE_SIZE" -lt 1000 ]; then
+            echo "::error::index.android.bundle is only ${BUNDLE_SIZE} bytes — likely corrupted"
+            exit 1
+          fi
+          echo "Android JS bundle created successfully (${BUNDLE_SIZE} bytes)"
+
+  # --- Phase 6: Xcode build validation (macOS, moderate) --------------------
 
   ios-build-check:
     uses: wcmchenry3-stack/.github/.github/workflows/called-ios-build-check.yml@main
@@ -166,3 +207,31 @@ jobs:
       workspace-name: 'GamingApp.xcworkspace'
       scheme: 'GamingApp'
     secrets: inherit
+
+  # --- Phase 7: Android build validation (Linux, moderate) ------------------
+
+  android-build-check:
+    uses: wcmchenry3-stack/.github/.github/workflows/called-android-build-check.yml@main
+    with:
+      working-directory: frontend
+    secrets: inherit
+
+  # --- Phase 8: Gradle wrapper validation -----------------------------------
+  # Validates the Gradle wrapper JAR checksum to prevent supply-chain attacks.
+
+  gradle-wrapper-check:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - name: Validate Gradle wrapper
+        uses: gradle/actions/wrapper-validation@v4
+      - name: Check Gradle build file consistency
+        run: |
+          CHANGED_FILES=$(git diff --name-only "${{ github.event.pull_request.base.sha }}"...HEAD)
+          if echo "$CHANGED_FILES" | grep -qE 'frontend/android/(app/)?build\.gradle|frontend/android/settings\.gradle'; then
+            echo "::notice::Android Gradle build files changed — ensure gradle.properties settings (SDK versions, Hermes, architectures) are still correct."
+          fi
+          echo "Gradle wrapper validation passed"
