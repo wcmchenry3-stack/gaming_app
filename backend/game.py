@@ -100,7 +100,9 @@ class YachtGame:
                     raise ValueError("Joker rule: must score in the corresponding upper category.")
             else:
                 # Priority 2 & 3: any open lower, then any open upper
-                open_lower = [c for c in LOWER_CATEGORIES if c != "yacht" and self.scores[c] is None]
+                open_lower = [
+                    c for c in LOWER_CATEGORIES if c != "yacht" and self.scores[c] is None
+                ]
                 if open_lower:
                     if category not in LOWER_CATEGORIES or category == "yacht":
                         # Check if they picked an upper category when lower is available
