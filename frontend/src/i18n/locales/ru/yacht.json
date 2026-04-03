@@ -41,7 +41,7 @@
   "gameOver.title": "Игра окончена!",
   "gameOver.finalScore": "Итоговый счёт",
   "gameOver.scoreLabel": "Итог: {{score}}",
-  "bonus.yachtLabel": "__NEEDS_TRANSLATION__",
+  "bonus.yachtLabel": "Бонус Яхта",
   "bonus.yachtValue": "×{{count}} = +{{total}}",
   "gameOver.yachtBonus": "+{{total}} ({{count}}×100)!",
   "gameOver.upperBonus": "+35 бонус за верх!",

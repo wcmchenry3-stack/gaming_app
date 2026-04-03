@@ -41,7 +41,7 @@
   "gameOver.title": "游戏结束！",
   "gameOver.finalScore": "最终得分",
   "gameOver.scoreLabel": "最终得分：{{score}}",
-  "bonus.yachtLabel": "__NEEDS_TRANSLATION__",
+  "bonus.yachtLabel": "快艇奖金",
   "bonus.yachtValue": "×{{count}} = +{{total}}",
   "gameOver.yachtBonus": "+{{total}} ({{count}}×100)!",
   "gameOver.upperBonus": "获得上分奖励+35！",

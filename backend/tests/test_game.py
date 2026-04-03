@@ -441,8 +441,14 @@ class TestJokerRule:
         g = make_game([2, 2, 2, 2, 2])
         g.scores["yacht"] = 50
         g.scores["twos"] = 6  # corresponding upper filled
-        for cat in ["three_of_a_kind", "four_of_a_kind", "full_house",
-                     "small_straight", "large_straight", "chance"]:
+        for cat in [
+            "three_of_a_kind",
+            "four_of_a_kind",
+            "full_house",
+            "small_straight",
+            "large_straight",
+            "chance",
+        ]:
             g.scores[cat] = 0
         g.score("ones")  # fallback to any open upper
         assert g.scores["ones"] == 0  # five 2s → ones = 0
@@ -471,8 +477,14 @@ class TestJokerRule:
         g = make_game([4, 4, 4, 4, 4])
         g.scores["yacht"] = 50
         g.scores["fours"] = 16
-        for cat in ["three_of_a_kind", "four_of_a_kind", "full_house",
-                     "small_straight", "large_straight", "chance"]:
+        for cat in [
+            "three_of_a_kind",
+            "four_of_a_kind",
+            "full_house",
+            "small_straight",
+            "large_straight",
+            "chance",
+        ]:
             g.scores[cat] = 0
         ps = g.possible_scores()
         assert "ones" in ps

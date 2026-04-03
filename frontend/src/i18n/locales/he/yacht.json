@@ -41,7 +41,7 @@
   "gameOver.title": "סיום משחק!",
   "gameOver.finalScore": "ניקוד סופי",
   "gameOver.scoreLabel": "ניקוד סופי: {{score}}",
-  "bonus.yachtLabel": "__NEEDS_TRANSLATION__",
+  "bonus.yachtLabel": "בונוס יאכטה",
   "bonus.yachtValue": "×{{count}} = +{{total}}",
   "gameOver.yachtBonus": "+{{total}} ({{count}}×100)!",
   "gameOver.upperBonus": "+35 בונוס עליון!",

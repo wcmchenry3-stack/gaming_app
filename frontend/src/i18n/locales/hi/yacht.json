@@ -41,7 +41,7 @@
   "gameOver.title": "खेल खत्म!",
   "gameOver.finalScore": "अंतिम स्कोर",
   "gameOver.scoreLabel": "अंतिम स्कोर: {{score}}",
-  "bonus.yachtLabel": "__NEEDS_TRANSLATION__",
+  "bonus.yachtLabel": "यॉट बोनस",
   "bonus.yachtValue": "×{{count}} = +{{total}}",
   "gameOver.yachtBonus": "+{{total}} ({{count}}×100)!",
   "gameOver.upperBonus": "+35 ऊपरी बोनस मिला!",

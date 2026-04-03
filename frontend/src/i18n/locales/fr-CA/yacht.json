@@ -41,7 +41,7 @@
   "gameOver.title": "Fin de partie!",
   "gameOver.finalScore": "Score final",
   "gameOver.scoreLabel": "Score final : {{score}}",
-  "bonus.yachtLabel": "__NEEDS_TRANSLATION__",
+  "bonus.yachtLabel": "Bonus Yacht",
   "bonus.yachtValue": "×{{count}} = +{{total}}",
   "gameOver.yachtBonus": "+{{total}} ({{count}}×100)!",
   "gameOver.upperBonus": "+35 Bonus inclus!",
