@@ -1,11 +1,11 @@
-import React, { useState } from "react";
-import { View, Text, Pressable, StyleSheet, ActivityIndicator } from "react-native";
+import React from "react";
+import { View, Text, Pressable, StyleSheet } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTranslation } from "react-i18next";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import * as Sentry from "@sentry/react-native";
 import { RootStackParamList } from "../../App";
-import { api } from "../game/yacht/api";
+import { newGame as newYachtGame } from "../game/yacht/engine";
+import { loadGame as loadYachtGame } from "../game/yacht/storage";
 import { useTheme } from "../theme/ThemeContext";
 import LanguageSwitcher from "../components/LanguageSwitcher";
 import OfflineBanner from "../components/OfflineBanner";
@@ -19,8 +19,6 @@ interface GameCard {
   title: string;
   description: string;
   action: () => void;
-  loading?: boolean;
-  error?: string | null;
   badge?: string;
 }
 
@@ -36,24 +34,12 @@ export default function HomeScreen({ navigation }: Props) {
   ]);
   const { colors, theme, toggle } = useTheme();
   const insets = useSafeAreaInsets();
-  const [yachtLoading, setYachtLoading] = useState(false);
-  const [yachtError, setYachtError] = useState<string | null>(null);
 
   async function startYacht() {
-    setYachtLoading(true);
-    setYachtError(null);
-    try {
-      const state = await api.newGame();
-      navigation.navigate("Game", { initialState: state });
-    } catch (e) {
-      Sentry.captureException(e, {
-        tags: { screen: "HomeScreen", game: "yacht" },
-        extra: { action: "startYacht" },
-      });
-      setYachtError(t("errors:backend.connection"));
-    } finally {
-      setYachtLoading(false);
-    }
+    // Resume an in-progress saved game if one exists, otherwise start fresh.
+    const saved = await loadYachtGame();
+    const state = saved && !saved.game_over ? saved : newYachtGame();
+    navigation.navigate("Game", { initialState: state });
   }
 
   const games: GameCard[] = [
@@ -62,8 +48,6 @@ export default function HomeScreen({ navigation }: Props) {
       title: t("yacht:game.title"),
       description: t("yacht:game.description"),
       action: startYacht,
-      loading: yachtLoading,
-      error: yachtError,
     },
     {
       emoji: "🍉",
@@ -130,11 +114,9 @@ export default function HomeScreen({ navigation }: Props) {
             <Pressable
               style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.border }]}
               onPress={game.action}
-              disabled={game.loading}
               accessibilityRole="button"
               accessibilityLabel={playLabels[game.title] ?? game.title}
               accessibilityHint={game.description}
-              accessibilityState={{ disabled: game.loading, busy: game.loading }}
             >
               <Text style={styles.cardEmoji}>{game.emoji}</Text>
               <View style={styles.cardBody}>
@@ -150,15 +132,8 @@ export default function HomeScreen({ navigation }: Props) {
                   {game.description}
                 </Text>
               </View>
-              {game.loading ? (
-                <ActivityIndicator color={colors.accent} />
-              ) : (
-                <Text style={[styles.cardArrow, { color: colors.textMuted }]}>›</Text>
-              )}
+              <Text style={[styles.cardArrow, { color: colors.textMuted }]}>›</Text>
             </Pressable>
-            {game.error && (
-              <Text style={[styles.error, { color: colors.error }]}>{game.error}</Text>
-            )}
           </View>
         ))}
       </View>
@@ -251,10 +226,5 @@ const styles = StyleSheet.create({
   cardArrow: {
     fontSize: 28,
     lineHeight: 32,
-  },
-  error: {
-    fontSize: 13,
-    marginTop: 6,
-    marginLeft: 4,
   },
 });

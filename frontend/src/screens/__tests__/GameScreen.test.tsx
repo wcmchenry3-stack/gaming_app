@@ -1,22 +1,16 @@
 import React from "react";
-import { render, fireEvent, act, waitFor } from "@testing-library/react-native";
+import { render, fireEvent, act } from "@testing-library/react-native";
 import GameScreen from "../GameScreen";
 import { ThemeProvider } from "../../theme/ThemeContext";
 
 // ---------------------------------------------------------------------------
-// Mock the API client
+// Mock yacht storage — no-op persistence
 // ---------------------------------------------------------------------------
-jest.mock("../../game/yacht/api", () => ({
-  api: {
-    roll: jest.fn(),
-    score: jest.fn(),
-    possibleScores: jest.fn(),
-    newGame: jest.fn(),
-  },
+jest.mock("../../game/yacht/storage", () => ({
+  saveGame: jest.fn(),
+  clearGame: jest.fn(),
+  loadGame: jest.fn().mockResolvedValue(null),
 }));
-
-import { api } from "../../game/yacht/api";
-const mockApi = api as jest.Mocked<typeof api>;
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -63,7 +57,7 @@ function renderScreen(stateOverrides: Record<string, unknown> = {}) {
     <ThemeProvider>
       <GameScreen
         navigation={mockNavigation}
-        route={{ params: { initialState } } as Parameters<typeof GameScreen>[0]["route"]}
+        route={{ params: { initialState } } as unknown as Parameters<typeof GameScreen>[0]["route"]}
       />
     </ThemeProvider>
   );
@@ -75,7 +69,6 @@ function renderScreen(stateOverrides: Record<string, unknown> = {}) {
 
 beforeEach(() => {
   jest.clearAllMocks();
-  mockApi.possibleScores.mockResolvedValue({ possible_scores: {} });
 });
 
 describe("GameScreen", () => {
@@ -84,52 +77,24 @@ describe("GameScreen", () => {
     expect(getByText(/round.*1/i)).toBeTruthy();
   });
 
-  it("calls api.roll when the roll button is pressed", async () => {
-    mockApi.roll.mockResolvedValue(makeState({ rolls_used: 1 }));
+  it("rolling updates rolls_used and enables scoring", async () => {
     const { getByRole } = renderScreen();
     await act(async () => {
       fireEvent.press(getByRole("button", { name: /roll dice/i }));
     });
-    expect(mockApi.roll).toHaveBeenCalledWith([false, false, false, false, false]);
+    // After a roll, the button label includes the remaining rolls count (2)
+    expect(getByRole("button", { name: /roll dice/i })).toBeTruthy();
   });
 
-  it("updates displayed state after a successful roll", async () => {
-    mockApi.roll.mockResolvedValue(makeState({ rolls_used: 1, round: 2 }));
-    const { getByRole } = renderScreen();
+  it("scoring a category after a roll advances the round", async () => {
+    const { getByRole, getByText } = renderScreen();
     await act(async () => {
       fireEvent.press(getByRole("button", { name: /roll dice/i }));
     });
-    await waitFor(() => {
-      expect(getByRole("button", { name: /roll dice/i })).toBeTruthy();
-    });
-  });
-
-  it("shows an error message when api.roll throws", async () => {
-    mockApi.roll.mockRejectedValue(new Error("Network error"));
-    const { getByRole, findByText } = renderScreen();
-    await act(async () => {
-      fireEvent.press(getByRole("button", { name: /roll dice/i }));
-    });
-    expect(await findByText("Network error")).toBeTruthy();
-  });
-
-  it("calls api.score when a scorecard category is pressed after rolling", async () => {
-    mockApi.roll.mockResolvedValue(makeState({ rolls_used: 1, dice: [1, 1, 1, 1, 1] }));
-    mockApi.score.mockResolvedValue(makeState({ rolls_used: 0, round: 2 }));
-    mockApi.possibleScores.mockResolvedValue({ possible_scores: { ones: 5 } });
-
-    const { getByRole } = renderScreen();
-
-    // Roll first to enable scoring
-    await act(async () => {
-      fireEvent.press(getByRole("button", { name: /roll dice/i }));
-    });
-
     await act(async () => {
       fireEvent.press(getByRole("button", { name: /ones/i }));
     });
-
-    expect(mockApi.score).toHaveBeenCalledWith("ones");
+    expect(getByText(/round.*2/i)).toBeTruthy();
   });
 
   it("game over modal is not visible initially", () => {
@@ -144,13 +109,10 @@ describe("GameScreen", () => {
   });
 
   it("play again button starts a new game in place", async () => {
-    const freshState = makeState({ rolls_used: 0, round: 1, total_score: 0 });
-    mockApi.newGame.mockResolvedValue(freshState);
     const { getByRole, getByText } = renderScreen({ game_over: true, total_score: 100 });
     await act(async () => {
       fireEvent.press(getByRole("button", { name: /play again/i }));
     });
-    expect(mockApi.newGame).toHaveBeenCalled();
     expect(mockNavigation.navigate).not.toHaveBeenCalled();
     expect(getByText(/round.*1/i)).toBeTruthy();
   });

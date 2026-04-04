@@ -4,7 +4,15 @@ import { useTranslation } from "react-i18next";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { RouteProp } from "@react-navigation/native";
 import { RootStackParamList } from "../../App";
-import { api, GameState } from "../game/yacht/api";
+import { GameState } from "../game/yacht/types";
+import {
+  newGame,
+  roll as engineRoll,
+  score as engineScore,
+  possibleScores as enginePossibleScores,
+  Category,
+} from "../game/yacht/engine";
+import { saveGame, clearGame } from "../game/yacht/storage";
 import DiceRow from "../components/DiceRow";
 import Scorecard from "../components/Scorecard";
 import { useTheme } from "../theme/ThemeContext";
@@ -22,42 +30,41 @@ export default function GameScreen({ navigation, route }: Props) {
   const [resetHeld, setResetHeld] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchPossibleScores = useCallback(async (rolls_used: number) => {
-    if (rolls_used === 0) {
-      setPossibleScores({});
-      return;
-    }
-    try {
-      const res = await api.possibleScores();
-      setPossibleScores(res.possible_scores);
-    } catch {
-      /* non-critical */
-    }
-  }, []);
-
+  // Persist state after every change
   useEffect(() => {
-    fetchPossibleScores(gameState.rolls_used);
-  }, [gameState.rolls_used, gameState.round, fetchPossibleScores]);
+    saveGame(gameState);
+  }, [gameState]);
 
-  async function handleRoll(held: boolean[]) {
+  // Recompute possibleScores locally from state
+  useEffect(() => {
+    setPossibleScores(enginePossibleScores(gameState));
+  }, [gameState]);
+
+  function handleRoll(held: boolean[]) {
     setError(null);
     try {
-      setGameState(await api.roll(held));
+      setGameState((s) => engineRoll(s, held));
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : String(e));
     }
   }
 
-  async function handleScore(category: string) {
+  function handleScore(category: string) {
     setError(null);
     try {
-      setGameState(await api.score(category));
+      setGameState((s) => engineScore(s, category as Category));
       setResetHeld((r) => !r);
-      setPossibleScores({});
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : String(e));
     }
   }
+
+  const startNewGame = useCallback(() => {
+    clearGame();
+    setGameState(newGame());
+    setResetHeld((r) => !r);
+    setError(null);
+  }, []);
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
@@ -156,17 +163,7 @@ export default function GameScreen({ navigation, route }: Props) {
             )}
             <Pressable
               style={[styles.modalButton, { backgroundColor: colors.accent }]}
-              onPress={async () => {
-                try {
-                  const newState = await api.newGame();
-                  setGameState(newState);
-                  setPossibleScores({});
-                  setResetHeld((r) => !r);
-                  setError(null);
-                } catch (e: unknown) {
-                  setError(e instanceof Error ? e.message : String(e));
-                }
-              }}
+              onPress={startNewGame}
               accessibilityRole="button"
               accessibilityLabel={t("gameOver.playAgainLabel")}
             >
