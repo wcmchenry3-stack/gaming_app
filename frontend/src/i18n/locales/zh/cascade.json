@@ -25,5 +25,6 @@
   "gameOver.playAgain": "再玩一次",
   "gameOver.playAgainButton": "再来一局",
   "game.engineUnsupported": "此游戏在本设备上不受支持。",
-  "game.webOnly": "仅限网页"
+  "game.webOnly": "仅限网页",
+  "gameOver.savedLocally": "已在本地保存 — 联网后将提交"
 }

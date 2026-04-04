@@ -8,6 +8,7 @@ import { RootStackParamList } from "../../App";
 import { api } from "../api/client";
 import { useTheme } from "../theme/ThemeContext";
 import LanguageSwitcher from "../components/LanguageSwitcher";
+import OfflineBanner from "../components/OfflineBanner";
 
 type Props = {
   navigation: NativeStackNavigationProp<RootStackParamList, "Home">;
@@ -101,6 +102,9 @@ export default function HomeScreen({ navigation }: Props) {
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <View style={[styles.offlineBannerWrap, { top: insets.top }]}>
+        <OfflineBanner />
+      </View>
       <View style={[styles.headerRow, { top: insets.top + 8 }]}>
         <Pressable
           style={styles.themeToggle}
@@ -175,6 +179,12 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 8,
+  },
+  offlineBannerWrap: {
+    position: "absolute",
+    left: 0,
+    right: 0,
+    zIndex: 10,
   },
   themeToggle: {
     paddingHorizontal: 12,

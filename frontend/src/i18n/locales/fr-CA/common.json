@@ -8,5 +8,6 @@
   "theme.switchTo": "Passer en mode {{mode}}",
   "theme.lightShort": "Clair",
   "theme.darkShort": "Sombre",
-  "lang.switcherLabel": "Choisir langue"
+  "lang.switcherLabel": "Choisir langue",
+  "network.offlineBanner": "Hors ligne — les scores seront synchronisés à la reconnexion"
 }

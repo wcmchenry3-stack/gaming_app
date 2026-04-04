@@ -25,5 +25,6 @@
   "gameOver.playAgain": "Rejouer",
   "gameOver.playAgainButton": "Rejouer",
   "game.engineUnsupported": "Ce jeu n'est pas disponible sur cet appareil.",
-  "game.webOnly": "Web uniquement"
+  "game.webOnly": "Web uniquement",
+  "gameOver.savedLocally": "Enregistré localement — sera envoyé une fois en ligne"
 }

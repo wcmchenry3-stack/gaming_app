@@ -8,5 +8,6 @@
   "theme.switchTo": "Wechsle zu {{mode}}",
   "theme.lightShort": "Hell",
   "theme.darkShort": "Dunkel",
-  "lang.switcherLabel": "Sprache wählen"
+  "lang.switcherLabel": "Sprache wählen",
+  "network.offlineBanner": "Offline — Punkte werden bei erneuter Verbindung synchronisiert"
 }

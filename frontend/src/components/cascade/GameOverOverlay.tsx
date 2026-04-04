@@ -11,6 +11,8 @@ import {
 import { useTranslation } from "react-i18next";
 import { cascadeApi, ScoreEntry } from "../../api/cascadeClient";
 import { useTheme } from "../../theme/ThemeContext";
+import { useNetwork } from "../../game/_shared/NetworkContext";
+import { scoreQueue } from "../../game/_shared/scoreQueue";
 
 interface Props {
   score: number;
@@ -20,20 +22,47 @@ interface Props {
 export default function GameOverOverlay({ score, onRestart }: Props) {
   const { t } = useTranslation("cascade");
   const { colors } = useTheme();
+  const { isOnline, isInitialized } = useNetwork();
   const [name, setName] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState<ScoreEntry | null>(null);
+  const [savedLocally, setSavedLocally] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   async function handleSubmit() {
     if (!name.trim()) return;
     setSubmitting(true);
     setError(null);
+    const playerName = name.trim();
+    // If we know we're offline, skip the fetch and queue immediately.
+    if (isInitialized && !isOnline) {
+      try {
+        await scoreQueue.enqueue("cascade", { player_name: playerName, score });
+        setSavedLocally(true);
+      } catch {
+        setError(t("errors:score.save"));
+      } finally {
+        setSubmitting(false);
+      }
+      return;
+    }
     try {
-      const entry = await cascadeApi.submitScore(name.trim(), score);
+      const entry = await cascadeApi.submitScore(playerName, score);
       setSubmitted(entry);
-    } catch {
-      setError(t("errors:score.save"));
+    } catch (e) {
+      // Network/fetch failures are TypeErrors from fetch(); treat as offline
+      // and queue for later. Application errors (non-2xx) fall through to
+      // the generic error message — those shouldn't be retried blindly.
+      if (e instanceof TypeError) {
+        try {
+          await scoreQueue.enqueue("cascade", { player_name: playerName, score });
+          setSavedLocally(true);
+        } catch {
+          setError(t("errors:score.save"));
+        }
+      } else {
+        setError(t("errors:score.save"));
+      }
     } finally {
       setSubmitting(false);
     }
@@ -61,7 +90,7 @@ export default function GameOverOverlay({ score, onRestart }: Props) {
             {t("gameOver.points")}
           </Text>
 
-          {!submitted ? (
+          {!submitted && !savedLocally ? (
             <>
               <TextInput
                 style={[
@@ -108,9 +137,13 @@ export default function GameOverOverlay({ score, onRestart }: Props) {
                 )}
               </Pressable>
             </>
+          ) : savedLocally ? (
+            <Text style={[styles.saved, { color: colors.bonus }]} accessibilityLiveRegion="polite">
+              {t("gameOver.savedLocally")}
+            </Text>
           ) : (
             <Text style={[styles.saved, { color: colors.bonus }]}>
-              {t("gameOver.savedConfirmation", { rank: submitted.score.toLocaleString() })}
+              {t("gameOver.savedConfirmation", { rank: submitted!.score.toLocaleString() })}
             </Text>
           )}
 

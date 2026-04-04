@@ -25,5 +25,6 @@
   "gameOver.playAgain": "שחק שוב",
   "gameOver.playAgainButton": "שחק שוב",
   "game.engineUnsupported": "משחק זה אינו נתמך במכשיר זה.",
-  "game.webOnly": "אינטרנט בלבד"
+  "game.webOnly": "אינטרנט בלבד",
+  "gameOver.savedLocally": "נשמר מקומית — יישלח כשמחובר"
 }
