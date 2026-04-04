@@ -257,7 +257,12 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
           </Path>
           {ghostCx !== null && guidePath !== null && (
             <Group opacity={0.7}>
-              <Path path={guidePath} color="rgba(255,255,255,0.25)" style="stroke" strokeWidth={1.5}>
+              <Path
+                path={guidePath}
+                color="rgba(255,255,255,0.25)"
+                style="stroke"
+                strokeWidth={1.5}
+              >
                 <DashPathEffect intervals={[4, 6]} phase={0} />
               </Path>
               <Circle
