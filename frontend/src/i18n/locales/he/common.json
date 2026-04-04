@@ -8,5 +8,6 @@
   "theme.switchTo": "החלף למצב {{mode}}",
   "theme.lightShort": "בהיר",
   "theme.darkShort": "כהה",
-  "lang.switcherLabel": "בחירת שפה"
+  "lang.switcherLabel": "בחירת שפה",
+  "network.offlineBanner": "לא מקוון — הניקוד יסונכרן בעת חיבור מחדש"
 }

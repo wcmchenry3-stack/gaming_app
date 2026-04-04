@@ -9,6 +9,8 @@ import React from "react";
 import { render, fireEvent, waitFor, screen } from "@testing-library/react-native";
 import GameOverOverlay from "../GameOverOverlay";
 import { cascadeApi } from "../../../api/cascadeClient";
+import * as NetworkContext from "../../../game/_shared/NetworkContext";
+import { scoreQueue } from "../../../game/_shared/scoreQueue";
 
 // ---------------------------------------------------------------------------
 // Mocks
@@ -19,6 +21,19 @@ jest.mock("../../../api/cascadeClient", () => ({
     submitScore: jest.fn(),
   },
 }));
+
+jest.mock("../../../game/_shared/NetworkContext", () => ({
+  useNetwork: jest.fn(),
+}));
+
+jest.mock("../../../game/_shared/scoreQueue", () => ({
+  scoreQueue: {
+    enqueue: jest.fn(),
+  },
+}));
+
+const useNetworkMock = NetworkContext.useNetwork as jest.Mock;
+const mockEnqueue = scoreQueue.enqueue as jest.Mock;
 
 // ThemeContext reads from AsyncStorage on native; provide a minimal stub
 jest.mock("../../../theme/ThemeContext", () => ({
@@ -51,6 +66,9 @@ function renderOverlay(score = 1234, onRestart = jest.fn()) {
 describe("GameOverOverlay", () => {
   beforeEach(() => {
     mockSubmitScore.mockReset();
+    mockEnqueue.mockReset();
+    mockEnqueue.mockResolvedValue(undefined);
+    useNetworkMock.mockReturnValue({ isOnline: true, isInitialized: true });
   });
 
   it("renders score and Game Over heading", () => {
@@ -103,5 +121,51 @@ describe("GameOverOverlay", () => {
     renderOverlay(100, onRestart);
     fireEvent.press(screen.getByLabelText("Play again"));
     expect(onRestart).toHaveBeenCalledTimes(1);
+  });
+
+  it("queues score locally when offline; skips API call", async () => {
+    useNetworkMock.mockReturnValue({ isOnline: false, isInitialized: true });
+    renderOverlay(4850);
+
+    fireEvent.changeText(screen.getByLabelText("Your name"), "Alice");
+    fireEvent.press(screen.getByLabelText("Save score"));
+
+    await waitFor(() => {
+      expect(mockEnqueue).toHaveBeenCalledWith("cascade", {
+        player_name: "Alice",
+        score: 4850,
+      });
+    });
+    expect(mockSubmitScore).not.toHaveBeenCalled();
+    expect(screen.getByText(/Saved locally/i)).toBeTruthy();
+  });
+
+  it("queues score when online submit fails with a network error (TypeError)", async () => {
+    mockSubmitScore.mockRejectedValueOnce(new TypeError("Failed to fetch"));
+    renderOverlay(1234);
+
+    fireEvent.changeText(screen.getByLabelText("Your name"), "Bob");
+    fireEvent.press(screen.getByLabelText("Save score"));
+
+    await waitFor(() => {
+      expect(mockEnqueue).toHaveBeenCalledWith("cascade", {
+        player_name: "Bob",
+        score: 1234,
+      });
+    });
+    expect(screen.getByText(/Saved locally/i)).toBeTruthy();
+  });
+
+  it("shows error (no queue) when online submit fails with an app error", async () => {
+    mockSubmitScore.mockRejectedValueOnce(new Error("Invalid score"));
+    renderOverlay(1234);
+
+    fireEvent.changeText(screen.getByLabelText("Your name"), "Bob");
+    fireEvent.press(screen.getByLabelText("Save score"));
+
+    await waitFor(() => {
+      expect(screen.getByText(/Could not save score/i)).toBeTruthy();
+    });
+    expect(mockEnqueue).not.toHaveBeenCalled();
   });
 });

@@ -8,5 +8,6 @@
   "theme.switchTo": "تبديل إلى وضع {{mode}}",
   "theme.lightShort": "نهار",
   "theme.darkShort": "ليل",
-  "lang.switcherLabel": "اختر اللغة"
+  "lang.switcherLabel": "اختر اللغة",
+  "network.offlineBanner": "غير متصل — ستتم مزامنة النقاط عند إعادة الاتصال"
 }

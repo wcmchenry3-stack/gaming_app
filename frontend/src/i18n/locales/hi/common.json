@@ -8,5 +8,6 @@
   "theme.switchTo": "{{mode}} मोड पर स्विच करें",
   "theme.lightShort": "लाइट",
   "theme.darkShort": "डार्क",
-  "lang.switcherLabel": "भाषा चुनें"
+  "lang.switcherLabel": "भाषा चुनें",
+  "network.offlineBanner": "ऑफ़लाइन — पुनः कनेक्ट होने पर स्कोर सिंक होंगे"
 }

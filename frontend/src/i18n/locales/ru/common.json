@@ -8,5 +8,6 @@
   "theme.switchTo": "Переключить на {{mode}}",
   "theme.lightShort": "Светл.",
   "theme.darkShort": "Тёмн.",
-  "lang.switcherLabel": "Выбор языка"
+  "lang.switcherLabel": "Выбор языка",
+  "network.offlineBanner": "Нет подключения — результаты синхронизируются при восстановлении"
 }

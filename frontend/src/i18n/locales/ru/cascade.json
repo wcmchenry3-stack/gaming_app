@@ -25,5 +25,6 @@
   "gameOver.playAgain": "Играть снова",
   "gameOver.playAgainButton": "Играть ещё",
   "game.engineUnsupported": "Эта игра не поддерживается на данном устройстве.",
-  "game.webOnly": "Только веб"
+  "game.webOnly": "Только веб",
+  "gameOver.savedLocally": "Сохранено локально — будет отправлено онлайн"
 }

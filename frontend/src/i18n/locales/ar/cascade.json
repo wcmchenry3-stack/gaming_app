@@ -25,5 +25,6 @@
   "gameOver.playAgain": "العب مجددًا",
   "gameOver.playAgainButton": "العب مرة أخرى",
   "game.engineUnsupported": "هذه اللعبة غير مدعومة على هذا الجهاز.",
-  "game.webOnly": "ويب فقط"
+  "game.webOnly": "ويب فقط",
+  "gameOver.savedLocally": "تم الحفظ محليًا — سيتم الإرسال عند الاتصال"
 }

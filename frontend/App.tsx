@@ -15,6 +15,7 @@ import Twenty48Screen from "./src/screens/Twenty48Screen";
 import { GameState } from "./src/api/client";
 import { ThemeProvider } from "./src/theme/ThemeContext";
 import { useHtmlAttributes } from "./src/i18n/useHtmlAttributes";
+import { NetworkProvider } from "./src/game/_shared/NetworkContext";
 
 const dsn = process.env.EXPO_PUBLIC_SENTRY_DSN;
 
@@ -56,18 +57,20 @@ function AppCrashFallback({ resetError }: { resetError: () => void }) {
 function AppInner() {
   useHtmlAttributes();
   return (
-    <ThemeProvider>
-      <NavigationContainer>
-        <Stack.Navigator screenOptions={{ headerShown: false }}>
-          <Stack.Screen name="Home" component={HomeScreen} />
-          <Stack.Screen name="Game" component={GameScreen} />
-          <Stack.Screen name="Cascade" component={CascadeScreen} />
-          <Stack.Screen name="Blackjack" component={BlackjackScreen} />
-          <Stack.Screen name="Ludo" component={LudoScreen} />
-          <Stack.Screen name="Twenty48" component={Twenty48Screen} />
-        </Stack.Navigator>
-      </NavigationContainer>
-    </ThemeProvider>
+    <NetworkProvider>
+      <ThemeProvider>
+        <NavigationContainer>
+          <Stack.Navigator screenOptions={{ headerShown: false }}>
+            <Stack.Screen name="Home" component={HomeScreen} />
+            <Stack.Screen name="Game" component={GameScreen} />
+            <Stack.Screen name="Cascade" component={CascadeScreen} />
+            <Stack.Screen name="Blackjack" component={BlackjackScreen} />
+            <Stack.Screen name="Ludo" component={LudoScreen} />
+            <Stack.Screen name="Twenty48" component={Twenty48Screen} />
+          </Stack.Navigator>
+        </NavigationContainer>
+      </ThemeProvider>
+    </NetworkProvider>
   );
 }
 

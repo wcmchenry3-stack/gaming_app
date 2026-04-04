@@ -8,5 +8,6 @@
   "theme.switchTo": "Cambiar a modo {{mode}}",
   "theme.lightShort": "Claro",
   "theme.darkShort": "Oscuro",
-  "lang.switcherLabel": "Seleccionar idioma"
+  "lang.switcherLabel": "Seleccionar idioma",
+  "network.offlineBanner": "Sin conexión — las puntuaciones se sincronizarán al reconectar"
 }

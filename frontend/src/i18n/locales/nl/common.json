@@ -8,5 +8,6 @@
   "theme.switchTo": "Schakel naar {{mode}} modus",
   "theme.lightShort": "Licht",
   "theme.darkShort": "Donker",
-  "lang.switcherLabel": "Kies taal"
+  "lang.switcherLabel": "Kies taal",
+  "network.offlineBanner": "Offline — scores worden gesynchroniseerd bij opnieuw verbinden"
 }
