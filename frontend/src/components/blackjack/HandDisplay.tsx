@@ -2,7 +2,7 @@ import React from "react";
 import { View, Text, StyleSheet } from "react-native";
 import { useTranslation } from "react-i18next";
 import { useTheme } from "../../theme/ThemeContext";
-import { HandResponse } from "../../api/blackjackClient";
+import { HandResponse } from "../../game/blackjack/api";
 import PlayingCard from "./PlayingCard";
 
 interface Props {

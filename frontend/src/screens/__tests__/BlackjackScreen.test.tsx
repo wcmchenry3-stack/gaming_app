@@ -7,7 +7,7 @@ import { ThemeProvider } from "../../theme/ThemeContext";
 // ---------------------------------------------------------------------------
 // Mock the API client
 // ---------------------------------------------------------------------------
-jest.mock("../../api/blackjackClient", () => ({
+jest.mock("../../game/blackjack/api", () => ({
   blackjackApi: {
     newSession: jest.fn(),
     getState: jest.fn(),
@@ -19,7 +19,7 @@ jest.mock("../../api/blackjackClient", () => ({
   },
 }));
 
-import { blackjackApi } from "../../api/blackjackClient";
+import { blackjackApi } from "../../game/blackjack/api";
 const mockApi = blackjackApi as jest.Mocked<typeof blackjackApi>;
 
 // ---------------------------------------------------------------------------

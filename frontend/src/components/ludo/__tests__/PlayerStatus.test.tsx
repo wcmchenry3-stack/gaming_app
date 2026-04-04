@@ -2,7 +2,7 @@ import React from "react";
 import { render } from "@testing-library/react-native";
 import PlayerStatus from "../PlayerStatus";
 import { ThemeProvider } from "../../../theme/ThemeContext";
-import { PlayerStateResponse } from "../../../api/ludoClient";
+import { PlayerStateResponse } from "../../../game/ludo/api";
 
 function makePlayerState(player_id: string, overrides = {}): PlayerStateResponse {
   return {

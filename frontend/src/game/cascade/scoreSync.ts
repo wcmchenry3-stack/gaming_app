@@ -5,7 +5,7 @@
  * logic co-located with Cascade rather than in a central switch.
  */
 
-import { cascadeApi } from "../../api/cascadeClient";
+import { cascadeApi } from "./api";
 import { scoreQueue } from "../_shared/scoreQueue";
 import { PendingSubmission } from "../_shared/types";
 

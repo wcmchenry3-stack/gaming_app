@@ -6,7 +6,7 @@ import { ThemeProvider } from "../../theme/ThemeContext";
 // ---------------------------------------------------------------------------
 // Mock the API client
 // ---------------------------------------------------------------------------
-jest.mock("../../api/client", () => ({
+jest.mock("../../game/yacht/api", () => ({
   api: {
     roll: jest.fn(),
     score: jest.fn(),
@@ -15,7 +15,7 @@ jest.mock("../../api/client", () => ({
   },
 }));
 
-import { api } from "../../api/client";
+import { api } from "../../game/yacht/api";
 const mockApi = api as jest.Mocked<typeof api>;
 
 // ---------------------------------------------------------------------------

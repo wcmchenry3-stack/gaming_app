@@ -8,7 +8,7 @@
 import React from "react";
 import { render, fireEvent, waitFor, screen } from "@testing-library/react-native";
 import GameOverOverlay from "../GameOverOverlay";
-import { cascadeApi } from "../../../api/cascadeClient";
+import { cascadeApi } from "../../../game/cascade/api";
 import * as NetworkContext from "../../../game/_shared/NetworkContext";
 import { scoreQueue } from "../../../game/_shared/scoreQueue";
 
@@ -16,7 +16,7 @@ import { scoreQueue } from "../../../game/_shared/scoreQueue";
 // Mocks
 // ---------------------------------------------------------------------------
 
-jest.mock("../../../api/cascadeClient", () => ({
+jest.mock("../../../game/cascade/api", () => ({
   cascadeApi: {
     submitScore: jest.fn(),
   },

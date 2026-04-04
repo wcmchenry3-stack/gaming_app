@@ -4,7 +4,7 @@ import { useTranslation } from "react-i18next";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { RouteProp } from "@react-navigation/native";
 import { RootStackParamList } from "../../App";
-import { api, GameState } from "../api/client";
+import { api, GameState } from "../game/yacht/api";
 import DiceRow from "../components/DiceRow";
 import Scorecard from "../components/Scorecard";
 import { useTheme } from "../theme/ThemeContext";
