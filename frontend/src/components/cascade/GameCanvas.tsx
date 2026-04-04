@@ -67,7 +67,6 @@ function FruitBodySkia({
   color,
   image,
   angle,
-  bgColor,
   sprite,
 }: {
   x: number;
@@ -76,7 +75,6 @@ function FruitBodySkia({
   color: string;
   image: SkImage | null;
   angle: number;
-  bgColor: string;
   sprite: SpriteInfo | null;
 }) {
   if (image) {
@@ -102,11 +100,14 @@ function FruitBodySkia({
       ih = radius * 2;
     }
 
+    // Sprite is drawn clipped to the fruit's circle. No opaque background fill:
+    // on web the sprite edges are hard-thresholded via cleanImage(), but on mobile
+    // we keep the raw alpha so sprite edges blend naturally with whatever is
+    // behind (canvas background or adjacent fruits). Filling a bg circle here
+    // would obscure adjacent fruits with a dark ring where sprite alpha fades.
     return (
       <Group transform={[{ translateX: x }, { translateY: y }, { rotate: angle }]}>
         <Group clip={clipPath} invertClip={false}>
-          {/* Opaque background fill — anything transparent in the sprite shows this */}
-          <Circle cx={0} cy={0} r={radius} color={bgColor} />
           <SkiaImage image={image} x={ix} y={iy} width={iw} height={ih} fit="fill" />
         </Group>
       </Group>
@@ -324,7 +325,6 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
                 color={nextDef.color}
                 image={images[nextDef.tier] ?? null}
                 angle={0}
-                bgColor={colors.fruitBackground}
                 sprite={spriteInfoByTier[nextDef.tier] ?? null}
               />
             </Group>
@@ -341,7 +341,6 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
                 color={def.color}
                 image={images[body.tier] ?? null}
                 angle={body.angle}
-                bgColor={colors.fruitBackground}
                 sprite={spriteInfoByTier[body.tier] ?? null}
               />
             );
