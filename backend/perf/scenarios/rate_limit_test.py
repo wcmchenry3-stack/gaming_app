@@ -5,7 +5,7 @@ Intentionally hammers endpoints to verify 429 responses fire correctly
 and include the required Retry-After header.
 
 Usage:
-  # Verify 429 fires on /game/new (10/minute limit):
+  # Verify 429 fires on /yacht/new (10/minute limit):
   locust -f perf/locustfile.py --headless --users 1 --spawn-rate 1 \
          --run-time 30s --host http://localhost:8000 RateLimitVerifyUser
 
@@ -28,13 +28,13 @@ class RateLimitTasks(SequentialTaskSet):
 
     @task
     def exhaust_new_game_limit(self):
-        """POST /game/new 12 times; the 11th or 12th must return 429."""
+        """POST /yacht/new 12 times; the 11th or 12th must return 429."""
         hit_429 = False
         for _ in range(12):
             with self.client.post(
-                "/game/new",
+                "/yacht/new",
                 headers=self._headers,
-                name="POST /game/new (rate test)",
+                name="POST /yacht/new (rate test)",
                 catch_response=True,
             ) as resp:
                 if resp.status_code == 429:

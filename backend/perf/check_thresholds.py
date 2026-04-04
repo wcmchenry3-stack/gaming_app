@@ -21,11 +21,11 @@ from pathlib import Path
 # Order matters: more specific patterns first.
 ENDPOINT_TO_SCENARIO: list[tuple[str, str]] = [
     ("/cascade/", "leaderboard"),
-    ("/game/new", "game_flow"),
-    ("/game/roll", "game_flow"),
-    ("/game/score", "game_flow"),
-    ("/game/state", "stateless_reads"),
-    ("/game/possible-scores", "stateless_reads"),
+    ("/yacht/new", "game_flow"),
+    ("/yacht/roll", "game_flow"),
+    ("/yacht/score", "game_flow"),
+    ("/yacht/state", "stateless_reads"),
+    ("/yacht/possible-scores", "stateless_reads"),
 ]
 
 
