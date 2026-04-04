@@ -22,11 +22,7 @@ The `frontend/ios/` directory must exist in the repo. If it is missing:
 
 ## EAS status
 
-`eas.json` exists and is intentionally kept for future use. When the app goes to production,
-EAS will be used for **App Store submission** (`eas submit`), not for building.
-Builds will remain Xcode-direct even then unless explicitly decided otherwise.
-
-**Do not** treat the presence of `eas.json` as evidence that EAS Build is in use.
+EAS Build and `eas submit` are **not used** for this project — neither now nor planned. `eas.json` has been removed.
 
 ## CI / CD
 
@@ -39,4 +35,4 @@ The `/Volumes/workspace/repository/` path in Xcode Cloud logs is Apple's runner 
 - `eas build` for iOS
 - `prebuildCommand` in `eas.json`
 - Treating `ios/` as a generated/ephemeral directory
-- Removing `eas.json` — it is kept intentionally for future App Store submission
+- Treating `ios/` as a generated/ephemeral directory

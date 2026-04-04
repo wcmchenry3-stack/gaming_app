@@ -33,6 +33,18 @@ cd backend && python -m pytest tests/ -v
 **Xcode Cloud (App Store Connect) — EAS Build is NOT used.** `frontend/ios/` is committed to the repo, not generated at build time. `/Volumes/workspace/repository/` in build logs is Apple's Xcode Cloud runner.
 See [`docs/IOS.md`](docs/IOS.md). Do not suggest `eas build`, `prebuildCommand`, or treating `ios/` as ephemeral.
 
+## Android Builds
+**Gradle → Google Play Console (internal testing) — EAS Build is NOT used.** `frontend/android/` is committed to the repo (bare workflow), not generated at build time.
+See [`docs/ANDROID-CI.md`](docs/ANDROID-CI.md). Do not suggest `eas build`, `eas submit`, or treating `android/` as ephemeral.
+
+### Android Rules
+- Before modifying files under `frontend/android/`: verify the change builds locally with `cd frontend/android && ./gradlew assembleDebug`.
+- Never commit `upload-keystore.jks`, `debug.keystore`, or `local.properties` — these are gitignored for security.
+- Never change the Gradle wrapper version (`gradle-wrapper.properties`) without verifying compatibility with current AGP and React Native Gradle Plugin.
+- Read `docs/ANDROID-CI.md` before modifying `build.gradle`, `settings.gradle`, or `gradle.properties`.
+- After any change to `build.gradle`, `settings.gradle`, or `gradle.properties`, verify `android-bundle-check` and `android-build-check` CI jobs pass before merging.
+- `sentry.properties` must use environment variables for org/project/token — never hardcode Sentry credentials.
+
 ## Deployment
 See [`docs/RENDER.md`](docs/RENDER.md) for Render hosting setup.
 

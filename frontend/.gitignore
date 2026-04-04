@@ -37,8 +37,8 @@ yarn-error.*
 *.tsbuildinfo
 
 # generated native folders
-# NOTE: /ios is NOT ignored — iOS builds use Xcode directly, ios/ is committed
-# See docs/IOS.md
-/android
+# NOTE: /ios and /android are NOT ignored — native builds use committed bare workflows
+# See docs/IOS.md and docs/ANDROID-CI.md
+# /android
 
 .env.local
