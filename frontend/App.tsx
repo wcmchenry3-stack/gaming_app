@@ -11,6 +11,7 @@ import GameScreen from "./src/screens/GameScreen";
 import CascadeScreen from "./src/screens/CascadeScreen";
 import BlackjackScreen from "./src/screens/BlackjackScreen";
 import LudoScreen from "./src/screens/LudoScreen";
+import Twenty48Screen from "./src/screens/Twenty48Screen";
 import { GameState } from "./src/api/client";
 import { ThemeProvider } from "./src/theme/ThemeContext";
 import { useHtmlAttributes } from "./src/i18n/useHtmlAttributes";
@@ -36,6 +37,7 @@ export type RootStackParamList = {
   Cascade: undefined;
   Blackjack: undefined;
   Ludo: undefined;
+  Twenty48: undefined;
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -62,6 +64,7 @@ function AppInner() {
           <Stack.Screen name="Cascade" component={CascadeScreen} />
           <Stack.Screen name="Blackjack" component={BlackjackScreen} />
           <Stack.Screen name="Ludo" component={LudoScreen} />
+          <Stack.Screen name="Twenty48" component={Twenty48Screen} />
         </Stack.Navigator>
       </NavigationContainer>
     </ThemeProvider>

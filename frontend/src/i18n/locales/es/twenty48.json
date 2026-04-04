@@ -1,0 +1,20 @@
+{
+  "game.title": "2048",
+  "game.description": "Desliza y combina fichas para llegar a 2048.",
+  "game.playLabel": "Jugar 2048",
+  "score.label": "Puntuaci\u00f3n",
+  "score.accessibilityLabel": "Puntuaci\u00f3n actual: {{score}}",
+  "actions.newGame": "Nuevo juego",
+  "actions.newGameLabel": "Iniciar un nuevo juego de 2048",
+  "actions.keepPlaying": "Seguir jugando",
+  "actions.keepPlayingLabel": "Continuar jugando despu\u00e9s de alcanzar 2048",
+  "actions.quit": "Salir",
+  "actions.quitLabel": "Salir y volver a la pantalla de inicio",
+  "swipe.hint": "Desliza para mover las fichas",
+  "gameOver.title": "Fin del juego",
+  "gameOver.body": "No quedan movimientos. Tu puntuaci\u00f3n: {{score}}.",
+  "gameOver.newGame": "Nuevo juego",
+  "gameOver.home": "Inicio",
+  "win.title": "\u00a1Ganaste!",
+  "win.body": "\u00a1Llegaste a 2048! Puedes seguir jugando para una puntuaci\u00f3n m\u00e1s alta."
+}

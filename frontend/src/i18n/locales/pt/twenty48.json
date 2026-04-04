@@ -1,0 +1,20 @@
+{
+  "game.title": "2048",
+  "game.description": "Deslize e combine pe\u00e7as para chegar a 2048.",
+  "game.playLabel": "Jogar 2048",
+  "score.label": "Pontua\u00e7\u00e3o",
+  "score.accessibilityLabel": "Pontua\u00e7\u00e3o atual: {{score}}",
+  "actions.newGame": "Novo jogo",
+  "actions.newGameLabel": "Iniciar um novo jogo de 2048",
+  "actions.keepPlaying": "Continuar jogando",
+  "actions.keepPlayingLabel": "Continuar jogando ap\u00f3s alcan\u00e7ar 2048",
+  "actions.quit": "Sair",
+  "actions.quitLabel": "Sair e voltar \u00e0 tela inicial",
+  "swipe.hint": "Deslize para mover as pe\u00e7as",
+  "gameOver.title": "Fim de jogo",
+  "gameOver.body": "N\u00e3o h\u00e1 mais movimentos. Sua pontua\u00e7\u00e3o: {{score}}.",
+  "gameOver.newGame": "Novo jogo",
+  "gameOver.home": "In\u00edcio",
+  "win.title": "Voc\u00ea venceu!",
+  "win.body": "Voc\u00ea alcan\u00e7ou 2048! Voc\u00ea pode continuar jogando para uma pontua\u00e7\u00e3o maior."
+}

@@ -1,0 +1,20 @@
+{
+  "game.title": "2048",
+  "game.description": "Glissez et fusionnez les tuiles pour atteindre 2048.",
+  "game.playLabel": "Jouer \u00e0 2048",
+  "score.label": "Score",
+  "score.accessibilityLabel": "Score actuel\u00a0: {{score}}",
+  "actions.newGame": "Nouvelle partie",
+  "actions.newGameLabel": "D\u00e9marrer une nouvelle partie de 2048",
+  "actions.keepPlaying": "Continuer",
+  "actions.keepPlayingLabel": "Continuer \u00e0 jouer apr\u00e8s avoir atteint 2048",
+  "actions.quit": "Quitter",
+  "actions.quitLabel": "Quitter et revenir \u00e0 l\u2019accueil",
+  "swipe.hint": "Glissez pour d\u00e9placer les tuiles",
+  "gameOver.title": "Partie termin\u00e9e",
+  "gameOver.body": "Plus de mouvements disponibles. Votre score\u00a0: {{score}}.",
+  "gameOver.newGame": "Nouvelle partie",
+  "gameOver.home": "Accueil",
+  "win.title": "Vous avez gagn\u00e9\u00a0!",
+  "win.body": "Vous avez atteint 2048\u00a0! Vous pouvez continuer pour un meilleur score."
+}

@@ -24,7 +24,15 @@ interface GameCard {
 }
 
 export default function HomeScreen({ navigation }: Props) {
-  const { t } = useTranslation(["common", "yacht", "cascade", "blackjack", "ludo", "errors"]);
+  const { t } = useTranslation([
+    "common",
+    "yacht",
+    "cascade",
+    "blackjack",
+    "ludo",
+    "twenty48",
+    "errors",
+  ]);
   const { colors, theme, toggle } = useTheme();
   const insets = useSafeAreaInsets();
   const [yachtLoading, setYachtLoading] = useState(false);
@@ -75,6 +83,12 @@ export default function HomeScreen({ navigation }: Props) {
       description: t("ludo:game.description"),
       action: () => navigation.navigate("Ludo"),
     },
+    {
+      emoji: "🔢",
+      title: t("twenty48:game.title"),
+      description: t("twenty48:game.description"),
+      action: () => navigation.navigate("Twenty48"),
+    },
   ];
 
   const playLabels: Record<string, string> = {
@@ -82,6 +96,7 @@ export default function HomeScreen({ navigation }: Props) {
     [t("cascade:game.title")]: t("cascade:game.playLabel"),
     [t("blackjack:game.title")]: t("blackjack:game.playLabel"),
     [t("ludo:game.title")]: t("ludo:game.playLabel"),
+    [t("twenty48:game.title")]: t("twenty48:game.playLabel"),
   };
 
   return (

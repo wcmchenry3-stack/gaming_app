@@ -1,0 +1,20 @@
+{
+  "game.title": "2048",
+  "game.description": "\ud0c0\uc77c\uc744 \ubc00\uace0 \ud569\uccd0\uc11c 2048\uc5d0 \ub3c4\ub2ec\ud558\uc138\uc694.",
+  "game.playLabel": "2048 \ud50c\ub808\uc774",
+  "score.label": "\uc810\uc218",
+  "score.accessibilityLabel": "\ud604\uc7ac \uc810\uc218: {{score}}",
+  "actions.newGame": "\uc0c8 \uac8c\uc784",
+  "actions.newGameLabel": "\uc0c8\ub85c\uc6b4 2048 \uac8c\uc784 \uc2dc\uc791",
+  "actions.keepPlaying": "\uacc4\uc18d \ud50c\ub808\uc774",
+  "actions.keepPlayingLabel": "2048 \ub2ec\uc131 \ud6c4 \uacc4\uc18d \ud50c\ub808\uc774",
+  "actions.quit": "\uc885\ub8cc",
+  "actions.quitLabel": "\uc885\ub8cc\ud558\uace0 \ud648 \ud654\uba74\uc73c\ub85c \ub3cc\uc544\uac00\uae30",
+  "swipe.hint": "\uc2a4\uc640\uc774\ud504\ud558\uc5ec \ud0c0\uc77c\uc744 \uc774\ub3d9\ud558\uc138\uc694",
+  "gameOver.title": "\uac8c\uc784 \uc624\ubc84",
+  "gameOver.body": "\ub354 \uc774\uc0c1 \uc774\ub3d9\ud560 \uc218 \uc5c6\uc2b5\ub2c8\ub2e4. \uc810\uc218: {{score}}.",
+  "gameOver.newGame": "\uc0c8 \uac8c\uc784",
+  "gameOver.home": "\ud648",
+  "win.title": "\uc2b9\ub9ac!",
+  "win.body": "2048\uc5d0 \ub3c4\ub2ec\ud588\uc2b5\ub2c8\ub2e4! \ub354 \ub192\uc740 \uc810\uc218\ub97c \uc704\ud574 \uacc4\uc18d \ud50c\ub808\uc774\ud560 \uc218 \uc788\uc2b5\ub2c8\ub2e4."
+}
