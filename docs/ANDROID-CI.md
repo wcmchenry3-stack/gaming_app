@@ -1,9 +1,8 @@
 # Android CI/CD — Build Infrastructure
 
-## IMPORTANT: We use EAS Build, NOT Xcode Cloud
+## IMPORTANT: We use Play Console, NOT EAS Build or Xcode Cloud
 
-Android builds run through **EAS Build** (Expo's cloud CI). Xcode Cloud is
-iOS-only. Do not suggest Xcode Cloud fixes for Android build failures.
+Android releases are built locally with Gradle and uploaded manually to **Google Play Console** (internal testing track). EAS Build is **not used**. Xcode Cloud is iOS-only. Do not suggest EAS Build or Xcode Cloud fixes for Android build failures.
 
 ## Why `npm ci` must run before Gradle
 
@@ -20,14 +19,14 @@ Always install JS dependencies before any Gradle command — both locally and in
 ## Bare workflow
 
 `frontend/android/` is committed (bare Expo workflow). Running `expo prebuild`
-locally regenerates it; EAS Build does NOT run prebuild — it uses the committed
-`android/` directory directly.
+locally regenerates it. The committed `android/` directory is used directly for
+Gradle builds — no prebuild step happens in CI.
 
 ## Signing configuration
 
 - **Debug**: uses `app/debug.keystore` (standard Android debug key, gitignored)
 - **Release**: uses `app/upload-keystore.jks` (gitignored), passwords via env vars
-  - These are configured as EAS secrets (`eas secret:create`)
+  - Keystore passwords are stored as GitHub Actions secrets
   - Fallback passwords in `app/build.gradle` are for local development only
 
 **Critical**: Never commit keystores or `local.properties` — they are gitignored
@@ -48,7 +47,7 @@ for security.
 
 The `android-bundle-check` CI job runs `npx expo export:embed --platform android`
 on every PR to verify the JS bundle can be created. This catches silent bundling
-failures before they reach EAS Build.
+failures before they reach a Play Console upload.
 
 The `android-build-check` CI job compiles Debug mode via `./gradlew assembleDebug`.
 Debug builds skip JS bundling (Metro dev server is expected), so it only validates
@@ -72,7 +71,7 @@ failures from blocking the build.
 
 | Aspect | iOS | Android |
 |---|---|---|
-| Build system | Xcode Cloud | EAS Build |
+| Build system | Xcode Cloud | Gradle → Play Console |
 | Native deps | CocoaPods (`pod install`) | Gradle (automatic) |
 | Lock file | `Podfile.lock` (committed) | None (Gradle resolves dynamically) |
 | CI compile check | `ios-build-check` (macOS) | `android-build-check` (Linux) |
