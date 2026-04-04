@@ -22,7 +22,9 @@ class StatelessReadTasks(TaskSet):
 
     @task(3)
     def get_state(self):
-        with self.client.get("/yacht/state", headers=self._headers, name="GET /yacht/state") as resp:
+        with self.client.get(
+            "/yacht/state", headers=self._headers, name="GET /yacht/state"
+        ) as resp:
             resp.raise_for_status()
 
     @task(1)
