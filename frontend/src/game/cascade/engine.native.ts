@@ -1,5 +1,6 @@
 import Matter from "matter-js";
 import { FruitDefinition, FruitSet, FruitTier } from "../../theme/fruitSets";
+import { getVerticesForFruit } from "./fruitVertices";
 
 // Re-export shared types so imports from './engine' resolve correctly on native
 export {
@@ -29,6 +30,14 @@ import {
 } from "./engine.shared";
 import type { FruitBody, BodySnapshot, MergeEvent, EngineHandle } from "./engine.shared";
 
+export interface BoundaryEscapeEvent {
+  tier: number;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+
 // matter.js gravity scale: Rapier uses GRAVITY_Y=14 with SCALE=0.01, i.e. 1400 px/s².
 // matter.js default gravity.scale = 0.001 and gravity.y = 1 → effective ≈ 1 px/tick².
 // We want ~1400 px/s² at 60fps (dt=16.67ms). matter.js applies gravity as:
@@ -41,7 +50,8 @@ export async function createEngine(
   H: number,
   fruitSet: FruitSet,
   onMerge: (event: MergeEvent) => void,
-  onGameOver: () => void
+  onGameOver: () => void,
+  onBoundaryEscape?: (event: BoundaryEscapeEvent) => void
 ): Promise<EngineHandle> {
   const engine = Matter.Engine.create({
     gravity: { x: 0, y: MATTER_GRAVITY_Y },
@@ -85,11 +95,35 @@ export async function createEngine(
   });
 
   function spawnAt(def: FruitDefinition, setId: string, x: number, y: number): FruitBody {
-    const body = Matter.Bodies.circle(x, y, def.radius, {
+    const nameKey = (def as { nameKey?: string }).nameKey ?? def.name.toLowerCase();
+    const verts = getVerticesForFruit(setId, nameKey);
+
+    let body: Matter.Body;
+    const bodyOpts = {
       restitution: FRUIT_RESTITUTION,
       friction: FRUIT_FRICTION,
       density: 0.001, // matter.js density is per-pixel-area; tuned for natural feel
-    });
+    };
+
+    if (verts && verts.length >= 3) {
+      const matterVerts = verts.map((v) => ({
+        x: v.x * def.radius,
+        y: v.y * def.radius,
+      }));
+      const polyBody = Matter.Bodies.fromVertices(x, y, [matterVerts], bodyOpts);
+      // fromVertices can return a body whose centre-of-mass differs from (x, y).
+      // Force the position to the requested drop point so it matches the circle
+      // fallback behaviour and the renderer's expectations.
+      if (polyBody) {
+        Matter.Body.setPosition(polyBody, { x, y });
+        body = polyBody;
+      } else {
+        body = Matter.Bodies.circle(x, y, def.radius, bodyOpts);
+      }
+    } else {
+      body = Matter.Bodies.circle(x, y, def.radius, bodyOpts);
+    }
+
     Matter.Composite.add(world, body);
 
     const fb: FruitBody = {
@@ -99,7 +133,7 @@ export async function createEngine(
       isMerging: false,
       createdAt: Date.now(),
       fruitRadius: def.radius,
-      collisionVerts: null, // native uses circle colliders only
+      collisionVerts: verts,
     };
     fruitMap.set(body.id, fb);
     return fb;
@@ -171,21 +205,43 @@ export async function createEngine(
         });
       }
 
-      // Collect snapshots
+      // Collect snapshots and detect boundary escapes
       const snapshots: BodySnapshot[] = [];
+      const escapedIds: number[] = [];
+      const allBodies = Matter.Composite.allBodies(world);
       fruitMap.forEach((fb, bodyId) => {
-        const bodies = Matter.Composite.allBodies(world);
-        const body = bodies.find((b) => b.id === bodyId);
+        const body = allBodies.find((b) => b.id === bodyId);
         if (!body) return;
+        const px = body.position.x;
+        const py = body.position.y;
+
+        // Detect bodies that have escaped the play area (with margin)
+        const margin = fb.fruitRadius * 2;
+        if (px < -margin || px > W + margin || py > H + margin) {
+          escapedIds.push(bodyId);
+          onBoundaryEscape?.({
+            tier: fb.fruitTier,
+            x: px,
+            y: py,
+            width: W,
+            height: H,
+          });
+          return;
+        }
+
         snapshots.push({
           id: bodyId,
-          x: body.position.x,
-          y: body.position.y,
+          x: px,
+          y: py,
           tier: fb.fruitTier,
           angle: body.angle,
           collisionVerts: fb.collisionVerts,
         });
       });
+      // Clean up escaped bodies
+      for (const id of escapedIds) {
+        removeBody(id);
+      }
       return snapshots;
     },
 
