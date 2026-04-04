@@ -213,17 +213,21 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
       );
     }
 
+    const panGesture = Gesture.Pan()
+      .runOnJS(true)
+      .minDistance(0)
+      .onBegin((e) => setPointerX(e.x))
+      .onChange((e) => setPointerX(e.x))
+      .onEnd((e) => {
+        if (pointerX !== null) onTap(e.x);
+      })
+      .onFinalize(() => setPointerX(null));
     const tapGesture = Gesture.Tap()
       .runOnJS(true)
       .onEnd((e, ok) => {
         if (ok) onTap(e.x);
       });
-    const panGesture = Gesture.Pan()
-      .runOnJS(true)
-      .onBegin((e) => setPointerX(e.x))
-      .onChange((e) => setPointerX(e.x))
-      .onFinalize(() => setPointerX(null));
-    const composed = Gesture.Simultaneous(tapGesture, panGesture);
+    const composed = Gesture.Exclusive(panGesture, tapGesture);
 
     return (
       <GestureDetector gesture={composed}>
@@ -252,10 +256,16 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
             <DashPathEffect intervals={[6, 4]} phase={0} />
           </Path>
           {ghostCx !== null && guidePath !== null && (
-            <Group opacity={0.4}>
-              <Path path={guidePath} color="rgba(255,255,255,0.12)" style="stroke" strokeWidth={1}>
+            <Group opacity={0.7}>
+              <Path path={guidePath} color="rgba(255,255,255,0.25)" style="stroke" strokeWidth={1.5}>
                 <DashPathEffect intervals={[4, 6]} phase={0} />
               </Path>
+              <Circle
+                cx={ghostCx + 2}
+                cy={DROP_Y + 3}
+                r={nextDef.radius + 1}
+                color="rgba(0,0,0,0.25)"
+              />
               <FruitBodySkia
                 x={ghostCx}
                 y={DROP_Y}

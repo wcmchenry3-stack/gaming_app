@@ -178,14 +178,19 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
           width - WALL_THICKNESS - nd.radius
         );
         ctx.save();
-        ctx.globalAlpha = 0.4;
-        ctx.strokeStyle = "rgba(255,255,255,0.12)";
-        ctx.lineWidth = 1;
+        ctx.globalAlpha = 0.7;
+        ctx.strokeStyle = "rgba(255,255,255,0.25)";
+        ctx.lineWidth = 1.5;
         ctx.setLineDash([4, 6]);
         ctx.beginPath();
         ctx.moveTo(ghostCx, dangerY);
         ctx.lineTo(ghostCx, height - WALL_THICKNESS);
         ctx.stroke();
+        // Drop shadow
+        ctx.fillStyle = "rgba(0,0,0,0.25)";
+        ctx.beginPath();
+        ctx.arc(ghostCx + 2, DROP_Y + 3, nd.radius + 1, 0, Math.PI * 2);
+        ctx.fill();
         drawFruitBody(
           ctx,
           nd,
@@ -279,23 +284,27 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
       [initEngine, width]
     );
 
-    const tapGesture = Gesture.Tap()
-      .runOnJS(true)
-      .onEnd((e, ok) => {
-        if (ok) onTap(e.x);
-      });
     const panGesture = Gesture.Pan()
       .runOnJS(true)
+      .minDistance(0)
       .onBegin((e) => {
         pointerXRef.current = e.x;
       })
       .onChange((e) => {
         pointerXRef.current = e.x;
       })
+      .onEnd((e) => {
+        if (pointerXRef.current !== null) onTap(e.x);
+      })
       .onFinalize(() => {
         pointerXRef.current = null;
       });
-    const composed = Gesture.Simultaneous(tapGesture, panGesture);
+    const tapGesture = Gesture.Tap()
+      .runOnJS(true)
+      .onEnd((e, ok) => {
+        if (ok) onTap(e.x);
+      });
+    const composed = Gesture.Exclusive(panGesture, tapGesture);
 
     return (
       <GestureDetector gesture={composed}>
