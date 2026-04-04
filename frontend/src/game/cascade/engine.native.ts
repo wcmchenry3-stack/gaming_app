@@ -99,6 +99,7 @@ export async function createEngine(
       isMerging: false,
       createdAt: Date.now(),
       fruitRadius: def.radius,
+      collisionVerts: null, // native uses circle colliders only
     };
     fruitMap.set(body.id, fb);
     return fb;
@@ -182,6 +183,7 @@ export async function createEngine(
           y: body.position.y,
           tier: fb.fruitTier,
           angle: body.angle,
+          collisionVerts: fb.collisionVerts,
         });
       });
       return snapshots;

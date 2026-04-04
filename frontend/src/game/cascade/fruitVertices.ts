@@ -3,35 +3,130 @@ import planetVerticesRaw from "../../../assets/planet-vertices.json";
 
 export type VertexPoint = { x: number; y: number };
 
-// Evenly downsample a convex-hull vertex array to at most maxCount vertices.
-// Bounds the number of collision faces per body, preventing excessive angular
-// impulses from high-vertex hulls (grapes, pineapple, etc.).
+/** Sprite rendering info for aligning the image with the collision hull. */
+export interface SpriteInfo {
+  /** Offset from body centre to image centre, in normalised coords (multiply by radius). */
+  offsetX: number;
+  offsetY: number;
+  /** Half-size of the image in normalised coords (multiply by radius). */
+  scaleX: number;
+  scaleY: number;
+}
+
+interface AssetEntry {
+  verts: [number, number][];
+  spriteOffset: [number, number];
+  spriteScale: [number, number];
+}
+
+/**
+ * Perpendicular distance from point P to the line segment A→B.
+ */
+function perpendicularDist(p: VertexPoint, a: VertexPoint, b: VertexPoint): number {
+  const dx = b.x - a.x;
+  const dy = b.y - a.y;
+  const lenSq = dx * dx + dy * dy;
+  if (lenSq < 1e-12) return Math.hypot(p.x - a.x, p.y - a.y);
+  return Math.abs(dy * p.x - dx * p.y + b.x * a.y - b.y * a.x) / Math.sqrt(lenSq);
+}
+
+/**
+ * Ramer-Douglas-Peucker simplification for a closed polygon.
+ *
+ * Iteratively increases epsilon until the result has at most maxCount
+ * vertices. Much better than uniform downsampling at preserving shape
+ * features (corners, concavities) while reducing vertex count.
+ */
 function simplifyVertices(verts: VertexPoint[], maxCount: number): VertexPoint[] {
   if (verts.length <= maxCount) return verts;
-  const step = verts.length / maxCount;
-  return Array.from({ length: maxCount }, (_, i) => verts[Math.floor(i * step)]);
+
+  function rdp(points: VertexPoint[], epsilon: number): VertexPoint[] {
+    if (points.length <= 2) return points;
+
+    let maxDist = 0;
+    let maxIdx = 0;
+    const first = points[0];
+    const last = points[points.length - 1];
+
+    for (let i = 1; i < points.length - 1; i++) {
+      const d = perpendicularDist(points[i], first, last);
+      if (d > maxDist) {
+        maxDist = d;
+        maxIdx = i;
+      }
+    }
+
+    if (maxDist > epsilon) {
+      const left = rdp(points.slice(0, maxIdx + 1), epsilon);
+      const right = rdp(points.slice(maxIdx), epsilon);
+      return left.slice(0, -1).concat(right);
+    }
+    return [first, last];
+  }
+
+  // Close the polygon for RDP, then remove duplicate closing vertex
+  const closed = [...verts, verts[0]];
+
+  // Binary search for the smallest epsilon that yields ≤ maxCount vertices
+  let lo = 0;
+  let hi = 2.0; // vertices are in [-1, 1] range, so 2.0 is generous
+  let best = verts;
+
+  for (let iter = 0; iter < 20; iter++) {
+    const mid = (lo + hi) / 2;
+    const result = rdp(closed, mid);
+    const trimmed = result.slice(0, -1); // remove closing duplicate
+    if (trimmed.length <= maxCount) {
+      best = trimmed;
+      hi = mid;
+    } else {
+      lo = mid;
+    }
+  }
+
+  return best;
+}
+
+function getEntry(setId: string, nameKey: string): AssetEntry | null {
+  let map: Record<string, AssetEntry> | null = null;
+  if (setId === "fruits") map = fruitVerticesRaw as unknown as Record<string, AssetEntry>;
+  else if (setId === "planets") map = planetVerticesRaw as unknown as Record<string, AssetEntry>;
+  else return null;
+
+  return map[nameKey] ?? null;
 }
 
 /**
  * Return normalized convex-hull vertices for a fruit, or null if the set
  * has no PNG assets (e.g. gems) or fewer than 3 vertices were extracted.
  *
- * @param setId   - FruitSet.id ("fruits" | "planets" | "gems" | ...)
- * @param nameKey - filename stem, lowercase (e.g. "cherry", "grapes")
- *
- * Vertices are centroid-centred and scaled so max distance from origin = 1.0.
- * Multiply each component by def.radius to get world-space coordinates.
+ * Vertices are centred on the opaque bounding-box centre and scaled so the
+ * hull fills [-1, 1]. Multiply each component by def.radius for world-space.
  */
 export function getVerticesForFruit(setId: string, nameKey: string): VertexPoint[] | null {
-  let map: Record<string, [number, number][]> | null = null;
-  if (setId === "fruits") map = fruitVerticesRaw;
-  else if (setId === "planets") map = planetVerticesRaw;
-  else return null; // gems or unknown set → circle fallback
+  const entry = getEntry(setId, nameKey);
+  if (!entry) return null;
 
-  const raw = map[nameKey];
+  const raw = entry.verts;
   if (!raw || raw.length < 3) return null;
   return simplifyVertices(
     raw.map(([x, y]) => ({ x, y })),
-    12
+    24
   );
+}
+
+/**
+ * Return sprite rendering info so the image aligns with the collision hull.
+ * Returns null for sets without PNG assets.
+ */
+export function getSpriteInfo(setId: string, nameKey: string): SpriteInfo | null {
+  const entry = getEntry(setId, nameKey);
+  if (!entry) return null;
+
+  return {
+    offsetX: entry.spriteOffset[0],
+    offsetY: entry.spriteOffset[1],
+    scaleX: entry.spriteScale[0],
+    scaleY: entry.spriteScale[1],
+  };
 }

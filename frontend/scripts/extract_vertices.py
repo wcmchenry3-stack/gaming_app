@@ -62,7 +62,7 @@ def _opaque_pixels(
     pixels: list[tuple[int, int, int, int]],
     width: int,
     height: int,
-    alpha_threshold: int = 128,
+    alpha_threshold: int = 200,
 ) -> list[tuple[int, int]]:
     """Return (x, y) coordinates of every pixel whose alpha > alpha_threshold."""
     result = []
@@ -139,22 +139,52 @@ def _area_centroid(hull: list[tuple[float, float]]) -> tuple[float, float]:
 
 def _normalize_hull(
     hull: list[tuple[float, float]],
+    img_width: int | None = None,
+    img_height: int | None = None,
 ) -> list[tuple[float, float]]:
     """
-    Normalize hull vertices so that:
-      - area-weighted centroid is at (0, 0)  ← matches Matter.js Vertices.centre
-      - maximum distance from centroid is 1.0
+    Normalize hull vertices to match how the sprite is rendered at runtime.
 
-    Using the area-weighted centroid (rather than the arithmetic mean) ensures
-    that when Matter.js calls setVertices() internally during fromVertices(),
-    its own centroid recentering is a no-op — the body ends up exactly at the
-    requested spawn position regardless of shape asymmetry.
+    The canvas draws each sprite with ``drawImage(img, -r, -r, 2r, 2r)``,
+    which stretches the full image into a square of side ``2 * radius``
+    centred on the body position.  A pixel at ``(px, py)`` in an image of
+    size ``(W, H)`` therefore maps to world offset::
+
+        ( (px / W - 0.5) * 2r,  (py / H - 0.5) * 2r )
+
+    which equals ``(nx * r, ny * r)`` when we define::
+
+        nx = 2 * px / W - 1      (range [-1, 1])
+        ny = 2 * py / H - 1      (range [-1, 1])
+
+    This per-axis normalisation guarantees the collision polygon lines up
+    with the rendered sprite regardless of image aspect ratio or shape
+    asymmetry (cherry stems, pineapple crowns, etc.).
+
+    When *img_width* / *img_height* are not provided, falls back to the
+    legacy centroid-and-max-distance normalisation (for tests / standalone
+    use).
 
     Returns [] if hull is empty or all vertices are coincident.
     """
     if not hull:
         return []
 
+    if img_width is not None and img_height is not None:
+        # Bounding-box normalisation — centre on the opaque content's bbox
+        # centre, scale by max(bbox_w, bbox_h)/2 so the hull fills [-1, 1].
+        # This ensures the collision shape fills the physics radius regardless
+        # of how much transparent padding the source PNG has.
+        xs = [p[0] for p in hull]
+        ys = [p[1] for p in hull]
+        bbox_cx = (min(xs) + max(xs)) / 2.0
+        bbox_cy = (min(ys) + max(ys)) / 2.0
+        half_size = max(max(xs) - min(xs), max(ys) - min(ys)) / 2.0
+        if half_size < 1e-9:
+            return []
+        return [((p[0] - bbox_cx) / half_size, (p[1] - bbox_cy) / half_size) for p in hull]
+
+    # Legacy fallback: area-weighted centroid, max distance = 1.0
     cx, cy = _area_centroid(hull)
 
     centered = [(p[0] - cx, p[1] - cy) for p in hull]
@@ -167,33 +197,81 @@ def _normalize_hull(
 
 
 def extract_hull(
-    pixels: list[tuple[int, int, int, int]],
+    pixels,
     width: int,
     height: int,
-) -> list[tuple[float, float]]:
+) -> dict:
     """
-    Extract a normalized convex hull from a flat RGBA pixel list.
+    Extract a normalized convex hull from pixel data.
 
-    Returns a list of (x, y) float tuples (centroid at origin, max radius = 1.0),
-    or [] if there are fewer than 3 opaque pixels.
+    *pixels* can be either a numpy array of shape ``(H, W, 4)`` or a flat
+    list of ``(R, G, B, A)`` tuples.
+
+    Returns a dict with:
+      - ``verts``: normalised hull vertices ([-1, 1] based on opaque bbox)
+      - ``spriteOffset``: [ox, oy] — how much to shift the sprite so its
+        opaque content aligns with the collision hull centre, in normalised
+        [-1, 1] coordinates (multiply by radius at runtime).
+
+    Returns ``{"verts": [], "spriteOffset": [0, 0]}`` on failure.
     """
-    opaque = _opaque_pixels(pixels, width, height)
-    if len(opaque) < 3:
-        return []
-
-    # Use scipy if available for a faster/more robust hull
+    empty = {"verts": [], "spriteOffset": [0.0, 0.0]}
     try:
+        import numpy as np  # type: ignore
         from scipy.spatial import ConvexHull  # type: ignore
 
-        import numpy as np  # type: ignore
+        # Fast numpy path
+        arr = np.asarray(pixels)
+        if arr.ndim == 3:
+            alpha = arr[:, :, 3]
+            ys, xs = np.where(alpha > 200)
+            if len(xs) < 3:
+                return empty
+            points = np.column_stack((xs.astype(float), ys.astype(float)))
+        else:
+            opaque = _opaque_pixels(pixels, width, height)
+            if len(opaque) < 3:
+                return empty
+            points = np.array(opaque, dtype=float)
 
-        arr = np.array(opaque, dtype=float)
-        hull_obj = ConvexHull(arr)
-        hull_pts = [tuple(arr[i]) for i in hull_obj.vertices]
+        hull_obj = ConvexHull(points)
+        hull_pts = [tuple(points[i]) for i in hull_obj.vertices]
     except ImportError:
+        opaque = _opaque_pixels(pixels, width, height)
+        if len(opaque) < 3:
+            return empty
         hull_pts = _graham_scan([(float(x), float(y)) for x, y in opaque])
 
-    return _normalize_hull(hull_pts)
+    hull_verts = _normalize_hull(hull_pts, img_width=width, img_height=height)
+    if not hull_verts:
+        return empty
+
+    # Compute sprite offset: the hull is centred on the opaque bbox centre,
+    # but drawImage centres on the image centre.  The offset tells the
+    # renderer how far to shift the image so they align.
+    hxs = [p[0] for p in hull_pts]
+    hys = [p[1] for p in hull_pts]
+    bbox_cx = (min(hxs) + max(hxs)) / 2.0
+    bbox_cy = (min(hys) + max(hys)) / 2.0
+    half_size = max(max(hxs) - min(hxs), max(hys) - min(hys)) / 2.0
+    # Image centre in hull-normalised coords
+    img_cx_norm = (width / 2.0 - bbox_cx) / half_size
+    img_cy_norm = (height / 2.0 - bbox_cy) / half_size
+    # Sprite scale: image spans from -img_half_norm to +img_half_norm
+    img_half_x = (width / 2.0) / half_size
+    img_half_y = (height / 2.0) / half_size
+
+    return {
+        "verts": hull_verts,
+        "spriteOffset": [
+            round(img_cx_norm, 6),
+            round(img_cy_norm, 6),
+        ],
+        "spriteScale": [
+            round(img_half_x, 6),
+            round(img_half_y, 6),
+        ],
+    }
 
 
 # ---------------------------------------------------------------------------
@@ -209,8 +287,18 @@ def _load_rgba(path: Path) -> tuple[list[tuple[int, int, int, int]], int, int]:
 
     img = Image.open(path).convert("RGBA")
     width, height = img.size
-    raw = list(img.get_flattened_data())
-    return raw, width, height
+
+    # Fast path: use numpy to extract opaque pixel coordinates directly,
+    # avoiding the extremely slow pure-Python list-of-tuples path for
+    # large images (2048×2048 = 4M pixels).
+    try:
+        import numpy as np  # type: ignore
+
+        arr = np.array(img)  # shape (H, W, 4)
+        return arr, width, height  # type: ignore[return-value]
+    except ImportError:
+        raw = list(img.get_flattened_data())
+        return raw, width, height
 
 
 # ---------------------------------------------------------------------------
@@ -226,14 +314,19 @@ def process_directory(
 
     Returns the vertex map written.
     """
-    result: dict[str, list[list[float]]] = {}
+    result: dict[str, dict] = {}
 
     for png_path in sorted(png_dir.glob("*.png")):
         pixels, width, height = _load_rgba(png_path)
-        hull = extract_hull(pixels, width, height)
+        data = extract_hull(pixels, width, height)
         key = png_path.stem  # filename without extension
-        result[key] = [[round(x, 6), round(y, 6)] for x, y in hull]
-        status = f"{len(hull)} vertices" if hull else "no hull (too few opaque pixels)"
+        verts = data["verts"]
+        result[key] = {
+            "verts": [[round(x, 6), round(y, 6)] for x, y in verts],
+            "spriteOffset": data["spriteOffset"],
+            "spriteScale": data["spriteScale"],
+        }
+        status = f"{len(verts)} vertices" if verts else "no hull (too few opaque pixels)"
         print(f"  {png_path.name}: {status}")
 
     output_json.parent.mkdir(parents=True, exist_ok=True)
@@ -245,8 +338,12 @@ def process_directory(
 def process_single_file(path: Path) -> None:
     """Process a single PNG and print the vertex JSON to stdout."""
     pixels, width, height = _load_rgba(path)
-    hull = extract_hull(pixels, width, height)
-    result = {path.stem: [[round(x, 6), round(y, 6)] for x, y in hull]}
+    data = extract_hull(pixels, width, height)
+    result = {path.stem: {
+        "verts": [[round(x, 6), round(y, 6)] for x, y in data["verts"]],
+        "spriteOffset": data["spriteOffset"],
+        "spriteScale": data["spriteScale"],
+    }}
     print(json.dumps(result, indent=2))
 
 

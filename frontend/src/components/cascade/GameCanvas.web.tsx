@@ -14,12 +14,22 @@ import {
   MergeEvent,
   WALL_THICKNESS,
   DANGER_LINE_RATIO,
+  BoundaryEscapeEvent,
 } from "../../game/cascade/engine";
+import * as Sentry from "@sentry/react-native";
 import { FruitDefinition, FruitSet } from "../../theme/fruitSets";
+import { getSpriteInfo, SpriteInfo } from "../../game/cascade/fruitVertices";
 import { useTheme } from "../../theme/ThemeContext";
 import { useTranslation } from "react-i18next";
 
 const DROP_Y = 30;
+
+/**
+ * Debug flag: when true, draws collision polygon outlines over each fruit.
+ * Toggle to visualise the mismatch between visual sprite edges and physics
+ * boundaries (see GitHub issue #121).
+ */
+const DEBUG_COLLISION = __DEV__;
 
 export interface GameCanvasHandle {
   drop: (def: FruitDefinition, x: number) => void;
@@ -41,20 +51,69 @@ function clamp(value: number, min: number, max: number) {
   return Math.max(min, Math.min(max, value));
 }
 
+/** Strip semi-transparent glow/shadow pixels from a loaded image.
+ *  Planet PNGs have bright RGB data in their zero-alpha pixels; downsampling
+ *  would blend these with adjacent opaque pixels, resurrecting them as a
+ *  visible checkerboard. We process at full resolution to avoid this. */
+function cleanImage(img: HTMLImageElement): CanvasImageSource {
+  try {
+    const w = img.naturalWidth;
+    const h = img.naturalHeight;
+    const c = document.createElement("canvas");
+    c.width = w;
+    c.height = h;
+    const ctx = c.getContext("2d")!;
+    ctx.drawImage(img, 0, 0);
+    const data = ctx.getImageData(0, 0, w, h);
+    const px = data.data;
+    for (let i = 0; i < px.length; i += 4) {
+      if (px[i + 3] < 200) {
+        // Zero out RGBA entirely — prevents RGB bleed on later resampling
+        px[i] = 0;
+        px[i + 1] = 0;
+        px[i + 2] = 0;
+        px[i + 3] = 0;
+      }
+    }
+    ctx.putImageData(data, 0, 0);
+    return c;
+  } catch (e) {
+    console.warn("cleanImage failed:", e);
+    return img;
+  }
+}
+
 function drawFruitBody(
   ctx: CanvasRenderingContext2D,
   def: FruitDefinition,
   x: number,
   y: number,
   angle: number,
-  image: HTMLImageElement | null
+  image: CanvasImageSource | null,
+  bgColor: string,
+  sprite: SpriteInfo | null
 ) {
   const r = def.radius;
-  if (image && image.complete && image.naturalWidth > 0) {
+  const imgW = (image as HTMLCanvasElement | null)?.width ?? 0;
+  if (image && imgW > 0) {
     ctx.save();
     ctx.translate(x, y);
     ctx.rotate(angle);
-    ctx.drawImage(image, -r, -r, r * 2, r * 2);
+    ctx.beginPath();
+    ctx.arc(0, 0, r, 0, Math.PI * 2);
+    ctx.clip();
+    // Opaque bg fill first — anything transparent in the sprite shows this
+    ctx.fillStyle = bgColor;
+    ctx.fillRect(-r, -r, r * 2, r * 2);
+    if (sprite) {
+      const ix = sprite.offsetX * r;
+      const iy = sprite.offsetY * r;
+      const sw = sprite.scaleX * r;
+      const sh = sprite.scaleY * r;
+      ctx.drawImage(image, ix - sw, iy - sh, sw * 2, sh * 2);
+    } else {
+      ctx.drawImage(image, -r, -r, r * 2, r * 2);
+    }
     ctx.restore();
   } else {
     ctx.fillStyle = def.color;
@@ -62,6 +121,45 @@ function drawFruitBody(
     ctx.arc(x, y, r, 0, Math.PI * 2);
     ctx.fill();
   }
+}
+
+function drawCollisionOverlay(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  angle: number,
+  radius: number,
+  verts: { x: number; y: number }[] | null
+) {
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.rotate(angle);
+
+  if (verts && verts.length >= 3) {
+    // Draw the actual polygon collider
+    ctx.beginPath();
+    ctx.moveTo(verts[0].x * radius, verts[0].y * radius);
+    for (let i = 1; i < verts.length; i++) {
+      ctx.lineTo(verts[i].x * radius, verts[i].y * radius);
+    }
+    ctx.closePath();
+    ctx.strokeStyle = "rgba(0,255,0,0.8)";
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+    ctx.fillStyle = "rgba(0,255,0,0.1)";
+    ctx.fill();
+  } else {
+    // Circle fallback collider
+    ctx.beginPath();
+    ctx.arc(0, 0, radius, 0, Math.PI * 2);
+    ctx.strokeStyle = "rgba(255,255,0,0.8)";
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+    ctx.fillStyle = "rgba(255,255,0,0.1)";
+    ctx.fill();
+  }
+
+  ctx.restore();
 }
 
 const GameCanvas = forwardRef<GameCanvasHandle, Props>(
@@ -78,7 +176,8 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
     const nextDefRef = useRef(nextDef);
     const bodiesRef = useRef<BodySnapshot[]>([]);
     const pointerXRef = useRef<number | null>(null);
-    const htmlImagesRef = useRef<(HTMLImageElement | null)[]>([]);
+    const htmlImagesRef = useRef<(CanvasImageSource | null)[]>([]);
+    const spriteInfoRef = useRef<(SpriteInfo | null)[]>([]);
     const lastFrameTimeRef = useRef<number>(0); // tracks last RAF timestamp for elapsed-time physics
 
     useEffect(() => {
@@ -100,8 +199,13 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
     // Load HTMLImageElements for the current fruit set via expo-asset
     useEffect(() => {
       const fruits = fruitSet.fruits;
-      const images: (HTMLImageElement | null)[] = new Array(fruits.length).fill(null);
+      const images: (CanvasImageSource | null)[] = new Array(fruits.length).fill(null);
       htmlImagesRef.current = images;
+      // Precompute sprite rendering info for each tier
+      spriteInfoRef.current = fruits.map((def) => {
+        const nameKey = (def as { nameKey?: string }).nameKey ?? def.name.toLowerCase();
+        return getSpriteInfo(fruitSet.id, nameKey);
+      });
       let cancelled = false;
 
       (async () => {
@@ -115,9 +219,10 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
               if (!uri || cancelled) return;
               await new Promise<void>((resolve) => {
                 const img = new window.Image();
+                img.crossOrigin = "anonymous";
                 img.src = uri;
                 img.onload = () => {
-                  if (!cancelled) images[i] = img;
+                  if (!cancelled) images[i] = cleanImage(img);
                   resolve();
                 };
                 img.onerror = () => resolve();
@@ -197,13 +302,16 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
           ghostCx,
           DROP_Y,
           0, // ghost has no rotation
-          htmlImagesRef.current[nd.tier] ?? null
+          htmlImagesRef.current[nd.tier] ?? null,
+          c.fruitBackground,
+          spriteInfoRef.current[nd.tier] ?? null
         );
         ctx.restore();
       }
 
-      // Physics bodies
-      for (const body of bodiesRef.current) {
+      // Physics bodies — sorted by Y so lower fruits draw on top of higher ones
+      const bodies = [...bodiesRef.current].sort((a, b) => a.y - b.y);
+      for (const body of bodies) {
         const def = fs.fruits[body.tier];
         if (!def) continue;
         drawFruitBody(
@@ -212,9 +320,20 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
           body.x,
           body.y,
           body.angle,
-          htmlImagesRef.current[body.tier] ?? null
+          htmlImagesRef.current[body.tier] ?? null,
+          c.fruitBackground,
+          spriteInfoRef.current[body.tier] ?? null
         );
+        if (DEBUG_COLLISION) {
+          drawCollisionOverlay(ctx, body.x, body.y, body.angle, def.radius, body.collisionVerts);
+        }
       }
+
+      // Redraw walls on top so bin edges are always in front of fruit sprites
+      ctx.fillStyle = c.border;
+      ctx.fillRect(0, 0, WALL_THICKNESS, height);
+      ctx.fillRect(width - WALL_THICKNESS, 0, WALL_THICKNESS, height);
+      ctx.fillRect(0, height - WALL_THICKNESS, width, WALL_THICKNESS);
     }, [width, height]); // width/height trigger engine reset anyway, so deps here are stable
 
     // Keep latest draw in a ref so the RAF loop never needs to be torn down
@@ -232,7 +351,19 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
         height,
         fruitSet,
         (e) => onMergeRef.current(e),
-        () => onGameOverRef.current()
+        () => onGameOverRef.current(),
+        (escape: BoundaryEscapeEvent) => {
+          Sentry.captureMessage("Cascade: fruit escaped boundary", {
+            level: "warning",
+            extra: {
+              tier: escape.tier,
+              x: Math.round(escape.x),
+              y: Math.round(escape.y),
+              canvasWidth: escape.width,
+              canvasHeight: escape.height,
+            },
+          });
+        }
       );
     }, [width, height, fruitSet]);
 
@@ -242,6 +373,26 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
         engineRef.current?.cleanup();
       };
     }, [initEngine]);
+
+    // Debug: keyboard shortcuts to spawn any tier fruit (0-9, 'q' for tier 10)
+    useEffect(() => {
+      if (!DEBUG_COLLISION) return;
+      function onKey(e: KeyboardEvent) {
+        const engine = engineRef.current;
+        const fs = fruitSetRef.current;
+        if (!engine || !fs) return;
+        let tier = -1;
+        if (e.key >= "0" && e.key <= "9") tier = parseInt(e.key, 10);
+        else if (e.key === "q" || e.key === "Q") tier = 10;
+        else return;
+        const def = fs.fruits[tier];
+        if (!def) return;
+        const spawnX = WALL_THICKNESS + def.radius + Math.random() * (width - 2 * WALL_THICKNESS - 2 * def.radius);
+        engine.drop(def, fs.id, spawnX, DROP_Y);
+      }
+      window.addEventListener("keydown", onKey);
+      return () => window.removeEventListener("keydown", onKey);
+    }, [width]);
 
     // Single long-lived RAF loop: steps physics then draws.
     // Uses the RAF timestamp to compute elapsed time so physics runs at real

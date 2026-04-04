@@ -26,6 +26,9 @@ export interface FruitBody {
   isMerging: boolean;
   createdAt: number;
   fruitRadius: number; // in pixels
+  /** Normalized collision hull vertices in [-1, 1] per axis, matching sprite rendering.
+   *  Multiply by fruitRadius to get pixel-space polygon. */
+  collisionVerts: { x: number; y: number }[] | null;
 }
 
 export interface BodySnapshot {
@@ -34,6 +37,8 @@ export interface BodySnapshot {
   y: number; // pixels
   tier: number;
   angle: number; // radians
+  /** Normalized collision vertices for debug overlay (null = circle fallback). */
+  collisionVerts: { x: number; y: number }[] | null;
 }
 
 export interface MergeEvent {
