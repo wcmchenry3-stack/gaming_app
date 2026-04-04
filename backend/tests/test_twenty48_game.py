@@ -184,16 +184,6 @@ class TestMove:
     def test_invalid_move_raises(self):
         game = self._make_game_with_board(
             [
-                [2, 4, 2, 4],
-                [0, 0, 0, 0],
-                [0, 0, 0, 0],
-                [0, 0, 0, 0],
-            ]
-        )
-        # Moving left on row 0 has no effect (alternating), but other rows are empty
-        # Use a board where left truly has no effect
-        game2 = self._make_game_with_board(
-            [
                 [2, 0, 0, 0],
                 [4, 0, 0, 0],
                 [2, 0, 0, 0],
@@ -201,7 +191,7 @@ class TestMove:
             ]
         )
         with pytest.raises(ValueError, match="no effect"):
-            game2.move("left")
+            game.move("left")
 
     def test_invalid_direction_raises(self):
         game = Game2048()
