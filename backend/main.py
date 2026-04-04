@@ -22,6 +22,7 @@ from session import get_session_id
 from cascade.router import router as cascade_router
 from blackjack.router import router as blackjack_router
 from ludo.router import router as ludo_router
+from twenty48.router import router as twenty48_router
 
 # ---------------------------------------------------------------------------
 # Audit logger — emits JSON lines; Render's log aggregator handles timestamps
@@ -50,6 +51,7 @@ app = FastAPI(title="Gaming App API")
 app.include_router(cascade_router, prefix="/cascade")
 app.include_router(blackjack_router, prefix="/blackjack")
 app.include_router(ludo_router, prefix="/ludo")
+app.include_router(twenty48_router, prefix="/twenty48")
 
 # ---------------------------------------------------------------------------
 # Rate limiting

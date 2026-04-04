@@ -1,0 +1,20 @@
+{
+  "game.title": "2048",
+  "game.description": "Veeg en voeg tegels samen om 2048 te bereiken.",
+  "game.playLabel": "Speel 2048",
+  "score.label": "Score",
+  "score.accessibilityLabel": "Huidige score: {{score}}",
+  "actions.newGame": "Nieuw spel",
+  "actions.newGameLabel": "Start een nieuw 2048-spel",
+  "actions.keepPlaying": "Doorspelen",
+  "actions.keepPlayingLabel": "Doorspelen na het bereiken van 2048",
+  "actions.quit": "Stoppen",
+  "actions.quitLabel": "Stoppen en terug naar het startscherm",
+  "swipe.hint": "Veeg om tegels te verplaatsen",
+  "gameOver.title": "Spel voorbij",
+  "gameOver.body": "Geen zetten meer mogelijk. Je score: {{score}}.",
+  "gameOver.newGame": "Nieuw spel",
+  "gameOver.home": "Start",
+  "win.title": "Gewonnen!",
+  "win.body": "Je hebt 2048 bereikt! Je kunt doorspelen voor een hogere score."
+}

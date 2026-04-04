@@ -1,0 +1,20 @@
+{
+  "game.title": "2048",
+  "game.description": "Slide and merge tiles to reach 2048.",
+  "game.playLabel": "Play 2048",
+  "score.label": "Score",
+  "score.accessibilityLabel": "Current score: {{score}}",
+  "actions.newGame": "New Game",
+  "actions.newGameLabel": "Start a new 2048 game",
+  "actions.keepPlaying": "Keep Playing",
+  "actions.keepPlayingLabel": "Continue playing after reaching 2048",
+  "actions.quit": "Quit",
+  "actions.quitLabel": "Quit and return to home screen",
+  "swipe.hint": "Swipe to move tiles",
+  "gameOver.title": "Game Over",
+  "gameOver.body": "No more moves available. Your score: {{score}}.",
+  "gameOver.newGame": "New Game",
+  "gameOver.home": "Home",
+  "win.title": "You Win!",
+  "win.body": "You reached 2048! You can keep playing for a higher score."
+}

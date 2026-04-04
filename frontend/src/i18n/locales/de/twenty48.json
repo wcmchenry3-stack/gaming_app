@@ -1,0 +1,20 @@
+{
+  "game.title": "2048",
+  "game.description": "Wische und kombiniere Kacheln, um 2048 zu erreichen.",
+  "game.playLabel": "2048 spielen",
+  "score.label": "Punkte",
+  "score.accessibilityLabel": "Aktueller Punktestand: {{score}}",
+  "actions.newGame": "Neues Spiel",
+  "actions.newGameLabel": "Ein neues 2048-Spiel starten",
+  "actions.keepPlaying": "Weiterspielen",
+  "actions.keepPlayingLabel": "Nach Erreichen von 2048 weiterspielen",
+  "actions.quit": "Beenden",
+  "actions.quitLabel": "Beenden und zur Startseite zur\u00fcckkehren",
+  "swipe.hint": "Wische, um Kacheln zu bewegen",
+  "gameOver.title": "Spiel vorbei",
+  "gameOver.body": "Keine Z\u00fcge mehr m\u00f6glich. Dein Punktestand: {{score}}.",
+  "gameOver.newGame": "Neues Spiel",
+  "gameOver.home": "Startseite",
+  "win.title": "Gewonnen!",
+  "win.body": "Du hast 2048 erreicht! Du kannst weiterspielen f\u00fcr einen h\u00f6heren Punktestand."
+}

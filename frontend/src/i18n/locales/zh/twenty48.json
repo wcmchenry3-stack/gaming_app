@@ -1,0 +1,20 @@
+{
+  "game.title": "2048",
+  "game.description": "\u6ed1\u52a8\u5e76\u5408\u5e76\u65b9\u5757\uff0c\u8fbe\u52302048\u3002",
+  "game.playLabel": "\u73a9 2048",
+  "score.label": "\u5f97\u5206",
+  "score.accessibilityLabel": "\u5f53\u524d\u5f97\u5206\uff1a{{score}}",
+  "actions.newGame": "\u65b0\u6e38\u620f",
+  "actions.newGameLabel": "\u5f00\u59cb\u65b0\u76842048\u6e38\u620f",
+  "actions.keepPlaying": "\u7ee7\u7eed\u6e38\u620f",
+  "actions.keepPlayingLabel": "\u8fbe\u52302048\u540e\u7ee7\u7eed\u6e38\u620f",
+  "actions.quit": "\u9000\u51fa",
+  "actions.quitLabel": "\u9000\u51fa\u5e76\u8fd4\u56de\u4e3b\u5c4f\u5e55",
+  "swipe.hint": "\u6ed1\u52a8\u4ee5\u79fb\u52a8\u65b9\u5757",
+  "gameOver.title": "\u6e38\u620f\u7ed3\u675f",
+  "gameOver.body": "\u6ca1\u6709\u53ef\u7528\u7684\u79fb\u52a8\u3002\u4f60\u7684\u5f97\u5206\uff1a{{score}}\u3002",
+  "gameOver.newGame": "\u65b0\u6e38\u620f",
+  "gameOver.home": "\u4e3b\u9875",
+  "win.title": "\u4f60\u8d62\u4e86\uff01",
+  "win.body": "\u4f60\u8fbe\u5230\u4e862048\uff01\u4f60\u53ef\u4ee5\u7ee7\u7eed\u6e38\u620f\u4ee5\u83b7\u5f97\u66f4\u9ad8\u5206\u6570\u3002"
+}
