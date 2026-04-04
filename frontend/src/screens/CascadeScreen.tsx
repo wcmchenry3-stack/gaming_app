@@ -84,7 +84,7 @@ function CascadeGame({ navigation }: Props) {
 
       setTimeout(() => {
         droppingRef.current = false;
-      }, 400);
+      }, 200);
     },
     [gameOver, activeFruitSet]
   );

@@ -4,7 +4,7 @@
  * GameCanvas (which uses HTMLCanvas + Matter.js) is mocked out entirely.
  * We focus on the state and ref logic in CascadeGame:
  *   - score starts at 0
- *   - handleTap cooldown blocks double-drops within 400ms
+ *   - handleTap cooldown blocks double-drops within 200ms
  *   - handleTap is blocked when game is over
  *   - handleRestart resets score and calls canvas.reset
  */
@@ -124,7 +124,7 @@ describe("CascadeGame", () => {
     expect(mockDrop).toHaveBeenCalledTimes(1);
   });
 
-  it("second tap within 400ms cooldown is ignored", () => {
+  it("second tap within 200ms cooldown is ignored", () => {
     const renderer = renderScreen();
     const canvas = findCanvas(renderer);
 
@@ -136,7 +136,7 @@ describe("CascadeGame", () => {
     expect(mockDrop).toHaveBeenCalledTimes(1);
   });
 
-  it("tap succeeds again after the 400ms cooldown expires", () => {
+  it("tap succeeds again after the 200ms cooldown expires", () => {
     const renderer = renderScreen();
     const canvas = findCanvas(renderer);
 
@@ -144,7 +144,7 @@ describe("CascadeGame", () => {
       canvas.props.__onTap(150);
     });
     act(() => {
-      jest.advanceTimersByTime(401);
+      jest.advanceTimersByTime(201);
     });
     act(() => {
       canvas.props.__onTap(150);
