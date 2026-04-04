@@ -12,7 +12,7 @@ import CascadeScreen from "./src/screens/CascadeScreen";
 import BlackjackScreen from "./src/screens/BlackjackScreen";
 import LudoScreen from "./src/screens/LudoScreen";
 import Twenty48Screen from "./src/screens/Twenty48Screen";
-import { GameState } from "./src/api/client";
+import { GameState } from "./src/game/yacht/api";
 import { ThemeProvider } from "./src/theme/ThemeContext";
 import { useHtmlAttributes } from "./src/i18n/useHtmlAttributes";
 import { NetworkProvider } from "./src/game/_shared/NetworkContext";

@@ -4,7 +4,7 @@ import { useTranslation } from "react-i18next";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { RootStackParamList } from "../../App";
 import { useTheme } from "../theme/ThemeContext";
-import { blackjackApi, BlackjackState } from "../api/blackjackClient";
+import { blackjackApi, BlackjackState } from "../game/blackjack/api";
 import BettingPanel from "../components/blackjack/BettingPanel";
 import BlackjackTable from "../components/blackjack/BlackjackTable";
 import ActionButtons from "../components/blackjack/ActionButtons";

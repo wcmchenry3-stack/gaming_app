@@ -5,7 +5,7 @@ import { useTranslation } from "react-i18next";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import * as Sentry from "@sentry/react-native";
 import { RootStackParamList } from "../../App";
-import { api } from "../api/client";
+import { api } from "../game/yacht/api";
 import { useTheme } from "../theme/ThemeContext";
 import LanguageSwitcher from "../components/LanguageSwitcher";
 import OfflineBanner from "../components/OfflineBanner";

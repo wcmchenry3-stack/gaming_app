@@ -7,7 +7,7 @@ import { ThemeProvider } from "../../theme/ThemeContext";
 // ---------------------------------------------------------------------------
 // Mock the API client
 // ---------------------------------------------------------------------------
-jest.mock("../../api/ludoClient", () => ({
+jest.mock("../../game/ludo/api", () => ({
   ludoApi: {
     newSession: jest.fn(),
     getState: jest.fn(),
@@ -17,7 +17,7 @@ jest.mock("../../api/ludoClient", () => ({
   },
 }));
 
-import { ludoApi } from "../../api/ludoClient";
+import { ludoApi } from "../../game/ludo/api";
 const mockApi = ludoApi as jest.Mocked<typeof ludoApi>;
 
 // ---------------------------------------------------------------------------

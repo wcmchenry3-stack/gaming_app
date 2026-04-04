@@ -9,7 +9,7 @@ import {
   Modal,
 } from "react-native";
 import { useTranslation } from "react-i18next";
-import { cascadeApi, ScoreEntry } from "../../api/cascadeClient";
+import { cascadeApi, ScoreEntry } from "../../game/cascade/api";
 import { useTheme } from "../../theme/ThemeContext";
 import { useNetwork } from "../../game/_shared/NetworkContext";
 import { scoreQueue } from "../../game/_shared/scoreQueue";

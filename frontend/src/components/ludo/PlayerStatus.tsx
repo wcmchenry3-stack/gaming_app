@@ -2,7 +2,7 @@ import React from "react";
 import { View, Text, StyleSheet } from "react-native";
 import { useTranslation } from "react-i18next";
 import { useTheme } from "../../theme/ThemeContext";
-import { PlayerStateResponse } from "../../api/ludoClient";
+import { PlayerStateResponse } from "../../game/ludo/api";
 import { PLAYER_COLORS } from "./boardLayout";
 
 interface Props {

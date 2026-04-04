@@ -1,7 +1,7 @@
 import React from "react";
 import { View, StyleSheet } from "react-native";
 import { useTranslation } from "react-i18next";
-import { HandResponse } from "../../api/blackjackClient";
+import { HandResponse } from "../../game/blackjack/api";
 import HandDisplay from "./HandDisplay";
 
 interface Props {

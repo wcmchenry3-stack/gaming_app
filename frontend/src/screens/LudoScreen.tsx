@@ -4,7 +4,7 @@ import { useTranslation } from "react-i18next";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { RootStackParamList } from "../../App";
 import { useTheme } from "../theme/ThemeContext";
-import { ludoApi, LudoState } from "../api/ludoClient";
+import { ludoApi, LudoState } from "../game/ludo/api";
 import LudoBoard from "../components/ludo/LudoBoard";
 import DiceDisplay from "../components/ludo/DiceDisplay";
 import PieceSelector from "../components/ludo/PieceSelector";

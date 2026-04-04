@@ -1,7 +1,7 @@
 import React, { useMemo } from "react";
 import { View, Pressable, StyleSheet } from "react-native";
 import { useTheme } from "../../theme/ThemeContext";
-import { PlayerStateResponse } from "../../api/ludoClient";
+import { PlayerStateResponse } from "../../game/ludo/api";
 import {
   CELL_ROLES,
   TRACK_INDEX_TO_CELL,

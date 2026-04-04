@@ -13,7 +13,7 @@
 
 import * as Sentry from "@sentry/react-native";
 import { Platform } from "react-native";
-import { getOrCreateSessionId } from "../../api/client";
+import { getOrCreateSessionId } from "./session";
 
 function resolveBaseUrl(): string {
   const raw = process.env.EXPO_PUBLIC_API_URL ?? "http://localhost:8000";
