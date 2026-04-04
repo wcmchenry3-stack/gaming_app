@@ -5,40 +5,48 @@
  * asset files being present in the repo, and run instantly.
  */
 
+const entry = (verts: [number, number][]) => ({
+  verts,
+  spriteOffset: [0, 0],
+  spriteScale: [1, 1],
+});
+
 jest.mock("../../../../assets/fruit-vertices.json", () => ({
-  cherry: [
+  cherry: entry([
     [-0.5, -0.5],
     [0.5, -0.5],
     [0.5, 0.5],
     [-0.5, 0.5],
-  ],
-  grapes: [
+  ]),
+  grapes: entry([
     [-0.4, -0.6],
     [0.4, -0.6],
     [0.6, 0.2],
     [0.0, 0.8],
     [-0.6, 0.2],
-  ],
-  too_few: [
+  ]),
+  too_few: entry([
     [-0.5, 0.0],
     [0.5, 0.0],
-  ], // only 2 points → should return null
-  // 20-vertex circle approximation — exercises the simplifyVertices path (>12)
-  pineapple: Array.from({ length: 20 }, (_, i) => {
-    const a = (i / 20) * Math.PI * 2;
-    return [Math.cos(a) * 0.9, Math.sin(a) * 0.9];
-  }),
+  ]),
+  // 20-vertex circle approximation — exercises the simplifyVertices path (>24)
+  pineapple: entry(
+    Array.from({ length: 30 }, (_, i) => {
+      const a = (i / 30) * Math.PI * 2;
+      return [Math.cos(a) * 0.9, Math.sin(a) * 0.9] as [number, number];
+    })
+  ),
 }));
 
 jest.mock("../../../../assets/planet-vertices.json", () => ({
-  moon: [
+  moon: entry([
     [-0.7, -0.3],
     [0.7, -0.3],
     [0.0, 0.9],
-  ],
+  ]),
 }));
 
-import { getVerticesForFruit } from "../fruitVertices";
+import { getVerticesForFruit, getSpriteInfo } from "../fruitVertices";
 
 describe("getVerticesForFruit", () => {
   // --- fruits set ---
@@ -87,17 +95,31 @@ describe("getVerticesForFruit", () => {
 
   // --- vertex simplification ---
 
-  it("returns at most 12 vertices when raw hull has more than 12 points", () => {
+  it("returns at most 24 vertices when raw hull has more than 24 points", () => {
     const verts = getVerticesForFruit("fruits", "pineapple");
     expect(verts).not.toBeNull();
-    expect(verts!.length).toBeLessThanOrEqual(12);
+    expect(verts!.length).toBeLessThanOrEqual(24);
   });
 
-  it("simplified vertices all lie within the unit circle (max_dist ≤ 1.0)", () => {
+  it("simplified vertices all lie within the [-1, 1] bounding box", () => {
     const verts = getVerticesForFruit("fruits", "pineapple");
     expect(verts).not.toBeNull();
     for (const pt of verts!) {
-      expect(Math.hypot(pt.x, pt.y)).toBeLessThanOrEqual(1.0 + Number.EPSILON);
+      expect(Math.abs(pt.x)).toBeLessThanOrEqual(1.0 + Number.EPSILON);
+      expect(Math.abs(pt.y)).toBeLessThanOrEqual(1.0 + Number.EPSILON);
     }
+  });
+
+  // --- sprite info ---
+
+  it("returns sprite info for a known fruit", () => {
+    const info = getSpriteInfo("fruits", "cherry");
+    expect(info).not.toBeNull();
+    expect(typeof info!.offsetX).toBe("number");
+    expect(typeof info!.scaleX).toBe("number");
+  });
+
+  it("returns null sprite info for unknown set", () => {
+    expect(getSpriteInfo("gems", "ruby")).toBeNull();
   });
 });

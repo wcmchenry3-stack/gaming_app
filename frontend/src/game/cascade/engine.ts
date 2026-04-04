@@ -58,12 +58,21 @@ async function getRapier(): Promise<RapierLib> {
   return _rapierPromise;
 }
 
+export interface BoundaryEscapeEvent {
+  tier: number;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+
 export async function createEngine(
   W: number,
   H: number,
   fruitSet: FruitSet,
   onMerge: (event: MergeEvent) => void,
-  onGameOver: () => void
+  onGameOver: () => void,
+  onBoundaryEscape?: (event: BoundaryEscapeEvent) => void
 ): Promise<EngineHandle> {
   const R = await getRapier();
 
@@ -153,6 +162,7 @@ export async function createEngine(
       isMerging: false,
       createdAt: Date.now(),
       fruitRadius: def.radius,
+      collisionVerts: verts,
     };
     fruitMap.set(rb.handle, fb);
     colliderToBody.set(collider.handle, rb.handle);
@@ -205,8 +215,11 @@ export async function createEngine(
     mergeQueue.length = 0;
   }
 
+  let disposed = false;
+
   return {
     step(dt?: number): BodySnapshot[] {
+      if (disposed) return [];
       if (dt !== undefined) {
         // Clamp: min 1/120s (avoid micro-steps), max 1/30s (avoid spiral of death on slow frames)
         world.integrationParameters.dt = Math.max(1 / 120, Math.min(dt, 1 / 30));
@@ -246,20 +259,43 @@ export async function createEngine(
         });
       }
 
-      // Collect body snapshots (pixel coordinates)
+      // Collect body snapshots (pixel coordinates) and detect boundary escapes
       const snapshots: BodySnapshot[] = [];
+      const escapedHandles: number[] = [];
       fruitMap.forEach((fb, handle) => {
         const rb = world.getRigidBody(handle);
         if (!rb) return;
         const pos = rb.translation();
+        const px = pos.x / SCALE;
+        const py = pos.y / SCALE;
+
+        // Detect bodies that have escaped the play area (with margin)
+        const margin = fb.fruitRadius * 2;
+        if (px < -margin || px > W + margin || py > H + margin) {
+          escapedHandles.push(handle);
+          onBoundaryEscape?.({
+            tier: fb.fruitTier,
+            x: px,
+            y: py,
+            width: W,
+            height: H,
+          });
+          return;
+        }
+
         snapshots.push({
           id: handle,
-          x: pos.x / SCALE,
-          y: pos.y / SCALE,
+          x: px,
+          y: py,
           tier: fb.fruitTier,
           angle: rb.rotation(),
+          collisionVerts: fb.collisionVerts,
         });
       });
+      // Clean up escaped bodies
+      for (const h of escapedHandles) {
+        removeBody(h);
+      }
       return snapshots;
     },
 
@@ -268,10 +304,19 @@ export async function createEngine(
     },
 
     cleanup(): void {
+      disposed = true;
       fruitMap.clear();
       colliderToBody.clear();
-      eventQueue.free();
-      world.free();
+      try {
+        eventQueue.free();
+      } catch {
+        /* already freed */
+      }
+      try {
+        world.free();
+      } catch {
+        /* already freed */
+      }
     },
   };
 }
