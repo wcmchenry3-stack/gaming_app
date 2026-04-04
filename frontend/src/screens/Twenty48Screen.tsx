@@ -1,9 +1,6 @@
 import React, { useEffect, useState, useCallback, useRef } from "react";
 import { View, Text, Pressable, StyleSheet, ActivityIndicator } from "react-native";
-import {
-  GestureDetector,
-  Gesture,
-} from "react-native-gesture-handler";
+import { GestureDetector, Gesture } from "react-native-gesture-handler";
 import { useTranslation } from "react-i18next";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { RootStackParamList } from "../../App";
@@ -67,7 +64,7 @@ export default function Twenty48Screen({ navigation }: Props) {
         setLoading(false);
       }
     },
-    [t],
+    [t]
   );
 
   const handleMove = useCallback(
@@ -80,7 +77,7 @@ export default function Twenty48Screen({ navigation }: Props) {
         movingRef.current = false;
       }
     },
-    [call, state],
+    [call, state]
   );
 
   const handleNewGame = useCallback(async () => {
@@ -168,9 +165,7 @@ export default function Twenty48Screen({ navigation }: Props) {
 
       {/* Board */}
       <GestureDetector gesture={swipeGesture}>
-        <View style={styles.boardContainer}>
-          {state && <Grid board={state.board} />}
-        </View>
+        <View style={styles.boardContainer}>{state && <Grid board={state.board} />}</View>
       </GestureDetector>
 
       {/* Error */}

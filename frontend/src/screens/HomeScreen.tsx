@@ -24,7 +24,15 @@ interface GameCard {
 }
 
 export default function HomeScreen({ navigation }: Props) {
-  const { t } = useTranslation(["common", "yacht", "cascade", "blackjack", "ludo", "twenty48", "errors"]);
+  const { t } = useTranslation([
+    "common",
+    "yacht",
+    "cascade",
+    "blackjack",
+    "ludo",
+    "twenty48",
+    "errors",
+  ]);
   const { colors, theme, toggle } = useTheme();
   const insets = useSafeAreaInsets();
   const [yachtLoading, setYachtLoading] = useState(false);

@@ -4,7 +4,6 @@ import pytest
 
 from twenty48.game import Game2048, _slide_and_merge, SIZE
 
-
 # ---------------------------------------------------------------------------
 # TestSlideAndMerge — pure function, no randomness
 # ---------------------------------------------------------------------------
