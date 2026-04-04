@@ -19,7 +19,7 @@ jobs:
     with:
       backend-url: 'https://dev-games-api.buffingchi.com'
       health-path: '/health'
-      probe-path: '/game/state'
+      probe-path: '/yacht/state'
       probe-expected-status: '400'
     secrets: inherit
 
