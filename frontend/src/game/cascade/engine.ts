@@ -307,8 +307,16 @@ export async function createEngine(
       disposed = true;
       fruitMap.clear();
       colliderToBody.clear();
-      try { eventQueue.free(); } catch { /* already freed */ }
-      try { world.free(); } catch { /* already freed */ }
+      try {
+        eventQueue.free();
+      } catch {
+        /* already freed */
+      }
+      try {
+        world.free();
+      } catch {
+        /* already freed */
+      }
     },
   };
 }

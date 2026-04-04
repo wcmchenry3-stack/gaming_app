@@ -387,7 +387,10 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
         else return;
         const def = fs.fruits[tier];
         if (!def) return;
-        const spawnX = WALL_THICKNESS + def.radius + Math.random() * (width - 2 * WALL_THICKNESS - 2 * def.radius);
+        const spawnX =
+          WALL_THICKNESS +
+          def.radius +
+          Math.random() * (width - 2 * WALL_THICKNESS - 2 * def.radius);
         engine.drop(def, fs.id, spawnX, DROP_Y);
       }
       window.addEventListener("keydown", onKey);
