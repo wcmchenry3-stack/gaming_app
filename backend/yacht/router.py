@@ -1,8 +1,4 @@
-"""Yacht game routes.
-
-Mounted by main.py with prefix=`/game` for backwards compatibility.
-Renaming the prefix to `/yacht` is tracked in issue #161.
-"""
+"""Yacht game routes. Mounted by main.py with prefix=`/yacht`."""
 
 from collections import OrderedDict
 
@@ -33,7 +29,7 @@ def _evict_if_full() -> None:
 def _get_game(session_id: str) -> YachtGame:
     game = _sessions.get(session_id)
     if game is None:
-        raise HTTPException(status_code=404, detail="No game in progress. POST /game/new first.")
+        raise HTTPException(status_code=404, detail="No game in progress. POST /yacht/new first.")
     return game
 
 

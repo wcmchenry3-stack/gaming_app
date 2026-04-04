@@ -45,7 +45,7 @@ backend/tests/
 - `possible_scores()` only returns unfilled categories
 
 **test_api.py**
-- `POST /game/new`, `GET /game/state`, `POST /game/roll`, `POST /game/score`, `GET /game/possible-scores`
+- `POST /yacht/new`, `GET /yacht/state`, `POST /yacht/roll`, `POST /yacht/score`, `GET /yacht/possible-scores`
 
 **test_cascade_api.py**
 - `POST /cascade/score` — valid submission (201), invalid payloads (422)

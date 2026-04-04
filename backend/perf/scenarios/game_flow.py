@@ -38,7 +38,7 @@ class GameFlowTasks(SequentialTaskSet):
 
     @task
     def new_game(self):
-        with self.client.post("/game/new", headers=self._headers, name="POST /game/new") as resp:
+        with self.client.post("/yacht/new", headers=self._headers, name="POST /yacht/new") as resp:
             resp.raise_for_status()
         self._round = 0
 
@@ -97,7 +97,7 @@ class GameFlowTasks(SequentialTaskSet):
     @task
     def verify_game_over(self):
         with self.client.get(
-            "/game/state", headers=self._headers, name="GET /game/state (final)"
+            "/yacht/state", headers=self._headers, name="GET /yacht/state (final)"
         ) as resp:
             resp.raise_for_status()
             data = resp.json()
@@ -109,24 +109,24 @@ class GameFlowTasks(SequentialTaskSet):
         held = [False, False, False, False, False]
 
         with self.client.post(
-            "/game/roll",
+            "/yacht/roll",
             json={"held": held},
             headers=self._headers,
-            name="POST /game/roll",
+            name="POST /yacht/roll",
         ) as resp:
             resp.raise_for_status()
 
         with self.client.get(
-            "/game/possible-scores",
+            "/yacht/possible-scores",
             headers=self._headers,
-            name="GET /game/possible-scores",
+            name="GET /yacht/possible-scores",
         ) as resp:
             resp.raise_for_status()
 
         with self.client.post(
-            "/game/score",
+            "/yacht/score",
             json={"category": CATEGORIES[round_index]},
             headers=self._headers,
-            name="POST /game/score",
+            name="POST /yacht/score",
         ) as resp:
             resp.raise_for_status()

@@ -1,8 +1,5 @@
 /**
  * Yacht API client.
- *
- * Note: paths still use the legacy `/game/` prefix rather than `/yacht/`;
- * renaming is tracked in #161.
  */
 
 import { createGameClient } from "../_shared/httpClient";
@@ -11,23 +8,23 @@ import { GameState, PossibleScores } from "./types";
 const request = createGameClient({ apiTag: "gaming-app" });
 
 export const api = {
-  newGame: () => request<GameState>("/game/new", { method: "POST" }),
+  newGame: () => request<GameState>("/yacht/new", { method: "POST" }),
 
-  getState: () => request<GameState>("/game/state"),
+  getState: () => request<GameState>("/yacht/state"),
 
   roll: (held: boolean[]) =>
-    request<GameState>("/game/roll", {
+    request<GameState>("/yacht/roll", {
       method: "POST",
       body: JSON.stringify({ held }),
     }),
 
   score: (category: string) =>
-    request<GameState>("/game/score", {
+    request<GameState>("/yacht/score", {
       method: "POST",
       body: JSON.stringify({ category }),
     }),
 
-  possibleScores: () => request<PossibleScores>("/game/possible-scores"),
+  possibleScores: () => request<PossibleScores>("/yacht/possible-scores"),
 };
 
 // Re-export types for import-site convenience.

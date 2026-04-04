@@ -174,14 +174,14 @@ class TestAPISimulation:
 
     def _new(self) -> dict:
         self._rl_reset()
-        res = client.post("/game/new", headers=SESSION_HEADERS)
+        res = client.post("/yacht/new", headers=SESSION_HEADERS)
         assert res.status_code == 200
         return res.json()
 
     def _roll(self, held: list[bool] | None = None) -> dict:
         self._rl_reset()
         res = client.post(
-            "/game/roll",
+            "/yacht/roll",
             json={"held": held or [False] * 5},
             headers=SESSION_HEADERS,
         )
@@ -191,7 +191,7 @@ class TestAPISimulation:
     def _score(self, category: str) -> dict:
         self._rl_reset()
         res = client.post(
-            "/game/score",
+            "/yacht/score",
             json={"category": category},
             headers=SESSION_HEADERS,
         )
@@ -200,13 +200,13 @@ class TestAPISimulation:
 
     def _state(self) -> dict:
         self._rl_reset()
-        res = client.get("/game/state", headers=SESSION_HEADERS)
+        res = client.get("/yacht/state", headers=SESSION_HEADERS)
         assert res.status_code == 200
         return res.json()
 
     def _possible(self) -> dict:
         self._rl_reset()
-        res = client.get("/game/possible-scores", headers=SESSION_HEADERS)
+        res = client.get("/yacht/possible-scores", headers=SESSION_HEADERS)
         assert res.status_code == 200
         return res.json()["possible_scores"]
 
@@ -278,7 +278,7 @@ class TestAPISimulation:
             self._roll()
             self._score(cat)
         res = client.post(
-            "/game/roll",
+            "/yacht/roll",
             json={"held": [False] * 5},
             headers=SESSION_HEADERS,
         )
@@ -293,7 +293,7 @@ class TestAPISimulation:
         # Need a roll_used > 0 to reach the game_over check (not the must-roll check)
         # Manually set rolls_used won't work via API — the endpoint raises game_over first
         res = client.post(
-            "/game/score",
+            "/yacht/score",
             json={"category": "chance"},
             headers=SESSION_HEADERS,
         )

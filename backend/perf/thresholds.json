@@ -7,11 +7,11 @@
       "p95_ms": 500,
       "error_rate_pct": 0.0,
       "endpoints": [
-        "POST /game/new",
-        "POST /game/roll",
-        "GET /game/possible-scores",
-        "POST /game/score",
-        "GET /game/state (final)"
+        "POST /yacht/new",
+        "POST /yacht/roll",
+        "GET /yacht/possible-scores",
+        "POST /yacht/score",
+        "GET /yacht/state (final)"
       ]
     },
     "leaderboard": {
@@ -30,8 +30,8 @@
       "p95_ms": 200,
       "error_rate_pct": 0.0,
       "endpoints": [
-        "GET /game/state",
-        "GET /game/possible-scores"
+        "GET /yacht/state",
+        "GET /yacht/possible-scores"
       ]
     }
   }

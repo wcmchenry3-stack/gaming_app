@@ -16,30 +16,30 @@ describe("yacht api — endpoints", () => {
     } as Response);
   }
 
-  it("newGame POSTs to /game/new", async () => {
+  it("newGame POSTs to /yacht/new", async () => {
     respondWith({ dice: [1, 2, 3, 4, 5] });
     await api.newGame();
     expect(mockFetch).toHaveBeenCalledWith(
-      expect.stringContaining("/game/new"),
+      expect.stringContaining("/yacht/new"),
       expect.objectContaining({ method: "POST" })
     );
   });
 
-  it("getState GETs /game/state", async () => {
+  it("getState GETs /yacht/state", async () => {
     respondWith({ dice: [1, 1, 1, 1, 1] });
     await api.getState();
     expect(mockFetch).toHaveBeenCalledWith(
-      expect.stringContaining("/game/state"),
+      expect.stringContaining("/yacht/state"),
       expect.any(Object)
     );
   });
 
-  it("roll POSTs held array to /game/roll", async () => {
+  it("roll POSTs held array to /yacht/roll", async () => {
     const held = [true, false, true, false, false];
     respondWith({ dice: [1, 2, 3, 4, 5] });
     await api.roll(held);
     expect(mockFetch).toHaveBeenCalledWith(
-      expect.stringContaining("/game/roll"),
+      expect.stringContaining("/yacht/roll"),
       expect.objectContaining({
         method: "POST",
         body: JSON.stringify({ held }),
@@ -47,11 +47,11 @@ describe("yacht api — endpoints", () => {
     );
   });
 
-  it("score POSTs category to /game/score", async () => {
+  it("score POSTs category to /yacht/score", async () => {
     respondWith({ dice: [1, 2, 3, 4, 5] });
     await api.score("ones");
     expect(mockFetch).toHaveBeenCalledWith(
-      expect.stringContaining("/game/score"),
+      expect.stringContaining("/yacht/score"),
       expect.objectContaining({
         method: "POST",
         body: JSON.stringify({ category: "ones" }),
@@ -59,11 +59,11 @@ describe("yacht api — endpoints", () => {
     );
   });
 
-  it("possibleScores GETs /game/possible-scores", async () => {
+  it("possibleScores GETs /yacht/possible-scores", async () => {
     respondWith({ possible_scores: { ones: 3 } });
     await api.possibleScores();
     expect(mockFetch).toHaveBeenCalledWith(
-      expect.stringContaining("/game/possible-scores"),
+      expect.stringContaining("/yacht/possible-scores"),
       expect.any(Object)
     );
   });

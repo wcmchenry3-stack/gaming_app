@@ -45,8 +45,7 @@ if _sentry_dsn:
 # ---------------------------------------------------------------------------
 
 app = FastAPI(title="Gaming App API")
-# Yacht still uses /game/* prefix for backwards compat — rename tracked in #161.
-app.include_router(yacht_router, prefix="/game")
+app.include_router(yacht_router, prefix="/yacht")
 app.include_router(cascade_router, prefix="/cascade")
 app.include_router(blackjack_router, prefix="/blackjack")
 app.include_router(ludo_router, prefix="/ludo")

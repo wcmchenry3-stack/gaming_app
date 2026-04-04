@@ -51,16 +51,16 @@ function rolledState(round = 1): GameState {
 
 /**
  * Install a stateful full-game mock.
- * - POST /game/new          → fresh state round=1
- * - POST /game/roll         → state with dice + rolls_used=1
- * - GET  /game/possible-scores → all 13 categories with value 15
- * - POST /game/score        → advances round; game_over when round > 13
+ * - POST /yacht/new          → fresh state round=1
+ * - POST /yacht/roll         → state with dice + rolls_used=1
+ * - GET  /yacht/possible-scores → all 13 categories with value 15
+ * - POST /yacht/score        → advances round; game_over when round > 13
  */
 export async function installYachtGameMock(page: Page): Promise<void> {
   let round = 1;
   const scored: Record<string, number> = {};
 
-  await page.route(`${API_BASE}/game/new`, async (route: Route) => {
+  await page.route(`${API_BASE}/yacht/new`, async (route: Route) => {
     round = 1;
     Object.keys(scored).forEach((k) => delete scored[k]);
     await route.fulfill({
@@ -70,7 +70,7 @@ export async function installYachtGameMock(page: Page): Promise<void> {
     });
   });
 
-  await page.route(`${API_BASE}/game/roll`, async (route: Route) => {
+  await page.route(`${API_BASE}/yacht/roll`, async (route: Route) => {
     await route.fulfill({
       status: 200,
       contentType: "application/json",
@@ -78,7 +78,7 @@ export async function installYachtGameMock(page: Page): Promise<void> {
     });
   });
 
-  await page.route(`${API_BASE}/game/possible-scores`, async (route: Route) => {
+  await page.route(`${API_BASE}/yacht/possible-scores`, async (route: Route) => {
     const unfilled = CATEGORIES.filter((c) => !(c in scored));
     const possible = Object.fromEntries(unfilled.map((c) => [c, 15]));
     await route.fulfill({
@@ -88,7 +88,7 @@ export async function installYachtGameMock(page: Page): Promise<void> {
     });
   });
 
-  await page.route(`${API_BASE}/game/score`, async (route: Route) => {
+  await page.route(`${API_BASE}/yacht/score`, async (route: Route) => {
     const body = JSON.parse((await route.request().postData()) ?? "{}");
     const cat: string = body.category ?? CATEGORIES[round - 1];
     scored[cat] = 15;
@@ -113,13 +113,13 @@ export async function installYachtGameMock(page: Page): Promise<void> {
 }
 
 /**
- * Install a mock that returns a 503 for the first /game/new call,
+ * Install a mock that returns a 503 for the first /yacht/new call,
  * then succeeds on subsequent calls.
  */
 export async function installFlakyNewGameMock(page: Page): Promise<void> {
   let attempt = 0;
 
-  await page.route(`${API_BASE}/game/new`, async (route: Route) => {
+  await page.route(`${API_BASE}/yacht/new`, async (route: Route) => {
     attempt++;
     if (attempt === 1) {
       await route.fulfill({
@@ -137,7 +137,7 @@ export async function installFlakyNewGameMock(page: Page): Promise<void> {
   });
 
   // Also install roll/score for after the retry succeeds
-  await page.route(`${API_BASE}/game/roll`, async (route: Route) => {
+  await page.route(`${API_BASE}/yacht/roll`, async (route: Route) => {
     await route.fulfill({
       status: 200,
       contentType: "application/json",
@@ -145,7 +145,7 @@ export async function installFlakyNewGameMock(page: Page): Promise<void> {
     });
   });
 
-  await page.route(`${API_BASE}/game/possible-scores`, async (route: Route) => {
+  await page.route(`${API_BASE}/yacht/possible-scores`, async (route: Route) => {
     const possible = Object.fromEntries(CATEGORIES.map((c) => [c, 15]));
     await route.fulfill({
       status: 200,

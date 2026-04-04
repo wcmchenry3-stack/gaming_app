@@ -21,7 +21,7 @@ def reset_game():
 
 
 def _new_game() -> dict:
-    res = client.post("/game/new", headers=SESSION_HEADERS)
+    res = client.post("/yacht/new", headers=SESSION_HEADERS)
     assert res.status_code == 200
     return res.json()
 
@@ -29,16 +29,16 @@ def _new_game() -> dict:
 def _roll(held: list[bool] = None) -> dict:
     if held is None:
         held = [False] * 5
-    res = client.post("/game/roll", json={"held": held}, headers=SESSION_HEADERS)
+    res = client.post("/yacht/roll", json={"held": held}, headers=SESSION_HEADERS)
     return res
 
 
 def _score(category: str) -> dict:
-    return client.post("/game/score", json={"category": category}, headers=SESSION_HEADERS)
+    return client.post("/yacht/score", json={"category": category}, headers=SESSION_HEADERS)
 
 
 # ---------------------------------------------------------------------------
-# POST /game/new
+# POST /yacht/new
 # ---------------------------------------------------------------------------
 
 
@@ -64,33 +64,33 @@ class TestNewGame:
         assert state["scores"]["chance"] is None
 
     def test_400_missing_session_id(self):
-        res = client.post("/game/new")
+        res = client.post("/yacht/new")
         assert res.status_code == 400
 
     def test_400_invalid_session_id(self):
-        res = client.post("/game/new", headers={"X-Session-ID": "not-a-uuid"})
+        res = client.post("/yacht/new", headers={"X-Session-ID": "not-a-uuid"})
         assert res.status_code == 400
 
 
 # ---------------------------------------------------------------------------
-# GET /game/state
+# GET /yacht/state
 # ---------------------------------------------------------------------------
 
 
 class TestGetState:
     def test_404_without_game(self):
-        res = client.get("/game/state", headers=SESSION_HEADERS)
+        res = client.get("/yacht/state", headers=SESSION_HEADERS)
         assert res.status_code == 404
 
     def test_returns_current_state(self):
         _new_game()
-        res = client.get("/game/state", headers=SESSION_HEADERS)
+        res = client.get("/yacht/state", headers=SESSION_HEADERS)
         assert res.status_code == 200
         assert res.json()["round"] == 1
 
 
 # ---------------------------------------------------------------------------
-# POST /game/roll
+# POST /yacht/roll
 # ---------------------------------------------------------------------------
 
 
@@ -109,7 +109,7 @@ class TestRoll:
 
     def test_invalid_held_length(self):
         _new_game()
-        res = client.post("/game/roll", json={"held": [False, False]}, headers=SESSION_HEADERS)
+        res = client.post("/yacht/roll", json={"held": [False, False]}, headers=SESSION_HEADERS)
         assert res.status_code == 422
 
     def test_400_after_three_rolls(self):
@@ -130,7 +130,7 @@ class TestRoll:
 
 
 # ---------------------------------------------------------------------------
-# POST /game/score
+# POST /yacht/score
 # ---------------------------------------------------------------------------
 
 
@@ -195,30 +195,30 @@ class TestScore:
         for cat in categories:
             _roll()
             _score(cat)
-        state = client.get("/game/state", headers=SESSION_HEADERS).json()
+        state = client.get("/yacht/state", headers=SESSION_HEADERS).json()
         assert state["game_over"] is True
 
 
 # ---------------------------------------------------------------------------
-# GET /game/possible-scores
+# GET /yacht/possible-scores
 # ---------------------------------------------------------------------------
 
 
 class TestPossibleScores:
     def test_404_without_game(self):
-        res = client.get("/game/possible-scores", headers=SESSION_HEADERS)
+        res = client.get("/yacht/possible-scores", headers=SESSION_HEADERS)
         assert res.status_code == 404
 
     def test_empty_before_rolling(self):
         _new_game()
-        res = client.get("/game/possible-scores", headers=SESSION_HEADERS)
+        res = client.get("/yacht/possible-scores", headers=SESSION_HEADERS)
         assert res.status_code == 200
         assert res.json()["possible_scores"] == {}
 
     def test_returns_scores_after_roll(self):
         _new_game()
         _roll()
-        res = client.get("/game/possible-scores", headers=SESSION_HEADERS)
+        res = client.get("/yacht/possible-scores", headers=SESSION_HEADERS)
         assert res.status_code == 200
         ps = res.json()["possible_scores"]
         assert len(ps) == 13
@@ -228,7 +228,7 @@ class TestPossibleScores:
         _roll()
         _score("chance")
         _roll()
-        ps = client.get("/game/possible-scores", headers=SESSION_HEADERS).json()["possible_scores"]
+        ps = client.get("/yacht/possible-scores", headers=SESSION_HEADERS).json()["possible_scores"]
         assert "chance" not in ps
         assert len(ps) == 12
 
@@ -242,14 +242,14 @@ class TestSessionIsolation:
     def test_two_sessions_are_independent(self):
         sid1 = str(uuid.uuid4())
         sid2 = str(uuid.uuid4())
-        client.post("/game/new", headers={"X-Session-ID": sid1})
-        client.post("/game/new", headers={"X-Session-ID": sid2})
+        client.post("/yacht/new", headers={"X-Session-ID": sid1})
+        client.post("/yacht/new", headers={"X-Session-ID": sid2})
         client.post(
-            "/game/roll",
+            "/yacht/roll",
             json={"held": [False] * 5},
             headers={"X-Session-ID": sid1},
         )
-        state2 = client.get("/game/state", headers={"X-Session-ID": sid2}).json()
+        state2 = client.get("/yacht/state", headers={"X-Session-ID": sid2}).json()
         assert state2["rolls_used"] == 0
 
     def test_session_lru_eviction(self):
@@ -259,7 +259,7 @@ class TestSessionIsolation:
         # Patch _MAX_SESSIONS to 3 so we can trigger eviction without rate limit
         with mock.patch.object(m, "_MAX_SESSIONS", 3):
             for _ in range(4):
-                client.post("/game/new", headers={"X-Session-ID": str(uuid.uuid4())})
+                client.post("/yacht/new", headers={"X-Session-ID": str(uuid.uuid4())})
         assert len(m._sessions) <= 3
 
     def test_evicted_session_returns_404(self):
@@ -267,9 +267,9 @@ class TestSessionIsolation:
         import unittest.mock as mock
 
         first_sid = str(uuid.uuid4())
-        client.post("/game/new", headers={"X-Session-ID": first_sid})
+        client.post("/yacht/new", headers={"X-Session-ID": first_sid})
         with mock.patch.object(m, "_MAX_SESSIONS", 3):
             for _ in range(3):
-                client.post("/game/new", headers={"X-Session-ID": str(uuid.uuid4())})
-        res = client.get("/game/state", headers={"X-Session-ID": first_sid})
+                client.post("/yacht/new", headers={"X-Session-ID": str(uuid.uuid4())})
+        res = client.get("/yacht/state", headers={"X-Session-ID": first_sid})
         assert res.status_code == 404

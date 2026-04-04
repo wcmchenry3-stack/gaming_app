@@ -43,7 +43,7 @@ test.describe("Yacht — error recovery", () => {
     await installYachtGameMock(page);
 
     // Override score endpoint to return 400
-    await page.route(`${API_BASE}/game/score`, async (route) => {
+    await page.route(`${API_BASE}/yacht/score`, async (route) => {
       await route.fulfill({
         status: 400,
         contentType: "application/json",
