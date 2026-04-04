@@ -5,7 +5,9 @@ import { useTranslation } from "react-i18next";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { RootStackParamList } from "../../App";
 import { useTheme } from "../theme/ThemeContext";
-import { twenty48Api, Twenty48State } from "../game/twenty48/api";
+import { Twenty48State } from "../game/twenty48/types";
+import { newGame, move as engineMove, Direction } from "../game/twenty48/engine";
+import { saveGame, loadGame, clearGame } from "../game/twenty48/storage";
 import Grid from "../components/twenty48/Grid";
 import ScoreBoard from "../components/twenty48/ScoreBoard";
 import GameOverlay from "../components/twenty48/GameOverlay";
@@ -21,8 +23,7 @@ export default function Twenty48Screen({ navigation }: Props) {
   const { colors, theme, toggle } = useTheme();
 
   const [state, setState] = useState<Twenty48State | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
   const [winDismissed, setWinDismissed] = useState(false);
   const movingRef = useRef(false);
 
@@ -31,17 +32,15 @@ export default function Twenty48Screen({ navigation }: Props) {
     navigation.setOptions({ gestureEnabled: false });
   }, [navigation]);
 
-  // Create session on mount
+  // Load saved game, or start a new one
   useEffect(() => {
     let active = true;
-    setLoading(true);
-    twenty48Api
-      .newSession()
-      .then((s) => {
-        if (active) setState(s);
-      })
-      .catch(() => {
-        if (active) setError(t("errors:backend.connection"));
+    loadGame()
+      .then((saved) => {
+        if (!active) return;
+        const next = saved ?? newGame();
+        setState(next);
+        if (!saved) saveGame(next);
       })
       .finally(() => {
         if (active) setLoading(false);
@@ -49,41 +48,36 @@ export default function Twenty48Screen({ navigation }: Props) {
     return () => {
       active = false;
     };
-  }, [t]);
-
-  const call = useCallback(
-    async (fn: () => Promise<Twenty48State>) => {
-      setLoading(true);
-      setError(null);
-      try {
-        const s = await fn();
-        setState(s);
-      } catch (e: unknown) {
-        setError(e instanceof Error ? e.message : t("errors:backend.connection"));
-      } finally {
-        setLoading(false);
-      }
-    },
-    [t]
-  );
+  }, []);
 
   const handleMove = useCallback(
-    async (direction: string) => {
+    (direction: Direction) => {
       if (movingRef.current || !state || state.game_over) return;
       movingRef.current = true;
       try {
-        await call(() => twenty48Api.move(direction));
+        const next = engineMove(state, direction);
+        setState(next);
+        saveGame(next);
+      } catch {
+        // "no effect" and "game over" throws — expected, ignore
       } finally {
         movingRef.current = false;
       }
     },
-    [call, state]
+    [state]
   );
 
-  const handleNewGame = useCallback(async () => {
+  const handleNewGame = useCallback(() => {
     setWinDismissed(false);
-    await call(twenty48Api.newSession);
-  }, [call]);
+    const next = newGame();
+    setState(next);
+    saveGame(next);
+  }, []);
+
+  // When game ends, remove the saved state so a fresh game starts next launch.
+  useEffect(() => {
+    if (state?.game_over) clearGame();
+  }, [state?.game_over]);
 
   const swipeGesture = Gesture.Pan()
     .minDistance(SWIPE_THRESHOLD)
@@ -94,7 +88,7 @@ export default function Twenty48Screen({ navigation }: Props) {
 
       if (absX < SWIPE_THRESHOLD && absY < SWIPE_THRESHOLD) return;
 
-      let direction: string;
+      let direction: Direction;
       if (absX > absY) {
         direction = translationX > 0 ? "right" : "left";
       } else {
@@ -150,7 +144,6 @@ export default function Twenty48Screen({ navigation }: Props) {
         <Pressable
           style={[styles.newGameBtn, { backgroundColor: colors.accent }]}
           onPress={handleNewGame}
-          disabled={loading}
           accessibilityRole="button"
           accessibilityLabel={t("twenty48:actions.newGameLabel")}
         >
@@ -167,11 +160,6 @@ export default function Twenty48Screen({ navigation }: Props) {
       <GestureDetector gesture={swipeGesture}>
         <View style={styles.boardContainer}>{state && <Grid board={state.board} />}</View>
       </GestureDetector>
-
-      {/* Error */}
-      {error && !error.includes("no effect") && (
-        <Text style={[styles.error, { color: colors.error }]}>{error}</Text>
-      )}
 
       {/* Overlays */}
       {showWinOverlay && (
