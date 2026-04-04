@@ -1,5 +1,5 @@
 import pytest
-from game import YachtGame, _calculate_score
+from yacht.game import YachtGame, _calculate_score
 
 # ---------------------------------------------------------------------------
 # Helpers

@@ -17,8 +17,8 @@ import uuid
 import pytest
 from fastapi.testclient import TestClient
 
-import main as main_module
-from game import CATEGORIES, UPPER_CATEGORIES, YachtGame
+from yacht.game import CATEGORIES, UPPER_CATEGORIES, YachtGame
+from yacht.router import reset_game as _yacht_reset
 from main import app
 
 # ---------------------------------------------------------------------------
@@ -34,9 +34,9 @@ SESSION_HEADERS = {"X-Session-ID": TEST_SESSION_ID}
 @pytest.fixture(autouse=True)
 def reset_game():
     """Reset session state before and after each test."""
-    main_module._sessions.clear()
+    _yacht_reset()
     yield
-    main_module._sessions.clear()
+    _yacht_reset()
 
 
 # ---------------------------------------------------------------------------

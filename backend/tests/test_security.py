@@ -8,6 +8,8 @@ import pytest
 from fastapi.testclient import TestClient
 from hypothesis import HealthCheck, given, settings, strategies as st
 
+from yacht.router import reset_game
+
 
 @pytest.fixture()
 def client_default():
@@ -15,9 +17,9 @@ def client_default():
     duplicate rate-limit decorator registrations that halve the effective limit."""
     import main as m
 
-    m._sessions.clear()
+    reset_game()
     yield TestClient(m.app)
-    m._sessions.clear()
+    reset_game()
 
 
 @pytest.fixture()
@@ -36,7 +38,7 @@ def client_prod():
     os.environ.pop("ALLOWED_ORIGINS", None)
     importlib.reload(m)
     limiter.reset()
-    m._sessions.clear()
+    reset_game()
 
 
 def _sid() -> str:
