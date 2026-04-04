@@ -2,8 +2,8 @@ import uuid
 
 import pytest
 from fastapi.testclient import TestClient
-import main as main_module
 from main import app
+from yacht.router import reset_game as _yacht_reset
 
 client = TestClient(app)
 
@@ -15,9 +15,9 @@ SESSION_HEADERS = {"X-Session-ID": TEST_SESSION_ID}
 @pytest.fixture(autouse=True)
 def reset_game():
     """Reset session state before each test."""
-    main_module._sessions.clear()
+    _yacht_reset()
     yield
-    main_module._sessions.clear()
+    _yacht_reset()
 
 
 def _new_game() -> dict:
@@ -253,7 +253,7 @@ class TestSessionIsolation:
         assert state2["rolls_used"] == 0
 
     def test_session_lru_eviction(self):
-        import main as m
+        from yacht import router as m
         import unittest.mock as mock
 
         # Patch _MAX_SESSIONS to 3 so we can trigger eviction without rate limit
@@ -263,7 +263,7 @@ class TestSessionIsolation:
         assert len(m._sessions) <= 3
 
     def test_evicted_session_returns_404(self):
-        import main as m
+        from yacht import router as m
         import unittest.mock as mock
 
         first_sid = str(uuid.uuid4())

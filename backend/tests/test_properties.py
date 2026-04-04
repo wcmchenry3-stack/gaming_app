@@ -14,7 +14,7 @@ import os
 from hypothesis import HealthCheck, given, settings
 from hypothesis import strategies as st
 
-from game import CATEGORIES, YachtGame, _calculate_score
+from yacht.game import CATEGORIES, YachtGame, _calculate_score
 
 # ---------------------------------------------------------------------------
 # Hypothesis profiles
