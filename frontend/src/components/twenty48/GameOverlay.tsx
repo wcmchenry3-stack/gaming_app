@@ -39,7 +39,7 @@ export default function GameOverlay({
               accessibilityRole="button"
               accessibilityLabel={t("twenty48:actions.keepPlayingLabel")}
             >
-                <Text style={[styles.btnText, { color: colors.textOnAccent }]}>
+              <Text style={[styles.btnText, { color: colors.textOnAccent }]}>
                 {t("twenty48:actions.keepPlaying")}
               </Text>
             </Pressable>
