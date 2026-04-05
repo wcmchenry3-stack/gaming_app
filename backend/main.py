@@ -18,7 +18,6 @@ from limiter import _real_ip, limiter
 from cascade.router import router as cascade_router
 from blackjack.router import router as blackjack_router
 from pachisi.router import router as pachisi_router
-from twenty48.router import router as twenty48_router
 from yacht.router import router as yacht_router
 
 # ---------------------------------------------------------------------------
@@ -49,7 +48,6 @@ app.include_router(yacht_router, prefix="/yacht")
 app.include_router(cascade_router, prefix="/cascade")
 app.include_router(blackjack_router, prefix="/blackjack")
 app.include_router(pachisi_router, prefix="/pachisi")
-app.include_router(twenty48_router, prefix="/twenty48")
 
 # ---------------------------------------------------------------------------
 # Rate limiting
