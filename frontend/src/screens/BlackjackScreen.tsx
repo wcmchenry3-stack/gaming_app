@@ -132,8 +132,78 @@ export default function BlackjackScreen({ navigation }: Props) {
         </Text>
       )}
 
-      {/* Main content */}
-      <View style={styles.content}>
+      {/*
+       * GH #227 — Chip balance is now always visible during player and result
+       * phases. BettingPanel already shows chips during the betting phase, so
+       * this strip only appears outside of it.
+       */}
+      {state && state.phase !== "betting" && (
+        <Text
+          style={[styles.chipStrip, { color: colors.text }]}
+          accessibilityLabel={t("blackjack:chips.accessibilityLabel", { chips: state.chips })}
+        >
+          {t("blackjack:chips.display", { chips: state.chips })}
+        </Text>
+      )}
+
+      {/*
+       * GH #226 — BlackjackTable is now always rendered when state exists,
+       * including during the betting phase (where the hands are empty). This
+       * keeps the table felt visible between hands instead of wiping the screen
+       * and replacing it with the bet stepper.
+       */}
+      {state && (
+        <View style={styles.tableArea}>
+          <BlackjackTable
+            playerHand={state.player_hand}
+            dealerHand={state.dealer_hand}
+            phase={state.phase}
+          />
+        </View>
+      )}
+
+      {/* Phase-specific controls */}
+      <View style={styles.controls}>
+        {state?.phase === "result" && (
+          <>
+            <ResultBanner outcome={state.outcome!} payout={state.payout} />
+
+            <View style={styles.resultActions}>
+              <Pressable
+                style={[styles.actionBtn, { backgroundColor: colors.accent }]}
+                onPress={handleNextHand}
+                accessibilityRole="button"
+                accessibilityLabel={t("blackjack:actions.nextHandLabel")}
+              >
+                <Text style={[styles.actionBtnText, { color: colors.surface }]}>
+                  {t("blackjack:actions.nextHand")}
+                </Text>
+              </Pressable>
+
+              <Pressable
+                style={[styles.actionBtn, styles.quitBtn, { borderColor: colors.border }]}
+                onPress={() => navigation.navigate("Home")}
+                accessibilityRole="button"
+                accessibilityLabel={t("blackjack:actions.quitLabel")}
+              >
+                <Text style={[styles.actionBtnText, { color: colors.text }]}>
+                  {t("blackjack:actions.quit")}
+                </Text>
+              </Pressable>
+            </View>
+          </>
+        )}
+
+        {state?.phase === "player" && (
+          <ActionButtons
+            onHit={handleHit}
+            onStand={handleStand}
+            onDoubleDown={handleDoubleDown}
+            doubleDownAvailable={state.double_down_available}
+            loading={false}
+          />
+        )}
+
         {(!state || state.phase === "betting") && (
           <BettingPanel
             chips={state?.chips ?? 1000}
@@ -141,56 +211,6 @@ export default function BlackjackScreen({ navigation }: Props) {
             loading={false}
             error={error}
           />
-        )}
-
-        {state && state.phase !== "betting" && (
-          <>
-            <BlackjackTable
-              playerHand={state.player_hand}
-              dealerHand={state.dealer_hand}
-              phase={state.phase}
-            />
-
-            {state.phase === "result" && (
-              <>
-                <ResultBanner outcome={state.outcome!} payout={state.payout} />
-
-                <View style={styles.resultActions}>
-                  <Pressable
-                    style={[styles.actionBtn, { backgroundColor: colors.accent }]}
-                    onPress={handleNextHand}
-                    accessibilityRole="button"
-                    accessibilityLabel={t("blackjack:actions.nextHandLabel")}
-                  >
-                    <Text style={[styles.actionBtnText, { color: colors.surface }]}>
-                      {t("blackjack:actions.nextHand")}
-                    </Text>
-                  </Pressable>
-
-                  <Pressable
-                    style={[styles.actionBtn, styles.quitBtn, { borderColor: colors.border }]}
-                    onPress={() => navigation.navigate("Home")}
-                    accessibilityRole="button"
-                    accessibilityLabel={t("blackjack:actions.quitLabel")}
-                  >
-                    <Text style={[styles.actionBtnText, { color: colors.text }]}>
-                      {t("blackjack:actions.quit")}
-                    </Text>
-                  </Pressable>
-                </View>
-              </>
-            )}
-
-            {state.phase === "player" && (
-              <ActionButtons
-                onHit={handleHit}
-                onStand={handleStand}
-                onDoubleDown={handleDoubleDown}
-                doubleDownAvailable={state.double_down_available}
-                loading={false}
-              />
-            )}
-          </>
         )}
 
         {state && state.phase !== "betting" && error && (
@@ -244,14 +264,25 @@ const styles = StyleSheet.create({
     fontWeight: "500",
     textTransform: "uppercase",
     letterSpacing: 0.8,
-    marginBottom: 16,
+    marginBottom: 4,
   },
-  content: {
+  chipStrip: {
+    textAlign: "center",
+    fontSize: 20,
+    fontWeight: "700",
+    marginBottom: 12,
+  },
+  tableArea: {
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
-    padding: 24,
-    gap: 28,
+    paddingHorizontal: 24,
+  },
+  controls: {
+    alignItems: "center",
+    paddingHorizontal: 24,
+    paddingBottom: 32,
+    gap: 16,
   },
   resultActions: {
     width: "100%",
