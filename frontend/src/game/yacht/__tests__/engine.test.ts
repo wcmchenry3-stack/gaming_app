@@ -483,6 +483,81 @@ describe("joker rule — possibleScores", () => {
     expect(ps.twos).toBe(10);
     expect(ps.full_house).toBe(0);
   });
+
+  // --- New edge cases (#186) -----------------------------------------------
+
+  it("priority 3: only non-corresponding upper open → that category is the sole option", () => {
+    // Five 3s with threes filled and all lower filled — only fives remains open.
+    const g: GameState = {
+      ...makeGame([3, 3, 3, 3, 3]),
+      scores: {
+        ...newGame().scores,
+        yacht: 50,
+        threes: 9, // corresponding upper filled
+        ones: 0,
+        twos: 0,
+        fours: 0,
+        sixes: 0, // all other uppers filled except fives
+        three_of_a_kind: 0,
+        four_of_a_kind: 0,
+        full_house: 0,
+        small_straight: 0,
+        large_straight: 0,
+        chance: 0, // all lower filled
+      },
+    };
+
+    const ps = possibleScores(g);
+    expect(ps).toEqual({ fives: 0 }); // five 3s → 0 in fives
+
+    const g2 = score(g, "fives");
+    expect(g2.scores.fives).toBe(0);
+    expect(g2.yacht_bonus_count).toBe(1); // bonus still awarded under Priority 3
+  });
+
+  it("scratched yacht: subsequent yacht roll does not activate joker or award bonus", () => {
+    // Score yacht as 0 (non-yacht dice).
+    let g = makeGame([1, 2, 3, 4, 5]);
+    g = score(g, "yacht");
+    expect(g.scores.yacht).toBe(0);
+    expect(g.yacht_bonus_count).toBe(0);
+
+    // Later turn: roll a genuine yacht.
+    const g2: GameState = { ...g, dice: [4, 4, 4, 4, 4], rolls_used: 1 };
+
+    // Joker requires scores.yacht === 50 — scratched means it's 0, not active.
+    const ps = possibleScores(g2);
+    expect(ps.fours).toBe(20); // normal upper scoring
+    expect(ps.full_house).toBe(0); // normal (not joker) lower value
+
+    const g3 = score(g2, "fours");
+    expect(g3.scores.fours).toBe(20);
+    expect(g3.yacht_bonus_count).toBe(0); // no bonus ever awarded
+  });
+
+  it("only yacht remaining with non-yacht roll → possible_scores is {yacht: 0}", () => {
+    const g: GameState = {
+      ...makeGame([1, 2, 3, 4, 5]),
+      scores: {
+        ones: 0,
+        twos: 0,
+        threes: 0,
+        fours: 0,
+        fives: 0,
+        sixes: 0,
+        three_of_a_kind: 0,
+        four_of_a_kind: 0,
+        full_house: 0,
+        small_straight: 0,
+        large_straight: 0,
+        chance: 0,
+        yacht: null, // the only unscored category
+      },
+    };
+
+    const ps = possibleScores(g);
+    expect(ps).toEqual({ yacht: 0 });
+  });
 });
 
 // --- Seedable RNG ---------------------------------------------------------
