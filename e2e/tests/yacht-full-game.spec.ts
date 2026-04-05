@@ -53,7 +53,9 @@ test.describe("Yacht — full 13-round game journey", () => {
     await rollBtn.click();
 
     // After rolling, a die button with an accessible "Die N: showing X" label appears
-    await expect(page.getByRole("button", { name: /Die 1: showing \d/ })).toBeVisible();
+    await expect(
+      page.getByRole("button", { name: /Die 1: showing \d/ }),
+    ).toBeVisible();
   });
 
   test("scoring a category advances the round", async ({ page }) => {
@@ -79,7 +81,9 @@ test.describe("Yacht — full 13-round game journey", () => {
     await expect(page.getByText(/Final Score/i)).toBeVisible();
   });
 
-  test("Play Again from game-over modal starts a new game in place", async ({ page }) => {
+  test("Play Again from game-over modal starts a new game in place", async ({
+    page,
+  }) => {
     await page.getByRole("button", { name: "Play Yacht" }).click();
 
     for (let round = 0; round < 13; round++) {
@@ -94,7 +98,7 @@ test.describe("Yacht — full 13-round game journey", () => {
     await expect(page.getByRole("button", { name: /Roll/i })).toBeVisible();
   });
 
-  test("No Thanks dismisses game-over modal and keeps score visible", async ({ page }) => {
+  test("No Thanks navigates back to HomeScreen", async ({ page }) => {
     await page.getByRole("button", { name: "Play Yacht" }).click();
 
     for (let round = 0; round < 13; round++) {
@@ -105,6 +109,9 @@ test.describe("Yacht — full 13-round game journey", () => {
     await expect(page.getByText("Game Over!")).toBeVisible();
     await page.getByRole("button", { name: /dismiss/i }).click();
 
-    await expect(page.getByText("Game Over!")).not.toBeVisible();
+    // Dismiss now navigates back to HomeScreen rather than hiding the modal in-place.
+    await expect(page.getByText("Gaming App").first()).toBeVisible({
+      timeout: 10000,
+    });
   });
 });

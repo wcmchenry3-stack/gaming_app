@@ -120,7 +120,9 @@ test.describe("Yacht — error paths and navigation", () => {
     await expect(rollBtn).not.toBeDisabled();
   });
 
-  test("all score rows are disabled after game over", async ({ page }) => {
+  test("game-over modal shows final score and both action buttons", async ({
+    page,
+  }) => {
     const CATEGORY_LABELS_IN_ORDER = [
       "Ones",
       "Twos",
@@ -146,14 +148,13 @@ test.describe("Yacht — error paths and navigation", () => {
       await page.getByText(CATEGORY_LABELS_IN_ORDER[round]).first().click();
     }
 
-    // Dismiss the game-over modal to inspect the scorecard
+    // Modal should show final score and both action buttons
     await expect(page.getByText("Game Over!")).toBeVisible();
-    await page.getByRole("button", { name: /dismiss/i }).click();
-
-    // All scored rows should be disabled (game_over=true blocks canScore)
-    const chanceRow = page.getByRole("button", { name: /Chance: scored/ });
-    await expect(chanceRow).toBeVisible();
-    await expect(chanceRow).toBeDisabled();
+    await expect(page.getByText(/Final Score/i)).toBeVisible();
+    await expect(
+      page.getByRole("button", { name: /start a new game/i }),
+    ).toBeVisible();
+    await expect(page.getByRole("button", { name: /dismiss/i })).toBeVisible();
   });
 
   test("scratching a category (scoring 0) is not reversible", async ({
