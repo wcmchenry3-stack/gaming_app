@@ -125,7 +125,7 @@ test.describe("Blackjack — error paths and guardrails", () => {
       page.getByRole("button", { name: /start a new session with 1000 chips/i }),
     ).toBeVisible();
     await expect(
-      page.getByRole("button", { name: "Return to home screen" }),
+      page.getByRole("button", { name: "Return to home screen", exact: true }),
     ).toBeVisible();
   });
 
@@ -153,7 +153,7 @@ test.describe("Blackjack — error paths and guardrails", () => {
     await expect(page.getByText("Out of Chips").first()).toBeVisible();
 
     await page
-      .getByRole("button", { name: /return to home screen/i })
+      .getByRole("button", { name: "Return to home screen", exact: true })
       .click();
 
     await expect(page.getByText("Gaming App").first()).toBeVisible({
