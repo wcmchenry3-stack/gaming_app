@@ -505,3 +505,96 @@ class TestJokerRule:
         assert "twos" in ps
         assert ps["twos"] == 10
         assert ps["full_house"] == 0
+
+    # ------------------------------------------------------------------
+    # New edge cases (#186)
+    # ------------------------------------------------------------------
+
+    def test_joker_priority_3_only_noncorresponding_upper_open(self):
+        """Priority 3: when all lower and all upper except a non-corresponding
+        category are filled, that single non-corresponding upper is the only
+        valid destination and possible_scores returns exactly that entry."""
+        g = make_game([3, 3, 3, 3, 3])
+        g.scores["yacht"] = 50
+        g.scores["threes"] = 9  # corresponding upper already filled
+        # Fill every other upper except fives
+        for cat in ["ones", "twos", "fours", "sixes"]:
+            g.scores[cat] = 0
+        # Fill every lower category
+        for cat in [
+            "three_of_a_kind",
+            "four_of_a_kind",
+            "full_house",
+            "small_straight",
+            "large_straight",
+            "chance",
+        ]:
+            g.scores[cat] = 0
+        # Only fives remains open
+
+        ps = g.possible_scores()
+        assert ps == {"fives": 0}  # five 3s scores 0 in fives
+
+        g.score("fives")
+        assert g.scores["fives"] == 0
+        assert g.yacht_bonus_count == 1  # bonus still awarded
+
+    def test_scratched_yacht_no_joker_on_subsequent_yacht_roll(self):
+        """After yacht is scratched (scored as 0), rolling five-of-a-kind later
+        must NOT activate the joker rule and must NOT increment yacht_bonus_count."""
+        g = make_game([1, 2, 3, 4, 5])
+        g.score("yacht")  # not a yacht → scores 0
+        assert g.scores["yacht"] == 0
+        assert g.yacht_bonus_count == 0
+
+        # Simulate a later turn: roll a genuine yacht
+        g.dice = [4, 4, 4, 4, 4]
+        g.rolls_used = 1
+
+        assert not g._joker_active()  # scores["yacht"] == 0, not 50
+
+        ps = g.possible_scores()
+        assert ps["fours"] == 20  # normal upper scoring
+        assert ps.get("full_house") == 0  # normal (not joker) lower value
+
+        g.score("fours")
+        assert g.scores["fours"] == 20
+        assert g.yacht_bonus_count == 0  # no bonus ever awarded
+
+    def test_yacht_bonus_count_never_set_after_scratch(self):
+        """yacht_bonus_count stays 0 throughout the game when yacht was scratched."""
+        g = make_game([6, 1, 2, 3, 4])
+        g.score("yacht")  # not all same → 0
+        assert g.scores["yacht"] == 0
+        assert g.yacht_bonus_count == 0
+
+        # Two subsequent yacht rolls still don't trigger joker
+        for dice in ([5, 5, 5, 5, 5], [3, 3, 3, 3, 3]):
+            g.dice = list(dice)
+            g.rolls_used = 1
+            assert not g._joker_active()
+            assert g.yacht_bonus_count == 0
+
+    def test_possible_scores_only_yacht_remaining_non_yacht_roll(self):
+        """When every category except Yacht is scored and dice aren't a yacht,
+        possible_scores returns exactly {yacht: 0} (forced scratch)."""
+        g = make_game([1, 2, 3, 4, 5])
+        for cat in [
+            "ones",
+            "twos",
+            "threes",
+            "fours",
+            "fives",
+            "sixes",
+            "three_of_a_kind",
+            "four_of_a_kind",
+            "full_house",
+            "small_straight",
+            "large_straight",
+            "chance",
+        ]:
+            g.scores[cat] = 0
+        # yacht is still None
+
+        ps = g.possible_scores()
+        assert ps == {"yacht": 0}
