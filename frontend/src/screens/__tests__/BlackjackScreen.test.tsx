@@ -16,7 +16,9 @@ jest.mock("../../game/blackjack/storage", () => ({
 }));
 
 function mockNav() {
-  return { navigate: jest.fn() } as unknown as Parameters<typeof BlackjackScreen>[0]["navigation"];
+  return { navigate: jest.fn(), goBack: jest.fn() } as unknown as Parameters<
+    typeof BlackjackScreen
+  >[0]["navigation"];
 }
 
 function renderScreen(nav = mockNav()) {
@@ -62,7 +64,7 @@ describe("BlackjackScreen — header / navigation", () => {
     await screen.findByText("Deal"); // wait for mount
     const back = screen.getByLabelText(/back/i);
     fireEvent.press(back);
-    expect(nav.navigate).toHaveBeenCalledWith("Home");
+    expect(nav.goBack).toHaveBeenCalledTimes(1);
   });
 
   it("shows Blackjack title", async () => {
