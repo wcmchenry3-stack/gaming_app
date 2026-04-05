@@ -143,7 +143,7 @@ export default function GameOverOverlay({ score, onRestart }: Props) {
             </Text>
           ) : (
             <Text style={[styles.saved, { color: colors.bonus }]}>
-              {t("gameOver.savedConfirmation", { rank: submitted!.score.toLocaleString() })}
+              {t("gameOver.savedConfirmation", { rank: submitted!.rank })}
             </Text>
           )}
 

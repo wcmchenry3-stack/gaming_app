@@ -84,22 +84,24 @@ describe("GameOverOverlay", () => {
   });
 
   it("pressing save after entering a name calls the API", async () => {
-    mockSubmitScore.mockResolvedValueOnce({ name: "Alice", score: 1234, rank: 1 });
+    mockSubmitScore.mockResolvedValueOnce({ player_name: "Alice", score: 1234, rank: 1 });
     renderOverlay(1234);
     fireEvent.changeText(screen.getByLabelText("Your name"), "Alice");
     fireEvent.press(screen.getByLabelText("Save score"));
     await waitFor(() => expect(mockSubmitScore).toHaveBeenCalledWith("Alice", 1234));
   });
 
-  it("shows saved confirmation after successful submit", async () => {
-    mockSubmitScore.mockResolvedValueOnce({ name: "Alice", score: 1234, rank: 2 });
+  it("shows saved confirmation with the leaderboard rank (#2), not the score", async () => {
+    // Regression guard for #195: previously the score was displayed where
+    // rank belonged ("Saved! #1234" for a score=1234 / rank=2).
+    mockSubmitScore.mockResolvedValueOnce({ player_name: "Alice", score: 1234, rank: 2 });
     renderOverlay(1234);
 
     fireEvent.changeText(screen.getByLabelText("Your name"), "Alice");
     fireEvent.press(screen.getByLabelText("Save score"));
 
     await waitFor(() => {
-      expect(screen.getByText(/Saved!/i)).toBeTruthy();
+      expect(screen.getByText("Saved! #2")).toBeTruthy();
     });
     expect(mockSubmitScore).toHaveBeenCalledWith("Alice", 1234);
   });
