@@ -140,12 +140,13 @@ test.describe("2048 — win-state + keep-playing flow", () => {
       timeout: 3000,
     });
 
-    // Inject another near-win into storage, reload
+    // Inject another near-win into storage, reload, navigate back in
     await page.evaluate(
       (s) => localStorage.setItem("twenty48_game_v1", JSON.stringify(s)),
       nearWinState(),
     );
     await page.reload();
+    await page.getByRole("button", { name: "Play 2048" }).click();
     await page.getByLabel("Game board").waitFor();
     await page.keyboard.press("ArrowLeft");
 

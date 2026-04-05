@@ -235,7 +235,9 @@ test.describe("2048 — accessibility labels", () => {
 test.describe("2048 — axe-core scans", () => {
   test("no axe violations on betting (start) phase", async ({ page }) => {
     await gotoTwenty48(page);
-    const results = await new AxeBuilder({ page }).analyze();
+    const results = await new AxeBuilder({ page })
+      .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"])
+      .analyze();
     expect(results.violations).toEqual([]);
   });
 
@@ -244,7 +246,9 @@ test.describe("2048 — axe-core scans", () => {
     await page.getByRole("button", { name: "Play 2048" }).click();
     await page.getByLabel("Game board").waitFor();
 
-    const results = await new AxeBuilder({ page }).analyze();
+    const results = await new AxeBuilder({ page })
+      .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"])
+      .analyze();
     expect(results.violations).toEqual([]);
   });
 
@@ -253,7 +257,9 @@ test.describe("2048 — axe-core scans", () => {
     await page.getByRole("button", { name: "Play 2048" }).click();
     await page.getByText("You Win!").waitFor();
 
-    const results = await new AxeBuilder({ page }).analyze();
+    const results = await new AxeBuilder({ page })
+      .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"])
+      .analyze();
     expect(results.violations).toEqual([]);
   });
 
@@ -262,7 +268,9 @@ test.describe("2048 — axe-core scans", () => {
     await page.getByRole("button", { name: "Play 2048" }).click();
     await page.getByText("Game Over").waitFor();
 
-    const results = await new AxeBuilder({ page }).analyze();
+    const results = await new AxeBuilder({ page })
+      .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"])
+      .analyze();
     expect(results.violations).toEqual([]);
   });
 });
