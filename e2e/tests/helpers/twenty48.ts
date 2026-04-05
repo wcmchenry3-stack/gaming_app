@@ -53,12 +53,12 @@ export function midGameState(
 ): InjectedTwenty48State {
   return {
     board: [
-      [4, 2, 0, 0],
       [0, 0, 0, 0],
-      [0, 0, 0, 0],
+      [0, 4, 0, 0],
+      [0, 0, 2, 0],
       [0, 0, 0, 0],
     ],
-    score: 4,
+    score: 0,
     game_over: false,
     has_won: false,
     ...overrides,
@@ -74,10 +74,10 @@ export function nearWinState(
 ): InjectedTwenty48State {
   return {
     board: [
-      [1024, 1024, 2, 4],
+      [1024, 1024, 0, 0],
       [2, 4, 8, 16],
-      [4, 2, 16, 8],
-      [8, 16, 4, 2],
+      [4, 8, 16, 32],
+      [8, 16, 32, 64],
     ],
     score: 5000,
     game_over: false,

@@ -158,8 +158,8 @@ test.describe("2048 — accessibility labels", () => {
     await page.getByRole("button", { name: "Play 2048" }).click();
     await page.getByLabel("Game board").waitFor();
 
-    await expect(page.getByLabel("4").first()).toBeVisible();
-    await expect(page.getByLabel("2").first()).toBeVisible();
+    await expect(page.locator('[aria-label="4"]').first()).toBeVisible();
+    await expect(page.locator('[aria-label="2"]').first()).toBeVisible();
   });
 
   test("empty tiles have accessibility label 'empty'", async ({ page }) => {
@@ -183,7 +183,7 @@ test.describe("2048 — accessibility labels", () => {
     await page.getByRole("button", { name: "Play 2048" }).click();
     await page.getByLabel("Game board").waitFor();
 
-    await expect(page.getByLabel("Current score: 128")).toBeVisible();
+    await expect(page.locator('[aria-label="Current score: 128"]')).toBeVisible();
   });
 
   test("back button has accessible role and label", async ({ page }) => {

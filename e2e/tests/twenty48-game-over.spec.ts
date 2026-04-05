@@ -30,7 +30,7 @@ test.describe("2048 — game-over detection and flow", () => {
     await page.getByText("Game Over").waitFor();
 
     await expect(
-      page.getByRole("button", { name: "Start a new 2048 game" }),
+      page.getByRole("button", { name: "Start a new 2048 game" }).first(),
     ).toBeVisible();
     await expect(
       page.getByRole("button", { name: "Quit and return to home screen" }),
@@ -63,12 +63,12 @@ test.describe("2048 — game-over detection and flow", () => {
     await page.getByRole("button", { name: "Play 2048" }).click();
     await page.getByText("Game Over").waitFor();
 
-    await page.getByRole("button", { name: "Start a new 2048 game" }).click();
+    await page.getByRole("button", { name: "Start a new 2048 game" }).first().click();
 
     await expect(page.getByText("Game Over")).not.toBeVisible({
       timeout: 3000,
     });
-    await expect(page.getByLabel("Current score: 0")).toBeVisible({
+    await expect(page.locator('[aria-label="Current score: 0"]')).toBeVisible({
       timeout: 3000,
     });
     // Fresh board has 2 tiles → 14 empty cells

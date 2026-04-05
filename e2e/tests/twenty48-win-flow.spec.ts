@@ -106,7 +106,7 @@ test.describe("2048 — win-state + keep-playing flow", () => {
 
     // Overlay gone, score reset to 0
     await expect(page.getByText("You Win!")).not.toBeVisible({ timeout: 3000 });
-    await expect(page.getByLabel("Current score: 0")).toBeVisible({
+    await expect(page.locator('[aria-label="Current score: 0"]')).toBeVisible({
       timeout: 3000,
     });
   });
@@ -136,7 +136,7 @@ test.describe("2048 — win-state + keep-playing flow", () => {
       .getByRole("button", { name: "Start a new 2048 game" })
       .first()
       .click();
-    await expect(page.getByLabel("Current score: 0")).toBeVisible({
+    await expect(page.locator('[aria-label="Current score: 0"]')).toBeVisible({
       timeout: 3000,
     });
 

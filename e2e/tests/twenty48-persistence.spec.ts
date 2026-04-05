@@ -24,15 +24,27 @@ test.describe("2048 — state persistence", () => {
     await page.getByRole("button", { name: "Play 2048" }).click();
     await page.getByLabel("Game board").waitFor();
 
-    // midGameState has score=4
-    await expect(page.getByLabel("Current score: 4")).toBeVisible();
+    // midGameState has score=0, tiles at [1][1]=4 and [2][2]=2
+    await expect(page.locator('[aria-label="Current score: 0"]')).toBeVisible();
     // Two non-empty tiles: "4" and "2"
-    await expect(page.getByLabel("4").first()).toBeVisible();
-    await expect(page.getByLabel("2").first()).toBeVisible();
+    await expect(page.locator('[aria-label="4"]').first()).toBeVisible();
+    await expect(page.locator('[aria-label="2"]').first()).toBeVisible();
   });
 
   test("board and score survive a page reload", async ({ page }) => {
-    await injectGameState(page, midGameState());
+    // Use a board with two 2s in row 0 so ArrowLeft creates a merge (score ≥ 4)
+    await injectGameState(
+      page,
+      midGameState({
+        board: [
+          [0, 2, 2, 0],
+          [0, 0, 0, 0],
+          [0, 0, 0, 0],
+          [0, 0, 0, 0],
+        ],
+        score: 0,
+      }),
+    );
     await page.getByRole("button", { name: "Play 2048" }).click();
     await page.getByLabel("Game board").waitFor();
 
@@ -49,7 +61,7 @@ test.describe("2048 — state persistence", () => {
     await page.getByRole("button", { name: "Play 2048" }).click();
     await page.getByLabel("Game board").waitFor();
 
-    // After the move score ≥ 4; after reload it should not reset to 0
+    // After the 2+2 merge score = 4; after reload it should not reset to 0
     const scoreLabelEl = page.locator('[aria-label^="Current score:"]');
     const labelText = await scoreLabelEl.getAttribute("aria-label");
     const savedScore = parseInt(
@@ -63,7 +75,7 @@ test.describe("2048 — state persistence", () => {
     await injectGameState(page, midGameState({ score: 64 }));
     await page.getByRole("button", { name: "Play 2048" }).click();
     await page.getByLabel("Game board").waitFor();
-    await expect(page.getByLabel("Current score: 64")).toBeVisible();
+    await expect(page.locator('[aria-label="Current score: 64"]')).toBeVisible();
 
     // Navigate home
     await page.getByRole("button", { name: "Back" }).click();
@@ -74,7 +86,7 @@ test.describe("2048 — state persistence", () => {
     await page.getByLabel("Game board").waitFor();
 
     // Score preserved
-    await expect(page.getByLabel("Current score: 64")).toBeVisible();
+    await expect(page.locator('[aria-label="Current score: 64"]')).toBeVisible();
   });
 
   test("game-over state: localStorage cleared automatically", async ({
@@ -101,7 +113,7 @@ test.describe("2048 — state persistence", () => {
     await page.getByRole("button", { name: "Play 2048" }).click();
     await page.getByLabel("Game board").waitFor();
 
-    await expect(page.getByLabel("Current score: 0")).toBeVisible();
+    await expect(page.locator('[aria-label="Current score: 0"]')).toBeVisible();
     await expect(page.getByLabel("empty")).toHaveCount(14);
     await expect(page.getByText("Game Over")).not.toBeVisible();
   });
@@ -117,7 +129,7 @@ test.describe("2048 — state persistence", () => {
     await page.getByRole("button", { name: "Play 2048" }).click();
     await page.getByLabel("Game board").waitFor();
 
-    await expect(page.getByLabel("Current score: 0")).toBeVisible();
+    await expect(page.locator('[aria-label="Current score: 0"]')).toBeVisible();
     await expect(page.getByLabel("empty")).toHaveCount(14);
   });
 
@@ -136,7 +148,7 @@ test.describe("2048 — state persistence", () => {
     await page.getByRole("button", { name: "Play 2048" }).click();
     await page.getByLabel("Game board").waitFor();
 
-    await expect(page.getByLabel("Current score: 0")).toBeVisible();
+    await expect(page.locator('[aria-label="Current score: 0"]')).toBeVisible();
   });
 
   test("New Game is always reachable from mid-game", async ({ page }) => {
@@ -150,7 +162,7 @@ test.describe("2048 — state persistence", () => {
     await expect(newGameBtn).toBeVisible();
     await newGameBtn.click();
 
-    await expect(page.getByLabel("Current score: 0")).toBeVisible({
+    await expect(page.locator('[aria-label="Current score: 0"]')).toBeVisible({
       timeout: 3000,
     });
   });
@@ -167,7 +179,7 @@ test.describe("2048 — state persistence", () => {
       .first()
       .click();
 
-    await expect(page.getByLabel("Current score: 0")).toBeVisible({
+    await expect(page.locator('[aria-label="Current score: 0"]')).toBeVisible({
       timeout: 3000,
     });
     await expect(page.getByText("You Win!")).not.toBeVisible();
@@ -188,9 +200,12 @@ test.describe("2048 — state persistence", () => {
     await page.getByRole("button", { name: "Play 2048" }).click();
     await page.getByText("Game Over").waitFor();
 
-    await page.getByRole("button", { name: "Start a new 2048 game" }).click();
+    await page
+      .getByRole("button", { name: "Start a new 2048 game" })
+      .first()
+      .click();
 
-    await expect(page.getByLabel("Current score: 0")).toBeVisible({
+    await expect(page.locator('[aria-label="Current score: 0"]')).toBeVisible({
       timeout: 3000,
     });
 

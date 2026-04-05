@@ -105,7 +105,7 @@ test.describe("2048 — full happy-path game journey", () => {
     await page.keyboard.press("ArrowLeft");
 
     // Score should jump to 4 after 2+2 merge
-    await expect(page.getByLabel("Current score: 4")).toBeVisible({
+    await expect(page.locator('[aria-label="Current score: 4"]')).toBeVisible({
       timeout: 3000,
     });
   });
@@ -120,7 +120,7 @@ test.describe("2048 — full happy-path game journey", () => {
     await page.keyboard.press("ArrowLeft");
 
     // Score should be 8 (4+4), not 16 (8+8) or 4 (just one merge)
-    await expect(page.getByLabel("Current score: 8")).toBeVisible({
+    await expect(page.locator('[aria-label="Current score: 8"]')).toBeVisible({
       timeout: 3000,
     });
   });
@@ -132,7 +132,7 @@ test.describe("2048 — full happy-path game journey", () => {
 
     await page.getByRole("button", { name: "Start a new 2048 game" }).click();
 
-    await expect(page.getByLabel("Current score: 0")).toBeVisible({
+    await expect(page.locator('[aria-label="Current score: 0"]')).toBeVisible({
       timeout: 3000,
     });
   });

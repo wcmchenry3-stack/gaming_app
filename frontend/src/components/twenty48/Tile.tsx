@@ -38,6 +38,7 @@ export default function Tile({ value, size }: TileProps) {
     <View
       style={[styles.tile, { width: size, height: size, backgroundColor: bg }]}
       accessibilityLabel={value > 0 ? String(value) : "empty"}
+      accessibilityRole="image"
     >
       {value > 0 && (
         <Text style={[styles.text, { color: textColor, fontSize: getFontSize(value) }]}>
