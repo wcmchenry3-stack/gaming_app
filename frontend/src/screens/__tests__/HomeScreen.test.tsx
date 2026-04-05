@@ -5,16 +5,11 @@ import HomeScreen from "../HomeScreen";
 import { ThemeProvider } from "../../theme/ThemeContext";
 
 // ---------------------------------------------------------------------------
-// Mock the Yacht API client
+// Mock yacht storage — no saved game by default
 // ---------------------------------------------------------------------------
-jest.mock("../../game/yacht/api", () => ({
-  api: {
-    newGame: jest.fn(),
-  },
+jest.mock("../../game/yacht/storage", () => ({
+  loadGame: jest.fn().mockResolvedValue(null),
 }));
-
-import { api } from "../../game/yacht/api";
-const mockApi = api as jest.Mocked<typeof api>;
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -81,23 +76,17 @@ describe("HomeScreen — game cards", () => {
     expect(nav.navigate).toHaveBeenCalledWith("Ludo");
   });
 
-  it("calls api.newGame and navigates to Game when Yacht card pressed", async () => {
+  it("navigates to Game with a new state when Yacht card pressed (no saved game)", async () => {
     const nav = mockNav();
-    mockApi.newGame.mockResolvedValue({
-      dice: [1, 2, 3, 4, 5],
-      held: [false, false, false, false, false],
-      rolls_used: 0,
-      round: 1,
-      scores: {},
-      game_over: false,
-      upper_subtotal: 0,
-      upper_bonus: 0,
-      yacht_bonus_count: 0,
-      yacht_bonus_total: 0,
-      total_score: 0,
-    });
     const { getByLabelText } = renderScreen(nav);
     fireEvent.press(getByLabelText("Play Yacht"));
-    await waitFor(() => expect(nav.navigate).toHaveBeenCalledWith("Game", expect.any(Object)));
+    await waitFor(() =>
+      expect(nav.navigate).toHaveBeenCalledWith(
+        "Game",
+        expect.objectContaining({
+          initialState: expect.objectContaining({ round: 1, rolls_used: 0, game_over: false }),
+        })
+      )
+    );
   });
 });

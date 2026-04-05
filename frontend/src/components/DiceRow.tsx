@@ -8,7 +8,7 @@ interface DiceRowProps {
   dice: number[];
   rollsUsed: number;
   gameOver: boolean;
-  onRoll: (held: boolean[]) => Promise<void>;
+  onRoll: (held: boolean[]) => void | Promise<void>;
   resetHeld: boolean;
 }
 
