@@ -8,6 +8,7 @@
  * navigation.
  *
  * GH #184 — extended with 5 additional error / guard cases.
+ * GH #225 — regression tests for "Play Again" reset bug.
  */
 
 import { test, expect } from "@playwright/test";
@@ -190,5 +191,123 @@ test.describe("Yacht — error paths and navigation", () => {
         .click();
       await expect(page.getByText("Round 2 / 13")).toBeVisible();
     }
+  });
+});
+
+// ---------------------------------------------------------------------------
+// GH #225 — "Play Again" reset regression tests
+// ---------------------------------------------------------------------------
+
+const CATEGORY_LABELS_IN_ORDER = [
+  "Ones",
+  "Twos",
+  "Threes",
+  "Fours",
+  "Fives",
+  "Sixes",
+  "Three of a Kind",
+  "Four of a Kind",
+  "Full House (25)",
+  "Sm. Straight (30)",
+  "Lg. Straight (40)",
+  "Yacht! (50)",
+  "Chance",
+];
+
+test.describe("Yacht — Play Again reset regression (GH #225)", () => {
+  test.beforeEach(async ({ page }) => {
+    await page.goto("/");
+    await page.evaluate(() => localStorage.removeItem("yacht_game_v1"));
+    await page.goto("/");
+  });
+
+  /** Helper: play a full 13-round game and reach the game-over modal. */
+  async function playFullGame(page: Parameters<Parameters<typeof test>[1]>[0]) {
+    await page.getByRole("button", { name: "Play Yacht" }).click();
+    for (let round = 0; round < 13; round++) {
+      await page
+        .getByText(`Round ${round + 1} / 13`)
+        .waitFor({ timeout: 15000 });
+      await page.getByRole("button", { name: /Roll/i }).click();
+      await page.getByText(CATEGORY_LABELS_IN_ORDER[round]).first().click();
+    }
+    await page.getByText("Game Over!").waitFor({ timeout: 10000 });
+  }
+
+  test("Play Again resets to Round 1 / 13", async ({ page }) => {
+    await playFullGame(page);
+
+    await page.getByRole("button", { name: /start a new game/i }).click();
+
+    await expect(page.getByText("Round 1 / 13")).toBeVisible({
+      timeout: 10000,
+    });
+  });
+
+  test("Play Again clears all scored categories", async ({ page }) => {
+    await playFullGame(page);
+    await page.getByRole("button", { name: /start a new game/i }).click();
+    await expect(page.getByText("Round 1 / 13")).toBeVisible({
+      timeout: 10000,
+    });
+
+    // No category should show a filled score — they should all be "not available"
+    // (before the first roll, canScore is false so all show "not available")
+    await expect(
+      page.getByRole("button", { name: /Chance: not available/ }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole("button", { name: /Ones: not available/ }),
+    ).toBeVisible();
+  });
+
+  test("Play Again allows rolling and scoring immediately", async ({
+    page,
+  }) => {
+    await playFullGame(page);
+    await page.getByRole("button", { name: /start a new game/i }).click();
+    await expect(page.getByText("Round 1 / 13")).toBeVisible({
+      timeout: 10000,
+    });
+
+    const rollBtn = page.getByRole("button", { name: /Roll/i });
+    await expect(rollBtn).not.toBeDisabled();
+    await rollBtn.click();
+    await expect(
+      page.getByRole("button", { name: /Chance: potential score/ }),
+    ).toBeVisible();
+  });
+
+  test("localStorage is updated with round-1 state after Play Again", async ({
+    page,
+  }) => {
+    await playFullGame(page);
+    await page.getByRole("button", { name: /start a new game/i }).click();
+    await expect(page.getByText("Round 1 / 13")).toBeVisible({
+      timeout: 10000,
+    });
+
+    const stored = await page.evaluate(() =>
+      localStorage.getItem("yacht_game_v1"),
+    );
+    expect(stored).not.toBeNull();
+    const state = JSON.parse(stored!);
+    expect(state.round).toBe(1);
+    expect(state.game_over).toBe(false);
+    // All scores should be null
+    for (const v of Object.values(state.scores)) {
+      expect(v).toBeNull();
+    }
+  });
+
+  test("Dismiss navigates back to HomeScreen", async ({ page }) => {
+    await playFullGame(page);
+
+    await page.getByRole("button", { name: /dismiss/i }).click();
+
+    // After dismiss the user lands on HomeScreen
+    await expect(page.getByText("Gaming App").first()).toBeVisible({
+      timeout: 10000,
+    });
   });
 });
