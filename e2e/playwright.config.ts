@@ -4,12 +4,22 @@ import { join } from "path";
 /**
  * Playwright E2E configuration.
  *
+ * Named projects allow CI to run only the impacted game suite on dev PRs
+ * while always running the full suite on main PRs / pushes.
+ *
+ * Projects:
+ *   yacht      — yacht-*.spec.ts
+ *   blackjack  — blackjack-*.spec.ts
+ *   twenty48   — twenty48-*.spec.ts
+ *   pachisi    — pachisi-*.spec.ts
+ *   cross      — accessibility.spec.ts, cascade-flow.spec.ts, ui-preferences.spec.ts
+ *
+ * In CI the e2e job passes --project flags based on dorny/paths-filter output.
+ * Locally, `npx playwright test` runs all projects (no --project flag needed).
+ *
  * The webServer serves the pre-built Expo Web static export from
  * frontend/dist/.  In CI the build step runs separately before this job.
  * Locally, run `cd frontend && npx expo export --platform web` once first.
- *
- * The Yacht backend API (http://localhost:8000) is mocked via
- * page.route() in each test — no live backend is required.
  */
 export default defineConfig({
   testDir: "./tests",
@@ -19,7 +29,9 @@ export default defineConfig({
   },
   retries: process.env.CI ? 2 : 0,
   workers: process.env.CI ? 1 : undefined,
-  reporter: process.env.CI ? [["github"], ["html", { outputFolder: "playwright-report" }]] : "list",
+  reporter: process.env.CI
+    ? [["github"], ["html", { outputFolder: "playwright-report" }]]
+    : "list",
   use: {
     baseURL: "http://localhost:8081",
     trace: "on-first-retry",
@@ -27,7 +39,32 @@ export default defineConfig({
   },
   projects: [
     {
-      name: "chromium",
+      name: "yacht",
+      testMatch: "yacht-*.spec.ts",
+      use: { ...devices["Desktop Chrome"] },
+    },
+    {
+      name: "blackjack",
+      testMatch: "blackjack-*.spec.ts",
+      use: { ...devices["Desktop Chrome"] },
+    },
+    {
+      name: "twenty48",
+      testMatch: "twenty48-*.spec.ts",
+      use: { ...devices["Desktop Chrome"] },
+    },
+    {
+      name: "pachisi",
+      testMatch: "pachisi-*.spec.ts",
+      use: { ...devices["Desktop Chrome"] },
+    },
+    {
+      name: "cross",
+      testMatch: [
+        "accessibility.spec.ts",
+        "cascade-flow.spec.ts",
+        "ui-preferences.spec.ts",
+      ],
       use: { ...devices["Desktop Chrome"] },
     },
   ],
