@@ -24,6 +24,7 @@
   "hand.player": "Sua Mão",
   "hand.dealer": "Mão do Dealer",
   "hand.value": "Valor: {{value}}",
+  "hand.softValue": "Suave {{value}}",
   "hand.valueHidden": "Valor: ?",
   "card.accessibilityLabel": "{{rank}} de {{suit}}",
   "card.faceDown": "Carta virada",

@@ -24,6 +24,7 @@
   "hand.player": "Ваши карты",
   "hand.dealer": "Карты дилера",
   "hand.value": "Сумма: {{value}}",
+  "hand.softValue": "Мягкий {{value}}",
   "hand.valueHidden": "Сумма: ?",
   "card.accessibilityLabel": "{{rank}} {{suit}}",
   "card.faceDown": "Карта рубашкой",

@@ -78,6 +78,25 @@ export function isNaturalBlackjack(cards: readonly Card[]): boolean {
   return cards.length === 2 && handValue(cards) === 21;
 }
 
+/**
+ * Returns true when at least one Ace in the hand is counted as 11.
+ * A+6 = soft 17; A+6+K = hard 17 (Ace forced to 1).
+ */
+export function isSoftHand(cards: readonly Card[]): boolean {
+  if (cards.length === 0) return false;
+  let rawTotal = 0;
+  let numAces = 0;
+  for (const c of cards) {
+    rawTotal += RANK_VALUES[c.rank];
+    if (c.rank === "A") numAces += 1;
+  }
+  if (numAces === 0) return false;
+  const best = handValue(cards);
+  // Number of Aces that had to be reduced from 11 → 1 to stay ≤ 21
+  const reductions = (rawTotal - best) / 10;
+  return best <= 21 && numAces > reductions;
+}
+
 // ---------------------------------------------------------------------------
 // Seedable RNG
 //
@@ -161,7 +180,8 @@ function handResponse(cards: readonly Card[], concealHole: boolean): HandRespons
     return { rank: c.rank, suit: c.suit, face_down: false };
   });
   const value = concealHole ? 0 : handValue(cards);
-  return { cards: cardResponses, value };
+  const soft = concealHole ? false : isSoftHand(cards);
+  return { cards: cardResponses, value, soft };
 }
 
 export function toViewState(s: EngineState): BlackjackState {

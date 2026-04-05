@@ -24,6 +24,7 @@
   "hand.player": "Jouw Hand",
   "hand.dealer": "Hand Dealer",
   "hand.value": "Waarde: {{value}}",
+  "hand.softValue": "Zacht {{value}}",
   "hand.valueHidden": "Waarde: ?",
   "card.accessibilityLabel": "{{rank}} van {{suit}}",
   "card.faceDown": "Kaart omgedraaid",

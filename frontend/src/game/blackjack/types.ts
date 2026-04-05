@@ -11,6 +11,8 @@ export interface CardResponse {
 export interface HandResponse {
   cards: CardResponse[];
   value: number;
+  /** True when at least one Ace is counted as 11 (soft hand). */
+  soft: boolean;
 }
 
 export interface BlackjackState {

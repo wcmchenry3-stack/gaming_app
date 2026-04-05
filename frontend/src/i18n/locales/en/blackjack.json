@@ -28,6 +28,7 @@
   "hand.player": "Your Hand",
   "hand.dealer": "Dealer's Hand",
   "hand.value": "Value: {{value}}",
+  "hand.softValue": "Soft {{value}}",
   "hand.valueHidden": "Value: ?",
 
   "card.accessibilityLabel": "{{rank}} of {{suit}}",

@@ -24,6 +24,7 @@
   "hand.player": "يدك",
   "hand.dealer": "يد الموزع",
   "hand.value": "القيمة: {{value}}",
+  "hand.softValue": "ناعم {{value}}",
   "hand.valueHidden": "القيمة: ؟",
   "card.accessibilityLabel": "{{rank}} من {{suit}}",
   "card.faceDown": "بطاقة مقلوبة",

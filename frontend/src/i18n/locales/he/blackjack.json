@@ -24,6 +24,7 @@
   "hand.player": "היד שלך",
   "hand.dealer": "היד של הדילר",
   "hand.value": "ערך: {{value}}",
+  "hand.softValue": "רך {{value}}",
   "hand.valueHidden": "ערך: ?",
   "card.accessibilityLabel": "{{rank}} של {{suit}}",
   "card.faceDown": "קלף מוסתר",

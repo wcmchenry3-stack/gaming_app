@@ -24,6 +24,7 @@
   "hand.player": "你的牌",
   "hand.dealer": "庄家的牌",
   "hand.value": "点数: {{value}}",
+  "hand.softValue": "软 {{value}}",
   "hand.valueHidden": "点数: ?",
   "card.accessibilityLabel": "{{suit}} {{rank}}",
   "card.faceDown": "盖着的牌",

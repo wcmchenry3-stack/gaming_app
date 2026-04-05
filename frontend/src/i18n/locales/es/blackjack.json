@@ -24,6 +24,7 @@
   "hand.player": "Tu mano",
   "hand.dealer": "Mano del crupier",
   "hand.value": "Valor: {{value}}",
+  "hand.softValue": "Suave {{value}}",
   "hand.valueHidden": "Valor: ?",
   "card.accessibilityLabel": "{{rank}} de {{suit}}",
   "card.faceDown": "Carta boca abajo",
