@@ -3,9 +3,11 @@
  */
 
 import React from "react";
-import { render, act, waitFor } from "@testing-library/react-native";
+import { render, act, waitFor, fireEvent } from "@testing-library/react-native";
 import Twenty48Screen from "../Twenty48Screen";
 import { ThemeProvider } from "../../theme/ThemeContext";
+import { saveGame, clearGame, loadGame } from "../../game/twenty48/storage";
+import { Twenty48State } from "../../game/twenty48/types";
 
 // Force web platform so the keyboard-listener useEffect runs.
 import { Platform } from "react-native";
@@ -127,5 +129,206 @@ describe("Twenty48Screen — keyboard controls (web)", () => {
     expect(remove).toHaveBeenCalledWith("keydown", expect.any(Function));
     add.mockRestore();
     remove.mockRestore();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Shared fixture states
+// ---------------------------------------------------------------------------
+
+// All tiles packed left, no equal adjacent pairs → ArrowLeft is a no-op.
+const NOOP_LEFT_STATE: Twenty48State = {
+  board: [
+    [2, 4, 0, 0],
+    [8, 16, 0, 0],
+    [32, 64, 0, 0],
+    [128, 256, 0, 0],
+  ],
+  score: 0,
+  game_over: false,
+  has_won: false,
+};
+
+const WON_STATE: Twenty48State = {
+  board: [
+    [2048, 4, 0, 0],
+    [8, 16, 0, 0],
+    [32, 64, 0, 0],
+    [128, 256, 0, 0],
+  ],
+  score: 2048,
+  game_over: false,
+  has_won: true,
+};
+
+// A filled board with no possible merges — game is over.
+const GAME_OVER_STATE: Twenty48State = {
+  board: [
+    [2, 4, 2, 4],
+    [4, 2, 4, 2],
+    [2, 4, 2, 4],
+    [4, 2, 4, 2],
+  ],
+  score: 0,
+  game_over: true,
+  has_won: false,
+};
+
+// ---------------------------------------------------------------------------
+// Initial load
+// ---------------------------------------------------------------------------
+
+describe("Twenty48Screen — initial load", () => {
+  beforeEach(() => jest.clearAllMocks());
+
+  it("calls loadGame on mount", async () => {
+    await mountAndSettle();
+    expect(loadGame).toHaveBeenCalledTimes(1);
+  });
+
+  it("calls saveGame with new state when loadGame returns null", async () => {
+    (loadGame as jest.Mock).mockResolvedValueOnce(null);
+    await mountAndSettle();
+    expect(saveGame).toHaveBeenCalledTimes(1);
+  });
+
+  it("does not call saveGame when loadGame returns a saved state", async () => {
+    (loadGame as jest.Mock).mockResolvedValueOnce(NOOP_LEFT_STATE);
+    await mountAndSettle();
+    expect(saveGame).not.toHaveBeenCalled();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Move persistence
+// ---------------------------------------------------------------------------
+
+describe("Twenty48Screen — move persistence", () => {
+  beforeEach(() => jest.clearAllMocks());
+
+  it("calls saveGame after a valid move", async () => {
+    // Start from null so the engine spawns a real random board.
+    (loadGame as jest.Mock).mockResolvedValueOnce(null);
+    await mountAndSettle();
+    jest.clearAllMocks(); // reset the initial saveGame call
+
+    // At least one of the four directions will produce a valid move.
+    act(() => {
+      dispatchKey("ArrowLeft");
+      dispatchKey("ArrowRight");
+      dispatchKey("ArrowUp");
+      dispatchKey("ArrowDown");
+    });
+
+    expect(saveGame).toHaveBeenCalled();
+  });
+
+  it("does not call saveGame for a no-op move", async () => {
+    (loadGame as jest.Mock).mockResolvedValueOnce(NOOP_LEFT_STATE);
+    await mountAndSettle();
+
+    act(() => {
+      dispatchKey("ArrowLeft"); // no-op on this board
+    });
+
+    expect(saveGame).not.toHaveBeenCalled();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Game-over
+// ---------------------------------------------------------------------------
+
+describe("Twenty48Screen — game-over", () => {
+  beforeEach(() => jest.clearAllMocks());
+
+  it("calls clearGame when loaded state is game_over", async () => {
+    (loadGame as jest.Mock).mockResolvedValueOnce(GAME_OVER_STATE);
+    await mountAndSettle();
+    expect(clearGame).toHaveBeenCalledTimes(1);
+  });
+
+  it("renders game-over overlay when game_over is true", async () => {
+    (loadGame as jest.Mock).mockResolvedValueOnce(GAME_OVER_STATE);
+    const { getByText } = await mountAndSettle();
+    await waitFor(() => expect(getByText("Game Over")).toBeTruthy());
+  });
+
+  it("does not render game-over overlay for an active game", async () => {
+    (loadGame as jest.Mock).mockResolvedValueOnce(NOOP_LEFT_STATE);
+    const { queryByText } = await mountAndSettle();
+    expect(queryByText("Game Over")).toBeNull();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Win overlay
+// ---------------------------------------------------------------------------
+
+describe("Twenty48Screen — win overlay", () => {
+  beforeEach(() => jest.clearAllMocks());
+
+  it("shows win overlay when has_won is true and game is not over", async () => {
+    (loadGame as jest.Mock).mockResolvedValueOnce(WON_STATE);
+    const { getByText } = await mountAndSettle();
+    await waitFor(() => expect(getByText("You Win!")).toBeTruthy());
+  });
+
+  it("dismisses win overlay when Keep Playing is pressed", async () => {
+    (loadGame as jest.Mock).mockResolvedValueOnce(WON_STATE);
+    const { getByLabelText, queryByText } = await mountAndSettle();
+    await waitFor(() =>
+      expect(getByLabelText("Continue playing after reaching 2048")).toBeTruthy()
+    );
+    act(() => {
+      fireEvent.press(getByLabelText("Continue playing after reaching 2048"));
+    });
+    expect(queryByText("You Win!")).toBeNull();
+  });
+
+  it("does not show win overlay when game_over is true even if has_won", async () => {
+    const wonAndOver: Twenty48State = { ...WON_STATE, game_over: true };
+    (loadGame as jest.Mock).mockResolvedValueOnce(wonAndOver);
+    const { queryByText } = await mountAndSettle();
+    await waitFor(() => expect(queryByText("You Win!")).toBeNull());
+  });
+});
+
+// ---------------------------------------------------------------------------
+// New game
+// ---------------------------------------------------------------------------
+
+describe("Twenty48Screen — new game", () => {
+  beforeEach(() => jest.clearAllMocks());
+
+  it("New Game button calls saveGame with a fresh state", async () => {
+    (loadGame as jest.Mock).mockResolvedValueOnce(null);
+    const { getByLabelText } = await mountAndSettle();
+    jest.clearAllMocks();
+
+    act(() => {
+      fireEvent.press(getByLabelText("Start a new 2048 game"));
+    });
+
+    expect(saveGame).toHaveBeenCalledTimes(1);
+    const savedState = (saveGame as jest.Mock).mock.calls[0][0] as Twenty48State;
+    expect(savedState.score).toBe(0);
+    expect(savedState.game_over).toBe(false);
+    expect(savedState.has_won).toBe(false);
+  });
+
+  it("New Game dismisses the win overlay", async () => {
+    (loadGame as jest.Mock).mockResolvedValueOnce(WON_STATE);
+    const { getByText, getAllByLabelText, queryByText } = await mountAndSettle();
+    await waitFor(() => expect(getByText("You Win!")).toBeTruthy());
+
+    // Both the header button and the overlay button share the same label.
+    // Press any one of them — they both call handleNewGame.
+    act(() => {
+      fireEvent.press(getAllByLabelText("Start a new 2048 game")[0]);
+    });
+
+    // New state has has_won=false so overlay should be gone.
+    expect(queryByText("You Win!")).toBeNull();
   });
 });
