@@ -62,6 +62,51 @@ function boardsEqual(a: readonly number[][], b: readonly number[][]): boolean {
   return true;
 }
 
+// ---------------------------------------------------------------------------
+// Seedable RNG
+//
+// Both spawn decisions (which empty cell, 2 vs 4) go through `_rng` so tests
+// and e2e flows can pin the sequence with `setRng(createSeededRng(seed))`.
+// Default is Math.random for normal gameplay. After each test that calls
+// setRng, call setRng(Math.random) to restore the default.
+// ---------------------------------------------------------------------------
+
+export type RandomSource = () => number;
+
+let _rng: RandomSource = Math.random;
+
+export function setRng(fn: RandomSource): void {
+  _rng = fn;
+}
+
+/**
+ * LCG (same parameters as Cascade's seeded RNG). Deterministic for a given
+ * seed. Not cryptographic — testing only.
+ */
+export function createSeededRng(seed: number): RandomSource {
+  let state = seed >>> 0;
+  return () => {
+    state = (1664525 * state + 1013904223) >>> 0;
+    return state / 4294967296;
+  };
+}
+
+// E2E test hook — exposed only when __DEV__ is true OR EXPO_PUBLIC_TEST_HOOKS
+// is set (production e2e builds). Metro strips `if (__DEV__)` branches from
+// production bundles; the EXPO_PUBLIC_TEST_HOOKS env var opts in explicitly
+// for Playwright/Maestro flows that need deterministic spawns against a
+// production-shaped bundle. Call `globalThis.__twenty48_setSeed(n)` before
+// the next `newGame()` to pin the tile sequence.
+const _devHook = typeof __DEV__ !== "undefined" && __DEV__;
+const _testHook = process.env.EXPO_PUBLIC_TEST_HOOKS === "1";
+if ((_devHook || _testHook) && typeof globalThis !== "undefined") {
+  (globalThis as unknown as { __twenty48_setSeed?: (seed: number) => void }).__twenty48_setSeed = (
+    seed: number
+  ) => {
+    setRng(createSeededRng(seed));
+  };
+}
+
 function spawnTile(board: number[][]): void {
   const empty: Array<[number, number]> = [];
   for (let r = 0; r < SIZE; r++) {
@@ -70,8 +115,8 @@ function spawnTile(board: number[][]): void {
     }
   }
   if (empty.length === 0) return;
-  const [r, c] = empty[Math.floor(Math.random() * empty.length)];
-  board[r][c] = Math.random() < 0.9 ? 2 : 4;
+  const [r, c] = empty[Math.floor(_rng() * empty.length)];
+  board[r][c] = _rng() < 0.9 ? 2 : 4;
 }
 
 /**
