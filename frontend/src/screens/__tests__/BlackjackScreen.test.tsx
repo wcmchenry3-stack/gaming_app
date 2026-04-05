@@ -16,7 +16,9 @@ jest.mock("../../game/blackjack/storage", () => ({
 }));
 
 function mockNav() {
-  return { navigate: jest.fn(), goBack: jest.fn() } as unknown as Parameters<typeof BlackjackScreen>[0]["navigation"];
+  return { navigate: jest.fn(), goBack: jest.fn() } as unknown as Parameters<
+    typeof BlackjackScreen
+  >[0]["navigation"];
 }
 
 function renderScreen(nav = mockNav()) {
