@@ -78,6 +78,35 @@ export function isNaturalBlackjack(cards: readonly Card[]): boolean {
   return cards.length === 2 && handValue(cards) === 21;
 }
 
+// ---------------------------------------------------------------------------
+// Seedable RNG
+//
+// The deck shuffle goes through `_rng` so tests and e2e flows can pin the
+// deal sequence with `setRng(createSeededRng(seed))`. Default is Math.random
+// for normal gameplay. Tests that call setRng must restore Math.random in
+// afterEach to avoid leaking determinism into later tests.
+// ---------------------------------------------------------------------------
+
+export type RandomSource = () => number;
+
+let _rng: RandomSource = Math.random;
+
+export function setRng(fn: RandomSource): void {
+  _rng = fn;
+}
+
+/**
+ * LCG (same parameters as Cascade's and Twenty48's seeded RNGs).
+ * Deterministic for a given seed. Not cryptographic — testing only.
+ */
+export function createSeededRng(seed: number): RandomSource {
+  let state = seed >>> 0;
+  return () => {
+    state = (1664525 * state + 1013904223) >>> 0;
+    return state / 4294967296;
+  };
+}
+
 function freshShuffledDeck(): Card[] {
   const deck: Card[] = [];
   for (const s of SUITS) {
@@ -87,10 +116,26 @@ function freshShuffledDeck(): Card[] {
   }
   // Fisher–Yates shuffle
   for (let i = deck.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
+    const j = Math.floor(_rng() * (i + 1));
     [deck[i], deck[j]] = [deck[j], deck[i]];
   }
   return deck;
+}
+
+// E2E test hook — exposed only when __DEV__ is true OR EXPO_PUBLIC_TEST_HOOKS
+// is set (production e2e builds). Metro strips `if (__DEV__)` branches from
+// production bundles; the EXPO_PUBLIC_TEST_HOOKS env var opts in explicitly
+// for Playwright/Maestro flows that need deterministic deals against a
+// production-shaped bundle. Call `globalThis.__blackjack_setSeed(n)` before
+// the next `newGame()` (or after) — subsequent reshuffles will draw from
+// the seeded stream too, so the entire session is reproducible.
+const _devHook = typeof __DEV__ !== "undefined" && __DEV__;
+const _testHook = process.env.EXPO_PUBLIC_TEST_HOOKS === "1";
+if ((_devHook || _testHook) && typeof globalThis !== "undefined") {
+  (globalThis as unknown as { __blackjack_setSeed?: (seed: number) => void }).__blackjack_setSeed =
+    (seed: number) => {
+      setRng(createSeededRng(seed));
+    };
 }
 
 /**
