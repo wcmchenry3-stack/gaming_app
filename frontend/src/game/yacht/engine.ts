@@ -62,6 +62,51 @@ const FACE_TO_UPPER: Record<number, Category> = {
 };
 
 // ---------------------------------------------------------------------------
+// Seedable RNG
+//
+// Die rolls go through `_rng` so tests and e2e flows can pin the dice
+// sequence with `setRng(createSeededRng(seed))`. Default is Math.random for
+// normal gameplay. Tests that call setRng must restore Math.random in
+// afterEach to avoid leaking determinism into later tests.
+// ---------------------------------------------------------------------------
+
+export type RandomSource = () => number;
+
+let _rng: RandomSource = Math.random;
+
+export function setRng(fn: RandomSource): void {
+  _rng = fn;
+}
+
+/**
+ * LCG (same parameters as Cascade's, Twenty48's, and Blackjack's seeded
+ * RNGs). Deterministic for a given seed. Not cryptographic — testing only.
+ */
+export function createSeededRng(seed: number): RandomSource {
+  let state = seed >>> 0;
+  return () => {
+    state = (1664525 * state + 1013904223) >>> 0;
+    return state / 4294967296;
+  };
+}
+
+// E2E test hook — exposed only when __DEV__ is true OR EXPO_PUBLIC_TEST_HOOKS
+// is set (production e2e builds). Metro strips `if (__DEV__)` branches from
+// production bundles; the EXPO_PUBLIC_TEST_HOOKS env var opts in explicitly
+// for Playwright/Maestro flows that need deterministic dice against a
+// production-shaped bundle. Call `globalThis.__yacht_setSeed(n)` before
+// the next `newGame()` to pin the roll sequence.
+const _devHook = typeof __DEV__ !== "undefined" && __DEV__;
+const _testHook = process.env.EXPO_PUBLIC_TEST_HOOKS === "1";
+if ((_devHook || _testHook) && typeof globalThis !== "undefined") {
+  (globalThis as unknown as { __yacht_setSeed?: (seed: number) => void }).__yacht_setSeed = (
+    seed: number
+  ) => {
+    setRng(createSeededRng(seed));
+  };
+}
+
+// ---------------------------------------------------------------------------
 // Pure scoring functions
 // ---------------------------------------------------------------------------
 
@@ -260,7 +305,7 @@ export function roll(state: GameState, heldInput: readonly boolean[]): GameState
 
   const nextDice = [...state.dice];
   for (let i = 0; i < 5; i++) {
-    if (!held[i]) nextDice[i] = 1 + Math.floor(Math.random() * 6);
+    if (!held[i]) nextDice[i] = 1 + Math.floor(_rng() * 6);
   }
 
   return withDerived({

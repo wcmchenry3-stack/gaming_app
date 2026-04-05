@@ -11,6 +11,8 @@ import {
   possibleScores,
   calculateScore,
   computeDerived,
+  setRng,
+  createSeededRng,
   Category,
   CATEGORIES,
 } from "../engine";
@@ -480,5 +482,75 @@ describe("joker rule — possibleScores", () => {
     const ps = possibleScores(g);
     expect(ps.twos).toBe(10);
     expect(ps.full_house).toBe(0);
+  });
+});
+
+// --- Seedable RNG ---------------------------------------------------------
+
+describe("seedable RNG (setRng + createSeededRng)", () => {
+  afterEach(() => {
+    // Restore default RNG so subsequent tests aren't affected.
+    setRng(Math.random);
+  });
+
+  it("same seed produces identical first roll", () => {
+    setRng(createSeededRng(42));
+    const a = roll(newGame(), [false, false, false, false, false]);
+    setRng(createSeededRng(42));
+    const b = roll(newGame(), [false, false, false, false, false]);
+    expect(a.dice).toEqual(b.dice);
+  });
+
+  it("different seeds produce different rolls", () => {
+    setRng(createSeededRng(1));
+    const a = roll(newGame(), [false, false, false, false, false]);
+    setRng(createSeededRng(999));
+    const b = roll(newGame(), [false, false, false, false, false]);
+    expect(a.dice).not.toEqual(b.dice);
+  });
+
+  it("same seed replays an identical 3-roll turn", () => {
+    const held = [false, false, false, false, false];
+
+    setRng(createSeededRng(7));
+    let a = roll(newGame(), held);
+    a = roll(a, held);
+    a = roll(a, held);
+
+    setRng(createSeededRng(7));
+    let b = roll(newGame(), held);
+    b = roll(b, held);
+    b = roll(b, held);
+
+    expect(a.dice).toEqual(b.dice);
+    expect(a.rolls_used).toEqual(b.rolls_used);
+  });
+
+  it("held dice are preserved across seeded re-rolls", () => {
+    setRng(createSeededRng(123));
+    let g = roll(newGame(), [false, false, false, false, false]);
+    const firstRoll = [...g.dice];
+    // Hold dice 0 and 1, reroll the rest with a seeded continuation.
+    g = roll(g, [true, true, false, false, false]);
+    expect(g.dice[0]).toBe(firstRoll[0]);
+    expect(g.dice[1]).toBe(firstRoll[1]);
+  });
+
+  it("seeded dice are always in 1..6", () => {
+    setRng(createSeededRng(999_999));
+    for (let i = 0; i < 20; i++) {
+      const g = roll(newGame(), [false, false, false, false, false]);
+      for (const d of g.dice) {
+        expect(d).toBeGreaterThanOrEqual(1);
+        expect(d).toBeLessThanOrEqual(6);
+      }
+    }
+  });
+
+  it("setRng(Math.random) afterEach restores non-determinism", () => {
+    // Two fresh rolls from Math.random almost never match across 5 dice.
+    const a = roll(newGame(), [false, false, false, false, false]);
+    const b = roll(newGame(), [false, false, false, false, false]);
+    expect(a.dice).not.toEqual(b.dice);
   });
 });
