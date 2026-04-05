@@ -346,3 +346,223 @@ class TestDeckReshuffle:
         g.new_hand()
         # After dealing 4 cards the deck should still be large
         assert len(g._deck) > 40
+
+
+# ---------------------------------------------------------------------------
+# Double down — deterministic scenarios (rigged decks)
+#
+# _deal() pops from the end of _deck, so the LAST element is drawn first.
+# For DD tests the dealer is stacked onto the deck AFTER the DD card:
+#     deck = [..., dealer_hit_2, dealer_hit_1, DD_card]
+#                                                ^ popped first
+# ---------------------------------------------------------------------------
+
+
+def _dd_setup(chips: int, bet: int, player, dealer, deck) -> BlackjackGame:
+    """Build a player-phase game with exact hands and deck contents."""
+    g = BlackjackGame(chips=chips)
+    g.bet = bet
+    g._player_hand = list(player)
+    g._dealer_hand = list(dealer)
+    g._deck = list(deck)
+    g.phase = "player"
+    return g
+
+
+class TestDoubleDownDeterministic:
+    """DD with rigged decks so outcomes are fixed, not random."""
+
+    def test_dd_win_pays_net_plus_2x_bet(self):
+        # Player 10+5=15; DD card 6 → 21. Dealer 6+8=14, hits a 10 → 24 bust.
+        g = _dd_setup(
+            chips=500,
+            bet=100,
+            player=[Card("♠", "10"), Card("♥", "5")],
+            dealer=[Card("♦", "6"), Card("♣", "8")],
+            deck=[Card("♠", "10"), Card("♠", "6")],  # dealer hit, then DD card
+        )
+        g.double_down()
+        assert g.outcome == "win"
+        assert g.bet == 200
+        assert g.chips == 500 + 200  # net +2*bet
+
+    def test_dd_loss_debits_net_minus_2x_bet(self):
+        # Player 10+5=15; DD card 2 → 17. Dealer 9+9=18, stands. Player loses.
+        g = _dd_setup(
+            chips=500,
+            bet=100,
+            player=[Card("♠", "10"), Card("♥", "5")],
+            dealer=[Card("♦", "9"), Card("♣", "9")],
+            deck=[Card("♠", "2")],
+        )
+        g.double_down()
+        assert g.outcome == "lose"
+        assert g.chips == 500 - 200  # net -2*bet
+
+    def test_dd_push_returns_zero_delta(self):
+        # Player 10+5=15; DD card 3 → 18. Dealer 9+9=18, stands. Push.
+        g = _dd_setup(
+            chips=500,
+            bet=100,
+            player=[Card("♠", "10"), Card("♥", "5")],
+            dealer=[Card("♦", "9"), Card("♣", "9")],
+            deck=[Card("♠", "3")],
+        )
+        g.double_down()
+        assert g.outcome == "push"
+        assert g.chips == 500  # net 0
+
+    def test_dd_to_21_is_even_money_not_blackjack(self):
+        # 6+5=11, DD card K → 21. Not a natural BJ (that needs exactly 2 initial
+        # cards). Should pay even money on the doubled bet, i.e. +2*bet — NOT
+        # the 3:2 blackjack payout (which would be ceil(1.5*200)=300).
+        g = _dd_setup(
+            chips=500,
+            bet=100,
+            player=[Card("♠", "6"), Card("♥", "5")],
+            dealer=[Card("♦", "10"), Card("♣", "8")],  # 18, stands
+            deck=[Card("♠", "K")],
+        )
+        g.double_down()
+        assert g.outcome == "win"
+        assert g.chips == 500 + 200  # +2*bet, not +1.5*2*bet=300
+
+    def test_dd_bust_settles_immediately_dealer_untouched(self):
+        # Player 10+10=20, DD card 5 → 25 bust. Dealer must NOT draw.
+        dealer_initial = [Card("♦", "6"), Card("♣", "7")]
+        g = _dd_setup(
+            chips=500,
+            bet=100,
+            player=[Card("♠", "K"), Card("♥", "Q")],
+            dealer=dealer_initial,
+            deck=[Card("♠", "2"), Card("♠", "5")],  # 2 is "would-be dealer hit"
+        )
+        g.double_down()
+        assert g.outcome == "lose"
+        assert g.chips == 500 - 200
+        # Dealer hand should be untouched (2 cards, same ranks).
+        assert len(g._dealer_hand) == 2
+        assert [(c.rank, c.suit) for c in g._dealer_hand] == [
+            (c.rank, c.suit) for c in dealer_initial
+        ]
+        # The would-be dealer hit card should still be in the deck.
+        assert any(c.rank == "2" for c in g._deck)
+
+    def test_dd_sufficiency_exact_2x_boundary_allowed(self):
+        g = _dd_setup(
+            chips=200,
+            bet=100,
+            player=[Card("♠", "10"), Card("♥", "5")],
+            dealer=[Card("♦", "9"), Card("♣", "9")],
+            deck=[Card("♠", "3")],  # → 18 push
+        )
+        g.double_down()
+        assert g.bet == 200
+        # push: chips unchanged at 200
+        assert g.chips == 200
+
+    def test_dd_sufficiency_below_2x_rejected(self):
+        # chips = 2*bet - 10 (190) → not enough free stack
+        g = _dd_setup(
+            chips=190,
+            bet=100,
+            player=[Card("♠", "10"), Card("♥", "5")],
+            dealer=[Card("♦", "9"), Card("♣", "9")],
+            deck=[Card("♠", "2")],
+        )
+        with pytest.raises(ValueError, match="Insufficient chips"):
+            g.double_down()
+
+    def test_dd_exact_2x_loss_reaches_zero_and_game_over(self):
+        # chips == 2*bet, DD loss → chips 0, phase result (game_over by view).
+        g = _dd_setup(
+            chips=200,
+            bet=100,
+            player=[Card("♠", "10"), Card("♥", "5")],
+            dealer=[Card("♦", "9"), Card("♣", "9")],
+            deck=[Card("♠", "2")],  # → 17, dealer 18, lose
+        )
+        g.double_down()
+        assert g.outcome == "lose"
+        assert g.chips == 0
+        assert g.phase == "result"
+
+    def test_dd_refused_after_third_card(self):
+        # Same wording as existing "requires two cards" test but spelled out
+        # for completeness: once the player hits, DD is off the table.
+        g = _dd_setup(
+            chips=500,
+            bet=100,
+            player=[Card("♠", "5"), Card("♥", "5")],
+            dealer=[Card("♦", "9"), Card("♣", "8")],
+            deck=[Card("♠", "3")],
+        )
+        g.hit()  # player hand now 3 cards: 5+5+3=13
+        with pytest.raises(ValueError, match="initial two cards"):
+            g.double_down()
+
+    def test_dd_with_soft_17_ace_counts_as_one_on_bust(self):
+        # Player A+6 = 17 soft. DD card K → A+6+K: 11+6+10=27>21, ace demotes
+        # to 1+6+10=17. No bust; still valid. Dealer 9+9=18, stands. Lose.
+        g = _dd_setup(
+            chips=500,
+            bet=100,
+            player=[Card("♠", "A"), Card("♥", "6")],
+            dealer=[Card("♦", "9"), Card("♣", "9")],
+            deck=[Card("♠", "K")],
+        )
+        g.double_down()
+        assert g.outcome == "lose"
+        assert hand_value(g._player_hand) == 17
+        assert g.chips == 500 - 200
+
+    def test_dd_with_soft_18_can_stay_21_with_3(self):
+        # Player A+7 = 18 soft. DD card 3 → A+7+3: 11+7+3=21 (ace stays 11).
+        # Dealer 10+8=18 stands. Player wins.
+        g = _dd_setup(
+            chips=500,
+            bet=100,
+            player=[Card("♠", "A"), Card("♥", "7")],
+            dealer=[Card("♦", "10"), Card("♣", "8")],
+            deck=[Card("♠", "3")],
+        )
+        g.double_down()
+        assert hand_value(g._player_hand) == 21
+        assert g.outcome == "win"
+        assert g.chips == 500 + 200
+
+
+@pytest.mark.parametrize(
+    "chips,bet",
+    [
+        (200, 100),  # exact DD boundary
+        (1000, 500),  # max bet, exact DD boundary
+        (20, 10),  # min bet, exact DD boundary
+    ],
+)
+class TestDoubleDownParamBoundary:
+    """Exact 2*bet boundary across a spread of (chips, bet) pairs."""
+
+    def test_dd_at_boundary_allowed_push_leaves_chips_intact(self, chips, bet):
+        g = _dd_setup(
+            chips=chips,
+            bet=bet,
+            player=[Card("♠", "10"), Card("♥", "5")],
+            dealer=[Card("♦", "9"), Card("♣", "9")],
+            deck=[Card("♠", "3")],  # → 18 push against dealer 18
+        )
+        g.double_down()
+        assert g.outcome == "push"
+        assert g.chips == chips
+
+    def test_dd_at_boundary_loss_reaches_zero(self, chips, bet):
+        g = _dd_setup(
+            chips=chips,
+            bet=bet,
+            player=[Card("♠", "10"), Card("♥", "5")],
+            dealer=[Card("♦", "9"), Card("♣", "9")],
+            deck=[Card("♠", "2")],  # → 17 vs dealer 18 → lose
+        )
+        g.double_down()
+        assert g.outcome == "lose"
+        assert g.chips == 0

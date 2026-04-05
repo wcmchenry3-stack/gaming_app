@@ -399,3 +399,223 @@ describe("toViewState", () => {
     expect(toViewState(three).double_down_available).toBe(false);
   });
 });
+
+// --- Double down — deterministic scenarios (rigged decks) -----------------
+//
+// deal() pops from the end of `deck`, so the LAST element is drawn first.
+// Stack order for DD tests:
+//     deck = [..., dealer_hit_2, dealer_hit_1, DD_card]
+//                                               ^ popped first
+
+function ddSetup(
+  chips: number,
+  bet: number,
+  player: Card[],
+  dealer: Card[],
+  deck: Card[]
+): EngineState {
+  return {
+    chips,
+    bet,
+    phase: "player",
+    outcome: null,
+    payout: 0,
+    player_hand: player,
+    dealer_hand: dealer,
+    deck,
+    doubled: false,
+  };
+}
+
+describe("double down — deterministic scenarios", () => {
+  it("DD win pays net +2*bet (dealer busts)", () => {
+    // Player 10+5=15, DD card 6 → 21. Dealer 6+8=14, hits 10 → 24 bust.
+    const g = ddSetup(
+      500,
+      100,
+      [c("♠", "10"), c("♥", "5")],
+      [c("♦", "6"), c("♣", "8")],
+      [c("♠", "10"), c("♠", "6")] // dealer hit, then DD card (popped first)
+    );
+    const r = doubleDown(g);
+    expect(r.outcome).toBe("win");
+    expect(r.bet).toBe(200);
+    expect(r.chips).toBe(500 + 200); // net +2*bet
+  });
+
+  it("DD loss debits net -2*bet", () => {
+    // Player 10+5=15, DD card 2 → 17. Dealer 9+9=18 stands.
+    const g = ddSetup(
+      500,
+      100,
+      [c("♠", "10"), c("♥", "5")],
+      [c("♦", "9"), c("♣", "9")],
+      [c("♠", "2")]
+    );
+    const r = doubleDown(g);
+    expect(r.outcome).toBe("lose");
+    expect(r.chips).toBe(500 - 200);
+  });
+
+  it("DD push returns zero delta", () => {
+    // Player 10+5=15, DD card 3 → 18. Dealer 9+9=18 stands. Push.
+    const g = ddSetup(
+      500,
+      100,
+      [c("♠", "10"), c("♥", "5")],
+      [c("♦", "9"), c("♣", "9")],
+      [c("♠", "3")]
+    );
+    const r = doubleDown(g);
+    expect(r.outcome).toBe("push");
+    expect(r.chips).toBe(500);
+  });
+
+  it("DD to 21 is even money, not the 3:2 blackjack payout", () => {
+    // 6+5=11, DD card K → 21 (3 cards — not a natural). Pays +2*bet,
+    // NOT ceil(1.5 * 200) = 300.
+    const g = ddSetup(
+      500,
+      100,
+      [c("♠", "6"), c("♥", "5")],
+      [c("♦", "10"), c("♣", "8")], // 18, stands
+      [c("♠", "K")]
+    );
+    const r = doubleDown(g);
+    expect(r.outcome).toBe("win");
+    expect(r.chips).toBe(500 + 200); // not +300
+  });
+
+  it("DD bust settles immediately — dealer hand untouched", () => {
+    // Player 10+10=20, DD card 5 → 25 bust. Dealer MUST NOT draw.
+    const dealerInitial = [c("♦", "6"), c("♣", "7")];
+    const g = ddSetup(
+      500,
+      100,
+      [c("♠", "K"), c("♥", "Q")],
+      dealerInitial,
+      [c("♠", "2"), c("♠", "5")] // 2 is "would-be dealer hit"
+    );
+    const r = doubleDown(g);
+    expect(r.outcome).toBe("lose");
+    expect(r.chips).toBe(500 - 200);
+    expect(r.dealer_hand).toEqual(dealerInitial);
+    // The unused dealer-hit card should still be in the deck.
+    expect(r.deck.some((card) => card.rank === "2")).toBe(true);
+  });
+
+  it("sufficiency boundary: chips == 2*bet is allowed", () => {
+    const g = ddSetup(
+      200,
+      100,
+      [c("♠", "10"), c("♥", "5")],
+      [c("♦", "9"), c("♣", "9")],
+      [c("♠", "3")] // push
+    );
+    const r = doubleDown(g);
+    expect(r.bet).toBe(200);
+    expect(r.chips).toBe(200);
+  });
+
+  it("sufficiency boundary: chips == 2*bet - 10 rejected", () => {
+    const g = ddSetup(
+      190,
+      100,
+      [c("♠", "10"), c("♥", "5")],
+      [c("♦", "9"), c("♣", "9")],
+      [c("♠", "2")]
+    );
+    expect(() => doubleDown(g)).toThrow(/Insufficient chips/);
+  });
+
+  it("exact 2*bet loss → chips 0 and game_over via view state", () => {
+    const g = ddSetup(
+      200,
+      100,
+      [c("♠", "10"), c("♥", "5")],
+      [c("♦", "9"), c("♣", "9")],
+      [c("♠", "2")] // → 17, dealer 18 → lose
+    );
+    const r = doubleDown(g);
+    expect(r.outcome).toBe("lose");
+    expect(r.chips).toBe(0);
+    expect(r.phase).toBe("result");
+    expect(toViewState(r).game_over).toBe(true);
+  });
+
+  it("DD refused after a hit (3rd card)", () => {
+    const g = ddSetup(
+      500,
+      100,
+      [c("♠", "5"), c("♥", "5")],
+      [c("♦", "9"), c("♣", "8")],
+      [c("♠", "3")]
+    );
+    const afterHit = hit(g);
+    expect(() => doubleDown(afterHit)).toThrow(/initial two cards/);
+  });
+
+  it("DD with soft 17 (A+6) — ace demotes when DD card busts", () => {
+    // A+6 = 17 soft. DD card K → 11+6+10=27 > 21, ace demotes: 1+6+10 = 17.
+    // Dealer 9+9=18 stands → lose.
+    const g = ddSetup(
+      500,
+      100,
+      [c("♠", "A"), c("♥", "6")],
+      [c("♦", "9"), c("♣", "9")],
+      [c("♠", "K")]
+    );
+    const r = doubleDown(g);
+    expect(r.outcome).toBe("lose");
+    expect(r.chips).toBe(500 - 200);
+    // Confirm the final player total is 17 via the engine's handValue
+    expect(handValue(r.player_hand)).toBe(17);
+  });
+
+  it("DD with soft 18 (A+7) — 3 brings it to hard 21 (ace stays 11)", () => {
+    // A+7=18, DD card 3 → 11+7+3=21. Dealer 10+8=18 stands → win.
+    const g = ddSetup(
+      500,
+      100,
+      [c("♠", "A"), c("♥", "7")],
+      [c("♦", "10"), c("♣", "8")],
+      [c("♠", "3")]
+    );
+    const r = doubleDown(g);
+    expect(handValue(r.player_hand)).toBe(21);
+    expect(r.outcome).toBe("win");
+    expect(r.chips).toBe(500 + 200);
+  });
+});
+
+describe.each([
+  [200, 100],
+  [1000, 500],
+  [20, 10],
+])("double down — boundary at chips=%i, bet=%i", (chips, bet) => {
+  it("DD at exact 2*bet with push leaves chips intact", () => {
+    const g = ddSetup(
+      chips,
+      bet,
+      [c("♠", "10"), c("♥", "5")],
+      [c("♦", "9"), c("♣", "9")],
+      [c("♠", "3")]
+    );
+    const r = doubleDown(g);
+    expect(r.outcome).toBe("push");
+    expect(r.chips).toBe(chips);
+  });
+
+  it("DD at exact 2*bet with loss reaches zero", () => {
+    const g = ddSetup(
+      chips,
+      bet,
+      [c("♠", "10"), c("♥", "5")],
+      [c("♦", "9"), c("♣", "9")],
+      [c("♠", "2")]
+    );
+    const r = doubleDown(g);
+    expect(r.outcome).toBe("lose");
+    expect(r.chips).toBe(0);
+  });
+});
