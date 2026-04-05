@@ -93,9 +93,73 @@ jobs:
       working-directory: frontend
     secrets: inherit
 
+  detect-e2e-scope:
+    name: Detect E2E scope
+    runs-on: ubuntu-latest
+    outputs:
+      projects: ${{ steps.scope.outputs.projects }}
+      label: ${{ steps.scope.outputs.label }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            yacht:
+              - 'frontend/src/screens/GameScreen*'
+              - 'frontend/src/components/Die*'
+              - 'frontend/src/components/DiceRow*'
+              - 'frontend/src/components/Scorecard*'
+              - 'frontend/src/components/ScoreRow*'
+              - 'frontend/src/game/yacht/**'
+              - 'backend/games/yacht*'
+            blackjack:
+              - 'frontend/src/screens/BlackjackScreen*'
+              - 'frontend/src/components/blackjack/**'
+              - 'frontend/src/game/blackjack/**'
+              - 'backend/games/blackjack*'
+            twenty48:
+              - 'frontend/src/screens/Twenty48Screen*'
+              - 'frontend/src/components/twenty48/**'
+              - 'frontend/src/game/twenty48/**'
+              - 'backend/games/twenty48*'
+            pachisi:
+              - 'frontend/src/screens/PachisiScreen*'
+              - 'frontend/src/components/pachisi/**'
+              - 'frontend/src/game/pachisi/**'
+              - 'backend/games/pachisi*'
+            shared:
+              - 'frontend/App.tsx'
+              - 'frontend/app.json'
+              - 'frontend/src/theme/**'
+              - 'frontend/src/components/OfflineBanner*'
+              - 'frontend/src/components/LanguageSwitcher*'
+              - 'backend/main.py'
+              - 'e2e/**'
+              - '.github/workflows/**'
+
+      - id: scope
+        run: |
+          # Push events or PRs targeting main always run the full suite
+          if [[ "${{ github.event_name }}" == "push" ]] || \
+             [[ "${{ github.base_ref }}" == "main" ]] || \
+             [[ "${{ steps.filter.outputs.shared }}" == "true" ]]; then
+            echo "projects=yacht blackjack twenty48 pachisi cross" >> "$GITHUB_OUTPUT"
+            echo "label=full suite (push/main/shared change)" >> "$GITHUB_OUTPUT"
+          else
+            projects="cross"
+            [[ "${{ steps.filter.outputs.yacht }}"     == "true" ]] && projects="$projects yacht"
+            [[ "${{ steps.filter.outputs.blackjack }}" == "true" ]] && projects="$projects blackjack"
+            [[ "${{ steps.filter.outputs.twenty48 }}"  == "true" ]] && projects="$projects twenty48"
+            [[ "${{ steps.filter.outputs.pachisi }}"   == "true" ]] && projects="$projects pachisi"
+            echo "projects=$projects" >> "$GITHUB_OUTPUT"
+            echo "label=selective: $projects" >> "$GITHUB_OUTPUT"
+          fi
+
   e2e:
     name: Playwright E2E
-    needs: [test-python, test-frontend]
+    needs: [test-python, test-frontend, detect-e2e-scope]
     runs-on: ubuntu-latest
     container:
       image: mcr.microsoft.com/playwright:v1.48.2-jammy
@@ -126,8 +190,12 @@ jobs:
         run: npx playwright install chromium --with-deps
         working-directory: e2e
 
-      - name: Run Playwright tests
-        run: npx playwright test
+      - name: Run Playwright tests (${{ needs.detect-e2e-scope.outputs.label }})
+        run: |
+          PROJECTS="${{ needs.detect-e2e-scope.outputs.projects }}"
+          ARGS=""
+          for p in $PROJECTS; do ARGS="$ARGS --project $p"; done
+          npx playwright test $ARGS
         working-directory: e2e
         env:
           CI: "true"
