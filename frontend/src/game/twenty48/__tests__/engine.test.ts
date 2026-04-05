@@ -5,7 +5,16 @@
  * behaviorally identical.
  */
 
-import { newGame, move, slideAndMerge, isGameOver, SIZE, Direction } from "../engine";
+import {
+  newGame,
+  move,
+  slideAndMerge,
+  isGameOver,
+  setRng,
+  createSeededRng,
+  SIZE,
+  Direction,
+} from "../engine";
 import { Twenty48State } from "../types";
 
 // Build a state with a specific board, bypassing random spawns.
@@ -334,5 +343,97 @@ describe("spawn probability", () => {
     const ratio2 = counts[2] / (counts[2] + counts[4]);
     expect(ratio2).toBeGreaterThanOrEqual(0.85);
     expect(ratio2).toBeLessThanOrEqual(0.95);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Seedable RNG
+// ---------------------------------------------------------------------------
+
+describe("seedable RNG (setRng + createSeededRng)", () => {
+  afterEach(() => {
+    // Restore default RNG so subsequent tests aren't affected.
+    setRng(Math.random);
+  });
+
+  it("same seed produces identical initial boards", () => {
+    setRng(createSeededRng(42));
+    const a = newGame();
+    setRng(createSeededRng(42));
+    const b = newGame();
+    expect(a.board).toEqual(b.board);
+  });
+
+  it("different seeds usually produce different boards", () => {
+    setRng(createSeededRng(1));
+    const a = newGame();
+    setRng(createSeededRng(999));
+    const b = newGame();
+    // Two different seeds should diverge on at least one cell.
+    const flatA = a.board.flat();
+    const flatB = b.board.flat();
+    const anyDiff = flatA.some((v, i) => v !== flatB[i]);
+    expect(anyDiff).toBe(true);
+  });
+
+  it("same seed replays the exact tile sequence over 10 moves", () => {
+    // Run A
+    setRng(createSeededRng(7));
+    let a = newGame();
+    const sequenceA: number[][][] = [a.board.map((r) => [...r])];
+    const directions: Direction[] = ["left", "down", "right", "up", "left"];
+    for (const d of directions) {
+      try {
+        a = move(a, d);
+        sequenceA.push(a.board.map((r) => [...r]));
+      } catch {
+        // "no effect" — try the next direction
+      }
+    }
+
+    // Run B with same seed
+    setRng(createSeededRng(7));
+    let b = newGame();
+    const sequenceB: number[][][] = [b.board.map((r) => [...r])];
+    for (const d of directions) {
+      try {
+        b = move(b, d);
+        sequenceB.push(b.board.map((r) => [...r]));
+      } catch {
+        // same skip
+      }
+    }
+
+    expect(sequenceA).toEqual(sequenceB);
+  });
+
+  it("rng returning 0.5 spawns a 2 (not 4) — probability gate at 0.9", () => {
+    // 0.5 < 0.9 → spawns 2. First call picks the cell index (floor(0.5 * N)),
+    // second call decides 2 vs 4.
+    setRng(() => 0.5);
+    const s = newGame();
+    const nonZero = s.board.flat().filter((v) => v !== 0);
+    // newGame spawns 2 tiles; both should be 2s.
+    expect(nonZero).toEqual([2, 2]);
+  });
+
+  it("rng returning 0.95 spawns a 4 — probability gate at 0.9", () => {
+    setRng(() => 0.95);
+    const s = newGame();
+    const nonZero = s.board.flat().filter((v) => v !== 0);
+    // 0.95 >= 0.9 → spawns 4s.
+    expect(nonZero).toEqual([4, 4]);
+  });
+
+  it("setRng(Math.random) after afterEach restores non-determinism", () => {
+    // Sanity: back on default, two games should almost always differ.
+    const a = newGame();
+    const b = newGame();
+    // Not guaranteed to differ, but across 16 cells with random placement
+    // the odds of a full match are vanishingly small.
+    const flatA = a.board.flat();
+    const flatB = b.board.flat();
+    const anyDiff = flatA.some((v, i) => v !== flatB[i]);
+    expect(anyDiff).toBe(true);
   });
 });
