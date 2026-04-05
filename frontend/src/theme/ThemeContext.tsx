@@ -11,6 +11,7 @@ export interface Colors {
   text: string;
   textMuted: string;
   textFilled: string;
+  textOnAccent: string;
   accent: string;
   potential: string;
   heldBg: string;
@@ -64,6 +65,7 @@ const dark: Colors = {
   text: COLORS.slate100,
   textMuted: COLORS.slate400,
   textFilled: COLORS.slate600,
+  textOnAccent: COLORS.white,
   accent: COLORS.blue600,
   potential: COLORS.blue400, // blue400 on slate800 ≈ 5.25:1 — passes WCAG AA
   heldBg: "#1e3a5f", // bespoke — no direct Tailwind match
@@ -89,6 +91,7 @@ const light: Colors = {
   text: COLORS.slate800,
   textMuted: COLORS.slate500,
   textFilled: COLORS.slate400,
+  textOnAccent: COLORS.white,
   accent: COLORS.blue600,
   potential: COLORS.blue600, // blue600 on white ≈ 4.71:1 — passes WCAG AA
   heldBg: COLORS.blue100,
