@@ -224,7 +224,7 @@ test.describe("2048 — accessibility labels", () => {
     await page.getByText("Game Over").waitFor();
 
     await expect(
-      page.getByRole("button", { name: "Start a new 2048 game" }),
+      page.getByRole("button", { name: "Start a new 2048 game" }).first(),
     ).toBeVisible();
     await expect(
       page.getByRole("button", { name: "Quit and return to home screen" }),

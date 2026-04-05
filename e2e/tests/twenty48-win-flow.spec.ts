@@ -98,10 +98,10 @@ test.describe("2048 — win-state + keep-playing flow", () => {
     await page.keyboard.press("ArrowLeft");
     await page.getByText("You Win!").waitFor();
 
-    // Click New Game inside the overlay (first match = overlay button)
+    // Click New Game inside the overlay (nth(1) = overlay button, first() is header)
     await page
       .getByRole("button", { name: "Start a new 2048 game" })
-      .first()
+      .nth(1)
       .click();
 
     // Overlay gone, score reset to 0
@@ -134,7 +134,7 @@ test.describe("2048 — win-state + keep-playing flow", () => {
     await page.getByText("You Win!").waitFor();
     await page
       .getByRole("button", { name: "Start a new 2048 game" })
-      .first()
+      .nth(1)
       .click();
     await expect(page.locator('[aria-label="Current score: 0"]')).toBeVisible({
       timeout: 3000,

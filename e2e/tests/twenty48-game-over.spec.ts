@@ -63,7 +63,7 @@ test.describe("2048 — game-over detection and flow", () => {
     await page.getByRole("button", { name: "Play 2048" }).click();
     await page.getByText("Game Over").waitFor();
 
-    await page.getByRole("button", { name: "Start a new 2048 game" }).first().click();
+    await page.getByRole("button", { name: "Start a new 2048 game" }).nth(1).click();
 
     await expect(page.getByText("Game Over")).not.toBeVisible({
       timeout: 3000,
