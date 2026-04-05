@@ -4,7 +4,18 @@ import { useTranslation } from "react-i18next";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { RootStackParamList } from "../../App";
 import { useTheme } from "../theme/ThemeContext";
-import { blackjackApi, BlackjackState } from "../game/blackjack/api";
+import { BlackjackState } from "../game/blackjack/types";
+import {
+  newGame,
+  placeBet as enginePlaceBet,
+  hit as engineHit,
+  stand as engineStand,
+  doubleDown as engineDoubleDown,
+  newHand as engineNewHand,
+  toViewState,
+  EngineState,
+} from "../game/blackjack/engine";
+import { saveGame, loadGame, clearGame } from "../game/blackjack/storage";
 import BettingPanel from "../components/blackjack/BettingPanel";
 import BlackjackTable from "../components/blackjack/BlackjackTable";
 import ActionButtons from "../components/blackjack/ActionButtons";
@@ -19,21 +30,19 @@ export default function BlackjackScreen({ navigation }: Props) {
   const { t } = useTranslation(["blackjack", "common", "errors"]);
   const { colors, theme, toggle } = useTheme();
 
-  const [state, setState] = useState<BlackjackState | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [engine, setEngine] = useState<EngineState | null>(null);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Create session on mount
+  // Load saved game or start fresh
   useEffect(() => {
     let active = true;
-    setLoading(true);
-    blackjackApi
-      .newSession()
-      .then((s) => {
-        if (active) setState(s);
-      })
-      .catch(() => {
-        if (active) setError(t("errors:backend.connection"));
+    loadGame()
+      .then((saved) => {
+        if (!active) return;
+        const next = saved ?? newGame();
+        setEngine(next);
+        if (!saved) saveGame(next);
       })
       .finally(() => {
         if (active) setLoading(false);
@@ -41,55 +50,51 @@ export default function BlackjackScreen({ navigation }: Props) {
     return () => {
       active = false;
     };
-  }, [t]);
+  }, []);
 
-  const call = useCallback(
-    async (fn: () => Promise<BlackjackState>) => {
-      setLoading(true);
+  // Clear storage when the player runs out of chips so relaunch starts fresh.
+  useEffect(() => {
+    if (engine && engine.chips === 0 && engine.phase === "result") {
+      clearGame();
+    }
+  }, [engine]);
+
+  const apply = useCallback(
+    (fn: (s: EngineState) => EngineState) => {
+      if (!engine) return;
       setError(null);
       try {
-        const s = await fn();
-        setState(s);
+        const next = fn(engine);
+        setEngine(next);
+        saveGame(next);
       } catch (e: unknown) {
-        setError(e instanceof Error ? e.message : t("errors:backend.connection"));
-      } finally {
-        setLoading(false);
+        setError(e instanceof Error ? e.message : String(e));
       }
     },
-    [t]
+    [engine]
   );
 
-  async function handleDeal(amount: number) {
-    await call(() => blackjackApi.placeBet(amount));
-  }
+  const handleDeal = (amount: number) => apply((s) => enginePlaceBet(s, amount));
+  const handleHit = () => apply(engineHit);
+  const handleStand = () => apply(engineStand);
+  const handleDoubleDown = () => apply(engineDoubleDown);
+  const handleNextHand = () => apply(engineNewHand);
+  const handlePlayAgain = () => {
+    const fresh = newGame();
+    setEngine(fresh);
+    saveGame(fresh);
+    setError(null);
+  };
 
-  async function handleHit() {
-    await call(blackjackApi.hit);
-  }
-
-  async function handleStand() {
-    await call(blackjackApi.stand);
-  }
-
-  async function handleDoubleDown() {
-    await call(blackjackApi.doubleDown);
-  }
-
-  async function handleNextHand() {
-    await call(blackjackApi.newHand);
-  }
-
-  async function handlePlayAgain() {
-    await call(blackjackApi.newSession);
-  }
-
-  if (!state && loading) {
+  if (!engine && loading) {
     return (
       <View style={[styles.centered, { backgroundColor: colors.background }]}>
         <ActivityIndicator color={colors.accent} size="large" />
       </View>
     );
   }
+
+  const state: BlackjackState | null = engine ? toViewState(engine) : null;
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
@@ -129,17 +134,15 @@ export default function BlackjackScreen({ navigation }: Props) {
 
       {/* Main content */}
       <View style={styles.content}>
-        {/* Betting phase */}
         {(!state || state.phase === "betting") && (
           <BettingPanel
             chips={state?.chips ?? 1000}
             onDeal={handleDeal}
-            loading={loading}
+            loading={false}
             error={error}
           />
         )}
 
-        {/* Player / result phase — show table */}
         {state && state.phase !== "betting" && (
           <>
             <BlackjackTable
@@ -148,7 +151,6 @@ export default function BlackjackScreen({ navigation }: Props) {
               phase={state.phase}
             />
 
-            {/* Result phase: banner + actions */}
             {state.phase === "result" && (
               <>
                 <ResultBanner outcome={state.outcome!} payout={state.payout} />
@@ -157,10 +159,8 @@ export default function BlackjackScreen({ navigation }: Props) {
                   <Pressable
                     style={[styles.actionBtn, { backgroundColor: colors.accent }]}
                     onPress={handleNextHand}
-                    disabled={loading}
                     accessibilityRole="button"
                     accessibilityLabel={t("blackjack:actions.nextHandLabel")}
-                    accessibilityState={{ disabled: loading }}
                   >
                     <Text style={[styles.actionBtnText, { color: colors.surface }]}>
                       {t("blackjack:actions.nextHand")}
@@ -181,26 +181,23 @@ export default function BlackjackScreen({ navigation }: Props) {
               </>
             )}
 
-            {/* Player phase: action buttons */}
             {state.phase === "player" && (
               <ActionButtons
                 onHit={handleHit}
                 onStand={handleStand}
                 onDoubleDown={handleDoubleDown}
                 doubleDownAvailable={state.double_down_available}
-                loading={loading}
+                loading={false}
               />
             )}
           </>
         )}
 
-        {/* Error outside betting panel */}
         {state && state.phase !== "betting" && error && (
           <Text style={[styles.error, { color: colors.error }]}>{error}</Text>
         )}
       </View>
 
-      {/* Game over modal */}
       {state && (
         <GameOverModal
           visible={state.game_over}
