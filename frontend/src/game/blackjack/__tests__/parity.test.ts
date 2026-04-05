@@ -14,13 +14,9 @@
  */
 
 import { Card, EngineState, doubleDown, hit, newGame, placeBet, stand } from "../engine";
-
-// JSON import — resolveJsonModule is enabled via expo/tsconfig.base.
-// The path goes 5 levels up from frontend/src/game/blackjack/__tests__/ to
-// the repo root, then into backend/tests/fixtures/.
-// eslint-disable-next-line @typescript-eslint/no-require-imports
-const fixtures =
-  require("../../../../../backend/tests/fixtures/blackjack_parity.json") as ParityFixture[];
+// resolveJsonModule is enabled via expo/tsconfig.base.
+// Path: 5 levels up from __tests__/ to repo root, then into backend/tests/fixtures/.
+import fixtureData from "../../../../../backend/tests/fixtures/blackjack_parity.json";
 
 interface ParityFixture {
   id: string;
@@ -45,6 +41,8 @@ function runAction(state: EngineState, action: string): EngineState {
   if (action === "double_down") return doubleDown(state);
   throw new Error(`Unknown action: ${action}`);
 }
+
+const fixtures = fixtureData as ParityFixture[];
 
 test.each(fixtures.map((f) => [f.id, f] as [string, ParityFixture]))(
   "parity: %s",
