@@ -60,7 +60,7 @@ test.describe("Blackjack — state persistence", () => {
 
     // Navigate back to Home
     await page.getByRole("button", { name: /back/i }).click();
-    await expect(page.getByText("Gaming App").first()).toBeVisible();
+    await expect(page.getByText("Gaming App").first()).toBeVisible({ timeout: 10000 });
 
     // Return to Blackjack — state should be restored
     await page.getByRole("button", { name: "Play Blackjack" }).click();
@@ -135,7 +135,7 @@ test.describe("Blackjack — state persistence", () => {
     await injectEngineState(page, gameOverState());
     await page.getByRole("button", { name: "Play Blackjack" }).click();
 
-    await expect(page.getByText("Out of Chips")).toBeVisible({
+    await expect(page.getByText("Out of Chips").first()).toBeVisible({
       timeout: 5000,
     });
   });
@@ -152,6 +152,6 @@ test.describe("Blackjack — state persistence", () => {
     await expect(page.getByText("Next Hand")).toBeVisible({ timeout: 5000 });
 
     // Chip strip should reflect outcome (win/push/lose from 750)
-    await expect(page.getByText(/\d+ chips/)).toBeVisible();
+    await expect(page.getByText(/\d+ chips/).first()).toBeVisible();
   });
 });

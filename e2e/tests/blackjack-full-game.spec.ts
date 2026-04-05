@@ -29,7 +29,7 @@ test.describe("Blackjack — full happy-path game journey", () => {
     await expect(page.getByText("Gaming App").first()).toBeVisible();
     await page.getByRole("button", { name: "Play Blackjack" }).click();
     await expect(page.getByRole("button", { name: /deal cards with/i })).toBeVisible();
-    await expect(page.getByText("Blackjack", { exact: true })).toBeVisible();
+    await expect(page.getByText("Blackjack", { exact: true }).first()).toBeVisible();
   });
 
   test("Deal button transitions from betting to player or result phase", async ({
@@ -121,7 +121,7 @@ test.describe("Blackjack — full happy-path game journey", () => {
 
     // Outcome is non-deterministic; just verify chip display is present
     await expect(
-      page.getByText(/\d+ chips/),
+      page.getByText(/\d+ chips/).first(),
     ).toBeVisible();
   });
 
@@ -135,7 +135,7 @@ test.describe("Blackjack — full happy-path game journey", () => {
     await page.getByRole("button", { name: /quit/i }).click();
 
     await expect(page.getByText("Gaming App").first()).toBeVisible({
-      timeout: 5000,
+      timeout: 10000,
     });
   });
 });

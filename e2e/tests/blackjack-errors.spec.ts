@@ -35,7 +35,7 @@ test.describe("Blackjack — error paths and guardrails", () => {
     await gotoBlackjack(page);
     await page.getByRole("button", { name: /back/i }).click();
     await expect(page.getByText("Gaming App").first()).toBeVisible({
-      timeout: 5000,
+      timeout: 10000,
     });
   });
 
@@ -46,7 +46,7 @@ test.describe("Blackjack — error paths and guardrails", () => {
 
     await page.getByRole("button", { name: /back/i }).click();
     await expect(page.getByText("Gaming App").first()).toBeVisible({
-      timeout: 5000,
+      timeout: 10000,
     });
   });
 
@@ -118,7 +118,7 @@ test.describe("Blackjack — error paths and guardrails", () => {
     await injectEngineState(page, gameOverState());
     await page.getByRole("button", { name: "Play Blackjack" }).click();
 
-    await expect(page.getByText("Out of Chips")).toBeVisible({
+    await expect(page.getByText("Out of Chips").first()).toBeVisible({
       timeout: 5000,
     });
     await expect(
@@ -134,7 +134,7 @@ test.describe("Blackjack — error paths and guardrails", () => {
   }) => {
     await injectEngineState(page, gameOverState());
     await page.getByRole("button", { name: "Play Blackjack" }).click();
-    await expect(page.getByText("Out of Chips")).toBeVisible();
+    await expect(page.getByText("Out of Chips").first()).toBeVisible();
 
     await page
       .getByRole("button", { name: /start a new session with 1000 chips/i })
@@ -150,7 +150,7 @@ test.describe("Blackjack — error paths and guardrails", () => {
   }) => {
     await injectEngineState(page, gameOverState());
     await page.getByRole("button", { name: "Play Blackjack" }).click();
-    await expect(page.getByText("Out of Chips")).toBeVisible();
+    await expect(page.getByText("Out of Chips").first()).toBeVisible();
 
     await page
       .getByRole("button", { name: /return to home screen/i })

@@ -99,6 +99,6 @@ test.describe("Blackjack — double-down", () => {
     await expect(page.getByText("Next Hand")).toBeVisible({ timeout: 5000 });
 
     // Chip display updated (won't be 1000 anymore — bet was 200 post-double)
-    await expect(page.getByText(/\d+ chips/)).toBeVisible();
+    await expect(page.getByText(/\d+ chips/).first()).toBeVisible();
   });
 });
