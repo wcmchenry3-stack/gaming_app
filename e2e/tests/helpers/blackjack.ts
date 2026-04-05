@@ -28,7 +28,8 @@ export async function gotoBlackjack(page: Page): Promise<void> {
   await page.evaluate(() => localStorage.removeItem("blackjack_game_v1"));
   await page.goto("/");
   await page.getByRole("button", { name: "Play Blackjack" }).click();
-  await page.getByText("Deal").waitFor();
+  // Use role selector to avoid strict-mode violations from "Dealer's Hand" / "dealer" substrings
+  await page.getByRole("button", { name: /deal cards with/i }).waitFor();
 }
 
 /** Inject a pre-built EngineState into localStorage then reload home. */

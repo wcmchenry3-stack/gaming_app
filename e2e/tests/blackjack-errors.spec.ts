@@ -141,7 +141,7 @@ test.describe("Blackjack — error paths and guardrails", () => {
       .click();
 
     // Back in betting phase with fresh chip count
-    await expect(page.getByText("Deal")).toBeVisible({ timeout: 5000 });
+    await expect(page.getByRole("button", { name: /deal cards with/i })).toBeVisible({ timeout: 5000 });
     await expect(page.getByText("1000 chips")).toBeVisible();
   });
 
@@ -174,7 +174,7 @@ test.describe("Blackjack — error paths and guardrails", () => {
     await page.getByRole("button", { name: "Play Blackjack" }).click();
 
     // Should start fresh in betting phase, not crash
-    await expect(page.getByText("Deal")).toBeVisible({ timeout: 5000 });
+    await expect(page.getByRole("button", { name: /deal cards with/i })).toBeVisible({ timeout: 5000 });
     await expect(page.getByText("1000 chips")).toBeVisible();
   });
 
@@ -191,7 +191,7 @@ test.describe("Blackjack — error paths and guardrails", () => {
     await page.goto("/");
     await page.getByRole("button", { name: "Play Blackjack" }).click();
 
-    await expect(page.getByText("Deal")).toBeVisible({ timeout: 5000 });
+    await expect(page.getByRole("button", { name: /deal cards with/i })).toBeVisible({ timeout: 5000 });
   });
 
   // ---------------------------------------------------------------------------
@@ -214,7 +214,7 @@ test.describe("Blackjack — error paths and guardrails", () => {
     await page.getByRole("button", { name: "Play Blackjack" }).click();
     await page.getByText("Next Hand").click();
 
-    await expect(page.getByText("Deal")).toBeVisible({ timeout: 5000 });
+    await expect(page.getByRole("button", { name: /deal cards with/i })).toBeVisible({ timeout: 5000 });
     await expect(page.getByText("Dealer's Hand")).toBeVisible();
     await expect(page.getByText("Your Hand")).toBeVisible();
   });

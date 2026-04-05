@@ -31,7 +31,7 @@ test.describe("Blackjack — state persistence", () => {
 
     // Should land directly in player phase, not betting
     await expect(page.getByText("Hit")).toBeVisible({ timeout: 5000 });
-    await expect(page.getByText("Deal")).not.toBeVisible();
+    await expect(page.getByRole("button", { name: /deal cards with/i })).not.toBeVisible();
   });
 
   test("injected result-phase state is loaded and shows outcome", async ({
@@ -49,7 +49,7 @@ test.describe("Blackjack — state persistence", () => {
     page,
   }) => {
     await gotoBlackjack(page);
-    await page.getByText("Deal").click();
+    await page.getByRole("button", { name: /deal cards with/i }).click();
 
     // Wait for player or result phase
     await expect(
@@ -118,7 +118,7 @@ test.describe("Blackjack — state persistence", () => {
     await page.getByRole("button", { name: "Play Blackjack" }).click();
     await page.getByText("Next Hand").click();
 
-    await expect(page.getByText("Deal")).toBeVisible({ timeout: 5000 });
+    await expect(page.getByRole("button", { name: /deal cards with/i })).toBeVisible({ timeout: 5000 });
 
     const stored = await page.evaluate(() =>
       localStorage.getItem("blackjack_game_v1"),

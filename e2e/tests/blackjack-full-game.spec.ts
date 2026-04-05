@@ -28,15 +28,15 @@ test.describe("Blackjack — full happy-path game journey", () => {
   }) => {
     await expect(page.getByText("Gaming App").first()).toBeVisible();
     await page.getByRole("button", { name: "Play Blackjack" }).click();
-    await expect(page.getByText("Deal")).toBeVisible();
-    await expect(page.getByText("Blackjack")).toBeVisible();
+    await expect(page.getByRole("button", { name: /deal cards with/i })).toBeVisible();
+    await expect(page.getByText("Blackjack", { exact: true })).toBeVisible();
   });
 
   test("Deal button transitions from betting to player or result phase", async ({
     page,
   }) => {
     await gotoBlackjack(page);
-    await page.getByText("Deal").click();
+    await page.getByRole("button", { name: /deal cards with/i }).click();
 
     // Either player phase (Hit/Stand) or immediate result (natural BJ → Next Hand)
     await expect(
@@ -66,7 +66,7 @@ test.describe("Blackjack — full happy-path game journey", () => {
     await page.getByText("Next Hand").click();
 
     // Back in betting phase
-    await expect(page.getByText("Deal")).toBeVisible({ timeout: 5000 });
+    await expect(page.getByRole("button", { name: /deal cards with/i })).toBeVisible({ timeout: 5000 });
   });
 
   test("Hit adds a card and stays in player phase if not busted", async ({
@@ -80,7 +80,7 @@ test.describe("Blackjack — full happy-path game journey", () => {
     await page.getByRole("button", { name: /hit/i }).click();
 
     // Either still in player phase or result (bust) — Deal should NOT be visible
-    await expect(page.getByText("Deal")).not.toBeVisible({ timeout: 3000 });
+    await expect(page.getByRole("button", { name: /deal cards with/i })).not.toBeVisible({ timeout: 3000 });
   });
 
   test("multiple hands can be played in sequence", async ({ page }) => {
@@ -88,8 +88,8 @@ test.describe("Blackjack — full happy-path game journey", () => {
 
     for (let hand = 0; hand < 3; hand++) {
       // Betting phase
-      await expect(page.getByText("Deal")).toBeVisible({ timeout: 10000 });
-      await page.getByText("Deal").click();
+      await expect(page.getByRole("button", { name: /deal cards with/i })).toBeVisible({ timeout: 10000 });
+      await page.getByRole("button", { name: /deal cards with/i }).click();
 
       // Player or result phase
       await expect(
@@ -108,7 +108,7 @@ test.describe("Blackjack — full happy-path game journey", () => {
     }
 
     // Still in betting phase after 3 hands
-    await expect(page.getByText("Deal")).toBeVisible({ timeout: 5000 });
+    await expect(page.getByRole("button", { name: /deal cards with/i })).toBeVisible({ timeout: 5000 });
   });
 
   test("chip balance updates after a winning hand", async ({ page }) => {

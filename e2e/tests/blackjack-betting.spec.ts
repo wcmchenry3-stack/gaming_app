@@ -96,7 +96,7 @@ test.describe("Blackjack — betting panel and bet stepper", () => {
       playerPhaseState({ chips: 50, bet: 0, phase: "betting", outcome: null, payout: 0, player_hand: [], dealer_hand: [] }),
     );
     await page.getByRole("button", { name: "Play Blackjack" }).click();
-    await expect(page.getByText("Deal")).toBeVisible();
+    await expect(page.getByRole("button", { name: /deal cards with/i })).toBeVisible();
 
     // Max bet should be 50 (equal to chips)
     // Try to increase past chips — button should become disabled before 500
@@ -140,7 +140,7 @@ test.describe("Blackjack — betting panel and bet stepper", () => {
     await expect(page.getByText("Hit")).toBeVisible();
 
     // Deal button should not be visible
-    await expect(page.getByText("Deal")).not.toBeVisible();
+    await expect(page.getByRole("button", { name: /deal cards with/i })).not.toBeVisible();
   });
 
   test("BettingPanel returns after pressing Next Hand", async ({ page }) => {
@@ -151,6 +151,6 @@ test.describe("Blackjack — betting panel and bet stepper", () => {
     await page.getByText("Next Hand").click();
 
     // BettingPanel with Deal button should be visible again
-    await expect(page.getByText("Deal")).toBeVisible({ timeout: 5000 });
+    await expect(page.getByRole("button", { name: /deal cards with/i })).toBeVisible({ timeout: 5000 });
   });
 });
