@@ -290,9 +290,16 @@ describe("double down", () => {
     expect(() => doubleDown(three)).toThrow(/initial two cards/);
   });
 
-  it("requires sufficient chips", () => {
-    const broke: EngineState = { ...stateInPlayer(150, 100), chips: 50 };
+  it("requires chips >= 2*bet (free stack = chips - bet)", () => {
+    // chips=150, bet=100 → only 50 free; needs another 100 to double.
+    const broke: EngineState = stateInPlayer(150, 100);
     expect(() => doubleDown(broke)).toThrow(/Insufficient chips/);
+  });
+
+  it("accepts exact 2*bet (boundary)", () => {
+    // chips=200, bet=100 → chips == 2*bet, allowed.
+    const r = doubleDown(stateInPlayer(200, 100));
+    expect(r.bet).toBe(200);
   });
 
   it("doubles the bet", () => {
@@ -305,11 +312,17 @@ describe("double down", () => {
     expect(r.phase).toBe("result");
   });
 
-  it("deducts extra chips before settling", () => {
+  it("applies 2x payout delta", () => {
+    // Under "chips includes wagered" accounting, doubling the bet doubles
+    // the settlement delta. Start 300 / bet 100:
+    //   win:  300 + 200 = 500
+    //   lose: 300 - 200 = 100
+    //   push: 300 + 0   = 300
     const r = doubleDown(stateInPlayer(300, 100));
-    // Start 300, deduct 100 extra = 200, then ±payout
-    if (r.outcome === "win") expect(r.chips).toBe(300 - 100 + 200);
-    if (r.outcome === "push") expect(r.chips).toBe(200);
+    expect(r.bet).toBe(200);
+    if (r.outcome === "win") expect(r.chips).toBe(500);
+    if (r.outcome === "lose") expect(r.chips).toBe(100);
+    if (r.outcome === "push") expect(r.chips).toBe(300);
     expect(r.chips).toBeGreaterThanOrEqual(0);
   });
 });
@@ -371,10 +384,14 @@ describe("toViewState", () => {
     expect(toViewState(stateInResult()).game_over).toBe(false);
   });
 
-  it("double_down_available only in player phase with 2 cards and enough chips", () => {
+  it("double_down_available only in player phase with 2 cards and chips >= 2*bet", () => {
+    // chips=500, bet=100 → chips >= 200 ✓
     expect(toViewState(stateInPlayer(500, 100)).double_down_available).toBe(true);
-    const broke: EngineState = { ...stateInPlayer(50, 100) };
-    expect(toViewState(broke).double_down_available).toBe(false);
+    // boundary: chips=200, bet=100 ✓
+    expect(toViewState(stateInPlayer(200, 100)).double_down_available).toBe(true);
+    // chips=150, bet=100 → not enough free stack
+    expect(toViewState(stateInPlayer(150, 100)).double_down_available).toBe(false);
+    // 3 cards → not available
     const three: EngineState = {
       ...stateInPlayer(500, 100),
       player_hand: [c("♠", "5"), c("♥", "5"), c("♦", "5")],

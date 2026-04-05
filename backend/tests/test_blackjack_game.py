@@ -278,10 +278,17 @@ class TestDoubleDown:
             g.double_down()
 
     def test_double_down_requires_sufficient_chips(self):
+        # chips=150, bet=100 → free stack is chips-bet=50, not enough to double.
+        # Real requirement is chips >= 2*bet (200 here).
         g = _in_player_phase(chips=150, bet=100)
-        g.chips = 50  # not enough to cover bet again
         with pytest.raises(ValueError, match="Insufficient chips"):
             g.double_down()
+
+    def test_double_down_accepts_exact_2x_bet(self):
+        # chips=200, bet=100 → chips == 2*bet, boundary allowed.
+        g = _in_player_phase(chips=200, bet=100)
+        g.double_down()  # should not raise
+        assert g.bet == 200
 
     def test_double_down_doubles_the_bet(self):
         g = _in_player_phase(chips=500, bet=100)
@@ -293,15 +300,21 @@ class TestDoubleDown:
         g.double_down()
         assert g.phase == "result"
 
-    def test_double_down_deducts_extra_chips_before_settle(self):
+    def test_double_down_applies_2x_payout(self):
+        # Under the "chips includes wagered" accounting, DD doubles the bet
+        # and the settlement delta doubles with it. Start 300 / bet 100:
+        #   win:  300 + 200 = 500  (net +200)
+        #   lose: 300 - 200 = 100  (net -200)
+        #   push: 300 + 0   = 300  (net 0)
         g = _in_player_phase(chips=300, bet=100)
         g.double_down()
-        # chips = 300 - 100 (extra) ± payout
+        assert g.bet == 200
         if g.outcome == "win":
-            assert g.chips == 300 - 100 + 200  # net +100
+            assert g.chips == 500
         elif g.outcome == "lose":
-            assert g.chips == 300 - 100 - 200  # net -200 → 0 (floor)
-        # push: 300 - 100 + 0 = 200
+            assert g.chips == 100
+        elif g.outcome == "push":
+            assert g.chips == 300
         assert g.chips >= 0
 
 
