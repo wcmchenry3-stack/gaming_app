@@ -150,7 +150,7 @@ export default function Twenty48Screen({ navigation }: Props) {
       <View style={styles.header}>
         <Pressable
           style={styles.headerBtn}
-          onPress={() => navigation.navigate("Home")}
+          onPress={() => navigation.goBack()}
           accessibilityRole="button"
           accessibilityLabel={t("common:nav.back")}
         >
@@ -208,7 +208,7 @@ export default function Twenty48Screen({ navigation }: Props) {
           score={state!.score}
           onNewGame={handleNewGame}
           onKeepPlaying={() => setWinDismissed(true)}
-          onHome={() => navigation.navigate("Home")}
+          onHome={() => navigation.goBack()}
         />
       )}
       {showGameOverOverlay && (
@@ -216,7 +216,7 @@ export default function Twenty48Screen({ navigation }: Props) {
           type="game_over"
           score={state!.score}
           onNewGame={handleNewGame}
-          onHome={() => navigation.navigate("Home")}
+          onHome={() => navigation.goBack()}
         />
       )}
     </View>

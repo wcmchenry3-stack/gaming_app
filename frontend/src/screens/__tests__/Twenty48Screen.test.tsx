@@ -24,6 +24,7 @@ function mockNav() {
   return {
     setOptions: jest.fn(),
     navigate: jest.fn(),
+    goBack: jest.fn(),
   } as unknown as Parameters<typeof Twenty48Screen>[0]["navigation"];
 }
 
