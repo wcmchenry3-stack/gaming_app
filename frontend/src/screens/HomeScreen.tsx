@@ -28,7 +28,7 @@ export default function HomeScreen({ navigation }: Props) {
     "yacht",
     "cascade",
     "blackjack",
-    "ludo",
+    "pachisi",
     "twenty48",
     "errors",
   ]);
@@ -64,9 +64,9 @@ export default function HomeScreen({ navigation }: Props) {
     },
     {
       emoji: "🎯",
-      title: t("ludo:game.title"),
-      description: t("ludo:game.description"),
-      action: () => navigation.navigate("Ludo"),
+      title: t("pachisi:game.title"),
+      description: t("pachisi:game.description"),
+      action: () => navigation.navigate("Pachisi"),
     },
     {
       emoji: "🔢",
@@ -80,7 +80,7 @@ export default function HomeScreen({ navigation }: Props) {
     [t("yacht:game.title")]: t("yacht:game.playLabel"),
     [t("cascade:game.title")]: t("cascade:game.playLabel"),
     [t("blackjack:game.title")]: t("blackjack:game.playLabel"),
-    [t("ludo:game.title")]: t("ludo:game.playLabel"),
+    [t("pachisi:game.title")]: t("pachisi:game.playLabel"),
     [t("twenty48:game.title")]: t("twenty48:game.playLabel"),
   };
 

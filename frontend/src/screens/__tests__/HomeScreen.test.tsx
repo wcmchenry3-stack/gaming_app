@@ -52,7 +52,7 @@ describe("HomeScreen — game cards", () => {
     expect(getByLabelText("Play Yacht")).toBeTruthy();
     expect(getByLabelText("Play Cascade")).toBeTruthy();
     expect(getByLabelText("Play Blackjack")).toBeTruthy();
-    expect(getByLabelText("Play Ludo")).toBeTruthy();
+    expect(getByLabelText("Play Pachisi")).toBeTruthy();
   });
 
   it("navigates to Blackjack when Blackjack card pressed", () => {
@@ -69,11 +69,11 @@ describe("HomeScreen — game cards", () => {
     expect(nav.navigate).toHaveBeenCalledWith("Cascade");
   });
 
-  it("navigates to Ludo when Ludo card pressed", () => {
+  it("navigates to Pachisi when Pachisi card pressed", () => {
     const nav = mockNav();
     const { getByLabelText } = renderScreen(nav);
-    fireEvent.press(getByLabelText("Play Ludo"));
-    expect(nav.navigate).toHaveBeenCalledWith("Ludo");
+    fireEvent.press(getByLabelText("Play Pachisi"));
+    expect(nav.navigate).toHaveBeenCalledWith("Pachisi");
   });
 
   it("navigates to Game with a new state when Yacht card pressed (no saved game)", async () => {
