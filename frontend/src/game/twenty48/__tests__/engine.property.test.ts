@@ -53,9 +53,7 @@ const stateArb: fc.Arbitrary<Twenty48State> = boardArb.map((board) => ({
 }));
 
 /** Any board that is not game-over (has at least one empty cell or adjacent match). */
-const playableStateArb: fc.Arbitrary<Twenty48State> = stateArb.filter(
-  (s) => !isGameOver(s.board)
-);
+const playableStateArb: fc.Arbitrary<Twenty48State> = stateArb.filter((s) => !isGameOver(s.board));
 
 const directionArb: fc.Arbitrary<Direction> = fc.constantFrom<Direction>(
   "up",
@@ -226,28 +224,25 @@ describe("move — score invariants", () => {
   it("score increase equals the sum of all merged tile values", () => {
     // A state with exactly one pair that will merge — we know the exact gain.
     fc.assert(
-      fc.property(
-        fc.constantFrom(2, 4, 8, 16, 32, 64, 128, 256, 512, 1024),
-        (v) => {
-          // Row 1 has two tiles of value v — left move will merge them.
-          const state: Twenty48State = {
-            board: [
-              [0, 0, 0, 0],
-              [v, 0, v, 0],
-              [0, 0, 0, 0],
-              [0, 0, 0, 0],
-            ],
-            score: 0,
-            game_over: false,
-            has_won: false,
-          };
-          // Use a seeded RNG to avoid flaky spawn positions.
-          setRng(createSeededRng(1));
-          const next = move(state, "left");
-          setRng(Math.random);
-          expect(next.score).toBe(v * 2);
-        }
-      )
+      fc.property(fc.constantFrom(2, 4, 8, 16, 32, 64, 128, 256, 512, 1024), (v) => {
+        // Row 1 has two tiles of value v — left move will merge them.
+        const state: Twenty48State = {
+          board: [
+            [0, 0, 0, 0],
+            [v, 0, v, 0],
+            [0, 0, 0, 0],
+            [0, 0, 0, 0],
+          ],
+          score: 0,
+          game_over: false,
+          has_won: false,
+        };
+        // Use a seeded RNG to avoid flaky spawn positions.
+        setRng(createSeededRng(1));
+        const next = move(state, "left");
+        setRng(Math.random);
+        expect(next.score).toBe(v * 2);
+      })
     );
   });
 });
@@ -555,7 +550,7 @@ describe("board tile validity through moves", () => {
           setRng(Math.random);
           if (!state.game_over) return; // didn't reach game over — skip
           // Attempting any direction on a game_over state must throw.
-          for (const d of (["up", "down", "left", "right"] as Direction[])) {
+          for (const d of ["up", "down", "left", "right"] as Direction[]) {
             expect(() => move(state, d)).toThrow(/Game is over/);
           }
         }
