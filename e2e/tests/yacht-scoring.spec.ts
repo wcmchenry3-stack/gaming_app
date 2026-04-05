@@ -71,9 +71,14 @@ test.describe("Yacht — scoring verification (#180)", () => {
     await chanceBtn.click();
     await expect(page.getByText("Round 2 / 13")).toBeVisible();
 
-    // Total score should now equal the Chance value (only category scored so far)
+    // Verify the Chance row shows the scored value — this also validates the total
+    // (using the aria-label to avoid strict-mode violations from duplicate text nodes)
     if (potentialValue !== null) {
-      await expect(page.getByText(String(potentialValue))).toBeVisible();
+      await expect(
+        page.getByRole("button", {
+          name: new RegExp(`Chance: scored ${potentialValue}`),
+        }),
+      ).toBeVisible();
     }
   });
 
