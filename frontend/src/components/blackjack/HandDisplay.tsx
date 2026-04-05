@@ -2,7 +2,7 @@ import React from "react";
 import { View, Text, StyleSheet } from "react-native";
 import { useTranslation } from "react-i18next";
 import { useTheme } from "../../theme/ThemeContext";
-import { HandResponse } from "../../game/blackjack/api";
+import { HandResponse } from "../../game/blackjack/types";
 import PlayingCard from "./PlayingCard";
 
 interface Props {
@@ -15,7 +15,11 @@ export default function HandDisplay({ hand, label, concealed = false }: Props) {
   const { t } = useTranslation("blackjack");
   const { colors } = useTheme();
 
-  const valueText = concealed ? t("hand.valueHidden") : t("hand.value", { value: hand.value });
+  const valueText = concealed
+    ? t("hand.valueHidden")
+    : hand.soft
+      ? t("hand.softValue" as Parameters<typeof t>[0], { value: hand.value })
+      : t("hand.value", { value: hand.value });
 
   return (
     <View style={styles.container}>

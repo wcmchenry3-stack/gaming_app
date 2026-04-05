@@ -24,6 +24,7 @@
   "hand.player": "आपके पत्ते",
   "hand.dealer": "डीलर के पत्ते",
   "hand.value": "मूल्य: {{value}}",
+  "hand.softValue": "सॉफ्ट {{value}}",
   "hand.valueHidden": "मूल्य: ?",
   "card.accessibilityLabel": "{{rank}} का {{suit}}",
   "card.faceDown": "उल्टा कार्ड",

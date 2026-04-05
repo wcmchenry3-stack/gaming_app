@@ -24,6 +24,7 @@
   "hand.player": "あなたの手札",
   "hand.dealer": "ディーラーの手札",
   "hand.value": "合計: {{value}}",
+  "hand.softValue": "ソフト {{value}}",
   "hand.valueHidden": "合計: ?",
   "card.accessibilityLabel": "{{suit}}の{{rank}}",
   "card.faceDown": "裏向きのカード",

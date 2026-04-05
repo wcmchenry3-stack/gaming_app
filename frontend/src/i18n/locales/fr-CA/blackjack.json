@@ -24,6 +24,7 @@
   "hand.player": "Votre main",
   "hand.dealer": "Main du croupier",
   "hand.value": "Valeur : {{value}}",
+  "hand.softValue": "Souple {{value}}",
   "hand.valueHidden": "Valeur : ?",
   "card.accessibilityLabel": "{{rank}} de {{suit}}",
   "card.faceDown": "Carte face cachée",

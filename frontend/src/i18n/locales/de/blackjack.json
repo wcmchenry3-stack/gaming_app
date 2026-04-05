@@ -24,6 +24,7 @@
   "hand.player": "Deine Hand",
   "hand.dealer": "Geber Hand",
   "hand.value": "Wert: {{value}}",
+  "hand.softValue": "Soft {{value}}",
   "hand.valueHidden": "Wert: ?",
   "card.accessibilityLabel": "{{rank}} von {{suit}}",
   "card.faceDown": "Verdeckte Karte",
