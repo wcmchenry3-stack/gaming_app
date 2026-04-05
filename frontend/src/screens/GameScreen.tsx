@@ -59,8 +59,8 @@ export default function GameScreen({ navigation, route }: Props) {
     }
   }
 
-  const startNewGame = useCallback(() => {
-    clearGame();
+  const startNewGame = useCallback(async () => {
+    await clearGame();
     setGameState(newGame());
     setResetHeld((r) => !r);
     setError(null);
@@ -171,7 +171,7 @@ export default function GameScreen({ navigation, route }: Props) {
             </Pressable>
             <Pressable
               style={[styles.modalDismissButton]}
-              onPress={() => setGameState((s) => ({ ...s, game_over: false }))}
+              onPress={() => navigation.goBack()}
               accessibilityRole="button"
               accessibilityLabel={t("gameOver.dismissLabel")}
             >

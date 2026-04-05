@@ -1,14 +1,15 @@
 import React from "react";
-import { render, fireEvent, act } from "@testing-library/react-native";
+import { render, fireEvent, act, waitFor } from "@testing-library/react-native";
 import GameScreen from "../GameScreen";
 import { ThemeProvider } from "../../theme/ThemeContext";
+import { saveGame, clearGame } from "../../game/yacht/storage";
 
 // ---------------------------------------------------------------------------
 // Mock yacht storage — no-op persistence
 // ---------------------------------------------------------------------------
 jest.mock("../../game/yacht/storage", () => ({
   saveGame: jest.fn(),
-  clearGame: jest.fn(),
+  clearGame: jest.fn().mockResolvedValue(undefined),
   loadGame: jest.fn().mockResolvedValue(null),
 }));
 
@@ -117,11 +118,130 @@ describe("GameScreen", () => {
     expect(getByText(/round.*1/i)).toBeTruthy();
   });
 
-  it("dismiss button closes modal and keeps final score", async () => {
-    const { getByRole, queryByText } = renderScreen({ game_over: true, total_score: 200 });
+  it("dismiss button navigates back to HomeScreen", async () => {
+    const { getByRole } = renderScreen({ game_over: true, total_score: 200 });
     await act(async () => {
       fireEvent.press(getByRole("button", { name: /dismiss/i }));
     });
+    expect(mockNavigation.goBack).toHaveBeenCalledTimes(1);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// GH #225 — "Play Again" reset correctness
+// ---------------------------------------------------------------------------
+
+describe("GameScreen — Play Again reset (GH #225)", () => {
+  // Build a fully-completed game state: all 13 categories filled, game_over true.
+  function makeGameOverState(): Record<string, unknown> {
+    return {
+      dice: [0, 0, 0, 0, 0],
+      held: [false, false, false, false, false],
+      rolls_used: 0,
+      round: 14, // engine advances past 13 after the last score
+      scores: {
+        ones: 3,
+        twos: 6,
+        threes: 9,
+        fours: 12,
+        fives: 15,
+        sixes: 18,
+        three_of_a_kind: 20,
+        four_of_a_kind: 0,
+        full_house: 25,
+        small_straight: 30,
+        large_straight: 40,
+        yacht: 50,
+        chance: 21,
+      },
+      game_over: true,
+      upper_subtotal: 63,
+      upper_bonus: 35,
+      yacht_bonus_count: 0,
+      yacht_bonus_total: 0,
+      total_score: 284,
+    };
+  }
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it("Play Again resets round to 1", async () => {
+    const { getByRole, getByText } = renderScreen(makeGameOverState());
+    await act(async () => {
+      fireEvent.press(getByRole("button", { name: /play again/i }));
+    });
+    expect(getByText(/round.*1/i)).toBeTruthy();
+  });
+
+  it("Play Again resets all score categories to null", async () => {
+    const { getByRole, queryByText } = renderScreen(makeGameOverState());
+    await act(async () => {
+      fireEvent.press(getByRole("button", { name: /play again/i }));
+    });
+    // After reset, no category should show a filled score — modal is gone too
     expect(queryByText(/game over/i)).toBeNull();
+    // Total score should be 0
+    expect(queryByText("284")).toBeNull();
+  });
+
+  it("Play Again calls clearGame before saveGame to avoid the race condition", async () => {
+    const callOrder: string[] = [];
+    (clearGame as jest.Mock).mockImplementation(async () => {
+      callOrder.push("clearGame");
+    });
+    (saveGame as jest.Mock).mockImplementation(async () => {
+      callOrder.push("saveGame");
+    });
+
+    // Mount and flush the initial useEffect (which calls saveGame with the
+    // game-over state). We only care about the ordering triggered by "Play Again".
+    const { getByRole } = renderScreen(makeGameOverState());
+    await act(async () => {
+      await Promise.resolve(); // flush initial saveGame from useEffect
+    });
+    callOrder.length = 0; // reset tracker — only track calls from "Play Again" onward
+
+    await act(async () => {
+      fireEvent.press(getByRole("button", { name: /play again/i }));
+    });
+
+    // clearGame must have been called
+    expect(clearGame).toHaveBeenCalled();
+    // saveGame must have been called (via useEffect on the new state)
+    await waitFor(() => expect(saveGame).toHaveBeenCalled());
+    // clearGame MUST appear before saveGame in the call order
+    const clearIdx = callOrder.indexOf("clearGame");
+    const saveIdx = callOrder.indexOf("saveGame");
+    expect(clearIdx).toBeGreaterThanOrEqual(0);
+    expect(saveIdx).toBeGreaterThan(clearIdx);
+  });
+
+  it("Play Again saves a fresh state (round:1, game_over:false, scores null)", async () => {
+    const { getByRole } = renderScreen(makeGameOverState());
+    await act(async () => {
+      fireEvent.press(getByRole("button", { name: /play again/i }));
+    });
+
+    await waitFor(() => expect(saveGame).toHaveBeenCalled());
+    const savedState = (saveGame as jest.Mock).mock.calls.at(-1)?.[0];
+    expect(savedState.round).toBe(1);
+    expect(savedState.game_over).toBe(false);
+    // Every score category should be null
+    for (const v of Object.values(savedState.scores)) {
+      expect(v).toBeNull();
+    }
+  });
+
+  it("Play Again resets total_score to 0", async () => {
+    const { getByRole } = renderScreen(makeGameOverState());
+    await act(async () => {
+      fireEvent.press(getByRole("button", { name: /play again/i }));
+    });
+
+    await waitFor(() => expect(saveGame).toHaveBeenCalled());
+    const savedState = (saveGame as jest.Mock).mock.calls.at(-1)?.[0];
+    expect(savedState.total_score).toBe(0);
   });
 });
