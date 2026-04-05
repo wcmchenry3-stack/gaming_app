@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback, useRef } from "react";
-import { View, Text, Pressable, StyleSheet, ActivityIndicator } from "react-native";
+import { View, Text, Pressable, StyleSheet, ActivityIndicator, Platform } from "react-native";
 import { GestureDetector, Gesture } from "react-native-gesture-handler";
 import { useTranslation } from "react-i18next";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
@@ -79,6 +79,41 @@ export default function Twenty48Screen({ navigation }: Props) {
     if (state?.game_over) clearGame();
   }, [state?.game_over]);
 
+  // Web keyboard controls — arrow keys + WASD. No-op on iOS/Android.
+  useEffect(() => {
+    if (Platform.OS !== "web") return;
+    const keyMap: Record<string, Direction> = {
+      ArrowUp: "up",
+      ArrowDown: "down",
+      ArrowLeft: "left",
+      ArrowRight: "right",
+      w: "up",
+      W: "up",
+      s: "down",
+      S: "down",
+      a: "left",
+      A: "left",
+      d: "right",
+      D: "right",
+    };
+    function onKeyDown(e: KeyboardEvent) {
+      // Don't fire while the user is typing into any input-like element.
+      const target = e.target as HTMLElement | null;
+      if (target) {
+        const tag = target.tagName;
+        if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT" || target.isContentEditable) {
+          return;
+        }
+      }
+      const direction = keyMap[e.key];
+      if (!direction) return;
+      e.preventDefault(); // prevent arrow-key page scroll
+      handleMove(direction);
+    }
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [handleMove]);
+
   const swipeGesture = Gesture.Pan()
     .minDistance(SWIPE_THRESHOLD)
     .onEnd((e) => {
@@ -155,6 +190,11 @@ export default function Twenty48Screen({ navigation }: Props) {
 
       {/* Swipe hint */}
       <Text style={[styles.hint, { color: colors.textMuted }]}>{t("twenty48:swipe.hint")}</Text>
+      {Platform.OS === "web" && (
+        <Text style={[styles.hint, { color: colors.textMuted }]}>
+          {t("twenty48:controls.keyboardHint")}
+        </Text>
+      )}
 
       {/* Board */}
       <GestureDetector gesture={swipeGesture}>

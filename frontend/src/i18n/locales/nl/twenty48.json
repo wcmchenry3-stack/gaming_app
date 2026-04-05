@@ -16,5 +16,6 @@
   "gameOver.newGame": "Nieuw spel",
   "gameOver.home": "Start",
   "win.title": "Gewonnen!",
-  "win.body": "Je hebt 2048 bereikt! Je kunt doorspelen voor een hogere score."
+  "win.body": "Je hebt 2048 bereikt! Je kunt doorspelen voor een hogere score.",
+  "controls.keyboardHint": "Of gebruik de pijltoetsen"
 }

@@ -11,6 +11,7 @@
   "actions.quit": "Quit",
   "actions.quitLabel": "Quit and return to home screen",
   "swipe.hint": "Swipe to move tiles",
+  "controls.keyboardHint": "Or use arrow keys",
   "gameOver.title": "Game Over",
   "gameOver.body": "No more moves available. Your score: {{score}}.",
   "gameOver.newGame": "New Game",

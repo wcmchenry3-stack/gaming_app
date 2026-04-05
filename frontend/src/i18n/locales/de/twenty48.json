@@ -9,12 +9,13 @@
   "actions.keepPlaying": "Weiterspielen",
   "actions.keepPlayingLabel": "Nach Erreichen von 2048 weiterspielen",
   "actions.quit": "Beenden",
-  "actions.quitLabel": "Beenden und zur Startseite zur\u00fcckkehren",
+  "actions.quitLabel": "Beenden und zur Startseite zurückkehren",
   "swipe.hint": "Wische, um Kacheln zu bewegen",
   "gameOver.title": "Spiel vorbei",
-  "gameOver.body": "Keine Z\u00fcge mehr m\u00f6glich. Dein Punktestand: {{score}}.",
+  "gameOver.body": "Keine Züge mehr möglich. Dein Punktestand: {{score}}.",
   "gameOver.newGame": "Neues Spiel",
   "gameOver.home": "Startseite",
   "win.title": "Gewonnen!",
-  "win.body": "Du hast 2048 erreicht! Du kannst weiterspielen f\u00fcr einen h\u00f6heren Punktestand."
+  "win.body": "Du hast 2048 erreicht! Du kannst weiterspielen für einen höheren Punktestand.",
+  "controls.keyboardHint": "Oder nutze die Pfeiltasten"
 }
