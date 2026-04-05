@@ -10,9 +10,9 @@ import HomeScreen from "./src/screens/HomeScreen";
 import GameScreen from "./src/screens/GameScreen";
 import CascadeScreen from "./src/screens/CascadeScreen";
 import BlackjackScreen from "./src/screens/BlackjackScreen";
-import LudoScreen from "./src/screens/LudoScreen";
+import PachisiScreen from "./src/screens/PachisiScreen";
 import Twenty48Screen from "./src/screens/Twenty48Screen";
-import { GameState } from "./src/game/yacht/api";
+import { GameState } from "./src/game/yacht/types";
 import { ThemeProvider } from "./src/theme/ThemeContext";
 import { useHtmlAttributes } from "./src/i18n/useHtmlAttributes";
 import { NetworkProvider } from "./src/game/_shared/NetworkContext";
@@ -37,7 +37,7 @@ export type RootStackParamList = {
   Game: { initialState: GameState };
   Cascade: undefined;
   Blackjack: undefined;
-  Ludo: undefined;
+  Pachisi: undefined;
   Twenty48: undefined;
 };
 
@@ -65,7 +65,7 @@ function AppInner() {
             <Stack.Screen name="Game" component={GameScreen} />
             <Stack.Screen name="Cascade" component={CascadeScreen} />
             <Stack.Screen name="Blackjack" component={BlackjackScreen} />
-            <Stack.Screen name="Ludo" component={LudoScreen} />
+            <Stack.Screen name="Pachisi" component={PachisiScreen} />
             <Stack.Screen name="Twenty48" component={Twenty48Screen} />
           </Stack.Navigator>
         </NavigationContainer>

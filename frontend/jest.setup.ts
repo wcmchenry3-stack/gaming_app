@@ -25,12 +25,12 @@ import yacht from "./src/i18n/locales/en/yacht.json";
 import cascade from "./src/i18n/locales/en/cascade.json";
 import errors from "./src/i18n/locales/en/errors.json";
 import blackjack from "./src/i18n/locales/en/blackjack.json";
-import ludo from "./src/i18n/locales/en/ludo.json";
+import pachisi from "./src/i18n/locales/en/pachisi.json";
 
 i18n.use(initReactI18next).init({
   lng: "en",
   fallbackLng: "en",
-  ns: ["common", "yacht", "cascade", "errors", "blackjack", "ludo"],
+  ns: ["common", "yacht", "cascade", "errors", "blackjack", "pachisi"],
   defaultNS: "common",
   resources: {
     en: {
@@ -39,7 +39,7 @@ i18n.use(initReactI18next).init({
       cascade,
       errors,
       blackjack,
-      ludo,
+      pachisi,
     },
   },
   interpolation: { escapeValue: false },

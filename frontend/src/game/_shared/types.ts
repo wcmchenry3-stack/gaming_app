@@ -6,7 +6,7 @@
  * pattern.
  */
 
-export type GameType = "cascade" | "yacht" | "blackjack" | "twenty48" | "ludo";
+export type GameType = "cascade" | "yacht" | "blackjack" | "twenty48" | "pachisi";
 
 /**
  * A score submission waiting to be sent to the server.
