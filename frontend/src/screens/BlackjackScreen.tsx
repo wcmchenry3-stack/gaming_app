@@ -102,7 +102,7 @@ export default function BlackjackScreen({ navigation }: Props) {
       <View style={styles.header}>
         <Pressable
           style={styles.headerBtn}
-          onPress={() => navigation.navigate("Home")}
+          onPress={() => navigation.goBack()}
           accessibilityRole="button"
           accessibilityLabel={t("common:nav.back")}
         >
@@ -182,7 +182,7 @@ export default function BlackjackScreen({ navigation }: Props) {
 
               <Pressable
                 style={[styles.actionBtn, styles.quitBtn, { borderColor: colors.border }]}
-                onPress={() => navigation.navigate("Home")}
+                onPress={() => navigation.goBack()}
                 accessibilityRole="button"
                 accessibilityLabel={t("blackjack:actions.quitLabel")}
               >
@@ -222,7 +222,7 @@ export default function BlackjackScreen({ navigation }: Props) {
         <GameOverModal
           visible={state.game_over}
           onPlayAgain={handlePlayAgain}
-          onHome={() => navigation.navigate("Home")}
+          onHome={() => navigation.goBack()}
         />
       )}
     </View>

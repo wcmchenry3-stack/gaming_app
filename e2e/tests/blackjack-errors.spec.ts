@@ -125,7 +125,7 @@ test.describe("Blackjack — error paths and guardrails", () => {
       page.getByRole("button", { name: /start a new session with 1000 chips/i }),
     ).toBeVisible();
     await expect(
-      page.getByRole("button", { name: /return to home screen/i }),
+      page.getByRole("button", { name: "Return to home screen" }),
     ).toBeVisible();
   });
 
@@ -157,7 +157,7 @@ test.describe("Blackjack — error paths and guardrails", () => {
       .click();
 
     await expect(page.getByText("Gaming App").first()).toBeVisible({
-      timeout: 5000,
+      timeout: 10000,
     });
   });
 

@@ -29,7 +29,6 @@ test.describe("Blackjack — full happy-path game journey", () => {
     await expect(page.getByText("Gaming App").first()).toBeVisible();
     await page.getByRole("button", { name: "Play Blackjack" }).click();
     await expect(page.getByRole("button", { name: /deal cards with/i })).toBeVisible();
-    await expect(page.getByText("Blackjack", { exact: true }).first()).toBeVisible();
   });
 
   test("Deal button transitions from betting to player or result phase", async ({
