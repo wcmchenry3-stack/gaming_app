@@ -21,7 +21,7 @@ import { LOCALES } from "../src/i18n/locales.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const LOCALES_DIR = join(__dirname, "../src/i18n/locales");
-const NAMESPACES = ["common", "yacht", "cascade", "errors", "blackjack", "ludo"];
+const NAMESPACES = ["common", "yacht", "cascade", "errors", "blackjack", "pachisi"];
 const PLACEHOLDER = "__NEEDS_TRANSLATION__";
 
 // ─── CLI ─────────────────────────────────────────────────────────────────────
