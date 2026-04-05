@@ -3,7 +3,7 @@ import { render, fireEvent, act, screen, waitFor } from "@testing-library/react-
 import BlackjackScreen from "../BlackjackScreen";
 import { ThemeProvider } from "../../theme/ThemeContext";
 import { loadGame } from "../../game/blackjack/storage";
-import { newGame, placeBet, hit, stand } from "../../game/blackjack/engine";
+import { newGame, placeBet, stand } from "../../game/blackjack/engine";
 
 // ---------------------------------------------------------------------------
 // Mock blackjack storage — no saved game by default, no-op persistence.
