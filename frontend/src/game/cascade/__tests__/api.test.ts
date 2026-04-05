@@ -17,7 +17,7 @@ describe("cascadeApi — endpoints", () => {
   }
 
   it("submitScore POSTs player_name and score to /cascade/score", async () => {
-    respondWith({ player_name: "Alice", score: 500 });
+    respondWith({ player_name: "Alice", score: 500, rank: 1 });
     await cascadeApi.submitScore("Alice", 500);
     expect(mockFetch).toHaveBeenCalledWith(
       expect.stringContaining("/cascade/score"),
@@ -26,6 +26,12 @@ describe("cascadeApi — endpoints", () => {
         body: JSON.stringify({ player_name: "Alice", score: 500 }),
       })
     );
+  });
+
+  it("submitScore returns rank from response", async () => {
+    respondWith({ player_name: "Alice", score: 500, rank: 3 });
+    const entry = await cascadeApi.submitScore("Alice", 500);
+    expect(entry.rank).toBe(3);
   });
 
   it("getLeaderboard GETs /cascade/scores", async () => {
