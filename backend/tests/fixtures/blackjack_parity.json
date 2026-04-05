@@ -1,0 +1,152 @@
+[
+  {
+    "id": "natural_blackjack",
+    "description": "Player dealt A+K (natural 21); dealer has 2+5. Pays 3:2.",
+    "deck": [
+      { "suit": "♥", "rank": "5" },
+      { "suit": "♣", "rank": "K" },
+      { "suit": "♦", "rank": "2" },
+      { "suit": "♠", "rank": "A" }
+    ],
+    "actions": ["bet:100"],
+    "expected": {
+      "phase": "result",
+      "outcome": "blackjack",
+      "chips": 1150,
+      "payout": 150,
+      "bet": 100
+    }
+  },
+  {
+    "id": "push_both_blackjack",
+    "description": "Both player and dealer dealt natural 21. Push — chips unchanged.",
+    "deck": [
+      { "suit": "♦", "rank": "K" },
+      { "suit": "♣", "rank": "K" },
+      { "suit": "♥", "rank": "A" },
+      { "suit": "♠", "rank": "A" }
+    ],
+    "actions": ["bet:100"],
+    "expected": {
+      "phase": "result",
+      "outcome": "push",
+      "chips": 1000,
+      "payout": 0,
+      "bet": 100
+    }
+  },
+  {
+    "id": "dealer_bust",
+    "description": "Player stands on 18; dealer hits from 15 and busts with 25.",
+    "deck": [
+      { "suit": "♥", "rank": "10" },
+      { "suit": "♦", "rank": "9" },
+      { "suit": "♣", "rank": "8" },
+      { "suit": "♥", "rank": "6" },
+      { "suit": "♠", "rank": "10" }
+    ],
+    "actions": ["bet:100", "stand"],
+    "expected": {
+      "phase": "result",
+      "outcome": "win",
+      "chips": 1100,
+      "payout": 100,
+      "bet": 100
+    }
+  },
+  {
+    "id": "player_bust",
+    "description": "Player holds 13, hits, draws 10 and busts with 23.",
+    "deck": [
+      { "suit": "♥", "rank": "10" },
+      { "suit": "♣", "rank": "8" },
+      { "suit": "♦", "rank": "4" },
+      { "suit": "♥", "rank": "6" },
+      { "suit": "♠", "rank": "9" }
+    ],
+    "actions": ["bet:100", "hit"],
+    "expected": {
+      "phase": "result",
+      "outcome": "lose",
+      "chips": 900,
+      "payout": -100,
+      "bet": 100
+    }
+  },
+  {
+    "id": "push_equal_values",
+    "description": "Player stands on 18; dealer also reaches 18. Push.",
+    "deck": [
+      { "suit": "♦", "rank": "9" },
+      { "suit": "♣", "rank": "8" },
+      { "suit": "♥", "rank": "9" },
+      { "suit": "♠", "rank": "10" }
+    ],
+    "actions": ["bet:100", "stand"],
+    "expected": {
+      "phase": "result",
+      "outcome": "push",
+      "chips": 1000,
+      "payout": 0,
+      "bet": 100
+    }
+  },
+  {
+    "id": "double_down_win",
+    "description": "Player doubles 11 → 21; dealer hits 15 → 18. Player wins double bet.",
+    "deck": [
+      { "suit": "♠", "rank": "3" },
+      { "suit": "♣", "rank": "10" },
+      { "suit": "♣", "rank": "8" },
+      { "suit": "♦", "rank": "2" },
+      { "suit": "♥", "rank": "7" },
+      { "suit": "♠", "rank": "9" }
+    ],
+    "actions": ["bet:100", "double_down"],
+    "expected": {
+      "phase": "result",
+      "outcome": "win",
+      "chips": 1200,
+      "payout": 200,
+      "bet": 200
+    }
+  },
+  {
+    "id": "double_down_lose",
+    "description": "Player doubles 11 → 16; dealer stands on 17. Player loses double bet.",
+    "deck": [
+      { "suit": "♣", "rank": "5" },
+      { "suit": "♦", "rank": "7" },
+      { "suit": "♦", "rank": "2" },
+      { "suit": "♥", "rank": "K" },
+      { "suit": "♠", "rank": "9" }
+    ],
+    "actions": ["bet:100", "double_down"],
+    "expected": {
+      "phase": "result",
+      "outcome": "lose",
+      "chips": 800,
+      "payout": -200,
+      "bet": 200
+    }
+  },
+  {
+    "id": "double_down_bust",
+    "description": "Player doubles 14 → draws K → 24. Busts; loses double bet.",
+    "deck": [
+      { "suit": "♣", "rank": "K" },
+      { "suit": "♣", "rank": "8" },
+      { "suit": "♦", "rank": "5" },
+      { "suit": "♥", "rank": "7" },
+      { "suit": "♠", "rank": "9" }
+    ],
+    "actions": ["bet:100", "double_down"],
+    "expected": {
+      "phase": "result",
+      "outcome": "lose",
+      "chips": 800,
+      "payout": -200,
+      "bet": 200
+    }
+  }
+]
