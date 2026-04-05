@@ -186,14 +186,14 @@ export function toViewState(s: EngineState): BlackjackState {
 // Public API — pure state transitions
 // ---------------------------------------------------------------------------
 
-export function newGame(): EngineState {
+export function newGame(deck?: Card[]): EngineState {
   return {
     chips: 1000,
     bet: 0,
     phase: "betting",
     outcome: null,
     payout: 0,
-    deck: freshShuffledDeck(),
+    deck: deck ?? freshShuffledDeck(),
     player_hand: [],
     dealer_hand: [],
     doubled: false,
