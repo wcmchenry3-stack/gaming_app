@@ -54,7 +54,7 @@ def _state_response(game: BlackjackGame) -> BlackjackStateResponse:
     dealer_hand = _hand_response(game._dealer_hand, conceal_hole=concealing)
     player_hand = _hand_response(game._player_hand)
     double_down_available = (
-        game.phase == "player" and len(game._player_hand) == 2 and game.chips >= game.bet
+        game.phase == "player" and len(game._player_hand) == 2 and game.chips >= game.bet * 2
     )
     game_over = game.chips == 0 and game.phase == "result"
     return BlackjackStateResponse(

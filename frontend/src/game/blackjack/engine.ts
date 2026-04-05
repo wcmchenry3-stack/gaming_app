@@ -122,7 +122,7 @@ function handResponse(cards: readonly Card[], concealHole: boolean): HandRespons
 export function toViewState(s: EngineState): BlackjackState {
   const concealing = s.phase === "player";
   const double_down_available =
-    s.phase === "player" && s.player_hand.length === 2 && s.chips >= s.bet;
+    s.phase === "player" && s.player_hand.length === 2 && s.chips >= s.bet * 2;
   const game_over = s.chips === 0 && s.phase === "result";
   return {
     phase: s.phase,
@@ -250,13 +250,18 @@ export function doubleDown(s: EngineState): EngineState {
   if (s.player_hand.length !== 2) {
     throw new Error("Double down only allowed on initial two cards.");
   }
-  if (s.chips < s.bet) throw new Error("Insufficient chips to double down.");
+  // chips represents stack+wagered (placeBet does not deduct); the free
+  // stack is chips-bet. Doubling requires another `bet` of free stack,
+  // so the true requirement is chips >= 2*bet.
+  if (s.chips < s.bet * 2) throw new Error("Insufficient chips to double down.");
 
-  // Deduct extra bet now + double the bet
+  // Don't subtract from chips here — that would double-count the extra
+  // wager. Doubling `bet` alone makes the settlement delta double, which
+  // is correct under the "chips includes wagered" accounting used by
+  // settleWith().
   const { deck, card } = deal(s.deck);
   const afterDouble: EngineState = {
     ...s,
-    chips: s.chips - s.bet,
     bet: s.bet * 2,
     doubled: true,
     deck,

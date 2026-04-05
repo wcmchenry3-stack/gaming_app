@@ -127,10 +127,16 @@ class BlackjackGame:
             raise ValueError("Not in player phase.")
         if len(self._player_hand) != 2:
             raise ValueError("Double down only allowed on initial two cards.")
-        if self.chips < self.bet:
+        # chips represents stack+wagered (place_bet does not deduct); the free
+        # stack is chips-bet. Doubling requires another `bet` of free stack,
+        # so the true requirement is chips >= 2*bet.
+        if self.chips < self.bet * 2:
             raise ValueError("Insufficient chips to double down.")
 
-        self.chips -= self.bet  # deduct extra bet now
+        # Don't subtract from chips here — that would double-count the extra
+        # wager. Doubling `bet` alone makes the settlement delta double,
+        # which is the correct outcome under the "chips includes wagered"
+        # accounting used by _settle_with().
         self.bet *= 2
         self._doubled = True
 
