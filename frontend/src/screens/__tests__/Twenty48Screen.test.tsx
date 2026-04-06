@@ -61,6 +61,15 @@ describe("Twenty48Screen — keyboard controls (web)", () => {
     jest.clearAllMocks();
   });
 
+  // Flush any pending move-lock timeouts (120 ms) so they don't fire
+  // during subsequent tests and pollute the saveGame mock call count.
+  afterEach(async () => {
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 200));
+    });
+    jest.clearAllMocks();
+  });
+
   it("arrow keys advance the game", async () => {
     const { queryByText } = await mountAndSettle();
     // Wait for loadGame() promise to resolve + initial state to render.
