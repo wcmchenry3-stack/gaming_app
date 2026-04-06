@@ -10,7 +10,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as Sentry from "@sentry/react-native";
 import { EngineState } from "./engine";
 
-const STORAGE_KEY = "blackjack_game_v1";
+const STORAGE_KEY = "blackjack_game_v2";
 
 export async function saveGame(state: EngineState): Promise<void> {
   try {
@@ -32,7 +32,9 @@ export async function loadGame(): Promise<EngineState | null> {
       typeof parsed.phase !== "string" ||
       !Array.isArray(parsed.deck) ||
       !Array.isArray(parsed.player_hand) ||
-      !Array.isArray(parsed.dealer_hand)
+      !Array.isArray(parsed.dealer_hand) ||
+      !Array.isArray(parsed.player_hands) ||
+      !Array.isArray(parsed.hand_bets)
     ) {
       return null;
     }

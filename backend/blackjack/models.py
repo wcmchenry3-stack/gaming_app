@@ -26,3 +26,10 @@ class BlackjackStateResponse(BaseModel):
     payout: int
     game_over: bool
     double_down_available: bool
+    split_available: bool
+    # Multi-hand split fields
+    player_hands: list[HandResponse]
+    hand_bets: list[int]
+    active_hand_index: int
+    hand_outcomes: list[str | None]
+    hand_payouts: list[int]
