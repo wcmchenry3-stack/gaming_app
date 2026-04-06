@@ -6,6 +6,7 @@ import { RootStackParamList } from "../../App";
 import { useTheme } from "../theme/ThemeContext";
 import { FruitSetProvider, useFruitSet } from "../theme/FruitSetContext";
 import { FruitQueue } from "../game/cascade/fruitQueue";
+import { ControlledSpawnSelector, createSeededRng } from "../game/cascade/spawnSelector";
 import { MergeEvent } from "../game/cascade/engine";
 import { scoreForMerge } from "../game/cascade/scoring";
 import GameCanvas, { GameCanvasHandle } from "../components/cascade/GameCanvas";
@@ -36,6 +37,22 @@ function CascadeGame({ navigation }: Props) {
   const queueRef = useRef(new FruitQueue());
   const droppingRef = useRef(false);
   const prevFruitSetId = useRef(activeFruitSet.id);
+
+  // Refs used by test hooks to read latest state without closure staleness
+  const scoreRef = useRef(0);
+  const gameOverRef = useRef(false);
+  const activeFruitSetRef = useRef(activeFruitSet);
+
+  // Keep refs in sync with state for test hooks
+  useEffect(() => {
+    scoreRef.current = score;
+  }, [score]);
+  useEffect(() => {
+    gameOverRef.current = gameOver;
+  }, [gameOver]);
+  useEffect(() => {
+    activeFruitSetRef.current = activeFruitSet;
+  }, [activeFruitSet]);
 
   // Reset the engine when the player switches fruit set skin
   useEffect(() => {
@@ -88,6 +105,51 @@ function CascadeGame({ navigation }: Props) {
     },
     [gameOver, activeFruitSet]
   );
+
+  // -------------------------------------------------------------------------
+  // Test seam — window.__cascade_* hooks (only when EXPO_PUBLIC_TEST_HOOKS=1)
+  // -------------------------------------------------------------------------
+  useEffect(() => {
+    if (process.env.EXPO_PUBLIC_TEST_HOOKS !== "1") return;
+    const g = globalThis as Record<string, unknown>;
+    g.__cascade_getState = () => ({
+      score: scoreRef.current,
+      gameOver: gameOverRef.current,
+      nextFruitTier: queueRef.current.peek(),
+      ...canvasRef.current?.getEngineState?.(),
+    });
+    g.__cascade_setSeed = (seed: number) => {
+      queueRef.current = new FruitQueue(new ControlledSpawnSelector(createSeededRng(seed)));
+      setQueueVersion((v) => v + 1);
+    };
+    g.__cascade_dropAt = (x: number) => {
+      if (gameOverRef.current) return;
+      const tier = queueRef.current.consume();
+      setQueueVersion((v) => v + 1);
+      const def = activeFruitSetRef.current.fruits[tier];
+      canvasRef.current?.drop(def, x);
+    };
+    g.__cascade_fastForward = (ms: number) => {
+      canvasRef.current?.fastForward?.(ms);
+    };
+    g.__cascade_triggerGameOver = () => {
+      setGameOver(true);
+    };
+    g.__cascade_spawnTierAt = (tier: number, x: number) => {
+      if (gameOverRef.current) return;
+      const def = activeFruitSetRef.current.fruits[tier];
+      if (!def) return;
+      canvasRef.current?.drop(def, x);
+    };
+    return () => {
+      delete g.__cascade_getState;
+      delete g.__cascade_setSeed;
+      delete g.__cascade_dropAt;
+      delete g.__cascade_fastForward;
+      delete g.__cascade_triggerGameOver;
+      delete g.__cascade_spawnTierAt;
+    };
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   function handleRestart() {
     queueRef.current = new FruitQueue();

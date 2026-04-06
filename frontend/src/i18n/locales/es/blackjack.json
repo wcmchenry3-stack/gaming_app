@@ -53,5 +53,19 @@
   "gameOver.playAgain": "Jugar de nuevo",
   "gameOver.playAgainLabel": "Inicia una nueva sesión con 1000 fichas",
   "gameOver.home": "Inicio",
-  "gameOver.homeLabel": "Volver a la pantalla de inicio"
+  "gameOver.homeLabel": "Volver a la pantalla de inicio",
+
+  "rules.title": "Reglas de mesa",
+  "rules.toggleLabel": "Alternar reglas de mesa",
+  "rules.dealerSoft17": "Crupier 17 suave",
+  "rules.s17": "S17",
+  "rules.h17": "H17",
+  "rules.s17Label": "El crupier se planta en 17 suave",
+  "rules.h17Label": "El crupier pide en 17 suave",
+  "rules.deckCount": "Barajas",
+  "rules.decreaseDeckLabel": "Reducir barajas",
+  "rules.increaseDeckLabel": "Aumentar barajas",
+  "rules.penetration": "Penetración",
+  "rules.decreasePenetrationLabel": "Reducir penetración",
+  "rules.increasePenetrationLabel": "Aumentar penetración"
 }

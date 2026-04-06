@@ -53,5 +53,19 @@
   "gameOver.playAgain": "Nochmal",
   "gameOver.playAgainLabel": "Neue Runde mit 1000 Chips starten",
   "gameOver.home": "Start",
-  "gameOver.homeLabel": "Zurück zum Startbildschirm"
+  "gameOver.homeLabel": "Zurück zum Startbildschirm",
+
+  "rules.title": "Tischregeln",
+  "rules.toggleLabel": "Tischregeln umschalten",
+  "rules.dealerSoft17": "Dealer weiche 17",
+  "rules.s17": "S17",
+  "rules.h17": "H17",
+  "rules.s17Label": "Dealer bleibt bei weicher 17",
+  "rules.h17Label": "Dealer zieht bei weicher 17",
+  "rules.deckCount": "Decks",
+  "rules.decreaseDeckLabel": "Deckanzahl verringern",
+  "rules.increaseDeckLabel": "Deckanzahl erhöhen",
+  "rules.penetration": "Penetration",
+  "rules.decreasePenetrationLabel": "Penetration verringern",
+  "rules.increasePenetrationLabel": "Penetration erhöhen"
 }

@@ -53,5 +53,19 @@
   "gameOver.playAgain": "다시 시작",
   "gameOver.playAgainLabel": "1000칩으로 새 게임 시작",
   "gameOver.home": "홈",
-  "gameOver.homeLabel": "홈 화면으로 돌아가기"
+  "gameOver.homeLabel": "홈 화면으로 돌아가기",
+
+  "rules.title": "테이블 규칙",
+  "rules.toggleLabel": "테이블 규칙 전환",
+  "rules.dealerSoft17": "딜러 소프트 17",
+  "rules.s17": "S17",
+  "rules.h17": "H17",
+  "rules.s17Label": "딜러가 소프트 17에서 스탠드",
+  "rules.h17Label": "딜러가 소프트 17에서 히트",
+  "rules.deckCount": "덱 수",
+  "rules.decreaseDeckLabel": "덱 수 줄이기",
+  "rules.increaseDeckLabel": "덱 수 늘리기",
+  "rules.penetration": "페네트레이션",
+  "rules.decreasePenetrationLabel": "페네트레이션 줄이기",
+  "rules.increasePenetrationLabel": "페네트레이션 늘리기"
 }

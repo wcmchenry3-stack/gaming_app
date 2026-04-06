@@ -31,10 +31,19 @@ const DROP_Y = 30;
  */
 const DEBUG_COLLISION = __DEV__;
 
+export interface CascadeEngineState {
+  fruitCount: number;
+  dangerRatio: number;
+  fruits: Array<{ id: number; tier: number; x: number; y: number }>;
+}
+
 export interface GameCanvasHandle {
   drop: (def: FruitDefinition, x: number) => void;
   reset: () => void;
   announceEvent: (message: string) => void;
+  /** Only populated when EXPO_PUBLIC_TEST_HOOKS=1 */
+  getEngineState?: () => CascadeEngineState;
+  fastForward?: (ms: number) => void;
 }
 
 interface Props {
@@ -416,9 +425,8 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
       return () => cancelAnimationFrame(id);
     }, []); // intentionally empty — loop lives for component lifetime
 
-    useImperativeHandle(
-      ref,
-      () => ({
+    useImperativeHandle(ref, () => {
+      const base: GameCanvasHandle = {
         drop(def, x) {
           if (!engineRef.current) return;
           const clamped = clamp(
@@ -434,9 +442,44 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
         announceEvent(message) {
           AccessibilityInfo.announceForAccessibility(message);
         },
-      }),
-      [initEngine, width]
-    );
+      };
+
+      if (process.env.EXPO_PUBLIC_TEST_HOOKS !== "1") return base;
+
+      return {
+        ...base,
+        getEngineState(): CascadeEngineState {
+          const bodies = bodiesRef.current;
+          const dangerY = height * DANGER_LINE_RATIO;
+          let dangerRatio = 0;
+          if (bodies.length > 0) {
+            const minTopY = Math.min(
+              ...bodies.map((b) => b.y - (fruitSetRef.current.fruits[b.tier]?.radius ?? 0))
+            );
+            dangerRatio = Math.max(0, Math.min(1, 1 - minTopY / dangerY));
+          }
+          return {
+            fruitCount: bodies.length,
+            dangerRatio,
+            fruits: bodies.map((b) => ({
+              id: b.id,
+              tier: b.tier,
+              x: Math.round(b.x),
+              y: Math.round(b.y),
+            })),
+          };
+        },
+        fastForward(ms: number) {
+          if (!engineRef.current) return;
+          const STEP_S = 1 / 60; // ~16.67 ms per step
+          const steps = Math.ceil(ms / (STEP_S * 1000));
+          for (let i = 0; i < steps; i++) {
+            bodiesRef.current = engineRef.current.step(STEP_S);
+          }
+          drawRef.current();
+        },
+      };
+    }, [initEngine, width, height]);
 
     const panGesture = Gesture.Pan()
       .runOnJS(true)

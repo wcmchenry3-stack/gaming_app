@@ -53,5 +53,19 @@
   "gameOver.playAgain": "再挑戦",
   "gameOver.playAgainLabel": "1000チップで新しいセッションを開始",
   "gameOver.home": "ホーム",
-  "gameOver.homeLabel": "ホーム画面に戻る"
+  "gameOver.homeLabel": "ホーム画面に戻る",
+
+  "rules.title": "テーブルルール",
+  "rules.toggleLabel": "テーブルルールを切り替え",
+  "rules.dealerSoft17": "ディーラーソフト17",
+  "rules.s17": "S17",
+  "rules.h17": "H17",
+  "rules.s17Label": "ディーラーはソフト17でスタンド",
+  "rules.h17Label": "ディーラーはソフト17でヒット",
+  "rules.deckCount": "デッキ数",
+  "rules.decreaseDeckLabel": "デッキ数を減らす",
+  "rules.increaseDeckLabel": "デッキ数を増やす",
+  "rules.penetration": "ペネトレーション",
+  "rules.decreasePenetrationLabel": "ペネトレーションを減らす",
+  "rules.increasePenetrationLabel": "ペネトレーションを増やす"
 }

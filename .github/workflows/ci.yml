@@ -129,6 +129,11 @@ jobs:
               - 'frontend/src/components/pachisi/**'
               - 'frontend/src/game/pachisi/**'
               - 'backend/games/pachisi*'
+            cascade:
+              - 'frontend/src/screens/CascadeScreen*'
+              - 'frontend/src/components/cascade/**'
+              - 'frontend/src/game/cascade/**'
+              - 'backend/games/cascade*'
             shared:
               - 'frontend/App.tsx'
               - 'frontend/app.json'
@@ -145,7 +150,7 @@ jobs:
           if [[ "${{ github.event_name }}" == "push" ]] || \
              [[ "${{ github.base_ref }}" == "main" ]] || \
              [[ "${{ steps.filter.outputs.shared }}" == "true" ]]; then
-            echo "projects=yacht blackjack twenty48 pachisi cross" >> "$GITHUB_OUTPUT"
+            echo "projects=yacht blackjack twenty48 pachisi cascade cross" >> "$GITHUB_OUTPUT"
             echo "label=full suite (push/main/shared change)" >> "$GITHUB_OUTPUT"
           else
             projects="cross"
@@ -153,6 +158,7 @@ jobs:
             [[ "${{ steps.filter.outputs.blackjack }}" == "true" ]] && projects="$projects blackjack"
             [[ "${{ steps.filter.outputs.twenty48 }}"  == "true" ]] && projects="$projects twenty48"
             [[ "${{ steps.filter.outputs.pachisi }}"   == "true" ]] && projects="$projects pachisi"
+            [[ "${{ steps.filter.outputs.cascade }}"   == "true" ]] && projects="$projects cascade"
             echo "projects=$projects" >> "$GITHUB_OUTPUT"
             echo "label=selective: $projects" >> "$GITHUB_OUTPUT"
           fi
@@ -181,6 +187,7 @@ jobs:
         working-directory: frontend
         env:
           EXPO_PUBLIC_API_URL: http://localhost:8000
+          EXPO_PUBLIC_TEST_HOOKS: "1"
 
       - name: Install E2E deps
         run: npm ci

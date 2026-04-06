@@ -53,5 +53,19 @@
   "gameOver.playAgain": "שחק שוב",
   "gameOver.playAgainLabel": "התחל משחק חדש עם 1000 שבבים",
   "gameOver.home": "בית",
-  "gameOver.homeLabel": "חזור למסך הבית"
+  "gameOver.homeLabel": "חזור למסך הבית",
+
+  "rules.title": "חוקי שולחן",
+  "rules.toggleLabel": "החלף חוקי שולחן",
+  "rules.dealerSoft17": "דילר 17 רך",
+  "rules.s17": "S17",
+  "rules.h17": "H17",
+  "rules.s17Label": "הדילר עומד על 17 רך",
+  "rules.h17Label": "הדילר שולף על 17 רך",
+  "rules.deckCount": "חפיסות",
+  "rules.decreaseDeckLabel": "הפחת מספר חפיסות",
+  "rules.increaseDeckLabel": "הגדל מספר חפיסות",
+  "rules.penetration": "חדירה",
+  "rules.decreasePenetrationLabel": "הפחת חדירה",
+  "rules.increasePenetrationLabel": "הגדל חדירה"
 }

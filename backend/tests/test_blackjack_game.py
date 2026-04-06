@@ -13,7 +13,7 @@ from blackjack.game import (
     BlackjackGame,
     Card,
     _cards_can_split,
-    _fresh_shuffled_deck,
+    _fresh_shuffled_shoe,
     hand_value,
     is_natural_blackjack,
 )
@@ -91,10 +91,10 @@ class TestIsNaturalBlackjack:
 
 class TestFreshDeck:
     def test_deck_has_52_cards(self):
-        assert len(_fresh_shuffled_deck()) == 52
+        assert len(_fresh_shuffled_shoe()) == 52
 
     def test_all_suits_and_ranks_present(self):
-        deck = _fresh_shuffled_deck()
+        deck = _fresh_shuffled_shoe()
         suits = {c.suit for c in deck}
         ranks = {c.rank for c in deck}
         assert suits == {"♠", "♥", "♦", "♣"}
