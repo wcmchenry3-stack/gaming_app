@@ -4,7 +4,7 @@
  * State persistence across navigation and page reloads.
  *
  * Blackjack persists EngineState to AsyncStorage (localStorage on web)
- * under the key "blackjack_game_v1" after every action.
+ * under the key "blackjack_game_v2" after every action.
  */
 
 import { test, expect } from "@playwright/test";
@@ -19,7 +19,7 @@ import {
 test.describe("Blackjack — state persistence", () => {
   test.beforeEach(async ({ page }) => {
     await page.goto("/");
-    await page.evaluate(() => localStorage.removeItem("blackjack_game_v1"));
+    await page.evaluate(() => localStorage.removeItem("blackjack_game_v2"));
     await page.goto("/");
   });
 
@@ -81,7 +81,7 @@ test.describe("Blackjack — state persistence", () => {
 
     // Verify the key exists in localStorage
     const stored = await page.evaluate(() =>
-      localStorage.getItem("blackjack_game_v1"),
+      localStorage.getItem("blackjack_game_v2"),
     );
     expect(stored).not.toBeNull();
     const state = JSON.parse(stored!);
@@ -103,7 +103,7 @@ test.describe("Blackjack — state persistence", () => {
     await expect(page.getByText("Next Hand")).toBeVisible({ timeout: 5000 });
 
     const stored = await page.evaluate(() =>
-      localStorage.getItem("blackjack_game_v1"),
+      localStorage.getItem("blackjack_game_v2"),
     );
     expect(stored).not.toBeNull();
     const state = JSON.parse(stored!);
@@ -121,7 +121,7 @@ test.describe("Blackjack — state persistence", () => {
     await expect(page.getByRole("button", { name: /deal cards with/i })).toBeVisible({ timeout: 5000 });
 
     const stored = await page.evaluate(() =>
-      localStorage.getItem("blackjack_game_v1"),
+      localStorage.getItem("blackjack_game_v2"),
     );
     expect(stored).not.toBeNull();
     const state = JSON.parse(stored!);
