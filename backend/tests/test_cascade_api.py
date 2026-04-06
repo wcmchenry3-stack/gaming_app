@@ -210,7 +210,7 @@ class TestTieBreak:
 
         scores = client.get("/cascade/scores").json()["scores"]
         assert scores[0]["player_name"] == "Alice"  # older entry is rank 1
-        assert scores[1]["player_name"] == "Bob"    # newer entry is rank 2
+        assert scores[1]["player_name"] == "Bob"  # newer entry is rank 2
         assert body["rank"] == 2  # confirmed in submission response too
 
 
