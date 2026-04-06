@@ -17,7 +17,14 @@ interface Props {
   onRulesChange: (rules: GameRules) => void;
 }
 
-export default function BettingPanel({ chips, onDeal, loading, error, rules, onRulesChange }: Props) {
+export default function BettingPanel({
+  chips,
+  onDeal,
+  loading,
+  error,
+  rules,
+  onRulesChange,
+}: Props) {
   const { t } = useTranslation("blackjack");
   const { colors } = useTheme();
   const maxBet = Math.min(MAX_BET, chips);
@@ -154,9 +161,7 @@ export default function BettingPanel({ chips, onDeal, loading, error, rules, onR
 
           {/* Deck count */}
           <View style={styles.ruleRow}>
-            <Text style={[styles.ruleLabel, { color: colors.text }]}>
-              {t("rules.deckCount")}
-            </Text>
+            <Text style={[styles.ruleLabel, { color: colors.text }]}>{t("rules.deckCount")}</Text>
             <View style={styles.stepper}>
               <Pressable
                 style={[
@@ -192,9 +197,7 @@ export default function BettingPanel({ chips, onDeal, loading, error, rules, onR
 
           {/* Penetration */}
           <View style={styles.ruleRow}>
-            <Text style={[styles.ruleLabel, { color: colors.text }]}>
-              {t("rules.penetration")}
-            </Text>
+            <Text style={[styles.ruleLabel, { color: colors.text }]}>{t("rules.penetration")}</Text>
             <View style={styles.stepper}>
               <Pressable
                 style={[

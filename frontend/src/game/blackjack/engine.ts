@@ -366,9 +366,7 @@ function reshuffleThreshold(rules: GameRules): number {
 export function newHand(s: EngineState): EngineState {
   if (s.phase !== "result") throw new Error("Not in result phase.");
   const deck =
-    s.deck.length < reshuffleThreshold(s.rules)
-      ? freshShuffledDeck(s.rules.deck_count)
-      : s.deck;
+    s.deck.length < reshuffleThreshold(s.rules) ? freshShuffledDeck(s.rules.deck_count) : s.deck;
   return {
     ...s,
     phase: "betting",
