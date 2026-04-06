@@ -54,10 +54,36 @@ def _hand_response(cards, conceal_hole: bool = False) -> HandResponse:
 def _state_response(game: BlackjackGame) -> BlackjackStateResponse:
     concealing = game.phase == "player"
     dealer_hand = _hand_response(game._dealer_hand, conceal_hole=concealing)
-    player_hand = _hand_response(game._player_hand)
-    double_down_available = (
-        game.phase == "player" and len(game._player_hand) == 2 and game.chips >= game.bet * 2
-    )
+
+    if game.is_split:
+        player_hand = _hand_response(
+            game._player_hands[min(game._active_hand, len(game._player_hands) - 1)]
+        )
+        player_hands = [_hand_response(h) for h in game._player_hands]
+        hand_bets = list(game._hand_bets)
+        active_hand_index = game._active_hand
+        hand_outcomes = list(game._hand_outcomes)
+        hand_payouts = list(game._hand_payouts)
+    else:
+        player_hand = _hand_response(game._player_hand)
+        player_hands = [_hand_response(game._player_hand)] if game._player_hand else []
+        hand_bets = [game.bet] if game.bet else []
+        active_hand_index = 0
+        hand_outcomes = [game.outcome] if game.outcome is not None else []
+        hand_payouts = [game.payout] if game.payout != 0 else []
+
+    double_down_available = False
+    if game.phase == "player":
+        if game.is_split:
+            hand = game._player_hands[game._active_hand]
+            hand_bet = game._hand_bets[game._active_hand]
+            is_ace_hand = game._split_from_aces[game._active_hand]
+            total_wagered = sum(game._hand_bets)
+            free_stack = game.chips - total_wagered
+            double_down_available = len(hand) == 2 and not is_ace_hand and free_stack >= hand_bet
+        else:
+            double_down_available = len(game._player_hand) == 2 and game.chips >= game.bet * 2
+
     game_over = game.chips == 0 and game.phase == "result"
     rules = RulesResponse(
         hit_soft_17=game.rules.hit_soft_17,
@@ -74,6 +100,12 @@ def _state_response(game: BlackjackGame) -> BlackjackStateResponse:
         payout=game.payout,
         game_over=game_over,
         double_down_available=double_down_available,
+        split_available=game.can_split(),
+        player_hands=player_hands,
+        hand_bets=hand_bets,
+        active_hand_index=active_hand_index,
+        hand_outcomes=hand_outcomes,
+        hand_payouts=hand_payouts,
         rules=rules,
     )
 
@@ -145,6 +177,18 @@ def double_down(request: Request) -> BlackjackStateResponse:
     game = _require_game(sid)
     try:
         game.double_down()
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    return _state_response(game)
+
+
+@router.post("/split", response_model=BlackjackStateResponse)
+@limiter.limit("30/minute")
+def split(request: Request) -> BlackjackStateResponse:
+    sid = get_session_id(request)
+    game = _require_game(sid)
+    try:
+        game.split()
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
     return _state_response(game)

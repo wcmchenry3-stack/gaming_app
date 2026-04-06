@@ -20,12 +20,20 @@ export interface InjectedEngineState {
   player_hand: InjectedCard[];
   dealer_hand: InjectedCard[];
   doubled: boolean;
+  // Split state
+  player_hands: InjectedCard[][];
+  hand_bets: number[];
+  hand_outcomes: (string | null)[];
+  hand_payouts: number[];
+  active_hand_index: number;
+  split_count: number;
+  split_from_aces: boolean[];
 }
 
 /** Navigate from Home to Blackjack, clearing any saved state first. */
 export async function gotoBlackjack(page: Page): Promise<void> {
   await page.goto("/");
-  await page.evaluate(() => localStorage.removeItem("blackjack_game_v1"));
+  await page.evaluate(() => localStorage.removeItem("blackjack_game_v2"));
   await page.goto("/");
   await page.getByRole("button", { name: "Play Blackjack" }).click();
   // Use role selector to avoid strict-mode violations from "Dealer's Hand" / "dealer" substrings
@@ -39,10 +47,32 @@ export async function injectEngineState(
 ): Promise<void> {
   await page.goto("/");
   await page.evaluate(
-    (s) => localStorage.setItem("blackjack_game_v1", JSON.stringify(s)),
+    (s) => localStorage.setItem("blackjack_game_v2", JSON.stringify(s)),
     state,
   );
   await page.goto("/");
+}
+
+/** Default split state fields — no active split. */
+function emptySplitFields(): Pick<
+  InjectedEngineState,
+  | "player_hands"
+  | "hand_bets"
+  | "hand_outcomes"
+  | "hand_payouts"
+  | "active_hand_index"
+  | "split_count"
+  | "split_from_aces"
+> {
+  return {
+    player_hands: [],
+    hand_bets: [],
+    hand_outcomes: [],
+    hand_payouts: [],
+    active_hand_index: 0,
+    split_count: 0,
+    split_from_aces: [],
+  };
 }
 
 /**
@@ -68,6 +98,7 @@ export function playerPhaseState(
       { suit: "♣", rank: "K" },
     ],
     doubled: false,
+    ...emptySplitFields(),
     ...overrides,
   };
 }
@@ -92,6 +123,7 @@ export function resultPhaseState(
       { suit: "♦", rank: "9" },
     ],
     doubled: false,
+    ...emptySplitFields(),
     ...overrides,
   };
 }
@@ -115,5 +147,6 @@ export function gameOverState(): InjectedEngineState {
       { suit: "♠", rank: "9" },
     ],
     doubled: false,
+    ...emptySplitFields(),
   };
 }

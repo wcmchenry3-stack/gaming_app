@@ -20,6 +20,9 @@
   "actions.doubleDown": "Double Down",
   "actions.doubleDownLabel": "Double down — double bet and take one card",
   "actions.doubleDownDisabledLabel": "Double down not available",
+  "actions.split": "Split",
+  "actions.splitLabel": "Split — split pair into two hands",
+  "actions.splitDisabledLabel": "Split not available",
   "actions.nextHand": "Next Hand",
   "actions.nextHandLabel": "Start the next hand",
   "actions.quit": "Quit",
@@ -27,6 +30,8 @@
 
   "hand.player": "Your Hand",
   "hand.dealer": "Dealer's Hand",
+  "hand.playerHand": "Hand {{number}}",
+  "hand.activeIndicator": "(Active)",
   "hand.value": "Value: {{value}}",
   "hand.softValue": "Soft {{value}}",
   "hand.valueHidden": "Value: ?",

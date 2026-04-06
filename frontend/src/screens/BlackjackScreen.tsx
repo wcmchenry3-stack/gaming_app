@@ -11,6 +11,7 @@ import {
   hit as engineHit,
   stand as engineStand,
   doubleDown as engineDoubleDown,
+  split as engineSplit,
   newHand as engineNewHand,
   toViewState,
   EngineState,
@@ -80,6 +81,7 @@ export default function BlackjackScreen({ navigation }: Props) {
   const handleHit = () => apply(engineHit);
   const handleStand = () => apply(engineStand);
   const handleDoubleDown = () => apply(engineDoubleDown);
+  const handleSplit = () => apply(engineSplit);
   const handleNextHand = () => apply(engineNewHand);
   const handlePlayAgain = () => {
     const fresh = newGame(undefined, engine?.rules ?? DEFAULT_RULES);
@@ -173,6 +175,10 @@ export default function BlackjackScreen({ navigation }: Props) {
             playerHand={state.player_hand}
             dealerHand={state.dealer_hand}
             phase={state.phase}
+            playerHands={state.player_hands}
+            activeHandIndex={state.active_hand_index}
+            handBets={state.hand_bets}
+            handOutcomes={state.hand_outcomes}
           />
         </View>
       )}
@@ -214,7 +220,9 @@ export default function BlackjackScreen({ navigation }: Props) {
             onHit={handleHit}
             onStand={handleStand}
             onDoubleDown={handleDoubleDown}
+            onSplit={handleSplit}
             doubleDownAvailable={state.double_down_available}
+            splitAvailable={state.split_available}
             loading={false}
           />
         )}

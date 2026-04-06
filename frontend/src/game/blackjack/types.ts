@@ -31,5 +31,12 @@ export interface BlackjackState {
   payout: number;
   game_over: boolean;
   double_down_available: boolean;
+  split_available: boolean;
+  // Multi-hand split fields
+  player_hands: HandResponse[];
+  hand_bets: number[];
+  active_hand_index: number;
+  hand_outcomes: (string | null)[];
+  hand_payouts: number[];
   rules: GameRules;
 }

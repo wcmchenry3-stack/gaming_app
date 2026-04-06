@@ -7,7 +7,9 @@ interface Props {
   onHit: () => void;
   onStand: () => void;
   onDoubleDown: () => void;
+  onSplit: () => void;
   doubleDownAvailable: boolean;
+  splitAvailable: boolean;
   loading: boolean;
 }
 
@@ -15,7 +17,9 @@ export default function ActionButtons({
   onHit,
   onStand,
   onDoubleDown,
+  onSplit,
   doubleDownAvailable,
+  splitAvailable,
   loading,
 }: Props) {
   const { t } = useTranslation("blackjack");
@@ -24,6 +28,8 @@ export default function ActionButtons({
   const ddLabel = doubleDownAvailable
     ? t("actions.doubleDownLabel")
     : t("actions.doubleDownDisabledLabel");
+
+  const splitLabel = splitAvailable ? t("actions.splitLabel") : t("actions.splitDisabledLabel");
 
   return (
     <View style={styles.container}>
@@ -65,6 +71,24 @@ export default function ActionButtons({
         accessibilityState={{ disabled: !doubleDownAvailable || loading }}
       >
         <Text style={[styles.btnText, { color: colors.text }]}>{t("actions.doubleDown")}</Text>
+      </Pressable>
+
+      <Pressable
+        style={[
+          styles.btn,
+          {
+            backgroundColor: splitAvailable ? colors.surface : colors.border,
+            borderColor: splitAvailable ? colors.border : "transparent",
+            opacity: splitAvailable ? 1 : 0.5,
+          },
+        ]}
+        onPress={onSplit}
+        disabled={!splitAvailable || loading}
+        accessibilityRole="button"
+        accessibilityLabel={splitLabel}
+        accessibilityState={{ disabled: !splitAvailable || loading }}
+      >
+        <Text style={[styles.btnText, { color: colors.text }]}>{t("actions.split")}</Text>
       </Pressable>
     </View>
   );
