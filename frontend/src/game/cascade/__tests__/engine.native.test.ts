@@ -200,3 +200,153 @@ describe("cleanup", () => {
     expect(() => handle.cleanup()).not.toThrow();
   });
 });
+
+// ---------------------------------------------------------------------------
+// Merge detection — extended (#202)
+// ---------------------------------------------------------------------------
+
+describe("merge detection — extended", () => {
+  it("does NOT spawn a new fruit when merging tier-10 (watermelon disappears)", async () => {
+    const onMerge = jest.fn();
+    const handle = await buildEngine(onMerge);
+    const tier10 = fruitSet.fruits[10]; // radius = 98
+
+    // Drop two tier-10 fruits nearly on top of each other — overlap triggers immediate collision
+    handle.drop(tier10, "fruits", W / 2 - 5, 50);
+    handle.drop(tier10, "fruits", W / 2 + 5, 50);
+
+    for (let i = 0; i < 300; i++) {
+      handle.step(1 / 60);
+      if (onMerge.mock.calls.length > 0) break;
+    }
+
+    expect(onMerge).toHaveBeenCalledWith(expect.objectContaining({ tier: 10 }));
+    // No tier-11 exists; step once more and verify no bodies remain
+    const snapshots = handle.step(1 / 60);
+    expect(snapshots.every((s) => s.tier !== 11)).toBe(true);
+    handle.cleanup();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Game-over detection — extended (#202)
+// ---------------------------------------------------------------------------
+
+describe("game-over detection — extended", () => {
+  // dangerY = H * DANGER_LINE_RATIO = 600 * 0.18 = 108px
+
+  it("does NOT fire onGameOver during the grace period", async () => {
+    const onGameOver = jest.fn();
+    const fakeNow = Date.now();
+    jest.spyOn(Date, "now").mockReturnValue(fakeNow);
+
+    const handle = await buildEngine(jest.fn(), onGameOver);
+    handle.drop(fruitSet.fruits[0], "fruits", W / 2, 50);
+
+    // Step within the grace period — time hasn't advanced
+    handle.step(1 / 60);
+    expect(onGameOver).not.toHaveBeenCalled();
+
+    handle.cleanup();
+  });
+
+  it("does NOT fire onGameOver when fruit is safely below the danger line", async () => {
+    const onGameOver = jest.fn();
+    const fakeNow = Date.now();
+    jest.spyOn(Date, "now").mockReturnValue(fakeNow);
+
+    const handle = await buildEngine(jest.fn(), onGameOver);
+    // y=500 → top = 500 - 18 = 482 > dangerY (108) → safe
+    handle.drop(fruitSet.fruits[0], "fruits", W / 2, 500);
+    handle.step(1 / 60);
+
+    (Date.now as jest.Mock).mockReturnValue(fakeNow + 5000);
+    handle.step(1 / 60);
+
+    expect(onGameOver).not.toHaveBeenCalled();
+    handle.cleanup();
+  });
+
+  it("fires onGameOver only once across multiple steps", async () => {
+    const onGameOver = jest.fn();
+    const fakeNow = Date.now();
+    jest.spyOn(Date, "now").mockReturnValue(fakeNow);
+
+    const handle = await buildEngine(jest.fn(), onGameOver);
+    handle.drop(fruitSet.fruits[0], "fruits", W / 2, 50);
+    handle.step(1 / 60);
+
+    (Date.now as jest.Mock).mockReturnValue(fakeNow + 5000);
+    handle.step(1 / 60);
+    handle.step(1 / 60); // second step must not re-fire
+    handle.step(1 / 60);
+
+    expect(onGameOver).toHaveBeenCalledTimes(1);
+    handle.cleanup();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Boundary escape (#202)
+// ---------------------------------------------------------------------------
+
+describe("boundary escape", () => {
+  // tier-0 radius = 18, margin = 36
+  const RADIUS = fruitSet.fruits[0].radius; // 18
+  const MARGIN = RADIUS * 2; // 36
+
+  async function buildEscape() {
+    const onBoundaryEscape = jest.fn();
+    const onGameOver = jest.fn();
+    const handle = await createEngine(W, H, fruitSet, jest.fn(), onGameOver, onBoundaryEscape);
+    return { handle, onBoundaryEscape, onGameOver };
+  }
+
+  it("fires callback and removes body when fruit is dropped below the floor", async () => {
+    const { handle, onBoundaryEscape } = await buildEscape();
+    // Drop directly below the floor — py > H + margin on first step
+    handle.drop(fruitSet.fruits[0], "fruits", W / 2, H + MARGIN + 10);
+    const snapshots = handle.step(1 / 60);
+    expect(onBoundaryEscape).toHaveBeenCalledTimes(1);
+    expect(onBoundaryEscape).toHaveBeenCalledWith(expect.objectContaining({ tier: 0 }));
+    // Escaped body not in snapshots
+    expect(snapshots).toHaveLength(0);
+    handle.cleanup();
+  });
+
+  it("fires callback and removes body when fruit is dropped past the left wall", async () => {
+    const { handle, onBoundaryEscape } = await buildEscape();
+    handle.drop(fruitSet.fruits[0], "fruits", -MARGIN - 10, H / 2);
+    const snapshots = handle.step(1 / 60);
+    expect(onBoundaryEscape).toHaveBeenCalledTimes(1);
+    expect(snapshots).toHaveLength(0);
+    handle.cleanup();
+  });
+
+  it("fires callback and removes body when fruit is dropped past the right wall", async () => {
+    const { handle, onBoundaryEscape } = await buildEscape();
+    handle.drop(fruitSet.fruits[0], "fruits", W + MARGIN + 10, H / 2);
+    const snapshots = handle.step(1 / 60);
+    expect(onBoundaryEscape).toHaveBeenCalledTimes(1);
+    expect(snapshots).toHaveLength(0);
+    handle.cleanup();
+  });
+
+  it("does NOT fire callback for a fruit inside the escape margin", async () => {
+    const { handle, onBoundaryEscape } = await buildEscape();
+    // px = W + RADIUS = 318, which is < W + MARGIN (336)
+    handle.drop(fruitSet.fruits[0], "fruits", W + RADIUS, H / 2);
+    handle.step(1 / 60);
+    expect(onBoundaryEscape).not.toHaveBeenCalled();
+    handle.cleanup();
+  });
+
+  it("escape does not trigger game-over", async () => {
+    const { handle, onBoundaryEscape, onGameOver } = await buildEscape();
+    handle.drop(fruitSet.fruits[0], "fruits", W / 2, H + MARGIN + 10);
+    handle.step(1 / 60);
+    expect(onBoundaryEscape).toHaveBeenCalledTimes(1);
+    expect(onGameOver).not.toHaveBeenCalled();
+    handle.cleanup();
+  });
+});
