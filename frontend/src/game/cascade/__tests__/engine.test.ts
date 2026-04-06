@@ -280,6 +280,89 @@ describe("game-over detection", () => {
 });
 
 // ---------------------------------------------------------------------------
+// Boundary escape
+// ---------------------------------------------------------------------------
+
+describe("boundary escape", () => {
+  // tier-0 radius = 18px, margin = 2 * 18 = 36px
+  // SCALE = 0.01: physics coord = pixel * 0.01
+  const RADIUS = fruitSet.fruits[0].radius; // 18
+  const MARGIN = RADIUS * 2; // 36
+
+  async function buildEscapeEngine() {
+    const onBoundaryEscape = jest.fn();
+    const onGameOver = jest.fn();
+    const handle = await createEngine(W, H, fruitSet, jest.fn(), onGameOver, onBoundaryEscape);
+    return { handle, onBoundaryEscape, onGameOver };
+  }
+
+  it("fires onBoundaryEscape and removes body when fruit escapes below floor", async () => {
+    const { handle, onBoundaryEscape } = await buildEscapeEngine();
+    handle.drop(fruitSet.fruits[0], fruitSet.id, 150, 300);
+    handle.step(); // register body (handle 0)
+    const world = getWorld();
+    const body = world._bodies.get(0)!;
+    // Place below floor: py > H + margin
+    body._y = (H + MARGIN + 10) * 0.01;
+    handle.step();
+    expect(onBoundaryEscape).toHaveBeenCalledTimes(1);
+    expect(onBoundaryEscape).toHaveBeenCalledWith(expect.objectContaining({ tier: 0 }));
+    // Body removed from world
+    expect(world._bodies.has(0)).toBe(false);
+  });
+
+  it("fires onBoundaryEscape and removes body when fruit escapes through left wall", async () => {
+    const { handle, onBoundaryEscape } = await buildEscapeEngine();
+    handle.drop(fruitSet.fruits[0], fruitSet.id, 150, 300);
+    handle.step();
+    const world = getWorld();
+    const body = world._bodies.get(0)!;
+    // Place left of left wall: px < -margin
+    body._x = (-MARGIN - 10) * 0.01;
+    handle.step();
+    expect(onBoundaryEscape).toHaveBeenCalledTimes(1);
+    expect(world._bodies.has(0)).toBe(false);
+  });
+
+  it("fires onBoundaryEscape and removes body when fruit escapes through right wall", async () => {
+    const { handle, onBoundaryEscape } = await buildEscapeEngine();
+    handle.drop(fruitSet.fruits[0], fruitSet.id, 150, 300);
+    handle.step();
+    const world = getWorld();
+    const body = world._bodies.get(0)!;
+    // Place right of right wall: px > W + margin
+    body._x = (W + MARGIN + 10) * 0.01;
+    handle.step();
+    expect(onBoundaryEscape).toHaveBeenCalledTimes(1);
+    expect(world._bodies.has(0)).toBe(false);
+  });
+
+  it("does NOT fire onBoundaryEscape for a fruit inside the escape margin", async () => {
+    const { handle, onBoundaryEscape } = await buildEscapeEngine();
+    handle.drop(fruitSet.fruits[0], fruitSet.id, 150, 300);
+    handle.step();
+    const world = getWorld();
+    const body = world._bodies.get(0)!;
+    // Place just inside the right margin: px = W + radius (< W + 2*radius)
+    body._x = (W + RADIUS) * 0.01;
+    handle.step();
+    expect(onBoundaryEscape).not.toHaveBeenCalled();
+    expect(world._bodies.has(0)).toBe(true);
+  });
+
+  it("escape does not trigger game-over", async () => {
+    const { handle, onBoundaryEscape, onGameOver } = await buildEscapeEngine();
+    handle.drop(fruitSet.fruits[0], fruitSet.id, 150, 300);
+    handle.step();
+    const world = getWorld();
+    world._bodies.get(0)!._y = (H + MARGIN + 10) * 0.01;
+    handle.step();
+    expect(onBoundaryEscape).toHaveBeenCalledTimes(1);
+    expect(onGameOver).not.toHaveBeenCalled();
+  });
+});
+
+// ---------------------------------------------------------------------------
 // cleanup
 // ---------------------------------------------------------------------------
 
