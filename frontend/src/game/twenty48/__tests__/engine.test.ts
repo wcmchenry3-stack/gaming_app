@@ -12,7 +12,6 @@ import {
   isGameOver,
   setRng,
   createSeededRng,
-  _resetTileIds,
   SIZE,
   Direction,
 } from "../engine";
