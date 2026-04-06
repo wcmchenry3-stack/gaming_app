@@ -18,6 +18,8 @@ jest.mock("../../game/twenty48/storage", () => ({
   saveGame: jest.fn(),
   clearGame: jest.fn(),
   loadGame: jest.fn().mockResolvedValue(null),
+  saveBestScore: jest.fn(),
+  loadBestScore: jest.fn().mockResolvedValue(0),
 }));
 
 function mockNav() {
@@ -56,6 +58,15 @@ function dispatchKey(key: string, target?: EventTarget) {
 
 describe("Twenty48Screen — keyboard controls (web)", () => {
   beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  // Flush any pending move-lock timeouts (120 ms) so they don't fire
+  // during subsequent tests and pollute the saveGame mock call count.
+  afterEach(async () => {
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 200));
+    });
     jest.clearAllMocks();
   });
 
@@ -137,40 +148,70 @@ describe("Twenty48Screen — keyboard controls (web)", () => {
 // Shared fixture states
 // ---------------------------------------------------------------------------
 
+import { TileData } from "../../game/twenty48/types";
+
+function tilesFor(board: number[][]): TileData[] {
+  const tiles: TileData[] = [];
+  let id = 100;
+  for (let r = 0; r < board.length; r++)
+    for (let c = 0; c < board[r].length; c++)
+      if (board[r][c] !== 0)
+        tiles.push({
+          id: id++,
+          value: board[r][c],
+          row: r,
+          col: c,
+          prevRow: r,
+          prevCol: c,
+          isNew: false,
+          isMerge: false,
+        });
+  return tiles;
+}
+
 // All tiles packed left, no equal adjacent pairs → ArrowLeft is a no-op.
+const NOOP_LEFT_BOARD = [
+  [2, 4, 0, 0],
+  [8, 16, 0, 0],
+  [32, 64, 0, 0],
+  [128, 256, 0, 0],
+];
 const NOOP_LEFT_STATE: Twenty48State = {
-  board: [
-    [2, 4, 0, 0],
-    [8, 16, 0, 0],
-    [32, 64, 0, 0],
-    [128, 256, 0, 0],
-  ],
+  board: NOOP_LEFT_BOARD,
+  tiles: tilesFor(NOOP_LEFT_BOARD),
   score: 0,
+  scoreDelta: 0,
   game_over: false,
   has_won: false,
 };
 
+const WON_BOARD = [
+  [2048, 4, 0, 0],
+  [8, 16, 0, 0],
+  [32, 64, 0, 0],
+  [128, 256, 0, 0],
+];
 const WON_STATE: Twenty48State = {
-  board: [
-    [2048, 4, 0, 0],
-    [8, 16, 0, 0],
-    [32, 64, 0, 0],
-    [128, 256, 0, 0],
-  ],
+  board: WON_BOARD,
+  tiles: tilesFor(WON_BOARD),
   score: 2048,
+  scoreDelta: 0,
   game_over: false,
   has_won: true,
 };
 
 // A filled board with no possible merges — game is over.
+const GAME_OVER_BOARD = [
+  [2, 4, 2, 4],
+  [4, 2, 4, 2],
+  [2, 4, 2, 4],
+  [4, 2, 4, 2],
+];
 const GAME_OVER_STATE: Twenty48State = {
-  board: [
-    [2, 4, 2, 4],
-    [4, 2, 4, 2],
-    [2, 4, 2, 4],
-    [4, 2, 4, 2],
-  ],
+  board: GAME_OVER_BOARD,
+  tiles: tilesFor(GAME_OVER_BOARD),
   score: 0,
+  scoreDelta: 0,
   game_over: true,
   has_won: false,
 };

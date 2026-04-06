@@ -7,12 +7,20 @@ import { RootStackParamList } from "../../App";
 import { useTheme } from "../theme/ThemeContext";
 import { Twenty48State } from "../game/twenty48/types";
 import { newGame, move as engineMove, Direction } from "../game/twenty48/engine";
-import { saveGame, loadGame, clearGame } from "../game/twenty48/storage";
+import {
+  saveGame,
+  loadGame,
+  clearGame,
+  saveBestScore,
+  loadBestScore,
+} from "../game/twenty48/storage";
 import Grid from "../components/twenty48/Grid";
 import ScoreBoard from "../components/twenty48/ScoreBoard";
 import GameOverlay from "../components/twenty48/GameOverlay";
 
 const SWIPE_THRESHOLD = 30;
+/** How long (ms) to hold the move lock — matches slide animation duration. */
+const MOVE_LOCK_MS = 120;
 
 type Props = {
   navigation: NativeStackNavigationProp<RootStackParamList, "Twenty48">;
@@ -25,49 +33,86 @@ export default function Twenty48Screen({ navigation }: Props) {
   const [state, setState] = useState<Twenty48State | null>(null);
   const [loading, setLoading] = useState(true);
   const [winDismissed, setWinDismissed] = useState(false);
-  const movingRef = useRef(false);
+  const [bestScore, setBestScore] = useState(0);
 
-  // Disable back swipe gesture on this screen
+  /** Blocks new moves while the slide animation plays. */
+  const movingRef = useRef(false);
+  /** One queued move — fires immediately after the current animation ends. */
+  const pendingMove = useRef<Direction | null>(null);
+
+  // Disable back swipe gesture on this screen.
   useEffect(() => {
     navigation.setOptions({ gestureEnabled: false });
   }, [navigation]);
 
-  // Load saved game, or start a new one
+  // Load saved game and best score on mount.
   useEffect(() => {
     let active = true;
-    loadGame()
-      .then((saved) => {
-        if (!active) return;
-        const next = saved ?? newGame();
-        setState(next);
-        if (!saved) saveGame(next);
-      })
-      .finally(() => {
-        if (active) setLoading(false);
-      });
+    Promise.all([loadGame(), loadBestScore()]).then(([saved, best]) => {
+      if (!active) return;
+      const next = saved ?? newGame();
+      setState(next);
+      if (!saved) saveGame(next);
+      setBestScore(best);
+      setLoading(false);
+    });
     return () => {
       active = false;
     };
   }, []);
 
+  // Update and persist best score whenever score improves.
+  useEffect(() => {
+    if (!state) return;
+    if (state.score > bestScore) {
+      setBestScore(state.score);
+      saveBestScore(state.score);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state?.score]); // intentional: only re-run when score changes, not on every state update
+
+  const executeMove = useCallback((direction: Direction, currentState: Twenty48State) => {
+    movingRef.current = true;
+    let next: Twenty48State;
+    try {
+      next = engineMove(currentState, direction);
+    } catch {
+      // "no effect" or game over — release lock immediately.
+      movingRef.current = false;
+      pendingMove.current = null;
+      return;
+    }
+    setState(next);
+    saveGame(next);
+    // Hold the lock for the slide animation duration, then fire any queued move.
+    setTimeout(() => {
+      movingRef.current = false;
+      const queued = pendingMove.current;
+      pendingMove.current = null;
+      if (queued) {
+        setState((s) => {
+          if (s) executeMove(queued, s);
+          return s;
+        });
+      }
+    }, MOVE_LOCK_MS);
+  }, []);
+
   const handleMove = useCallback(
     (direction: Direction) => {
-      if (movingRef.current || !state || state.game_over) return;
-      movingRef.current = true;
-      try {
-        const next = engineMove(state, direction);
-        setState(next);
-        saveGame(next);
-      } catch {
-        // "no effect" and "game over" throws — expected, ignore
-      } finally {
-        movingRef.current = false;
+      if (!state || state.game_over) return;
+      if (movingRef.current) {
+        pendingMove.current = direction;
+        return;
       }
+      executeMove(direction, state);
     },
-    [state]
+    [state, executeMove]
   );
 
   const handleNewGame = useCallback(() => {
+    movingRef.current = false;
+    pendingMove.current = null;
     setWinDismissed(false);
     const next = newGame();
     setState(next);
@@ -79,7 +124,7 @@ export default function Twenty48Screen({ navigation }: Props) {
     if (state?.game_over) clearGame();
   }, [state?.game_over]);
 
-  // Web keyboard controls — arrow keys + WASD. No-op on iOS/Android.
+  // Web keyboard controls — arrow keys + WASD.
   useEffect(() => {
     if (Platform.OS !== "web") return;
     const keyMap: Record<string, Direction> = {
@@ -97,7 +142,6 @@ export default function Twenty48Screen({ navigation }: Props) {
       D: "right",
     };
     function onKeyDown(e: KeyboardEvent) {
-      // Don't fire while the user is typing into any input-like element.
       const target = e.target as HTMLElement | null;
       if (target) {
         const tag = target.tagName;
@@ -107,7 +151,7 @@ export default function Twenty48Screen({ navigation }: Props) {
       }
       const direction = keyMap[e.key];
       if (!direction) return;
-      e.preventDefault(); // prevent arrow-key page scroll
+      e.preventDefault();
       handleMove(direction);
     }
     window.addEventListener("keydown", onKeyDown);
@@ -120,9 +164,7 @@ export default function Twenty48Screen({ navigation }: Props) {
       const { translationX, translationY } = e;
       const absX = Math.abs(translationX);
       const absY = Math.abs(translationY);
-
       if (absX < SWIPE_THRESHOLD && absY < SWIPE_THRESHOLD) return;
-
       let direction: Direction;
       if (absX > absY) {
         direction = translationX > 0 ? "right" : "left";
@@ -175,7 +217,9 @@ export default function Twenty48Screen({ navigation }: Props) {
 
       {/* Score + New Game */}
       <View style={styles.scoreRow}>
-        {state && <ScoreBoard score={state.score} />}
+        {state && (
+          <ScoreBoard score={state.score} bestScore={bestScore} scoreDelta={state.scoreDelta} />
+        )}
         <Pressable
           style={[styles.newGameBtn, { backgroundColor: colors.accent }]}
           onPress={handleNewGame}
@@ -198,7 +242,7 @@ export default function Twenty48Screen({ navigation }: Props) {
 
       {/* Board */}
       <GestureDetector gesture={swipeGesture}>
-        <View style={styles.boardContainer}>{state && <Grid board={state.board} />}</View>
+        <View style={styles.boardContainer}>{state && <Grid tiles={state.tiles} />}</View>
       </GestureDetector>
 
       {/* Overlays */}

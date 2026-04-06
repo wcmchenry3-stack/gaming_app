@@ -162,7 +162,7 @@ jobs:
     needs: [test-python, test-frontend, detect-e2e-scope]
     runs-on: ubuntu-latest
     container:
-      image: mcr.microsoft.com/playwright:v1.48.2-jammy
+      image: mcr.microsoft.com/playwright:v1.58.2-jammy
     steps:
       - uses: actions/checkout@v4
 
@@ -184,10 +184,6 @@ jobs:
 
       - name: Install E2E deps
         run: npm ci
-        working-directory: e2e
-
-      - name: Install Playwright browsers
-        run: npx playwright install chromium --with-deps
         working-directory: e2e
 
       - name: Run Playwright tests (${{ needs.detect-e2e-scope.outputs.label }})

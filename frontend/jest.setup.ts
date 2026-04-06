@@ -1,6 +1,63 @@
 // Gesture handler requires native setup in Jest
 import "react-native-gesture-handler/jestSetup";
 
+// Reanimated v4 — the official mock still imports worklets which require a
+// native runtime. Instead we supply a minimal stub covering the hooks used
+// in AnimatedTile.tsx (useSharedValue, useAnimatedStyle, withTiming, etc.).
+jest.mock("react-native-reanimated", () => {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const React = require("react");
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const { View, Text } = require("react-native");
+
+  const sharedValue = (init: unknown) => ({ value: init });
+  const noopAnim = (v: unknown) => v;
+
+  const createAnimatedComponent = (Component: React.ComponentType) => {
+    const Wrapped = React.forwardRef((props: object, ref: unknown) =>
+      React.createElement(Component, { ...props, ref })
+    );
+    Wrapped.displayName = "AnimatedComponent";
+    return Wrapped;
+  };
+
+  const AnimatedView = createAnimatedComponent(View);
+  const AnimatedText = createAnimatedComponent(Text);
+
+  return {
+    __esModule: true,
+    default: {
+      View: AnimatedView,
+      Text: AnimatedText,
+      createAnimatedComponent,
+    },
+    // Named exports used directly in AnimatedTile.tsx
+    useSharedValue: sharedValue,
+    useAnimatedStyle: (fn: () => object) => fn(),
+    withTiming: noopAnim,
+    withSequence: (...args: unknown[]) => args[args.length - 1],
+    withDelay: (_ms: number, v: unknown) => v,
+    Easing: {
+      out: () => () => 0,
+      in: () => () => 0,
+      quad: () => 0,
+    },
+    runOnJS: (fn: unknown) => fn,
+    createAnimatedComponent,
+    // Used internally by react-native-gesture-handler
+    useEvent: () => () => {},
+    useHandler: (_handlers: unknown, deps: unknown[]) => [() => {}, deps],
+    useAnimatedRef: () => ({ current: null }),
+    useAnimatedReaction: () => {},
+    useDerivedValue: (fn: () => unknown) => ({ value: fn() }),
+    useWorkletCallback: (fn: unknown) => fn,
+    makeRemote: (obj: unknown) => obj,
+    makeShareable: (obj: unknown) => obj,
+    startMapper: () => 0,
+    stopMapper: () => {},
+  };
+});
+
 // Sentry mock — @sentry/react-native ships ESM that Jest can't transform
 jest.mock("@sentry/react-native", () => ({
   captureException: jest.fn(),

@@ -142,7 +142,7 @@ test.describe("2048 — win-state + keep-playing flow", () => {
 
     // Inject another near-win into storage, reload, navigate back in
     await page.evaluate(
-      (s) => localStorage.setItem("twenty48_game_v1", JSON.stringify(s)),
+      (s) => localStorage.setItem("twenty48_game_v2", JSON.stringify(s)),
       nearWinState(),
     );
     await page.reload();

@@ -4,6 +4,8 @@
   "game.playLabel": "Jouer à 2048",
   "score.label": "Score",
   "score.accessibilityLabel": "Score actuel : {{score}}",
+  "score.best": "Meilleur",
+  "score.bestAccessibilityLabel": "Meilleur score : {{score}}",
   "actions.newGame": "Nouvelle partie",
   "actions.newGameLabel": "Démarrer une nouvelle partie de 2048",
   "actions.keepPlaying": "Continuer",

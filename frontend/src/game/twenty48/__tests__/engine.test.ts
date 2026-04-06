@@ -15,13 +15,38 @@ import {
   SIZE,
   Direction,
 } from "../engine";
-import { Twenty48State } from "../types";
+import { Twenty48State, TileData } from "../types";
 
-// Build a state with a specific board, bypassing random spawns.
+/**
+ * Build a Twenty48State from a board, synthesising a tiles[] array by
+ * scanning the board for non-zero cells and assigning sequential IDs.
+ * This lets existing tests stay board-focused without worrying about tile
+ * identity details.
+ */
 function stateWith(board: number[][], overrides: Partial<Twenty48State> = {}): Twenty48State {
+  const tiles: TileData[] = [];
+  let id = 1000; // use high IDs to avoid collisions with engine-generated IDs
+  for (let r = 0; r < board.length; r++) {
+    for (let c = 0; c < board[r].length; c++) {
+      if (board[r][c] !== 0) {
+        tiles.push({
+          id: id++,
+          value: board[r][c],
+          row: r,
+          col: c,
+          prevRow: r,
+          prevCol: c,
+          isNew: false,
+          isMerge: false,
+        });
+      }
+    }
+  }
   return {
     board: board.map((r) => [...r]),
+    tiles,
     score: 0,
+    scoreDelta: 0,
     game_over: false,
     has_won: false,
     ...overrides,

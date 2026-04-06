@@ -1,19 +1,35 @@
 /**
  * Client-side 2048 engine.
  *
- * Ported from backend/twenty48/game.py. Pure functions returning new state
- * on each move — immutable for React-friendly state updates.
+ * Pure functions returning new state on each move — immutable for
+ * React-friendly state updates.
  *
- * After this port, Twenty48Screen runs the engine locally and never makes
- * a per-move API call. This eliminates the rate-limit pressure from
- * fast-paced gameplay (see #158 for rate-limit context).
+ * Each tile carries a stable numeric ID assigned at spawn. The `tiles`
+ * array records per-tile animation metadata (prevRow/prevCol, isNew,
+ * isMerge) so the renderer can animate slides, merges, and spawns
+ * without tracking state itself.
  */
 
-import { Twenty48State } from "./types";
+import { Twenty48State, TileData } from "./types";
 
 export const SIZE = 4;
 
 export type Direction = "up" | "down" | "left" | "right";
+
+// ---------------------------------------------------------------------------
+// Tile ID counter
+// ---------------------------------------------------------------------------
+
+let _nextTileId = 1;
+
+function nextId(): number {
+  return _nextTileId++;
+}
+
+/** Reset the ID counter — for testing only. */
+export function _resetTileIds(): void {
+  _nextTileId = 1;
+}
 
 // ---------------------------------------------------------------------------
 // Pure helpers
@@ -22,6 +38,10 @@ export type Direction = "up" | "down" | "left" | "right";
 /**
  * Slide a single row/column toward index 0 and merge equal neighbours.
  * Each tile may only participate in one merge per move.
+ *
+ * Operates on parallel value and ID arrays so tile identity is preserved
+ * through the slide. Merged tiles receive a new ID; the score delta and
+ * the set of newly-merged IDs are returned alongside the output arrays.
  */
 export function slideAndMerge(line: readonly number[]): { line: number[]; score: number } {
   const compacted = line.filter((v) => v !== 0);
@@ -43,6 +63,47 @@ export function slideAndMerge(line: readonly number[]): { line: number[]; score:
   return { line: merged, score };
 }
 
+/** Internal version that also threads tile IDs through the merge logic. */
+function slideAndMergeWithIds(
+  values: readonly number[],
+  ids: readonly number[]
+): { values: number[]; ids: number[]; score: number; mergedIds: Set<number> } {
+  const cv: number[] = [];
+  const ci: number[] = [];
+  for (let k = 0; k < values.length; k++) {
+    if (values[k] !== 0) {
+      cv.push(values[k]);
+      ci.push(ids[k]);
+    }
+  }
+
+  const outV: number[] = [];
+  const outI: number[] = [];
+  const mergedIds = new Set<number>();
+  let score = 0;
+  let i = 0;
+  while (i < cv.length) {
+    if (i + 1 < cv.length && cv[i] === cv[i + 1]) {
+      const val = cv[i] * 2;
+      const id = nextId();
+      outV.push(val);
+      outI.push(id);
+      mergedIds.add(id);
+      score += val;
+      i += 2;
+    } else {
+      outV.push(cv[i]);
+      outI.push(ci[i]);
+      i++;
+    }
+  }
+  while (outV.length < SIZE) {
+    outV.push(0);
+    outI.push(0);
+  }
+  return { values: outV, ids: outI, score, mergedIds };
+}
+
 function transpose(board: readonly number[][]): number[][] {
   return Array.from({ length: SIZE }, (_, c) =>
     Array.from({ length: SIZE }, (_, r) => board[r][c])
@@ -51,6 +112,10 @@ function transpose(board: readonly number[][]): number[][] {
 
 function cloneBoard(board: readonly number[][]): number[][] {
   return board.map((row) => [...row]);
+}
+
+function cloneIds(ids: readonly number[][]): number[][] {
+  return ids.map((row) => [...row]);
 }
 
 function boardsEqual(a: readonly number[][], b: readonly number[][]): boolean {
@@ -64,11 +129,6 @@ function boardsEqual(a: readonly number[][], b: readonly number[][]): boolean {
 
 // ---------------------------------------------------------------------------
 // Seedable RNG
-//
-// Both spawn decisions (which empty cell, 2 vs 4) go through `_rng` so tests
-// and e2e flows can pin the sequence with `setRng(createSeededRng(seed))`.
-// Default is Math.random for normal gameplay. After each test that calls
-// setRng, call setRng(Math.random) to restore the default.
 // ---------------------------------------------------------------------------
 
 export type RandomSource = () => number;
@@ -80,8 +140,7 @@ export function setRng(fn: RandomSource): void {
 }
 
 /**
- * LCG (same parameters as Cascade's seeded RNG). Deterministic for a given
- * seed. Not cryptographic — testing only.
+ * LCG deterministic RNG — for testing only.
  */
 export function createSeededRng(seed: number): RandomSource {
   let state = seed >>> 0;
@@ -91,12 +150,7 @@ export function createSeededRng(seed: number): RandomSource {
   };
 }
 
-// E2E test hook — exposed only when __DEV__ is true OR EXPO_PUBLIC_TEST_HOOKS
-// is set (production e2e builds). Metro strips `if (__DEV__)` branches from
-// production bundles; the EXPO_PUBLIC_TEST_HOOKS env var opts in explicitly
-// for Playwright/Maestro flows that need deterministic spawns against a
-// production-shaped bundle. Call `globalThis.__twenty48_setSeed(n)` before
-// the next `newGame()` to pin the tile sequence.
+// E2E test hook
 const _devHook = typeof __DEV__ !== "undefined" && __DEV__;
 const _testHook = process.env.EXPO_PUBLIC_TEST_HOOKS === "1";
 if ((_devHook || _testHook) && typeof globalThis !== "undefined") {
@@ -107,7 +161,7 @@ if ((_devHook || _testHook) && typeof globalThis !== "undefined") {
   };
 }
 
-function spawnTile(board: number[][]): void {
+function spawnTile(board: number[][], idBoard: number[][]): void {
   const empty: Array<[number, number]> = [];
   for (let r = 0; r < SIZE; r++) {
     for (let c = 0; c < SIZE; c++) {
@@ -117,6 +171,7 @@ function spawnTile(board: number[][]): void {
   if (empty.length === 0) return;
   const [r, c] = empty[Math.floor(_rng() * empty.length)];
   board[r][c] = _rng() < 0.9 ? 2 : 4;
+  idBoard[r][c] = nextId();
 }
 
 /**
@@ -143,42 +198,112 @@ function boardHas2048(board: readonly number[][]): boolean {
 }
 
 // ---------------------------------------------------------------------------
-// Direction kernels — mutate a working board, return gained score
+// Build TileData[] from board + idBoard + previous tile positions
 // ---------------------------------------------------------------------------
 
-function applyLeft(board: number[][]): number {
-  let gained = 0;
+function buildTiles(
+  board: number[][],
+  idBoard: number[][],
+  prevPositions: Map<number, { row: number; col: number }>,
+  mergedIds: Set<number>,
+  spawnedIds: Set<number>
+): TileData[] {
+  const tiles: TileData[] = [];
   for (let r = 0; r < SIZE; r++) {
-    const { line, score } = slideAndMerge(board[r]);
-    board[r] = line;
-    gained += score;
+    for (let c = 0; c < SIZE; c++) {
+      const id = idBoard[r][c];
+      if (id === 0) continue;
+      const prev = prevPositions.get(id);
+      tiles.push({
+        id,
+        value: board[r][c],
+        row: r,
+        col: c,
+        prevRow: prev?.row ?? null,
+        prevCol: prev?.col ?? null,
+        isNew: spawnedIds.has(id),
+        isMerge: mergedIds.has(id),
+      });
+    }
   }
-  return gained;
+  return tiles;
 }
 
-function applyRight(board: number[][]): number {
-  let gained = 0;
+/** Extract previous tile positions from the current tiles array. */
+function positionMap(tiles: readonly TileData[]): Map<number, { row: number; col: number }> {
+  const map = new Map<number, { row: number; col: number }>();
+  for (const t of tiles) map.set(t.id, { row: t.row, col: t.col });
+  return map;
+}
+
+/** Derive an ID board from a tiles array. */
+function idBoardFromTiles(tiles: readonly TileData[]): number[][] {
+  const board = Array.from({ length: SIZE }, () => Array(SIZE).fill(0));
+  for (const t of tiles) board[t.row][t.col] = t.id;
+  return board;
+}
+
+// ---------------------------------------------------------------------------
+// Direction kernels — mutate working board + idBoard, return gained score
+// and accumulated merged IDs
+// ---------------------------------------------------------------------------
+
+function applyLeft(
+  board: number[][],
+  idBoard: number[][]
+): { score: number; mergedIds: Set<number> } {
+  let score = 0;
+  const mergedIds = new Set<number>();
   for (let r = 0; r < SIZE; r++) {
-    const reversed = [...board[r]].reverse();
-    const { line, score } = slideAndMerge(reversed);
-    board[r] = line.reverse();
-    gained += score;
+    const result = slideAndMergeWithIds(board[r], idBoard[r]);
+    board[r] = result.values;
+    idBoard[r] = result.ids;
+    score += result.score;
+    for (const id of result.mergedIds) mergedIds.add(id);
   }
-  return gained;
+  return { score, mergedIds };
 }
 
-function applyUp(board: number[][]): { board: number[][]; gained: number } {
-  let working = transpose(board);
-  const gained = applyLeft(working);
-  working = transpose(working);
-  return { board: working, gained };
+function applyRight(
+  board: number[][],
+  idBoard: number[][]
+): { score: number; mergedIds: Set<number> } {
+  let score = 0;
+  const mergedIds = new Set<number>();
+  for (let r = 0; r < SIZE; r++) {
+    const revV = [...board[r]].reverse();
+    const revI = [...idBoard[r]].reverse();
+    const result = slideAndMergeWithIds(revV, revI);
+    board[r] = result.values.reverse();
+    idBoard[r] = result.ids.reverse();
+    score += result.score;
+    for (const id of result.mergedIds) mergedIds.add(id);
+  }
+  return { score, mergedIds };
 }
 
-function applyDown(board: number[][]): { board: number[][]; gained: number } {
-  let working = transpose(board);
-  const gained = applyRight(working);
-  working = transpose(working);
-  return { board: working, gained };
+function applyUp(
+  board: number[][],
+  idBoard: number[][]
+): { board: number[][]; idBoard: number[][]; score: number; mergedIds: Set<number> } {
+  let wb = transpose(board);
+  let wi = transpose(idBoard);
+  const { score, mergedIds } = applyLeft(wb, wi);
+  wb = transpose(wb);
+  wi = transpose(wi);
+  return { board: wb, idBoard: wi, score, mergedIds };
+}
+
+function applyDown(
+  board: number[][],
+  idBoard: number[][]
+): { board: number[][]; idBoard: number[][]; score: number; mergedIds: Set<number> } {
+  let wb = transpose(board);
+  let wi = transpose(idBoard);
+  const { score, mergedIds } = applyRight(wb, wi);
+  wb = transpose(wb);
+  wi = transpose(wi);
+  return { board: wb, idBoard: wi, score, mergedIds };
 }
 
 // ---------------------------------------------------------------------------
@@ -187,9 +312,17 @@ function applyDown(board: number[][]): { board: number[][]; gained: number } {
 
 export function newGame(): Twenty48State {
   const board: number[][] = Array.from({ length: SIZE }, () => Array(SIZE).fill(0));
-  spawnTile(board);
-  spawnTile(board);
-  return { board, score: 0, game_over: false, has_won: false };
+  const idBoard: number[][] = Array.from({ length: SIZE }, () => Array(SIZE).fill(0));
+  spawnTile(board, idBoard);
+  spawnTile(board, idBoard);
+
+  // All tiles in a new game are "new" (spawn animation).
+  const spawnedIds = new Set<number>();
+  for (let r = 0; r < SIZE; r++)
+    for (let c = 0; c < SIZE; c++) if (idBoard[r][c] !== 0) spawnedIds.add(idBoard[r][c]);
+
+  const tiles = buildTiles(board, idBoard, new Map(), new Set(), spawnedIds);
+  return { board, tiles, score: 0, scoreDelta: 0, game_over: false, has_won: false };
 }
 
 /**
@@ -206,34 +339,59 @@ export function move(state: Twenty48State, direction: Direction): Twenty48State 
 
   const oldBoard = state.board;
   let nextBoard = cloneBoard(state.board);
+  let nextIdBoard = cloneIds(idBoardFromTiles(state.tiles));
   let gained = 0;
+  let mergedIds = new Set<number>();
 
   if (direction === "left") {
-    gained = applyLeft(nextBoard);
+    const r = applyLeft(nextBoard, nextIdBoard);
+    gained = r.score;
+    mergedIds = r.mergedIds;
   } else if (direction === "right") {
-    gained = applyRight(nextBoard);
+    const r = applyRight(nextBoard, nextIdBoard);
+    gained = r.score;
+    mergedIds = r.mergedIds;
   } else if (direction === "up") {
-    const r = applyUp(nextBoard);
+    const r = applyUp(nextBoard, nextIdBoard);
     nextBoard = r.board;
-    gained = r.gained;
+    nextIdBoard = r.idBoard;
+    gained = r.score;
+    mergedIds = r.mergedIds;
   } else {
-    const r = applyDown(nextBoard);
+    const r = applyDown(nextBoard, nextIdBoard);
     nextBoard = r.board;
-    gained = r.gained;
+    nextIdBoard = r.idBoard;
+    gained = r.score;
+    mergedIds = r.mergedIds;
   }
 
   if (boardsEqual(nextBoard, oldBoard)) {
     throw new Error("Move has no effect.");
   }
 
-  spawnTile(nextBoard);
+  const prevPositions = positionMap(state.tiles);
 
+  const spawnedIds = new Set<number>();
+  spawnTile(nextBoard, nextIdBoard);
+  // Find the newly spawned ID (the one in nextIdBoard not in prevPositions).
+  for (let r = 0; r < SIZE; r++) {
+    for (let c = 0; c < SIZE; c++) {
+      const id = nextIdBoard[r][c];
+      if (id !== 0 && !prevPositions.has(id) && !mergedIds.has(id)) {
+        spawnedIds.add(id);
+      }
+    }
+  }
+
+  const tiles = buildTiles(nextBoard, nextIdBoard, prevPositions, mergedIds, spawnedIds);
   const has_won = state.has_won || boardHas2048(nextBoard);
   const game_over = isGameOver(nextBoard);
 
   return {
     board: nextBoard,
+    tiles,
     score: state.score + gained,
+    scoreDelta: gained,
     game_over,
     has_won,
   };

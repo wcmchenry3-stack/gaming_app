@@ -4,6 +4,8 @@
   "game.playLabel": "Speel 2048",
   "score.label": "Score",
   "score.accessibilityLabel": "Huidige score: {{score}}",
+  "score.best": "Beste",
+  "score.bestAccessibilityLabel": "Beste score: {{score}}",
   "actions.newGame": "Nieuw spel",
   "actions.newGameLabel": "Start een nieuw 2048-spel",
   "actions.keepPlaying": "Doorspelen",

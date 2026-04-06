@@ -21,7 +21,7 @@ import {
 test.describe("2048 — full happy-path game journey", () => {
   test.beforeEach(async ({ page }) => {
     await page.goto("/");
-    await page.evaluate(() => localStorage.removeItem("twenty48_game_v1"));
+    await page.evaluate(() => localStorage.removeItem("twenty48_game_v2"));
     await page.goto("/");
   });
 

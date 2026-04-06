@@ -83,7 +83,7 @@ test.describe("2048 — state persistence", () => {
 
     // clearGame() fires via the useEffect on game_over=true
     const stored = await page.evaluate(() =>
-      localStorage.getItem("twenty48_game_v1"),
+      localStorage.getItem("twenty48_game_v2"),
     );
     expect(stored).toBeNull();
   });
@@ -108,7 +108,7 @@ test.describe("2048 — state persistence", () => {
   }) => {
     await page.goto("/");
     await page.evaluate(() =>
-      localStorage.setItem("twenty48_game_v1", "garbage{not json}"),
+      localStorage.setItem("twenty48_game_v2", "garbage{not json}"),
     );
     await page.goto("/");
     await page.getByRole("button", { name: "Play 2048" }).click();
@@ -125,7 +125,7 @@ test.describe("2048 — state persistence", () => {
     // Missing 'board' field — fails the sanity check in loadGame()
     await page.evaluate(() =>
       localStorage.setItem(
-        "twenty48_game_v1",
+        "twenty48_game_v2",
         JSON.stringify({ score: 100, game_over: false, has_won: false }),
       ),
     );
@@ -171,7 +171,7 @@ test.describe("2048 — state persistence", () => {
 
     // Verify the saved state has has_won=false
     const stored = await page.evaluate(() =>
-      localStorage.getItem("twenty48_game_v1"),
+      localStorage.getItem("twenty48_game_v2"),
     );
     const parsed = JSON.parse(stored ?? "{}");
     expect(parsed.has_won).toBe(false);
@@ -195,7 +195,7 @@ test.describe("2048 — state persistence", () => {
     });
 
     const stored = await page.evaluate(() =>
-      localStorage.getItem("twenty48_game_v1"),
+      localStorage.getItem("twenty48_game_v2"),
     );
     expect(stored).not.toBeNull();
     const parsed = JSON.parse(stored!);

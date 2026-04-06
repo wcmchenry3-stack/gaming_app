@@ -9,6 +9,7 @@
 import { test, expect } from "@playwright/test";
 import {
   injectGameState,
+  tilesFromBoard,
   gameOverState,
   midGameState,
 } from "./helpers/twenty48";
@@ -82,7 +83,7 @@ test.describe("2048 — game-over detection and flow", () => {
 
     // The clearGame() effect fires when game_over=true is loaded
     const stored = await page.evaluate(() =>
-      localStorage.getItem("twenty48_game_v1"),
+      localStorage.getItem("twenty48_game_v2"),
     );
     expect(stored).toBeNull();
   });
@@ -91,14 +92,17 @@ test.describe("2048 — game-over detection and flow", () => {
     page,
   }) => {
     // Row 0 has [2,2,4,8]: two adjacent 2s → not game over even if fully packed
+    const board = [
+      [2, 2, 4, 8],
+      [4, 8, 16, 32],
+      [8, 16, 32, 64],
+      [16, 32, 64, 128],
+    ];
     await injectGameState(page, {
-      board: [
-        [2, 2, 4, 8],
-        [4, 8, 16, 32],
-        [8, 16, 32, 64],
-        [16, 32, 64, 128],
-      ],
+      board,
+      tiles: tilesFromBoard(board),
       score: 0,
+      scoreDelta: 0,
       game_over: false,
       has_won: false,
     });

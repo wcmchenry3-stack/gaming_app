@@ -4,6 +4,8 @@
   "game.playLabel": "שחק 2048",
   "score.label": "ניקוד",
   "score.accessibilityLabel": "ניקוד נוכחי: {{score}}",
+  "score.best": "שיא",
+  "score.bestAccessibilityLabel": "ניקוד שיא: {{score}}",
   "actions.newGame": "משחק חדש",
   "actions.newGameLabel": "התחל משחק 2048 חדש",
   "actions.keepPlaying": "המשך לשחק",

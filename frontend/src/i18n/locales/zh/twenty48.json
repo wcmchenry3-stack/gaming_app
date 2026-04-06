@@ -4,6 +4,8 @@
   "game.playLabel": "玩 2048",
   "score.label": "得分",
   "score.accessibilityLabel": "当前得分：{{score}}",
+  "score.best": "最高",
+  "score.bestAccessibilityLabel": "最高分: {{score}}",
   "actions.newGame": "新游戏",
   "actions.newGameLabel": "开始新的2048游戏",
   "actions.keepPlaying": "继续游戏",

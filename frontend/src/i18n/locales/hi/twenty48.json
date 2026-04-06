@@ -4,6 +4,8 @@
   "game.playLabel": "2048 खेलें",
   "score.label": "स्कोर",
   "score.accessibilityLabel": "वर्तमान स्कोर: {{score}}",
+  "score.best": "सर्वश्रेष्ठ",
+  "score.bestAccessibilityLabel": "सर्वश्रेष्ठ स्कोर: {{score}}",
   "actions.newGame": "नया खेल",
   "actions.newGameLabel": "एक नया 2048 खेल शुरू करें",
   "actions.keepPlaying": "खेलते रहें",
