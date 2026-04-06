@@ -115,3 +115,21 @@ export async function triggerGameOver(page: Page): Promise<void> {
     ).__cascade_triggerGameOver?.(),
   );
 }
+
+/**
+ * Spawn a fruit of a specific tier at canvas x-coordinate `x`, bypassing
+ * the queue entirely. Enables deterministic merge/score tests.
+ */
+export async function spawnTierAt(
+  page: Page,
+  tier: number,
+  x: number,
+): Promise<void> {
+  await page.evaluate(
+    ([t, xPos]) =>
+      (
+        window as { __cascade_spawnTierAt?: (tier: number, x: number) => void }
+      ).__cascade_spawnTierAt?.(t, xPos),
+    [tier, x] as const,
+  );
+}
