@@ -24,7 +24,5 @@
   "gameOver.savedConfirmation": "¡Guardado! #{{rank}}",
   "gameOver.playAgain": "Jugar de nuevo",
   "gameOver.playAgainButton": "Jugar otra vez",
-  "game.engineUnsupported": "Este juego no está disponible en este dispositivo.",
-  "game.webOnly": "Solo Web",
   "gameOver.savedLocally": "Guardado localmente — se enviará al estar en línea"
 }

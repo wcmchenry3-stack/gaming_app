@@ -167,3 +167,82 @@ class TestSubmitRank:
             _submit(name, score)
         scores = client.get("/cascade/scores").json()["scores"]
         assert [s["rank"] for s in scores] == [1, 2, 3]
+
+
+# ---------------------------------------------------------------------------
+# Rate limiter (#204)
+# ---------------------------------------------------------------------------
+
+
+class TestRateLimit:
+    def test_sixth_submission_returns_429(self):
+        """POST /cascade/score is limited to 5/minute; 6th call must 429."""
+        from limiter import limiter
+
+        # 5 allowed submissions
+        for i in range(5):
+            res = _submit(f"Player{i}", i * 10)
+            assert res.status_code == 201
+
+        # 6th should be rate-limited
+        res = _submit("Excess", 999)
+        assert res.status_code == 429
+
+        # Cleanup: reset so other tests aren't affected
+        limiter.reset()
+
+
+# ---------------------------------------------------------------------------
+# Tie-break ordering (#204)
+# ---------------------------------------------------------------------------
+
+
+class TestTieBreak:
+    def test_older_score_ranks_higher_on_tie(self):
+        """When two entries share the same score, insertion order decides rank.
+        The first-inserted entry wins (stable sort on score descending)."""
+        from limiter import limiter
+
+        limiter.reset()
+        _submit("Alice", 100)
+        limiter.reset()
+        body = _submit("Bob", 100).json()
+
+        scores = client.get("/cascade/scores").json()["scores"]
+        assert scores[0]["player_name"] == "Alice"  # older entry is rank 1
+        assert scores[1]["player_name"] == "Bob"    # newer entry is rank 2
+        assert body["rank"] == 2  # confirmed in submission response too
+
+
+# ---------------------------------------------------------------------------
+# Duplicate player names (#204)
+# ---------------------------------------------------------------------------
+
+
+class TestDuplicateNames:
+    def test_duplicate_name_both_entries_kept(self):
+        """Policy: append-only. Two submissions from the same name both appear
+        on the leaderboard (neither overwrites the other)."""
+        from limiter import limiter
+
+        limiter.reset()
+        _submit("Alice", 100)
+        limiter.reset()
+        _submit("Alice", 200)
+
+        scores = client.get("/cascade/scores").json()["scores"]
+        alice_entries = [s for s in scores if s["player_name"] == "Alice"]
+        assert len(alice_entries) == 2
+
+    def test_duplicate_name_ordered_by_score(self):
+        """Both Alice entries appear, higher score ranked first."""
+        from limiter import limiter
+
+        limiter.reset()
+        _submit("Alice", 100)
+        limiter.reset()
+        _submit("Alice", 200)
+
+        scores = client.get("/cascade/scores").json()["scores"]
+        alice_scores = [s["score"] for s in scores if s["player_name"] == "Alice"]
+        assert alice_scores == [200, 100]  # descending

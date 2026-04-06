@@ -24,7 +24,5 @@
   "gameOver.savedConfirmation": "Opgeslagen! #{{rank}}",
   "gameOver.playAgain": "Opnieuw spelen",
   "gameOver.playAgainButton": "Nog een keer",
-  "game.engineUnsupported": "Dit spel wordt niet ondersteund op dit apparaat.",
-  "game.webOnly": "Alleen web",
   "gameOver.savedLocally": "Lokaal opgeslagen — wordt online verzonden"
 }

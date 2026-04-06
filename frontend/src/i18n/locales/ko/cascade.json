@@ -24,7 +24,5 @@
   "gameOver.savedConfirmation": "저장 완료! #{{rank}}",
   "gameOver.playAgain": "다시 하기",
   "gameOver.playAgainButton": "다시 플레이",
-  "game.engineUnsupported": "이 게임은 이 기기에서 지원되지 않습니다.",
-  "game.webOnly": "웹 전용",
   "gameOver.savedLocally": "로컬에 저장됨 — 온라인 시 전송됩니다"
 }

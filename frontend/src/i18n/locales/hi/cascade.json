@@ -24,7 +24,5 @@
   "gameOver.savedConfirmation": "सेव्ड! #{{rank}}",
   "gameOver.playAgain": "फिर से खेलें",
   "gameOver.playAgainButton": "फिर से खेलें",
-  "game.engineUnsupported": "यह गेम इस डिवाइस पर समर्थित नहीं है।",
-  "game.webOnly": "केवल वेब",
   "gameOver.savedLocally": "स्थानीय रूप से सहेजा गया — ऑनलाइन होने पर भेजा जाएगा"
 }

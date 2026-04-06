@@ -24,7 +24,5 @@
   "gameOver.savedConfirmation": "保存完了！#{{rank}}",
   "gameOver.playAgain": "もう一度プレイ",
   "gameOver.playAgainButton": "再挑戦",
-  "game.engineUnsupported": "このゲームはこのデバイスではサポートされていません。",
-  "game.webOnly": "Webのみ",
   "gameOver.savedLocally": "ローカルに保存しました — オンライン時に送信されます"
 }
