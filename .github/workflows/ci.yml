@@ -181,6 +181,7 @@ jobs:
         working-directory: frontend
         env:
           EXPO_PUBLIC_API_URL: http://localhost:8000
+          EXPO_PUBLIC_TEST_HOOKS: "1"
 
       - name: Install E2E deps
         run: npm ci

@@ -44,10 +44,19 @@ import { useFruitImages, getImagesForSet } from "../../theme/useFruitImages";
 
 const DROP_Y = 30;
 
+export interface CascadeEngineState {
+  fruitCount: number;
+  dangerRatio: number;
+  fruits: Array<{ id: number; tier: number; x: number; y: number }>;
+}
+
 export interface GameCanvasHandle {
   drop: (def: FruitDefinition, x: number) => void;
   reset: () => void;
   announceEvent: (message: string) => void;
+  /** Only populated when EXPO_PUBLIC_TEST_HOOKS=1 */
+  getEngineState?: () => CascadeEngineState;
+  fastForward?: (ms: number) => void;
 }
 
 interface Props {
