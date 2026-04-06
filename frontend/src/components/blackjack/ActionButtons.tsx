@@ -29,9 +29,7 @@ export default function ActionButtons({
     ? t("actions.doubleDownLabel")
     : t("actions.doubleDownDisabledLabel");
 
-  const splitLabel = splitAvailable
-    ? t("actions.splitLabel")
-    : t("actions.splitDisabledLabel");
+  const splitLabel = splitAvailable ? t("actions.splitLabel") : t("actions.splitDisabledLabel");
 
   return (
     <View style={styles.container}>

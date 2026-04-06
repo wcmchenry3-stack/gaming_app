@@ -3,10 +3,12 @@ import { render } from "@testing-library/react-native";
 import ActionButtons from "../ActionButtons";
 import { ThemeProvider } from "../../../theme/ThemeContext";
 
-function renderButtons(opts: {
-  doubleDownAvailable?: boolean;
-  splitAvailable?: boolean;
-} = {}) {
+function renderButtons(
+  opts: {
+    doubleDownAvailable?: boolean;
+    splitAvailable?: boolean;
+  } = {}
+) {
   const { doubleDownAvailable = true, splitAvailable = false } = opts;
   return render(
     <ThemeProvider>

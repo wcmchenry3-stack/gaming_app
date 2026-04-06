@@ -988,7 +988,10 @@ describe("split aces", () => {
     // Manually build a split-ace state in player phase
     const s: EngineState = {
       ...splitSetup(),
-      player_hands: [[c("♠", "A"), c("♥", "5")], [c("♥", "A"), c("♠", "K")]],
+      player_hands: [
+        [c("♠", "A"), c("♥", "5")],
+        [c("♥", "A"), c("♠", "K")],
+      ],
       hand_bets: [100, 100],
       hand_outcomes: [null, null],
       hand_payouts: [0, 0],
@@ -1002,7 +1005,10 @@ describe("split aces", () => {
   it("cannot double down on split aces", () => {
     const s: EngineState = {
       ...splitSetup(),
-      player_hands: [[c("♠", "A"), c("♥", "5")], [c("♥", "A"), c("♠", "K")]],
+      player_hands: [
+        [c("♠", "A"), c("♥", "5")],
+        [c("♥", "A"), c("♠", "K")],
+      ],
       hand_bets: [100, 100],
       hand_outcomes: [null, null],
       hand_payouts: [0, 0],
@@ -1021,7 +1027,9 @@ describe("resplit", () => {
         chips: 1000,
         bet: 100,
         player: [c("♠", "8"), c("♥", "8")],
-        deck: Array(20).fill(c("♦", "3")).concat([c("♣", "8"), c("♣", "8"), c("♣", "8"), c("♣", "8"), c("♣", "8"), c("♣", "8")]),
+        deck: Array(20)
+          .fill(c("♦", "3"))
+          .concat([c("♣", "8"), c("♣", "8"), c("♣", "8"), c("♣", "8"), c("♣", "8"), c("♣", "8")]),
       })
     );
     expect(s.split_count).toBe(1);

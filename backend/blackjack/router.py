@@ -78,15 +78,9 @@ def _state_response(game: BlackjackGame) -> BlackjackStateResponse:
             is_ace_hand = game._split_from_aces[game._active_hand]
             total_wagered = sum(game._hand_bets)
             free_stack = game.chips - total_wagered
-            double_down_available = (
-                len(hand) == 2
-                and not is_ace_hand
-                and free_stack >= hand_bet
-            )
+            double_down_available = len(hand) == 2 and not is_ace_hand and free_stack >= hand_bet
         else:
-            double_down_available = (
-                len(game._player_hand) == 2 and game.chips >= game.bet * 2
-            )
+            double_down_available = len(game._player_hand) == 2 and game.chips >= game.bet * 2
 
     game_over = game.chips == 0 and game.phase == "result"
 

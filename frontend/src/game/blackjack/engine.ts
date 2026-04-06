@@ -268,16 +268,8 @@ export function toViewState(s: EngineState): BlackjackState {
     player_hands: player_hands_view,
     hand_bets: isSplit ? [...s.hand_bets] : s.bet ? [s.bet] : [],
     active_hand_index: s.active_hand_index,
-    hand_outcomes: isSplit
-      ? [...s.hand_outcomes]
-      : s.outcome !== null
-        ? [s.outcome]
-        : [],
-    hand_payouts: isSplit
-      ? [...s.hand_payouts]
-      : s.payout !== 0
-        ? [s.payout]
-        : [],
+    hand_outcomes: isSplit ? [...s.hand_outcomes] : s.outcome !== null ? [s.outcome] : [],
+    hand_payouts: isSplit ? [...s.hand_payouts] : s.payout !== 0 ? [s.payout] : [],
   };
 }
 
@@ -287,7 +279,13 @@ export function toViewState(s: EngineState): BlackjackState {
 
 function emptySplitState(): Pick<
   EngineState,
-  "player_hands" | "hand_bets" | "hand_outcomes" | "hand_payouts" | "active_hand_index" | "split_count" | "split_from_aces"
+  | "player_hands"
+  | "hand_bets"
+  | "hand_outcomes"
+  | "hand_payouts"
+  | "active_hand_index"
+  | "split_count"
+  | "split_from_aces"
 > {
   return {
     player_hands: [],
@@ -391,11 +389,7 @@ function determineAndSettle(s: EngineState): EngineState {
 // Split-specific helpers
 // ---------------------------------------------------------------------------
 
-function settleHand(
-  s: EngineState,
-  idx: number,
-  outcome: "win" | "lose" | "push"
-): EngineState {
+function settleHand(s: EngineState, idx: number, outcome: "win" | "lose" | "push"): EngineState {
   const bet = s.hand_bets[idx];
   let delta = 0;
   if (outcome === "win") delta = bet;
@@ -468,9 +462,7 @@ export function hit(s: EngineState): EngineState {
       throw new Error("Cannot hit on split aces.");
     }
     const { deck, card } = deal(s.deck);
-    const newHands = s.player_hands.map((h, i) =>
-      i === s.active_hand_index ? [...h, card] : h
-    );
+    const newHands = s.player_hands.map((h, i) => (i === s.active_hand_index ? [...h, card] : h));
     let next: EngineState = { ...s, deck, player_hands: newHands };
     if (handValue(newHands[s.active_hand_index]) > 21) {
       next = settleHand(next, s.active_hand_index, "lose");
@@ -520,9 +512,7 @@ export function doubleDown(s: EngineState): EngineState {
     }
 
     const { deck, card } = deal(s.deck);
-    const newHands = s.player_hands.map((h, i) =>
-      i === idx ? [...h, card] : h
-    );
+    const newHands = s.player_hands.map((h, i) => (i === idx ? [...h, card] : h));
     const newBets = [...s.hand_bets];
     newBets[idx] = handBet * 2;
 

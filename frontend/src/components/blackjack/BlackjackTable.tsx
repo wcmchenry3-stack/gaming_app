@@ -56,9 +56,7 @@ export default function BlackjackTable({
               >
                 <HandDisplay hand={hand} label={label} />
                 {bet != null && (
-                  <Text style={[styles.handBet, { color: colors.textMuted }]}>
-                    {bet}
-                  </Text>
+                  <Text style={[styles.handBet, { color: colors.textMuted }]}>{bet}</Text>
                 )}
                 {outcome && phase === "result" && (
                   <Text
