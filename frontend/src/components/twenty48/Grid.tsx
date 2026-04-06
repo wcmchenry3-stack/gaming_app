@@ -19,7 +19,7 @@ export default function Grid({ tiles }: GridProps) {
   const tileSize = (boardWidth - GAP * (GRID_SIZE + 1)) / GRID_SIZE;
 
   // Render empty slot backgrounds so the grid looks filled even with no tiles.
-  const occupiedCells = new Set(tiles.map(t => `${t.row}-${t.col}`));
+  const occupiedCells = new Set(tiles.map((t) => `${t.row}-${t.col}`));
   const slots = [];
   for (let r = 0; r < GRID_SIZE; r++) {
     for (let c = 0; c < GRID_SIZE; c++) {
