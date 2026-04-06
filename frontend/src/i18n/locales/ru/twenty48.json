@@ -4,6 +4,8 @@
   "game.playLabel": "Играть в 2048",
   "score.label": "Счёт",
   "score.accessibilityLabel": "Текущий счёт: {{score}}",
+  "score.best": "Рекорд",
+  "score.bestAccessibilityLabel": "Рекорд: {{score}}",
   "actions.newGame": "Новая игра",
   "actions.newGameLabel": "Начать новую игру 2048",
   "actions.keepPlaying": "Продолжить",

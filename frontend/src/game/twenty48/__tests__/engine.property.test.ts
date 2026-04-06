@@ -20,7 +20,34 @@ import {
   SIZE,
   Direction,
 } from "../engine";
-import { Twenty48State } from "../types";
+import { Twenty48State, TileData } from "../types";
+
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+
+/** Build a tiles[] array from a board by scanning for non-zero cells. */
+function tilesFromBoard(board: number[][]): TileData[] {
+  const tiles: TileData[] = [];
+  let id = 5000;
+  for (let r = 0; r < board.length; r++) {
+    for (let c = 0; c < board[r].length; c++) {
+      if (board[r][c] !== 0) {
+        tiles.push({
+          id: id++,
+          value: board[r][c],
+          row: r,
+          col: c,
+          prevRow: r,
+          prevCol: c,
+          isNew: false,
+          isMerge: false,
+        });
+      }
+    }
+  }
+  return tiles;
+}
 
 // ---------------------------------------------------------------------------
 // Arbitraries
@@ -47,7 +74,9 @@ const boardArb: fc.Arbitrary<number[][]> = fc.array(
 /** A Twenty48State built from an arbitrary board. */
 const stateArb: fc.Arbitrary<Twenty48State> = boardArb.map((board) => ({
   board,
+  tiles: tilesFromBoard(board),
   score: 0,
+  scoreDelta: 0,
   game_over: false,
   has_won: false,
 }));
@@ -226,14 +255,17 @@ describe("move — score invariants", () => {
     fc.assert(
       fc.property(fc.constantFrom(2, 4, 8, 16, 32, 64, 128, 256, 512, 1024), (v) => {
         // Row 1 has two tiles of value v — left move will merge them.
+        const board = [
+          [0, 0, 0, 0],
+          [v, 0, v, 0],
+          [0, 0, 0, 0],
+          [0, 0, 0, 0],
+        ];
         const state: Twenty48State = {
-          board: [
-            [0, 0, 0, 0],
-            [v, 0, v, 0],
-            [0, 0, 0, 0],
-            [0, 0, 0, 0],
-          ],
+          board,
+          tiles: tilesFromBoard(board),
           score: 0,
+          scoreDelta: 0,
           game_over: false,
           has_won: false,
         };
@@ -286,7 +318,14 @@ describe("move — tile count invariants", () => {
           const board = Array.from({ length: SIZE }, (_, r) =>
             Array.from({ length: SIZE }, (_, c) => (r === row && c === col ? val : 0))
           );
-          const state: Twenty48State = { board, score: 0, game_over: false, has_won: false };
+          const state: Twenty48State = {
+            board,
+            tiles: tilesFromBoard(board),
+            score: 0,
+            scoreDelta: 0,
+            game_over: false,
+            has_won: false,
+          };
           setRng(createSeededRng(42));
           const next = move(state, "left");
           setRng(Math.random);
@@ -328,14 +367,17 @@ describe("move — has_won is sticky", () => {
         fc.integer({ min: 0, max: 9999 }).map((seed) => createSeededRng(seed)),
         (rng) => {
           // Build a state where the NEXT left move produces 2048 and has spare space.
+          const winBoard = [
+            [1024, 1024, 0, 0],
+            [0, 0, 0, 0],
+            [0, 0, 0, 0],
+            [0, 0, 0, 0],
+          ];
           const state: Twenty48State = {
-            board: [
-              [1024, 1024, 0, 0],
-              [0, 0, 0, 0],
-              [0, 0, 0, 0],
-              [0, 0, 0, 0],
-            ],
+            board: winBoard,
+            tiles: tilesFromBoard(winBoard),
             score: 0,
+            scoreDelta: 0,
             game_over: false,
             has_won: false,
           };
@@ -393,7 +435,9 @@ describe("isGameOver — properties", () => {
         // so the "no effect" check runs instead.
         const state: Twenty48State = {
           board,
+          tiles: tilesFromBoard(board),
           score: 0,
+          scoreDelta: 0,
           game_over: false, // bypass the game-over guard to reach boardsEqual check
           has_won: false,
         };

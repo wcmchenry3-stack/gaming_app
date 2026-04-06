@@ -1,5 +1,5 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { saveGame, loadGame, clearGame } from "../storage";
+import { saveGame, loadGame, clearGame, saveBestScore, loadBestScore } from "../storage";
 import { Twenty48State } from "../types";
 
 const sample: Twenty48State = {
@@ -9,7 +9,14 @@ const sample: Twenty48State = {
     [0, 0, 8, 0],
     [0, 0, 0, 16],
   ],
+  tiles: [
+    { id: 1, value: 2, row: 0, col: 0, prevRow: 0, prevCol: 0, isNew: false, isMerge: false },
+    { id: 2, value: 4, row: 1, col: 1, prevRow: 1, prevCol: 1, isNew: false, isMerge: false },
+    { id: 3, value: 8, row: 2, col: 2, prevRow: 2, prevCol: 2, isNew: false, isMerge: false },
+    { id: 4, value: 16, row: 3, col: 3, prevRow: 3, prevCol: 3, isNew: false, isMerge: false },
+  ],
   score: 120,
+  scoreDelta: 0,
   game_over: false,
   has_won: false,
 };
@@ -31,13 +38,20 @@ describe("twenty48 storage", () => {
   });
 
   it("returns null when saved data is corrupted", async () => {
-    await AsyncStorage.setItem("twenty48_game_v1", "not json");
+    await AsyncStorage.setItem("twenty48_game_v2", "not json");
     const loaded = await loadGame();
     expect(loaded).toBeNull();
   });
 
   it("returns null when saved data has a different shape", async () => {
-    await AsyncStorage.setItem("twenty48_game_v1", JSON.stringify({ foo: "bar" }));
+    await AsyncStorage.setItem("twenty48_game_v2", JSON.stringify({ foo: "bar" }));
+    const loaded = await loadGame();
+    expect(loaded).toBeNull();
+  });
+
+  it("returns null for v1 payloads (missing tiles array)", async () => {
+    const v1Payload = { board: sample.board, score: 0, game_over: false, has_won: false };
+    await AsyncStorage.setItem("twenty48_game_v2", JSON.stringify(v1Payload));
     const loaded = await loadGame();
     expect(loaded).toBeNull();
   });
@@ -46,5 +60,14 @@ describe("twenty48 storage", () => {
     await saveGame(sample);
     await clearGame();
     expect(await loadGame()).toBeNull();
+  });
+
+  it("saves and loads best score", async () => {
+    await saveBestScore(1234);
+    expect(await loadBestScore()).toBe(1234);
+  });
+
+  it("loadBestScore returns 0 when nothing is saved", async () => {
+    expect(await loadBestScore()).toBe(0);
   });
 });

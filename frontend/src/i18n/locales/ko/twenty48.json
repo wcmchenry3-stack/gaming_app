@@ -4,6 +4,8 @@
   "game.playLabel": "2048 플레이",
   "score.label": "점수",
   "score.accessibilityLabel": "현재 점수: {{score}}",
+  "score.best": "최고",
+  "score.bestAccessibilityLabel": "최고 점수: {{score}}",
   "actions.newGame": "새 게임",
   "actions.newGameLabel": "새로운 2048 게임 시작",
   "actions.keepPlaying": "계속 플레이",

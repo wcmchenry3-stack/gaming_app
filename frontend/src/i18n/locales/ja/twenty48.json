@@ -4,6 +4,8 @@
   "game.playLabel": "2048をプレイ",
   "score.label": "スコア",
   "score.accessibilityLabel": "現在のスコア：{{score}}",
+  "score.best": "ベスト",
+  "score.bestAccessibilityLabel": "ベストスコア: {{score}}",
   "actions.newGame": "新しいゲーム",
   "actions.newGameLabel": "新しい2048ゲームを開始",
   "actions.keepPlaying": "続ける",

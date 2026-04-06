@@ -1,43 +1,53 @@
 import React from "react";
 import { View, StyleSheet, useWindowDimensions } from "react-native";
 import { useTheme } from "../../theme/ThemeContext";
-import Tile from "./Tile";
+import { TileData } from "../../game/twenty48/types";
+import AnimatedTile from "./AnimatedTile";
 
 const GRID_SIZE = 4;
 const GAP = 8;
 const MAX_BOARD = 360;
 
 interface GridProps {
-  board: number[][];
+  tiles: TileData[];
 }
 
-export default function Grid({ board }: GridProps) {
+export default function Grid({ tiles }: GridProps) {
   const { width } = useWindowDimensions();
   const { colors } = useTheme();
   const boardWidth = Math.min(width - 32, MAX_BOARD);
   const tileSize = (boardWidth - GAP * (GRID_SIZE + 1)) / GRID_SIZE;
 
+  // Render empty slot backgrounds so the grid looks filled even with no tiles.
+  const slots = [];
+  for (let r = 0; r < GRID_SIZE; r++) {
+    for (let c = 0; c < GRID_SIZE; c++) {
+      const top = GAP + r * (tileSize + GAP);
+      const left = GAP + c * (tileSize + GAP);
+      slots.push(
+        <View
+          key={`slot-${r}-${c}`}
+          style={[
+            styles.slot,
+            { width: tileSize, height: tileSize, top, left, backgroundColor: colors.border },
+          ]}
+        />
+      );
+    }
+  }
+
   return (
     <View
       style={[
         styles.grid,
-        {
-          width: boardWidth,
-          height: boardWidth,
-          backgroundColor: colors.border,
-          padding: GAP,
-          gap: GAP,
-        },
+        { width: boardWidth, height: boardWidth, backgroundColor: colors.border },
       ]}
       accessible={true}
       accessibilityLabel="Game board"
     >
-      {board.map((row, r) => (
-        <View key={r} style={[styles.row, { gap: GAP }]}>
-          {row.map((cell, c) => (
-            <Tile key={`${r}-${c}`} value={cell} size={tileSize} />
-          ))}
-        </View>
+      {slots}
+      {tiles.map((tile) => (
+        <AnimatedTile key={tile.id} tile={tile} tileSize={tileSize} gap={GAP} />
       ))}
     </View>
   );
@@ -46,8 +56,10 @@ export default function Grid({ board }: GridProps) {
 const styles = StyleSheet.create({
   grid: {
     borderRadius: 10,
+    position: "relative",
   },
-  row: {
-    flexDirection: "row",
+  slot: {
+    position: "absolute",
+    borderRadius: 6,
   },
 });

@@ -4,6 +4,8 @@
   "game.playLabel": "العب 2048",
   "score.label": "النتيجة",
   "score.accessibilityLabel": "النتيجة الحالية: {{score}}",
+  "score.best": "الأفضل",
+  "score.bestAccessibilityLabel": "أفضل نتيجة: {{score}}",
   "actions.newGame": "لعبة جديدة",
   "actions.newGameLabel": "بدء لعبة 2048 جديدة",
   "actions.keepPlaying": "استمر في اللعب",
