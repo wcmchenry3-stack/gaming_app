@@ -162,7 +162,7 @@ jobs:
     needs: [test-python, test-frontend, detect-e2e-scope]
     runs-on: ubuntu-latest
     container:
-      image: mcr.microsoft.com/playwright:v1.48.2-jammy
+      image: mcr.microsoft.com/playwright:v1.58.2-jammy
     steps:
       - uses: actions/checkout@v4
 
