@@ -31,6 +31,7 @@ export default function Grid({ tiles }: GridProps) {
             styles.slot,
             { width: tileSize, height: tileSize, top, left, backgroundColor: colors.border },
           ]}
+          accessibilityLabel="empty"
         />
       );
     }
