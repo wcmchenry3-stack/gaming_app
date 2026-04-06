@@ -943,7 +943,7 @@ describe("split payout", () => {
 
   it("split 21 pays even money not 3:2", () => {
     // Split aces: A+K=21, A+5=16. Dealer 10+7=17.
-    let s = split(
+    const s = split(
       splitSetup({
         chips: 1000,
         bet: 100,
