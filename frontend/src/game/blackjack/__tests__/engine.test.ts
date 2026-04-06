@@ -22,6 +22,7 @@ import {
   createSeededRng,
   EngineState,
   Card,
+  DEFAULT_RULES,
 } from "../engine";
 
 // Helpers ------------------------------------------------------------------
@@ -41,6 +42,7 @@ function stateInPlayer(chips = 1000, bet = 100): EngineState {
     player_hand: [c("♠", "7"), c("♥", "8")], // 15
     dealer_hand: [c("♦", "6"), c("♣", "9")], // 15
     doubled: false,
+    rules: DEFAULT_RULES,
   };
 }
 
@@ -60,6 +62,7 @@ function stateInResult(
     player_hand: [c("♠", "7"), c("♥", "8")],
     dealer_hand: [c("♦", "6"), c("♣", "9")],
     doubled: false,
+    rules: DEFAULT_RULES,
   };
 }
 
@@ -122,7 +125,8 @@ describe("isSoftHand", () => {
 describe("newGame", () => {
   it("starts in betting phase", () => expect(newGame().phase).toBe("betting"));
   it("starts with 1000 chips", () => expect(newGame().chips).toBe(1000));
-  it("starts with 52-card deck", () => expect(newGame().deck).toHaveLength(52));
+  it("starts with 312-card deck (6 decks by default)", () =>
+    expect(newGame().deck).toHaveLength(312));
   it("starts with empty hands", () => {
     const g = newGame();
     expect(g.player_hand).toEqual([]);
@@ -372,15 +376,17 @@ describe("bust", () => {
 
 describe("deck reshuffle", () => {
   it("reshuffles when below threshold on newHand", () => {
+    // Default rules: 6 decks, 0.75 penetration → threshold = max(15, 312*0.25) = 78
     const low: EngineState = { ...stateInResult(), deck: [c("♠", "5"), c("♥", "5")] };
     const r = newHand(low);
-    expect(r.deck.length).toBe(52);
+    expect(r.deck.length).toBe(312); // 6 decks
   });
 
   it("keeps deck when above threshold on newHand", () => {
-    const high: EngineState = { ...stateInResult(), deck: Array(30).fill(c("♠", "5")) };
+    // 80 cards remaining is above threshold (78)
+    const high: EngineState = { ...stateInResult(), deck: Array(80).fill(c("♠", "5")) };
     const r = newHand(high);
-    expect(r.deck.length).toBe(30);
+    expect(r.deck.length).toBe(80);
   });
 });
 
@@ -477,6 +483,7 @@ function ddSetup(
     dealer_hand: dealer,
     deck,
     doubled: false,
+    rules: DEFAULT_RULES,
   };
 }
 
@@ -723,12 +730,12 @@ describe("seedable RNG (setRng + createSeededRng)", () => {
     expect(a.chips).toEqual(b.chips);
   });
 
-  it("deck contains all 52 unique cards regardless of seed", () => {
+  it("deck contains all 52 unique card types regardless of seed", () => {
     setRng(createSeededRng(12345));
     const { deck } = newGame();
-    expect(deck).toHaveLength(52);
+    expect(deck).toHaveLength(312); // 6 decks
     const keys = new Set(deck.map((card) => `${card.rank}-${card.suit}`));
-    expect(keys.size).toBe(52);
+    expect(keys.size).toBe(52); // 52 unique card types, each repeated 6 times
   });
 
   it("setRng(Math.random) afterEach restores non-determinism", () => {

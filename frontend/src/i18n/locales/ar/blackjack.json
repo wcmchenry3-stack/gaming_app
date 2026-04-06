@@ -48,5 +48,19 @@
   "gameOver.playAgain": "العب مجدداً",
   "gameOver.playAgainLabel": "ابدأ جلسة جديدة مع 1000 رقاقة",
   "gameOver.home": "الرئيسية",
-  "gameOver.homeLabel": "العودة إلى الشاشة الرئيسية"
+  "gameOver.homeLabel": "العودة إلى الشاشة الرئيسية",
+
+  "rules.title": "قواعد الطاولة",
+  "rules.toggleLabel": "تبديل قواعد الطاولة",
+  "rules.dealerSoft17": "الموزع 17 لينة",
+  "rules.s17": "S17",
+  "rules.h17": "H17",
+  "rules.s17Label": "الموزع يقف على 17 لينة",
+  "rules.h17Label": "الموزع يسحب على 17 لينة",
+  "rules.deckCount": "الرزم",
+  "rules.decreaseDeckLabel": "تقليل عدد الرزم",
+  "rules.increaseDeckLabel": "زيادة عدد الرزم",
+  "rules.penetration": "الاختراق",
+  "rules.decreasePenetrationLabel": "تقليل الاختراق",
+  "rules.increasePenetrationLabel": "زيادة الاختراق"
 }

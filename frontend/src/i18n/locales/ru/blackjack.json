@@ -48,5 +48,19 @@
   "gameOver.playAgain": "Сыграть",
   "gameOver.playAgainLabel": "Начать новую игру с 1000 фишек",
   "gameOver.home": "Домой",
-  "gameOver.homeLabel": "Вернуться на главный экран"
+  "gameOver.homeLabel": "Вернуться на главный экран",
+
+  "rules.title": "Правила стола",
+  "rules.toggleLabel": "Переключить правила стола",
+  "rules.dealerSoft17": "Дилер мягкие 17",
+  "rules.s17": "S17",
+  "rules.h17": "H17",
+  "rules.s17Label": "Дилер стоит на мягких 17",
+  "rules.h17Label": "Дилер берёт на мягких 17",
+  "rules.deckCount": "Колоды",
+  "rules.decreaseDeckLabel": "Уменьшить количество колод",
+  "rules.increaseDeckLabel": "Увеличить количество колод",
+  "rules.penetration": "Пенетрация",
+  "rules.decreasePenetrationLabel": "Уменьшить пенетрацию",
+  "rules.increasePenetrationLabel": "Увеличить пенетрацию"
 }

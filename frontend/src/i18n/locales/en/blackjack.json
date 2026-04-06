@@ -57,5 +57,19 @@
   "gameOver.playAgain": "Play Again",
   "gameOver.playAgainLabel": "Start a new session with 1000 chips",
   "gameOver.home": "Home",
-  "gameOver.homeLabel": "Return to home screen"
+  "gameOver.homeLabel": "Return to home screen",
+
+  "rules.title": "Table Rules",
+  "rules.toggleLabel": "Toggle table rules",
+  "rules.dealerSoft17": "Dealer soft 17",
+  "rules.s17": "S17",
+  "rules.h17": "H17",
+  "rules.s17Label": "Dealer stands on soft 17",
+  "rules.h17Label": "Dealer hits on soft 17",
+  "rules.deckCount": "Decks",
+  "rules.decreaseDeckLabel": "Decrease deck count",
+  "rules.increaseDeckLabel": "Increase deck count",
+  "rules.penetration": "Penetration",
+  "rules.decreasePenetrationLabel": "Decrease penetration",
+  "rules.increasePenetrationLabel": "Increase penetration"
 }

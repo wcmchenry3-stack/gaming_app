@@ -14,7 +14,9 @@ import {
   newHand as engineNewHand,
   toViewState,
   EngineState,
+  DEFAULT_RULES,
 } from "../game/blackjack/engine";
+import { GameRules } from "../game/blackjack/types";
 import { saveGame, loadGame, clearGame } from "../game/blackjack/storage";
 import BettingPanel from "../components/blackjack/BettingPanel";
 import BlackjackTable from "../components/blackjack/BlackjackTable";
@@ -80,11 +82,24 @@ export default function BlackjackScreen({ navigation }: Props) {
   const handleDoubleDown = () => apply(engineDoubleDown);
   const handleNextHand = () => apply(engineNewHand);
   const handlePlayAgain = () => {
-    const fresh = newGame();
+    const fresh = newGame(undefined, engine?.rules ?? DEFAULT_RULES);
     setEngine(fresh);
     saveGame(fresh);
     setError(null);
   };
+
+  const handleRulesChange = useCallback(
+    (rules: GameRules) => {
+      if (!engine || engine.phase !== "betting") return;
+      const updated: EngineState = {
+        ...newGame(undefined, rules),
+        chips: engine.chips,
+      };
+      setEngine(updated);
+      saveGame(updated);
+    },
+    [engine]
+  );
 
   if (!engine && loading) {
     return (
@@ -210,6 +225,8 @@ export default function BlackjackScreen({ navigation }: Props) {
             onDeal={handleDeal}
             loading={false}
             error={error}
+            rules={state?.rules ?? DEFAULT_RULES}
+            onRulesChange={handleRulesChange}
           />
         )}
 

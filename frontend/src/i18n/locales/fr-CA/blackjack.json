@@ -48,5 +48,19 @@
   "gameOver.playAgain": "Rejouer",
   "gameOver.playAgainLabel": "Commencez une nouvelle partie avec 1000 jetons",
   "gameOver.home": "Accueil",
-  "gameOver.homeLabel": "Retour à l'écran d'accueil"
+  "gameOver.homeLabel": "Retour à l'écran d'accueil",
+
+  "rules.title": "Règles de la table",
+  "rules.toggleLabel": "Basculer les règles de la table",
+  "rules.dealerSoft17": "Croupier 17 souple",
+  "rules.s17": "S17",
+  "rules.h17": "H17",
+  "rules.s17Label": "Le croupier reste sur un 17 souple",
+  "rules.h17Label": "Le croupier tire sur un 17 souple",
+  "rules.deckCount": "Jeux",
+  "rules.decreaseDeckLabel": "Réduire le nombre de jeux",
+  "rules.increaseDeckLabel": "Augmenter le nombre de jeux",
+  "rules.penetration": "Pénétration",
+  "rules.decreasePenetrationLabel": "Réduire la pénétration",
+  "rules.increasePenetrationLabel": "Augmenter la pénétration"
 }

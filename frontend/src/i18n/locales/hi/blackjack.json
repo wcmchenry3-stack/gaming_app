@@ -48,5 +48,19 @@
   "gameOver.playAgain": "फिर से खेलें",
   "gameOver.playAgainLabel": "1000 चिप्स के साथ नया सत्र शुरू करें",
   "gameOver.home": "होम",
-  "gameOver.homeLabel": "होम स्क्रीन पर लौटें"
+  "gameOver.homeLabel": "होम स्क्रीन पर लौटें",
+
+  "rules.title": "टेबल नियम",
+  "rules.toggleLabel": "टेबल नियम टॉगल करें",
+  "rules.dealerSoft17": "डीलर सॉफ्ट 17",
+  "rules.s17": "S17",
+  "rules.h17": "H17",
+  "rules.s17Label": "डीलर सॉफ्ट 17 पर रुकता है",
+  "rules.h17Label": "डीलर सॉफ्ट 17 पर कार्ड लेता है",
+  "rules.deckCount": "डेक",
+  "rules.decreaseDeckLabel": "डेक संख्या घटाएं",
+  "rules.increaseDeckLabel": "डेक संख्या बढ़ाएं",
+  "rules.penetration": "पेनेट्रेशन",
+  "rules.decreasePenetrationLabel": "पेनेट्रेशन घटाएं",
+  "rules.increasePenetrationLabel": "पेनेट्रेशन बढ़ाएं"
 }

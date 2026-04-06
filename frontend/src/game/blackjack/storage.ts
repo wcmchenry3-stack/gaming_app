@@ -8,7 +8,7 @@
 
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as Sentry from "@sentry/react-native";
-import { EngineState } from "./engine";
+import { DEFAULT_RULES, EngineState } from "./engine";
 
 const STORAGE_KEY = "blackjack_game_v1";
 
@@ -35,6 +35,10 @@ export async function loadGame(): Promise<EngineState | null> {
       !Array.isArray(parsed.dealer_hand)
     ) {
       return null;
+    }
+    // Backfill rules for saves created before configurable rules.
+    if (!parsed.rules) {
+      parsed.rules = DEFAULT_RULES;
     }
     return parsed;
   } catch (e) {
