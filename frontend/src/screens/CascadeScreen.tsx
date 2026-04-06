@@ -135,12 +135,19 @@ function CascadeGame({ navigation }: Props) {
     g.__cascade_triggerGameOver = () => {
       setGameOver(true);
     };
+    g.__cascade_spawnTierAt = (tier: number, x: number) => {
+      if (gameOverRef.current) return;
+      const def = activeFruitSetRef.current.fruits[tier];
+      if (!def) return;
+      canvasRef.current?.drop(def, x);
+    };
     return () => {
       delete g.__cascade_getState;
       delete g.__cascade_setSeed;
       delete g.__cascade_dropAt;
       delete g.__cascade_fastForward;
       delete g.__cascade_triggerGameOver;
+      delete g.__cascade_spawnTierAt;
     };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
