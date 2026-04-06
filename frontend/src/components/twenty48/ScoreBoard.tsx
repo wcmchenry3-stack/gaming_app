@@ -36,7 +36,8 @@ export default function ScoreBoard({ score, bestScore, scoreDelta }: ScoreBoardP
         useNativeDriver: true,
       }),
     ]).start();
-  }, [scoreDelta, score]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [scoreDelta, score]); // deltaOpacity/deltaTranslateY are stable Animated.Value refs
 
   return (
     <View style={styles.row}>

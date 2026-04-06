@@ -68,7 +68,8 @@ export default function Twenty48Screen({ navigation }: Props) {
       setBestScore(state.score);
       saveBestScore(state.score);
     }
-  }, [state?.score]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state?.score]); // intentional: only re-run when score changes, not on every state update
 
   const executeMove = useCallback((direction: Direction, currentState: Twenty48State) => {
     movingRef.current = true;

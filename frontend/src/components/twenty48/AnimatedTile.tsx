@@ -18,7 +18,6 @@ import Animated, {
   withSequence,
   withDelay,
   Easing,
-  runOnJS,
 } from "react-native-reanimated";
 import { TileData } from "../../game/twenty48/types";
 
@@ -100,7 +99,8 @@ export default function AnimatedTile({ tile, tileSize, gap }: AnimatedTileProps)
         )
       );
     }
-  }, [id, row, col, isNew, isMerge]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id, row, col, isNew, isMerge]); // shared values (top/left/scale) are stable refs
 
   const animStyle = useAnimatedStyle(() => ({
     top: top.value,

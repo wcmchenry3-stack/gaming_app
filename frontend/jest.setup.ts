@@ -5,7 +5,9 @@ import "react-native-gesture-handler/jestSetup";
 // native runtime. Instead we supply a minimal stub covering the hooks used
 // in AnimatedTile.tsx (useSharedValue, useAnimatedStyle, withTiming, etc.).
 jest.mock("react-native-reanimated", () => {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
   const React = require("react");
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
   const { View, Text } = require("react-native");
 
   const sharedValue = (init: unknown) => ({ value: init });
