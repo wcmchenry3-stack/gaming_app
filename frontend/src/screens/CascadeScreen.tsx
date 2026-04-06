@@ -36,6 +36,8 @@ function CascadeGame({ navigation }: Props) {
   const canvasRef = useRef<GameCanvasHandle>(null);
   const queueRef = useRef(new FruitQueue());
   const droppingRef = useRef(false);
+  const lastDropTimeRef = useRef<number>(0);
+  const dropCountRef = useRef<number>(0);
   const prevFruitSetId = useRef(activeFruitSet.id);
 
   // Refs used by test hooks to read latest state without closure staleness
@@ -90,11 +92,25 @@ function CascadeGame({ navigation }: Props) {
 
   const handleTap = useCallback(
     (x: number) => {
-      if (gameOver || droppingRef.current) return;
+      const now = Date.now();
+      const interval = now - lastDropTimeRef.current;
+
+      if (gameOver || droppingRef.current) {
+        console.log(
+          `[Cascade] drop BLOCKED — gameOver=${gameOver} cooling=${droppingRef.current} intervalMs=${interval}`
+        );
+        return;
+      }
       droppingRef.current = true;
+      lastDropTimeRef.current = now;
+      dropCountRef.current += 1;
 
       const tier = queueRef.current.consume();
       setQueueVersion((v) => v + 1);
+
+      console.log(
+        `[Cascade] drop #${dropCountRef.current} tier=${tier} x=${Math.round(x)} intervalMs=${interval}`
+      );
 
       const def = activeFruitSet.fruits[tier];
       canvasRef.current?.drop(def, x);

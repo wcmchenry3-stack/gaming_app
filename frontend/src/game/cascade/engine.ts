@@ -116,7 +116,16 @@ export async function createEngine(
   // Merges are queued during collision events and processed synchronously after draining.
   const mergeQueue: Array<[number, number]> = [];
 
-  function spawnAt(def: FruitDefinition, setId: string, x: number, y: number): FruitBody {
+  function spawnAt(
+    def: FruitDefinition,
+    setId: string,
+    x: number,
+    y: number,
+    source: "player" | "merge" = "player"
+  ): FruitBody {
+    console.log(
+      `[Engine] spawn tier=${def.tier} source=${source} totalBefore=${fruitMap.size} t=${Date.now()}`
+    );
     const rbDesc = R.RigidBodyDesc.dynamic().setTranslation(x * SCALE, y * SCALE);
     const rb = world.createRigidBody(rbDesc);
 
@@ -184,6 +193,9 @@ export async function createEngine(
   }
 
   function processMerges(): void {
+    if (mergeQueue.length > 0) {
+      console.log(`[Engine] processMerges queueLen=${mergeQueue.length} t=${Date.now()}`);
+    }
     for (const [ha, hb] of mergeQueue) {
       const fa = fruitMap.get(ha);
       const fb = fruitMap.get(hb);
@@ -202,6 +214,7 @@ export async function createEngine(
       const posB = rbb.translation();
       const midX = (posA.x + posB.x) / 2 / SCALE; // back to pixels
       const midY = (posA.y + posB.y) / 2 / SCALE;
+      console.log(`[Engine] merge tier=${tier} midX=${midX.toFixed(0)} midY=${midY.toFixed(0)}`);
 
       removeBody(ha);
       removeBody(hb);
@@ -209,17 +222,21 @@ export async function createEngine(
 
       if (tier < 10) {
         const nextDef = fruitSet.fruits[(tier + 1) as FruitTier];
-        spawnAt(nextDef, fruitSet.id, midX, midY);
+        spawnAt(nextDef, fruitSet.id, midX, midY, "merge");
       }
     }
     mergeQueue.length = 0;
   }
 
   let disposed = false;
+  let stepCount = 0;
 
   return {
     step(dt?: number): BodySnapshot[] {
       if (disposed) return [];
+      stepCount += 1;
+      const countBefore = fruitMap.size;
+
       if (dt !== undefined) {
         // Clamp: min 1/120s (avoid micro-steps), max 1/30s (avoid spiral of death on slow frames)
         world.integrationParameters.dt = Math.max(1 / 120, Math.min(dt, 1 / 30));
@@ -257,6 +274,23 @@ export async function createEngine(
             onGameOver();
           }
         });
+      }
+
+      // Per-step fruit-count delta check
+      const delta = fruitMap.size - countBefore;
+      if (delta > 1) {
+        console.warn(
+          `[Engine] step added ${delta} fruits in one tick — expected 1 from a single player drop`
+        );
+      }
+
+      // Periodic bin snapshot (~5 s at 60 fps)
+      if (stepCount % 300 === 0) {
+        const tierCounts: Record<number, number> = {};
+        fruitMap.forEach((fb) => {
+          tierCounts[fb.fruitTier] = (tierCounts[fb.fruitTier] ?? 0) + 1;
+        });
+        console.log("[Engine] bin snapshot", tierCounts, "total=", fruitMap.size);
       }
 
       // Collect body snapshots (pixel coordinates) and detect boundary escapes
