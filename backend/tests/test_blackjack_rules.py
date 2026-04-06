@@ -14,7 +14,6 @@ from blackjack.game import (
     is_soft_hand,
 )
 
-
 # ---------------------------------------------------------------------------
 # BlackjackRules validation
 # ---------------------------------------------------------------------------
@@ -213,7 +212,7 @@ class TestDealerH17:
         g = _make_game_in_player_phase(
             rules=BlackjackRules(hit_soft_17=True),
             player_hand=[Card("♠", "10"), Card("♥", "9")],  # 19
-            dealer_hand=[Card("♦", "A"), Card("♣", "6")],   # soft 17
+            dealer_hand=[Card("♦", "A"), Card("♣", "6")],  # soft 17
             deck=[Card("♠", "A")],  # dealer draws → soft 18
         )
         g.stand()
@@ -226,7 +225,7 @@ class TestDealerH17:
         g = _make_game_in_player_phase(
             rules=BlackjackRules(hit_soft_17=True),
             player_hand=[Card("♠", "10"), Card("♥", "8")],  # 18
-            dealer_hand=[Card("♦", "A"), Card("♣", "6")],   # soft 17
+            dealer_hand=[Card("♦", "A"), Card("♣", "6")],  # soft 17
             deck=[Card("♠", "K")],  # A+6+K = 17 hard
         )
         g.stand()

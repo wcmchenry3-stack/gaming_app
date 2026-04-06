@@ -299,23 +299,18 @@ export function hit(s: EngineState): EngineState {
   return next;
 }
 
+function dealerShouldDraw(hand: readonly Card[], hitSoft17: boolean): boolean {
+  const dv = handValue(hand);
+  if (dv < 17) return true;
+  if (dv === 17 && hitSoft17 && isSoftHand(hand)) return true;
+  return false;
+}
+
 function dealerPlay(s: EngineState): EngineState {
   let working = s;
-  while (true) {
-    const dv = handValue(working.dealer_hand);
-    if (dv < 17) {
-      const { deck, card } = deal(working.deck, working.rules.deck_count);
-      working = { ...working, deck, dealer_hand: [...working.dealer_hand, card] };
-    } else if (
-      dv === 17 &&
-      working.rules.hit_soft_17 &&
-      isSoftHand(working.dealer_hand)
-    ) {
-      const { deck, card } = deal(working.deck, working.rules.deck_count);
-      working = { ...working, deck, dealer_hand: [...working.dealer_hand, card] };
-    } else {
-      break;
-    }
+  while (dealerShouldDraw(working.dealer_hand, working.rules.hit_soft_17)) {
+    const { deck, card } = deal(working.deck, working.rules.deck_count);
+    working = { ...working, deck, dealer_hand: [...working.dealer_hand, card] };
   }
   return working;
 }
