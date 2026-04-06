@@ -48,5 +48,19 @@
   "gameOver.playAgain": "再玩一次",
   "gameOver.playAgainLabel": "用1000筹码开始新游戏",
   "gameOver.home": "主页",
-  "gameOver.homeLabel": "返回主页"
+  "gameOver.homeLabel": "返回主页",
+
+  "rules.title": "牌桌规则",
+  "rules.toggleLabel": "切换牌桌规则",
+  "rules.dealerSoft17": "庄家软17",
+  "rules.s17": "S17",
+  "rules.h17": "H17",
+  "rules.s17Label": "庄家软17停牌",
+  "rules.h17Label": "庄家软17要牌",
+  "rules.deckCount": "副数",
+  "rules.decreaseDeckLabel": "减少副数",
+  "rules.increaseDeckLabel": "增加副数",
+  "rules.penetration": "切牌深度",
+  "rules.decreasePenetrationLabel": "减少切牌深度",
+  "rules.increasePenetrationLabel": "增加切牌深度"
 }

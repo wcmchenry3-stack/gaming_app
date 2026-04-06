@@ -48,5 +48,19 @@
   "gameOver.playAgain": "Jogar de Novo",
   "gameOver.playAgainLabel": "Iniciar nova sessão com 1000 fichas",
   "gameOver.home": "Início",
-  "gameOver.homeLabel": "Voltar para a tela inicial"
+  "gameOver.homeLabel": "Voltar para a tela inicial",
+
+  "rules.title": "Regras da mesa",
+  "rules.toggleLabel": "Alternar regras da mesa",
+  "rules.dealerSoft17": "Dealer 17 suave",
+  "rules.s17": "S17",
+  "rules.h17": "H17",
+  "rules.s17Label": "Dealer para no 17 suave",
+  "rules.h17Label": "Dealer compra no 17 suave",
+  "rules.deckCount": "Baralhos",
+  "rules.decreaseDeckLabel": "Diminuir número de baralhos",
+  "rules.increaseDeckLabel": "Aumentar número de baralhos",
+  "rules.penetration": "Penetração",
+  "rules.decreasePenetrationLabel": "Diminuir penetração",
+  "rules.increasePenetrationLabel": "Aumentar penetração"
 }

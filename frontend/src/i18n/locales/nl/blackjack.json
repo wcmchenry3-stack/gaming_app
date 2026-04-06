@@ -48,5 +48,19 @@
   "gameOver.playAgain": "Opnieuw",
   "gameOver.playAgainLabel": "Begin een nieuwe sessie met 1000 chips",
   "gameOver.home": "Home",
-  "gameOver.homeLabel": "Terug naar startscherm"
+  "gameOver.homeLabel": "Terug naar startscherm",
+
+  "rules.title": "Tafelregels",
+  "rules.toggleLabel": "Tafelregels wisselen",
+  "rules.dealerSoft17": "Dealer zachte 17",
+  "rules.s17": "S17",
+  "rules.h17": "H17",
+  "rules.s17Label": "Dealer staat op zachte 17",
+  "rules.h17Label": "Dealer trekt op zachte 17",
+  "rules.deckCount": "Decks",
+  "rules.decreaseDeckLabel": "Aantal decks verlagen",
+  "rules.increaseDeckLabel": "Aantal decks verhogen",
+  "rules.penetration": "Penetratie",
+  "rules.decreasePenetrationLabel": "Penetratie verlagen",
+  "rules.increasePenetrationLabel": "Penetratie verhogen"
 }

@@ -15,6 +15,12 @@ export interface HandResponse {
   soft: boolean;
 }
 
+export interface GameRules {
+  hit_soft_17: boolean;
+  deck_count: number;
+  penetration: number;
+}
+
 export interface BlackjackState {
   phase: string; // "betting" | "player" | "result"
   chips: number;
@@ -25,4 +31,5 @@ export interface BlackjackState {
   payout: number;
   game_over: boolean;
   double_down_available: boolean;
+  rules: GameRules;
 }

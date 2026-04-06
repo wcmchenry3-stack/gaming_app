@@ -24,6 +24,19 @@ RANK_VALUES: dict[str, int] = {
 RESHUFFLE_THRESHOLD = 15
 
 
+@dataclass(frozen=True)
+class BlackjackRules:
+    hit_soft_17: bool = False
+    deck_count: int = 6
+    penetration: float = 0.75
+
+    def __post_init__(self) -> None:
+        if not 1 <= self.deck_count <= 8:
+            raise ValueError("deck_count must be between 1 and 8.")
+        if not 0.5 <= self.penetration <= 0.9:
+            raise ValueError("penetration must be between 0.5 and 0.9.")
+
+
 @dataclass
 class Card:
     suit: str
@@ -56,8 +69,21 @@ def is_natural_blackjack(cards: list[Card]) -> bool:
     return len(cards) == 2 and hand_value(cards) == 21
 
 
-def _fresh_shuffled_deck() -> list[Card]:
-    deck = [Card(suit=s, rank=r) for s in SUITS for r in RANKS]
+def is_soft_hand(cards: list[Card]) -> bool:
+    """True when at least one Ace in the hand is counted as 11."""
+    if not cards:
+        return False
+    raw_total = sum(RANK_VALUES[c.rank] for c in cards)
+    num_aces = sum(1 for c in cards if c.rank == "A")
+    if num_aces == 0:
+        return False
+    best = hand_value(cards)
+    reductions = (raw_total - best) // 10
+    return best <= 21 and num_aces > reductions
+
+
+def _fresh_shuffled_shoe(deck_count: int = 1) -> list[Card]:
+    deck = [Card(suit=s, rank=r) for s in SUITS for r in RANKS] * deck_count
     random.shuffle(deck)
     return deck
 
@@ -69,10 +95,15 @@ class BlackjackGame:
     phase: str = "betting"  # "betting" | "player" | "result"
     outcome: str | None = None  # "blackjack" | "win" | "lose" | "push"
     payout: int = 0  # net chip delta already applied to self.chips
-    _deck: list[Card] = field(default_factory=_fresh_shuffled_deck)
+    rules: BlackjackRules = field(default_factory=BlackjackRules)
+    _deck: list[Card] = field(default_factory=list)
     _player_hand: list[Card] = field(default_factory=list)
     _dealer_hand: list[Card] = field(default_factory=list)
     _doubled: bool = False
+
+    def __post_init__(self) -> None:
+        if not self._deck:
+            self._deck = _fresh_shuffled_shoe(self.rules.deck_count)
 
     # ------------------------------------------------------------------
     # Public API
@@ -147,6 +178,10 @@ class BlackjackGame:
         self._dealer_play()
         self._determine_and_settle()
 
+    def _reshuffle_threshold(self) -> int:
+        total_cards = self.rules.deck_count * 52
+        return max(RESHUFFLE_THRESHOLD, int(total_cards * (1 - self.rules.penetration)))
+
     def new_hand(self) -> None:
         if self.phase != "result":
             raise ValueError("Not in result phase.")
@@ -156,8 +191,8 @@ class BlackjackGame:
         self.outcome = None
         self.payout = 0
         self._doubled = False
-        if len(self._deck) < RESHUFFLE_THRESHOLD:
-            self._deck = _fresh_shuffled_deck()
+        if len(self._deck) < self._reshuffle_threshold():
+            self._deck = _fresh_shuffled_shoe(self.rules.deck_count)
         self.phase = "betting"
 
     # ------------------------------------------------------------------
@@ -166,12 +201,18 @@ class BlackjackGame:
 
     def _deal(self) -> Card:
         if not self._deck:
-            self._deck = _fresh_shuffled_deck()
+            self._deck = _fresh_shuffled_shoe(self.rules.deck_count)
         return self._deck.pop()
 
     def _dealer_play(self) -> None:
-        while hand_value(self._dealer_hand) <= 16:
-            self._dealer_hand.append(self._deal())
+        while True:
+            dv = hand_value(self._dealer_hand)
+            if dv < 17:
+                self._dealer_hand.append(self._deal())
+            elif dv == 17 and self.rules.hit_soft_17 and is_soft_hand(self._dealer_hand):
+                self._dealer_hand.append(self._deal())
+            else:
+                break
 
     def _determine_and_settle(self) -> None:
         pv = hand_value(self._player_hand)

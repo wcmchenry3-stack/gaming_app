@@ -2,18 +2,27 @@ import React from "react";
 import { render, fireEvent } from "@testing-library/react-native";
 import BettingPanel from "../BettingPanel";
 import { ThemeProvider } from "../../../theme/ThemeContext";
+import { DEFAULT_RULES } from "../../../game/blackjack/engine";
 
 function renderPanel(
   overrides: Partial<{ chips: number; loading: boolean; error: string | null }> = {}
 ) {
   const onDeal = jest.fn();
+  const onRulesChange = jest.fn();
   const { chips = 1000, loading = false, error = null } = overrides;
   const utils = render(
     <ThemeProvider>
-      <BettingPanel chips={chips} onDeal={onDeal} loading={loading} error={error} />
+      <BettingPanel
+        chips={chips}
+        onDeal={onDeal}
+        loading={loading}
+        error={error}
+        rules={DEFAULT_RULES}
+        onRulesChange={onRulesChange}
+      />
     </ThemeProvider>
   );
-  return { ...utils, onDeal };
+  return { ...utils, onDeal, onRulesChange };
 }
 
 describe("BettingPanel", () => {

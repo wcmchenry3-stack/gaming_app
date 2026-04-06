@@ -4,12 +4,14 @@ from fastapi import APIRouter, HTTPException, Request
 
 from limiter import limiter
 from session import get_session_id
-from .game import BlackjackGame, hand_value
+from .game import BlackjackGame, BlackjackRules, hand_value
 from .models import (
     BlackjackStateResponse,
     CardResponse,
     HandResponse,
     PlaceBetRequest,
+    RulesRequest,
+    RulesResponse,
 )
 
 router = APIRouter()
@@ -57,6 +59,11 @@ def _state_response(game: BlackjackGame) -> BlackjackStateResponse:
         game.phase == "player" and len(game._player_hand) == 2 and game.chips >= game.bet * 2
     )
     game_over = game.chips == 0 and game.phase == "result"
+    rules = RulesResponse(
+        hit_soft_17=game.rules.hit_soft_17,
+        deck_count=game.rules.deck_count,
+        penetration=game.rules.penetration,
+    )
     return BlackjackStateResponse(
         phase=game.phase,
         chips=game.chips,
@@ -67,15 +74,24 @@ def _state_response(game: BlackjackGame) -> BlackjackStateResponse:
         payout=game.payout,
         game_over=game_over,
         double_down_available=double_down_available,
+        rules=rules,
     )
 
 
 @router.post("/new", response_model=BlackjackStateResponse)
 @limiter.limit("10/minute")
-def new_game(request: Request) -> BlackjackStateResponse:
+def new_game(request: Request, body: RulesRequest | None = None) -> BlackjackStateResponse:
     sid = get_session_id(request)
     _evict_if_full()
-    _sessions[sid] = BlackjackGame()
+    if body:
+        rules = BlackjackRules(
+            hit_soft_17=body.hit_soft_17,
+            deck_count=body.deck_count,
+            penetration=body.penetration,
+        )
+    else:
+        rules = BlackjackRules()
+    _sessions[sid] = BlackjackGame(rules=rules)
     return _state_response(_sessions[sid])
 
 

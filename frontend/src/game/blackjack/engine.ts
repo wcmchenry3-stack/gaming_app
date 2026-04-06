@@ -11,7 +11,7 @@
  * player phase (mirrors backend's conceal behavior).
  */
 
-import { BlackjackState, CardResponse, HandResponse } from "./types";
+import { BlackjackState, CardResponse, GameRules, HandResponse } from "./types";
 
 const SUITS = ["♠", "♥", "♦", "♣"] as const;
 const RANKS = ["A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K"] as const;
@@ -39,6 +39,12 @@ export interface Card {
   rank: string;
 }
 
+export const DEFAULT_RULES: GameRules = {
+  hit_soft_17: false,
+  deck_count: 6,
+  penetration: 0.75,
+};
+
 /**
  * Full engine state — kept in memory + AsyncStorage. The UI never sees
  * this directly; it consumes `toViewState(engineState)` instead.
@@ -53,6 +59,7 @@ export interface EngineState {
   player_hand: Card[];
   dealer_hand: Card[];
   doubled: boolean;
+  rules: GameRules;
 }
 
 // ---------------------------------------------------------------------------
@@ -126,11 +133,13 @@ export function createSeededRng(seed: number): RandomSource {
   };
 }
 
-function freshShuffledDeck(): Card[] {
+function freshShuffledDeck(deckCount: number = 1): Card[] {
   const deck: Card[] = [];
-  for (const s of SUITS) {
-    for (const r of RANKS) {
-      deck.push({ suit: s, rank: r });
+  for (let d = 0; d < deckCount; d++) {
+    for (const s of SUITS) {
+      for (const r of RANKS) {
+        deck.push({ suit: s, rank: r });
+      }
     }
   }
   // Fisher–Yates shuffle
@@ -161,8 +170,8 @@ if ((_devHook || _testHook) && typeof globalThis !== "undefined") {
  * Draw one card from a deck. Returns the new deck (with one fewer card)
  * and the drawn card. Auto-reshuffles if the deck runs dry mid-draw.
  */
-function deal(deck: Card[]): { deck: Card[]; card: Card } {
-  const working = deck.length === 0 ? freshShuffledDeck() : deck;
+function deal(deck: Card[], deckCount: number = 1): { deck: Card[]; card: Card } {
+  const working = deck.length === 0 ? freshShuffledDeck(deckCount) : deck;
   const next = [...working];
   const card = next.pop()!;
   return { deck: next, card };
@@ -199,6 +208,7 @@ export function toViewState(s: EngineState): BlackjackState {
     payout: s.payout,
     game_over,
     double_down_available,
+    rules: s.rules,
   };
 }
 
@@ -206,17 +216,19 @@ export function toViewState(s: EngineState): BlackjackState {
 // Public API — pure state transitions
 // ---------------------------------------------------------------------------
 
-export function newGame(deck?: Card[]): EngineState {
+export function newGame(deck?: Card[], rules?: GameRules): EngineState {
+  const r = rules ?? DEFAULT_RULES;
   return {
     chips: 1000,
     bet: 0,
     phase: "betting",
     outcome: null,
     payout: 0,
-    deck: deck ?? freshShuffledDeck(),
+    deck: deck ?? freshShuffledDeck(r.deck_count),
     player_hand: [],
     dealer_hand: [],
     doubled: false,
+    rules: r,
   };
 }
 
@@ -247,10 +259,10 @@ export function placeBet(s: EngineState, amount: number): EngineState {
   const playerHand: Card[] = [];
   const dealerHand: Card[] = [];
   for (let i = 0; i < 2; i++) {
-    let r = deal(deck);
+    let r = deal(deck, s.rules.deck_count);
     deck = r.deck;
     playerHand.push(r.card);
-    r = deal(deck);
+    r = deal(deck, s.rules.deck_count);
     deck = r.deck;
     dealerHand.push(r.card);
   }
@@ -275,7 +287,7 @@ export function placeBet(s: EngineState, amount: number): EngineState {
 
 export function hit(s: EngineState): EngineState {
   if (s.phase !== "player") throw new Error("Not in player phase.");
-  const { deck, card } = deal(s.deck);
+  const { deck, card } = deal(s.deck, s.rules.deck_count);
   const next: EngineState = {
     ...s,
     deck,
@@ -289,9 +301,21 @@ export function hit(s: EngineState): EngineState {
 
 function dealerPlay(s: EngineState): EngineState {
   let working = s;
-  while (handValue(working.dealer_hand) <= 16) {
-    const { deck, card } = deal(working.deck);
-    working = { ...working, deck, dealer_hand: [...working.dealer_hand, card] };
+  while (true) {
+    const dv = handValue(working.dealer_hand);
+    if (dv < 17) {
+      const { deck, card } = deal(working.deck, working.rules.deck_count);
+      working = { ...working, deck, dealer_hand: [...working.dealer_hand, card] };
+    } else if (
+      dv === 17 &&
+      working.rules.hit_soft_17 &&
+      isSoftHand(working.dealer_hand)
+    ) {
+      const { deck, card } = deal(working.deck, working.rules.deck_count);
+      working = { ...working, deck, dealer_hand: [...working.dealer_hand, card] };
+    } else {
+      break;
+    }
   }
   return working;
 }
@@ -324,7 +348,7 @@ export function doubleDown(s: EngineState): EngineState {
   // wager. Doubling `bet` alone makes the settlement delta double, which
   // is correct under the "chips includes wagered" accounting used by
   // settleWith().
-  const { deck, card } = deal(s.deck);
+  const { deck, card } = deal(s.deck, s.rules.deck_count);
   const afterDouble: EngineState = {
     ...s,
     bet: s.bet * 2,
@@ -339,9 +363,17 @@ export function doubleDown(s: EngineState): EngineState {
   return determineAndSettle(dealerPlay(afterDouble));
 }
 
+function reshuffleThreshold(rules: GameRules): number {
+  const totalCards = rules.deck_count * 52;
+  return Math.max(RESHUFFLE_THRESHOLD, Math.floor(totalCards * (1 - rules.penetration)));
+}
+
 export function newHand(s: EngineState): EngineState {
   if (s.phase !== "result") throw new Error("Not in result phase.");
-  const deck = s.deck.length < RESHUFFLE_THRESHOLD ? freshShuffledDeck() : s.deck;
+  const deck =
+    s.deck.length < reshuffleThreshold(s.rules)
+      ? freshShuffledDeck(s.rules.deck_count)
+      : s.deck;
   return {
     ...s,
     phase: "betting",
