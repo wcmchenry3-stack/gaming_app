@@ -276,6 +276,7 @@ jobs:
   # --- Phase 6: Xcode build validation (macOS, moderate) --------------------
 
   ios-build-check:
+    if: github.base_ref == 'main' || (github.event_name == 'push' && github.ref == 'refs/heads/main')
     uses: wcmchenry3-stack/.github/.github/workflows/called-ios-build-check.yml@main
     with:
       working-directory: frontend
@@ -286,6 +287,7 @@ jobs:
   # --- Phase 7: Android build validation (Linux, moderate) ------------------
 
   android-build-check:
+    if: github.base_ref == 'main' || (github.event_name == 'push' && github.ref == 'refs/heads/main')
     uses: wcmchenry3-stack/.github/.github/workflows/called-android-build-check.yml@main
     with:
       working-directory: frontend
