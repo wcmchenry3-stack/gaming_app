@@ -17,7 +17,7 @@ from sentry_sdk.integrations.starlette import StarletteIntegration
 from limiter import _real_ip, limiter
 from cascade.router import router as cascade_router
 from blackjack.router import router as blackjack_router
-from pachisi.router import router as pachisi_router
+from pachisi.router import router as pachisi_router  # noqa: F401
 from yacht.router import router as yacht_router
 
 # ---------------------------------------------------------------------------
