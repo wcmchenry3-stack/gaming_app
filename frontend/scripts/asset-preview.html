@@ -344,6 +344,10 @@
       #simulate-canvas {
         border-radius: 8px;
         box-shadow: 0 0 0 2px #334155;
+        cursor: grab;
+      }
+      #simulate-canvas.dragging {
+        cursor: grabbing;
       }
 
       .sim-hint {
@@ -519,8 +523,9 @@
             </div>
             <canvas id="simulate-canvas" width="320" height="520"></canvas>
             <div class="sim-hint">
-              Physics uses Matter.js with game constants (restitution 0.1, friction 0.3).<br />
-              Hulls are approximated as circles for the simulation.
+              Physics uses Matter.js with game constants (restitution 0.1, friction 0.3).
+              Hulls are approximated as circles for the simulation.<br />
+              <strong style="color:#94a3b8">Drag any body</strong> to reposition it — physics resumes on release.
             </div>
           </div>
         </div>
@@ -1008,6 +1013,69 @@
         mRunner = null;
       let simBodies = []; // { body, tier, themeId, imgData, sprite }
       let simRafId = null;
+      let dragEntry = null; // { entry, offsetX, offsetY } while dragging
+
+      function getPointerPos(e) {
+        const rect = simCanvas.getBoundingClientRect();
+        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+        const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+        const scaleX = SIM_W / rect.width;
+        const scaleY = SIM_H / rect.height;
+        return {
+          x: (clientX - rect.left) * scaleX,
+          y: (clientY - rect.top) * scaleY,
+        };
+      }
+
+      function findBodyAt(x, y) {
+        for (const entry of simBodies) {
+          const dx = entry.body.position.x - x;
+          const dy = entry.body.position.y - y;
+          if (Math.hypot(dx, dy) <= RADII[entry.tier]) return entry;
+        }
+        return null;
+      }
+
+      function onDragStart(e) {
+        const { x, y } = getPointerPos(e);
+        const entry = findBodyAt(x, y);
+        if (!entry) return;
+        e.preventDefault();
+        dragEntry = {
+          entry,
+          offsetX: entry.body.position.x - x,
+          offsetY: entry.body.position.y - y,
+        };
+        Matter.Body.setStatic(entry.body, true);
+        simCanvas.classList.add("dragging");
+      }
+
+      function onDragMove(e) {
+        if (!dragEntry) return;
+        e.preventDefault();
+        const { x, y } = getPointerPos(e);
+        Matter.Body.setPosition(dragEntry.entry.body, {
+          x: x + dragEntry.offsetX,
+          y: y + dragEntry.offsetY,
+        });
+      }
+
+      function onDragEnd() {
+        if (!dragEntry) return;
+        Matter.Body.setStatic(dragEntry.entry.body, false);
+        Matter.Body.setVelocity(dragEntry.entry.body, { x: 0, y: 0 });
+        dragEntry = null;
+        simCanvas.classList.remove("dragging");
+      }
+
+      simCanvas.addEventListener("mousedown", onDragStart);
+      simCanvas.addEventListener("mousemove", onDragMove);
+      simCanvas.addEventListener("mouseup", onDragEnd);
+      simCanvas.addEventListener("mouseleave", onDragEnd);
+      simCanvas.addEventListener("touchstart", onDragStart, { passive: false });
+      simCanvas.addEventListener("touchmove", onDragMove, { passive: false });
+      simCanvas.addEventListener("touchend", onDragEnd);
+      simCanvas.addEventListener("touchcancel", onDragEnd);
 
       function buildSimWorld() {
         if (mEngine) {
@@ -1084,17 +1152,31 @@
         simCtx.fillRect(0, SIM_H - WALL, SIM_W, WALL);
 
         // Bodies
-        for (const { body, tier, imgData, sprite } of simBodies) {
+        for (const entry of simBodies) {
+          const { body, tier, imgData, sprite } = entry;
           const { x, y } = body.position;
           const angle = body.angle;
           const r = RADII[tier];
+          const isDragged = dragEntry && dragEntry.entry === entry;
 
           simCtx.save();
           simCtx.translate(x, y);
           simCtx.rotate(angle);
+          if (isDragged) simCtx.globalAlpha = 0.6;
           const fruit = THEMES[currentThemeId].fruits[tier];
           drawAsset(simCtx, r, fruit.color, imgData ? imgData.clean : null, sprite);
           simCtx.restore();
+
+          // Highlight ring around dragged body
+          if (isDragged) {
+            simCtx.save();
+            simCtx.strokeStyle = "#f8fafc";
+            simCtx.lineWidth = 2;
+            simCtx.beginPath();
+            simCtx.arc(x, y, r + 3, 0, Math.PI * 2);
+            simCtx.stroke();
+            simCtx.restore();
+          }
         }
       }
 
