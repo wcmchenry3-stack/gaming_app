@@ -7,7 +7,7 @@
  */
 
 import fruitVerticesRaw from "../../../../assets/fruit-vertices.json";
-import planetVerticesRaw from "../../../../assets/planet-vertices.json";
+import cosmosVerticesRaw from "../../../../assets/cosmos-vertices.json";
 import { FRUIT_SETS, FruitDefinition } from "../../../theme/fruitSets";
 import { getVerticesForFruit, getSpriteInfo } from "../fruitVertices";
 
@@ -194,12 +194,12 @@ describe("fruitSets ↔ vertex JSON key alignment", () => {
     }
   });
 
-  it("every planet with an icon has a matching vertex JSON entry", () => {
-    const planetMap = planetVerticesRaw as unknown as Record<string, AssetEntry>;
-    for (const def of FRUIT_SETS.planets.fruits) {
+  it("every cosmos entry with an icon has a matching vertex JSON entry", () => {
+    const cosmosMap = cosmosVerticesRaw as unknown as Record<string, AssetEntry>;
+    for (const def of FRUIT_SETS.cosmos.fruits) {
       if (!def.icon) continue;
       const key = nameKeyFor(def);
-      expect(planetMap).toHaveProperty(key);
+      expect(cosmosMap).toHaveProperty(key);
     }
   });
 });

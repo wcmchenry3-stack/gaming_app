@@ -1,5 +1,5 @@
 import fruitVerticesRaw from "../../../assets/fruit-vertices.json";
-import planetVerticesRaw from "../../../assets/planet-vertices.json";
+import cosmosVerticesRaw from "../../../assets/cosmos-vertices.json";
 
 export type VertexPoint = { x: number; y: number };
 
@@ -90,7 +90,7 @@ function simplifyVertices(verts: VertexPoint[], maxCount: number): VertexPoint[]
 function getEntry(setId: string, nameKey: string): AssetEntry | null {
   let map: Record<string, AssetEntry> | null = null;
   if (setId === "fruits") map = fruitVerticesRaw as unknown as Record<string, AssetEntry>;
-  else if (setId === "planets") map = planetVerticesRaw as unknown as Record<string, AssetEntry>;
+  else if (setId === "cosmos") map = cosmosVerticesRaw as unknown as Record<string, AssetEntry>;
   else return null;
 
   return map[nameKey] ?? null;
@@ -98,7 +98,7 @@ function getEntry(setId: string, nameKey: string): AssetEntry | null {
 
 /**
  * Return normalized convex-hull vertices for a fruit, or null if the set
- * has no PNG assets (e.g. gems) or fewer than 3 vertices were extracted.
+ * has no PNG assets or fewer than 3 vertices were extracted.
  *
  * Vertices are centred on the opaque bounding-box centre and scaled so the
  * hull fills [-1, 1]. Multiply each component by def.radius for world-space.

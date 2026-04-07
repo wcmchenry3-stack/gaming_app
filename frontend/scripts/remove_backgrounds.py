@@ -30,11 +30,15 @@ Modes
              solid or near-solid opaque background (fruit icons). Samples up to
              four corner regions for reference background colours.
 
-  circle  — circular alpha mask. Suitable for spherical assets (planets/moons)
-             where the subject fills the frame and the "background" corner pixels
-             are part of the subject's atmosphere rather than a solid backdrop.
-             The colour-distance approach incorrectly makes interior pixels
-             semi-transparent for these images; a circle mask is exact.
+  circle    — circular alpha mask. Suitable for spherical assets where the subject
+               fills the entire frame.
+
+  celestial — two-pass mode for celestial/kawaii sprites with baked-in checkerboard
+               backgrounds. Uses colour-distance removal with tight thresholds
+               (CELESTIAL_HARD / CELESTIAL_SOFT) followed by a circle mask.
+               The tight thresholds remove the checkerboard (which clusters at
+               distance 0–5 from corner references) without eating grey artwork
+               (Moon, Venus, Saturn) that starts at distance 10+.
 """
 
 import math
@@ -48,12 +52,20 @@ SOFT_THRESHOLD = 80  # pixels beyond this from background → fully opaque
 CIRCLE_RADIUS_FACTOR = 0.48   # planet radius as fraction of min(w,h)
 CIRCLE_FEATHER_FACTOR = 0.01  # soft-edge width as fraction of min(w,h)
 
+# Tighter colour-distance thresholds for celestial icons (two-pass mode).
+# The checkerboard background tones are close to the grey artwork on some bodies
+# (Moon, Venus, Saturn), so the standard 25/80 thresholds eat too much artwork.
+# Checkerboard pixels cluster at distance 0–5 from corner references; artwork
+# starts at ~10+, so 8/12 captures the checkerboard while preserving artwork.
+CELESTIAL_HARD = 8
+CELESTIAL_SOFT = 10
+
 # Default asset directories with their processing mode
 _SCRIPT_DIR = Path(__file__).resolve().parent
 _FRONTEND_DIR = _SCRIPT_DIR.parent
 DEFAULT_DIRS: list[tuple[Path, str]] = [
     (_FRONTEND_DIR / "assets" / "fruit-icons",    "color"),
-    (_FRONTEND_DIR / "assets" / "celestial-icons", "circle"),
+    (_FRONTEND_DIR / "assets" / "celestial-icons", "celestial"),
 ]
 
 
@@ -136,9 +148,13 @@ def apply_circle_mask(
         elif dist <= r + feather:
             t = (r + feather - dist) / (2.0 * feather)
             t = max(0.0, min(1.0, t))
-            result.append((px_r, px_g, px_b, int(px_a * t)))
+            new_a = int(px_a * t)
+            if new_a == 0:
+                result.append((0, 0, 0, 0))
+            else:
+                result.append((px_r, px_g, px_b, new_a))
         else:
-            result.append((px_r, px_g, px_b, 0))
+            result.append((0, 0, 0, 0))
     return result
 
 
@@ -172,11 +188,14 @@ def remove_background(
             for bg_r, bg_g, bg_b in bg_refs
         )
         if dist < hard_threshold:
-            result.append((r, g, b, 0))
+            result.append((0, 0, 0, 0))
         elif dist < soft_threshold:
             t = (dist - hard_threshold) / soft_range
             new_a = int(round(a * t))
-            result.append((r, g, b, new_a))
+            if new_a == 0:
+                result.append((0, 0, 0, 0))
+            else:
+                result.append((r, g, b, new_a))
         else:
             result.append((r, g, b, a))
     return result
@@ -216,14 +235,61 @@ def process_file(path: Path, mode: str = "color") -> str:
     """
     Process a single PNG file in place using the given mode.
 
-    mode="color"  — colour-distance background removal (fruits).
-    mode="circle" — circular alpha mask (celestial/spherical assets).
+    mode="color"     — colour-distance background removal (fruits).
+    mode="circle"    — circular alpha mask only (generic spherical assets).
+    mode="celestial" — colour-distance with tight thresholds then circle mask.
+                       Handles baked-in checkerboard backgrounds on celestial PNGs
+                       without eating grey artwork (Moon, Venus, Saturn, etc.).
 
     Returns a human-readable status string.
     """
     pixels, width, height = _load_rgba(path)
 
-    if mode == "circle":
+    if mode == "celestial":
+        # Two-pass colour + circle removal for celestial sprites with baked-in
+        # checkerboard backgrounds.  The checkerboard tones overlap with grey
+        # artwork (Moon, Venus, Saturn), so we use a radial strategy:
+        #   - Inner region (< 0.30 radius): tight thresholds to preserve artwork
+        #   - Outer ring  (>= 0.30 radius): standard thresholds to strip checker
+        # The fruit-colour fill in the Skia renderer covers any small artefacts
+        # at the boundary where thresholds transition.
+        bg_refs = _sample_background(pixels, width, height)
+        cx, cy = width / 2.0, height / 2.0
+        dim = min(width, height)
+        inner_r = dim * 0.30
+
+        processed: list[tuple[int, int, int, int]] = []
+        for idx, (r, g, b, a) in enumerate(pixels):
+            row = idx // width
+            col = idx % width
+            dist_center = math.hypot(col - cx, row - cy)
+
+            # Pick thresholds based on distance from centre
+            if dist_center < inner_r:
+                hard, soft = CELESTIAL_HARD, CELESTIAL_SOFT
+            else:
+                hard, soft = HARD_THRESHOLD, SOFT_THRESHOLD
+
+            colour_dist = min(
+                math.sqrt((r - br) ** 2 + (g - bg) ** 2 + (b - bb) ** 2)
+                for br, bg, bb in bg_refs
+            )
+            soft_range = soft - hard
+            if colour_dist < hard:
+                processed.append((0, 0, 0, 0))
+            elif colour_dist < soft:
+                t = (colour_dist - hard) / soft_range
+                new_a = int(round(a * t))
+                if new_a == 0:
+                    processed.append((0, 0, 0, 0))
+                else:
+                    processed.append((r, g, b, new_a))
+            else:
+                processed.append((r, g, b, a))
+
+        # Pass 2: circle mask to clean up remaining corner artefacts.
+        processed = apply_circle_mask(processed, width, height)
+    elif mode == "circle":
         processed = apply_circle_mask(pixels, width, height)
     else:
         if _is_already_transparent(pixels, width, height):

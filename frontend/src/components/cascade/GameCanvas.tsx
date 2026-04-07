@@ -109,11 +109,6 @@ function FruitBodySkia({
       ih = radius * 2;
     }
 
-    // Sprite is drawn clipped to the fruit's circle. No opaque background fill:
-    // on web the sprite edges are hard-thresholded via cleanImage(), but on mobile
-    // we keep the raw alpha so sprite edges blend naturally with whatever is
-    // behind (canvas background or adjacent fruits). Filling a bg circle here
-    // would obscure adjacent fruits with a dark ring where sprite alpha fades.
     return (
       <Group transform={[{ translateX: x }, { translateY: y }, { rotate: angle }]}>
         <Group clip={clipPath} invertClip={false}>

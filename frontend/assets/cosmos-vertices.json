@@ -1,0 +1,62 @@
+{
+  "earth": {
+    "verts": [],
+    "spriteOffset": [0.000755, -0.000755],
+    "spriteScale": [1.54566, 1.54566]
+  },
+  "jupiter": {
+    "verts": [],
+    "spriteOffset": [0.007788, 0.0],
+    "spriteScale": [1.063344, 1.063344]
+  },
+  "mars": {
+    "verts": [],
+    "spriteOffset": [0.000754, -0.000754],
+    "spriteScale": [1.543331, 1.543331]
+  },
+  "mercury": {
+    "verts": [],
+    "spriteOffset": [0.000755, -0.000755],
+    "spriteScale": [1.54566, 1.54566]
+  },
+  "milkyway": {
+    "verts": [],
+    "spriteOffset": [0.007277, 0.00104],
+    "spriteScale": [1.064449, 1.064449]
+  },
+  "moon": {
+    "verts": [],
+    "spriteOffset": [0.003017, 0.001508],
+    "spriteScale": [1.544495, 1.544495]
+  },
+  "neptune": {
+    "verts": [],
+    "spriteOffset": [0.000754, -0.000754],
+    "spriteScale": [1.543331, 1.543331]
+  },
+  "pluto": {
+    "verts": [],
+    "spriteOffset": [-0.019516, 0.0],
+    "spriteScale": [1.598751, 1.598751]
+  },
+  "saturn": {
+    "verts": [],
+    "spriteOffset": [0.047144, 0.058236],
+    "spriteScale": [1.135885, 1.135885]
+  },
+  "sun": {
+    "verts": [],
+    "spriteOffset": [0.002079, 0.006237],
+    "spriteScale": [1.064449, 1.064449]
+  },
+  "uranus": {
+    "verts": [],
+    "spriteOffset": [0.054368, 0.155773],
+    "spriteScale": [1.251069, 1.251069]
+  },
+  "venus": {
+    "verts": [],
+    "spriteOffset": [0.0, 0.0],
+    "spriteScale": [1.667752, 1.667752]
+  }
+}

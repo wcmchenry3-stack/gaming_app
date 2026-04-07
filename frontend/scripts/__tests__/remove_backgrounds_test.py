@@ -275,12 +275,16 @@ class TestApplyCircleMask:
         assert self._get_alpha(result, 0, self.SIZE - 1) == 0
         assert self._get_alpha(result, self.SIZE - 1, self.SIZE - 1) == 0
 
-    def test_rgb_values_are_preserved(self):
-        """Circle mask must not alter R, G, B — only alpha."""
+    def test_rgb_values_are_preserved_for_visible_pixels(self):
+        """Circle mask preserves R, G, B for pixels with non-zero alpha;
+        pixels with alpha=0 have RGB zeroed to prevent ghost-pixel resampling artifacts."""
         pixels = self._planet_image()
         result = apply_circle_mask(pixels, self.SIZE, self.SIZE)
-        for r, g, b, _ in result:
-            assert (r, g, b) == (200, 120, 50)
+        for r, g, b, a in result:
+            if a > 0:
+                assert (r, g, b) == (200, 120, 50)
+            else:
+                assert (r, g, b) == (0, 0, 0)
 
     def test_soft_edge_has_intermediate_alpha(self):
         """Pixels near the circle boundary should have 0 < alpha < 255."""
