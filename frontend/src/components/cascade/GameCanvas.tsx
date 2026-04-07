@@ -36,7 +36,7 @@ import {
   WALL_THICKNESS,
   DANGER_LINE_RATIO,
 } from "../../game/cascade/engine";
-import { getSpriteInfo, spriteClipRadius, SpriteInfo } from "../../game/cascade/fruitVertices";
+import { getSpriteInfo, SpriteInfo } from "../../game/cascade/fruitVertices";
 import { FruitDefinition, FruitSet } from "../../theme/fruitSets";
 import { useTheme } from "../../theme/ThemeContext";
 import { useTranslation } from "react-i18next";
@@ -87,11 +87,9 @@ function FruitBodySkia({
   sprite: SpriteInfo | null;
 }) {
   if (image) {
-    // Clip to the sprite's full bounding circle so ring imagery on ringed
-    // planets (Uranus, Saturn) is not truncated at the physics radius.
-    const clipR = sprite ? spriteClipRadius(sprite, radius) : radius;
+    // Build a circular clip path
     const clipPath = Skia.Path.Make();
-    clipPath.addCircle(0, 0, clipR);
+    clipPath.addCircle(0, 0, radius);
 
     // Compute image draw rect using sprite alignment info
     let ix: number, iy: number, iw: number, ih: number;
