@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!doctype html>
 <!--
   Cascade Asset Preview Tool
   ──────────────────────────
@@ -13,885 +13,1130 @@
                 see how it falls, stacks, and interacts with other bodies.
 -->
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>Cascade — Asset Preview</title>
-  <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  <head>
+    <meta charset="UTF-8" />
+    <title>Cascade — Asset Preview</title>
+    <style>
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
 
-    body {
-      font-family: system-ui, sans-serif;
-      background: #0f172a;
-      color: #e2e8f0;
-      display: flex;
-      flex-direction: column;
-      height: 100vh;
-      overflow: hidden;
-    }
+      body {
+        font-family: system-ui, sans-serif;
+        background: #0f172a;
+        color: #e2e8f0;
+        display: flex;
+        flex-direction: column;
+        height: 100vh;
+        overflow: hidden;
+      }
 
-    header {
-      background: #1e293b;
-      padding: 10px 16px;
-      border-bottom: 1px solid #334155;
-      font-size: 14px;
-      font-weight: 700;
-      letter-spacing: 0.05em;
-      color: #facc15;
-      flex-shrink: 0;
-    }
+      header {
+        background: #1e293b;
+        padding: 10px 16px;
+        border-bottom: 1px solid #334155;
+        font-size: 14px;
+        font-weight: 700;
+        letter-spacing: 0.05em;
+        color: #facc15;
+        flex-shrink: 0;
+      }
 
-    .workspace {
-      display: flex;
-      flex: 1;
-      overflow: hidden;
-    }
+      .workspace {
+        display: flex;
+        flex: 1;
+        overflow: hidden;
+      }
 
-    /* ── Sidebar ── */
-    .sidebar {
-      width: 200px;
-      background: #1e293b;
-      border-right: 1px solid #334155;
-      display: flex;
-      flex-direction: column;
-      overflow-y: auto;
-      flex-shrink: 0;
-    }
+      /* ── Sidebar ── */
+      .sidebar {
+        width: 200px;
+        background: #1e293b;
+        border-right: 1px solid #334155;
+        display: flex;
+        flex-direction: column;
+        overflow-y: auto;
+        flex-shrink: 0;
+      }
 
-    .sidebar-section {
-      padding: 10px;
-      border-bottom: 1px solid #334155;
-    }
+      .sidebar-section {
+        padding: 10px;
+        border-bottom: 1px solid #334155;
+      }
 
-    .sidebar-label {
-      font-size: 10px;
-      font-weight: 700;
-      letter-spacing: 0.08em;
-      color: #64748b;
-      text-transform: uppercase;
-      margin-bottom: 6px;
-    }
+      .sidebar-label {
+        font-size: 10px;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        color: #64748b;
+        text-transform: uppercase;
+        margin-bottom: 6px;
+      }
 
-    .theme-tabs {
-      display: flex;
-      gap: 4px;
-    }
+      .theme-tabs {
+        display: flex;
+        gap: 4px;
+      }
 
-    .theme-tab {
-      flex: 1;
-      padding: 5px 0;
-      border: 1px solid #334155;
-      border-radius: 5px;
-      background: transparent;
-      color: #94a3b8;
-      font-size: 12px;
-      cursor: pointer;
-      text-align: center;
-    }
+      .theme-tab {
+        flex: 1;
+        padding: 5px 0;
+        border: 1px solid #334155;
+        border-radius: 5px;
+        background: transparent;
+        color: #94a3b8;
+        font-size: 12px;
+        cursor: pointer;
+        text-align: center;
+      }
 
-    .theme-tab.active {
-      background: #facc15;
-      color: #0f172a;
-      font-weight: 700;
-      border-color: #facc15;
-    }
+      .theme-tab.active {
+        background: #facc15;
+        color: #0f172a;
+        font-weight: 700;
+        border-color: #facc15;
+      }
 
-    .tier-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 4px;
-    }
+      .tier-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 4px;
+      }
 
-    .tier-btn {
-      background: #0f172a;
-      border: 1px solid #334155;
-      border-radius: 5px;
-      padding: 5px 4px;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      gap: 5px;
-      font-size: 11px;
-      color: #cbd5e1;
-      transition: background 0.1s;
-    }
+      .tier-btn {
+        background: #0f172a;
+        border: 1px solid #334155;
+        border-radius: 5px;
+        padding: 5px 4px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        font-size: 11px;
+        color: #cbd5e1;
+        transition: background 0.1s;
+      }
 
-    .tier-btn:hover { background: #1e3a5f; }
+      .tier-btn:hover {
+        background: #1e3a5f;
+      }
 
-    .tier-btn.active {
-      background: #1e40af;
-      border-color: #3b82f6;
-      color: #fff;
-    }
+      .tier-btn.active {
+        background: #1e40af;
+        border-color: #3b82f6;
+        color: #fff;
+      }
 
-    .tier-thumb {
-      width: 22px;
-      height: 22px;
-      border-radius: 50%;
-      flex-shrink: 0;
-      object-fit: cover;
-    }
+      .tier-thumb {
+        width: 22px;
+        height: 22px;
+        border-radius: 50%;
+        flex-shrink: 0;
+        object-fit: cover;
+      }
 
-    .tier-thumb-placeholder {
-      width: 22px;
-      height: 22px;
-      border-radius: 50%;
-      flex-shrink: 0;
-    }
+      .tier-thumb-placeholder {
+        width: 22px;
+        height: 22px;
+        border-radius: 50%;
+        flex-shrink: 0;
+      }
 
-    .overlay-row {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      margin-bottom: 5px;
-      font-size: 12px;
-      cursor: pointer;
-    }
+      .overlay-row {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        margin-bottom: 5px;
+        font-size: 12px;
+        cursor: pointer;
+      }
 
-    .overlay-row input { cursor: pointer; accent-color: #3b82f6; }
+      .overlay-row input {
+        cursor: pointer;
+        accent-color: #3b82f6;
+      }
 
-    .dot {
-      width: 10px;
-      height: 10px;
-      border-radius: 50%;
-      border: 2px solid;
-      flex-shrink: 0;
-    }
+      .dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        border: 2px solid;
+        flex-shrink: 0;
+      }
 
-    /* ── Main panel ── */
-    .main {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      overflow: hidden;
-    }
+      /* ── Main panel ── */
+      .main {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+      }
 
-    .tab-bar {
-      display: flex;
-      background: #1e293b;
-      border-bottom: 1px solid #334155;
-      flex-shrink: 0;
-    }
+      .tab-bar {
+        display: flex;
+        background: #1e293b;
+        border-bottom: 1px solid #334155;
+        flex-shrink: 0;
+      }
 
-    .tab-btn {
-      padding: 8px 20px;
-      border: none;
-      border-bottom: 2px solid transparent;
-      background: transparent;
-      color: #64748b;
-      font-size: 13px;
-      font-weight: 600;
-      cursor: pointer;
-    }
+      .tab-btn {
+        padding: 8px 20px;
+        border: none;
+        border-bottom: 2px solid transparent;
+        background: transparent;
+        color: #64748b;
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+      }
 
-    .tab-btn.active {
-      color: #facc15;
-      border-bottom-color: #facc15;
-    }
+      .tab-btn.active {
+        color: #facc15;
+        border-bottom-color: #facc15;
+      }
 
-    .tab-content {
-      flex: 1;
-      display: none;
-      overflow: hidden;
-    }
+      .tab-content {
+        flex: 1;
+        display: none;
+        overflow: hidden;
+      }
 
-    .tab-content.active { display: flex; }
+      .tab-content.active {
+        display: flex;
+      }
 
-    /* ── Inspector tab ── */
-    .inspector-layout {
-      flex: 1;
-      display: flex;
-      overflow: hidden;
-    }
+      /* ── Inspector tab ── */
+      .inspector-layout {
+        flex: 1;
+        display: flex;
+        overflow: hidden;
+      }
 
-    .inspector-canvas-wrap {
-      flex: 1;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: repeating-conic-gradient(#1e293b 0% 25%, #162032 0% 50%) 0 0 / 20px 20px;
-      position: relative;
-    }
+      .inspector-canvas-wrap {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: repeating-conic-gradient(#1e293b 0% 25%, #162032 0% 50%) 0 0 / 20px 20px;
+        position: relative;
+      }
 
-    #inspector-canvas {
-      border-radius: 4px;
-      box-shadow: 0 0 0 1px #334155;
-    }
+      #inspector-canvas {
+        border-radius: 4px;
+        box-shadow: 0 0 0 1px #334155;
+      }
 
-    .inspector-info {
-      width: 220px;
-      background: #1e293b;
-      border-left: 1px solid #334155;
-      padding: 14px;
-      overflow-y: auto;
-      flex-shrink: 0;
-    }
+      .inspector-info {
+        width: 220px;
+        background: #1e293b;
+        border-left: 1px solid #334155;
+        padding: 14px;
+        overflow-y: auto;
+        flex-shrink: 0;
+      }
 
-    .info-title {
-      font-size: 18px;
-      font-weight: 800;
-      color: #f1f5f9;
-      margin-bottom: 2px;
-    }
+      .info-title {
+        font-size: 18px;
+        font-weight: 800;
+        color: #f1f5f9;
+        margin-bottom: 2px;
+      }
 
-    .info-tier {
-      font-size: 11px;
-      color: #64748b;
-      margin-bottom: 12px;
-    }
+      .info-tier {
+        font-size: 11px;
+        color: #64748b;
+        margin-bottom: 12px;
+      }
 
-    .info-row {
-      display: flex;
-      justify-content: space-between;
-      font-size: 12px;
-      padding: 4px 0;
-      border-bottom: 1px solid #1e3a5f;
-    }
+      .info-row {
+        display: flex;
+        justify-content: space-between;
+        font-size: 12px;
+        padding: 4px 0;
+        border-bottom: 1px solid #1e3a5f;
+      }
 
-    .info-key { color: #64748b; }
-    .info-val { color: #e2e8f0; font-family: monospace; font-size: 11px; }
+      .info-key {
+        color: #64748b;
+      }
+      .info-val {
+        color: #e2e8f0;
+        font-family: monospace;
+        font-size: 11px;
+      }
 
-    .info-section {
-      font-size: 10px;
-      font-weight: 700;
-      letter-spacing: 0.08em;
-      color: #64748b;
-      text-transform: uppercase;
-      margin: 10px 0 5px;
-    }
+      .info-section {
+        font-size: 10px;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        color: #64748b;
+        text-transform: uppercase;
+        margin: 10px 0 5px;
+      }
 
-    .warn { color: #f59e0b; font-size: 11px; margin-top: 8px; }
+      .warn {
+        color: #f59e0b;
+        font-size: 11px;
+        margin-top: 8px;
+      }
 
-    /* ── Simulate tab ── */
-    .simulate-layout {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      padding: 16px;
-      gap: 12px;
-      overflow-y: auto;
-    }
+      /* ── Simulate tab ── */
+      .simulate-layout {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 16px;
+        gap: 12px;
+        overflow-y: auto;
+      }
 
-    .sim-controls {
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
-      justify-content: center;
-    }
+      .sim-controls {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        justify-content: center;
+      }
 
-    .sim-btn {
-      padding: 7px 16px;
-      border: 1px solid #334155;
-      border-radius: 6px;
-      background: #1e293b;
-      color: #e2e8f0;
-      font-size: 13px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: background 0.1s;
-    }
+      .sim-btn {
+        padding: 7px 16px;
+        border: 1px solid #334155;
+        border-radius: 6px;
+        background: #1e293b;
+        color: #e2e8f0;
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background 0.1s;
+      }
 
-    .sim-btn:hover { background: #1e3a5f; }
-    .sim-btn.primary { background: #1d4ed8; border-color: #3b82f6; }
-    .sim-btn.primary:hover { background: #1e40af; }
-    .sim-btn.danger { background: #7f1d1d; border-color: #ef4444; }
-    .sim-btn.danger:hover { background: #991b1b; }
+      .sim-btn:hover {
+        background: #1e3a5f;
+      }
+      .sim-btn.primary {
+        background: #1d4ed8;
+        border-color: #3b82f6;
+      }
+      .sim-btn.primary:hover {
+        background: #1e40af;
+      }
+      .sim-btn.danger {
+        background: #7f1d1d;
+        border-color: #ef4444;
+      }
+      .sim-btn.danger:hover {
+        background: #991b1b;
+      }
 
-    #simulate-canvas {
-      border-radius: 8px;
-      box-shadow: 0 0 0 2px #334155;
-    }
+      #simulate-canvas {
+        border-radius: 8px;
+        box-shadow: 0 0 0 2px #334155;
+      }
 
-    .sim-hint {
-      font-size: 11px;
-      color: #64748b;
-      text-align: center;
-    }
-  </style>
-</head>
-<body>
+      .sim-hint {
+        font-size: 11px;
+        color: #64748b;
+        text-align: center;
+      }
+    </style>
+  </head>
+  <body>
+    <header>Cascade — Asset Preview</header>
 
-<header>Cascade — Asset Preview</header>
-
-<div class="workspace">
-  <!-- Sidebar -->
-  <aside class="sidebar">
-    <div class="sidebar-section">
-      <div class="sidebar-label">Theme</div>
-      <div class="theme-tabs">
-        <button class="theme-tab active" data-theme="fruits">Fruits</button>
-        <button class="theme-tab" data-theme="cosmos">Cosmos</button>
-      </div>
-    </div>
-
-    <div class="sidebar-section" style="flex:1">
-      <div class="sidebar-label">Tier</div>
-      <div class="tier-grid" id="tier-grid"></div>
-    </div>
-
-    <div class="sidebar-section">
-      <div class="sidebar-label">Overlays</div>
-      <label class="overlay-row">
-        <input type="checkbox" id="ov-physics" checked>
-        <span class="dot" style="border-color:#ffffff;"></span>
-        Physics radius
-      </label>
-      <label class="overlay-row">
-        <input type="checkbox" id="ov-clip" checked>
-        <span class="dot" style="border-color:#f97316; border-style:dashed;"></span>
-        Sprite clip
-      </label>
-      <label class="overlay-row">
-        <input type="checkbox" id="ov-hull" checked>
-        <span class="dot" style="background:#22c55e; border-color:#22c55e;"></span>
-        Hull polygon
-      </label>
-    </div>
-  </aside>
-
-  <!-- Main -->
-  <main class="main">
-    <div class="tab-bar">
-      <button class="tab-btn active" data-tab="inspector">Inspector</button>
-      <button class="tab-btn" data-tab="simulate">Simulate</button>
-    </div>
-
-    <!-- Inspector -->
-    <div class="tab-content active" id="tab-inspector">
-      <div class="inspector-layout">
-        <div class="inspector-canvas-wrap">
-          <canvas id="inspector-canvas" width="400" height="400"></canvas>
+    <div class="workspace">
+      <!-- Sidebar -->
+      <aside class="sidebar">
+        <div class="sidebar-section">
+          <div class="sidebar-label">Theme</div>
+          <div class="theme-tabs">
+            <button class="theme-tab active" data-theme="fruits">Fruits</button>
+            <button class="theme-tab" data-theme="cosmos">Cosmos</button>
+          </div>
         </div>
-        <aside class="inspector-info">
-          <div class="info-title" id="info-name">—</div>
-          <div class="info-tier" id="info-tier-label">—</div>
 
-          <div class="info-section">Physics</div>
-          <div class="info-row"><span class="info-key">Radius</span><span class="info-val" id="info-radius">—</span></div>
-          <div class="info-row"><span class="info-key">Collider</span><span class="info-val" id="info-collider">—</span></div>
-          <div class="info-row"><span class="info-key">Hull verts</span><span class="info-val" id="info-verts">—</span></div>
+        <div class="sidebar-section" style="flex: 1">
+          <div class="sidebar-label">Tier</div>
+          <div class="tier-grid" id="tier-grid"></div>
+        </div>
 
-          <div class="info-section">Sprite</div>
-          <div class="info-row"><span class="info-key">Offset X</span><span class="info-val" id="info-ox">—</span></div>
-          <div class="info-row"><span class="info-key">Offset Y</span><span class="info-val" id="info-oy">—</span></div>
-          <div class="info-row"><span class="info-key">Scale X</span><span class="info-val" id="info-sx">—</span></div>
-          <div class="info-row"><span class="info-key">Scale Y</span><span class="info-val" id="info-sy">—</span></div>
+        <div class="sidebar-section">
+          <div class="sidebar-label">Overlays</div>
+          <label class="overlay-row">
+            <input type="checkbox" id="ov-physics" checked />
+            <span class="dot" style="border-color: #ffffff"></span>
+            Physics radius
+          </label>
+          <label class="overlay-row">
+            <input type="checkbox" id="ov-clip" checked />
+            <span class="dot" style="border-color: #f97316; border-style: dashed"></span>
+            Sprite clip
+          </label>
+          <label class="overlay-row">
+            <input type="checkbox" id="ov-hull" checked />
+            <span class="dot" style="background: #22c55e; border-color: #22c55e"></span>
+            Hull polygon
+          </label>
+        </div>
+      </aside>
 
-          <div class="info-section">Clip</div>
-          <div class="info-row"><span class="info-key">Clip radius</span><span class="info-val" id="info-clipr">—</span></div>
-          <div class="info-row"><span class="info-key">Clip / phys</span><span class="info-val" id="info-ratio">—</span></div>
+      <!-- Main -->
+      <main class="main">
+        <div class="tab-bar">
+          <button class="tab-btn active" data-tab="inspector">Inspector</button>
+          <button class="tab-btn" data-tab="simulate">Simulate</button>
+        </div>
 
-          <div id="info-warn" class="warn" style="display:none"></div>
-        </aside>
-      </div>
+        <!-- Inspector -->
+        <div class="tab-content active" id="tab-inspector">
+          <div class="inspector-layout">
+            <div class="inspector-canvas-wrap">
+              <canvas id="inspector-canvas" width="400" height="400"></canvas>
+            </div>
+            <aside class="inspector-info">
+              <div class="info-title" id="info-name">—</div>
+              <div class="info-tier" id="info-tier-label">—</div>
+
+              <div class="info-section">Physics</div>
+              <div class="info-row">
+                <span class="info-key">Radius</span><span class="info-val" id="info-radius">—</span>
+              </div>
+              <div class="info-row">
+                <span class="info-key">Collider</span
+                ><span class="info-val" id="info-collider">—</span>
+              </div>
+              <div class="info-row">
+                <span class="info-key">Hull verts</span
+                ><span class="info-val" id="info-verts">—</span>
+              </div>
+
+              <div class="info-section">Sprite</div>
+              <div class="info-row">
+                <span class="info-key">Offset X</span><span class="info-val" id="info-ox">—</span>
+              </div>
+              <div class="info-row">
+                <span class="info-key">Offset Y</span><span class="info-val" id="info-oy">—</span>
+              </div>
+              <div class="info-row">
+                <span class="info-key">Scale X</span><span class="info-val" id="info-sx">—</span>
+              </div>
+              <div class="info-row">
+                <span class="info-key">Scale Y</span><span class="info-val" id="info-sy">—</span>
+              </div>
+
+              <div class="info-section">Clip</div>
+              <div class="info-row">
+                <span class="info-key">Clip radius</span
+                ><span class="info-val" id="info-clipr">—</span>
+              </div>
+              <div class="info-row">
+                <span class="info-key">Clip / phys</span
+                ><span class="info-val" id="info-ratio">—</span>
+              </div>
+
+              <div id="info-warn" class="warn" style="display: none"></div>
+            </aside>
+          </div>
+        </div>
+
+        <!-- Simulate -->
+        <div class="tab-content" id="tab-simulate">
+          <div class="simulate-layout">
+            <div class="sim-controls">
+              <button class="sim-btn primary" id="btn-drop">Drop one</button>
+              <button class="sim-btn primary" id="btn-pair">Drop pair</button>
+              <button class="sim-btn" id="btn-stack">Stack five</button>
+              <button class="sim-btn danger" id="btn-reset">Reset</button>
+            </div>
+            <canvas id="simulate-canvas" width="320" height="520"></canvas>
+            <div class="sim-hint">
+              Physics uses Matter.js with game constants (restitution 0.1, friction 0.3).<br />
+              Hulls are approximated as circles for the simulation.
+            </div>
+          </div>
+        </div>
+      </main>
     </div>
 
-    <!-- Simulate -->
-    <div class="tab-content" id="tab-simulate">
-      <div class="simulate-layout">
-        <div class="sim-controls">
-          <button class="sim-btn primary" id="btn-drop">Drop one</button>
-          <button class="sim-btn primary" id="btn-pair">Drop pair</button>
-          <button class="sim-btn" id="btn-stack">Stack five</button>
-          <button class="sim-btn danger" id="btn-reset">Reset</button>
-        </div>
-        <canvas id="simulate-canvas" width="320" height="520"></canvas>
-        <div class="sim-hint">
-          Physics uses Matter.js with game constants (restitution 0.1, friction 0.3).<br>
-          Hulls are approximated as circles for the simulation.
-        </div>
-      </div>
-    </div>
-  </main>
-</div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.20.0/matter.min.js"></script>
+    <script>
+      // ─────────────────────────────────────────────────────────────────────────────
+      // Theme & fruit data — mirrors fruitSets.ts
+      // ─────────────────────────────────────────────────────────────────────────────
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.20.0/matter.min.js"></script>
-<script>
-// ─────────────────────────────────────────────────────────────────────────────
-// Theme & fruit data — mirrors fruitSets.ts
-// ─────────────────────────────────────────────────────────────────────────────
+      const RADII = [18, 25, 33, 38, 44, 52, 60, 68, 76, 86, 98];
 
-const RADII = [18, 25, 33, 38, 44, 52, 60, 68, 76, 86, 98];
+      const THEMES = {
+        fruits: {
+          label: "Fruits",
+          verticesUrl: "../assets/fruit-vertices.json",
+          fruits: [
+            {
+              tier: 0,
+              name: "Cherry",
+              nameKey: "cherry",
+              icon: "../assets/fruit-icons/cherry.png",
+              color: "#dc2626",
+            },
+            {
+              tier: 1,
+              name: "Blueberry",
+              nameKey: "blueberry",
+              icon: "../assets/fruit-icons/blueberry.png",
+              color: "#6d28d9",
+            },
+            {
+              tier: 2,
+              name: "Lemon",
+              nameKey: "lemon",
+              icon: "../assets/fruit-icons/lemon.png",
+              color: "#ca8a04",
+            },
+            {
+              tier: 3,
+              name: "Grape",
+              nameKey: "grapes",
+              icon: "../assets/fruit-icons/grapes.png",
+              color: "#7c3aed",
+            },
+            {
+              tier: 4,
+              name: "Orange",
+              nameKey: "orange",
+              icon: "../assets/fruit-icons/orange.png",
+              color: "#ea580c",
+            },
+            {
+              tier: 5,
+              name: "Apple",
+              nameKey: "apple",
+              icon: "../assets/fruit-icons/apple.png",
+              color: "#dc2626",
+            },
+            {
+              tier: 6,
+              name: "Peach",
+              nameKey: "peach",
+              icon: "../assets/fruit-icons/peach.png",
+              color: "#f97316",
+            },
+            {
+              tier: 7,
+              name: "Coconut",
+              nameKey: "coconut",
+              icon: "../assets/fruit-icons/coconut.png",
+              color: "#78716c",
+            },
+            {
+              tier: 8,
+              name: "Dragonfruit",
+              nameKey: "dragonfruit",
+              icon: "../assets/fruit-icons/dragonfruit.png",
+              color: "#db2777",
+            },
+            {
+              tier: 9,
+              name: "Pineapple",
+              nameKey: "pineapple",
+              icon: "../assets/fruit-icons/pineapple.png",
+              color: "#ca8a04",
+            },
+            {
+              tier: 10,
+              name: "Watermelon",
+              nameKey: "watermelon",
+              icon: "../assets/fruit-icons/watermelon.png",
+              color: "#16a34a",
+            },
+          ],
+        },
+        cosmos: {
+          label: "Cosmos",
+          verticesUrl: "../assets/cosmos-vertices.json",
+          fruits: [
+            {
+              tier: 0,
+              name: "Moon",
+              nameKey: "moon",
+              icon: "../assets/celestial-icons/moon.png",
+              color: "#d1d5db",
+            },
+            {
+              tier: 1,
+              name: "Pluto",
+              nameKey: "pluto",
+              icon: "../assets/celestial-icons/pluto.png",
+              color: "#94a3b8",
+            },
+            {
+              tier: 2,
+              name: "Mercury",
+              nameKey: "mercury",
+              icon: "../assets/celestial-icons/mercury.png",
+              color: "#9ca3af",
+            },
+            {
+              tier: 3,
+              name: "Mars",
+              nameKey: "mars",
+              icon: "../assets/celestial-icons/mars.png",
+              color: "#dc2626",
+            },
+            {
+              tier: 4,
+              name: "Venus",
+              nameKey: "venus",
+              icon: "../assets/celestial-icons/venus.png",
+              color: "#fbbf24",
+            },
+            {
+              tier: 5,
+              name: "Earth",
+              nameKey: "earth",
+              icon: "../assets/celestial-icons/earth.png",
+              color: "#2563eb",
+            },
+            {
+              tier: 6,
+              name: "Neptune",
+              nameKey: "neptune",
+              icon: "../assets/celestial-icons/neptune.png",
+              color: "#1d4ed8",
+            },
+            {
+              tier: 7,
+              name: "Uranus",
+              nameKey: "uranus",
+              icon: "../assets/celestial-icons/uranus.png",
+              color: "#67e8f9",
+            },
+            {
+              tier: 8,
+              name: "Saturn",
+              nameKey: "saturn",
+              icon: "../assets/celestial-icons/saturn.png",
+              color: "#ca8a04",
+            },
+            {
+              tier: 9,
+              name: "Jupiter",
+              nameKey: "jupiter",
+              icon: "../assets/celestial-icons/jupiter.png",
+              color: "#ea580c",
+            },
+            {
+              tier: 10,
+              name: "Sun",
+              nameKey: "sun",
+              icon: "../assets/celestial-icons/sun.png",
+              color: "#facc15",
+            },
+          ],
+        },
+      };
 
-const THEMES = {
-  fruits: {
-    label: "Fruits",
-    verticesUrl: "../assets/fruit-vertices.json",
-    fruits: [
-      { tier: 0, name: "Cherry",      nameKey: "cherry",      icon: "../assets/fruit-icons/cherry.png",      color: "#dc2626" },
-      { tier: 1, name: "Blueberry",   nameKey: "blueberry",   icon: "../assets/fruit-icons/blueberry.png",   color: "#6d28d9" },
-      { tier: 2, name: "Lemon",       nameKey: "lemon",       icon: "../assets/fruit-icons/lemon.png",       color: "#ca8a04" },
-      { tier: 3, name: "Grape",       nameKey: "grapes",      icon: "../assets/fruit-icons/grapes.png",      color: "#7c3aed" },
-      { tier: 4, name: "Orange",      nameKey: "orange",      icon: "../assets/fruit-icons/orange.png",      color: "#ea580c" },
-      { tier: 5, name: "Apple",       nameKey: "apple",       icon: "../assets/fruit-icons/apple.png",       color: "#dc2626" },
-      { tier: 6, name: "Peach",       nameKey: "peach",       icon: "../assets/fruit-icons/peach.png",       color: "#f97316" },
-      { tier: 7, name: "Coconut",     nameKey: "coconut",     icon: "../assets/fruit-icons/coconut.png",     color: "#78716c" },
-      { tier: 8, name: "Dragonfruit", nameKey: "dragonfruit", icon: "../assets/fruit-icons/dragonfruit.png", color: "#db2777" },
-      { tier: 9, name: "Pineapple",   nameKey: "pineapple",   icon: "../assets/fruit-icons/pineapple.png",   color: "#ca8a04" },
-      { tier:10, name: "Watermelon",  nameKey: "watermelon",  icon: "../assets/fruit-icons/watermelon.png",  color: "#16a34a" },
-    ],
-  },
-  cosmos: {
-    label: "Cosmos",
-    verticesUrl: "../assets/cosmos-vertices.json",
-    fruits: [
-      { tier: 0, name: "Moon",    nameKey: "moon",    icon: "../assets/celestial-icons/moon.png",    color: "#d1d5db" },
-      { tier: 1, name: "Pluto",   nameKey: "pluto",   icon: "../assets/celestial-icons/pluto.png",   color: "#94a3b8" },
-      { tier: 2, name: "Mercury", nameKey: "mercury", icon: "../assets/celestial-icons/mercury.png", color: "#9ca3af" },
-      { tier: 3, name: "Mars",    nameKey: "mars",    icon: "../assets/celestial-icons/mars.png",    color: "#dc2626" },
-      { tier: 4, name: "Venus",   nameKey: "venus",   icon: "../assets/celestial-icons/venus.png",   color: "#fbbf24" },
-      { tier: 5, name: "Earth",   nameKey: "earth",   icon: "../assets/celestial-icons/earth.png",   color: "#2563eb" },
-      { tier: 6, name: "Neptune", nameKey: "neptune", icon: "../assets/celestial-icons/neptune.png", color: "#1d4ed8" },
-      { tier: 7, name: "Uranus",  nameKey: "uranus",  icon: "../assets/celestial-icons/uranus.png",  color: "#67e8f9" },
-      { tier: 8, name: "Saturn",  nameKey: "saturn",  icon: "../assets/celestial-icons/saturn.png",  color: "#ca8a04" },
-      { tier: 9, name: "Jupiter", nameKey: "jupiter", icon: "../assets/celestial-icons/jupiter.png", color: "#ea580c" },
-      { tier:10, name: "Sun",     nameKey: "sun",     icon: "../assets/celestial-icons/sun.png",     color: "#facc15" },
-    ],
-  },
-};
+      // ─────────────────────────────────────────────────────────────────────────────
+      // Rendering helpers — mirrors the game pipeline
+      // ─────────────────────────────────────────────────────────────────────────────
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Rendering helpers — mirrors the game pipeline
-// ─────────────────────────────────────────────────────────────────────────────
+      /** Mirrors cleanImage() in GameCanvas.web.tsx */
+      function cleanImage(img) {
+        const w = img.naturalWidth,
+          h = img.naturalHeight;
+        const c = document.createElement("canvas");
+        c.width = w;
+        c.height = h;
+        const ctx = c.getContext("2d");
+        ctx.drawImage(img, 0, 0);
+        const data = ctx.getImageData(0, 0, w, h);
+        const px = data.data;
+        for (let i = 0; i < px.length; i += 4) {
+          if (px[i + 3] < 200) {
+            px[i] = px[i + 1] = px[i + 2] = px[i + 3] = 0;
+          }
+        }
+        ctx.putImageData(data, 0, 0);
+        return c;
+      }
 
-/** Mirrors cleanImage() in GameCanvas.web.tsx */
-function cleanImage(img) {
-  const w = img.naturalWidth, h = img.naturalHeight;
-  const c = document.createElement("canvas");
-  c.width = w; c.height = h;
-  const ctx = c.getContext("2d");
-  ctx.drawImage(img, 0, 0);
-  const data = ctx.getImageData(0, 0, w, h);
-  const px = data.data;
-  for (let i = 0; i < px.length; i += 4) {
-    if (px[i + 3] < 200) { px[i] = px[i+1] = px[i+2] = px[i+3] = 0; }
-  }
-  ctx.putImageData(data, 0, 0);
-  return c;
-}
+      /** Mirrors spriteClipRadius() in fruitVertices.ts */
+      function spriteClipRadius(sprite, r) {
+        const { offsetX: ox, offsetY: oy, scaleX: sx, scaleY: sy } = sprite;
+        return (
+          Math.max(
+            Math.hypot(ox + sx, oy + sy),
+            Math.hypot(ox - sx, oy + sy),
+            Math.hypot(ox + sx, oy - sy),
+            Math.hypot(ox - sx, oy - sy)
+          ) * r
+        );
+      }
 
-/** Mirrors spriteClipRadius() in fruitVertices.ts */
-function spriteClipRadius(sprite, r) {
-  const { offsetX: ox, offsetY: oy, scaleX: sx, scaleY: sy } = sprite;
-  return Math.max(
-    Math.hypot(ox + sx, oy + sy),
-    Math.hypot(ox - sx, oy + sy),
-    Math.hypot(ox + sx, oy - sy),
-    Math.hypot(ox - sx, oy - sy)
-  ) * r;
-}
+      /** Draw an asset exactly as GameCanvas.web.tsx does (dev/pre-#266 pipeline).
+       *  ctx must already be translated to the body centre. */
+      function drawAsset(ctx, r, color, cleanedImage, sprite) {
+        if (!cleanedImage) {
+          ctx.fillStyle = color;
+          ctx.beginPath();
+          ctx.arc(0, 0, r, 0, Math.PI * 2);
+          ctx.fill();
+          return;
+        }
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(0, 0, r, 0, Math.PI * 2);
+        ctx.clip();
+        ctx.fillStyle = color;
+        ctx.fillRect(-r, -r, r * 2, r * 2);
+        if (sprite) {
+          const ix = sprite.offsetX * r;
+          const iy = sprite.offsetY * r;
+          const sw = sprite.scaleX * r;
+          const sh = sprite.scaleY * r;
+          ctx.drawImage(cleanedImage, ix - sw, iy - sh, sw * 2, sh * 2);
+        } else {
+          ctx.drawImage(cleanedImage, -r, -r, r * 2, r * 2);
+        }
+        ctx.restore();
+      }
 
-/** Draw an asset exactly as GameCanvas.web.tsx does (dev/pre-#266 pipeline).
- *  ctx must already be translated to the body centre. */
-function drawAsset(ctx, r, color, cleanedImage, sprite) {
-  if (!cleanedImage) {
-    ctx.fillStyle = color;
-    ctx.beginPath();
-    ctx.arc(0, 0, r, 0, Math.PI * 2);
-    ctx.fill();
-    return;
-  }
-  ctx.save();
-  ctx.beginPath();
-  ctx.arc(0, 0, r, 0, Math.PI * 2);
-  ctx.clip();
-  ctx.fillStyle = color;
-  ctx.fillRect(-r, -r, r * 2, r * 2);
-  if (sprite) {
-    const ix = sprite.offsetX * r;
-    const iy = sprite.offsetY * r;
-    const sw = sprite.scaleX * r;
-    const sh = sprite.scaleY * r;
-    ctx.drawImage(cleanedImage, ix - sw, iy - sh, sw * 2, sh * 2);
-  } else {
-    ctx.drawImage(cleanedImage, -r, -r, r * 2, r * 2);
-  }
-  ctx.restore();
-}
+      /** RDP simplification — mirrors simplifyVertices() in fruitVertices.ts */
+      function simplifyVertices(verts, maxCount) {
+        if (verts.length <= maxCount) return verts;
 
-/** RDP simplification — mirrors simplifyVertices() in fruitVertices.ts */
-function simplifyVertices(verts, maxCount) {
-  if (verts.length <= maxCount) return verts;
+        function perpDist(p, a, b) {
+          const dx = b.x - a.x,
+            dy = b.y - a.y;
+          const lenSq = dx * dx + dy * dy;
+          if (lenSq < 1e-12) return Math.hypot(p.x - a.x, p.y - a.y);
+          return Math.abs(dy * p.x - dx * p.y + b.x * a.y - b.y * a.x) / Math.sqrt(lenSq);
+        }
 
-  function perpDist(p, a, b) {
-    const dx = b.x - a.x, dy = b.y - a.y;
-    const lenSq = dx*dx + dy*dy;
-    if (lenSq < 1e-12) return Math.hypot(p.x - a.x, p.y - a.y);
-    return Math.abs(dy*p.x - dx*p.y + b.x*a.y - b.y*a.x) / Math.sqrt(lenSq);
-  }
+        function rdp(pts, eps) {
+          if (pts.length <= 2) return pts;
+          let maxD = 0,
+            maxI = 0;
+          const first = pts[0],
+            last = pts[pts.length - 1];
+          for (let i = 1; i < pts.length - 1; i++) {
+            const d = perpDist(pts[i], first, last);
+            if (d > maxD) {
+              maxD = d;
+              maxI = i;
+            }
+          }
+          if (maxD > eps) {
+            const L = rdp(pts.slice(0, maxI + 1), eps);
+            const R = rdp(pts.slice(maxI), eps);
+            return L.slice(0, -1).concat(R);
+          }
+          return [first, last];
+        }
 
-  function rdp(pts, eps) {
-    if (pts.length <= 2) return pts;
-    let maxD = 0, maxI = 0;
-    const first = pts[0], last = pts[pts.length - 1];
-    for (let i = 1; i < pts.length - 1; i++) {
-      const d = perpDist(pts[i], first, last);
-      if (d > maxD) { maxD = d; maxI = i; }
-    }
-    if (maxD > eps) {
-      const L = rdp(pts.slice(0, maxI + 1), eps);
-      const R = rdp(pts.slice(maxI), eps);
-      return L.slice(0, -1).concat(R);
-    }
-    return [first, last];
-  }
+        const closed = [...verts, verts[0]];
+        let lo = 0,
+          hi = 2.0,
+          best = verts;
+        for (let iter = 0; iter < 20; iter++) {
+          const mid = (lo + hi) / 2;
+          const result = rdp(closed, mid);
+          const trimmed = result.slice(0, -1);
+          if (trimmed.length <= maxCount) {
+            best = trimmed;
+            hi = mid;
+          } else {
+            lo = mid;
+          }
+        }
+        return best;
+      }
 
-  const closed = [...verts, verts[0]];
-  let lo = 0, hi = 2.0, best = verts;
-  for (let iter = 0; iter < 20; iter++) {
-    const mid = (lo + hi) / 2;
-    const result = rdp(closed, mid);
-    const trimmed = result.slice(0, -1);
-    if (trimmed.length <= maxCount) { best = trimmed; hi = mid; }
-    else { lo = mid; }
-  }
-  return best;
-}
+      // ─────────────────────────────────────────────────────────────────────────────
+      // State
+      // ─────────────────────────────────────────────────────────────────────────────
 
-// ─────────────────────────────────────────────────────────────────────────────
-// State
-// ─────────────────────────────────────────────────────────────────────────────
+      let currentThemeId = "fruits";
+      let currentTier = 0;
+      let verticesCache = {}; // themeId → {nameKey: entry}
+      let imageCache = {}; // url → { raw: HTMLImageElement, clean: CanvasImageSource }
 
-let currentThemeId = "fruits";
-let currentTier    = 0;
-let verticesCache  = {};   // themeId → {nameKey: entry}
-let imageCache     = {};   // url → { raw: HTMLImageElement, clean: CanvasImageSource }
+      // ─────────────────────────────────────────────────────────────────────────────
+      // Asset loading
+      // ─────────────────────────────────────────────────────────────────────────────
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Asset loading
-// ─────────────────────────────────────────────────────────────────────────────
+      async function loadVertices(themeId) {
+        if (verticesCache[themeId]) return verticesCache[themeId];
+        const url = THEMES[themeId].verticesUrl;
+        try {
+          const res = await fetch(url);
+          if (!res.ok) throw new Error(`HTTP ${res.status}`);
+          verticesCache[themeId] = await res.json();
+        } catch (e) {
+          console.warn("Could not load vertices (open via local server):", e.message);
+          verticesCache[themeId] = {};
+        }
+        return verticesCache[themeId];
+      }
 
-async function loadVertices(themeId) {
-  if (verticesCache[themeId]) return verticesCache[themeId];
-  const url = THEMES[themeId].verticesUrl;
-  try {
-    const res = await fetch(url);
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    verticesCache[themeId] = await res.json();
-  } catch (e) {
-    console.warn("Could not load vertices (open via local server):", e.message);
-    verticesCache[themeId] = {};
-  }
-  return verticesCache[themeId];
-}
+      async function loadImage(url) {
+        if (imageCache[url]) return imageCache[url];
+        return new Promise((resolve) => {
+          const img = new Image();
+          img.crossOrigin = "anonymous";
+          img.src = url;
+          img.onload = () => {
+            const entry = { raw: img, clean: cleanImage(img) };
+            imageCache[url] = entry;
+            resolve(entry);
+          };
+          img.onerror = () => {
+            resolve(null);
+          };
+        });
+      }
 
-async function loadImage(url) {
-  if (imageCache[url]) return imageCache[url];
-  return new Promise((resolve) => {
-    const img = new Image();
-    img.crossOrigin = "anonymous";
-    img.src = url;
-    img.onload = () => {
-      const entry = { raw: img, clean: cleanImage(img) };
-      imageCache[url] = entry;
-      resolve(entry);
-    };
-    img.onerror = () => { resolve(null); };
-  });
-}
+      // ─────────────────────────────────────────────────────────────────────────────
+      // Inspector
+      // ─────────────────────────────────────────────────────────────────────────────
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Inspector
-// ─────────────────────────────────────────────────────────────────────────────
+      const inspectorCanvas = document.getElementById("inspector-canvas");
+      const inspCtx = inspectorCanvas.getContext("2d");
 
-const inspectorCanvas = document.getElementById("inspector-canvas");
-const inspCtx = inspectorCanvas.getContext("2d");
+      function getOverlays() {
+        return {
+          physics: document.getElementById("ov-physics").checked,
+          clip: document.getElementById("ov-clip").checked,
+          hull: document.getElementById("ov-hull").checked,
+        };
+      }
 
-function getOverlays() {
-  return {
-    physics: document.getElementById("ov-physics").checked,
-    clip:    document.getElementById("ov-clip").checked,
-    hull:    document.getElementById("ov-hull").checked,
-  };
-}
+      async function drawInspector() {
+        const theme = THEMES[currentThemeId];
+        const fruit = theme.fruits[currentTier];
+        const r = RADII[currentTier];
+        const ovs = getOverlays();
+        const cx = inspectorCanvas.width / 2;
+        const cy = inspectorCanvas.height / 2;
 
-async function drawInspector() {
-  const theme  = THEMES[currentThemeId];
-  const fruit  = theme.fruits[currentTier];
-  const r      = RADII[currentTier];
-  const ovs    = getOverlays();
-  const cx     = inspectorCanvas.width  / 2;
-  const cy     = inspectorCanvas.height / 2;
+        const [vData, imgData] = await Promise.all([
+          loadVertices(currentThemeId),
+          loadImage(fruit.icon),
+        ]);
 
-  const [vData, imgData] = await Promise.all([
-    loadVertices(currentThemeId),
-    loadImage(fruit.icon),
-  ]);
+        const entry = vData[fruit.nameKey];
+        const sprite = entry
+          ? {
+              offsetX: entry.spriteOffset[0],
+              offsetY: entry.spriteOffset[1],
+              scaleX: entry.spriteScale[0],
+              scaleY: entry.spriteScale[1],
+            }
+          : null;
+        const rawVerts =
+          entry && entry.verts.length >= 3
+            ? simplifyVertices(
+                entry.verts.map(([x, y]) => ({ x, y })),
+                24
+              )
+            : null;
 
-  const entry  = vData[fruit.nameKey];
-  const sprite = entry ? { offsetX: entry.spriteOffset[0], offsetY: entry.spriteOffset[1],
-                           scaleX:  entry.spriteScale[0],  scaleY:  entry.spriteScale[1] } : null;
-  const rawVerts = entry && entry.verts.length >= 3
-    ? simplifyVertices(entry.verts.map(([x,y]) => ({x, y})), 24)
-    : null;
+        // Background (checkerboard comes from CSS on the wrapper; canvas itself is transparent)
+        inspCtx.clearRect(0, 0, inspectorCanvas.width, inspectorCanvas.height);
 
-  // Background (checkerboard comes from CSS on the wrapper; canvas itself is transparent)
-  inspCtx.clearRect(0, 0, inspectorCanvas.width, inspectorCanvas.height);
+        // Draw asset
+        inspCtx.save();
+        inspCtx.translate(cx, cy);
+        drawAsset(inspCtx, r, fruit.color, imgData ? imgData.clean : null, sprite);
 
-  // Draw asset
-  inspCtx.save();
-  inspCtx.translate(cx, cy);
-  drawAsset(inspCtx, r, fruit.color, imgData ? imgData.clean : null, sprite);
+        // Overlays — drawn on top of the asset
+        if (ovs.hull && rawVerts) {
+          inspCtx.beginPath();
+          inspCtx.moveTo(rawVerts[0].x * r, rawVerts[0].y * r);
+          for (let i = 1; i < rawVerts.length; i++)
+            inspCtx.lineTo(rawVerts[i].x * r, rawVerts[i].y * r);
+          inspCtx.closePath();
+          inspCtx.fillStyle = "rgba(34,197,94,0.12)";
+          inspCtx.fill();
+          inspCtx.strokeStyle = "rgba(34,197,94,0.85)";
+          inspCtx.lineWidth = 1.5;
+          inspCtx.stroke();
+        }
 
-  // Overlays — drawn on top of the asset
-  if (ovs.hull && rawVerts) {
-    inspCtx.beginPath();
-    inspCtx.moveTo(rawVerts[0].x * r, rawVerts[0].y * r);
-    for (let i = 1; i < rawVerts.length; i++) inspCtx.lineTo(rawVerts[i].x * r, rawVerts[i].y * r);
-    inspCtx.closePath();
-    inspCtx.fillStyle = "rgba(34,197,94,0.12)";
-    inspCtx.fill();
-    inspCtx.strokeStyle = "rgba(34,197,94,0.85)";
-    inspCtx.lineWidth = 1.5;
-    inspCtx.stroke();
-  }
+        if (ovs.clip && sprite) {
+          const clipR = spriteClipRadius(sprite, r);
+          inspCtx.beginPath();
+          inspCtx.arc(0, 0, clipR, 0, Math.PI * 2);
+          inspCtx.strokeStyle = "rgba(249,115,22,0.85)";
+          inspCtx.lineWidth = 1.5;
+          inspCtx.setLineDash([5, 4]);
+          inspCtx.stroke();
+          inspCtx.setLineDash([]);
+        }
 
-  if (ovs.clip && sprite) {
-    const clipR = spriteClipRadius(sprite, r);
-    inspCtx.beginPath();
-    inspCtx.arc(0, 0, clipR, 0, Math.PI * 2);
-    inspCtx.strokeStyle = "rgba(249,115,22,0.85)";
-    inspCtx.lineWidth = 1.5;
-    inspCtx.setLineDash([5, 4]);
-    inspCtx.stroke();
-    inspCtx.setLineDash([]);
-  }
+        if (ovs.physics) {
+          inspCtx.beginPath();
+          inspCtx.arc(0, 0, r, 0, Math.PI * 2);
+          inspCtx.strokeStyle = "rgba(255,255,255,0.9)";
+          inspCtx.lineWidth = 1.5;
+          inspCtx.stroke();
+          // Centre dot
+          inspCtx.beginPath();
+          inspCtx.arc(0, 0, 3, 0, Math.PI * 2);
+          inspCtx.fillStyle = "rgba(255,255,255,0.9)";
+          inspCtx.fill();
+        }
 
-  if (ovs.physics) {
-    inspCtx.beginPath();
-    inspCtx.arc(0, 0, r, 0, Math.PI * 2);
-    inspCtx.strokeStyle = "rgba(255,255,255,0.9)";
-    inspCtx.lineWidth = 1.5;
-    inspCtx.stroke();
-    // Centre dot
-    inspCtx.beginPath();
-    inspCtx.arc(0, 0, 3, 0, Math.PI * 2);
-    inspCtx.fillStyle = "rgba(255,255,255,0.9)";
-    inspCtx.fill();
-  }
+        inspCtx.restore();
 
-  inspCtx.restore();
+        // Info panel
+        const clipR = sprite ? spriteClipRadius(sprite, r) : r;
+        document.getElementById("info-name").textContent = fruit.name;
+        document.getElementById("info-tier-label").textContent =
+          `Tier ${fruit.tier} · ${currentThemeId}`;
+        document.getElementById("info-radius").textContent = `${r} px`;
+        document.getElementById("info-collider").textContent = rawVerts ? "polygon" : "circle";
+        document.getElementById("info-verts").textContent = rawVerts ? rawVerts.length : "—";
+        document.getElementById("info-ox").textContent = sprite ? sprite.offsetX.toFixed(4) : "—";
+        document.getElementById("info-oy").textContent = sprite ? sprite.offsetY.toFixed(4) : "—";
+        document.getElementById("info-sx").textContent = sprite ? sprite.scaleX.toFixed(4) : "—";
+        document.getElementById("info-sy").textContent = sprite ? sprite.scaleY.toFixed(4) : "—";
+        document.getElementById("info-clipr").textContent = sprite
+          ? `${clipR.toFixed(1)} px`
+          : `${r} px`;
+        document.getElementById("info-ratio").textContent = sprite
+          ? `${(clipR / r).toFixed(3)}×`
+          : "1.000×";
 
-  // Info panel
-  const clipR = sprite ? spriteClipRadius(sprite, r) : r;
-  document.getElementById("info-name").textContent        = fruit.name;
-  document.getElementById("info-tier-label").textContent  = `Tier ${fruit.tier} · ${currentThemeId}`;
-  document.getElementById("info-radius").textContent      = `${r} px`;
-  document.getElementById("info-collider").textContent    = rawVerts ? "polygon" : "circle";
-  document.getElementById("info-verts").textContent       = rawVerts ? rawVerts.length : "—";
-  document.getElementById("info-ox").textContent          = sprite ? sprite.offsetX.toFixed(4) : "—";
-  document.getElementById("info-oy").textContent          = sprite ? sprite.offsetY.toFixed(4) : "—";
-  document.getElementById("info-sx").textContent          = sprite ? sprite.scaleX.toFixed(4)  : "—";
-  document.getElementById("info-sy").textContent          = sprite ? sprite.scaleY.toFixed(4)  : "—";
-  document.getElementById("info-clipr").textContent       = sprite ? `${clipR.toFixed(1)} px`  : `${r} px`;
-  document.getElementById("info-ratio").textContent       = sprite ? `${(clipR/r).toFixed(3)}×` : "1.000×";
+        const warnEl = document.getElementById("info-warn");
+        if (!entry) {
+          warnEl.style.display = "block";
+          warnEl.textContent = "⚠ No vertex data found. Open via a local server so JSON can load.";
+        } else if (!rawVerts) {
+          warnEl.style.display = "block";
+          warnEl.textContent =
+            "ℹ Circle collider (verts array is empty — intentional for round bodies).";
+        } else {
+          warnEl.style.display = "none";
+        }
+      }
 
-  const warnEl = document.getElementById("info-warn");
-  if (!entry) {
-    warnEl.style.display = "block";
-    warnEl.textContent   = "⚠ No vertex data found. Open via a local server so JSON can load.";
-  } else if (!rawVerts) {
-    warnEl.style.display = "block";
-    warnEl.textContent   = "ℹ Circle collider (verts array is empty — intentional for round bodies).";
-  } else {
-    warnEl.style.display = "none";
-  }
-}
+      // ─────────────────────────────────────────────────────────────────────────────
+      // Simulate tab — Matter.js physics
+      // ─────────────────────────────────────────────────────────────────────────────
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Simulate tab — Matter.js physics
-// ─────────────────────────────────────────────────────────────────────────────
+      const SIM_W = 320,
+        SIM_H = 520,
+        WALL = 16;
+      const simCanvas = document.getElementById("simulate-canvas");
+      const simCtx = simCanvas.getContext("2d");
 
-const SIM_W = 320, SIM_H = 520, WALL = 16;
-const simCanvas = document.getElementById("simulate-canvas");
-const simCtx = simCanvas.getContext("2d");
+      // Game physics constants (mirrors engine.shared.ts)
+      const RESTITUTION = 0.1;
+      const FRICTION = 0.3;
+      const DENSITY = 0.002; // scaled for Matter.js
 
-// Game physics constants (mirrors engine.shared.ts)
-const RESTITUTION  = 0.1;
-const FRICTION     = 0.3;
-const DENSITY      = 0.002;  // scaled for Matter.js
+      let mEngine = null,
+        mRunner = null;
+      let simBodies = []; // { body, tier, themeId, imgData, sprite }
+      let simRafId = null;
 
-let mEngine = null, mRunner = null;
-let simBodies = [];   // { body, tier, themeId, imgData, sprite }
-let simRafId  = null;
+      function buildSimWorld() {
+        if (mEngine) {
+          Matter.Runner.stop(mRunner);
+          cancelAnimationFrame(simRafId);
+        }
+        mEngine = Matter.Engine.create({ gravity: { x: 0, y: 1.8 } });
+        mRunner = Matter.Runner.create();
+        simBodies = [];
 
-function buildSimWorld() {
-  if (mEngine) {
-    Matter.Runner.stop(mRunner);
-    cancelAnimationFrame(simRafId);
-  }
-  mEngine = Matter.Engine.create({ gravity: { x: 0, y: 1.8 } });
-  mRunner = Matter.Runner.create();
-  simBodies = [];
+        const wallOpts = {
+          isStatic: true,
+          friction: 0.3,
+          restitution: 0.0,
+          render: { visible: false },
+        };
 
-  const wallOpts = { isStatic: true, friction: 0.3, restitution: 0.0,
-                     render: { visible: false } };
+        // Floor and side walls
+        Matter.Composite.add(mEngine.world, [
+          Matter.Bodies.rectangle(SIM_W / 2, SIM_H - WALL / 2, SIM_W, WALL, wallOpts),
+          Matter.Bodies.rectangle(WALL / 2, SIM_H / 2, WALL, SIM_H, wallOpts),
+          Matter.Bodies.rectangle(SIM_W - WALL / 2, SIM_H / 2, WALL, SIM_H, wallOpts),
+        ]);
 
-  // Floor and side walls
-  Matter.Composite.add(mEngine.world, [
-    Matter.Bodies.rectangle(SIM_W / 2, SIM_H - WALL / 2, SIM_W, WALL, wallOpts),
-    Matter.Bodies.rectangle(WALL / 2,  SIM_H / 2, WALL, SIM_H, wallOpts),
-    Matter.Bodies.rectangle(SIM_W - WALL / 2, SIM_H / 2, WALL, SIM_H, wallOpts),
-  ]);
+        Matter.Runner.run(mRunner, mEngine);
+        simLoop();
+      }
 
-  Matter.Runner.run(mRunner, mEngine);
-  simLoop();
-}
+      function simLoop() {
+        simRafId = requestAnimationFrame(simLoop);
+        renderSim();
+      }
 
-function simLoop() {
-  simRafId = requestAnimationFrame(simLoop);
-  renderSim();
-}
+      function renderSim() {
+        const bg = "#131c2e";
+        simCtx.fillStyle = bg;
+        simCtx.fillRect(0, 0, SIM_W, SIM_H);
 
-function renderSim() {
-  const bg = "#131c2e";
-  simCtx.fillStyle = bg;
-  simCtx.fillRect(0, 0, SIM_W, SIM_H);
+        // Walls
+        simCtx.fillStyle = "#334155";
+        simCtx.fillRect(0, 0, WALL, SIM_H);
+        simCtx.fillRect(SIM_W - WALL, 0, WALL, SIM_H);
+        simCtx.fillRect(0, SIM_H - WALL, SIM_W, WALL);
 
-  // Walls
-  simCtx.fillStyle = "#334155";
-  simCtx.fillRect(0, 0, WALL, SIM_H);
-  simCtx.fillRect(SIM_W - WALL, 0, WALL, SIM_H);
-  simCtx.fillRect(0, SIM_H - WALL, SIM_W, WALL);
+        // Bodies
+        for (const { body, tier, imgData, sprite } of simBodies) {
+          const { x, y } = body.position;
+          const angle = body.angle;
+          const r = RADII[tier];
 
-  // Bodies
-  for (const { body, tier, imgData, sprite } of simBodies) {
-    const { x, y } = body.position;
-    const angle = body.angle;
-    const r = RADII[tier];
+          simCtx.save();
+          simCtx.translate(x, y);
+          simCtx.rotate(angle);
+          const fruit = THEMES[currentThemeId].fruits[tier];
+          drawAsset(simCtx, r, fruit.color, imgData ? imgData.clean : null, sprite);
+          simCtx.restore();
+        }
+      }
 
-    simCtx.save();
-    simCtx.translate(x, y);
-    simCtx.rotate(angle);
-    const fruit = THEMES[currentThemeId].fruits[tier];
-    drawAsset(simCtx, r, fruit.color, imgData ? imgData.clean : null, sprite);
-    simCtx.restore();
-  }
-}
+      async function spawnBody(tier, x, y) {
+        const r = RADII[tier];
+        const fruit = THEMES[currentThemeId].fruits[tier];
+        const body = Matter.Bodies.circle(x, y, r, {
+          restitution: RESTITUTION,
+          friction: FRICTION,
+          density: DENSITY,
+          frictionAir: 0.01,
+        });
+        Matter.Composite.add(mEngine.world, body);
 
-async function spawnBody(tier, x, y) {
-  const r = RADII[tier];
-  const fruit = THEMES[currentThemeId].fruits[tier];
-  const body = Matter.Bodies.circle(x, y, r, {
-    restitution: RESTITUTION,
-    friction:    FRICTION,
-    density:     DENSITY,
-    frictionAir: 0.01,
-  });
-  Matter.Composite.add(mEngine.world, body);
+        const [vData, imgData] = await Promise.all([
+          loadVertices(currentThemeId),
+          loadImage(fruit.icon),
+        ]);
+        const entry = vData[fruit.nameKey];
+        const sprite = entry
+          ? {
+              offsetX: entry.spriteOffset[0],
+              offsetY: entry.spriteOffset[1],
+              scaleX: entry.spriteScale[0],
+              scaleY: entry.spriteScale[1],
+            }
+          : null;
+        simBodies.push({ body, tier, imgData, sprite });
+      }
 
-  const [vData, imgData] = await Promise.all([
-    loadVertices(currentThemeId),
-    loadImage(fruit.icon),
-  ]);
-  const entry  = vData[fruit.nameKey];
-  const sprite = entry ? { offsetX: entry.spriteOffset[0], offsetY: entry.spriteOffset[1],
-                           scaleX:  entry.spriteScale[0],  scaleY:  entry.spriteScale[1] } : null;
-  simBodies.push({ body, tier, imgData, sprite });
-}
+      function dropOne() {
+        const r = RADII[currentTier];
+        const cx = SIM_W / 2 + (Math.random() - 0.5) * 4;
+        spawnBody(currentTier, cx, r + WALL + 2);
+      }
 
-function dropOne() {
-  const r = RADII[currentTier];
-  const cx = SIM_W / 2 + (Math.random() - 0.5) * 4;
-  spawnBody(currentTier, cx, r + WALL + 2);
-}
+      function dropPair() {
+        const r = RADII[currentTier];
+        const gap = r * 0.1;
+        spawnBody(currentTier, SIM_W / 2 - r - gap, r + WALL + 2);
+        spawnBody(currentTier, SIM_W / 2 + r + gap, r + WALL + 10);
+      }
 
-function dropPair() {
-  const r = RADII[currentTier];
-  const gap = r * 0.1;
-  spawnBody(currentTier, SIM_W / 2 - r - gap, r + WALL + 2);
-  spawnBody(currentTier, SIM_W / 2 + r + gap, r + WALL + 10);
-}
+      function stackFive() {
+        const r = RADII[currentTier];
+        for (let i = 0; i < 5; i++) {
+          setTimeout(() => {
+            const cx = WALL + r + Math.random() * (SIM_W - 2 * WALL - 2 * r);
+            spawnBody(currentTier, cx, r + WALL + 2);
+          }, i * 250);
+        }
+      }
 
-function stackFive() {
-  const r = RADII[currentTier];
-  for (let i = 0; i < 5; i++) {
-    setTimeout(() => {
-      const cx = WALL + r + Math.random() * (SIM_W - 2 * WALL - 2 * r);
-      spawnBody(currentTier, cx, r + WALL + 2);
-    }, i * 250);
-  }
-}
+      // ─────────────────────────────────────────────────────────────────────────────
+      // Tier grid
+      // ─────────────────────────────────────────────────────────────────────────────
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Tier grid
-// ─────────────────────────────────────────────────────────────────────────────
+      function buildTierGrid() {
+        const grid = document.getElementById("tier-grid");
+        const theme = THEMES[currentThemeId];
+        grid.innerHTML = "";
 
-function buildTierGrid() {
-  const grid   = document.getElementById("tier-grid");
-  const theme  = THEMES[currentThemeId];
-  grid.innerHTML = "";
+        theme.fruits.forEach((fruit) => {
+          const btn = document.createElement("button");
+          btn.className = "tier-btn" + (fruit.tier === currentTier ? " active" : "");
+          btn.dataset.tier = fruit.tier;
 
-  theme.fruits.forEach((fruit) => {
-    const btn = document.createElement("button");
-    btn.className = "tier-btn" + (fruit.tier === currentTier ? " active" : "");
-    btn.dataset.tier = fruit.tier;
+          const img = document.createElement("img");
+          img.className = "tier-thumb";
+          img.src = fruit.icon;
+          img.alt = fruit.name;
+          img.onerror = () => {
+            img.replaceWith(
+              Object.assign(document.createElement("span"), {
+                className: "tier-thumb-placeholder",
+                style: `background:${fruit.color};`,
+              })
+            );
+          };
 
-    const img = document.createElement("img");
-    img.className = "tier-thumb";
-    img.src = fruit.icon;
-    img.alt = fruit.name;
-    img.onerror = () => {
-      img.replaceWith(Object.assign(document.createElement("span"), {
-        className: "tier-thumb-placeholder",
-        style: `background:${fruit.color};`,
-      }));
-    };
+          btn.appendChild(img);
+          btn.appendChild(document.createTextNode(fruit.name));
+          btn.addEventListener("click", () => selectTier(fruit.tier));
+          grid.appendChild(btn);
+        });
+      }
 
-    btn.appendChild(img);
-    btn.appendChild(document.createTextNode(fruit.name));
-    btn.addEventListener("click", () => selectTier(fruit.tier));
-    grid.appendChild(btn);
-  });
-}
+      function selectTier(tier) {
+        currentTier = tier;
+        document
+          .querySelectorAll(".tier-btn")
+          .forEach((b) => b.classList.toggle("active", parseInt(b.dataset.tier) === tier));
+        drawInspector();
+      }
 
-function selectTier(tier) {
-  currentTier = tier;
-  document.querySelectorAll(".tier-btn").forEach((b) =>
-    b.classList.toggle("active", parseInt(b.dataset.tier) === tier));
-  drawInspector();
-}
+      // ─────────────────────────────────────────────────────────────────────────────
+      // Event wiring
+      // ─────────────────────────────────────────────────────────────────────────────
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Event wiring
-// ─────────────────────────────────────────────────────────────────────────────
+      document.querySelectorAll(".theme-tab").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          currentThemeId = btn.dataset.theme;
+          currentTier = 0;
+          document
+            .querySelectorAll(".theme-tab")
+            .forEach((b) => b.classList.toggle("active", b === btn));
+          buildTierGrid();
+          drawInspector();
+          buildSimWorld();
+        });
+      });
 
-document.querySelectorAll(".theme-tab").forEach((btn) => {
-  btn.addEventListener("click", () => {
-    currentThemeId = btn.dataset.theme;
-    currentTier    = 0;
-    document.querySelectorAll(".theme-tab").forEach((b) =>
-      b.classList.toggle("active", b === btn));
-    buildTierGrid();
-    drawInspector();
-    buildSimWorld();
-  });
-});
+      document.querySelectorAll(".tab-btn").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          document
+            .querySelectorAll(".tab-btn")
+            .forEach((b) => b.classList.toggle("active", b === btn));
+          document
+            .querySelectorAll(".tab-content")
+            .forEach((c) => c.classList.toggle("active", c.id === "tab-" + btn.dataset.tab));
+        });
+      });
 
-document.querySelectorAll(".tab-btn").forEach((btn) => {
-  btn.addEventListener("click", () => {
-    document.querySelectorAll(".tab-btn").forEach((b) =>
-      b.classList.toggle("active", b === btn));
-    document.querySelectorAll(".tab-content").forEach((c) =>
-      c.classList.toggle("active", c.id === "tab-" + btn.dataset.tab));
-  });
-});
+      ["ov-physics", "ov-clip", "ov-hull"].forEach((id) =>
+        document.getElementById(id).addEventListener("change", drawInspector)
+      );
 
-["ov-physics", "ov-clip", "ov-hull"].forEach((id) =>
-  document.getElementById(id).addEventListener("change", drawInspector));
+      document.getElementById("btn-drop").addEventListener("click", dropOne);
+      document.getElementById("btn-pair").addEventListener("click", dropPair);
+      document.getElementById("btn-stack").addEventListener("click", stackFive);
+      document.getElementById("btn-reset").addEventListener("click", buildSimWorld);
 
-document.getElementById("btn-drop").addEventListener("click",  dropOne);
-document.getElementById("btn-pair").addEventListener("click",  dropPair);
-document.getElementById("btn-stack").addEventListener("click", stackFive);
-document.getElementById("btn-reset").addEventListener("click", buildSimWorld);
+      // ─────────────────────────────────────────────────────────────────────────────
+      // Init
+      // ─────────────────────────────────────────────────────────────────────────────
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Init
-// ─────────────────────────────────────────────────────────────────────────────
-
-buildTierGrid();
-drawInspector();
-buildSimWorld();
-</script>
-</body>
+      buildTierGrid();
+      drawInspector();
+      buildSimWorld();
+    </script>
+  </body>
 </html>
