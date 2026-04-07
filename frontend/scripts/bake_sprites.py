@@ -165,14 +165,35 @@ def main() -> None:
             baked_clip_r[name] = clip_r
             print(f"  BAKED {name}: bakedClipR={clip_r:.6f}")
 
-        # Write bakedClipR into each entry of the vertices JSON
+        # Write bakedClipR into each entry of the vertices JSON, then
+        # format with Prettier so CI doesn't complain about code style.
         for name, clip_r in baked_clip_r.items():
             vertices[name]["bakedClipR"] = round(clip_r, 6)
         theme["vertices_json"].write_text(json.dumps(vertices, indent=2) + "\n")
+        _prettier(theme["vertices_json"])
         print(f"  Updated {theme['vertices_json'].name}")
 
     print("\nDone. Commit the baked PNGs and updated vertices JSON files.")
     print("Then update fruitSets.ts with the bakedClipR values and bakedIcon imports.")
+
+
+def _prettier(path: pathlib.Path) -> None:
+    """Run 'npx prettier --write' on path if npx is available; silently skip if not."""
+    import shutil
+    import subprocess
+
+    npx = shutil.which("npx")
+    if not npx:
+        print(f"  (npx not found — run: npx prettier --write {path.name})")
+        return
+    result = subprocess.run(
+        [npx, "prettier", "--write", str(path)],
+        cwd=FRONTEND_DIR,
+        capture_output=True,
+        text=True,
+    )
+    if result.returncode != 0:
+        print(f"  (prettier failed: {result.stderr.strip()!r})")
 
 
 if __name__ == "__main__":
