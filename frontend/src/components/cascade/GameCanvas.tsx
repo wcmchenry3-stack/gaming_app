@@ -36,7 +36,6 @@ import {
   WALL_THICKNESS,
   DANGER_LINE_RATIO,
 } from "../../game/cascade/engine";
-import { getSpriteInfo, SpriteInfo } from "../../game/cascade/fruitVertices";
 import { FruitDefinition, FruitSet } from "../../theme/fruitSets";
 import { useTheme } from "../../theme/ThemeContext";
 import { useTranslation } from "react-i18next";
@@ -70,6 +69,13 @@ interface Props {
   scale: number; // display scale: canvas CSS size = world * scale
 }
 
+/**
+ * Renders a single baked fruit sprite.
+ *
+ * Baked PNGs are pre-composited and clipped offline by bake_sprites.py.
+ * The image represents a square of side 2 * bakedClipR * radius centred on
+ * the body — a single SkiaImage draw is all that's needed.
+ */
 function FruitBodySkia({
   x,
   y,
@@ -77,7 +83,7 @@ function FruitBodySkia({
   color,
   image,
   angle,
-  sprite,
+  bakedClipR,
 }: {
   x: number;
   y: number;
@@ -85,36 +91,20 @@ function FruitBodySkia({
   color: string;
   image: SkImage | null;
   angle: number;
-  sprite: SpriteInfo | null;
+  bakedClipR: number;
 }) {
   if (image) {
-    // Build a circular clip path
-    const clipPath = Skia.Path.Make();
-    clipPath.addCircle(0, 0, radius);
-
-    // Compute image draw rect using sprite alignment info
-    let ix: number, iy: number, iw: number, ih: number;
-    if (sprite) {
-      const cx = sprite.offsetX * radius;
-      const cy = sprite.offsetY * radius;
-      const hw = sprite.scaleX * radius;
-      const hh = sprite.scaleY * radius;
-      ix = cx - hw;
-      iy = cy - hh;
-      iw = hw * 2;
-      ih = hh * 2;
-    } else {
-      ix = -radius;
-      iy = -radius;
-      iw = radius * 2;
-      ih = radius * 2;
-    }
-
+    const clipR = bakedClipR * radius;
     return (
       <Group transform={[{ translateX: x }, { translateY: y }, { rotate: angle }]}>
-        <Group clip={clipPath} invertClip={false}>
-          <SkiaImage image={image} x={ix} y={iy} width={iw} height={ih} fit="fill" />
-        </Group>
+        <SkiaImage
+          image={image}
+          x={-clipR}
+          y={-clipR}
+          width={clipR * 2}
+          height={clipR * 2}
+          fit="fill"
+        />
       </Group>
     );
   }
@@ -129,14 +119,6 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
     // Load all fruit/planet images via Skia (native only)
     const allImages = useFruitImages();
     const images = getImagesForSet(allImages, fruitSet.id);
-
-    // Precompute sprite rendering info for each tier
-    const spriteInfoByTier = useMemo(() => {
-      return fruitSet.fruits.map((def) => {
-        const nameKey = (def as { nameKey?: string }).nameKey ?? def.name.toLowerCase();
-        return getSpriteInfo(fruitSet.id, nameKey);
-      });
-    }, [fruitSet]);
 
     const [bodies, setBodies] = useState<BodySnapshot[]>([]);
     const [pointerX, setPointerX] = useState<number | null>(null);
@@ -334,7 +316,7 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
                   color={nextDef.color}
                   image={images[nextDef.tier] ?? null}
                   angle={0}
-                  sprite={spriteInfoByTier[nextDef.tier] ?? null}
+                  bakedClipR={nextDef.bakedClipR ?? 1}
                 />
               </Group>
             )}
@@ -350,7 +332,7 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
                   color={def.color}
                   image={images[body.tier] ?? null}
                   angle={body.angle}
-                  sprite={spriteInfoByTier[body.tier] ?? null}
+                  bakedClipR={def.bakedClipR ?? 1}
                 />
               );
             })}

@@ -18,7 +18,6 @@ import {
 } from "../../game/cascade/engine";
 import * as Sentry from "@sentry/react-native";
 import { FruitDefinition, FruitSet } from "../../theme/fruitSets";
-import { getSpriteInfo, SpriteInfo } from "../../game/cascade/fruitVertices";
 import { useTheme } from "../../theme/ThemeContext";
 import { useTranslation } from "react-i18next";
 
@@ -61,69 +60,28 @@ function clamp(value: number, min: number, max: number) {
   return Math.max(min, Math.min(max, value));
 }
 
-/** Strip semi-transparent glow/shadow pixels from a loaded image.
- *  Planet PNGs have bright RGB data in their zero-alpha pixels; downsampling
- *  would blend these with adjacent opaque pixels, resurrecting them as a
- *  visible checkerboard. We process at full resolution to avoid this. */
-function cleanImage(img: HTMLImageElement): CanvasImageSource {
-  try {
-    const w = img.naturalWidth;
-    const h = img.naturalHeight;
-    const c = document.createElement("canvas");
-    c.width = w;
-    c.height = h;
-    const ctx = c.getContext("2d")!;
-    ctx.drawImage(img, 0, 0);
-    const data = ctx.getImageData(0, 0, w, h);
-    const px = data.data;
-    for (let i = 0; i < px.length; i += 4) {
-      if (px[i + 3] < 200) {
-        // Zero out RGBA entirely — prevents RGB bleed on later resampling
-        px[i] = 0;
-        px[i + 1] = 0;
-        px[i + 2] = 0;
-        px[i + 3] = 0;
-      }
-    }
-    ctx.putImageData(data, 0, 0);
-    return c;
-  } catch (e) {
-    console.warn("cleanImage failed:", e);
-    return img;
-  }
-}
-
+/**
+ * Draw a baked fruit sprite.
+ *
+ * Baked PNGs are pre-composited and clipped offline by bake_sprites.py.
+ * The entire image represents a square of side 2 * bakedClipR * radius,
+ * centred on the body position — so a single drawImage is all that's needed.
+ */
 function drawFruitBody(
   ctx: CanvasRenderingContext2D,
   def: FruitDefinition,
   x: number,
   y: number,
   angle: number,
-  image: CanvasImageSource | null,
-  bgColor: string,
-  sprite: SpriteInfo | null
+  image: CanvasImageSource | null
 ) {
   const r = def.radius;
-  const imgW = (image as HTMLCanvasElement | null)?.width ?? 0;
-  if (image && imgW > 0) {
+  const clipR = (def.bakedClipR ?? 1) * r;
+  if (image) {
     ctx.save();
     ctx.translate(x, y);
     ctx.rotate(angle);
-    ctx.beginPath();
-    ctx.arc(0, 0, r, 0, Math.PI * 2);
-    ctx.clip();
-    // Opaque bg fill first — anything transparent in the sprite shows this
-    ctx.fillStyle = bgColor;
-    ctx.fillRect(-r, -r, r * 2, r * 2);
-    if (sprite) {
-      const ix = sprite.offsetX * r;
-      const iy = sprite.offsetY * r;
-      const sw = sprite.scaleX * r;
-      const sh = sprite.scaleY * r;
-      ctx.drawImage(image, ix - sw, iy - sh, sw * 2, sh * 2);
-    } else {
-      ctx.drawImage(image, -r, -r, r * 2, r * 2);
-    }
+    ctx.drawImage(image, -clipR, -clipR, clipR * 2, clipR * 2);
     ctx.restore();
   } else {
     ctx.fillStyle = def.color;
@@ -188,7 +146,6 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
     const pointerXRef = useRef<number | null>(null);
     const scaleRef = useRef(scale);
     const htmlImagesRef = useRef<(CanvasImageSource | null)[]>([]);
-    const spriteInfoRef = useRef<(SpriteInfo | null)[]>([]);
     const lastFrameTimeRef = useRef<number>(0); // tracks last RAF timestamp for elapsed-time physics
 
     useEffect(() => {
@@ -210,24 +167,21 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
       scaleRef.current = scale;
     }, [scale]);
 
-    // Load HTMLImageElements for the current fruit set via expo-asset
+    // Load baked HTMLImageElements for the current fruit set via expo-asset.
+    // Baked PNGs are pre-composited and clipped — no cleanImage() needed at runtime.
     useEffect(() => {
       const fruits = fruitSet.fruits;
       const images: (CanvasImageSource | null)[] = new Array(fruits.length).fill(null);
       htmlImagesRef.current = images;
-      // Precompute sprite rendering info for each tier
-      spriteInfoRef.current = fruits.map((def) => {
-        const nameKey = (def as { nameKey?: string }).nameKey ?? def.name.toLowerCase();
-        return getSpriteInfo(fruitSet.id, nameKey);
-      });
       let cancelled = false;
 
       (async () => {
         await Promise.all(
           fruits.map(async (def, i) => {
-            if (!def.icon) return;
+            const iconSrc = def.bakedIcon ?? def.icon;
+            if (!iconSrc) return;
             try {
-              const asset = Asset.fromModule(def.icon as number);
+              const asset = Asset.fromModule(iconSrc as number);
               await asset.downloadAsync();
               const uri = asset.localUri ?? asset.uri;
               if (!uri || cancelled) return;
@@ -236,7 +190,7 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
                 img.crossOrigin = "anonymous";
                 img.src = uri;
                 img.onload = () => {
-                  if (!cancelled) images[i] = cleanImage(img);
+                  if (!cancelled) images[i] = img;
                   resolve();
                 };
                 img.onerror = () => resolve();
@@ -324,9 +278,7 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
           ghostCx,
           DROP_Y,
           0, // ghost has no rotation
-          htmlImagesRef.current[nd.tier] ?? null,
-          c.fruitBackground,
-          spriteInfoRef.current[nd.tier] ?? null
+          htmlImagesRef.current[nd.tier] ?? null
         );
         ctx.restore();
       }
@@ -342,9 +294,7 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
           body.x,
           body.y,
           body.angle,
-          htmlImagesRef.current[body.tier] ?? null,
-          c.fruitBackground,
-          spriteInfoRef.current[body.tier] ?? null
+          htmlImagesRef.current[body.tier] ?? null
         );
         if (DEBUG_COLLISION) {
           drawCollisionOverlay(ctx, body.x, body.y, body.angle, def.radius, body.collisionVerts);
