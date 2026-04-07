@@ -265,9 +265,7 @@ describe("GameScreen — scorecard visual reset (GH #263)", () => {
     });
     // rollsUsed=0 after reset → canScore=false → every ScoreRow shows "not available"
     for (const cat of ["Ones", "Twos", "Threes", "Fours", "Fives", "Sixes"]) {
-      expect(
-        getByRole("button", { name: new RegExp(`${cat}:.*not available`, "i") })
-      ).toBeTruthy();
+      expect(getByRole("button", { name: new RegExp(`${cat}:.*not available`, "i") })).toBeTruthy();
     }
   });
 
@@ -285,9 +283,7 @@ describe("GameScreen — scorecard visual reset (GH #263)", () => {
       "Yacht!",
       "Chance",
     ]) {
-      expect(
-        getByRole("button", { name: new RegExp(`${cat}.*not available`, "i") })
-      ).toBeTruthy();
+      expect(getByRole("button", { name: new RegExp(`${cat}.*not available`, "i") })).toBeTruthy();
     }
   });
 

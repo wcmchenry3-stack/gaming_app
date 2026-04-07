@@ -135,9 +135,7 @@ describe("Scorecard — reset to all-null scores (GH #263)", () => {
   it("renders all upper section rows as 'not available' when scores are null", () => {
     const { getByRole } = renderScorecard({ rollsUsed: 0 });
     for (const cat of UPPER_CATS) {
-      expect(
-        getByRole("button", { name: new RegExp(`${cat}:.*not available`, "i") })
-      ).toBeTruthy();
+      expect(getByRole("button", { name: new RegExp(`${cat}:.*not available`, "i") })).toBeTruthy();
     }
   });
 
@@ -146,7 +144,9 @@ describe("Scorecard — reset to all-null scores (GH #263)", () => {
     for (const cat of LOWER_CATS) {
       // Use a loose regex — category labels include point values like "(25)"
       expect(
-        getByRole("button", { name: new RegExp(`${cat.replace(/[()]/g, "\\$&")}.*not available`, "i") })
+        getByRole("button", {
+          name: new RegExp(`${cat.replace(/[()]/g, "\\$&")}.*not available`, "i"),
+        })
       ).toBeTruthy();
     }
   });
@@ -178,9 +178,7 @@ describe("Scorecard — reset to all-null scores (GH #263)", () => {
       </ThemeProvider>
     );
     for (const cat of UPPER_CATS) {
-      expect(
-        getByRole("button", { name: new RegExp(`${cat}:.*not available`, "i") })
-      ).toBeTruthy();
+      expect(getByRole("button", { name: new RegExp(`${cat}:.*not available`, "i") })).toBeTruthy();
     }
   });
 
@@ -210,7 +208,9 @@ describe("Scorecard — reset to all-null scores (GH #263)", () => {
     );
     for (const cat of LOWER_CATS) {
       expect(
-        getByRole("button", { name: new RegExp(`${cat.replace(/[()]/g, "\\$&")}.*not available`, "i") })
+        getByRole("button", {
+          name: new RegExp(`${cat.replace(/[()]/g, "\\$&")}.*not available`, "i"),
+        })
       ).toBeTruthy();
     }
   });
