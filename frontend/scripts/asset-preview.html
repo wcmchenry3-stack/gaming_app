@@ -856,7 +856,6 @@
         if (imageCache[url]) return imageCache[url];
         return new Promise((resolve) => {
           const img = new Image();
-          img.crossOrigin = "anonymous";
           img.src = url;
           img.onload = () => {
             const entry = { raw: img, clean: cleanImage(img) };
