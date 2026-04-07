@@ -62,7 +62,13 @@ THEMES = [
 # ---------------------------------------------------------------------------
 
 def clean_image(img: Image.Image) -> Image.Image:
-    """Zero RGBA for pixels with alpha < 200 — mirrors runtime cleanImage()."""
+    """Zero RGBA for pixels with alpha < 200 — mirrors runtime cleanImage().
+
+    Scrubs JPEG compression halos and semi-transparent fringe so baked edges
+    stay crisp.  The saturn/uranus ring body pixels are fully opaque (alpha
+    255) and survive this threshold; only their feathered anti-alias edge
+    pixels are zeroed, which is acceptable.
+    """
     img = img.convert("RGBA")
     pixels = img.load()
     w, h = img.size
