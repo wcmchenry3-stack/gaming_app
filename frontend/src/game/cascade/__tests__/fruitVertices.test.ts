@@ -46,7 +46,7 @@ jest.mock("../../../../assets/cosmos-vertices.json", () => ({
   ]),
 }));
 
-import { getVerticesForFruit, getSpriteInfo } from "../fruitVertices";
+import { getVerticesForFruit, getSpriteInfo, spriteClipRadius } from "../fruitVertices";
 
 describe("getVerticesForFruit", () => {
   // --- fruits set ---
@@ -117,5 +117,69 @@ describe("getVerticesForFruit", () => {
 
   it("returns null sprite info for unknown set", () => {
     expect(getSpriteInfo("unknown_set", "ruby")).toBeNull();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// spriteClipRadius — GH #264 Uranus/Saturn ring clipping fix
+// ---------------------------------------------------------------------------
+
+describe("spriteClipRadius", () => {
+  it("returns sqrt(2)*scale*r for a centred sprite (offsetX=offsetY=0)", () => {
+    // All four corners are equidistant from origin at sqrt(sx^2 + sy^2)*r
+    const r = 68;
+    const sx = 1.251069;
+    const result = spriteClipRadius({ offsetX: 0, offsetY: 0, scaleX: sx, scaleY: sx }, r);
+    expect(result).toBeCloseTo(Math.hypot(sx, sx) * r, 4);
+  });
+
+  it("returns a value greater than r for a unit-scale centred sprite", () => {
+    // Even scale=1 with no offset gives sqrt(2)*r ≈ 1.414*r, ensuring the
+    // full image bounding box is visible (corners are at distance sqrt(2)*r)
+    const r = 100;
+    expect(spriteClipRadius({ offsetX: 0, offsetY: 0, scaleX: 1, scaleY: 1 }, r)).toBeGreaterThan(
+      r
+    );
+  });
+
+  it("uses the farthest corner — positive offset increases the clip radius", () => {
+    const r = 100;
+    const base = spriteClipRadius({ offsetX: 0, offsetY: 0, scaleX: 1, scaleY: 1 }, r);
+    const shifted = spriteClipRadius({ offsetX: 0.2, offsetY: 0.2, scaleX: 1, scaleY: 1 }, r);
+    expect(shifted).toBeGreaterThan(base);
+  });
+
+  it("scales linearly with r", () => {
+    const sprite = { offsetX: 0.05, offsetY: 0.16, scaleX: 1.25, scaleY: 1.25 };
+    const r1 = spriteClipRadius(sprite, 68);
+    const r2 = spriteClipRadius(sprite, 136);
+    expect(r2).toBeCloseTo(r1 * 2, 4);
+  });
+
+  it("Uranus parameters — clip radius is substantially larger than physics radius", () => {
+    // Uranus: tier 7, physics radius=68, spriteScale=1.251069, spriteOffset=[0.054368, 0.155773]
+    const uranusSprite = {
+      offsetX: 0.054368,
+      offsetY: 0.155773,
+      scaleX: 1.251069,
+      scaleY: 1.251069,
+    };
+    const clipR = spriteClipRadius(uranusSprite, 68);
+    // Rings extend well beyond the 68px physics radius
+    expect(clipR).toBeGreaterThan(68);
+    // Farthest corner: sqrt((0.054368+1.251069)^2 + (0.155773+1.251069)^2) * 68 ≈ 130px
+    expect(clipR).toBeCloseTo(Math.hypot(0.054368 + 1.251069, 0.155773 + 1.251069) * 68, 1);
+  });
+
+  it("Saturn parameters — clip radius exceeds physics radius", () => {
+    // Saturn: tier 8, physics radius=76, spriteScale=1.135885, spriteOffset=[0.047144, 0.058236]
+    const saturnSprite = {
+      offsetX: 0.047144,
+      offsetY: 0.058236,
+      scaleX: 1.135885,
+      scaleY: 1.135885,
+    };
+    const clipR = spriteClipRadius(saturnSprite, 76);
+    expect(clipR).toBeGreaterThan(76);
   });
 });
