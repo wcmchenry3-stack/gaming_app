@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { View, Text, StyleSheet, Modal, Pressable } from "react-native";
 import { useTranslation } from "react-i18next";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
@@ -13,6 +13,7 @@ import {
   Category,
 } from "../game/yacht/engine";
 import { saveGame, clearGame } from "../game/yacht/storage";
+import * as Sentry from "@sentry/react-native";
 import DiceRow from "../components/DiceRow";
 import Scorecard from "../components/Scorecard";
 import { useTheme } from "../theme/ThemeContext";
@@ -29,6 +30,14 @@ export default function GameScreen({ navigation, route }: Props) {
   const [possibleScores, setPossibleScores] = useState<Record<string, number>>({});
   const [resetHeld, setResetHeld] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [gameKey, setGameKey] = useState(0);
+
+  // Keep a ref in sync so startNewGame can log the pre-reset state without
+  // closing over a stale copy of gameState (useCallback has [] deps).
+  const gameStateRef = useRef(gameState);
+  useEffect(() => {
+    gameStateRef.current = gameState;
+  }, [gameState]);
 
   // Persist state after every change
   useEffect(() => {
@@ -60,10 +69,28 @@ export default function GameScreen({ navigation, route }: Props) {
   }
 
   const startNewGame = useCallback(async () => {
+    const prev = gameStateRef.current;
+    Sentry.addBreadcrumb({
+      category: "yacht.game",
+      message: "startNewGame: resetting",
+      data: {
+        round: prev.round,
+        game_over: prev.game_over,
+        upper_subtotal: prev.upper_subtotal,
+        total_score: prev.total_score,
+      },
+      level: "info",
+    });
     await clearGame();
     setGameState(newGame());
+    setGameKey((k) => k + 1);
     setResetHeld((r) => !r);
     setError(null);
+    Sentry.addBreadcrumb({
+      category: "yacht.game",
+      message: "startNewGame: reset complete",
+      level: "info",
+    });
   }, []);
 
   return (
@@ -111,9 +138,11 @@ export default function GameScreen({ navigation, route }: Props) {
         resetHeld={resetHeld}
       />
 
-      {/* Scorecard */}
+      {/* Scorecard — key forces full remount on new game, preventing stale
+           native-layer rendering in the ScrollView's upper section rows */}
       <View style={styles.scorecardContainer}>
         <Scorecard
+          key={gameKey}
           scores={gameState.scores}
           possibleScores={possibleScores}
           rollsUsed={gameState.rolls_used}

@@ -48,7 +48,8 @@
           "project": "react-native",
           "organization": "buffing-chi"
         }
-      ]
+      ],
+      "expo-localization"
     ]
   }
 }

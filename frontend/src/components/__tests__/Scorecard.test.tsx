@@ -29,6 +29,8 @@ function renderScorecard(overrides: Partial<React.ComponentProps<typeof Scorecar
     gameOver: false,
     upperSubtotal: 0,
     upperBonus: 0,
+    yachtBonusCount: 0,
+    yachtBonusTotal: 0,
     totalScore: 0,
     onScore: jest.fn(),
   };
@@ -111,5 +113,105 @@ describe("Scorecard", () => {
     const { getByText } = renderScorecard({ upperSubtotal: 63, upperBonus: 35 });
     // bonus.achieved = "{{subtotal}} / 63 ✓" — the ✓ is unique to the achieved state
     expect(getByText(/✓/)).toBeTruthy();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// GH #263 — scorecard reset: all-null scores render blank (upper & lower)
+// ---------------------------------------------------------------------------
+
+const UPPER_CATS = ["Ones", "Twos", "Threes", "Fours", "Fives", "Sixes"];
+const LOWER_CATS = [
+  "Three of a Kind",
+  "Four of a Kind",
+  "Full House (25)",
+  "Sm. Straight (30)",
+  "Lg. Straight (40)",
+  "Yacht! (50)",
+  "Chance",
+];
+
+describe("Scorecard — reset to all-null scores (GH #263)", () => {
+  it("renders all upper section rows as 'not available' when scores are null", () => {
+    const { getByRole } = renderScorecard({ rollsUsed: 0 });
+    for (const cat of UPPER_CATS) {
+      expect(getByRole("button", { name: new RegExp(`${cat}:.*not available`, "i") })).toBeTruthy();
+    }
+  });
+
+  it("renders all lower section rows as 'not available' when scores are null", () => {
+    const { getByRole } = renderScorecard({ rollsUsed: 0 });
+    for (const cat of LOWER_CATS) {
+      // Use a loose regex — category labels include point values like "(25)"
+      expect(
+        getByRole("button", {
+          name: new RegExp(`${cat.replace(/[()]/g, "\\$&")}.*not available`, "i"),
+        })
+      ).toBeTruthy();
+    }
+  });
+
+  it("transitions upper rows from scored to 'not available' when scores reset to null", () => {
+    const filledScores = Object.fromEntries(ALL_CATEGORIES.map((k) => [k, 5]));
+    const { rerender, getByRole } = renderScorecard({
+      scores: filledScores,
+      rollsUsed: 0,
+    });
+    // Confirm "scored" state
+    expect(getByRole("button", { name: /Ones:.*scored/i })).toBeTruthy();
+
+    // Re-render with all-null scores (simulating new game)
+    rerender(
+      <ThemeProvider>
+        <Scorecard
+          scores={emptyScores}
+          possibleScores={{}}
+          rollsUsed={0}
+          gameOver={false}
+          upperSubtotal={0}
+          upperBonus={0}
+          yachtBonusCount={0}
+          yachtBonusTotal={0}
+          totalScore={0}
+          onScore={jest.fn()}
+        />
+      </ThemeProvider>
+    );
+    for (const cat of UPPER_CATS) {
+      expect(getByRole("button", { name: new RegExp(`${cat}:.*not available`, "i") })).toBeTruthy();
+    }
+  });
+
+  it("transitions lower rows from scored to 'not available' when scores reset to null", () => {
+    const filledScores = Object.fromEntries(ALL_CATEGORIES.map((k) => [k, 5]));
+    const { rerender, getByRole } = renderScorecard({
+      scores: filledScores,
+      rollsUsed: 0,
+    });
+    expect(getByRole("button", { name: /Chance:.*scored/i })).toBeTruthy();
+
+    rerender(
+      <ThemeProvider>
+        <Scorecard
+          scores={emptyScores}
+          possibleScores={{}}
+          rollsUsed={0}
+          gameOver={false}
+          upperSubtotal={0}
+          upperBonus={0}
+          yachtBonusCount={0}
+          yachtBonusTotal={0}
+          totalScore={0}
+          onScore={jest.fn()}
+        />
+      </ThemeProvider>
+    );
+    for (const cat of LOWER_CATS) {
+      expect(
+        getByRole("button", {
+          name: new RegExp(`${cat.replace(/[()]/g, "\\$&")}.*not available`, "i"),
+        })
+      ).toBeTruthy();
+    }
   });
 });

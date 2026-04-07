@@ -98,6 +98,48 @@ test.describe("Yacht — full 13-round game journey", () => {
     await expect(page.getByRole("button", { name: /Roll/i })).toBeVisible();
   });
 
+  test("Play Again clears all scorecard scores — upper and lower sections (GH #263)", async ({
+    page,
+  }) => {
+    await page.getByRole("button", { name: "Play Yacht" }).click();
+
+    for (let round = 0; round < 13; round++) {
+      await page.getByRole("button", { name: /Roll/i }).click();
+      await page.getByText(CATEGORY_LABELS_IN_ORDER[round]).first().click();
+    }
+
+    await expect(page.getByText("Game Over!")).toBeVisible();
+    await page.getByRole("button", { name: /start a new game/i }).click();
+    await expect(page.getByText(/Round 1/i)).toBeVisible({ timeout: 10000 });
+
+    // All 13 category rows must show "not available" — no score should persist
+    // from the previous game (rollsUsed=0 at game start, canScore=false)
+    const ALL_CATEGORY_LABELS = [
+      "Ones",
+      "Twos",
+      "Threes",
+      "Fours",
+      "Fives",
+      "Sixes",
+      "Three of a Kind",
+      "Four of a Kind",
+      "Full House (25)",
+      "Sm. Straight (30)",
+      "Lg. Straight (40)",
+      "Yacht! (50)",
+      "Chance",
+    ];
+    for (const cat of ALL_CATEGORY_LABELS) {
+      await expect(
+        page.getByRole("button", { name: `${cat}: not available` })
+      ).toBeVisible();
+    }
+
+    // Upper bonus should also reset: no "✓" (achieved), progress shows 0 / 63
+    await expect(page.getByText(/✓/)).not.toBeVisible();
+    await expect(page.getByText("0 / 63")).toBeVisible();
+  });
+
   test("No Thanks navigates back to HomeScreen", async ({ page }) => {
     await page.getByRole("button", { name: "Play Yacht" }).click();
 

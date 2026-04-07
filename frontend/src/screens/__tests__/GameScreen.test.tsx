@@ -128,41 +128,44 @@ describe("GameScreen", () => {
 });
 
 // ---------------------------------------------------------------------------
+// Shared fixture — fully-completed game state
+// ---------------------------------------------------------------------------
+
+function makeGameOverState(): Record<string, unknown> {
+  return {
+    dice: [0, 0, 0, 0, 0],
+    held: [false, false, false, false, false],
+    rolls_used: 0,
+    round: 14, // engine advances past 13 after the last score
+    scores: {
+      ones: 3,
+      twos: 6,
+      threes: 9,
+      fours: 12,
+      fives: 15,
+      sixes: 18,
+      three_of_a_kind: 20,
+      four_of_a_kind: 0,
+      full_house: 25,
+      small_straight: 30,
+      large_straight: 40,
+      yacht: 50,
+      chance: 21,
+    },
+    game_over: true,
+    upper_subtotal: 63,
+    upper_bonus: 35,
+    yacht_bonus_count: 0,
+    yacht_bonus_total: 0,
+    total_score: 284,
+  };
+}
+
+// ---------------------------------------------------------------------------
 // GH #225 — "Play Again" reset correctness
 // ---------------------------------------------------------------------------
 
 describe("GameScreen — Play Again reset (GH #225)", () => {
-  // Build a fully-completed game state: all 13 categories filled, game_over true.
-  function makeGameOverState(): Record<string, unknown> {
-    return {
-      dice: [0, 0, 0, 0, 0],
-      held: [false, false, false, false, false],
-      rolls_used: 0,
-      round: 14, // engine advances past 13 after the last score
-      scores: {
-        ones: 3,
-        twos: 6,
-        threes: 9,
-        fours: 12,
-        fives: 15,
-        sixes: 18,
-        three_of_a_kind: 20,
-        four_of_a_kind: 0,
-        full_house: 25,
-        small_straight: 30,
-        large_straight: 40,
-        yacht: 50,
-        chance: 21,
-      },
-      game_over: true,
-      upper_subtotal: 63,
-      upper_bonus: 35,
-      yacht_bonus_count: 0,
-      yacht_bonus_total: 0,
-      total_score: 284,
-    };
-  }
-
   beforeEach(() => {
     jest.clearAllMocks();
   });
@@ -243,5 +246,73 @@ describe("GameScreen — Play Again reset (GH #225)", () => {
     await waitFor(() => expect(saveGame).toHaveBeenCalled());
     const savedState = (saveGame as jest.Mock).mock.calls.at(-1)?.[0];
     expect(savedState.total_score).toBe(0);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// GH #263 — scorecard visual reset (upper & lower sections)
+// ---------------------------------------------------------------------------
+
+describe("GameScreen — scorecard visual reset (GH #263)", () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it("Play Again resets all upper section rows to 'not available'", async () => {
+    const { getByRole } = renderScreen(makeGameOverState());
+    await act(async () => {
+      fireEvent.press(getByRole("button", { name: /play again/i }));
+    });
+    // rollsUsed=0 after reset → canScore=false → every ScoreRow shows "not available"
+    for (const cat of ["Ones", "Twos", "Threes", "Fours", "Fives", "Sixes"]) {
+      expect(getByRole("button", { name: new RegExp(`${cat}:.*not available`, "i") })).toBeTruthy();
+    }
+  });
+
+  it("Play Again resets all lower section rows to 'not available'", async () => {
+    const { getByRole } = renderScreen(makeGameOverState());
+    await act(async () => {
+      fireEvent.press(getByRole("button", { name: /play again/i }));
+    });
+    for (const cat of [
+      "Three of a Kind",
+      "Four of a Kind",
+      "Full House",
+      "Sm. Straight",
+      "Lg. Straight",
+      "Yacht!",
+      "Chance",
+    ]) {
+      expect(getByRole("button", { name: new RegExp(`${cat}.*not available`, "i") })).toBeTruthy();
+    }
+  });
+
+  it("Play Again resets upper bonus display to 0 / 63 progress", async () => {
+    const { getByRole, getByText, queryByText } = renderScreen(makeGameOverState());
+    await act(async () => {
+      fireEvent.press(getByRole("button", { name: /play again/i }));
+    });
+    // After reset: upper_subtotal=0, upper_bonus=0 → progress display ("0 / 63")
+    expect(getByText("0 / 63")).toBeTruthy();
+    // The "achieved" check mark must not be visible after reset
+    expect(queryByText(/\u2713/)).toBeNull();
+  });
+
+  it("Play Again logs Sentry breadcrumbs for the reset event", async () => {
+    const { getByRole } = renderScreen(makeGameOverState());
+    const { addBreadcrumb } = jest.requireMock("@sentry/react-native") as {
+      addBreadcrumb: jest.Mock;
+    };
+    addBreadcrumb.mockClear();
+    await act(async () => {
+      fireEvent.press(getByRole("button", { name: /play again/i }));
+    });
+    // Should have two breadcrumbs: one before reset, one after
+    expect(addBreadcrumb).toHaveBeenCalledWith(
+      expect.objectContaining({ message: expect.stringMatching(/resetting/) })
+    );
+    expect(addBreadcrumb).toHaveBeenCalledWith(
+      expect.objectContaining({ message: expect.stringMatching(/reset complete/) })
+    );
   });
 });
