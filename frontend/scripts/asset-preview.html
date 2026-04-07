@@ -948,7 +948,14 @@
           Matter.Runner.stop(mRunner);
           cancelAnimationFrame(simRafId);
         }
-        mEngine = Matter.Engine.create({ gravity: { x: 0, y: 1.8 } });
+        mEngine = Matter.Engine.create({
+          gravity: { x: 0, y: 1.2 },
+          // More solver iterations prevent small fast bodies (tier-0, r=18)
+          // from tunnelling through walls in a single physics step.
+          positionIterations: 20,
+          velocityIterations: 16,
+          constraintIterations: 4,
+        });
         mRunner = Matter.Runner.create();
         simBodies = [];
 
@@ -959,11 +966,35 @@
           render: { visible: false },
         };
 
-        // Floor and side walls
+        // Floor and side walls — bodies are 200px thick so even the smallest
+        // fruit (r=18, tier 0) cannot tunnel through in a single physics step.
+        // The visible surfaces stay at the same canvas positions as before.
+        const THICK = 200;
         Matter.Composite.add(mEngine.world, [
-          Matter.Bodies.rectangle(SIM_W / 2, SIM_H - WALL / 2, SIM_W, WALL, wallOpts),
-          Matter.Bodies.rectangle(WALL / 2, SIM_H / 2, WALL, SIM_H, wallOpts),
-          Matter.Bodies.rectangle(SIM_W - WALL / 2, SIM_H / 2, WALL, SIM_H, wallOpts),
+          // Floor: visible top at SIM_H - WALL, body extends THICK px below
+          Matter.Bodies.rectangle(
+            SIM_W / 2,
+            SIM_H - WALL / 2 + THICK / 2,
+            SIM_W + THICK * 2,
+            WALL + THICK,
+            wallOpts
+          ),
+          // Left wall: visible right edge at WALL, body extends THICK px left
+          Matter.Bodies.rectangle(
+            WALL / 2 - THICK / 2,
+            SIM_H / 2,
+            WALL + THICK,
+            SIM_H * 3,
+            wallOpts
+          ),
+          // Right wall: visible left edge at SIM_W - WALL, extends THICK px right
+          Matter.Bodies.rectangle(
+            SIM_W - WALL / 2 + THICK / 2,
+            SIM_H / 2,
+            WALL + THICK,
+            SIM_H * 3,
+            wallOpts
+          ),
         ]);
 
         Matter.Runner.run(mRunner, mEngine);
