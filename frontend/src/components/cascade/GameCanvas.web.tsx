@@ -115,9 +115,14 @@ function drawFruitBody(
     ctx.beginPath();
     ctx.arc(0, 0, clipR, 0, Math.PI * 2);
     ctx.clip();
-    // Opaque bg fill first — anything transparent in the sprite shows this
+    // Opaque bg fill within the physics circle — anything transparent in the
+    // sprite body shows this. Deliberately a circle (not fillRect) so the fill
+    // stays inside radius r and never bleeds into adjacent fruit sprites when
+    // the clip radius is expanded beyond r for ringed planets.
     ctx.fillStyle = bgColor;
-    ctx.fillRect(-r, -r, r * 2, r * 2);
+    ctx.beginPath();
+    ctx.arc(0, 0, r, 0, Math.PI * 2);
+    ctx.fill();
     if (sprite) {
       const ix = sprite.offsetX * r;
       const iy = sprite.offsetY * r;
