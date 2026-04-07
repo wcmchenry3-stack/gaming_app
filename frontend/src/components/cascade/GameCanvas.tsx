@@ -65,8 +65,9 @@ interface Props {
   onMerge: (event: MergeEvent) => void;
   onGameOver: () => void;
   onTap: (x: number) => void;
-  width: number;
-  height: number;
+  width: number; // world width (px) — physics coordinate space
+  height: number; // world height (px) — physics coordinate space
+  scale: number; // display scale: canvas CSS size = world * scale
 }
 
 function FruitBodySkia({
@@ -121,7 +122,7 @@ function FruitBodySkia({
 }
 
 const GameCanvas = forwardRef<GameCanvasHandle, Props>(
-  ({ fruitSet, nextDef, onMerge, onGameOver, onTap, width, height }, ref) => {
+  ({ fruitSet, nextDef, onMerge, onGameOver, onTap, width, height, scale }, ref) => {
     const { colors } = useTheme();
     const { t } = useTranslation("cascade");
 
@@ -267,88 +268,93 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
     const panGesture = Gesture.Pan()
       .runOnJS(true)
       .minDistance(0)
-      .onBegin((e) => setPointerX(e.x))
-      .onChange((e) => setPointerX(e.x))
+      .onBegin((e) => setPointerX(e.x / scale))
+      .onChange((e) => setPointerX(e.x / scale))
       .onEnd((e) => {
-        if (pointerX !== null) onTap(e.x);
+        if (pointerX !== null) onTap(e.x / scale);
       })
       .onFinalize(() => setPointerX(null));
     const tapGesture = Gesture.Tap()
       .runOnJS(true)
       .onEnd((e, ok) => {
-        if (ok) onTap(e.x);
+        if (ok) onTap(e.x / scale);
       });
     const composed = Gesture.Exclusive(panGesture, tapGesture);
+
+    const displayW = Math.round(width * scale);
+    const displayH = Math.round(height * scale);
 
     return (
       <GestureDetector gesture={composed}>
         <Canvas
-          style={{ width, height, borderRadius: 12, overflow: "hidden" }}
+          style={{ width: displayW, height: displayH, borderRadius: 12, overflow: "hidden" }}
           accessibilityLabel={t("game.canvasLabel")}
           accessibilityRole="none"
         >
-          <Fill color={colors.fruitBackground} />
-          <Rect x={0} y={0} width={WALL_THICKNESS} height={height} color={colors.border} />
-          <Rect
-            x={width - WALL_THICKNESS}
-            y={0}
-            width={WALL_THICKNESS}
-            height={height}
-            color={colors.border}
-          />
-          <Rect
-            x={0}
-            y={height - WALL_THICKNESS}
-            width={width}
-            height={WALL_THICKNESS}
-            color={colors.border}
-          />
-          <Path path={dangerPath} color="rgba(239,68,68,0.4)" style="stroke" strokeWidth={1}>
-            <DashPathEffect intervals={[6, 4]} phase={0} />
-          </Path>
-          {ghostCx !== null && guidePath !== null && (
-            <Group opacity={0.7}>
-              <Path
-                path={guidePath}
-                color="rgba(255,255,255,0.25)"
-                style="stroke"
-                strokeWidth={1.5}
-              >
-                <DashPathEffect intervals={[4, 6]} phase={0} />
-              </Path>
-              <Circle
-                cx={ghostCx + 2}
-                cy={DROP_Y + 3}
-                r={nextDef.radius + 1}
-                color="rgba(0,0,0,0.25)"
-              />
-              <FruitBodySkia
-                x={ghostCx}
-                y={DROP_Y}
-                radius={nextDef.radius}
-                color={nextDef.color}
-                image={images[nextDef.tier] ?? null}
-                angle={0}
-                sprite={spriteInfoByTier[nextDef.tier] ?? null}
-              />
-            </Group>
-          )}
-          {bodies.map((body) => {
-            const def = fruitSet.fruits[body.tier];
-            if (!def) return null;
-            return (
-              <FruitBodySkia
-                key={body.id}
-                x={body.x}
-                y={body.y}
-                radius={def.radius}
-                color={def.color}
-                image={images[body.tier] ?? null}
-                angle={body.angle}
-                sprite={spriteInfoByTier[body.tier] ?? null}
-              />
-            );
-          })}
+          <Group transform={[{ scale }]}>
+            <Fill color={colors.fruitBackground} />
+            <Rect x={0} y={0} width={WALL_THICKNESS} height={height} color={colors.border} />
+            <Rect
+              x={width - WALL_THICKNESS}
+              y={0}
+              width={WALL_THICKNESS}
+              height={height}
+              color={colors.border}
+            />
+            <Rect
+              x={0}
+              y={height - WALL_THICKNESS}
+              width={width}
+              height={WALL_THICKNESS}
+              color={colors.border}
+            />
+            <Path path={dangerPath} color="rgba(239,68,68,0.4)" style="stroke" strokeWidth={1}>
+              <DashPathEffect intervals={[6, 4]} phase={0} />
+            </Path>
+            {ghostCx !== null && guidePath !== null && (
+              <Group opacity={0.7}>
+                <Path
+                  path={guidePath}
+                  color="rgba(255,255,255,0.25)"
+                  style="stroke"
+                  strokeWidth={1.5}
+                >
+                  <DashPathEffect intervals={[4, 6]} phase={0} />
+                </Path>
+                <Circle
+                  cx={ghostCx + 2}
+                  cy={DROP_Y + 3}
+                  r={nextDef.radius + 1}
+                  color="rgba(0,0,0,0.25)"
+                />
+                <FruitBodySkia
+                  x={ghostCx}
+                  y={DROP_Y}
+                  radius={nextDef.radius}
+                  color={nextDef.color}
+                  image={images[nextDef.tier] ?? null}
+                  angle={0}
+                  sprite={spriteInfoByTier[nextDef.tier] ?? null}
+                />
+              </Group>
+            )}
+            {bodies.map((body) => {
+              const def = fruitSet.fruits[body.tier];
+              if (!def) return null;
+              return (
+                <FruitBodySkia
+                  key={body.id}
+                  x={body.x}
+                  y={body.y}
+                  radius={def.radius}
+                  color={def.color}
+                  image={images[body.tier] ?? null}
+                  angle={body.angle}
+                  sprite={spriteInfoByTier[body.tier] ?? null}
+                />
+              );
+            })}
+          </Group>
         </Canvas>
       </GestureDetector>
     );

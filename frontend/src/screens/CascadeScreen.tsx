@@ -7,7 +7,7 @@ import { useTheme } from "../theme/ThemeContext";
 import { FruitSetProvider, useFruitSet } from "../theme/FruitSetContext";
 import { FruitQueue } from "../game/cascade/fruitQueue";
 import { ControlledSpawnSelector, createSeededRng } from "../game/cascade/spawnSelector";
-import { MergeEvent } from "../game/cascade/engine";
+import { MergeEvent, WORLD_W, WORLD_H } from "../game/cascade/engine";
 import { scoreForMerge } from "../game/cascade/scoring";
 import GameCanvas, { GameCanvasHandle } from "../components/cascade/GameCanvas";
 import NextFruitPreview from "../components/cascade/NextFruitPreview";
@@ -19,9 +19,6 @@ type Props = {
   navigation: NativeStackNavigationProp<RootStackParamList, "Cascade">;
 };
 
-// Max container width — keeps the game portrait-shaped on wide screens
-const MAX_CANVAS_WIDTH = 400;
-
 function CascadeGame({ navigation }: Props) {
   const { t } = useTranslation(["cascade", "common"]);
   const { colors, theme, toggle } = useTheme();
@@ -30,7 +27,7 @@ function CascadeGame({ navigation }: Props) {
   const [score, setScore] = useState(0);
   const [gameOver, setGameOver] = useState(false);
   const [containerWidth, setContainerWidth] = useState(0);
-  const [canvasHeight, setCanvasHeight] = useState(0);
+  const [containerHeight, setContainerHeight] = useState(0);
   const [, setQueueVersion] = useState(0);
 
   const canvasRef = useRef<GameCanvasHandle>(null);
@@ -71,7 +68,7 @@ function CascadeGame({ navigation }: Props) {
   const onLayout = useCallback((e: LayoutChangeEvent) => {
     const { width, height } = e.nativeEvent.layout;
     setContainerWidth(Math.floor(width));
-    setCanvasHeight(Math.floor(height));
+    setContainerHeight(Math.floor(height));
   }, []);
 
   const handleMerge = useCallback(
@@ -179,8 +176,12 @@ function CascadeGame({ navigation }: Props) {
   const currentDef = activeFruitSet.fruits[queue.peek()];
   const nextDef = activeFruitSet.fruits[queue.peekNext()];
 
-  // Clamp canvas width to MAX_CANVAS_WIDTH
-  const canvasWidth = Math.min(containerWidth, MAX_CANVAS_WIDTH);
+  // Uniform scale so the fixed physics world fits the available container.
+  // Uses the smaller of the two axes so the canvas always letterboxes cleanly.
+  const scale =
+    containerWidth > 0 && containerHeight > 0
+      ? Math.min(containerWidth / WORLD_W, containerHeight / WORLD_H)
+      : 0;
 
   return (
     <View style={[styles.screen, { backgroundColor: colors.background }]}>
@@ -221,7 +222,7 @@ function CascadeGame({ navigation }: Props) {
 
       {/* Canvas — portrait-constrained, centered */}
       <View style={styles.canvasOuter} onLayout={onLayout}>
-        {canvasWidth > 0 && canvasHeight > 0 && (
+        {scale > 0 && (
           <GameCanvas
             ref={canvasRef}
             fruitSet={activeFruitSet}
@@ -229,8 +230,9 @@ function CascadeGame({ navigation }: Props) {
             onMerge={handleMerge}
             onGameOver={handleGameOver}
             onTap={handleTap}
-            width={canvasWidth}
-            height={canvasHeight}
+            width={WORLD_W}
+            height={WORLD_H}
+            scale={scale}
           />
         )}
       </View>

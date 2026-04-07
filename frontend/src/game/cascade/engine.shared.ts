@@ -1,5 +1,11 @@
 import { FruitDefinition, FruitTier } from "../../theme/fruitSets";
 
+// --- Canonical physics world dimensions (px) ---
+// Physics always runs at this fixed size. The renderer scales the canvas to fit
+// the device container — see CascadeScreen for the scale computation.
+export const WORLD_W = 400;
+export const WORLD_H = 700;
+
 // --- Layout constants ---
 export const WALL_THICKNESS = 16;
 /** 18% from top — game over if settled fruit crosses this */
