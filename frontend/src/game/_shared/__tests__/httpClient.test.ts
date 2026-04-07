@@ -93,6 +93,41 @@ describe("httpClient — error handling", () => {
     await expect(request("/x")).rejects.toThrow("Internal Server Error");
   });
 
+  it("throws ApiError with status code on non-ok response", async () => {
+    const { ApiError } = require("../httpClient") as typeof import("../httpClient");
+    mockFetch.mockResolvedValueOnce({
+      ok: false,
+      status: 404,
+      statusText: "Not Found",
+      json: () => Promise.resolve({ detail: "No game in progress" }),
+    } as Response);
+    try {
+      await request("/x");
+      fail("expected request to throw");
+    } catch (e) {
+      expect(e).toBeInstanceOf(ApiError);
+      expect((e as InstanceType<typeof ApiError>).status).toBe(404);
+      expect((e as Error).message).toBe("No game in progress");
+    }
+  });
+
+  it("throws ApiError with status 500 for server errors", async () => {
+    const { ApiError } = require("../httpClient") as typeof import("../httpClient");
+    mockFetch.mockResolvedValueOnce({
+      ok: false,
+      status: 500,
+      statusText: "Internal Server Error",
+      json: () => Promise.resolve({ detail: "Something broke" }),
+    } as Response);
+    try {
+      await request("/x");
+      fail("expected request to throw");
+    } catch (e) {
+      expect(e).toBeInstanceOf(ApiError);
+      expect((e as InstanceType<typeof ApiError>).status).toBe(500);
+    }
+  });
+
   it("sends Content-Type and X-Session-ID headers", async () => {
     mockFetch.mockResolvedValueOnce({
       ok: true,

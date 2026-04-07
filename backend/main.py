@@ -47,7 +47,8 @@ app = FastAPI(title="Gaming App API")
 app.include_router(yacht_router, prefix="/yacht")
 app.include_router(cascade_router, prefix="/cascade")
 app.include_router(blackjack_router, prefix="/blackjack")
-app.include_router(pachisi_router, prefix="/pachisi")
+# Pachisi disabled — needs total rewrite before re-enabling
+# app.include_router(pachisi_router, prefix="/pachisi")
 
 # ---------------------------------------------------------------------------
 # Rate limiting

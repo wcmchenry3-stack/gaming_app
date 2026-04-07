@@ -46,13 +46,14 @@ beforeEach(() => {
 });
 
 describe("HomeScreen — game cards", () => {
-  it("renders all four game cards", () => {
+  it("renders active game cards (Pachisi disabled)", () => {
     const nav = mockNav();
-    const { getByLabelText } = renderScreen(nav);
+    const { getByLabelText, queryByLabelText } = renderScreen(nav);
     expect(getByLabelText("Play Yacht")).toBeTruthy();
     expect(getByLabelText("Play Cascade")).toBeTruthy();
     expect(getByLabelText("Play Blackjack")).toBeTruthy();
-    expect(getByLabelText("Play Pachisi")).toBeTruthy();
+    // Pachisi is disabled — should not appear
+    expect(queryByLabelText("Play Pachisi")).toBeNull();
   });
 
   it("navigates to Blackjack when Blackjack card pressed", () => {
@@ -69,12 +70,13 @@ describe("HomeScreen — game cards", () => {
     expect(nav.navigate).toHaveBeenCalledWith("Cascade");
   });
 
-  it("navigates to Pachisi when Pachisi card pressed", () => {
-    const nav = mockNav();
-    const { getByLabelText } = renderScreen(nav);
-    fireEvent.press(getByLabelText("Play Pachisi"));
-    expect(nav.navigate).toHaveBeenCalledWith("Pachisi");
-  });
+  // Pachisi disabled — navigation test skipped
+  // it("navigates to Pachisi when Pachisi card pressed", () => {
+  //   const nav = mockNav();
+  //   const { getByLabelText } = renderScreen(nav);
+  //   fireEvent.press(getByLabelText("Play Pachisi"));
+  //   expect(nav.navigate).toHaveBeenCalledWith("Pachisi");
+  // });
 
   it("navigates to Game with a new state when Yacht card pressed (no saved game)", async () => {
     const nav = mockNav();

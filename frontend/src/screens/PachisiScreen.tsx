@@ -5,6 +5,7 @@ import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { RootStackParamList } from "../../App";
 import { useTheme } from "../theme/ThemeContext";
 import { pachisiApi, PachisiState } from "../game/pachisi/api";
+import { ApiError } from "../game/_shared/httpClient";
 import PachisiBoard from "../components/pachisi/PachisiBoard";
 import DiceDisplay from "../components/pachisi/DiceDisplay";
 import PieceSelector from "../components/pachisi/PieceSelector";
@@ -57,6 +58,17 @@ export default function PachisiScreen({ navigation }: Props) {
         setState(s);
         return s;
       } catch (e: unknown) {
+        // Session expired / not found — silently create a new one
+        if (e instanceof ApiError && e.status === 404) {
+          try {
+            const s = await pachisiApi.newSession();
+            setState(s);
+            return s;
+          } catch {
+            setError(t("errors:backend.connection"));
+            return null;
+          }
+        }
         setError(e instanceof Error ? e.message : t("errors:backend.connection"));
         return null;
       } finally {

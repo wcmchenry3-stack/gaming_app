@@ -65,7 +65,8 @@ function AppInner() {
             <Stack.Screen name="Game" component={GameScreen} />
             <Stack.Screen name="Cascade" component={CascadeScreen} />
             <Stack.Screen name="Blackjack" component={BlackjackScreen} />
-            <Stack.Screen name="Pachisi" component={PachisiScreen} />
+            {/* Pachisi disabled — needs total rewrite before re-enabling */}
+            {/* <Stack.Screen name="Pachisi" component={PachisiScreen} /> */}
             <Stack.Screen name="Twenty48" component={Twenty48Screen} />
           </Stack.Navigator>
         </NavigationContainer>

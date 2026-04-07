@@ -54,7 +54,7 @@ export default function LanguageSwitcher() {
                       { borderBottomColor: colors.border },
                       active && { backgroundColor: colors.surfaceAlt },
                     ]}
-                    accessibilityRole="option"
+                    accessibilityRole="button"
                     accessibilityState={{ selected: active }}
                     accessibilityLabel={`${item.nativeLabel} — ${item.label}`}
                   >
