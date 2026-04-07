@@ -117,9 +117,15 @@ describe("drop", () => {
     expect(snaps[0].tier).toBe(1);
   });
 
-  it("uses ball collider for sets without vertex data (gems)", async () => {
-    const handle = await createEngine(W, H, FRUIT_SETS["gems"], jest.fn(), jest.fn());
-    handle.drop(FRUIT_SETS["gems"].fruits[0], "gems", 150, 100);
+  it("uses ball collider for sets without vertex data", async () => {
+    // Synthetic set with no vertex JSON — simulates a set that has no PNG assets
+    const noVertexSet = {
+      id: "test_no_verts",
+      label: "Test",
+      fruits: FRUIT_SETS["fruits"].fruits.map((f) => ({ ...f, icon: undefined })),
+    };
+    const handle = await createEngine(W, H, noVertexSet, jest.fn(), jest.fn());
+    handle.drop(noVertexSet.fruits[0], "test_no_verts", 150, 100);
     expect(RAPIER_MOCK.ColliderDesc.ball).toHaveBeenCalled();
   });
 });

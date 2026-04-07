@@ -20,7 +20,13 @@ export function FruitSetProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     AsyncStorage.getItem(STORAGE_KEY)
       .then((stored) => {
-        if (stored && FRUIT_SETS[stored]) setActiveId(stored);
+        if (!stored) return;
+        // Migrate legacy theme ids
+        const migrated = stored === "planets" ? "cosmos" : stored;
+        if (FRUIT_SETS[migrated]) {
+          setActiveId(migrated);
+          if (migrated !== stored) AsyncStorage.setItem(STORAGE_KEY, migrated);
+        }
       })
       .catch(() => {});
   }, []);

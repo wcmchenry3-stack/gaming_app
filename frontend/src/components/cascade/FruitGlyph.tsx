@@ -25,7 +25,7 @@ export default function FruitGlyph({ fruit, size }: Props) {
     );
   }
 
-  // No icon configured (e.g. gems set) — colored circle fallback. No emoji.
+  // No icon configured — colored circle fallback.
   return (
     <View
       style={[

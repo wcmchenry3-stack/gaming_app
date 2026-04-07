@@ -17,7 +17,7 @@ Usage
 Output
 ------
   frontend/assets/fruit-vertices.json     — keys = fruit PNG filename stems
-  frontend/assets/planet-vertices.json    — keys = celestial PNG filename stems
+  frontend/assets/cosmos-vertices.json    — keys = celestial PNG filename stems
 
 JSON format
 -----------
@@ -50,7 +50,7 @@ _ASSETS_DIR = _FRONTEND_DIR / "assets"
 
 DEFAULT_TARGETS = [
     (_ASSETS_DIR / "fruit-icons", _ASSETS_DIR / "fruit-vertices.json"),
-    (_ASSETS_DIR / "celestial-icons", _ASSETS_DIR / "planet-vertices.json"),
+    (_ASSETS_DIR / "celestial-icons", _ASSETS_DIR / "cosmos-vertices.json"),
 ]
 
 

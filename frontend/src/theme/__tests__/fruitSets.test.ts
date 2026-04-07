@@ -3,11 +3,10 @@ import { FRUIT_SETS, FruitTier } from "../fruitSets";
 const ALL_TIERS: FruitTier[] = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
 
 describe("fruitSets structure", () => {
-  it("defines exactly three sets", () => {
-    expect(Object.keys(FRUIT_SETS)).toHaveLength(3);
+  it("defines exactly two sets", () => {
+    expect(Object.keys(FRUIT_SETS)).toHaveLength(2);
     expect(FRUIT_SETS).toHaveProperty("fruits");
-    expect(FRUIT_SETS).toHaveProperty("gems");
-    expect(FRUIT_SETS).toHaveProperty("planets");
+    expect(FRUIT_SETS).toHaveProperty("cosmos");
   });
 
   for (const [setId, set] of Object.entries(FRUIT_SETS)) {
@@ -35,13 +34,9 @@ describe("fruitSets structure", () => {
         }
       });
 
-      it("assigns image assets only to the fruit icon set", () => {
+      it("all entries have image assets", () => {
         for (const fruit of set.fruits) {
-          if (setId === "fruits" || setId === "planets") {
-            expect(fruit.icon).toBeTruthy();
-          } else {
-            expect(fruit.icon).toBeUndefined();
-          }
+          expect(fruit.icon).toBeTruthy();
         }
       });
 
@@ -69,8 +64,8 @@ describe("fruitSets structure", () => {
     }
   });
 
-  it("uses the requested smallest-to-largest order for planets", () => {
-    expect(FRUIT_SETS.planets.fruits.map((fruit) => fruit.name)).toEqual([
+  it("uses the requested smallest-to-largest order for cosmos", () => {
+    expect(FRUIT_SETS.cosmos.fruits.map((fruit) => fruit.name)).toEqual([
       "Moon",
       "Pluto",
       "Mercury",

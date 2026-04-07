@@ -89,7 +89,7 @@ const FRUIT_ICONS = {
   pumpkin: pumpkinIcon,
 } as const;
 
-const PLANET_ICONS = {
+const COSMOS_ICONS = {
   moon: moonIcon,
   pluto: plutoIcon,
   mercury: mercuryIcon,
@@ -211,108 +211,14 @@ export const FRUIT_SETS: Record<string, FruitSet> = {
       },
     ],
   },
-  gems: {
-    id: "gems",
-    label: "Gems",
-    fruits: [
-      {
-        tier: 0,
-        name: "Chip",
-        emoji: "🪨",
-        color: "#9ca3af",
-        radius: RADII[0],
-        scoreValue: SCORE_VALUES[0],
-      },
-      {
-        tier: 1,
-        name: "Quartz",
-        emoji: "🔮",
-        color: "#c4b5fd",
-        radius: RADII[1],
-        scoreValue: SCORE_VALUES[1],
-      },
-      {
-        tier: 2,
-        name: "Topaz",
-        emoji: "💛",
-        color: "#fbbf24",
-        radius: RADII[2],
-        scoreValue: SCORE_VALUES[2],
-      },
-      {
-        tier: 3,
-        name: "Amethyst",
-        emoji: "💜",
-        color: "#7c3aed",
-        radius: RADII[3],
-        scoreValue: SCORE_VALUES[3],
-      },
-      {
-        tier: 4,
-        name: "Sapphire",
-        emoji: "💙",
-        color: "#2563eb",
-        radius: RADII[4],
-        scoreValue: SCORE_VALUES[4],
-      },
-      {
-        tier: 5,
-        name: "Emerald",
-        emoji: "💚",
-        color: "#16a34a",
-        radius: RADII[5],
-        scoreValue: SCORE_VALUES[5],
-      },
-      {
-        tier: 6,
-        name: "Ruby",
-        emoji: "❤️",
-        color: "#dc2626",
-        radius: RADII[6],
-        scoreValue: SCORE_VALUES[6],
-      },
-      {
-        tier: 7,
-        name: "Opal",
-        emoji: "🌈",
-        color: "#06b6d4",
-        radius: RADII[7],
-        scoreValue: SCORE_VALUES[7],
-      },
-      {
-        tier: 8,
-        name: "Tanzanite",
-        emoji: "🫧",
-        color: "#4338ca",
-        radius: RADII[8],
-        scoreValue: SCORE_VALUES[8],
-      },
-      {
-        tier: 9,
-        name: "Diamond",
-        emoji: "💎",
-        color: "#e0f2fe",
-        radius: RADII[9],
-        scoreValue: SCORE_VALUES[9],
-      },
-      {
-        tier: 10,
-        name: "Star gem",
-        emoji: "⭐",
-        color: "#fde68a",
-        radius: RADII[10],
-        scoreValue: SCORE_VALUES[10],
-      },
-    ],
-  },
-  planets: {
-    id: "planets",
-    label: "Planets",
+  cosmos: {
+    id: "cosmos",
+    label: "Cosmos",
     fruits: [
       {
         tier: 0,
         name: "Moon",
-        icon: PLANET_ICONS.moon,
+        icon: COSMOS_ICONS.moon,
         emoji: "🌙",
         color: "#d1d5db",
         radius: RADII[0],
@@ -321,7 +227,7 @@ export const FRUIT_SETS: Record<string, FruitSet> = {
       {
         tier: 1,
         name: "Pluto",
-        icon: PLANET_ICONS.pluto,
+        icon: COSMOS_ICONS.pluto,
         emoji: "🪨",
         color: "#94a3b8",
         radius: RADII[1],
@@ -330,7 +236,7 @@ export const FRUIT_SETS: Record<string, FruitSet> = {
       {
         tier: 2,
         name: "Mercury",
-        icon: PLANET_ICONS.mercury,
+        icon: COSMOS_ICONS.mercury,
         emoji: "🪨",
         color: "#9ca3af",
         radius: RADII[2],
@@ -339,7 +245,7 @@ export const FRUIT_SETS: Record<string, FruitSet> = {
       {
         tier: 3,
         name: "Mars",
-        icon: PLANET_ICONS.mars,
+        icon: COSMOS_ICONS.mars,
         emoji: "🔴",
         color: "#dc2626",
         radius: RADII[3],
@@ -348,7 +254,7 @@ export const FRUIT_SETS: Record<string, FruitSet> = {
       {
         tier: 4,
         name: "Venus",
-        icon: PLANET_ICONS.venus,
+        icon: COSMOS_ICONS.venus,
         emoji: "🟡",
         color: "#fbbf24",
         radius: RADII[4],
@@ -357,7 +263,7 @@ export const FRUIT_SETS: Record<string, FruitSet> = {
       {
         tier: 5,
         name: "Earth",
-        icon: PLANET_ICONS.earth,
+        icon: COSMOS_ICONS.earth,
         emoji: "🌍",
         color: "#2563eb",
         radius: RADII[5],
@@ -366,7 +272,7 @@ export const FRUIT_SETS: Record<string, FruitSet> = {
       {
         tier: 6,
         name: "Neptune",
-        icon: PLANET_ICONS.neptune,
+        icon: COSMOS_ICONS.neptune,
         emoji: "🔵",
         color: "#1d4ed8",
         radius: RADII[6],
@@ -375,7 +281,7 @@ export const FRUIT_SETS: Record<string, FruitSet> = {
       {
         tier: 7,
         name: "Uranus",
-        icon: PLANET_ICONS.uranus,
+        icon: COSMOS_ICONS.uranus,
         emoji: "🩵",
         color: "#67e8f9",
         radius: RADII[7],
@@ -384,7 +290,7 @@ export const FRUIT_SETS: Record<string, FruitSet> = {
       {
         tier: 8,
         name: "Saturn",
-        icon: PLANET_ICONS.saturn,
+        icon: COSMOS_ICONS.saturn,
         emoji: "🪐",
         color: "#ca8a04",
         radius: RADII[8],
@@ -393,7 +299,7 @@ export const FRUIT_SETS: Record<string, FruitSet> = {
       {
         tier: 9,
         name: "Jupiter",
-        icon: PLANET_ICONS.jupiter,
+        icon: COSMOS_ICONS.jupiter,
         emoji: "🟠",
         color: "#ea580c",
         radius: RADII[9],
@@ -402,7 +308,7 @@ export const FRUIT_SETS: Record<string, FruitSet> = {
       {
         tier: 10,
         name: "Sun",
-        icon: PLANET_ICONS.sun,
+        icon: COSMOS_ICONS.sun,
         emoji: "☀️",
         color: "#facc15",
         radius: RADII[10],

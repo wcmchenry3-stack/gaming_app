@@ -1,5 +1,5 @@
 /**
- * useFruitImages — loads all fruit/planet PNG assets via Skia's useImage hook.
+ * useFruitImages — loads all fruit/cosmos PNG assets via Skia's useImage hook.
  *
  * useImage must be called unconditionally (React hooks rules), so every asset is
  * loaded upfront regardless of the active fruit set. The caller picks the right
@@ -38,10 +38,9 @@ import jupiterIcon from "../../assets/celestial-icons/jupiter.png";
 import sunIcon from "../../assets/celestial-icons/sun.png";
 
 export interface FruitSetImages {
-  /** Images indexed by tier (0–10). null = not yet loaded or no icon (gems). */
+  /** Images indexed by tier (0–10). null = not yet loaded. */
   fruits: (SkImage | null)[];
-  planets: (SkImage | null)[];
-  gems: null[];
+  cosmos: (SkImage | null)[];
 }
 
 export function useFruitImages(): FruitSetImages {
@@ -59,7 +58,7 @@ export function useFruitImages(): FruitSetImages {
   const pineapple = useImage(pineappleIcon);
   const watermelon = useImage(watermelonIcon);
 
-  // Planet tier order: moon, pluto, mercury, mars, venus, earth,
+  // Cosmos tier order: moon, pluto, mercury, mars, venus, earth,
   //                    neptune, uranus, saturn, jupiter, sun
   const moon = useImage(moonIcon);
   const pluto = useImage(plutoIcon);
@@ -87,8 +86,7 @@ export function useFruitImages(): FruitSetImages {
       pineapple,
       watermelon,
     ],
-    planets: [moon, pluto, mercury, mars, venus, earth, neptune, uranus, saturn, jupiter, sun],
-    gems: [null, null, null, null, null, null, null, null, null, null, null],
+    cosmos: [moon, pluto, mercury, mars, venus, earth, neptune, uranus, saturn, jupiter, sun],
   };
 }
 
@@ -97,9 +95,9 @@ export function getImagesForSet(allImages: FruitSetImages, setId: string): (SkIm
   switch (setId) {
     case "fruits":
       return allImages.fruits;
-    case "planets":
-      return allImages.planets;
+    case "cosmos":
+      return allImages.cosmos;
     default:
-      return allImages.gems;
+      return allImages.fruits;
   }
 }

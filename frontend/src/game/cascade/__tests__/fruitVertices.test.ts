@@ -38,7 +38,7 @@ jest.mock("../../../../assets/fruit-vertices.json", () => ({
   ),
 }));
 
-jest.mock("../../../../assets/planet-vertices.json", () => ({
+jest.mock("../../../../assets/cosmos-vertices.json", () => ({
   moon: entry([
     [-0.7, -0.3],
     [0.7, -0.3],
@@ -75,19 +75,15 @@ describe("getVerticesForFruit", () => {
     expect(getVerticesForFruit("fruits", "too_few")).toBeNull();
   });
 
-  // --- planets set ---
+  // --- cosmos set ---
 
-  it("returns vertices for a known planet key", () => {
-    const verts = getVerticesForFruit("planets", "moon");
+  it("returns vertices for a known cosmos key", () => {
+    const verts = getVerticesForFruit("cosmos", "moon");
     expect(verts).not.toBeNull();
     expect(verts!.length).toBe(3);
   });
 
-  // --- gems / unknown set → circle fallback ---
-
-  it("returns null for the gems set", () => {
-    expect(getVerticesForFruit("gems", "ruby")).toBeNull();
-  });
+  // --- unknown set → null ---
 
   it("returns null for an unknown set id", () => {
     expect(getVerticesForFruit("unknown_set", "cherry")).toBeNull();
@@ -120,6 +116,6 @@ describe("getVerticesForFruit", () => {
   });
 
   it("returns null sprite info for unknown set", () => {
-    expect(getSpriteInfo("gems", "ruby")).toBeNull();
+    expect(getSpriteInfo("unknown_set", "ruby")).toBeNull();
   });
 });
