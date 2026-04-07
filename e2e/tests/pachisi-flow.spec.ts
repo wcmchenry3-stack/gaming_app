@@ -146,7 +146,8 @@ async function setupPachisiMocks(page: Page) {
 // Tests
 // ---------------------------------------------------------------------------
 
-test.describe("Pachisi — navigation and smoke tests", () => {
+// Pachisi is disabled pending rewrite — skip all navigation tests
+test.describe.skip("Pachisi — navigation and smoke tests", () => {
   test("navigates from Home to Pachisi screen", async ({ page }) => {
     await setupPachisiMocks(page);
     await page.goto("/");

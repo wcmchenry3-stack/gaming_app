@@ -3,6 +3,7 @@ import { ActivityIndicator } from "react-native";
 import { render, fireEvent, waitFor, act } from "@testing-library/react-native";
 import PachisiScreen from "../PachisiScreen";
 import { ThemeProvider } from "../../theme/ThemeContext";
+import { ApiError } from "../../game/_shared/httpClient";
 
 // ---------------------------------------------------------------------------
 // Mock the API client
@@ -166,6 +167,45 @@ describe("PachisiScreen — auto-move", () => {
       jest.advanceTimersByTime(600);
     });
     await waitFor(() => expect(mockApi.move).toHaveBeenCalledWith(2));
+  });
+});
+
+describe("PachisiScreen — 404 auto-recovery", () => {
+  it("auto-creates new session when roll returns 404", async () => {
+    mockApi.newSession.mockResolvedValue(makeRollState());
+    mockApi.roll.mockRejectedValueOnce(new ApiError("No game in progress", 404));
+    // After 404, the call wrapper retries newSession
+    mockApi.newSession.mockResolvedValue(makeRollState());
+
+    const { findByText } = renderScreen();
+    const rollBtn = await findByText("Roll");
+    fireEvent.press(rollBtn);
+
+    await waitFor(() => expect(mockApi.newSession).toHaveBeenCalledTimes(2));
+  });
+
+  it("shows connection error when 404 recovery also fails", async () => {
+    mockApi.newSession
+      .mockResolvedValueOnce(makeRollState())
+      .mockRejectedValueOnce(new Error("Server down"));
+    mockApi.roll.mockRejectedValueOnce(new ApiError("No game in progress", 404));
+
+    const { findByText } = renderScreen();
+    const rollBtn = await findByText("Roll");
+    fireEvent.press(rollBtn);
+
+    await findByText("Connection error. Could not reach the backend.");
+  });
+
+  it("shows error message for non-404 API errors", async () => {
+    mockApi.newSession.mockResolvedValue(makeRollState());
+    mockApi.roll.mockRejectedValueOnce(new ApiError("Invalid phase", 400));
+
+    const { findByText } = renderScreen();
+    const rollBtn = await findByText("Roll");
+    fireEvent.press(rollBtn);
+
+    await findByText("Invalid phase");
   });
 });
 

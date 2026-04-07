@@ -17,7 +17,7 @@ from sentry_sdk.integrations.starlette import StarletteIntegration
 from limiter import _real_ip, limiter
 from cascade.router import router as cascade_router
 from blackjack.router import router as blackjack_router
-from pachisi.router import router as pachisi_router
+from pachisi.router import router as pachisi_router  # noqa: F401
 from yacht.router import router as yacht_router
 
 # ---------------------------------------------------------------------------
@@ -47,7 +47,8 @@ app = FastAPI(title="Gaming App API")
 app.include_router(yacht_router, prefix="/yacht")
 app.include_router(cascade_router, prefix="/cascade")
 app.include_router(blackjack_router, prefix="/blackjack")
-app.include_router(pachisi_router, prefix="/pachisi")
+# Pachisi disabled — needs total rewrite before re-enabling
+# app.include_router(pachisi_router, prefix="/pachisi")
 
 # ---------------------------------------------------------------------------
 # Rate limiting

@@ -10,7 +10,6 @@ import HomeScreen from "./src/screens/HomeScreen";
 import GameScreen from "./src/screens/GameScreen";
 import CascadeScreen from "./src/screens/CascadeScreen";
 import BlackjackScreen from "./src/screens/BlackjackScreen";
-import PachisiScreen from "./src/screens/PachisiScreen";
 import Twenty48Screen from "./src/screens/Twenty48Screen";
 import { GameState } from "./src/game/yacht/types";
 import { ThemeProvider } from "./src/theme/ThemeContext";
@@ -65,7 +64,8 @@ function AppInner() {
             <Stack.Screen name="Game" component={GameScreen} />
             <Stack.Screen name="Cascade" component={CascadeScreen} />
             <Stack.Screen name="Blackjack" component={BlackjackScreen} />
-            <Stack.Screen name="Pachisi" component={PachisiScreen} />
+            {/* Pachisi disabled — needs total rewrite before re-enabling */}
+            {/* <Stack.Screen name="Pachisi" component={PachisiScreen} /> */}
             <Stack.Screen name="Twenty48" component={Twenty48Screen} />
           </Stack.Navigator>
         </NavigationContainer>

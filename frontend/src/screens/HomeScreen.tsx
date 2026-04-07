@@ -62,12 +62,13 @@ export default function HomeScreen({ navigation }: Props) {
       description: t("blackjack:game.description"),
       action: () => navigation.navigate("Blackjack"),
     },
-    {
-      emoji: "🎯",
-      title: t("pachisi:game.title"),
-      description: t("pachisi:game.description"),
-      action: () => navigation.navigate("Pachisi"),
-    },
+    // Pachisi disabled — needs total rewrite before re-enabling
+    // {
+    //   emoji: "🎯",
+    //   title: t("pachisi:game.title"),
+    //   description: t("pachisi:game.description"),
+    //   action: () => navigation.navigate("Pachisi"),
+    // },
     {
       emoji: "🔢",
       title: t("twenty48:game.title"),
@@ -80,7 +81,7 @@ export default function HomeScreen({ navigation }: Props) {
     [t("yacht:game.title")]: t("yacht:game.playLabel"),
     [t("cascade:game.title")]: t("cascade:game.playLabel"),
     [t("blackjack:game.title")]: t("blackjack:game.playLabel"),
-    [t("pachisi:game.title")]: t("pachisi:game.playLabel"),
+    // [t("pachisi:game.title")]: t("pachisi:game.playLabel"), // Pachisi disabled
     [t("twenty48:game.title")]: t("twenty48:game.playLabel"),
   };
 

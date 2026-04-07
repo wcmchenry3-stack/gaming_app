@@ -31,9 +31,11 @@ test.describe("Cascade — merge and score behavior", () => {
   test("two tier-0 fruits at same x merge → score = 2, fruitCount = 1", async ({
     page,
   }) => {
-    // Drop two tier-0 fruits slightly apart so physics detects overlap
-    await spawnTierAt(page, 0, 145);
-    await spawnTierAt(page, 0, 155);
+    // Drop two tier-0 fruits slightly apart so physics detects overlap.
+    // x=80/90 is used here (same positions as the passing mixed-tier test)
+    // to avoid the high-overlap regime that can suppress Rapier contact events.
+    await spawnTierAt(page, 0, 80);
+    await spawnTierAt(page, 0, 90);
     await fastForward(page, 2000);
 
     const state = await getState(page);
@@ -58,8 +60,11 @@ test.describe("Cascade — merge and score behavior", () => {
   test("two tier-10 (watermelon) fruits merge → score = 256, no tier-11 spawned", async ({
     page,
   }) => {
-    await spawnTierAt(page, 10, 145);
-    await spawnTierAt(page, 10, 155);
+    // Tier-10 radius=98; valid x range in a 400px canvas is [114, 286].
+    // Use the extreme ends (min/max clamp) for least initial overlap (~12%)
+    // so Rapier contact detection fires reliably.
+    await spawnTierAt(page, 10, 114);
+    await spawnTierAt(page, 10, 286);
     await fastForward(page, 2000);
 
     const state = await getState(page);
@@ -93,14 +98,14 @@ test.describe("Cascade — merge and score behavior", () => {
   test("sequential tier-0 merges accumulate score correctly", async ({
     page,
   }) => {
-    // Merge 1: two tier-0 → score += 2
-    await spawnTierAt(page, 0, 100);
-    await spawnTierAt(page, 0, 110);
+    // Merge 1: two tier-0 → score += 2 (left side, same regime as mixed-tier test)
+    await spawnTierAt(page, 0, 80);
+    await spawnTierAt(page, 0, 90);
     await fastForward(page, 1500);
 
-    // Merge 2: two more tier-0 → score += 2 (total = 4)
-    await spawnTierAt(page, 0, 200);
-    await spawnTierAt(page, 0, 210);
+    // Merge 2: two more tier-0 → score += 2 (total = 4) (right side, well separated)
+    await spawnTierAt(page, 0, 260);
+    await spawnTierAt(page, 0, 270);
     await fastForward(page, 1500);
 
     const state = await getState(page);

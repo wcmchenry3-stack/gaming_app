@@ -15,6 +15,16 @@ import * as Sentry from "@sentry/react-native";
 import { Platform } from "react-native";
 import { getOrCreateSessionId } from "./session";
 
+/** Error subclass that preserves the HTTP status code from the API response. */
+export class ApiError extends Error {
+  readonly status: number;
+  constructor(message: string, status: number) {
+    super(message);
+    this.name = "ApiError";
+    this.status = status;
+  }
+}
+
 function resolveBaseUrl(): string {
   const raw = process.env.EXPO_PUBLIC_API_URL ?? "http://localhost:8000";
   return raw.startsWith("http") ? raw : `https://${raw}`;
@@ -56,7 +66,7 @@ export function createGameClient(options: HttpClientOptions) {
           level: "warning",
           extra: { url, status: res.status, detail: msg, platform: Platform.OS },
         });
-        throw new Error(msg);
+        throw new ApiError(msg, res.status);
       }
       return res.json();
     } catch (e) {
