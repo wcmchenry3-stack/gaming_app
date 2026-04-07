@@ -380,28 +380,28 @@
             Physics radius
           </label>
           <div class="overlay-desc">
-            The collision circle used by the engine. Two same-tier fruits merge when their physics
-            circles overlap.
+            How big the fruit "is" to the game. Two fruits of the same type merge when these circles
+            touch.
           </div>
           <label class="overlay-row">
             <input type="checkbox" id="ov-clip" checked />
             <span class="dot" style="border-color: #f97316; border-style: dashed"></span>
-            Sprite clip
+            Image boundary
           </label>
           <div class="overlay-desc">
-            Minimum circle that encloses the full image bounding box (spriteOffset + spriteScale).
-            Image pixels outside this are clipped. For ringed planets this is larger than the
-            physics radius — the gap between the circles is where ring art lives.
+            How far out the image is allowed to draw. Usually close to the white circle — if it's
+            noticeably larger, part of the image (like Saturn's rings) extends beyond where the game
+            thinks the fruit ends.
           </div>
           <label class="overlay-row">
             <input type="checkbox" id="ov-hull" checked />
             <span class="dot" style="background: #22c55e; border-color: #22c55e"></span>
-            Hull polygon
+            Collision shape
           </label>
           <div class="overlay-desc">
-            Convex collision polygon from the vertex JSON, RDP-simplified to ≤ 24 verts. Should hug
-            the visible body. No polygon shown = circle collider is used instead (intentional for
-            round bodies like planets).
+            The outline the game uses when deciding if two fruits have touched. Should follow the
+            edge of the art closely. If there's no green shape, the game uses the white circle
+            instead.
           </div>
         </div>
       </aside>
@@ -433,7 +433,7 @@
                   <svg width="16" height="16">
                     <circle cx="8" cy="8" r="6" fill="none" stroke="#fff" stroke-width="1.5" />
                   </svg>
-                  Physics radius — collision boundary
+                  White circle — how big the fruit is to the game
                 </span>
                 <span style="display: flex; align-items: center; gap: 5px">
                   <svg width="16" height="16">
@@ -447,7 +447,7 @@
                       stroke-dasharray="3 2"
                     />
                   </svg>
-                  Sprite clip — max image extent
+                  Orange dashed — how far the image draws
                 </span>
                 <span style="display: flex; align-items: center; gap: 5px">
                   <svg width="16" height="16">
@@ -458,7 +458,7 @@
                       stroke-width="1.5"
                     />
                   </svg>
-                  Hull polygon — convex collision shape
+                  Green shape — collision outline
                 </span>
               </div>
             </div>
