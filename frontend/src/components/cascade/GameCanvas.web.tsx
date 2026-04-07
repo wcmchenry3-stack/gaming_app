@@ -52,8 +52,9 @@ interface Props {
   onMerge: (event: MergeEvent) => void;
   onGameOver: () => void;
   onTap: (x: number) => void;
-  width: number;
-  height: number;
+  width: number; // world width (px) — physics coordinate space
+  height: number; // world height (px) — physics coordinate space
+  scale: number; // display scale: canvas CSS size = world * scale
 }
 
 function clamp(value: number, min: number, max: number) {
@@ -172,7 +173,7 @@ function drawCollisionOverlay(
 }
 
 const GameCanvas = forwardRef<GameCanvasHandle, Props>(
-  ({ fruitSet, nextDef, onMerge, onGameOver, onTap, width, height }, ref) => {
+  ({ fruitSet, nextDef, onMerge, onGameOver, onTap, width, height, scale }, ref) => {
     const { colors } = useTheme();
     const { t } = useTranslation("cascade");
 
@@ -185,6 +186,7 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
     const nextDefRef = useRef(nextDef);
     const bodiesRef = useRef<BodySnapshot[]>([]);
     const pointerXRef = useRef<number | null>(null);
+    const scaleRef = useRef(scale);
     const htmlImagesRef = useRef<(CanvasImageSource | null)[]>([]);
     const spriteInfoRef = useRef<(SpriteInfo | null)[]>([]);
     const lastFrameTimeRef = useRef<number>(0); // tracks last RAF timestamp for elapsed-time physics
@@ -204,6 +206,9 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
     useEffect(() => {
       nextDefRef.current = nextDef;
     }, [nextDef]);
+    useEffect(() => {
+      scaleRef.current = scale;
+    }, [scale]);
 
     // Load HTMLImageElements for the current fruit set via expo-asset
     useEffect(() => {
@@ -260,7 +265,15 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
       const fs = fruitSetRef.current;
       const dangerY = height * DANGER_LINE_RATIO;
 
-      ctx.clearRect(0, 0, width, height);
+      const s = scaleRef.current;
+      const displayW = width * s;
+      const displayH = height * s;
+
+      ctx.clearRect(0, 0, displayW, displayH);
+
+      // Apply uniform scale: all drawing coords are in world units
+      ctx.save();
+      ctx.scale(s, s);
 
       // Background
       ctx.fillStyle = c.fruitBackground;
@@ -343,6 +356,8 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
       ctx.fillRect(0, 0, WALL_THICKNESS, height);
       ctx.fillRect(width - WALL_THICKNESS, 0, WALL_THICKNESS, height);
       ctx.fillRect(0, height - WALL_THICKNESS, width, WALL_THICKNESS);
+
+      ctx.restore(); // undo ctx.scale(s, s)
     }, [width, height]); // width/height trigger engine reset anyway, so deps here are stable
 
     // Keep latest draw in a ref so the RAF loop never needs to be torn down
@@ -485,13 +500,13 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
       .runOnJS(true)
       .minDistance(0)
       .onBegin((e) => {
-        pointerXRef.current = e.x;
+        pointerXRef.current = e.x / scaleRef.current;
       })
       .onChange((e) => {
-        pointerXRef.current = e.x;
+        pointerXRef.current = e.x / scaleRef.current;
       })
       .onEnd((e) => {
-        if (pointerXRef.current !== null) onTap(e.x);
+        if (pointerXRef.current !== null) onTap(e.x / scaleRef.current);
       })
       .onFinalize(() => {
         pointerXRef.current = null;
@@ -499,21 +514,24 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
     const tapGesture = Gesture.Tap()
       .runOnJS(true)
       .onEnd((e, ok) => {
-        if (ok) onTap(e.x);
+        if (ok) onTap(e.x / scaleRef.current);
       });
     const composed = Gesture.Exclusive(panGesture, tapGesture);
+
+    const displayW = Math.round(width * scale);
+    const displayH = Math.round(height * scale);
 
     return (
       <GestureDetector gesture={composed}>
         <View
-          style={{ width, height, borderRadius: 12, overflow: "hidden" }}
+          style={{ width: displayW, height: displayH, borderRadius: 12, overflow: "hidden" }}
           accessibilityLabel={t("game.canvasLabel")}
           accessibilityRole="image"
         >
           <canvas
             ref={canvasRef}
-            width={width}
-            height={height}
+            width={displayW}
+            height={displayH}
             style={{ display: "block", borderRadius: 12 }}
           />
         </View>

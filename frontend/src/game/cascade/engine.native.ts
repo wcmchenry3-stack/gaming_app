@@ -4,6 +4,8 @@ import { getVerticesForFruit } from "./fruitVertices";
 
 // Re-export shared types so imports from './engine' resolve correctly on native
 export {
+  WORLD_W,
+  WORLD_H,
   WALL_THICKNESS,
   DANGER_LINE_RATIO,
   GAME_OVER_GRACE_MS,

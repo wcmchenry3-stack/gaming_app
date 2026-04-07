@@ -3,6 +3,8 @@ import { getVerticesForFruit } from "./fruitVertices";
 
 // Re-export all shared types and constants so existing imports from './engine' keep working
 export {
+  WORLD_W,
+  WORLD_H,
   WALL_THICKNESS,
   DANGER_LINE_RATIO,
   GAME_OVER_GRACE_MS,
