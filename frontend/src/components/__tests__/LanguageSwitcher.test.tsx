@@ -1,5 +1,5 @@
 import React from "react";
-import { render, fireEvent, screen } from "@testing-library/react-native";
+import { render, fireEvent } from "@testing-library/react-native";
 import LanguageSwitcher from "../LanguageSwitcher";
 
 jest.mock("../../theme/ThemeContext", () => ({

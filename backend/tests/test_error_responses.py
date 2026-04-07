@@ -12,6 +12,7 @@ from fastapi.testclient import TestClient
 from main import app
 
 import yacht.router as yacht_router
+
 # Pachisi router is disabled in main.py — import kept for reset only
 import pachisi.router as pachisi_router
 import blackjack.router as blackjack_router

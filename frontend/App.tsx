@@ -10,7 +10,6 @@ import HomeScreen from "./src/screens/HomeScreen";
 import GameScreen from "./src/screens/GameScreen";
 import CascadeScreen from "./src/screens/CascadeScreen";
 import BlackjackScreen from "./src/screens/BlackjackScreen";
-import PachisiScreen from "./src/screens/PachisiScreen";
 import Twenty48Screen from "./src/screens/Twenty48Screen";
 import { GameState } from "./src/game/yacht/types";
 import { ThemeProvider } from "./src/theme/ThemeContext";
