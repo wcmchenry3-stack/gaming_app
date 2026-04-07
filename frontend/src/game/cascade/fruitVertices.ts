@@ -116,6 +116,30 @@ export function getVerticesForFruit(setId: string, nameKey: string): VertexPoint
 }
 
 /**
+ * Minimum circular clip radius (px) that fully encompasses the sprite rect.
+ *
+ * The sprite is drawn as an axis-aligned rectangle centred at
+ * (offsetX, offsetY)*r with half-extents (scaleX, scaleY)*r. For most
+ * planets this equals `sqrt(2)*scaleX*r`; for ringed planets (Uranus,
+ * Saturn) whose rings push the image beyond the physics radius, this
+ * returns a value larger than `r` so the ring imagery is not clipped.
+ *
+ * Physics collision always uses the unmodified `r` — this is render-only.
+ */
+export function spriteClipRadius(sprite: SpriteInfo, r: number): number {
+  const { offsetX: ox, offsetY: oy, scaleX: sx, scaleY: sy } = sprite;
+  // Distance from origin to each corner of the sprite bounding rect
+  return (
+    Math.max(
+      Math.hypot(ox + sx, oy + sy),
+      Math.hypot(ox - sx, oy + sy),
+      Math.hypot(ox + sx, oy - sy),
+      Math.hypot(ox - sx, oy - sy)
+    ) * r
+  );
+}
+
+/**
  * Return sprite rendering info so the image aligns with the collision hull.
  * Returns null for sets without PNG assets.
  */

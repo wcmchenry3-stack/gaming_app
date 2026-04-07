@@ -18,7 +18,7 @@ import {
 } from "../../game/cascade/engine";
 import * as Sentry from "@sentry/react-native";
 import { FruitDefinition, FruitSet } from "../../theme/fruitSets";
-import { getSpriteInfo, SpriteInfo } from "../../game/cascade/fruitVertices";
+import { getSpriteInfo, spriteClipRadius, SpriteInfo } from "../../game/cascade/fruitVertices";
 import { useTheme } from "../../theme/ThemeContext";
 import { useTranslation } from "react-i18next";
 
@@ -108,8 +108,12 @@ function drawFruitBody(
     ctx.save();
     ctx.translate(x, y);
     ctx.rotate(angle);
+    // Clip to the sprite's full bounding circle so ring imagery on ringed
+    // planets (Uranus, Saturn) is not truncated at the physics radius.
+    // For sprites without an extended bounding rect this equals r exactly.
+    const clipR = sprite ? spriteClipRadius(sprite, r) : r;
     ctx.beginPath();
-    ctx.arc(0, 0, r, 0, Math.PI * 2);
+    ctx.arc(0, 0, clipR, 0, Math.PI * 2);
     ctx.clip();
     // Opaque bg fill first — anything transparent in the sprite shows this
     ctx.fillStyle = bgColor;
