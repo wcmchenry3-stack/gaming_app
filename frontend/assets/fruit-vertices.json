@@ -186,7 +186,8 @@
       [0.233429, 0.932277]
     ],
     "spriteOffset": [0.0, -0.007205],
-    "spriteScale": [1.475504, 1.475504]
+    "spriteScale": [1.475504, 1.475504],
+    "bakedClipR": 2.091779
   },
   "blueberry": {
     "verts": [
@@ -233,7 +234,8 @@
       [0.078248, -0.778894]
     ],
     "spriteOffset": [-0.118449, -0.270639],
-    "spriteScale": [1.470208, 1.470208]
+    "spriteScale": [1.470208, 1.470208],
+    "bakedClipR": 2.356773
   },
   "cherry": {
     "verts": [
@@ -412,7 +414,8 @@
       [-0.395934, -0.878993]
     ],
     "spriteOffset": [0.000968, -0.561471],
-    "spriteScale": [1.982575, 1.982575]
+    "spriteScale": [1.982575, 1.982575],
+    "bakedClipR": 3.225928
   },
   "coconut": {
     "verts": [
@@ -649,7 +652,8 @@
       [0.353272, -0.92822]
     ],
     "spriteOffset": [0.0, -0.021816],
-    "spriteScale": [1.441239, 1.441239]
+    "spriteScale": [1.441239, 1.441239],
+    "bakedClipR": 2.053704
   },
   "dragonfruit": {
     "verts": [
@@ -758,7 +762,8 @@
       [-0.701223, 0.00322]
     ],
     "spriteOffset": [0.000644, 0.025113],
-    "spriteScale": [1.318738, 1.318738]
+    "spriteScale": [1.318738, 1.318738],
+    "bakedClipR": 1.88327
   },
   "grapes": {
     "verts": [
@@ -852,7 +857,8 @@
       [0.409554, -0.904459]
     ],
     "spriteOffset": [-0.091083, -0.042038],
-    "spriteScale": [1.304459, 1.304459]
+    "spriteScale": [1.304459, 1.304459],
+    "bakedClipR": 1.939224
   },
   "lemon": {
     "verts": [
@@ -1006,7 +1012,8 @@
       [0.42487, 0.738342]
     ],
     "spriteOffset": [0.0, -0.018135],
-    "spriteScale": [1.326425, 1.326425]
+    "spriteScale": [1.326425, 1.326425],
+    "bakedClipR": 1.888715
   },
   "orange": {
     "verts": [
@@ -1167,7 +1174,8 @@
       [-0.862019, -0.515614]
     ],
     "spriteOffset": [0.000726, -0.014524],
-    "spriteScale": [1.487291, 1.487291]
+    "spriteScale": [1.487291, 1.487291],
+    "bakedClipR": 2.114153
   },
   "peach": {
     "verts": [
@@ -1396,7 +1404,8 @@
       [-0.318745, -0.916849]
     ],
     "spriteOffset": [0.000729, -0.000729],
-    "spriteScale": [1.4938, 1.4938]
+    "spriteScale": [1.4938, 1.4938],
+    "bakedClipR": 2.113583
   },
   "pineapple": {
     "verts": [
@@ -1546,7 +1555,8 @@
       [-0.605902, 0.057049]
     ],
     "spriteOffset": [0.0, 0.016393],
-    "spriteScale": [1.342951, 1.342951]
+    "spriteScale": [1.342951, 1.342951],
+    "bakedClipR": 1.910846
   },
   "pumpkin": {
     "verts": [
@@ -1685,7 +1695,8 @@
       [-0.01301, -0.918474]
     ],
     "spriteOffset": [0.000867, -0.002602],
-    "spriteScale": [2.442324, 1.332177]
+    "spriteScale": [2.442324, 1.332177],
+    "bakedClipR": 2.784029
   },
   "watermelon": {
     "verts": [
@@ -1907,6 +1918,7 @@
       [-0.984656, 0.059373]
     ],
     "spriteOffset": [0.0, -0.008672],
-    "spriteScale": [1.366244, 1.366244]
+    "spriteScale": [1.366244, 1.366244],
+    "bakedClipR": 1.938303
   }
 }

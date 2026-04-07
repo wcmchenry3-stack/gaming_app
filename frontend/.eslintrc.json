@@ -30,6 +30,7 @@
     "android/",
     "*.config.js",
     "babel.config.js",
-    "index.ts"
+    "index.ts",
+    "*.py"
   ]
 }

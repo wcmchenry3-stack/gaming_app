@@ -11,31 +11,31 @@
 import { useImage } from "@shopify/react-native-skia";
 import type { SkImage } from "@shopify/react-native-skia";
 
-// --- Fruit icons ---
-import cherryIcon from "../../assets/fruit-icons/cherry.png";
-import blueberryIcon from "../../assets/fruit-icons/blueberry.png";
-import lemonIcon from "../../assets/fruit-icons/lemon.png";
-import grapesIcon from "../../assets/fruit-icons/grapes.png";
-import orangeIcon from "../../assets/fruit-icons/orange.png";
-import appleIcon from "../../assets/fruit-icons/apple.png";
-import peachIcon from "../../assets/fruit-icons/peach.png";
-import coconutIcon from "../../assets/fruit-icons/coconut.png";
-import dragonfruitIcon from "../../assets/fruit-icons/dragonfruit.png";
-import pineappleIcon from "../../assets/fruit-icons/pineapple.png";
-import watermelonIcon from "../../assets/fruit-icons/watermelon.png";
+// --- Baked fruit icons (pre-composited, clipped — for game canvas rendering) ---
+import cherryIcon from "../../assets/fruits-baked/cherry.png";
+import blueberryIcon from "../../assets/fruits-baked/blueberry.png";
+import lemonIcon from "../../assets/fruits-baked/lemon.png";
+import grapesIcon from "../../assets/fruits-baked/grapes.png";
+import orangeIcon from "../../assets/fruits-baked/orange.png";
+import appleIcon from "../../assets/fruits-baked/apple.png";
+import peachIcon from "../../assets/fruits-baked/peach.png";
+import coconutIcon from "../../assets/fruits-baked/coconut.png";
+import dragonfruitIcon from "../../assets/fruits-baked/dragonfruit.png";
+import pineappleIcon from "../../assets/fruits-baked/pineapple.png";
+import watermelonIcon from "../../assets/fruits-baked/watermelon.png";
 
-// --- Celestial icons ---
-import moonIcon from "../../assets/celestial-icons/moon.png";
-import plutoIcon from "../../assets/celestial-icons/pluto.png";
-import mercuryIcon from "../../assets/celestial-icons/mercury.png";
-import marsIcon from "../../assets/celestial-icons/mars.png";
-import venusIcon from "../../assets/celestial-icons/venus.png";
-import earthIcon from "../../assets/celestial-icons/earth.png";
-import neptuneIcon from "../../assets/celestial-icons/neptune.png";
-import uranusIcon from "../../assets/celestial-icons/uranus.png";
-import saturnIcon from "../../assets/celestial-icons/saturn.png";
-import jupiterIcon from "../../assets/celestial-icons/jupiter.png";
-import sunIcon from "../../assets/celestial-icons/sun.png";
+// --- Baked celestial icons ---
+import moonIcon from "../../assets/cosmos-baked/moon.png";
+import plutoIcon from "../../assets/cosmos-baked/pluto.png";
+import mercuryIcon from "../../assets/cosmos-baked/mercury.png";
+import marsIcon from "../../assets/cosmos-baked/mars.png";
+import venusIcon from "../../assets/cosmos-baked/venus.png";
+import earthIcon from "../../assets/cosmos-baked/earth.png";
+import neptuneIcon from "../../assets/cosmos-baked/neptune.png";
+import uranusIcon from "../../assets/cosmos-baked/uranus.png";
+import saturnIcon from "../../assets/cosmos-baked/saturn.png";
+import jupiterIcon from "../../assets/cosmos-baked/jupiter.png";
+import sunIcon from "../../assets/cosmos-baked/sun.png";
 
 export interface FruitSetImages {
   /** Images indexed by tier (0–10). null = not yet loaded. */

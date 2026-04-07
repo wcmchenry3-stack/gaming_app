@@ -25,6 +25,32 @@ import jupiterIcon from "../../assets/celestial-icons/jupiter.png";
 import sunIcon from "../../assets/celestial-icons/sun.png";
 import milkyWayIcon from "../../assets/celestial-icons/milkyway.png"; // reserved for future use
 
+// Pre-baked game canvas icons — composited, clipped, ready for single drawImage
+import cherryBaked from "../../assets/fruits-baked/cherry.png";
+import blueberryBaked from "../../assets/fruits-baked/blueberry.png";
+import lemonBaked from "../../assets/fruits-baked/lemon.png";
+import grapesBaked from "../../assets/fruits-baked/grapes.png";
+import orangeBaked from "../../assets/fruits-baked/orange.png";
+import appleBaked from "../../assets/fruits-baked/apple.png";
+import peachBaked from "../../assets/fruits-baked/peach.png";
+import coconutBaked from "../../assets/fruits-baked/coconut.png";
+import dragonfruitBaked from "../../assets/fruits-baked/dragonfruit.png";
+import pineappleBaked from "../../assets/fruits-baked/pineapple.png";
+import watermelonBaked from "../../assets/fruits-baked/watermelon.png";
+import pumpkinBaked from "../../assets/fruits-baked/pumpkin.png"; // reserved for future use
+import moonBaked from "../../assets/cosmos-baked/moon.png";
+import plutoBaked from "../../assets/cosmos-baked/pluto.png";
+import mercuryBaked from "../../assets/cosmos-baked/mercury.png";
+import marsBaked from "../../assets/cosmos-baked/mars.png";
+import venusBaked from "../../assets/cosmos-baked/venus.png";
+import earthBaked from "../../assets/cosmos-baked/earth.png";
+import neptuneBaked from "../../assets/cosmos-baked/neptune.png";
+import uranusBaked from "../../assets/cosmos-baked/uranus.png";
+import saturnBaked from "../../assets/cosmos-baked/saturn.png";
+import jupiterBaked from "../../assets/cosmos-baked/jupiter.png";
+import sunBaked from "../../assets/cosmos-baked/sun.png";
+import milkyWayBaked from "../../assets/cosmos-baked/milkyway.png"; // reserved for future use
+
 export type FruitTier = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10;
 
 export interface FruitDefinition {
@@ -33,6 +59,14 @@ export interface FruitDefinition {
   nameKey?: string; // JSON vertex-lookup key when it differs from name.toLowerCase()
   emoji: string;
   icon?: ImageSourcePropType;
+  /** Pre-baked game canvas PNG — composited, clipped, ready for a single drawImage. */
+  bakedIcon?: ImageSourcePropType;
+  /**
+   * Normalised clip radius of the baked PNG (= clipR / physics radius).
+   * At render time: half-size = bakedClipR * def.radius
+   * Produced by scripts/bake_sprites.py — do not edit by hand.
+   */
+  bakedClipR?: number;
   color: string;
   radius: number; // physics radius in px — identical across all sets per tier
   scoreValue: number; // points awarded on merge
@@ -104,6 +138,37 @@ const COSMOS_ICONS = {
   milkyWay: milkyWayIcon,
 } as const;
 
+// Baked game-canvas icons (produced by scripts/bake_sprites.py)
+const FRUIT_BAKED = {
+  cherry: cherryBaked,
+  blueberry: blueberryBaked,
+  lemon: lemonBaked,
+  grape: grapesBaked,
+  orange: orangeBaked,
+  apple: appleBaked,
+  peach: peachBaked,
+  coconut: coconutBaked,
+  dragonfruit: dragonfruitBaked,
+  pineapple: pineappleBaked,
+  watermelon: watermelonBaked,
+  pumpkin: pumpkinBaked,
+} as const;
+
+const COSMOS_BAKED = {
+  moon: moonBaked,
+  pluto: plutoBaked,
+  mercury: mercuryBaked,
+  mars: marsBaked,
+  venus: venusBaked,
+  earth: earthBaked,
+  neptune: neptuneBaked,
+  uranus: uranusBaked,
+  saturn: saturnBaked,
+  jupiter: jupiterBaked,
+  sun: sunBaked,
+  milkyWay: milkyWayBaked,
+} as const;
+
 export const FRUIT_SETS: Record<string, FruitSet> = {
   fruits: {
     id: "fruits",
@@ -113,6 +178,8 @@ export const FRUIT_SETS: Record<string, FruitSet> = {
         tier: 0,
         name: "Cherry",
         icon: FRUIT_ICONS.cherry,
+        bakedIcon: FRUIT_BAKED.cherry,
+        bakedClipR: 3.225928,
         emoji: "🍒",
         color: "#dc2626",
         radius: RADII[0],
@@ -122,6 +189,8 @@ export const FRUIT_SETS: Record<string, FruitSet> = {
         tier: 1,
         name: "Blueberry",
         icon: FRUIT_ICONS.blueberry,
+        bakedIcon: FRUIT_BAKED.blueberry,
+        bakedClipR: 2.356773,
         emoji: "🫐",
         color: "#6d28d9",
         radius: RADII[1],
@@ -131,6 +200,8 @@ export const FRUIT_SETS: Record<string, FruitSet> = {
         tier: 2,
         name: "Lemon",
         icon: FRUIT_ICONS.lemon,
+        bakedIcon: FRUIT_BAKED.lemon,
+        bakedClipR: 1.888715,
         emoji: "🍋",
         color: "#ca8a04",
         radius: RADII[2],
@@ -141,6 +212,8 @@ export const FRUIT_SETS: Record<string, FruitSet> = {
         name: "Grape",
         nameKey: "grapes", // PNG filename is grapes.png, not grape.png
         icon: FRUIT_ICONS.grape,
+        bakedIcon: FRUIT_BAKED.grape,
+        bakedClipR: 1.939224,
         emoji: "🍇",
         color: "#7c3aed",
         radius: RADII[3],
@@ -150,6 +223,8 @@ export const FRUIT_SETS: Record<string, FruitSet> = {
         tier: 4,
         name: "Orange",
         icon: FRUIT_ICONS.orange,
+        bakedIcon: FRUIT_BAKED.orange,
+        bakedClipR: 2.114153,
         emoji: "🍊",
         color: "#ea580c",
         radius: RADII[4],
@@ -159,6 +234,8 @@ export const FRUIT_SETS: Record<string, FruitSet> = {
         tier: 5,
         name: "Apple",
         icon: FRUIT_ICONS.apple,
+        bakedIcon: FRUIT_BAKED.apple,
+        bakedClipR: 2.091779,
         emoji: "🍎",
         color: "#dc2626",
         radius: RADII[5],
@@ -168,6 +245,8 @@ export const FRUIT_SETS: Record<string, FruitSet> = {
         tier: 6,
         name: "Peach",
         icon: FRUIT_ICONS.peach,
+        bakedIcon: FRUIT_BAKED.peach,
+        bakedClipR: 2.113583,
         emoji: "🍑",
         color: "#f97316",
         radius: RADII[6],
@@ -177,6 +256,8 @@ export const FRUIT_SETS: Record<string, FruitSet> = {
         tier: 7,
         name: "Coconut",
         icon: FRUIT_ICONS.coconut,
+        bakedIcon: FRUIT_BAKED.coconut,
+        bakedClipR: 2.053704,
         emoji: "🥥",
         color: "#78716c",
         radius: RADII[7],
@@ -186,6 +267,8 @@ export const FRUIT_SETS: Record<string, FruitSet> = {
         tier: 8,
         name: "Dragonfruit",
         icon: FRUIT_ICONS.dragonfruit,
+        bakedIcon: FRUIT_BAKED.dragonfruit,
+        bakedClipR: 1.88327,
         emoji: "🐉",
         color: "#db2777",
         radius: RADII[8],
@@ -195,6 +278,8 @@ export const FRUIT_SETS: Record<string, FruitSet> = {
         tier: 9,
         name: "Pineapple",
         icon: FRUIT_ICONS.pineapple,
+        bakedIcon: FRUIT_BAKED.pineapple,
+        bakedClipR: 1.910846,
         emoji: "🍍",
         color: "#ca8a04",
         radius: RADII[9],
@@ -204,6 +289,8 @@ export const FRUIT_SETS: Record<string, FruitSet> = {
         tier: 10,
         name: "Watermelon",
         icon: FRUIT_ICONS.watermelon,
+        bakedIcon: FRUIT_BAKED.watermelon,
+        bakedClipR: 1.938303,
         emoji: "🍉",
         color: "#16a34a",
         radius: RADII[10],
@@ -219,6 +306,8 @@ export const FRUIT_SETS: Record<string, FruitSet> = {
         tier: 0,
         name: "Moon",
         icon: COSMOS_ICONS.moon,
+        bakedIcon: COSMOS_BAKED.moon,
+        bakedClipR: 2.187446,
         emoji: "🌙",
         color: "#d1d5db",
         radius: RADII[0],
@@ -228,6 +317,8 @@ export const FRUIT_SETS: Record<string, FruitSet> = {
         tier: 1,
         name: "Pluto",
         icon: COSMOS_ICONS.pluto,
+        bakedIcon: COSMOS_BAKED.pluto,
+        bakedClipR: 2.274817,
         emoji: "🪨",
         color: "#94a3b8",
         radius: RADII[1],
@@ -237,6 +328,8 @@ export const FRUIT_SETS: Record<string, FruitSet> = {
         tier: 2,
         name: "Mercury",
         icon: COSMOS_ICONS.mercury,
+        bakedIcon: COSMOS_BAKED.mercury,
+        bakedClipR: 2.186961,
         emoji: "🪨",
         color: "#9ca3af",
         radius: RADII[2],
@@ -246,6 +339,8 @@ export const FRUIT_SETS: Record<string, FruitSet> = {
         tier: 3,
         name: "Mars",
         icon: COSMOS_ICONS.mars,
+        bakedIcon: COSMOS_BAKED.mars,
+        bakedClipR: 2.183666,
         emoji: "🔴",
         color: "#dc2626",
         radius: RADII[3],
@@ -255,6 +350,8 @@ export const FRUIT_SETS: Record<string, FruitSet> = {
         tier: 4,
         name: "Venus",
         icon: COSMOS_ICONS.venus,
+        bakedIcon: COSMOS_BAKED.venus,
+        bakedClipR: 2.358557,
         emoji: "🟡",
         color: "#fbbf24",
         radius: RADII[4],
@@ -264,6 +361,8 @@ export const FRUIT_SETS: Record<string, FruitSet> = {
         tier: 5,
         name: "Earth",
         icon: COSMOS_ICONS.earth,
+        bakedIcon: COSMOS_BAKED.earth,
+        bakedClipR: 2.186961,
         emoji: "🌍",
         color: "#2563eb",
         radius: RADII[5],
@@ -273,6 +372,8 @@ export const FRUIT_SETS: Record<string, FruitSet> = {
         tier: 6,
         name: "Neptune",
         icon: COSMOS_ICONS.neptune,
+        bakedIcon: COSMOS_BAKED.neptune,
+        bakedClipR: 2.183666,
         emoji: "🔵",
         color: "#1d4ed8",
         radius: RADII[6],
@@ -282,6 +383,8 @@ export const FRUIT_SETS: Record<string, FruitSet> = {
         tier: 7,
         name: "Uranus",
         icon: COSMOS_ICONS.uranus,
+        bakedIcon: COSMOS_BAKED.uranus,
+        bakedClipR: 1.919211,
         emoji: "🩵",
         color: "#67e8f9",
         radius: RADII[7],
@@ -291,6 +394,8 @@ export const FRUIT_SETS: Record<string, FruitSet> = {
         tier: 8,
         name: "Saturn",
         icon: COSMOS_ICONS.saturn,
+        bakedIcon: COSMOS_BAKED.saturn,
+        bakedClipR: 1.680917,
         emoji: "🪐",
         color: "#ca8a04",
         radius: RADII[8],
@@ -300,6 +405,8 @@ export const FRUIT_SETS: Record<string, FruitSet> = {
         tier: 9,
         name: "Jupiter",
         icon: COSMOS_ICONS.jupiter,
+        bakedIcon: COSMOS_BAKED.jupiter,
+        bakedClipR: 1.509313,
         emoji: "🟠",
         color: "#ea580c",
         radius: RADII[9],
@@ -309,6 +416,8 @@ export const FRUIT_SETS: Record<string, FruitSet> = {
         tier: 10,
         name: "Sun",
         icon: COSMOS_ICONS.sun,
+        bakedIcon: COSMOS_BAKED.sun,
+        bakedClipR: 1.511241,
         emoji: "☀️",
         color: "#facc15",
         radius: RADII[10],
