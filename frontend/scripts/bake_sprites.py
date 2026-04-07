@@ -62,12 +62,12 @@ THEMES = [
 # ---------------------------------------------------------------------------
 
 def clean_image(img: Image.Image) -> Image.Image:
-    """Zero RGBA for pixels with alpha < 10 (truly invisible noise only).
+    """Zero RGBA for pixels with alpha < 200 — mirrors runtime cleanImage().
 
-    The original runtime used a threshold of 200 to scrub JPEG compression
-    halos, but that also strips semi-transparent ring/halo pixels on clean
-    PNG assets (Saturn, Uranus).  A threshold of 10 removes only imperceptibly
-    invisible pixels while preserving fine transparency on rings and glows.
+    Scrubs JPEG compression halos and semi-transparent fringe so baked edges
+    stay crisp.  The saturn/uranus ring body pixels are fully opaque (alpha
+    255) and survive this threshold; only their feathered anti-alias edge
+    pixels are zeroed, which is acceptable.
     """
     img = img.convert("RGBA")
     pixels = img.load()
@@ -75,7 +75,7 @@ def clean_image(img: Image.Image) -> Image.Image:
     for y in range(h):
         for x in range(w):
             r, g, b, a = pixels[x, y]
-            if a < 10:
+            if a < 200:
                 pixels[x, y] = (0, 0, 0, 0)
     return img
 
