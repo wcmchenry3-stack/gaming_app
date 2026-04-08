@@ -61,6 +61,7 @@ export class ScoreQueue {
       return Array.isArray(parsed) ? parsed : [];
     } catch (e) {
       Sentry.captureException(e, { tags: { subsystem: "scoreQueue", op: "read" } });
+      await AsyncStorage.removeItem(STORAGE_KEY).catch(() => {});
       return [];
     }
   }

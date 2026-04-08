@@ -10,6 +10,7 @@ import {
 } from "react-native";
 import { useTranslation } from "react-i18next";
 import { cascadeApi, ScoreEntry } from "../../game/cascade/api";
+import { ApiError } from "../../game/_shared/httpClient";
 import { useTheme } from "../../theme/ThemeContext";
 import { useNetwork } from "../../game/_shared/NetworkContext";
 import { scoreQueue } from "../../game/_shared/scoreQueue";
@@ -50,10 +51,12 @@ export default function GameOverOverlay({ score, onRestart }: Props) {
       const entry = await cascadeApi.submitScore(playerName, score);
       setSubmitted(entry);
     } catch (e) {
-      // Network/fetch failures are TypeErrors from fetch(); treat as offline
-      // and queue for later. Application errors (non-2xx) fall through to
-      // the generic error message — those shouldn't be retried blindly.
-      if (e instanceof TypeError) {
+      // Network/fetch failures (TypeError) and transient server errors (429)
+      // are queued for automatic retry when connectivity/rate-limits allow.
+      // Permanent application errors fall through to the generic message.
+      const isTransient =
+        e instanceof TypeError || (e instanceof ApiError && e.status === 429);
+      if (isTransient) {
         try {
           await scoreQueue.enqueue("cascade", { player_name: playerName, score });
           setSavedLocally(true);

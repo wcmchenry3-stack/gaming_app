@@ -45,6 +45,7 @@ export async function loadGame(): Promise<EngineState | null> {
     return parsed;
   } catch (e) {
     Sentry.captureException(e, { tags: { subsystem: "blackjack.storage", op: "load" } });
+    await AsyncStorage.removeItem(STORAGE_KEY).catch(() => {});
     return null;
   }
 }
