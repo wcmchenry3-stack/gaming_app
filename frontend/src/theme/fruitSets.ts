@@ -190,7 +190,7 @@ export const FRUIT_SETS: Record<string, FruitSet> = {
         name: "Blueberry",
         icon: FRUIT_ICONS.blueberry,
         bakedIcon: FRUIT_BAKED.blueberry,
-        bakedClipR: 2.356773,
+        bakedClipR: 1.518479,
         emoji: "🫐",
         color: "#6d28d9",
         radius: RADII[1],
@@ -213,7 +213,7 @@ export const FRUIT_SETS: Record<string, FruitSet> = {
         nameKey: "grapes", // PNG filename is grapes.png, not grape.png
         icon: FRUIT_ICONS.grape,
         bakedIcon: FRUIT_BAKED.grape,
-        bakedClipR: 1.939224,
+        bakedClipR: 1.488527,
         emoji: "🍇",
         color: "#7c3aed",
         radius: RADII[3],
