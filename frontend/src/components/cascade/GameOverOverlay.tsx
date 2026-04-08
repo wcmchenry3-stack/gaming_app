@@ -54,8 +54,7 @@ export default function GameOverOverlay({ score, onRestart }: Props) {
       // Network/fetch failures (TypeError) and transient server errors (429)
       // are queued for automatic retry when connectivity/rate-limits allow.
       // Permanent application errors fall through to the generic message.
-      const isTransient =
-        e instanceof TypeError || (e instanceof ApiError && e.status === 429);
+      const isTransient = e instanceof TypeError || (e instanceof ApiError && e.status === 429);
       if (isTransient) {
         try {
           await scoreQueue.enqueue("cascade", { player_name: playerName, score });
