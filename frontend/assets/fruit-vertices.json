@@ -992,8 +992,8 @@
       [-0.338217, -0.998726]
     ],
     "spriteOffset": [0.001274, 0.000637],
-    "spriteScale": [1.051592, 1.051592],
-    "bakedClipR": 1.488527
+    "spriteScale": [1.000637, 1.000637],
+    "bakedClipR": 1.416466
   },
   "lemon": {
     "verts": [
