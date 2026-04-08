@@ -137,20 +137,27 @@ def bake_asset(src_png: pathlib.Path, sprite: dict, out_png: pathlib.Path) -> fl
     # PIL paste handles negative/out-of-bounds coordinates correctly
     canvas.paste(resized, (round(sprite_x), round(sprite_y)), resized)
 
-    # 4. Intersect existing alpha with physics-circle clip mask.
-    #    The physics radius (r=1.0 normalised) maps to HALF/clip_r_norm pixels
-    #    in the baked canvas.  Clipping here guarantees no colour bleeds
-    #    outside the collision boundary at runtime, regardless of how the
-    #    sprite is positioned or how large the source image is.
-    physics_r_px = HALF / clip_r_norm  # pixels that correspond to r=1.0
-    cx = cy = HALF  # canvas centre
-    circle_mask = Image.new("L", (out_size, out_size), 0)
-    ImageDraw.Draw(circle_mask).ellipse(
-        [cx - physics_r_px, cy - physics_r_px, cx + physics_r_px, cy + physics_r_px],
-        fill=255,
-    )
+    # 4. Intersect existing alpha with hull-polygon clip mask.
+    #    The hull vertices are in normalised units where 1.0 = physics radius.
+    #    Scaling by HALF/clip_r_norm converts them to pixels in the baked canvas.
+    #    Clipping to the hull polygon ensures no colour bleeds outside the
+    #    actual fruit/planet shape, regardless of sprite padding or disc backgrounds.
+    physics_scale = HALF / clip_r_norm  # pixels per normalised unit (r=1.0)
+    hull_px = [
+        (round(v[0] * physics_scale + HALF), round(v[1] * physics_scale + HALF))
+        for v in sprite["verts"]
+    ]
+    poly_mask = Image.new("L", (out_size, out_size), 0)
+    if len(hull_px) >= 3:
+        ImageDraw.Draw(poly_mask).polygon(hull_px, fill=255)
+    else:
+        # Fallback: physics circle
+        r_px = physics_scale
+        ImageDraw.Draw(poly_mask).ellipse(
+            [HALF - r_px, HALF - r_px, HALF + r_px, HALF + r_px], fill=255
+        )
     existing_alpha = canvas.split()[3]
-    combined_alpha = ImageChops.multiply(existing_alpha, circle_mask)
+    combined_alpha = ImageChops.multiply(existing_alpha, poly_mask)
     canvas.putalpha(combined_alpha)
 
     # 5. Save
