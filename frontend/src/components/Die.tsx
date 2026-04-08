@@ -1,5 +1,5 @@
 import React from "react";
-import { Pressable, Text, StyleSheet } from "react-native";
+import { Pressable, Text, StyleSheet, useWindowDimensions } from "react-native";
 import { useTranslation } from "react-i18next";
 import { useTheme } from "../theme/ThemeContext";
 
@@ -14,6 +14,10 @@ interface DieProps {
 export default function Die({ value, held, onPress, disabled, index }: DieProps) {
   const { t } = useTranslation("yacht");
   const { colors } = useTheme();
+  const { width } = useWindowDimensions();
+  // Scale dice down on narrow screens (e.g. Galaxy Fold cover: ~280dp).
+  // 5 dice × (size + 12px margin) must fit within screen width.
+  const dieSize = Math.min(56, (width - 80) / 5);
   const displayValue = value > 0 ? value : t("dice.labelBlank");
   const heldSuffix = held ? t("dice.heldSuffix") : "";
   const label = t("dice.label", { index: index + 1, value: displayValue, heldSuffix });
@@ -29,6 +33,8 @@ export default function Die({ value, held, onPress, disabled, index }: DieProps)
       style={[
         styles.die,
         {
+          width: dieSize,
+          height: dieSize,
           backgroundColor: held ? colors.heldBg : colors.dieBg,
           borderColor: held ? colors.heldBorder : colors.dieBorder,
         },
@@ -47,8 +53,6 @@ export default function Die({ value, held, onPress, disabled, index }: DieProps)
 
 const styles = StyleSheet.create({
   die: {
-    width: 56,
-    height: 56,
     borderRadius: 10,
     borderWidth: 3,
     alignItems: "center",

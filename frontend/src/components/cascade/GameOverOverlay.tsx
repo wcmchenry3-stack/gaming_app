@@ -176,7 +176,7 @@ const styles = StyleSheet.create({
     maxWidth: 360,
     borderRadius: 20,
     borderWidth: 1,
-    padding: 32,
+    padding: 24,
     alignItems: "center",
     gap: 12,
   },
