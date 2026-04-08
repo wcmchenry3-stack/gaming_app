@@ -175,6 +175,70 @@
         margin: 2px 0 8px 22px;
       }
 
+      /* ── AI Settings ── */
+      .ai-settings-body {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+
+      .ai-key-input {
+        width: 100%;
+        box-sizing: border-box;
+        background: #0f172a;
+        border: 1px solid #334155;
+        border-radius: 5px;
+        color: #e2e8f0;
+        font-size: 11px;
+        padding: 5px 8px;
+        outline: none;
+      }
+
+      .ai-key-input:focus {
+        border-color: #3b82f6;
+      }
+
+      .ai-key-buttons {
+        display: flex;
+        gap: 6px;
+      }
+
+      .ai-btn {
+        flex: 1;
+        padding: 4px 0;
+        font-size: 11px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+      }
+
+      .ai-btn-save {
+        background: #3b82f6;
+        color: #fff;
+      }
+
+      .ai-btn-save:hover {
+        background: #2563eb;
+      }
+
+      .ai-btn-clear {
+        background: #334155;
+        color: #94a3b8;
+      }
+
+      .ai-btn-clear:hover {
+        background: #475569;
+      }
+
+      .ai-key-status {
+        font-size: 10px;
+        color: #64748b;
+      }
+
+      .ai-key-status.saved {
+        color: #22c55e;
+      }
+
       /* ── Main panel ── */
       .main {
         flex: 1;
@@ -406,6 +470,26 @@
             The outline the game uses when deciding if two fruits have touched. Should follow the
             edge of the art closely. If there's no green shape, the game uses the white circle
             instead.
+          </div>
+        </div>
+
+        <div class="sidebar-section">
+          <div class="sidebar-label">AI Settings</div>
+          <div class="ai-settings-body">
+            <input
+              type="password"
+              id="api-key-input"
+              class="ai-key-input"
+              placeholder="sk-ant-…"
+              autocomplete="off"
+              spellcheck="false"
+            />
+            <div class="ai-key-buttons">
+              <button class="ai-btn ai-btn-save" id="api-key-save">Save</button>
+              <button class="ai-btn ai-btn-clear" id="api-key-clear">Clear</button>
+            </div>
+            <!-- API key is stored in localStorage only — never transmitted to the game backend. -->
+            <div class="ai-key-status" id="api-key-status">No key stored</div>
           </div>
         </div>
       </aside>
@@ -1308,6 +1392,48 @@
       document.getElementById("btn-pair").addEventListener("click", dropPair);
       document.getElementById("btn-stack").addEventListener("click", stackFive);
       document.getElementById("btn-reset").addEventListener("click", buildSimWorld);
+
+      // ─────────────────────────────────────────────────────────────────────────────
+      // AI Settings — localStorage key persistence (#275)
+      // API key is stored in localStorage only — never transmitted to the game backend.
+      // ─────────────────────────────────────────────────────────────────────────────
+
+      const AI_KEY_STORAGE = "cascade_preview_anthropic_key";
+      const apiKeyInput = document.getElementById("api-key-input");
+      const apiKeyStatus = document.getElementById("api-key-status");
+
+      function getStoredApiKey() {
+        return localStorage.getItem(AI_KEY_STORAGE) || "";
+      }
+
+      function updateApiKeyStatus() {
+        const key = getStoredApiKey();
+        if (key) {
+          const last4 = key.slice(-4);
+          apiKeyStatus.textContent = `Key saved (…${last4})`;
+          apiKeyStatus.className = "ai-key-status saved";
+        } else {
+          apiKeyStatus.textContent = "No key stored";
+          apiKeyStatus.className = "ai-key-status";
+        }
+      }
+
+      document.getElementById("api-key-save").addEventListener("click", () => {
+        const val = apiKeyInput.value.trim();
+        if (!val) return;
+        localStorage.setItem(AI_KEY_STORAGE, val);
+        apiKeyInput.value = "";
+        updateApiKeyStatus();
+      });
+
+      document.getElementById("api-key-clear").addEventListener("click", () => {
+        localStorage.removeItem(AI_KEY_STORAGE);
+        apiKeyInput.value = "";
+        updateApiKeyStatus();
+      });
+
+      // Restore status on load (key itself is not re-populated into the field)
+      updateApiKeyStatus();
 
       // ─────────────────────────────────────────────────────────────────────────────
       // Init
