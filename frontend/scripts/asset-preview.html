@@ -419,6 +419,62 @@
         color: #64748b;
         text-align: center;
       }
+
+      /* ── AI Diagnose ── */
+      .diagnose-btn {
+        padding: 6px 20px;
+        font-size: 12px;
+        font-weight: 600;
+        border: 1px solid #6366f1;
+        border-radius: 6px;
+        background: #312e81;
+        color: #c7d2fe;
+        cursor: pointer;
+        transition: background 0.1s;
+        letter-spacing: 0.02em;
+      }
+
+      .diagnose-btn:hover:not(:disabled) {
+        background: #3730a3;
+      }
+
+      .diagnose-btn:disabled {
+        opacity: 0.55;
+        cursor: default;
+      }
+
+      .ai-result {
+        width: 100%;
+        max-width: 400px;
+        background: #0f172a;
+        border: 1px solid #334155;
+        border-radius: 8px;
+        padding: 12px 14px;
+        font-size: 12px;
+        line-height: 1.6;
+        color: #cbd5e1;
+        box-sizing: border-box;
+      }
+
+      .ai-result-text {
+        white-space: pre-wrap;
+      }
+
+      .ai-result-error-text {
+        color: #f87171;
+      }
+
+      .ai-result-badge {
+        margin-top: 10px;
+        font-size: 10px;
+        color: #475569;
+        text-align: right;
+      }
+
+      /* Simulate tab result sits full-width inside the column layout */
+      #tab-simulate .ai-result {
+        max-width: 320px;
+      }
     </style>
   </head>
   <body>
@@ -549,6 +605,8 @@
                   Green shape — collision outline
                 </span>
               </div>
+              <button class="diagnose-btn" id="btn-diagnose-inspector">✦ Diagnose</button>
+              <div class="ai-result" id="ai-result-inspector" hidden></div>
             </div>
             <aside class="inspector-info">
               <div class="info-title" id="info-name">—</div>
@@ -612,6 +670,8 @@
               <strong style="color: #94a3b8">Drag any body</strong> to reposition it — physics
               resumes on release.
             </div>
+            <button class="diagnose-btn" id="btn-diagnose-simulate">✦ Diagnose</button>
+            <div class="ai-result" id="ai-result-simulate" hidden></div>
           </div>
         </div>
       </main>
@@ -1353,6 +1413,7 @@
         document
           .querySelectorAll(".tier-btn")
           .forEach((b) => b.classList.toggle("active", parseInt(b.dataset.tier) === tier));
+        clearAiResults();
         drawInspector();
       }
 
@@ -1367,6 +1428,7 @@
           document
             .querySelectorAll(".theme-tab")
             .forEach((b) => b.classList.toggle("active", b === btn));
+          clearAiResults();
           buildTierGrid();
           drawInspector();
           buildSimWorld();
@@ -1434,6 +1496,171 @@
 
       // Restore status on load (key itself is not re-populated into the field)
       updateApiKeyStatus();
+
+      // ─────────────────────────────────────────────────────────────────────────────
+      // AI Diagnose (#276)
+      // ─────────────────────────────────────────────────────────────────────────────
+
+      let diagnosisGeneration = 0;
+
+      function escapeHtml(str) {
+        return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+      }
+
+      function showAiResult(el, type, text) {
+        el.hidden = false;
+        if (type === "loading") {
+          el.innerHTML = '<div class="ai-result-text">Analyzing…</div>';
+        } else if (type === "error") {
+          el.innerHTML = `<div class="ai-result-text ai-result-error-text">${escapeHtml(text)}</div>`;
+        } else {
+          el.innerHTML =
+            `<div class="ai-result-text">${escapeHtml(text).replace(/\n/g, "<br>")}</div>` +
+            `<div class="ai-result-badge">✦ Claude</div>`;
+        }
+      }
+
+      function clearAiResults() {
+        diagnosisGeneration++;
+        ["inspector", "simulate"].forEach((tab) => {
+          const el = document.getElementById(`ai-result-${tab}`);
+          if (el) {
+            el.hidden = true;
+            el.innerHTML = "";
+          }
+          const btn = document.getElementById(`btn-diagnose-${tab}`);
+          if (btn) {
+            btn.textContent = "✦ Diagnose";
+            btn.disabled = false;
+          }
+        });
+      }
+
+      async function diagnoseCanvas(canvasEl, tabName) {
+        const apiKey = localStorage.getItem(AI_KEY_STORAGE);
+        const resultEl = document.getElementById(`ai-result-${tabName}`);
+        const btn = document.getElementById(`btn-diagnose-${tabName}`);
+
+        if (!apiKey) {
+          showAiResult(resultEl, "error", "No API key — add one in the AI Settings sidebar.");
+          return;
+        }
+
+        let imageBase64;
+        try {
+          const dataUrl = canvasEl.toDataURL("image/png");
+          imageBase64 = dataUrl.split(",")[1];
+        } catch {
+          showAiResult(
+            resultEl,
+            "error",
+            "Canvas is tainted — open via a local server (npx serve) to use AI Diagnose."
+          );
+          return;
+        }
+
+        const generation = ++diagnosisGeneration;
+        btn.textContent = "Diagnosing…";
+        btn.disabled = true;
+        showAiResult(resultEl, "loading", "");
+
+        const theme = THEMES[currentThemeId];
+        const fruit = theme.fruits[currentTier];
+        const ovs = getOverlays();
+        const activeOverlayNames = [
+          ovs.physics && "Physics radius",
+          ovs.clip && "Image boundary",
+          ovs.hull && "Collision shape",
+        ]
+          .filter(Boolean)
+          .join(", ");
+
+        const userText =
+          tabName === "inspector"
+            ? `This is the Inspector view for ${fruit.name} (Tier ${currentTier}, ${currentThemeId} theme). Active overlays: ${activeOverlayNames || "none"}.`
+            : `This is the Simulate view for ${fruit.name} (Tier ${currentTier}, ${currentThemeId} theme). Multiple bodies may be present in the physics sandbox.`;
+
+        try {
+          const resp = await fetch("https://api.anthropic.com/v1/messages", {
+            method: "POST",
+            headers: {
+              "content-type": "application/json",
+              "x-api-key": apiKey,
+              "anthropic-version": "2023-06-01",
+              "anthropic-dangerous-direct-browser-access": "true",
+            },
+            body: JSON.stringify({
+              model: "claude-sonnet-4-6",
+              max_tokens: 600,
+              system: `You are a visual QA assistant for a Suika-style physics game called Cascade. You are looking at a developer tool that renders game assets with diagnostic overlays.
+
+Overlay legend:
+- White solid circle: the physics radius. Two fruits merge when their white circles touch.
+- Orange dashed circle: the sprite clip boundary — how far the image is allowed to draw from centre.
+- Green filled polygon: the convex hull used as the collision shape. Should closely follow the visible sprite edge.
+
+Report:
+1. Whether the green hull polygon closely follows the sprite edge or has gaps/overhangs
+2. Whether the orange clip boundary is proportionate to the white circle (ratio > 1.3× is worth flagging)
+3. Whether the sprite art is centred within the physics circle
+4. (Simulate tab) Whether bodies settle naturally, overlap walls, or a nearby pair would trigger a merge correctly
+5. Any other anomalies relevant to a physics-based drop game
+
+Be concise. Use bullet points. Flag problems clearly. If everything looks correct, say so briefly.`,
+              messages: [
+                {
+                  role: "user",
+                  content: [
+                    {
+                      type: "image",
+                      source: { type: "base64", media_type: "image/png", data: imageBase64 },
+                    },
+                    { type: "text", text: userText },
+                  ],
+                },
+              ],
+            }),
+          });
+
+          if (generation !== diagnosisGeneration) return;
+
+          if (!resp.ok) {
+            const err = await resp.json().catch(() => ({}));
+            showAiResult(
+              resultEl,
+              "error",
+              `API error ${resp.status}: ${err?.error?.message || resp.statusText}`
+            );
+            return;
+          }
+
+          const data = await resp.json();
+          if (generation !== diagnosisGeneration) return;
+
+          showAiResult(resultEl, "success", data.content[0].text);
+        } catch (e) {
+          if (generation !== diagnosisGeneration) return;
+          showAiResult(resultEl, "error", `Request failed: ${e.message}`);
+        } finally {
+          if (generation === diagnosisGeneration) {
+            btn.textContent = "✦ Diagnose";
+            btn.disabled = false;
+          }
+        }
+      }
+
+      document.getElementById("btn-diagnose-inspector").addEventListener("click", () => {
+        diagnoseCanvas(inspectorCanvas, "inspector");
+      });
+
+      document.getElementById("btn-diagnose-simulate").addEventListener("click", () => {
+        diagnoseCanvas(simCanvas, "simulate");
+      });
+
+      // Clear stale AI results when switching assets or tabs
+      document.querySelectorAll(".tab-btn").forEach((btn) => {
+        btn.addEventListener("click", clearAiResults);
+      });
 
       // ─────────────────────────────────────────────────────────────────────────────
       // Init
