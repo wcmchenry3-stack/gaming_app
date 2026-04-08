@@ -213,7 +213,7 @@ export const FRUIT_SETS: Record<string, FruitSet> = {
         nameKey: "grapes", // PNG filename is grapes.png, not grape.png
         icon: FRUIT_ICONS.grape,
         bakedIcon: FRUIT_BAKED.grape,
-        bakedClipR: 1.416466,
+        bakedClipR: 1.488527,
         emoji: "🍇",
         color: "#7c3aed",
         radius: RADII[3],
