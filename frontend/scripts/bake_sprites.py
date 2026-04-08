@@ -147,18 +147,13 @@ def bake_asset(src_png: pathlib.Path, sprite: dict, out_png: pathlib.Path) -> fl
         (round(v[0] * physics_scale + HALF), round(v[1] * physics_scale + HALF))
         for v in sprite["verts"]
     ]
-    poly_mask = Image.new("L", (out_size, out_size), 0)
     if len(hull_px) >= 3:
+        poly_mask = Image.new("L", (out_size, out_size), 0)
         ImageDraw.Draw(poly_mask).polygon(hull_px, fill=255)
-    else:
-        # Fallback: physics circle
-        r_px = physics_scale
-        ImageDraw.Draw(poly_mask).ellipse(
-            [HALF - r_px, HALF - r_px, HALF + r_px, HALF + r_px], fill=255
-        )
-    existing_alpha = canvas.split()[3]
-    combined_alpha = ImageChops.multiply(existing_alpha, poly_mask)
-    canvas.putalpha(combined_alpha)
+        existing_alpha = canvas.split()[3]
+        combined_alpha = ImageChops.multiply(existing_alpha, poly_mask)
+        canvas.putalpha(combined_alpha)
+    # else: no hull polygon — asset has a transparent background, no clip needed.
 
     # 5. Save
     out_png.parent.mkdir(parents=True, exist_ok=True)
