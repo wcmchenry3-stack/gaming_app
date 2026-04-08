@@ -156,7 +156,7 @@ test.describe("Cascade — leaderboard API integration", () => {
   // 429 rate-limit response
   // ---------------------------------------------------------------------------
 
-  test("429 response from server → shows generic error message", async ({
+  test("429 response from server → queues score locally for retry", async ({
     page,
   }) => {
     await page.route(SCORE_ENDPOINT, async (route) => {
@@ -184,7 +184,7 @@ test.describe("Cascade — leaderboard API integration", () => {
     await page.getByRole("button", { name: "Save score" }).click();
 
     await expect(
-      page.getByText("Could not save score. Check your connection."),
+      page.getByText("Saved locally"),
     ).toBeVisible({ timeout: 5_000 });
   });
 
