@@ -929,8 +929,6 @@
         ctx.beginPath();
         ctx.arc(0, 0, r, 0, Math.PI * 2);
         ctx.clip();
-        ctx.fillStyle = color;
-        ctx.fillRect(-r, -r, r * 2, r * 2);
         if (sprite) {
           const ix = sprite.offsetX * r;
           const iy = sprite.offsetY * r;

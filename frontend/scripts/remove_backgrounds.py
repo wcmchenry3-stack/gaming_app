@@ -60,12 +60,22 @@ CIRCLE_FEATHER_FACTOR = 0.01  # soft-edge width as fraction of min(w,h)
 CELESTIAL_HARD = 8
 CELESTIAL_SOFT = 10
 
-# Default asset directories with their processing mode
+# Default pipeline: (source_dir, output_dir, mode)
+# source_dir  — original PNGs with opaque backgrounds (committed, never modified)
+# output_dir  — processed PNGs written here (may be the same dir for in-place runs)
 _SCRIPT_DIR = Path(__file__).resolve().parent
 _FRONTEND_DIR = _SCRIPT_DIR.parent
-DEFAULT_DIRS: list[tuple[Path, str]] = [
-    (_FRONTEND_DIR / "assets" / "fruit-icons",    "color"),
-    (_FRONTEND_DIR / "assets" / "celestial-icons", "celestial"),
+DEFAULT_PIPELINE: list[tuple[Path, Path, str]] = [
+    (
+        _FRONTEND_DIR / "assets" / "source-icons" / "fruits",
+        _FRONTEND_DIR / "assets" / "fruit-icons",
+        "color",
+    ),
+    (
+        _FRONTEND_DIR / "assets" / "source-icons" / "cosmos",
+        _FRONTEND_DIR / "assets" / "celestial-icons",
+        "celestial",
+    ),
 ]
 
 
@@ -231,9 +241,9 @@ def _save_rgba(path: Path, pixels: list[tuple[int, int, int, int]], width: int, 
 # File-level processing
 # ---------------------------------------------------------------------------
 
-def process_file(path: Path, mode: str = "color") -> str:
+def process_file(path: Path, mode: str = "color", out_path: Path | None = None) -> str:
     """
-    Process a single PNG file in place using the given mode.
+    Process a single PNG file and write the result to out_path (default: in-place).
 
     mode="color"     — colour-distance background removal (fruits).
     mode="circle"    — circular alpha mask only (generic spherical assets).
@@ -243,6 +253,8 @@ def process_file(path: Path, mode: str = "color") -> str:
 
     Returns a human-readable status string.
     """
+    if out_path is None:
+        out_path = path
     pixels, width, height = _load_rgba(path)
 
     if mode == "celestial":
@@ -299,22 +311,27 @@ def process_file(path: Path, mode: str = "color") -> str:
     cleared = sum(1 for orig, new in zip(pixels, processed) if orig[3] > 0 and new[3] == 0)
     pct = cleared / (width * height) * 100
 
-    _save_rgba(path, processed, width, height)
-    return f"{path.name} ({mode}) — {pct:.1f}% pixels cleared"
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    _save_rgba(out_path, processed, width, height)
+    return f"{path.name} ({mode}) -> {out_path.parent.name}/{out_path.name} -- {pct:.1f}% pixels cleared"
 
 
-def process_path(target: Path, mode: str = "color") -> list[str]:
-    """Process a single file or all PNGs in a directory. Returns status lines."""
+def process_path(target: Path, mode: str = "color", out_dir: Path | None = None) -> list[str]:
+    """Process a single file or all PNGs in a directory. Returns status lines.
+
+    If out_dir is given, processed files are written there instead of in-place.
+    """
     if target.is_file():
         if target.suffix.lower() != ".png":
             return [f"Skipped (not a PNG): {target}"]
-        return [process_file(target, mode)]
+        out_path = (out_dir / target.name) if out_dir else None
+        return [process_file(target, mode, out_path)]
 
     if target.is_dir():
         pngs = sorted(target.glob("*.png"))
         if not pngs:
             return [f"No PNG files found in {target}"]
-        return [process_file(p, mode) for p in pngs]
+        return [process_file(p, mode, (out_dir / p.name) if out_dir else None) for p in pngs]
 
     return [f"Path not found: {target}"]
 
@@ -338,23 +355,28 @@ def main() -> None:
     with the appropriate mode so future unattended runs pick it up automatically.
     """
     if len(sys.argv) > 1:
-        # Parse CLI: path [--mode <mode>]
+        # Parse CLI: path [--mode <mode>] [--out <dir>]
         args = sys.argv[1:]
         mode = "color"
+        out_dir: Path | None = None
         if "--mode" in args:
             idx = args.index("--mode")
             mode = args[idx + 1]
             args = [a for i, a in enumerate(args) if i not in (idx, idx + 1)]
+        if "--out" in args:
+            idx = args.index("--out")
+            out_dir = Path(args[idx + 1])
+            args = [a for i, a in enumerate(args) if i not in (idx, idx + 1)]
         if not args:
-            print("Usage: remove_backgrounds.py <path> [--mode color|circle]", file=sys.stderr)
+            print("Usage: remove_backgrounds.py <path> [--mode color|circle] [--out <dir>]", file=sys.stderr)
             sys.exit(1)
-        targets = [(Path(a), mode) for a in args]
+        targets = [(Path(a), mode, out_dir) for a in args]
     else:
-        targets = DEFAULT_DIRS
+        targets = [(src, mode, out) for src, out, mode in DEFAULT_PIPELINE]
 
     all_results = []
-    for target, mode in targets:
-        all_results.extend(process_path(target, mode))
+    for target, mode, out_dir in targets:
+        all_results.extend(process_path(target, mode, out_dir))
 
     for line in all_results:
         print(line)

@@ -137,12 +137,23 @@ def bake_asset(src_png: pathlib.Path, sprite: dict, out_png: pathlib.Path) -> fl
     # PIL paste handles negative/out-of-bounds coordinates correctly
     canvas.paste(resized, (round(sprite_x), round(sprite_y)), resized)
 
-    # 4. Intersect existing alpha with circular clip mask
-    circle_mask = Image.new("L", (out_size, out_size), 0)
-    ImageDraw.Draw(circle_mask).ellipse([0, 0, out_size - 1, out_size - 1], fill=255)
-    existing_alpha = canvas.split()[3]
-    combined_alpha = ImageChops.multiply(existing_alpha, circle_mask)
-    canvas.putalpha(combined_alpha)
+    # 4. Intersect existing alpha with hull-polygon clip mask.
+    #    The hull vertices are in normalised units where 1.0 = physics radius.
+    #    Scaling by HALF/clip_r_norm converts them to pixels in the baked canvas.
+    #    Clipping to the hull polygon ensures no colour bleeds outside the
+    #    actual fruit/planet shape, regardless of sprite padding or disc backgrounds.
+    physics_scale = HALF / clip_r_norm  # pixels per normalised unit (r=1.0)
+    hull_px = [
+        (round(v[0] * physics_scale + HALF), round(v[1] * physics_scale + HALF))
+        for v in sprite["verts"]
+    ]
+    if len(hull_px) >= 3:
+        poly_mask = Image.new("L", (out_size, out_size), 0)
+        ImageDraw.Draw(poly_mask).polygon(hull_px, fill=255)
+        existing_alpha = canvas.split()[3]
+        combined_alpha = ImageChops.multiply(existing_alpha, poly_mask)
+        canvas.putalpha(combined_alpha)
+    # else: no hull polygon — asset has a transparent background, no clip needed.
 
     # 5. Save
     out_png.parent.mkdir(parents=True, exist_ok=True)
