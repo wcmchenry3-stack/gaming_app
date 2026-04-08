@@ -137,9 +137,18 @@ def bake_asset(src_png: pathlib.Path, sprite: dict, out_png: pathlib.Path) -> fl
     # PIL paste handles negative/out-of-bounds coordinates correctly
     canvas.paste(resized, (round(sprite_x), round(sprite_y)), resized)
 
-    # 4. Intersect existing alpha with circular clip mask
+    # 4. Intersect existing alpha with physics-circle clip mask.
+    #    The physics radius (r=1.0 normalised) maps to HALF/clip_r_norm pixels
+    #    in the baked canvas.  Clipping here guarantees no colour bleeds
+    #    outside the collision boundary at runtime, regardless of how the
+    #    sprite is positioned or how large the source image is.
+    physics_r_px = HALF / clip_r_norm  # pixels that correspond to r=1.0
+    cx = cy = HALF  # canvas centre
     circle_mask = Image.new("L", (out_size, out_size), 0)
-    ImageDraw.Draw(circle_mask).ellipse([0, 0, out_size - 1, out_size - 1], fill=255)
+    ImageDraw.Draw(circle_mask).ellipse(
+        [cx - physics_r_px, cy - physics_r_px, cx + physics_r_px, cy + physics_r_px],
+        fill=255,
+    )
     existing_alpha = canvas.split()[3]
     combined_alpha = ImageChops.multiply(existing_alpha, circle_mask)
     canvas.putalpha(combined_alpha)
