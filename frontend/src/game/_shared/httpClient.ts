@@ -26,7 +26,19 @@ export class ApiError extends Error {
 }
 
 function resolveBaseUrl(): string {
-  const raw = process.env.EXPO_PUBLIC_API_URL ?? "http://localhost:8000";
+  const raw = process.env.EXPO_PUBLIC_API_URL;
+  if (!raw) {
+    if (__DEV__) {
+      return "http://localhost:8000";
+    }
+    Sentry.captureMessage("EXPO_PUBLIC_API_URL is not set in production build", {
+      level: "error",
+      tags: { subsystem: "httpClient", issue: "missing-env" },
+    });
+    // Fall back so the app doesn't hard-crash, but this will fail with a
+    // TypeError: Failed to fetch — which Sentry will capture separately.
+    return "http://localhost:8000";
+  }
   return raw.startsWith("http") ? raw : `https://${raw}`;
 }
 

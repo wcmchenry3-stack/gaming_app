@@ -39,6 +39,8 @@ export async function loadGame(): Promise<Twenty48State | null> {
     return parsed;
   } catch (e) {
     Sentry.captureException(e, { tags: { subsystem: "twenty48.storage", op: "load" } });
+    // Remove corrupted entry so it doesn't fail on every subsequent load.
+    await AsyncStorage.removeItem(GAME_KEY).catch(() => {});
     return null;
   }
 }

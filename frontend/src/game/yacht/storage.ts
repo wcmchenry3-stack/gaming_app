@@ -37,6 +37,7 @@ export async function loadGame(): Promise<GameState | null> {
     return parsed;
   } catch (e) {
     Sentry.captureException(e, { tags: { subsystem: "yacht.storage", op: "load" } });
+    await AsyncStorage.removeItem(STORAGE_KEY).catch(() => {});
     return null;
   }
 }
