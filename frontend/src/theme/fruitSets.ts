@@ -81,16 +81,16 @@ export interface FruitSet {
 // Radii scale with tier — same across all sets so physics is skin-agnostic
 const RADII: Record<FruitTier, number> = {
   0: 18,
-  1: 20,
-  2: 23,
-  3: 26,
-  4: 29,
-  5: 33,
-  6: 36,
-  7: 42,
-  8: 51,
-  9: 56,
-  10: 61,
+  1: 25,
+  2: 33,
+  3: 38,
+  4: 44,
+  5: 49,
+  6: 54,
+  7: 62,
+  8: 75,
+  9: 82,
+  10: 89,
 };
 
 // Score doubles each tier (cherry merge = 1, watermelon merge = 1024)
