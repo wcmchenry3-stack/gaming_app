@@ -58,6 +58,13 @@ jest.mock("react-native-reanimated", () => {
   };
 });
 
+// Safe area context mock — returns zero insets in tests
+jest.mock("react-native-safe-area-context", () => ({
+  useSafeAreaInsets: () => ({ top: 0, bottom: 0, left: 0, right: 0 }),
+  SafeAreaView: jest.fn(({ children }: { children: unknown }) => children),
+  SafeAreaProvider: jest.fn(({ children }: { children: unknown }) => children),
+}));
+
 // Sentry mock — @sentry/react-native ships ESM that Jest can't transform
 jest.mock("@sentry/react-native", () => ({
   captureException: jest.fn(),

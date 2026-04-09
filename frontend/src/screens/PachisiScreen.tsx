@@ -114,7 +114,18 @@ export default function PachisiScreen({ navigation }: Props) {
   }
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background, paddingTop: Math.max(insets.top, 16), paddingBottom: Math.max(insets.bottom, 16), paddingLeft: Math.max(insets.left, 16), paddingRight: Math.max(insets.right, 16) }]}>
+    <View
+      style={[
+        styles.container,
+        {
+          backgroundColor: colors.background,
+          paddingTop: Math.max(insets.top, 16),
+          paddingBottom: Math.max(insets.bottom, 16),
+          paddingLeft: Math.max(insets.left, 16),
+          paddingRight: Math.max(insets.right, 16),
+        },
+      ]}
+    >
       {/* Header */}
       <View style={styles.header}>
         <Pressable
