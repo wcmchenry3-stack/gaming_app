@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useCallback, useRef } from "react";
 import { View, Text, Pressable, StyleSheet, ActivityIndicator, ScrollView } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTranslation } from "react-i18next";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { RootStackParamList } from "../../App";
@@ -22,6 +23,7 @@ type Props = {
 export default function PachisiScreen({ navigation }: Props) {
   const { t } = useTranslation(["pachisi", "common", "errors"]);
   const { colors, theme, toggle } = useTheme();
+  const insets = useSafeAreaInsets();
 
   const [state, setState] = useState<PachisiState | null>(null);
   const [loading, setLoading] = useState(false);
@@ -112,7 +114,7 @@ export default function PachisiScreen({ navigation }: Props) {
   }
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
+    <View style={[styles.container, { backgroundColor: colors.background, paddingTop: Math.max(insets.top, 16), paddingBottom: Math.max(insets.bottom, 16), paddingLeft: Math.max(insets.left, 16), paddingRight: Math.max(insets.right, 16) }]}>
       {/* Header */}
       <View style={styles.header}>
         <Pressable
@@ -235,7 +237,6 @@ const styles = StyleSheet.create({
   },
   container: {
     flex: 1,
-    paddingTop: 48,
   },
   header: {
     flexDirection: "row",
