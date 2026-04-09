@@ -85,12 +85,12 @@ const RADII: Record<FruitTier, number> = {
   2: 33,
   3: 38,
   4: 44,
-  5: 52,
-  6: 60,
-  7: 68,
-  8: 76,
-  9: 86,
-  10: 98,
+  5: 49,
+  6: 54,
+  7: 62,
+  8: 75,
+  9: 82,
+  10: 89,
 };
 
 // Score doubles each tier (cherry merge = 1, watermelon merge = 1024)
