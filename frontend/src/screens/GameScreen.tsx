@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { View, Text, StyleSheet, Modal, Pressable } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTranslation } from "react-i18next";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { RouteProp } from "@react-navigation/native";
@@ -26,6 +27,7 @@ type Props = {
 export default function GameScreen({ navigation, route }: Props) {
   const { t } = useTranslation(["yacht", "common"]);
   const { colors, theme, toggle } = useTheme();
+  const insets = useSafeAreaInsets();
   const [gameState, setGameState] = useState<GameState>(route.params.initialState);
   const [possibleScores, setPossibleScores] = useState<Record<string, number>>({});
   const [resetHeld, setResetHeld] = useState(false);
@@ -94,7 +96,18 @@ export default function GameScreen({ navigation, route }: Props) {
   }, []);
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
+    <View
+      style={[
+        styles.container,
+        {
+          backgroundColor: colors.background,
+          paddingTop: Math.max(insets.top, 16),
+          paddingBottom: Math.max(insets.bottom, 16),
+          paddingLeft: Math.max(insets.left, 16),
+          paddingRight: Math.max(insets.right, 16),
+        },
+      ]}
+    >
       {/* Header */}
       <View style={[styles.header, { backgroundColor: colors.headerBg }]}>
         <Pressable
@@ -216,7 +229,7 @@ export default function GameScreen({ navigation, route }: Props) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, paddingTop: 48 },
+  container: { flex: 1 },
   header: {
     flexDirection: "row",
     alignItems: "center",

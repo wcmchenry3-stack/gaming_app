@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { View, Text, Pressable, StyleSheet, LayoutChangeEvent } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTranslation } from "react-i18next";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { RootStackParamList } from "../../App";
@@ -22,6 +23,7 @@ type Props = {
 function CascadeGame({ navigation }: Props) {
   const { t } = useTranslation(["cascade", "common"]);
   const { colors, theme, toggle } = useTheme();
+  const insets = useSafeAreaInsets();
   const { activeFruitSet } = useFruitSet();
 
   const [score, setScore] = useState(0);
@@ -184,7 +186,18 @@ function CascadeGame({ navigation }: Props) {
       : 0;
 
   return (
-    <View style={[styles.screen, { backgroundColor: colors.background }]}>
+    <View
+      style={[
+        styles.screen,
+        {
+          backgroundColor: colors.background,
+          paddingTop: Math.max(insets.top, 16),
+          paddingBottom: Math.max(insets.bottom, 16),
+          paddingLeft: Math.max(insets.left, 16),
+          paddingRight: Math.max(insets.right, 16),
+        },
+      ]}
+    >
       {/* Header */}
       <View style={styles.header}>
         <Pressable
@@ -253,8 +266,6 @@ export default function CascadeScreen(props: Props) {
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
-    padding: 16,
-    paddingTop: 48,
   },
   header: {
     flexDirection: "row",

@@ -39,7 +39,7 @@ function parseArgs() {
 
   const locale = get("--locale");
   const ns = get("--namespace");
-  const model = get("--model") ?? "gpt-4o";
+  const model = get("--model") ?? "gpt-4o-2024-11-20";
   const dryRun = has("--dry-run");
   const force = has("--force");
 
