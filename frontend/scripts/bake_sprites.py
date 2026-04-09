@@ -41,6 +41,11 @@ ASSETS_DIR = FRONTEND_DIR / "assets"
 # At runtime: ctx.drawImage(baked, cx-clipR, cy-clipR, clipR*2, clipR*2)
 HALF = 256  # half-size of each baked PNG (pixels)
 
+# Ringed planets have semi-transparent ring pixels (alpha 3–25) well beyond
+# the disc edge.  Skipping clean_image for these preserves the ring structure
+# without affecting disc-only assets.
+RINGED_PLANETS: frozenset[str] = frozenset({"saturn", "uranus"})
+
 THEMES = [
     {
         "id": "fruits",
@@ -61,21 +66,23 @@ THEMES = [
 # Helpers
 # ---------------------------------------------------------------------------
 
-def clean_image(img: Image.Image) -> Image.Image:
-    """Zero RGBA for pixels with alpha < 200 — mirrors runtime cleanImage().
+def clean_image(img: Image.Image, threshold: int = 200) -> Image.Image:
+    """Zero RGBA for pixels with alpha < threshold — mirrors runtime cleanImage().
 
     Scrubs JPEG compression halos and semi-transparent fringe so baked edges
-    stay crisp.  The saturn/uranus ring body pixels are fully opaque (alpha
-    255) and survive this threshold; only their feathered anti-alias edge
-    pixels are zeroed, which is acceptable.
+    stay crisp.  Pass threshold=0 for ringed planets (Saturn, Uranus) to
+    preserve their semi-transparent ring pixels, which have alpha values as
+    low as 3–25 well beyond the disc edge.
     """
+    if threshold == 0:
+        return img.convert("RGBA")
     img = img.convert("RGBA")
     pixels = img.load()
     w, h = img.size
     for y in range(h):
         for x in range(w):
             r, g, b, a = pixels[x, y]
-            if a < 200:
+            if a < threshold:
                 pixels[x, y] = (0, 0, 0, 0)
     return img
 
@@ -98,7 +105,7 @@ def sprite_clip_radius_norm(sprite: dict) -> float:
     )
 
 
-def bake_asset(src_png: pathlib.Path, sprite: dict, out_png: pathlib.Path) -> float:
+def bake_asset(src_png: pathlib.Path, sprite: dict, out_png: pathlib.Path, name: str = "") -> float:
     """
     Bake one asset PNG.
 
@@ -115,9 +122,12 @@ def bake_asset(src_png: pathlib.Path, sprite: dict, out_png: pathlib.Path) -> fl
     # So the baked clipR circle exactly fills the 512×512 canvas.
     scale = HALF / clip_r_norm
 
-    # 1. Load + clean source image
+    # 1. Load + clean source image.
+    # Ringed planets skip clean_image entirely so their semi-transparent ring
+    # pixels (alpha 3–25 beyond the disc edge) are preserved in the bake.
     src = Image.open(src_png).convert("RGBA")
-    src = clean_image(src)
+    clean_threshold = 0 if name in RINGED_PLANETS else 200
+    src = clean_image(src, threshold=clean_threshold)
 
     # 2. Compute where the sprite sits in the output canvas.
     #    Canvas centre = (HALF, HALF).
@@ -178,7 +188,7 @@ def main() -> None:
                 continue
 
             out_png: pathlib.Path = theme["out_dir"] / f"{name}.png"
-            clip_r = bake_asset(src_png, sprite, out_png)
+            clip_r = bake_asset(src_png, sprite, out_png, name=name)
             baked_clip_r[name] = clip_r
             print(f"  BAKED {name}: bakedClipR={clip_r:.6f}")
 
