@@ -60,11 +60,11 @@ test.describe("Cascade — merge and score behavior", () => {
   test("two tier-10 (watermelon) fruits merge → score = 256, no tier-11 spawned", async ({
     page,
   }) => {
-    // Tier-10 radius=98; valid x range in a 400px canvas is [114, 286].
-    // Use the extreme ends (min/max clamp) for least initial overlap (~12%)
-    // so Rapier contact detection fires reliably.
-    await spawnTierAt(page, 10, 114);
-    await spawnTierAt(page, 10, 286);
+    // Tier-10 radius=61; valid x range in a 400px canvas is [77, 323].
+    // Place 107px apart (r1+r2=122) for ~12% initial overlap so Rapier
+    // contact detection fires reliably without suppressing contact events.
+    await spawnTierAt(page, 10, 147);
+    await spawnTierAt(page, 10, 253);
     await fastForward(page, 2000);
 
     const state = await getState(page);
