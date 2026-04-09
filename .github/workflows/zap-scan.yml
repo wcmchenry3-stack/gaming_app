@@ -10,6 +10,6 @@ jobs:
   zap-scan:
     uses: wcmchenry3-stack/.github/.github/workflows/called-zap-scheduled.yml@main
     with:
-      target-url: ${{ secrets.SITE_URL }}
+      target-url: 'https://dev-games.buffingchi.com'
       artifact-name: 'zap-weekly-gaming'
     secrets: inherit
