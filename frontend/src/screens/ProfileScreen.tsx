@@ -10,7 +10,9 @@ export default function ProfileScreen() {
   const { t } = useTranslation("common");
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background, paddingTop: insets.top }]}>
+    <View
+      style={[styles.container, { backgroundColor: colors.background, paddingTop: insets.top }]}
+    >
       <Text style={[styles.icon]}>👤</Text>
       <Text style={[styles.title, { color: colors.text }]}>{t("screens.profile", "Profile")}</Text>
       <Text style={[styles.subtitle, { color: colors.textMuted }]}>Coming Soon</Text>

@@ -11,8 +11,12 @@ export default function SettingsScreen() {
   const { t } = useTranslation("common");
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background, paddingTop: insets.top }]}>
-      <Text style={[styles.title, { color: colors.text }]}>{t("screens.settings", "Settings")}</Text>
+    <View
+      style={[styles.container, { backgroundColor: colors.background, paddingTop: insets.top }]}
+    >
+      <Text style={[styles.title, { color: colors.text }]}>
+        {t("screens.settings", "Settings")}
+      </Text>
 
       <View style={[styles.row, { borderColor: colors.border }]}>
         <Text style={[styles.label, { color: colors.text }]}>{t("theme.label", "Theme")}</Text>
@@ -31,7 +35,9 @@ export default function SettingsScreen() {
       </View>
 
       <View style={[styles.row, { borderColor: colors.border }]}>
-        <Text style={[styles.label, { color: colors.text }]}>{t("settings.language", "Language")}</Text>
+        <Text style={[styles.label, { color: colors.text }]}>
+          {t("settings.language", "Language")}
+        </Text>
         <LanguageSwitcher />
       </View>
     </View>
