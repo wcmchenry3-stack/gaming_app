@@ -287,6 +287,15 @@ const styles = StyleSheet.create({
   },
   canvasOuter: {
     flex: 1,
-    alignItems: "center", // centers the canvas horizontally when narrower than container
+    alignItems: "center",
+    marginHorizontal: 8,
+    borderTopLeftRadius: 8,
+    borderTopRightRadius: 8,
+    borderBottomLeftRadius: 48,
+    borderBottomRightRadius: 48,
+    backgroundColor: "rgba(31,31,38,0.4)",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.05)",
+    overflow: "hidden",
   },
 });
