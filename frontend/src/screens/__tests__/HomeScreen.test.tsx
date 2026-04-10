@@ -50,7 +50,7 @@ function renderScreen() {
       <ThemeProvider>
         <HomeScreen />
       </ThemeProvider>
-    </SafeAreaProvider>,
+    </SafeAreaProvider>
   );
 }
 
@@ -96,8 +96,8 @@ describe("HomeScreen — game cards", () => {
             rolls_used: 0,
             game_over: false,
           }),
-        }),
-      ),
+        })
+      )
     );
   });
 });
