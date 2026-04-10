@@ -12,12 +12,17 @@ import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
+import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import * as Sentry from "@sentry/react-native";
 import HomeScreen from "./src/screens/HomeScreen";
 import GameScreen from "./src/screens/GameScreen";
 import CascadeScreen from "./src/screens/CascadeScreen";
 import BlackjackScreen from "./src/screens/BlackjackScreen";
 import Twenty48Screen from "./src/screens/Twenty48Screen";
+import LeaderboardScreen from "./src/screens/LeaderboardScreen";
+import ProfileScreen from "./src/screens/ProfileScreen";
+import SettingsScreen from "./src/screens/SettingsScreen";
+import BottomTabBar from "./src/components/shared/BottomTabBar";
 import { GameState } from "./src/game/yacht/types";
 import { ThemeProvider } from "./src/theme/ThemeContext";
 import { useHtmlAttributes } from "./src/i18n/useHtmlAttributes";
@@ -39,7 +44,7 @@ if (!dsn) {
 }
 
 export type RootStackParamList = {
-  Home: undefined;
+  MainTabs: undefined;
   Game: { initialState: GameState };
   Cascade: undefined;
   Blackjack: undefined;
@@ -48,6 +53,21 @@ export type RootStackParamList = {
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
+const Tab = createBottomTabNavigator();
+
+function MainTabs() {
+  return (
+    <Tab.Navigator
+      tabBar={(props) => <BottomTabBar {...props} />}
+      screenOptions={{ headerShown: false }}
+    >
+      <Tab.Screen name="Lobby" component={HomeScreen} />
+      <Tab.Screen name="Ranks" component={LeaderboardScreen} />
+      <Tab.Screen name="Profile" component={ProfileScreen} />
+      <Tab.Screen name="Settings" component={SettingsScreen} />
+    </Tab.Navigator>
+  );
+}
 
 function AppCrashFallback({ resetError }: { resetError: () => void }) {
   return (
@@ -67,7 +87,7 @@ function AppInner() {
       <ThemeProvider>
         <NavigationContainer>
           <Stack.Navigator screenOptions={{ headerShown: false }}>
-            <Stack.Screen name="Home" component={HomeScreen} />
+            <Stack.Screen name="MainTabs" component={MainTabs} />
             <Stack.Screen name="Game" component={GameScreen} />
             <Stack.Screen name="Cascade" component={CascadeScreen} />
             <Stack.Screen name="Blackjack" component={BlackjackScreen} />
