@@ -225,9 +225,11 @@ function CascadeGame({ navigation }: Props) {
         </Pressable>
       </View>
 
+      {/* Score bar */}
+      <ScoreDisplay score={score} />
+
       {/* HUD */}
       <View style={styles.hud}>
-        <ScoreDisplay score={score} />
         <NextFruitPreview current={currentDef} next={nextDef} />
       </View>
 
