@@ -11,10 +11,6 @@ import { useTheme } from "../theme/ThemeContext";
 import LanguageSwitcher from "../components/LanguageSwitcher";
 import OfflineBanner from "../components/OfflineBanner";
 
-type Props = {
-  navigation: NativeStackNavigationProp<RootStackParamList, "MainTabs">;
-};
-
 interface GameCard {
   emoji: string;
   title: string;
@@ -23,7 +19,7 @@ interface GameCard {
   badge?: string;
 }
 
-export default function HomeScreen(_props: Props) {
+export default function HomeScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const { t } = useTranslation([
     "common",

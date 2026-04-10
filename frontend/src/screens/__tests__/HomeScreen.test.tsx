@@ -1,8 +1,6 @@
 import React from "react";
 import { render, fireEvent, waitFor } from "@testing-library/react-native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
-import { NavigationContainer } from "@react-navigation/native";
-import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import HomeScreen from "../HomeScreen";
 import { ThemeProvider } from "../../theme/ThemeContext";
 
@@ -14,25 +12,32 @@ jest.mock("../../game/yacht/storage", () => ({
 }));
 
 // ---------------------------------------------------------------------------
-// Mock navigation — capture navigate calls
+// Mock navigation
 // ---------------------------------------------------------------------------
 const mockNavigate = jest.fn();
-jest.mock("@react-navigation/native", () => {
-  const actual = jest.requireActual("@react-navigation/native");
-  return {
-    ...actual,
-    useNavigation: () => ({
-      navigate: mockNavigate,
-      goBack: jest.fn(),
-    }),
-  };
-});
+
+jest.mock("@react-navigation/native", () => ({
+  ...jest.requireActual("@react-navigation/native"),
+  useNavigation: () => ({
+    navigate: mockNavigate,
+    goBack: jest.fn(),
+    dispatch: jest.fn(),
+    reset: jest.fn(),
+    isFocused: jest.fn().mockReturnValue(true),
+    canGoBack: jest.fn().mockReturnValue(false),
+    addListener: jest.fn(() => jest.fn()),
+    removeListener: jest.fn(),
+    setParams: jest.fn(),
+    getParent: jest.fn(),
+    getState: jest.fn(),
+    setOptions: jest.fn(),
+    getId: jest.fn(),
+  }),
+}));
 
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
-
-const Stack = createNativeStackNavigator();
 
 const testInsets = {
   frame: { x: 0, y: 0, width: 390, height: 844 },
@@ -43,13 +48,9 @@ function renderScreen() {
   return render(
     <SafeAreaProvider initialMetrics={testInsets}>
       <ThemeProvider>
-        <NavigationContainer>
-          <Stack.Navigator screenOptions={{ headerShown: false }}>
-            <Stack.Screen name="Home" component={HomeScreen} />
-          </Stack.Navigator>
-        </NavigationContainer>
+        <HomeScreen />
       </ThemeProvider>
-    </SafeAreaProvider>
+    </SafeAreaProvider>,
   );
 }
 
@@ -95,8 +96,8 @@ describe("HomeScreen — game cards", () => {
             rolls_used: 0,
             game_over: false,
           }),
-        })
-      )
+        }),
+      ),
     );
   });
 });
