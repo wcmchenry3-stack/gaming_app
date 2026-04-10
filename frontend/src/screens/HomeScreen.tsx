@@ -2,6 +2,7 @@ import React from "react";
 import { View, Text, Pressable, StyleSheet } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTranslation } from "react-i18next";
+import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { RootStackParamList } from "../../App";
 import { newGame as newYachtGame } from "../game/yacht/engine";
@@ -11,7 +12,7 @@ import LanguageSwitcher from "../components/LanguageSwitcher";
 import OfflineBanner from "../components/OfflineBanner";
 
 type Props = {
-  navigation: NativeStackNavigationProp<RootStackParamList, "Home">;
+  navigation: NativeStackNavigationProp<RootStackParamList, "MainTabs">;
 };
 
 interface GameCard {
@@ -22,7 +23,8 @@ interface GameCard {
   badge?: string;
 }
 
-export default function HomeScreen({ navigation }: Props) {
+export default function HomeScreen(_props: Props) {
+  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const { t } = useTranslation([
     "common",
     "yacht",
