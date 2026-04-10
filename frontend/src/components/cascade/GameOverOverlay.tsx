@@ -73,9 +73,7 @@ export default function GameOverOverlay({ score, onRestart }: Props) {
   return (
     <Modal transparent animationType="fade" accessibilityViewIsModal>
       <View style={styles.backdrop}>
-        <View
-          style={[styles.card, { backgroundColor: colors.modalBg, borderColor: colors.border }]}
-        >
+        <View style={[styles.card, { backgroundColor: colors.surfaceHigh }]}>
           <Text style={[styles.title, { color: colors.text }]} accessibilityRole="header">
             {t("gameOver.title")}
           </Text>
@@ -98,8 +96,8 @@ export default function GameOverOverlay({ score, onRestart }: Props) {
                 style={[
                   styles.input,
                   {
-                    backgroundColor: colors.surface,
-                    borderColor: colors.border,
+                    backgroundColor: colors.surfaceAlt,
+                    borderColor: "transparent",
                     color: colors.text,
                   },
                 ]}
@@ -150,12 +148,12 @@ export default function GameOverOverlay({ score, onRestart }: Props) {
           )}
 
           <Pressable
-            style={[styles.restartBtn, { borderColor: colors.border }]}
+            style={[styles.restartBtn, { borderColor: colors.accent }]}
             onPress={onRestart}
             accessibilityRole="button"
             accessibilityLabel={t("gameOver.playAgain")}
           >
-            <Text style={[styles.restartText, { color: colors.textMuted }]}>
+            <Text style={[styles.restartText, { color: colors.accent }]}>
               {t("gameOver.playAgainButton")}
             </Text>
           </Pressable>
@@ -168,7 +166,7 @@ export default function GameOverOverlay({ score, onRestart }: Props) {
 const styles = StyleSheet.create({
   backdrop: {
     flex: 1,
-    backgroundColor: "rgba(0,0,0,0.6)",
+    backgroundColor: "rgba(14,14,19,0.8)",
     alignItems: "center",
     justifyContent: "center",
     padding: 24,
@@ -176,9 +174,8 @@ const styles = StyleSheet.create({
   card: {
     width: "100%",
     maxWidth: 360,
-    borderRadius: 20,
-    borderWidth: 1,
-    padding: 24,
+    borderRadius: 24,
+    padding: 28,
     alignItems: "center",
     gap: 12,
   },
@@ -209,7 +206,7 @@ const styles = StyleSheet.create({
   btn: {
     width: "100%",
     padding: 14,
-    borderRadius: 10,
+    borderRadius: 20,
     alignItems: "center",
   },
   btnText: {
