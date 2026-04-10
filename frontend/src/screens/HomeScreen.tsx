@@ -8,7 +8,6 @@ import { RootStackParamList } from "../../App";
 import { newGame as newYachtGame } from "../game/yacht/engine";
 import { loadGame as loadYachtGame } from "../game/yacht/storage";
 import { useTheme } from "../theme/ThemeContext";
-import LanguageSwitcher from "../components/LanguageSwitcher";
 import OfflineBanner from "../components/OfflineBanner";
 
 interface GameCard {
@@ -30,7 +29,7 @@ export default function HomeScreen() {
     "twenty48",
     "errors",
   ]);
-  const { colors, theme, toggle } = useTheme();
+  const { colors } = useTheme();
   const insets = useSafeAreaInsets();
 
   async function startYacht() {
@@ -88,22 +87,6 @@ export default function HomeScreen() {
       <View style={[styles.offlineBannerWrap, { top: insets.top }]}>
         <OfflineBanner />
       </View>
-      <View style={[styles.headerRow, { top: insets.top + 8 }]}>
-        <Pressable
-          style={styles.themeToggle}
-          onPress={toggle}
-          accessibilityRole="button"
-          accessibilityLabel={t("common:theme.switchTo", {
-            mode: theme === "dark" ? t("common:theme.light") : t("common:theme.dark"),
-          })}
-        >
-          <Text style={[styles.themeToggleText, { color: colors.textMuted }]}>
-            {theme === "dark" ? t("common:theme.light") : t("common:theme.dark")}
-          </Text>
-        </Pressable>
-        <LanguageSwitcher />
-      </View>
-
       <Text style={[styles.title, { color: colors.text }]}>{t("common:app.title")}</Text>
       <Text style={[styles.subtitle, { color: colors.textMuted }]}>{t("common:app.subtitle")}</Text>
 
@@ -147,27 +130,11 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     padding: 24,
   },
-  headerRow: {
-    position: "absolute",
-    right: 16,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-  },
   offlineBannerWrap: {
     position: "absolute",
     left: 0,
     right: 0,
     zIndex: 10,
-  },
-  themeToggle: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    minHeight: 44,
-    justifyContent: "center",
-  },
-  themeToggleText: {
-    fontSize: 13,
   },
   title: {
     fontSize: 42,
