@@ -32,29 +32,37 @@ export default function ScoreDisplay({ score }: Props) {
 
   return (
     <View
-      style={[styles.container, { backgroundColor: colors.surface, borderColor: colors.border }]}
+      style={styles.container}
       accessibilityLiveRegion="polite"
       accessibilityLabel={t("score.display", { score: score.toLocaleString() })}
     >
-      <Text style={[styles.label, { color: colors.textMuted }]}>{t("score.label")}</Text>
-      <Animated.Text
-        style={[styles.score, { color: colors.accent, transform: [{ scale }] }]}
-        importantForAccessibility="no"
-      >
-        {score.toLocaleString()}
-      </Animated.Text>
+      <View style={styles.scoreSection}>
+        <Text style={[styles.label, { color: colors.textMuted }]}>{t("score.label")}</Text>
+        <Animated.Text
+          style={[styles.score, { color: colors.accent, transform: [{ scale }] }]}
+          importantForAccessibility="no"
+        >
+          {score.toLocaleString()}
+        </Animated.Text>
+      </View>
+      <View style={styles.scoreSection}>
+        <Text style={[styles.label, { color: colors.textMuted }]}>HIGH</Text>
+        <Text style={[styles.score, { color: colors.textMuted }]}>0</Text>
+      </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
+    flexDirection: "row",
+    justifyContent: "space-between",
     alignItems: "center",
-    paddingHorizontal: 20,
+    paddingHorizontal: 16,
     paddingVertical: 8,
-    borderRadius: 12,
-    borderWidth: 1,
-    minWidth: 100,
+  },
+  scoreSection: {
+    alignItems: "center",
   },
   label: {
     fontSize: 10,
@@ -63,7 +71,7 @@ const styles = StyleSheet.create({
     marginBottom: 2,
   },
   score: {
-    fontSize: 28,
+    fontSize: 32,
     fontWeight: "800",
   },
 });
