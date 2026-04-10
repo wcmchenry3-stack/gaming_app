@@ -48,6 +48,9 @@ See [`docs/ANDROID-CI.md`](docs/ANDROID-CI.md). Do not suggest `eas build`, `eas
 ## Deployment
 See [`docs/RENDER.md`](docs/RENDER.md) for Render hosting setup.
 
+## Branding & Design
+The visual design system is **BC Arcade** (never "Neon Arcade"). See [`docs/BRANDING.md`](docs/BRANDING.md) for palette, typography, theming rules, and per-screen Stitch-vs-ours guidance.
+
 ## Key Conventions
 - All rule enforcement is server-side (`backend/game.py`). Frontend is display only.
 - Frontend replaces state wholesale from each API response.
