@@ -20,6 +20,9 @@
     "setupFiles": [
       "./jest.setup.ts"
     ],
+    "setupFilesAfterEnv": [
+      "./jest.setup-after-env.ts"
+    ],
     "testMatch": [
       "**/__tests__/**/*.test.ts",
       "**/__tests__/**/*.test.tsx"
