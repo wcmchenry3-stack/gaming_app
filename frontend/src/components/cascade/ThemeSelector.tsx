@@ -4,7 +4,11 @@ import { useTranslation } from "react-i18next";
 import { FRUIT_SETS } from "../../theme/fruitSets";
 import { useFruitSet } from "../../theme/FruitSetContext";
 import { useTheme } from "../../theme/ThemeContext";
-import FruitGlyph from "./FruitGlyph";
+
+const TAB_EMOJIS: Record<string, string> = {
+  fruits: "\uD83C\uDF52",
+  cosmos: "\uD83C\uDF19",
+};
 
 export default function ThemeSelector() {
   const { t } = useTranslation("cascade");
@@ -13,7 +17,7 @@ export default function ThemeSelector() {
 
   return (
     <View
-      style={styles.row}
+      style={[styles.strip, { backgroundColor: colors.surfaceHigh }]}
       accessibilityRole="radiogroup"
       accessibilityLabel={t("theme.groupLabel")}
     >
@@ -27,20 +31,12 @@ export default function ThemeSelector() {
             accessibilityState={{ checked: active }}
             aria-checked={active}
             accessibilityLabel={t("theme.optionLabel", { label: set.label })}
-            style={[
-              styles.pill,
-              {
-                backgroundColor: active ? colors.accent : colors.surface,
-                borderColor: active ? colors.accent : colors.border,
-              },
-            ]}
+            style={[styles.tab, active && { backgroundColor: colors.accent }]}
           >
-            <View style={styles.pillContent}>
-              <FruitGlyph fruit={set.fruits[10]} size={18} />
-              <Text style={[styles.pillText, { color: active ? "#fff" : colors.textMuted }]}>
-                {set.label}
-              </Text>
-            </View>
+            <Text style={styles.emoji}>{TAB_EMOJIS[set.id] ?? ""}</Text>
+            <Text style={[styles.label, { color: active ? "#0e0e13" : colors.textMuted }]}>
+              {set.label}
+            </Text>
           </Pressable>
         );
       })}
@@ -49,28 +45,27 @@ export default function ThemeSelector() {
 }
 
 const styles = StyleSheet.create({
-  row: {
+  strip: {
     flexDirection: "row",
-    gap: 8,
-    flexWrap: "wrap",
-    justifyContent: "center",
+    alignSelf: "center",
+    borderRadius: 20,
+    padding: 3,
     marginBottom: 12,
   },
-  pill: {
-    paddingHorizontal: 14,
-    paddingVertical: 6,
-    borderRadius: 20,
-    borderWidth: 1,
-    minHeight: 44,
-    justifyContent: "center",
-  },
-  pillText: {
-    fontSize: 13,
-    fontWeight: "600",
-  },
-  pillContent: {
+  tab: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 6,
+    gap: 4,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 18,
+    minHeight: 36,
+  },
+  emoji: {
+    fontSize: 16,
+  },
+  label: {
+    fontSize: 13,
+    fontWeight: "600",
   },
 });
