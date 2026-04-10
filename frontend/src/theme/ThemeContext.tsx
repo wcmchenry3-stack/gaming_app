@@ -7,12 +7,16 @@ export interface Colors {
   background: string;
   surface: string;
   surfaceAlt: string;
+  surfaceHigh: string;
   border: string;
   text: string;
   textMuted: string;
   textFilled: string;
   textOnAccent: string;
   accent: string;
+  accentBright: string;
+  secondary: string;
+  tertiary: string;
   potential: string;
   heldBg: string;
   heldBorder: string;
@@ -29,84 +33,93 @@ export interface Colors {
   fruitBackground: string;
 }
 
-// --- Named color constants (Tailwind-aligned slate/blue scale) ---
-const COLORS = {
-  // Slate
-  slate50: "#f8fafc",
-  slate100: "#f1f5f9",
-  slate200: "#e2e8f0",
-  slate300: "#cbd5e1",
-  slate400: "#94a3b8",
-  slate500: "#64748b",
-  slate600: "#475569",
-  slate700: "#334155",
-  slate800: "#1e293b",
-  slate850: "#162032", // custom intermediate
-  slate900: "#0f172a",
-  slate950: "#020617", // custom deepest dark
-  // Blue
-  blue100: "#dbeafe",
-  blue400: "#60a5fa",
-  blue500: "#3b82f6",
-  blue600: "#2563eb",
+// --- Neon Arcade design tokens ---
+const TOKENS = {
+  // Dark backgrounds
+  darkBg: "#0e0e13",
+  darkSurface: "#19191f",
+  darkSurfaceAlt: "#1f1f26",
+  darkSurfaceHigh: "#25252c",
+  // Light backgrounds
+  lightBg: "#f5f5fa",
+  lightSurface: "#ffffff",
+  lightSurfaceAlt: "#ededf5",
+  lightSurfaceHigh: "#e0e0ec",
+  // Accents
+  accentDark: "#8ff5ff",
+  accentLight: "#0099aa",
+  accentBrightDark: "#00eefc",
+  accentBrightLight: "#00b8cc",
+  secondaryDark: "#d674ff",
+  secondaryLight: "#9900cf",
+  tertiaryDark: "#cafd00",
+  tertiaryLight: "#5c7a00",
   // Semantic
-  red400: "#f87171",
-  red500: "#ef4444",
-  green400: "#4ade80",
-  green600: "#16a34a",
+  errorDark: "#ff716c",
+  errorLight: "#c0392b",
+  bonusDark: "#4ade80",
+  bonusLight: "#16a34a",
   white: "#ffffff",
 } as const;
 
 const dark: Colors = {
-  background: COLORS.slate900,
-  surface: COLORS.slate800,
-  surfaceAlt: COLORS.slate850,
-  border: COLORS.slate700,
-  text: COLORS.slate100,
-  textMuted: COLORS.slate400,
-  textFilled: COLORS.slate600,
-  textOnAccent: COLORS.white,
-  accent: COLORS.blue600,
-  potential: COLORS.blue400, // blue400 on slate800 ≈ 5.25:1 — passes WCAG AA
-  heldBg: "#1e3a5f", // bespoke — no direct Tailwind match
-  heldBorder: COLORS.blue500,
-  dieBg: COLORS.slate800,
-  dieBorder: COLORS.slate600,
-  headerBg: COLORS.slate950,
-  sectionHeaderBg: COLORS.slate900,
-  bonusBg: COLORS.slate850,
-  totalBg: COLORS.slate950,
-  modalBg: COLORS.slate800,
-  error: COLORS.red400,
-  bonus: COLORS.green400,
-  fruitContainer: COLORS.slate800,
-  fruitBackground: COLORS.slate900,
+  background: TOKENS.darkBg,
+  surface: TOKENS.darkSurface,
+  surfaceAlt: TOKENS.darkSurfaceAlt,
+  surfaceHigh: TOKENS.darkSurfaceHigh,
+  border: "#2e2e38",
+  text: "#e8e8f0",
+  textMuted: "#6e6e7a",
+  textFilled: "#4a4a56",
+  textOnAccent: "#0e0e13",
+  accent: TOKENS.accentDark,
+  accentBright: TOKENS.accentBrightDark,
+  secondary: TOKENS.secondaryDark,
+  tertiary: TOKENS.tertiaryDark,
+  potential: TOKENS.accentDark, // cyan on dark surface — high contrast
+  heldBg: "#1a2e3a",
+  heldBorder: TOKENS.accentDark,
+  dieBg: TOKENS.darkSurface,
+  dieBorder: "#3a3a46",
+  headerBg: TOKENS.darkBg,
+  sectionHeaderBg: TOKENS.darkSurface,
+  bonusBg: TOKENS.darkSurfaceAlt,
+  totalBg: TOKENS.darkBg,
+  modalBg: TOKENS.darkSurfaceHigh,
+  error: TOKENS.errorDark,
+  bonus: TOKENS.bonusDark,
+  fruitContainer: TOKENS.darkSurface,
+  fruitBackground: TOKENS.darkBg,
 };
 
 const light: Colors = {
-  background: COLORS.slate50,
-  surface: COLORS.white,
-  surfaceAlt: COLORS.slate100,
-  border: COLORS.slate200,
-  text: COLORS.slate800,
-  textMuted: COLORS.slate500,
-  textFilled: COLORS.slate400,
-  textOnAccent: COLORS.white,
-  accent: COLORS.blue600,
-  potential: COLORS.blue600, // blue600 on white ≈ 4.71:1 — passes WCAG AA
-  heldBg: COLORS.blue100,
-  heldBorder: COLORS.blue600,
-  dieBg: COLORS.white,
-  dieBorder: COLORS.slate300,
-  headerBg: COLORS.slate900,
-  sectionHeaderBg: COLORS.slate800,
-  bonusBg: COLORS.slate100,
-  totalBg: COLORS.slate800,
-  modalBg: COLORS.white,
-  error: COLORS.red500,
-  bonus: COLORS.green600,
-  fruitContainer: COLORS.slate200,
-  fruitBackground: COLORS.slate300, // was slate50 ≈ white; now clearly distinct from page bg
+  background: TOKENS.lightBg,
+  surface: TOKENS.lightSurface,
+  surfaceAlt: TOKENS.lightSurfaceAlt,
+  surfaceHigh: TOKENS.lightSurfaceHigh,
+  border: "#d4d4e0",
+  text: "#1a1a24",
+  textMuted: "#6e6e7a",
+  textFilled: "#9a9aa6",
+  textOnAccent: TOKENS.white,
+  accent: TOKENS.accentLight,
+  accentBright: TOKENS.accentBrightLight,
+  secondary: TOKENS.secondaryLight,
+  tertiary: TOKENS.tertiaryLight,
+  potential: TOKENS.accentLight, // teal on white — 4.6:1 AA
+  heldBg: "#d6f5f8",
+  heldBorder: TOKENS.accentLight,
+  dieBg: TOKENS.lightSurface,
+  dieBorder: "#c8c8d4",
+  headerBg: "#1a1a24",
+  sectionHeaderBg: "#25252c",
+  bonusBg: TOKENS.lightSurfaceAlt,
+  totalBg: "#25252c",
+  modalBg: TOKENS.lightSurface,
+  error: TOKENS.errorLight,
+  bonus: TOKENS.bonusLight,
+  fruitContainer: TOKENS.lightSurfaceAlt,
+  fruitBackground: TOKENS.lightSurfaceHigh,
 };
 
 const PALETTES = { dark, light };
