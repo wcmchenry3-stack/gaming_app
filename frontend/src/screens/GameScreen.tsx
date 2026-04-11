@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
-import { View, Text, StyleSheet, Modal, Pressable } from "react-native";
+import { View, Text, StyleSheet, Modal, Pressable, useWindowDimensions } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTranslation } from "react-i18next";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
@@ -28,6 +28,8 @@ export default function GameScreen({ navigation, route }: Props) {
   const { t } = useTranslation(["yacht", "common"]);
   const { colors, theme, toggle } = useTheme();
   const insets = useSafeAreaInsets();
+  const { width: viewportWidth } = useWindowDimensions();
+  const showHeaderTotal = viewportWidth >= 480;
   const [gameState, setGameState] = useState<GameState>(route.params.initialState);
   const [possibleScores, setPossibleScores] = useState<Record<string, number>>({});
   const [resetHeld, setResetHeld] = useState(false);
@@ -109,28 +111,62 @@ export default function GameScreen({ navigation, route }: Props) {
       ]}
     >
       {/* Header */}
-      <View style={[styles.header, { backgroundColor: colors.headerBg }]}>
-        <Pressable
-          onPress={() => navigation.goBack()}
-          style={styles.backBtn}
-          accessibilityRole="button"
-          accessibilityLabel={t("common:nav.backLabel")}
+      <View
+        style={[
+          styles.header,
+          { backgroundColor: colors.headerBg, borderBottomColor: colors.border },
+        ]}
+      >
+        <View style={styles.headerSide}>
+          <Pressable
+            onPress={() => navigation.goBack()}
+            style={styles.navBtn}
+            accessibilityRole="button"
+            accessibilityLabel={t("common:nav.backLabel")}
+          >
+            <Text style={[styles.navText, { color: colors.textMuted }]}>
+              {t("common:nav.back")}
+            </Text>
+          </Pressable>
+        </View>
+        <View
+          style={[
+            styles.roundPill,
+            { backgroundColor: colors.surfaceAlt, borderColor: colors.accent },
+          ]}
         >
-          <Text style={styles.backText}>{t("common:nav.back")}</Text>
-        </Pressable>
-        <Text style={styles.headerText}>{t("round.header", { round: gameState.round })}</Text>
-        <Pressable
-          onPress={toggle}
-          style={styles.themeToggle}
-          accessibilityRole="button"
-          accessibilityLabel={t("common:theme.switchTo", {
-            mode: theme === "dark" ? t("common:theme.light") : t("common:theme.dark"),
-          })}
-        >
-          <Text style={styles.themeToggleText}>
-            {theme === "dark" ? t("common:theme.light") : t("common:theme.dark")}
+          <Text style={[styles.roundPillText, { color: colors.accent }]}>
+            {t("round.header", { round: gameState.round })}
           </Text>
-        </Pressable>
+        </View>
+        <View style={[styles.headerSide, styles.headerSideRight]}>
+          {showHeaderTotal && (
+            <View
+              style={styles.totalBox}
+              accessibilityElementsHidden
+              importantForAccessibility="no"
+            >
+              <Text style={[styles.totalLabel, { color: colors.textMuted }]}>
+                {t("section.total")}
+              </Text>
+              <Text style={[styles.totalValue, { color: colors.accent }]}>
+                {gameState.total_score}
+              </Text>
+            </View>
+          )}
+          <Pressable
+            onPress={toggle}
+            style={styles.navBtn}
+            accessibilityRole="button"
+            accessibilityLabel={t("common:theme.switchTo", {
+              mode: theme === "dark" ? t("common:theme.light") : t("common:theme.dark"),
+            })}
+          >
+            <Text style={[styles.navText, { color: colors.textMuted }]}>
+              {theme === "dark" ? t("common:theme.light") : t("common:theme.dark")}
+            </Text>
+          </Pressable>
+        </View>
       </View>
       {error && (
         <Text
@@ -233,36 +269,54 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "center",
-    paddingVertical: 12,
-    paddingHorizontal: 16,
+    justifyContent: "space-between",
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    borderBottomWidth: 1,
   },
-  headerText: {
-    color: "#facc15",
-    fontSize: 16,
-    fontWeight: "700",
+  headerSide: {
     flex: 1,
-    textAlign: "center",
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
   },
-  backBtn: {
+  headerSideRight: {
+    justifyContent: "flex-end",
+  },
+  roundPill: {
+    paddingHorizontal: 14,
+    paddingVertical: 5,
+    borderRadius: 999,
+    borderWidth: 1,
+  },
+  roundPillText: {
+    fontSize: 13,
+    fontWeight: "800",
+    letterSpacing: 0.8,
+  },
+  navBtn: {
     paddingHorizontal: 10,
     paddingVertical: 4,
     minHeight: 44,
     justifyContent: "center",
   },
-  backText: {
-    color: "#94a3b8",
+  navText: {
     fontSize: 13,
+    fontWeight: "600",
   },
-  themeToggle: {
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    minHeight: 44,
-    justifyContent: "center",
+  totalBox: {
+    alignItems: "flex-end",
   },
-  themeToggleText: {
-    color: "#94a3b8",
-    fontSize: 13,
+  totalLabel: {
+    fontSize: 9,
+    fontWeight: "800",
+    letterSpacing: 1.2,
+    textTransform: "uppercase",
+  },
+  totalValue: {
+    fontSize: 16,
+    fontWeight: "800",
+    lineHeight: 18,
   },
   errorText: {
     textAlign: "center",
