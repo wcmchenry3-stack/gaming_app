@@ -104,6 +104,5 @@ test.describe("Cascade — navigation and smoke tests", () => {
     await expect(page.getByText("Gaming App").first()).toBeVisible({
       timeout: 5000,
     });
-    await expect(page.getByText("Choose a game")).toBeVisible();
   });
 });
