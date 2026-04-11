@@ -3,6 +3,7 @@ import { View, Text, StyleSheet } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTranslation } from "react-i18next";
 import { useTheme } from "../theme/ThemeContext";
+import { AppHeader, APP_HEADER_HEIGHT } from "../components/shared/AppHeader";
 
 export default function LeaderboardScreen() {
   const { colors } = useTheme();
@@ -11,12 +12,13 @@ export default function LeaderboardScreen() {
 
   return (
     <View
-      style={[styles.container, { backgroundColor: colors.background, paddingTop: insets.top }]}
+      style={[
+        styles.container,
+        { backgroundColor: colors.background, paddingTop: APP_HEADER_HEIGHT + insets.top },
+      ]}
     >
+      <AppHeader title={t("nav.ranks")} />
       <Text style={[styles.icon]}>🏆</Text>
-      <Text style={[styles.title, { color: colors.text }]}>
-        {t("screens.leaderboard", "Leaderboard")}
-      </Text>
       <Text style={[styles.subtitle, { color: colors.textMuted }]}>Coming Soon</Text>
     </View>
   );
@@ -25,6 +27,5 @@ export default function LeaderboardScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, alignItems: "center", justifyContent: "center", padding: 24 },
   icon: { fontSize: 48, marginBottom: 16 },
-  title: { fontSize: 24, fontWeight: "700", marginBottom: 8 },
   subtitle: { fontSize: 16 },
 });
