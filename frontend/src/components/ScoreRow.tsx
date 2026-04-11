@@ -37,8 +37,7 @@ export default function ScoreRow({
   const accessLabel = t("score.label", { category: label, state: stateText });
 
   const accentColor = tone === "upper" ? colors.accent : colors.secondary;
-  const glowColor =
-    tone === "upper" ? "rgba(143,245,255,0.45)" : "rgba(214,116,255,0.45)";
+  const glowColor = tone === "upper" ? "rgba(143,245,255,0.45)" : "rgba(214,116,255,0.45)";
 
   // neon text-shadow is only meaningful on web
   const glowStyle: TextStyle | null =
@@ -65,10 +64,7 @@ export default function ScoreRow({
       <View style={styles.labelBox}>
         <CategoryIcon category={category} tone={tone} muted={!isFilled} />
         <Text
-          style={[
-            styles.label,
-            { color: isFilled ? colors.text : colors.textMuted },
-          ]}
+          style={[styles.label, { color: isFilled ? colors.text : colors.textMuted }]}
           numberOfLines={1}
         >
           {label}

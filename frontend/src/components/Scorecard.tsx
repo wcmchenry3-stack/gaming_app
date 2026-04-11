@@ -76,13 +76,11 @@ export default function Scorecard({
       ]}
     >
       <View style={styles.bentoHeader}>
-        <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>
-          {t("section.upper")}
-        </Text>
-        <View style={[styles.badge, { backgroundColor: colors.surface, borderColor: colors.accent }]}>
-          <Text style={[styles.badgeText, { color: colors.accent }]}>
-            {t("bonus.badge")}
-          </Text>
+        <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>{t("section.upper")}</Text>
+        <View
+          style={[styles.badge, { backgroundColor: colors.surface, borderColor: colors.accent }]}
+        >
+          <Text style={[styles.badgeText, { color: colors.accent }]}>{t("bonus.badge")}</Text>
         </View>
       </View>
       {UPPER_CATEGORY_KEYS.map((key) => (
@@ -100,10 +98,7 @@ export default function Scorecard({
       <View style={[styles.bonusRow, { borderTopColor: colors.border }]}>
         <Text style={[styles.bonusLabel, { color: colors.textMuted }]}>{t("bonus.label")}</Text>
         <Text
-          style={[
-            styles.bonusValue,
-            { color: upperBonus > 0 ? colors.bonus : colors.textMuted },
-          ]}
+          style={[styles.bonusValue, { color: upperBonus > 0 ? colors.bonus : colors.textMuted }]}
         >
           {upperBonus > 0
             ? t("bonus.achieved", { subtotal: upperSubtotal })
@@ -125,9 +120,7 @@ export default function Scorecard({
       ]}
     >
       <View style={styles.bentoHeader}>
-        <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>
-          {t("section.lower")}
-        </Text>
+        <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>{t("section.lower")}</Text>
       </View>
       {LOWER_CATEGORY_KEYS.map((key) => (
         <ScoreRow
@@ -166,9 +159,7 @@ export default function Scorecard({
           { backgroundColor: colors.surfaceHigh, borderColor: colors.accent },
         ]}
       >
-        <Text style={[styles.totalLabel, { color: colors.textMuted }]}>
-          {t("section.total")}
-        </Text>
+        <Text style={[styles.totalLabel, { color: colors.textMuted }]}>{t("section.total")}</Text>
         <Text style={[styles.totalValue, { color: colors.accent }]}>{totalScore}</Text>
       </View>
     </ScrollView>
