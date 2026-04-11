@@ -62,18 +62,28 @@ export default function BlackjackBettingScreen({ navigation }: Props) {
 
       {/*
        * GH #226 — Table is always rendered so the felt is visible between hands.
+       * Faded (opacity 0.4) during betting to emphasise the betting controls.
        */}
       {state && (
-        <View style={styles.tableArea}>
-          <BlackjackTable
-            playerHand={state.player_hand}
-            dealerHand={state.dealer_hand}
-            phase={state.phase}
-            playerHands={state.player_hands}
-            activeHandIndex={state.active_hand_index}
-            handBets={state.hand_bets}
-            handOutcomes={state.hand_outcomes}
-          />
+        <View style={styles.dealerArea}>
+          <View style={styles.tableWrapper}>
+            <BlackjackTable
+              playerHand={state.player_hand}
+              dealerHand={state.dealer_hand}
+              phase={state.phase}
+              playerHands={state.player_hands}
+              activeHandIndex={state.active_hand_index}
+              handBets={state.hand_bets}
+              handOutcomes={state.hand_outcomes}
+            />
+          </View>
+          <Text style={[styles.dealerRule, { color: colors.textMuted }]}>
+            {t(
+              `blackjack:rules.${state.rules.hit_soft_17 ? "h17Label" : "s17Label"}` as Parameters<
+                typeof t
+              >[0]
+            )}
+          </Text>
         </View>
       )}
 
@@ -110,16 +120,29 @@ const styles = StyleSheet.create({
     marginTop: 4,
     marginBottom: 4,
   },
-  tableArea: {
+  dealerArea: {
     flex: 1,
     alignItems: "center",
-    justifyContent: "center",
+    justifyContent: "flex-end",
     paddingHorizontal: 16,
+    paddingBottom: 8,
+    gap: 6,
+  },
+  tableWrapper: {
+    opacity: 0.4,
+    width: "100%",
+    alignItems: "center",
+  },
+  dealerRule: {
+    fontSize: 12,
+    textTransform: "uppercase",
+    letterSpacing: 0.8,
+    fontWeight: "500",
   },
   controls: {
     alignItems: "center",
     paddingHorizontal: 16,
-    paddingBottom: 32,
-    gap: 16,
+    paddingBottom: 24,
+    gap: 0,
   },
 });

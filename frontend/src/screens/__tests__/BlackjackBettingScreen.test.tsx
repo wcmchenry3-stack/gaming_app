@@ -101,9 +101,13 @@ describe("BlackjackBettingScreen — phase redirect", () => {
   it("calls navigation.replace('BlackjackTable') after Deal transitions phase", async () => {
     const nav = mockNav();
     renderScreen(nav);
-    const dealBtn = await screen.findByText("Deal");
+    await screen.findByText("Deal");
+    // Place a chip first so Deal becomes enabled
     await act(async () => {
-      fireEvent.press(dealBtn);
+      fireEvent.press(screen.getByLabelText(/add 100 to bet/i));
+    });
+    await act(async () => {
+      fireEvent.press(screen.getByLabelText(/deal cards with 100-chip bet/i));
     });
     await waitFor(() => {
       expect(nav.replace).toHaveBeenCalledWith("BlackjackTable");
@@ -116,10 +120,10 @@ describe("BlackjackBettingScreen — phase redirect", () => {
 // ---------------------------------------------------------------------------
 
 describe("BlackjackBettingScreen — chip balance visibility (GH #227)", () => {
-  it("chip balance is visible in BettingPanel during betting phase", async () => {
+  it("bankroll is visible in header during betting phase", async () => {
     renderScreen();
     await screen.findByText("Deal");
-    expect(screen.getByLabelText(/you have 1000 chips/i)).toBeTruthy();
+    expect(screen.getByLabelText(/bankroll: 1000 chips/i)).toBeTruthy();
   });
 });
 

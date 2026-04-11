@@ -23,7 +23,7 @@ import {
 test.describe("Blackjack — error paths and guardrails", () => {
   test.beforeEach(async ({ page }) => {
     await page.goto("/");
-    await page.evaluate(() => localStorage.removeItem("blackjack_game_v1"));
+    await page.evaluate(() => localStorage.removeItem("blackjack_game_v2"));
     await page.goto("/");
   });
 
@@ -146,7 +146,9 @@ test.describe("Blackjack — error paths and guardrails", () => {
     await expect(
       page.getByRole("button", { name: /deal cards with/i }),
     ).toBeVisible({ timeout: 5000 });
-    await expect(page.getByText("1000 chips")).toBeVisible();
+    await expect(
+      page.locator('[aria-label*="Bankroll: 1000 chips"]'),
+    ).toBeVisible();
   });
 
   test("Home button in game-over modal navigates to HomeScreen", async ({
@@ -172,7 +174,7 @@ test.describe("Blackjack — error paths and guardrails", () => {
   test("corrupted localStorage state starts a fresh game", async ({ page }) => {
     await page.goto("/");
     await page.evaluate(() =>
-      localStorage.setItem("blackjack_game_v1", "not-valid-json{{{"),
+      localStorage.setItem("blackjack_game_v2", "not-valid-json{{{"),
     );
     await page.goto("/");
     await page.getByRole("button", { name: "Play Blackjack" }).click();
@@ -181,7 +183,9 @@ test.describe("Blackjack — error paths and guardrails", () => {
     await expect(
       page.getByRole("button", { name: /deal cards with/i }),
     ).toBeVisible({ timeout: 5000 });
-    await expect(page.getByText("1000 chips")).toBeVisible();
+    await expect(
+      page.locator('[aria-label*="Bankroll: 1000 chips"]'),
+    ).toBeVisible();
   });
 
   test("shape-drift localStorage state (missing fields) falls back to fresh game", async ({
@@ -190,7 +194,7 @@ test.describe("Blackjack — error paths and guardrails", () => {
     await page.goto("/");
     await page.evaluate(() =>
       localStorage.setItem(
-        "blackjack_game_v1",
+        "blackjack_game_v2",
         JSON.stringify({ chips: "not-a-number", foo: "bar" }),
       ),
     );
