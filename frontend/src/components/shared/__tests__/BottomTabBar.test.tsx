@@ -1,5 +1,6 @@
 import React from "react";
 import { render, screen, fireEvent } from "@testing-library/react-native";
+import type { BottomTabBarProps } from "@react-navigation/bottom-tabs";
 import BottomTabBar from "../BottomTabBar";
 
 jest.mock("expo-blur", () => ({
@@ -43,17 +44,17 @@ jest.mock("react-i18next", () => ({
 
 jest.mock("@expo/vector-icons/MaterialIcons", () => "MockMaterialIcons");
 
-function buildProps(activeIndex = 0) {
+function buildProps(activeIndex = 0): BottomTabBarProps {
   const routes = [
     { key: "lobby", name: "Lobby" },
     { key: "ranks", name: "Ranks" },
     { key: "profile", name: "Profile" },
     { key: "settings", name: "Settings" },
-  ];
+  ] as BottomTabBarProps["state"]["routes"];
   return {
-    state: { routes, index: activeIndex } as any,
-    navigation: { navigate: jest.fn() } as any,
-    descriptors: {} as any,
+    state: { routes, index: activeIndex } as BottomTabBarProps["state"],
+    navigation: { navigate: jest.fn() } as unknown as BottomTabBarProps["navigation"],
+    descriptors: {} as BottomTabBarProps["descriptors"],
     insets: { top: 0, bottom: 0, left: 0, right: 0 },
   };
 }
