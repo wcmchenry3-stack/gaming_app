@@ -2,11 +2,15 @@ import React, { useState } from "react";
 import { View, Text, Pressable, StyleSheet } from "react-native";
 import { useTranslation } from "react-i18next";
 import { useTheme } from "../../theme/ThemeContext";
+import { typography } from "../../theme/typography";
 import { GameRules } from "../../game/blackjack/types";
+import BettingCircle from "./BettingCircle";
+import ChipButton from "./ChipButton";
 
-const MIN_BET = 10;
+const MIN_BET = 5;
 const MAX_BET = 500;
-const STEP = 10;
+
+const CHIP_DENOMINATIONS = [5, 25, 100, 500] as const;
 
 interface Props {
   chips: number;
@@ -28,71 +32,93 @@ export default function BettingPanel({
   const { t } = useTranslation("blackjack");
   const { colors } = useTheme();
   const maxBet = Math.min(MAX_BET, chips);
-  const [bet, setBet] = useState<number>(Math.min(100, maxBet));
+  const [bet, setBet] = useState<number>(0);
   const [rulesOpen, setRulesOpen] = useState(false);
 
-  function decrease() {
-    setBet((b) => Math.max(MIN_BET, b - STEP));
+  function addChip(denomination: number) {
+    setBet((b) => Math.min(maxBet, b + denomination));
   }
 
-  function increase() {
-    setBet((b) => Math.min(maxBet, b + STEP));
+  function clearBet() {
+    setBet(0);
   }
 
   const canDeal = bet >= MIN_BET && bet <= maxBet && !loading;
 
+  const chipColors = [colors.accent, colors.secondary, colors.tertiary, colors.secondary] as const;
+  const chipTextColors = [
+    colors.textOnAccent,
+    colors.textOnAccent,
+    colors.textOnAccent,
+    colors.textOnAccent,
+  ] as const;
+
   return (
     <View style={styles.container}>
-      <Text
-        style={[styles.chips, { color: colors.text }]}
-        accessibilityLabel={t("chips.accessibilityLabel", { chips })}
-      >
-        {t("chips.display", { chips })}
-      </Text>
+      {/* Betting circle */}
+      <BettingCircle bet={bet} />
 
-      <Text style={[styles.betLabel, { color: colors.textMuted }]}>{t("bet.label")}</Text>
-
-      <View style={styles.stepper}>
-        <Pressable
-          style={[styles.stepBtn, { backgroundColor: colors.surface, borderColor: colors.border }]}
-          onPress={decrease}
-          disabled={bet <= MIN_BET || loading}
-          accessibilityRole="button"
-          accessibilityLabel={t("bet.decreaseLabel")}
-          accessibilityState={{ disabled: bet <= MIN_BET || loading }}
-        >
-          <Text style={[styles.stepBtnText, { color: colors.text }]}>−</Text>
-        </Pressable>
-
-        <Text
-          style={[styles.betAmount, { color: colors.text }]}
-          accessibilityLabel={t("bet.accessibilityLabel", { amount: bet })}
-        >
-          {t("chips.display", { chips: bet })}
-        </Text>
-
-        <Pressable
-          style={[styles.stepBtn, { backgroundColor: colors.surface, borderColor: colors.border }]}
-          onPress={increase}
-          disabled={bet >= maxBet || loading}
-          accessibilityRole="button"
-          accessibilityLabel={t("bet.increaseLabel")}
-          accessibilityState={{ disabled: bet >= maxBet || loading }}
-        >
-          <Text style={[styles.stepBtnText, { color: colors.text }]}>+</Text>
-        </Pressable>
+      {/* Chip denomination row */}
+      <View style={styles.chipRow}>
+        {CHIP_DENOMINATIONS.map((denom, i) => (
+          <ChipButton
+            key={denom}
+            amount={denom}
+            onPress={() => addChip(denom)}
+            disabled={bet + denom > maxBet || loading}
+            chipColor={chipColors[i]}
+            textColor={chipTextColors[i]}
+            sublabel={denom === 500 ? t("chip.vipCredits") : undefined}
+          />
+        ))}
       </View>
 
-      <Pressable
-        style={[styles.dealBtn, { backgroundColor: canDeal ? colors.accent : colors.border }]}
-        onPress={() => onDeal(bet)}
-        disabled={!canDeal}
-        accessibilityRole="button"
-        accessibilityLabel={t("actions.dealLabel", { amount: bet })}
-        accessibilityState={{ disabled: !canDeal, busy: loading }}
-      >
-        <Text style={[styles.dealBtnText, { color: colors.surface }]}>{t("actions.deal")}</Text>
-      </Pressable>
+      {/* Table limits */}
+      <Text style={[styles.limits, { color: colors.textMuted, fontFamily: typography.label }]}>
+        {t("betting.tableLimits")}: {t("betting.tableLimitsRange", { min: MIN_BET, max: MAX_BET })}
+      </Text>
+
+      {/* Action buttons */}
+      <View style={styles.actions}>
+        <Pressable
+          style={[
+            styles.clearBtn,
+            { borderColor: colors.error, opacity: bet === 0 || loading ? 0.4 : 1 },
+          ]}
+          onPress={clearBet}
+          disabled={bet === 0 || loading}
+          accessibilityRole="button"
+          accessibilityLabel={t("betting.clearBetLabel")}
+          accessibilityState={{ disabled: bet === 0 || loading }}
+        >
+          <Text
+            style={[styles.clearBtnText, { color: colors.error, fontFamily: typography.label }]}
+          >
+            {t("betting.clearBet")}
+          </Text>
+        </Pressable>
+
+        <Pressable
+          style={[styles.dealBtn, { backgroundColor: canDeal ? colors.accent : colors.border }]}
+          onPress={() => onDeal(bet)}
+          disabled={!canDeal}
+          accessibilityRole="button"
+          accessibilityLabel={t("actions.dealLabel", { amount: bet })}
+          accessibilityState={{ disabled: !canDeal, busy: loading }}
+        >
+          <Text
+            style={[
+              styles.dealBtnText,
+              {
+                color: canDeal ? colors.textOnAccent : colors.textMuted,
+                fontFamily: typography.label,
+              },
+            ]}
+          >
+            {t("actions.deal")}
+          </Text>
+        </Pressable>
+      </View>
 
       {/* Collapsible Table Rules */}
       <Pressable
@@ -129,7 +155,7 @@ export default function BettingPanel({
                 <Text
                   style={[
                     styles.ruleOptionText,
-                    { color: !rules.hit_soft_17 ? colors.surface : colors.text },
+                    { color: !rules.hit_soft_17 ? colors.textOnAccent : colors.text },
                   ]}
                 >
                   {t("rules.s17")}
@@ -150,7 +176,7 @@ export default function BettingPanel({
                 <Text
                   style={[
                     styles.ruleOptionText,
-                    { color: rules.hit_soft_17 ? colors.surface : colors.text },
+                    { color: rules.hit_soft_17 ? colors.textOnAccent : colors.text },
                   ]}
                 >
                   {t("rules.h17")}
@@ -241,7 +267,7 @@ export default function BettingPanel({
         </View>
       )}
 
-      {error && <Text style={[styles.error, { color: colors.error }]}>{error}</Text>}
+      {error ? <Text style={[styles.error, { color: colors.error }]}>{error}</Text> : null}
     </View>
   );
 }
@@ -251,52 +277,46 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 16,
     width: "100%",
+    maxWidth: 360,
+  },
+  chipRow: {
+    flexDirection: "row",
+    justifyContent: "center",
+    gap: 12,
+  },
+  limits: {
+    fontSize: 11,
+    textTransform: "uppercase",
+    letterSpacing: 0.6,
+  },
+  actions: {
+    flexDirection: "row",
+    gap: 12,
+    width: "100%",
     maxWidth: 320,
   },
-  chips: {
-    fontSize: 24,
-    fontWeight: "700",
-  },
-  betLabel: {
-    fontSize: 13,
-    fontWeight: "600",
-    textTransform: "uppercase",
-    letterSpacing: 0.5,
-  },
-  stepper: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 16,
-  },
-  stepBtn: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+  clearBtn: {
+    flex: 1,
+    paddingVertical: 14,
+    borderRadius: 12,
     borderWidth: 1,
+    minHeight: 48,
     alignItems: "center",
     justifyContent: "center",
   },
-  stepBtnText: {
-    fontSize: 22,
-    lineHeight: 26,
-    fontWeight: "600",
-  },
-  betAmount: {
-    fontSize: 20,
-    fontWeight: "700",
-    minWidth: 100,
-    textAlign: "center",
+  clearBtnText: {
+    fontSize: 15,
   },
   dealBtn: {
-    paddingHorizontal: 48,
+    flex: 2,
     paddingVertical: 14,
     borderRadius: 12,
     minHeight: 48,
+    alignItems: "center",
     justifyContent: "center",
   },
   dealBtnText: {
     fontSize: 17,
-    fontWeight: "700",
   },
   error: {
     fontSize: 13,
@@ -342,6 +362,11 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: "600",
   },
+  stepper: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+  },
   ruleStepBtn: {
     width: 32,
     height: 32,
@@ -349,6 +374,11 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     alignItems: "center",
     justifyContent: "center",
+  },
+  stepBtnText: {
+    fontSize: 18,
+    lineHeight: 22,
+    fontWeight: "600",
   },
   ruleValue: {
     fontSize: 15,

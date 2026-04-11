@@ -26,20 +26,22 @@ function renderPanel(
 }
 
 describe("BettingPanel", () => {
-  it("renders chip count", () => {
-    const { getByText } = renderPanel({ chips: 500 });
-    expect(getByText("500 chips")).toBeTruthy();
-  });
-
   it("renders Deal button", () => {
     const { getByText } = renderPanel();
     expect(getByText("Deal")).toBeTruthy();
   });
 
-  it("calls onDeal with current bet amount when Deal pressed", () => {
-    const { getByText, onDeal } = renderPanel({ chips: 1000 });
+  it("Deal button is disabled when bet is 0", () => {
+    const { getByLabelText } = renderPanel({ chips: 1000 });
+    const dealBtn = getByLabelText(/deal cards with 0-chip bet/i);
+    expect(dealBtn.props.accessibilityState.disabled).toBe(true);
+  });
+
+  it("calls onDeal with bet amount after placing a chip", () => {
+    const { getByLabelText, getByText, onDeal } = renderPanel({ chips: 1000 });
+    fireEvent.press(getByLabelText(/add 100 to bet/i));
     fireEvent.press(getByText("Deal"));
-    expect(onDeal).toHaveBeenCalledWith(expect.any(Number));
+    expect(onDeal).toHaveBeenCalledWith(100);
   });
 
   it("does not call onDeal when loading", () => {
@@ -53,15 +55,37 @@ describe("BettingPanel", () => {
     expect(getByText("Something went wrong")).toBeTruthy();
   });
 
-  it("renders decrease and increase buttons", () => {
+  it("renders chip denomination buttons", () => {
     const { getByLabelText } = renderPanel();
-    expect(getByLabelText("Decrease bet by 10")).toBeTruthy();
-    expect(getByLabelText("Increase bet by 10")).toBeTruthy();
+    expect(getByLabelText(/add 5 to bet/i)).toBeTruthy();
+    expect(getByLabelText(/add 25 to bet/i)).toBeTruthy();
+    expect(getByLabelText(/add 100 to bet/i)).toBeTruthy();
+    expect(getByLabelText(/add 500 to bet/i)).toBeTruthy();
   });
 
-  it("increase button updates displayed bet", () => {
-    const { getByLabelText, getByText } = renderPanel({ chips: 1000 });
-    fireEvent.press(getByLabelText("Increase bet by 10"));
-    expect(getByText("110 chips")).toBeTruthy();
+  it("chip click adds denomination to displayed bet", () => {
+    const { getByLabelText } = renderPanel({ chips: 1000 });
+    fireEvent.press(getByLabelText(/add 100 to bet/i));
+    expect(getByLabelText(/deal cards with 100-chip bet/i)).toBeTruthy();
+  });
+
+  it("multiple chip clicks accumulate", () => {
+    const { getByLabelText } = renderPanel({ chips: 1000 });
+    fireEvent.press(getByLabelText(/add 100 to bet/i));
+    fireEvent.press(getByLabelText(/add 25 to bet/i));
+    expect(getByLabelText(/deal cards with 125-chip bet/i)).toBeTruthy();
+  });
+
+  it("Clear Bet button resets bet to 0", () => {
+    const { getByLabelText } = renderPanel({ chips: 1000 });
+    fireEvent.press(getByLabelText(/add 100 to bet/i));
+    fireEvent.press(getByLabelText(/clear bet/i));
+    expect(getByLabelText(/deal cards with 0-chip bet/i)).toBeTruthy();
+  });
+
+  it("500 chip is disabled when chips < 500", () => {
+    const { getByLabelText } = renderPanel({ chips: 200 });
+    const btn = getByLabelText(/500.*not available/i);
+    expect(btn.props.accessibilityState.disabled).toBe(true);
   });
 });

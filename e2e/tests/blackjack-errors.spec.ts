@@ -23,7 +23,7 @@ import {
 test.describe("Blackjack — error paths and guardrails", () => {
   test.beforeEach(async ({ page }) => {
     await page.goto("/");
-    await page.evaluate(() => localStorage.removeItem("blackjack_game_v1"));
+    await page.evaluate(() => localStorage.removeItem("blackjack_game_v2"));
     await page.goto("/");
   });
 
@@ -74,39 +74,35 @@ test.describe("Blackjack — error paths and guardrails", () => {
   // Bet stepper boundaries
   // ---------------------------------------------------------------------------
 
-  test("decrease button cannot go below 10-chip minimum", async ({ page }) => {
+  test("chip buttons are disabled when bet would exceed max (500)", async ({
+    page,
+  }) => {
     await gotoBlackjack(page);
 
-    // Mash decrease 20 times — should clamp at 10
-    for (let i = 0; i < 20; i++) {
-      const btn = page.getByRole("button", { name: /decrease bet by 10/i });
-      const disabled = await btn.isDisabled();
-      if (disabled) break;
-      await btn.click();
-    }
+    // Place 500-chip — all chip buttons become disabled
+    await page.getByRole("button", { name: /add 500 to bet/i }).click();
 
-    // Verify bet is 10 and decrease is disabled
     await expect(
-      page.getByRole("button", { name: /deal cards with 10-chip bet/i }),
+      page.getByRole("button", { name: /deal cards with 500-chip bet/i }),
     ).toBeVisible();
     await expect(
-      page.getByRole("button", { name: /decrease bet by 10/i }),
+      page.getByRole("button", { name: "5-chip not available", exact: true }),
     ).toBeDisabled();
   });
 
-  test("increase button cannot exceed 500-chip maximum", async ({ page }) => {
+  test("500-chip button is disabled when chips cap is lower than 500", async ({
+    page,
+  }) => {
     await gotoBlackjack(page);
 
-    // Mash increase 60 times — should clamp at 500
-    for (let i = 0; i < 60; i++) {
-      const btn = page.getByRole("button", { name: /increase bet by 10/i });
-      const disabled = await btn.isDisabled();
-      if (disabled) break;
-      await btn.click();
+    // Place 400 chips (four 100s); now only 5 and 25 would still fit,
+    // but 500 is definitely disabled
+    for (let i = 0; i < 4; i++) {
+      await page.getByRole("button", { name: /add 100 to bet/i }).click();
     }
 
     await expect(
-      page.getByRole("button", { name: /increase bet by 10/i }),
+      page.getByRole("button", { name: "500-chip not available", exact: true }),
     ).toBeDisabled();
   });
 
@@ -146,7 +142,9 @@ test.describe("Blackjack — error paths and guardrails", () => {
     await expect(
       page.getByRole("button", { name: /deal cards with/i }),
     ).toBeVisible({ timeout: 5000 });
-    await expect(page.getByText("1000 chips")).toBeVisible();
+    await expect(
+      page.locator('[aria-label*="Bankroll: 1000 chips"]'),
+    ).toBeVisible();
   });
 
   test("Home button in game-over modal navigates to HomeScreen", async ({
@@ -172,7 +170,7 @@ test.describe("Blackjack — error paths and guardrails", () => {
   test("corrupted localStorage state starts a fresh game", async ({ page }) => {
     await page.goto("/");
     await page.evaluate(() =>
-      localStorage.setItem("blackjack_game_v1", "not-valid-json{{{"),
+      localStorage.setItem("blackjack_game_v2", "not-valid-json{{{"),
     );
     await page.goto("/");
     await page.getByRole("button", { name: "Play Blackjack" }).click();
@@ -181,7 +179,9 @@ test.describe("Blackjack — error paths and guardrails", () => {
     await expect(
       page.getByRole("button", { name: /deal cards with/i }),
     ).toBeVisible({ timeout: 5000 });
-    await expect(page.getByText("1000 chips")).toBeVisible();
+    await expect(
+      page.locator('[aria-label*="Bankroll: 1000 chips"]'),
+    ).toBeVisible();
   });
 
   test("shape-drift localStorage state (missing fields) falls back to fresh game", async ({
@@ -190,7 +190,7 @@ test.describe("Blackjack — error paths and guardrails", () => {
     await page.goto("/");
     await page.evaluate(() =>
       localStorage.setItem(
-        "blackjack_game_v1",
+        "blackjack_game_v2",
         JSON.stringify({ chips: "not-a-number", foo: "bar" }),
       ),
     );

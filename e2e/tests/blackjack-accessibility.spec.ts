@@ -22,7 +22,7 @@ import {
 test.describe("Blackjack — accessibility", () => {
   test.beforeEach(async ({ page }) => {
     await page.goto("/");
-    await page.evaluate(() => localStorage.removeItem("blackjack_game_v1"));
+    await page.evaluate(() => localStorage.removeItem("blackjack_game_v2"));
     await page.goto("/");
   });
 
@@ -45,31 +45,35 @@ test.describe("Blackjack — accessibility", () => {
   // Betting phase
   // ---------------------------------------------------------------------------
 
-  test("chip balance has accessible label in betting phase", async ({
+  test("bankroll has accessible label in betting phase", async ({ page }) => {
+    await gotoBlackjack(page);
+    await expect(
+      page.locator('[aria-label*="Bankroll: 1000 chips"]'),
+    ).toBeVisible();
+  });
+
+  test("chip buttons have accessible labels in betting phase", async ({
     page,
   }) => {
     await gotoBlackjack(page);
     await expect(
-      page
-        .getByRole("text", { name: /you have 1000 chips/i })
-        .or(page.locator('[aria-label*="You have 1000 chips"]')),
+      page.getByRole("button", { name: /add 5 to bet/i }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole("button", { name: /add 25 to bet/i }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole("button", { name: /add 100 to bet/i }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole("button", { name: /add 500 to bet/i }),
     ).toBeVisible();
   });
 
-  test("bet stepper controls have accessible labels", async ({ page }) => {
+  test("current bet circle has accessible label", async ({ page }) => {
     await gotoBlackjack(page);
     await expect(
-      page.getByRole("button", { name: /decrease bet by 10/i }),
-    ).toBeVisible();
-    await expect(
-      page.getByRole("button", { name: /increase bet by 10/i }),
-    ).toBeVisible();
-  });
-
-  test("current bet amount has accessible label", async ({ page }) => {
-    await gotoBlackjack(page);
-    await expect(
-      page.locator('[aria-label*="Current bet: 100 chips"]'),
+      page.locator('[aria-label*="Current bet: 0 chips"]'),
     ).toBeVisible();
   });
 
@@ -77,6 +81,7 @@ test.describe("Blackjack — accessibility", () => {
     page,
   }) => {
     await gotoBlackjack(page);
+    await page.getByRole("button", { name: /add 100 to bet/i }).click();
     await expect(
       page.getByRole("button", { name: /deal cards with 100-chip bet/i }),
     ).toBeVisible();
