@@ -23,6 +23,7 @@ export default function SettingsScreen() {
         <Pressable
           onPress={toggle}
           style={[styles.toggle, { backgroundColor: colors.surfaceAlt }]}
+          testID="theme-toggle-button"
           accessibilityRole="button"
           accessibilityLabel={t("theme.switchTo", {
             mode: theme === "dark" ? t("theme.light") : t("theme.dark"),
