@@ -225,9 +225,21 @@ describe("phase machine", () => {
 // --- Bet validation -------------------------------------------------------
 
 describe("bet validation", () => {
-  it("below minimum throws", () => expect(() => placeBet(newGame(), 5)).toThrow());
+  it("below minimum (4) throws", () => expect(() => placeBet(newGame(), 4)).toThrow());
+  it("zero throws", () => expect(() => placeBet(newGame(), 0)).toThrow());
   it("above maximum throws", () => expect(() => placeBet(newGame(), 510)).toThrow());
-  it("not multiple of 10 throws", () => expect(() => placeBet(newGame(), 15)).toThrow());
+  it("minimum bet of 5 accepted", () => {
+    const g = placeBet(newGame(), 5);
+    expect(["player", "result"]).toContain(g.phase);
+  });
+  it("non-multiple of 10 (15) accepted", () => {
+    const g = placeBet(newGame(), 15);
+    expect(["player", "result"]).toContain(g.phase);
+  });
+  it("non-multiple of 10 (30) accepted", () => {
+    const g = placeBet(newGame(), 30);
+    expect(["player", "result"]).toContain(g.phase);
+  });
   it("exceeds chips throws", () =>
     expect(() => placeBet({ ...newGame(), chips: 50 }, 100)).toThrow(/Insufficient chips/));
   it("exact chips accepted", () => {
