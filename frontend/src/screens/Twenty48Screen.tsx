@@ -18,6 +18,7 @@ import {
 import Grid from "../components/twenty48/Grid";
 import ScoreBoard from "../components/twenty48/ScoreBoard";
 import GameOverlay from "../components/twenty48/GameOverlay";
+import StatsBento from "../components/twenty48/StatsBento";
 
 const SWIPE_THRESHOLD = 30;
 /** How long (ms) to hold the move lock — matches slide animation duration. */
@@ -52,7 +53,11 @@ export default function Twenty48Screen({ navigation }: Props) {
     let active = true;
     Promise.all([loadGame(), loadBestScore()]).then(([saved, best]) => {
       if (!active) return;
-      const next = saved ?? newGame();
+      let next = saved ?? newGame();
+      // Resume timer when reloading a mid-game state.
+      if (!next.game_over && next.startedAt !== null) {
+        next = { ...next, startedAt: Date.now() };
+      }
       setState(next);
       if (!saved) saveGame(next);
       setBestScore(best);
@@ -275,6 +280,9 @@ export default function Twenty48Screen({ navigation }: Props) {
           {state && <Grid tiles={state.tiles} />}
         </View>
       </GestureDetector>
+
+      {/* Stats bento — Highest Tile + Time Played */}
+      {state && <StatsBento state={state} />}
 
       {/* Overlays */}
       {showWinOverlay && (

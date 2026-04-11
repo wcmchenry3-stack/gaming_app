@@ -19,5 +19,7 @@
   "gameOver.home": "主页",
   "win.title": "你赢了！",
   "win.body": "你达到了2048！你可以继续游戏以获得更高分数。",
-  "controls.keyboardHint": "或使用方向键"
+  "controls.keyboardHint": "或使用方向键",
+  "stats.highestTile": "Highest Tile",
+  "stats.timePlayed": "Time Played"
 }

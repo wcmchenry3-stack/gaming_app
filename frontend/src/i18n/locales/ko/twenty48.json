@@ -19,5 +19,7 @@
   "gameOver.home": "홈",
   "win.title": "승리!",
   "win.body": "2048에 도달했습니다! 더 높은 점수를 위해 계속 플레이할 수 있습니다.",
-  "controls.keyboardHint": "또는 방향키 사용"
+  "controls.keyboardHint": "또는 방향키 사용",
+  "stats.highestTile": "Highest Tile",
+  "stats.timePlayed": "Time Played"
 }

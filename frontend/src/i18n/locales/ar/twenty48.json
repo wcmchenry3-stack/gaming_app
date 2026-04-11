@@ -19,5 +19,7 @@
   "gameOver.home": "الرئيسية",
   "win.title": "فزت!",
   "win.body": "وصلت إلى 2048! يمكنك الاستمرار للحصول على نتيجة أعلى.",
-  "controls.keyboardHint": "أو استخدم مفاتيح الأسهم"
+  "controls.keyboardHint": "أو استخدم مفاتيح الأسهم",
+  "stats.highestTile": "Highest Tile",
+  "stats.timePlayed": "Time Played"
 }

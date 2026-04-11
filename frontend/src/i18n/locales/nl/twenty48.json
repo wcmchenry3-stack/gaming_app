@@ -19,5 +19,7 @@
   "gameOver.home": "Start",
   "win.title": "Gewonnen!",
   "win.body": "Je hebt 2048 bereikt! Je kunt doorspelen voor een hogere score.",
-  "controls.keyboardHint": "Of gebruik de pijltoetsen"
+  "controls.keyboardHint": "Of gebruik de pijltoetsen",
+  "stats.highestTile": "Highest Tile",
+  "stats.timePlayed": "Time Played"
 }

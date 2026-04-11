@@ -19,5 +19,7 @@
   "gameOver.home": "ホーム",
   "win.title": "勝利！",
   "win.body": "2048に到達しました！さらに高いスコアを目指して続けられます。",
-  "controls.keyboardHint": "または矢印キーを使用"
+  "controls.keyboardHint": "または矢印キーを使用",
+  "stats.highestTile": "Highest Tile",
+  "stats.timePlayed": "Time Played"
 }
