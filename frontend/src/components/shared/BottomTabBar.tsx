@@ -98,15 +98,8 @@ export default function BottomTabBar({ state, navigation }: BottomTabBarProps) {
                 </LinearGradient>
               ) : (
                 <View style={styles.inactivePill}>
-                  <MaterialIcons
-                    name={config.icon}
-                    size={20}
-                    color={colors.text}
-                    style={styles.inactiveIcon}
-                  />
-                  <Text style={[styles.label, styles.inactiveLabel, { color: colors.text }]}>
-                    {label}
-                  </Text>
+                  <MaterialIcons name={config.icon} size={20} color={colors.text} />
+                  <Text style={[styles.label, { color: colors.text }]}>{label}</Text>
                 </View>
               )}
             </Pressable>
@@ -160,16 +153,10 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     gap: 2,
   },
-  inactiveIcon: {
-    opacity: 0.6,
-  },
   label: {
     fontFamily: typography.label,
     fontSize: 10,
     textTransform: "uppercase",
     letterSpacing: 0.5,
-  },
-  inactiveLabel: {
-    opacity: 0.6,
   },
 });
