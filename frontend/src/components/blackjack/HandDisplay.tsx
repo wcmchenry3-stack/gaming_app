@@ -4,34 +4,53 @@ import { useTranslation } from "react-i18next";
 import { useTheme } from "../../theme/ThemeContext";
 import { HandResponse } from "../../game/blackjack/types";
 import PlayingCard from "./PlayingCard";
+import ScorePill from "./ScorePill";
 
 interface Props {
   hand: HandResponse;
   label: string;
-  concealed?: boolean; // true when dealer hole card is hidden
+  concealed?: boolean;
+  /** "player" renders larger cards with fan rotation and neon score pill;
+   *  "dealer" renders compact cards and glass badge score. */
+  variant?: "player" | "dealer";
 }
 
-export default function HandDisplay({ hand, label, concealed = false }: Props) {
+// First two player cards get a gentle fan tilt
+const PLAYER_ROTATIONS: Record<number, number> = { 0: -3, 1: 2 };
+
+export default function HandDisplay({
+  hand,
+  label,
+  concealed = false,
+  variant = "dealer",
+}: Props) {
   const { t } = useTranslation("blackjack");
   const { colors } = useTheme();
-
-  const valueText = concealed
-    ? t("hand.valueHidden")
-    : hand.soft
-      ? t("hand.softValue" as Parameters<typeof t>[0], { value: hand.value })
-      : t("hand.value", { value: hand.value });
+  const showScore = hand.cards.length > 0;
 
   return (
     <View style={styles.container}>
       <Text style={[styles.label, { color: colors.textMuted }]}>{label}</Text>
+
+      {showScore && (
+        <ScorePill
+          value={hand.value}
+          soft={hand.soft}
+          concealed={concealed}
+          variant={variant}
+        />
+      )}
+
       <View style={styles.cards}>
         {hand.cards.map((card, i) => (
-          <PlayingCard key={i} card={card} />
+          <PlayingCard
+            key={i}
+            card={card}
+            variant={variant}
+            rotation={variant === "player" ? (PLAYER_ROTATIONS[i] ?? 0) : 0}
+          />
         ))}
       </View>
-      {hand.cards.length > 0 && (
-        <Text style={[styles.value, { color: colors.text }]}>{valueText}</Text>
-      )}
     </View>
   );
 }
@@ -39,7 +58,7 @@ export default function HandDisplay({ hand, label, concealed = false }: Props) {
 const styles = StyleSheet.create({
   container: {
     alignItems: "center",
-    gap: 6,
+    gap: 8,
   },
   label: {
     fontSize: 13,
@@ -51,9 +70,5 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     flexWrap: "wrap",
     justifyContent: "center",
-  },
-  value: {
-    fontSize: 15,
-    fontWeight: "600",
   },
 });
