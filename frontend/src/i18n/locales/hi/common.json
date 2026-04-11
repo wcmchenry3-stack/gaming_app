@@ -10,5 +10,9 @@
   "theme.darkShort": "डार्क",
   "lang.switcherLabel": "भाषा चुनें",
   "network.offlineBanner": "ऑफ़लाइन — पुनः कनेक्ट होने पर स्कोर सिंक होंगे",
-  "brand.wordmark": "BC Arcade"
+  "brand.wordmark": "BC Arcade",
+  "nav.lobby": "लॉबी",
+  "nav.ranks": "रैंक",
+  "nav.profile": "प्रोफ़ाइल",
+  "nav.settings": "सेटिंग्स"
 }

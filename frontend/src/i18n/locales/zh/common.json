@@ -10,5 +10,9 @@
   "theme.darkShort": "深色",
   "lang.switcherLabel": "选择语言",
   "network.offlineBanner": "离线 — 重新连接后将同步分数",
-  "brand.wordmark": "BC Arcade"
+  "brand.wordmark": "BC Arcade",
+  "nav.lobby": "大厅",
+  "nav.ranks": "排名",
+  "nav.profile": "个人",
+  "nav.settings": "设置"
 }
