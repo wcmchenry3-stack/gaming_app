@@ -21,6 +21,7 @@ export default function LanguageSwitcher() {
       <Pressable
         onPress={() => setOpen(true)}
         style={[styles.trigger, { borderColor: colors.border }]}
+        testID="lang-switcher-trigger"
         accessibilityRole="button"
         accessibilityLabel={t("lang.switcherLabel")}
         accessibilityState={{ expanded: open }}
