@@ -1,109 +1,40 @@
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect } from "react";
 import { View, Text, Pressable, StyleSheet, ActivityIndicator } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTranslation } from "react-i18next";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { RootStackParamList } from "../../App";
 import { useTheme } from "../theme/ThemeContext";
-import { BlackjackState } from "../game/blackjack/types";
 import {
-  newGame,
-  placeBet as enginePlaceBet,
   hit as engineHit,
   stand as engineStand,
   doubleDown as engineDoubleDown,
   split as engineSplit,
   newHand as engineNewHand,
   toViewState,
-  EngineState,
-  DEFAULT_RULES,
 } from "../game/blackjack/engine";
-import { GameRules } from "../game/blackjack/types";
-import { saveGame, loadGame, clearGame } from "../game/blackjack/storage";
-import BettingPanel from "../components/blackjack/BettingPanel";
+import { useBlackjackGame } from "../game/blackjack/BlackjackGameContext";
 import BlackjackTable from "../components/blackjack/BlackjackTable";
 import ActionButtons from "../components/blackjack/ActionButtons";
 import ResultBanner from "../components/blackjack/ResultBanner";
 import GameOverModal from "../components/blackjack/GameOverModal";
 
 type Props = {
-  navigation: NativeStackNavigationProp<RootStackParamList, "Blackjack">;
+  navigation: NativeStackNavigationProp<RootStackParamList, "BlackjackTable">;
 };
 
-export default function BlackjackScreen({ navigation }: Props) {
-  const { t } = useTranslation(["blackjack", "common", "errors"]);
+export default function BlackjackTableScreen({ navigation }: Props) {
+  const { t } = useTranslation(["blackjack", "common"]);
   const { colors, theme, toggle } = useTheme();
   const insets = useSafeAreaInsets();
+  const { engine, loading, error, apply, handlePlayAgain } = useBlackjackGame();
 
-  const [engine, setEngine] = useState<EngineState | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  // Load saved game or start fresh
+  // Redirect to BettingScreen when Next Hand transitions phase back to betting.
   useEffect(() => {
-    let active = true;
-    loadGame()
-      .then((saved) => {
-        if (!active) return;
-        const next = saved ?? newGame();
-        setEngine(next);
-        if (!saved) saveGame(next);
-      })
-      .finally(() => {
-        if (active) setLoading(false);
-      });
-    return () => {
-      active = false;
-    };
-  }, []);
-
-  // Clear storage when the player runs out of chips so relaunch starts fresh.
-  useEffect(() => {
-    if (engine && engine.chips === 0 && engine.phase === "result") {
-      clearGame();
+    if (!loading && engine && engine.phase === "betting") {
+      navigation.replace("BlackjackBetting");
     }
-  }, [engine]);
-
-  const apply = useCallback(
-    (fn: (s: EngineState) => EngineState) => {
-      if (!engine) return;
-      setError(null);
-      try {
-        const next = fn(engine);
-        setEngine(next);
-        saveGame(next);
-      } catch (e: unknown) {
-        setError(e instanceof Error ? e.message : String(e));
-      }
-    },
-    [engine]
-  );
-
-  const handleDeal = (amount: number) => apply((s) => enginePlaceBet(s, amount));
-  const handleHit = () => apply(engineHit);
-  const handleStand = () => apply(engineStand);
-  const handleDoubleDown = () => apply(engineDoubleDown);
-  const handleSplit = () => apply(engineSplit);
-  const handleNextHand = () => apply(engineNewHand);
-  const handlePlayAgain = () => {
-    const fresh = newGame(undefined, engine?.rules ?? DEFAULT_RULES);
-    setEngine(fresh);
-    saveGame(fresh);
-    setError(null);
-  };
-
-  const handleRulesChange = useCallback(
-    (rules: GameRules) => {
-      if (!engine || engine.phase !== "betting") return;
-      const updated: EngineState = {
-        ...newGame(undefined, rules),
-        chips: engine.chips,
-      };
-      setEngine(updated);
-      saveGame(updated);
-    },
-    [engine]
-  );
+  }, [loading, engine, navigation]);
 
   if (!engine && loading) {
     return (
@@ -113,7 +44,13 @@ export default function BlackjackScreen({ navigation }: Props) {
     );
   }
 
-  const state: BlackjackState | null = engine ? toViewState(engine) : null;
+  const state = engine ? toViewState(engine) : null;
+
+  const handleHit = () => apply(engineHit);
+  const handleStand = () => apply(engineStand);
+  const handleDoubleDown = () => apply(engineDoubleDown);
+  const handleSplit = () => apply(engineSplit);
+  const handleNextHand = () => apply(engineNewHand);
 
   return (
     <View
@@ -128,7 +65,9 @@ export default function BlackjackScreen({ navigation }: Props) {
         },
       ]}
     >
-      {/* Header */}
+      {/* Header — back navigates to MainTabs to preserve the same behaviour as
+          the single-screen design: pressing back from anywhere in Blackjack
+          returns to Home. */}
       <View style={styles.header}>
         <Pressable
           style={styles.headerBtn}
@@ -163,9 +102,7 @@ export default function BlackjackScreen({ navigation }: Props) {
       )}
 
       {/*
-       * GH #227 — Chip balance is now always visible during player and result
-       * phases. BettingPanel already shows chips during the betting phase, so
-       * this strip only appears outside of it.
+       * GH #227 — Chip balance visible during player and result phases.
        */}
       {state && state.phase !== "betting" && (
         <Text
@@ -176,12 +113,7 @@ export default function BlackjackScreen({ navigation }: Props) {
         </Text>
       )}
 
-      {/*
-       * GH #226 — BlackjackTable is now always rendered when state exists,
-       * including during the betting phase (where the hands are empty). This
-       * keeps the table felt visible between hands instead of wiping the screen
-       * and replacing it with the bet stepper.
-       */}
+      {/* Table */}
       {state && (
         <View style={styles.tableArea}>
           <BlackjackTable
@@ -237,17 +169,6 @@ export default function BlackjackScreen({ navigation }: Props) {
             doubleDownAvailable={state.double_down_available}
             splitAvailable={state.split_available}
             loading={false}
-          />
-        )}
-
-        {(!state || state.phase === "betting") && (
-          <BettingPanel
-            chips={state?.chips ?? 1000}
-            onDeal={handleDeal}
-            loading={false}
-            error={error}
-            rules={state?.rules ?? DEFAULT_RULES}
-            onRulesChange={handleRulesChange}
           />
         )}
 

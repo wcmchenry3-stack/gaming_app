@@ -58,7 +58,7 @@ export default function HomeScreen() {
       emoji: "🃏",
       title: t("blackjack:game.title"),
       description: t("blackjack:game.description"),
-      action: () => navigation.navigate("Blackjack"),
+      action: () => navigation.navigate("BlackjackBetting"),
     },
     {
       key: "twenty48",

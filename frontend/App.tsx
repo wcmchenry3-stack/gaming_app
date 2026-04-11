@@ -17,7 +17,8 @@ import * as Sentry from "@sentry/react-native";
 import HomeScreen from "./src/screens/HomeScreen";
 import GameScreen from "./src/screens/GameScreen";
 import CascadeScreen from "./src/screens/CascadeScreen";
-import BlackjackScreen from "./src/screens/BlackjackScreen";
+import BlackjackBettingScreen from "./src/screens/BlackjackBettingScreen";
+import BlackjackTableScreen from "./src/screens/BlackjackTableScreen";
 import Twenty48Screen from "./src/screens/Twenty48Screen";
 import LeaderboardScreen from "./src/screens/LeaderboardScreen";
 import ProfileScreen from "./src/screens/ProfileScreen";
@@ -27,6 +28,7 @@ import { GameState } from "./src/game/yacht/types";
 import { ThemeProvider } from "./src/theme/ThemeContext";
 import { useHtmlAttributes } from "./src/i18n/useHtmlAttributes";
 import { NetworkProvider } from "./src/game/_shared/NetworkContext";
+import { BlackjackGameProvider } from "./src/game/blackjack/BlackjackGameContext";
 
 const dsn = process.env.EXPO_PUBLIC_SENTRY_DSN;
 
@@ -47,7 +49,8 @@ export type RootStackParamList = {
   MainTabs: undefined;
   Game: { initialState: GameState };
   Cascade: undefined;
-  Blackjack: undefined;
+  BlackjackBetting: undefined;
+  BlackjackTable: undefined;
   Pachisi: undefined;
   Twenty48: undefined;
 };
@@ -85,17 +88,20 @@ function AppInner() {
   return (
     <NetworkProvider>
       <ThemeProvider>
-        <NavigationContainer>
-          <Stack.Navigator screenOptions={{ headerShown: false }}>
-            <Stack.Screen name="MainTabs" component={MainTabs} />
-            <Stack.Screen name="Game" component={GameScreen} />
-            <Stack.Screen name="Cascade" component={CascadeScreen} />
-            <Stack.Screen name="Blackjack" component={BlackjackScreen} />
-            {/* Pachisi disabled — needs total rewrite before re-enabling */}
-            {/* <Stack.Screen name="Pachisi" component={PachisiScreen} /> */}
-            <Stack.Screen name="Twenty48" component={Twenty48Screen} />
-          </Stack.Navigator>
-        </NavigationContainer>
+        <BlackjackGameProvider>
+          <NavigationContainer>
+            <Stack.Navigator screenOptions={{ headerShown: false }}>
+              <Stack.Screen name="MainTabs" component={MainTabs} />
+              <Stack.Screen name="Game" component={GameScreen} />
+              <Stack.Screen name="Cascade" component={CascadeScreen} />
+              <Stack.Screen name="BlackjackBetting" component={BlackjackBettingScreen} />
+              <Stack.Screen name="BlackjackTable" component={BlackjackTableScreen} />
+              {/* Pachisi disabled — needs total rewrite before re-enabling */}
+              {/* <Stack.Screen name="Pachisi" component={PachisiScreen} /> */}
+              <Stack.Screen name="Twenty48" component={Twenty48Screen} />
+            </Stack.Navigator>
+          </NavigationContainer>
+        </BlackjackGameProvider>
       </ThemeProvider>
     </NetworkProvider>
   );
