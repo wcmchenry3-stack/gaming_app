@@ -3,7 +3,7 @@ import { View, Text, Pressable, StyleSheet, ActivityIndicator, ScrollView } from
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTranslation } from "react-i18next";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import { RootStackParamList } from "../../App";
+import { HomeStackParamList } from "../../App";
 import { useTheme } from "../theme/ThemeContext";
 import { pachisiApi, PachisiState } from "../game/pachisi/api";
 import { ApiError } from "../game/_shared/httpClient";
@@ -17,7 +17,7 @@ const HUMAN_PLAYER = "red";
 const AUTO_MOVE_DELAY_MS = 600;
 
 type Props = {
-  navigation: NativeStackNavigationProp<RootStackParamList, "Pachisi">;
+  navigation: NativeStackNavigationProp<HomeStackParamList, "Pachisi">;
 };
 
 export default function PachisiScreen({ navigation }: Props) {

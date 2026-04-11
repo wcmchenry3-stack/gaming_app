@@ -4,7 +4,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTranslation } from "react-i18next";
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import { RootStackParamList } from "../../App";
+import { HomeStackParamList } from "../../App";
 import { newGame as newYachtGame } from "../game/yacht/engine";
 import { loadGame as loadYachtGame } from "../game/yacht/storage";
 import { useTheme } from "../theme/ThemeContext";
@@ -19,7 +19,7 @@ interface GameCard {
 }
 
 export default function HomeScreen() {
-  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+  const navigation = useNavigation<NativeStackNavigationProp<HomeStackParamList, "Home">>();
   const { t } = useTranslation([
     "common",
     "yacht",

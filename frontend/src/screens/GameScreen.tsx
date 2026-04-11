@@ -4,7 +4,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTranslation } from "react-i18next";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { RouteProp } from "@react-navigation/native";
-import { RootStackParamList } from "../../App";
+import { HomeStackParamList } from "../../App";
 import { GameState } from "../game/yacht/types";
 import {
   newGame,
@@ -23,8 +23,8 @@ import NewGameConfirmModal from "../components/yacht/NewGameConfirmModal";
 import { useTheme } from "../theme/ThemeContext";
 
 type Props = {
-  navigation: NativeStackNavigationProp<RootStackParamList, "Game">;
-  route: RouteProp<RootStackParamList, "Game">;
+  navigation: NativeStackNavigationProp<HomeStackParamList, "Game">;
+  route: RouteProp<HomeStackParamList, "Game">;
 };
 
 export default function GameScreen({ navigation, route }: Props) {

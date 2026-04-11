@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, ActivityIndicator } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTranslation } from "react-i18next";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import { RootStackParamList } from "../../App";
+import { HomeStackParamList } from "../../App";
 import { useTheme } from "../theme/ThemeContext";
 import { placeBet as enginePlaceBet, toViewState, DEFAULT_RULES } from "../game/blackjack/engine";
 import { useBlackjackGame } from "../game/blackjack/BlackjackGameContext";
@@ -12,7 +12,7 @@ import BlackjackTable from "../components/blackjack/BlackjackTable";
 import BlackjackHeader from "../components/blackjack/BlackjackHeader";
 
 type Props = {
-  navigation: NativeStackNavigationProp<RootStackParamList, "BlackjackBetting">;
+  navigation: NativeStackNavigationProp<HomeStackParamList, "BlackjackBetting">;
 };
 
 export default function BlackjackBettingScreen({ navigation }: Props) {

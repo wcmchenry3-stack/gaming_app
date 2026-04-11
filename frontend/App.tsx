@@ -47,6 +47,10 @@ if (!dsn) {
 
 export type RootStackParamList = {
   MainTabs: undefined;
+};
+
+export type HomeStackParamList = {
+  Home: undefined;
   Game: { initialState: GameState };
   Cascade: undefined;
   BlackjackBetting: undefined;
@@ -56,7 +60,23 @@ export type RootStackParamList = {
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
+const HomeStack = createNativeStackNavigator<HomeStackParamList>();
 const Tab = createBottomTabNavigator();
+
+function LobbyStack() {
+  return (
+    <HomeStack.Navigator screenOptions={{ headerShown: false }}>
+      <HomeStack.Screen name="Home" component={HomeScreen} />
+      <HomeStack.Screen name="Game" component={GameScreen} />
+      <HomeStack.Screen name="Cascade" component={CascadeScreen} />
+      <HomeStack.Screen name="BlackjackBetting" component={BlackjackBettingScreen} />
+      <HomeStack.Screen name="BlackjackTable" component={BlackjackTableScreen} />
+      {/* Pachisi disabled — needs total rewrite before re-enabling */}
+      {/* <HomeStack.Screen name="Pachisi" component={PachisiScreen} /> */}
+      <HomeStack.Screen name="Twenty48" component={Twenty48Screen} />
+    </HomeStack.Navigator>
+  );
+}
 
 function MainTabs() {
   return (
@@ -64,7 +84,7 @@ function MainTabs() {
       tabBar={(props) => <BottomTabBar {...props} />}
       screenOptions={{ headerShown: false }}
     >
-      <Tab.Screen name="Lobby" component={HomeScreen} />
+      <Tab.Screen name="Lobby" component={LobbyStack} />
       <Tab.Screen name="Ranks" component={LeaderboardScreen} />
       <Tab.Screen name="Profile" component={ProfileScreen} />
       <Tab.Screen name="Settings" component={SettingsScreen} />
@@ -92,13 +112,6 @@ function AppInner() {
           <NavigationContainer>
             <Stack.Navigator screenOptions={{ headerShown: false }}>
               <Stack.Screen name="MainTabs" component={MainTabs} />
-              <Stack.Screen name="Game" component={GameScreen} />
-              <Stack.Screen name="Cascade" component={CascadeScreen} />
-              <Stack.Screen name="BlackjackBetting" component={BlackjackBettingScreen} />
-              <Stack.Screen name="BlackjackTable" component={BlackjackTableScreen} />
-              {/* Pachisi disabled — needs total rewrite before re-enabling */}
-              {/* <Stack.Screen name="Pachisi" component={PachisiScreen} /> */}
-              <Stack.Screen name="Twenty48" component={Twenty48Screen} />
             </Stack.Navigator>
           </NavigationContainer>
         </BlackjackGameProvider>
