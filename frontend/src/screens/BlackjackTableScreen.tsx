@@ -18,6 +18,8 @@ import BlackjackTable from "../components/blackjack/BlackjackTable";
 import ActionButtons from "../components/blackjack/ActionButtons";
 import ResultBanner from "../components/blackjack/ResultBanner";
 import GameOverModal from "../components/blackjack/GameOverModal";
+import BlackjackHeader from "../components/blackjack/BlackjackHeader";
+import HudSidebar from "../components/blackjack/HudSidebar";
 
 type Props = {
   navigation: NativeStackNavigationProp<RootStackParamList, "BlackjackTable">;
@@ -25,7 +27,7 @@ type Props = {
 
 export default function BlackjackTableScreen({ navigation }: Props) {
   const { t } = useTranslation(["blackjack", "common"]);
-  const { colors, theme, toggle } = useTheme();
+  const { colors } = useTheme();
   const insets = useSafeAreaInsets();
   const { engine, loading, error, apply, handlePlayAgain } = useBlackjackGame();
 
@@ -58,41 +60,13 @@ export default function BlackjackTableScreen({ navigation }: Props) {
         styles.container,
         {
           backgroundColor: colors.background,
-          paddingTop: Math.max(insets.top, 16),
+          paddingTop: insets.top,
           paddingBottom: Math.max(insets.bottom, 16),
-          paddingLeft: Math.max(insets.left, 16),
-          paddingRight: Math.max(insets.right, 16),
         },
       ]}
     >
-      {/* Header — back navigates to MainTabs to preserve the same behaviour as
-          the single-screen design: pressing back from anywhere in Blackjack
-          returns to Home. */}
-      <View style={styles.header}>
-        <Pressable
-          style={styles.headerBtn}
-          onPress={() => navigation.goBack()}
-          accessibilityRole="button"
-          accessibilityLabel={t("common:nav.back")}
-        >
-          <Text style={[styles.headerBtnText, { color: colors.textMuted }]}>‹</Text>
-        </Pressable>
-
-        <Text style={[styles.title, { color: colors.text }]}>{t("blackjack:game.title")}</Text>
-
-        <Pressable
-          style={styles.headerBtn}
-          onPress={toggle}
-          accessibilityRole="button"
-          accessibilityLabel={t("common:theme.switchTo", {
-            mode: theme === "dark" ? t("common:theme.light") : t("common:theme.dark"),
-          })}
-        >
-          <Text style={[styles.headerBtnText, { color: colors.textMuted }]}>
-            {theme === "dark" ? t("common:theme.light") : t("common:theme.dark")}
-          </Text>
-        </Pressable>
-      </View>
+      {/* Shared header with bankroll */}
+      <BlackjackHeader chips={state?.chips ?? 1000} onBack={() => navigation.goBack()} />
 
       {/* Phase label */}
       {state && (
@@ -101,30 +75,28 @@ export default function BlackjackTableScreen({ navigation }: Props) {
         </Text>
       )}
 
-      {/*
-       * GH #227 — Chip balance visible during player and result phases.
-       */}
-      {state && state.phase !== "betting" && (
-        <Text
-          style={[styles.chipStrip, { color: colors.text }]}
-          accessibilityLabel={t("blackjack:chips.accessibilityLabel", { chips: state.chips })}
-        >
-          {t("blackjack:chips.display", { chips: state.chips })}
-        </Text>
-      )}
-
-      {/* Table */}
+      {/* Table + HUD sidebar */}
       {state && (
-        <View style={styles.tableArea}>
-          <BlackjackTable
-            playerHand={state.player_hand}
-            dealerHand={state.dealer_hand}
-            phase={state.phase}
-            playerHands={state.player_hands}
-            activeHandIndex={state.active_hand_index}
-            handBets={state.hand_bets}
-            handOutcomes={state.hand_outcomes}
-          />
+        <View style={styles.tableRow}>
+          {/* Left sidebar HUD */}
+          <View style={styles.sidebarLeft}>
+            <HudSidebar currentPot={state.bet} lastWin={state.last_win} />
+          </View>
+
+          <View style={styles.tableArea}>
+            <BlackjackTable
+              playerHand={state.player_hand}
+              dealerHand={state.dealer_hand}
+              phase={state.phase}
+              playerHands={state.player_hands}
+              activeHandIndex={state.active_hand_index}
+              handBets={state.hand_bets}
+              handOutcomes={state.hand_outcomes}
+            />
+          </View>
+
+          {/* Right spacer to balance the sidebar */}
+          <View style={styles.sidebarRight} />
         </View>
       )}
 
@@ -197,44 +169,33 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingHorizontal: 16,
-    paddingBottom: 8,
-  },
-  headerBtn: {
-    minWidth: 44,
-    minHeight: 44,
-    justifyContent: "center",
-  },
-  headerBtnText: {
-    fontSize: 17,
-  },
-  title: {
-    fontSize: 20,
-    fontWeight: "700",
-  },
   phaseLabel: {
     textAlign: "center",
     fontSize: 13,
     fontWeight: "500",
     textTransform: "uppercase",
     letterSpacing: 0.8,
+    marginTop: 4,
     marginBottom: 4,
   },
-  chipStrip: {
-    textAlign: "center",
-    fontSize: 20,
-    fontWeight: "700",
-    marginBottom: 12,
+  tableRow: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "stretch",
+  },
+  sidebarLeft: {
+    width: 88,
+    justifyContent: "center",
+    paddingLeft: 12,
+    paddingVertical: 8,
+  },
+  sidebarRight: {
+    width: 88,
   },
   tableArea: {
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
-    paddingHorizontal: 16,
   },
   controls: {
     alignItems: "center",

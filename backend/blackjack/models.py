@@ -37,6 +37,7 @@ class BlackjackStateResponse(BaseModel):
     dealer_hand: HandResponse
     outcome: str | None
     payout: int
+    last_win: int | None
     game_over: bool
     double_down_available: bool
     split_available: bool

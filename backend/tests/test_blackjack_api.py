@@ -109,6 +109,10 @@ class TestNewGame:
         data = new_game().json()
         assert data["game_over"] is False
 
+    def test_last_win_is_null_on_new_game(self):
+        data = new_game().json()
+        assert data["last_win"] is None
+
 
 # ---------------------------------------------------------------------------
 # GET /blackjack/state
@@ -308,6 +312,16 @@ class TestNewHand:
         _inject_result_phase()
         data = new_hand().json()
         assert data["bet"] == 0
+
+    def test_new_hand_sets_last_win_from_payout(self):
+        _inject_result_phase(chips=1100, bet_amount=100, outcome="win", payout=100)
+        data = new_hand().json()
+        assert data["last_win"] == 100
+
+    def test_new_hand_sets_last_win_negative_on_loss(self):
+        _inject_result_phase(chips=900, bet_amount=100, outcome="lose", payout=-100)
+        data = new_hand().json()
+        assert data["last_win"] == -100
 
 
 # ---------------------------------------------------------------------------

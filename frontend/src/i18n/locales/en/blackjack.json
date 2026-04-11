@@ -64,6 +64,19 @@
   "gameOver.home": "Home",
   "gameOver.homeLabel": "Return to home screen",
 
+  "header.brandName": "BC Arcade",
+  "header.bankrollLabel": "Bankroll",
+  "header.bankrollAccessibilityLabel": "Bankroll: {{chips}} chips",
+
+  "hud.currentPot": "Pot",
+  "hud.currentPotAccessibilityLabel": "Current pot: {{amount}} chips",
+  "hud.lastWin": "Last",
+  "hud.lastWinPositive": "+{{amount}}",
+  "hud.lastWinNegative": "{{amount}}",
+  "hud.lastWinZero": "Push",
+  "hud.lastWinNull": "—",
+  "hud.lastWinAccessibilityLabel": "Last win: {{result}}",
+
   "rules.title": "Table Rules",
   "rules.toggleLabel": "Toggle table rules",
   "rules.dealerSoft17": "Dealer soft 17",

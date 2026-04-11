@@ -109,6 +109,7 @@ class BlackjackGame:
     phase: str = "betting"  # "betting" | "player" | "result"
     outcome: str | None = None  # "blackjack" | "win" | "lose" | "push"
     payout: int = 0  # net chip delta already applied to self.chips
+    last_win: int | None = None  # payout from the previously resolved hand
     rules: BlackjackRules = field(default_factory=BlackjackRules)
     _deck: list[Card] = field(default_factory=list)
     _player_hand: list[Card] = field(default_factory=list)
@@ -305,6 +306,7 @@ class BlackjackGame:
     def new_hand(self) -> None:
         if self.phase != "result":
             raise ValueError("Not in result phase.")
+        self.last_win = self.payout
         self._player_hand = []
         self._dealer_hand = []
         self.bet = 0

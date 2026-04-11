@@ -32,17 +32,13 @@ test.describe("Blackjack — accessibility", () => {
 
   test("back button has an accessible label", async ({ page }) => {
     await gotoBlackjack(page);
-    await expect(
-      page.getByRole("button", { name: /back/i }),
-    ).toBeVisible();
+    await expect(page.getByRole("button", { name: /back/i })).toBeVisible();
   });
 
   test("theme toggle button has an accessible label", async ({ page }) => {
     await gotoBlackjack(page);
     // Label is "Switch to dark mode" or "Switch to light mode"
-    await expect(
-      page.getByRole("button", { name: /mode/i }),
-    ).toBeVisible();
+    await expect(page.getByRole("button", { name: /mode/i })).toBeVisible();
   });
 
   // ---------------------------------------------------------------------------
@@ -54,9 +50,9 @@ test.describe("Blackjack — accessibility", () => {
   }) => {
     await gotoBlackjack(page);
     await expect(
-      page.getByRole("text", { name: /you have 1000 chips/i }).or(
-        page.locator('[aria-label*="You have 1000 chips"]'),
-      ),
+      page
+        .getByRole("text", { name: /you have 1000 chips/i })
+        .or(page.locator('[aria-label*="You have 1000 chips"]')),
     ).toBeVisible();
   });
 
@@ -152,7 +148,7 @@ test.describe("Blackjack — accessibility", () => {
     await expect(page.getByText("Hit")).toBeVisible();
 
     await expect(
-      page.locator('[aria-label*="You have 1000 chips"]'),
+      page.locator('[aria-label*="Bankroll: 1000 chips"]'),
     ).toBeVisible();
   });
 
@@ -170,9 +166,9 @@ test.describe("Blackjack — accessibility", () => {
 
     // "8 of Spades" or similar (i18n expands the suit symbol)
     await expect(
-      page.locator('[aria-label*="8 of Spades"]').or(
-        page.locator('[role="img"][aria-label*="8"]'),
-      ),
+      page
+        .locator('[aria-label*="8 of Spades"]')
+        .or(page.locator('[role="img"][aria-label*="8"]')),
     ).toBeVisible();
   });
 
@@ -182,9 +178,7 @@ test.describe("Blackjack — accessibility", () => {
     await expect(page.getByText("Hit")).toBeVisible();
 
     // Dealer hole card is concealed during player phase
-    await expect(
-      page.locator('[aria-label="Face-down card"]'),
-    ).toBeVisible();
+    await expect(page.locator('[aria-label="Face-down card"]')).toBeVisible();
   });
 
   // ---------------------------------------------------------------------------
@@ -232,7 +226,9 @@ test.describe("Blackjack — accessibility", () => {
     const results = await new AxeBuilder({ page })
       .disableRules(["color-contrast"]) // theme-dependent; checked manually
       .analyze();
-    expect(results.violations.filter((v) => v.impact === "critical")).toHaveLength(0);
+    expect(
+      results.violations.filter((v) => v.impact === "critical"),
+    ).toHaveLength(0);
   });
 
   test("no critical axe violations during player phase", async ({ page }) => {
@@ -243,7 +239,9 @@ test.describe("Blackjack — accessibility", () => {
     const results = await new AxeBuilder({ page })
       .disableRules(["color-contrast"])
       .analyze();
-    expect(results.violations.filter((v) => v.impact === "critical")).toHaveLength(0);
+    expect(
+      results.violations.filter((v) => v.impact === "critical"),
+    ).toHaveLength(0);
   });
 
   test("no critical axe violations during result phase", async ({ page }) => {
@@ -254,6 +252,8 @@ test.describe("Blackjack — accessibility", () => {
     const results = await new AxeBuilder({ page })
       .disableRules(["color-contrast"])
       .analyze();
-    expect(results.violations.filter((v) => v.impact === "critical")).toHaveLength(0);
+    expect(
+      results.violations.filter((v) => v.impact === "critical"),
+    ).toHaveLength(0);
   });
 });

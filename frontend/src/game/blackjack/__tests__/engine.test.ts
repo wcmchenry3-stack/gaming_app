@@ -52,6 +52,7 @@ function stateInPlayer(chips = 1000, bet = 100): EngineState {
     phase: "player",
     outcome: null,
     payout: 0,
+    lastWin: null,
     deck: Array(20).fill(c("♠", "5")), // safe 5s — won't over-bust
     player_hand: [c("♠", "7"), c("♥", "8")], // 15
     dealer_hand: [c("♦", "6"), c("♣", "9")], // 15
@@ -73,6 +74,7 @@ function stateInResult(
     phase: "result",
     outcome,
     payout,
+    lastWin: null,
     deck: Array(30).fill(c("♠", "5")),
     player_hand: [c("♠", "7"), c("♥", "8")],
     dealer_hand: [c("♦", "6"), c("♣", "9")],
@@ -95,6 +97,7 @@ function splitSetup(opts?: {
     phase: "player",
     outcome: null,
     payout: 0,
+    lastWin: null,
     deck: opts?.deck ?? Array(20).fill(c("♠", "3")),
     player_hand: opts?.player ?? [c("♠", "8"), c("♥", "8")],
     dealer_hand: opts?.dealer ?? [c("♦", "6"), c("♣", "9")],
@@ -176,6 +179,7 @@ describe("newGame", () => {
     expect(g.outcome).toBeNull();
     expect(g.payout).toBe(0);
   });
+  it("starts with lastWin null", () => expect(newGame().lastWin).toBeNull());
 });
 
 // --- Phase machine --------------------------------------------------------
@@ -219,6 +223,21 @@ describe("phase machine", () => {
     expect(g.bet).toBe(0);
     expect(g.outcome).toBeNull();
     expect(g.payout).toBe(0);
+  });
+
+  it("newHand carries payout into lastWin", () => {
+    const g = newHand(stateInResult(1000, 100, "win", 100));
+    expect(g.lastWin).toBe(100);
+  });
+
+  it("newHand carries negative payout into lastWin on loss", () => {
+    const g = newHand(stateInResult(900, 100, "lose", -100));
+    expect(g.lastWin).toBe(-100);
+  });
+
+  it("newHand carries 0 payout into lastWin on push", () => {
+    const g = newHand(stateInResult(1000, 100, "push", 0));
+    expect(g.lastWin).toBe(0);
   });
 });
 
@@ -493,6 +512,20 @@ describe("toViewState", () => {
     expect(toViewState(soft).dealer_hand.value).toBe(17);
   });
 
+  it("last_win is null on a fresh game", () => {
+    expect(toViewState(newGame()).last_win).toBeNull();
+  });
+
+  it("last_win reflects lastWin from engine state", () => {
+    const s: EngineState = { ...stateInResult(), lastWin: 150 };
+    expect(toViewState(s).last_win).toBe(150);
+  });
+
+  it("last_win is negative for a loss", () => {
+    const s: EngineState = { ...stateInResult(), lastWin: -100 };
+    expect(toViewState(s).last_win).toBe(-100);
+  });
+
   it("double_down_available only in player phase with 2 cards and chips >= 2*bet", () => {
     // chips=500, bet=100 → chips >= 200 ✓
     expect(toViewState(stateInPlayer(500, 100)).double_down_available).toBe(true);
@@ -529,11 +562,13 @@ function ddSetup(
     phase: "player",
     outcome: null,
     payout: 0,
+    lastWin: null,
     player_hand: player,
     dealer_hand: dealer,
     deck,
     doubled: false,
     rules: DEFAULT_RULES,
+    ...emptySplitState(),
   };
 }
 

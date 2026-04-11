@@ -39,4 +39,6 @@ export interface BlackjackState {
   hand_outcomes: (string | null)[];
   hand_payouts: number[];
   rules: GameRules;
+  /** Net chip delta from the previously completed hand. Null until at least one hand resolves. */
+  last_win: number | null;
 }
