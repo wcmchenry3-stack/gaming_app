@@ -3,6 +3,25 @@ import { render } from "@testing-library/react-native";
 import ActionButtons from "../ActionButtons";
 import { ThemeProvider } from "../../../theme/ThemeContext";
 
+// ---------------------------------------------------------------------------
+// Mock icon libraries — they render native font glyphs that aren't available
+// in the Jest/jsdom environment. Use require() inside the factory to avoid
+// the jest.mock out-of-scope variable restriction.
+// ---------------------------------------------------------------------------
+jest.mock("@expo/vector-icons/MaterialIcons", () => {
+  const mockReact = require("react");
+  const { Text } = require("react-native");
+  return ({ name, testID }: { name: string; testID?: string }) =>
+    mockReact.createElement(Text, { testID: testID ?? `icon-${name}` }, name);
+});
+
+jest.mock("@expo/vector-icons/MaterialCommunityIcons", () => {
+  const mockReact = require("react");
+  const { Text } = require("react-native");
+  return ({ name, testID }: { name: string; testID?: string }) =>
+    mockReact.createElement(Text, { testID: testID ?? `icon-${name}` }, name);
+});
+
 function renderButtons(
   opts: {
     doubleDownAvailable?: boolean;
@@ -26,12 +45,20 @@ function renderButtons(
 }
 
 describe("ActionButtons", () => {
-  it("renders Hit, Stand, Double Down, and Split buttons", () => {
+  it("renders Hit, Stand, Double Down, and Split button labels", () => {
     const { getByText } = renderButtons();
     expect(getByText("Hit")).toBeTruthy();
     expect(getByText("Stand")).toBeTruthy();
     expect(getByText("Double Down")).toBeTruthy();
     expect(getByText("Split")).toBeTruthy();
+  });
+
+  it("renders icon for each action button", () => {
+    const { getByTestId } = renderButtons();
+    expect(getByTestId("icon-add")).toBeTruthy();
+    expect(getByTestId("icon-hand-back-right")).toBeTruthy();
+    expect(getByTestId("icon-numeric-2-circle-outline")).toBeTruthy();
+    expect(getByTestId("icon-call-split")).toBeTruthy();
   });
 
   it("Double Down has disabled accessibility label when doubleDownAvailable is false", () => {
