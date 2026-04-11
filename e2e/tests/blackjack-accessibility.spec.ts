@@ -13,6 +13,7 @@
 import { test, expect } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
 import {
+  BlackjackPage,
   gotoBlackjack,
   injectEngineState,
   playerPhaseState,
@@ -40,19 +41,12 @@ test.describe("Blackjack — accessibility", () => {
   test("chip buttons have accessible labels in betting phase", async ({
     page,
   }) => {
-    await gotoBlackjack(page);
-    await expect(
-      page.getByRole("button", { name: /add 5 to bet/i }),
-    ).toBeVisible();
-    await expect(
-      page.getByRole("button", { name: /add 25 to bet/i }),
-    ).toBeVisible();
-    await expect(
-      page.getByRole("button", { name: /add 100 to bet/i }),
-    ).toBeVisible();
-    await expect(
-      page.getByRole("button", { name: /add 500 to bet/i }),
-    ).toBeVisible();
+    const bj = new BlackjackPage(page);
+    await bj.goto();
+    await expect(bj.chipButton(5)).toBeVisible();
+    await expect(bj.chipButton(25)).toBeVisible();
+    await expect(bj.chipButton(100)).toBeVisible();
+    await expect(bj.chipButton(500)).toBeVisible();
   });
 
   test("current bet circle has accessible label", async ({ page }) => {
@@ -65,8 +59,9 @@ test.describe("Blackjack — accessibility", () => {
   test("Deal button has accessible label including bet amount", async ({
     page,
   }) => {
-    await gotoBlackjack(page);
-    await page.getByRole("button", { name: /add 100 to bet/i }).click();
+    const bj = new BlackjackPage(page);
+    await bj.goto();
+    await bj.chipButton(100).click();
     await expect(
       page.getByRole("button", { name: /deal cards with 100-chip bet/i }),
     ).toBeVisible();

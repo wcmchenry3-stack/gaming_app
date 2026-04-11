@@ -7,11 +7,13 @@ See [~/.claude/standards/testing.md](~/.claude/standards/testing.md) for univers
 ## Backend
 
 ### Setup
+
 ```bash
 cd backend && python -m pip install -r requirements.txt
 ```
 
 ### Running
+
 ```bash
 # All tests
 python -m pytest tests/ -v
@@ -26,6 +28,7 @@ python -m pytest tests/ -v --cov=. --cov-report=term-missing
 ```
 
 ### Structure
+
 ```
 backend/tests/
 ├── __init__.py
@@ -37,6 +40,7 @@ backend/tests/
 ### What's Tested
 
 **test_game.py**
+
 - All 13 scoring categories (hit and miss cases)
 - Upper section bonus (triggers at ≥63)
 - Roll logic, roll count enforcement (max 3), held dice
@@ -45,13 +49,16 @@ backend/tests/
 - `possible_scores()` only returns unfilled categories
 
 **test_api.py**
+
 - `POST /yacht/new`, `GET /yacht/state`, `POST /yacht/roll`, `POST /yacht/score`, `GET /yacht/possible-scores`
 
 **test_cascade_api.py**
+
 - `POST /cascade/score` — valid submission (201), invalid payloads (422)
 - `GET /cascade/scores` — empty initially, sorted descending, capped at 10
 
 ### Notes
+
 - API tests use FastAPI's `TestClient` (no running server needed).
 - Each test file has an `autouse` fixture that resets in-memory state before/after each test.
 - Game logic tests set `game.dice` and `game.rolls_used` directly to avoid randomness.
@@ -61,16 +68,19 @@ backend/tests/
 ## Frontend
 
 ### Setup
+
 ```bash
 cd frontend && npm install
 ```
 
 ### Running
+
 ```bash
 npm test
 ```
 
 ### Structure
+
 ```
 frontend/src/
 ├── game/cascade/__tests__/
@@ -83,18 +93,21 @@ frontend/src/
 ### What's Tested
 
 **scoring.test.ts**
+
 - `scoreForMerge(tier)` returns correct points per tier
 - Values double each tier (tiers 0–9)
 - Tier 10 (Watermelon) returns the disappear bonus (256)
 - Cumulative scoring adds correctly
 
 **fruitQueue.test.ts**
+
 - `peek()` and `peekNext()` return tiers within `[0, MAX_SPAWN_TIER]`
 - `consume()` returns the current peek value
 - Queue advances correctly after consume
 - Never spawns above `MAX_SPAWN_TIER` across 200 samples
 
 **fruitSets.test.ts**
+
 - All 3 sets (fruits, gems, planets) define exactly 11 tiers
 - No duplicate tiers within a set; all tiers 0–10 covered
 - Every fruit has non-empty name, emoji, and color
@@ -102,5 +115,72 @@ frontend/src/
 - Radii are identical across all sets for the same tier (physics skin-agnostic)
 
 ### Notes
+
 - Physics engine (Matter.js) is not unit-tested — third-party, no jest DOM available.
 - Only pure logic modules are tested (no React components, no canvas).
+
+---
+
+## E2E Test Conventions
+
+Guidelines for writing Playwright specs in `e2e/tests/`. These rules exist because each item below caused a real flaky-run incident.
+
+### 1. Storage key versioning
+
+When a game's `localStorage` key changes (e.g. `blackjack_game_v1` → `v2`), search `e2e/` for the old key and update **all** references atomically in the same PR. Partial updates leave some specs clearing the wrong key, leaking state between tests.
+
+```bash
+grep -r "blackjack_game_v" e2e/
+```
+
+### 2. `data-testid` for i18n-coupled labels
+
+Any element whose accessible label comes from a translation string must also carry a `testID` prop so specs can target it without coupling to translated copy. Elements that currently need this:
+
+- Deal button (`/deal cards with/i`)
+- Clear Bet button
+- 2048 overlay New Game button
+- Cascade Play Again button
+
+### 3. No branching on `isVisible()` without a prior settled wait
+
+Never call `isVisible()` in an `if` branch unless the immediately preceding `await` is `expect(...).toBeVisible()` or `locator.waitFor()` on the **same** locator with no intervening awaits. The snapshot can go stale between the wait and the branch check.
+
+```typescript
+// Bad — race window between toBeVisible() and isVisible()
+await expect(page.getByText("Hit").or(page.getByText("Next Hand"))).toBeVisible();
+const hitVisible = await page.getByText("Hit").isVisible(); // stale snapshot
+
+// Good — isVisible() is inside the same await chain
+const hitOrResult = page.getByText("Hit").or(page.getByText("Next Hand"));
+await expect(hitOrResult).toBeVisible({ timeout: 5000 });
+if (await page.getByText("Hit").isVisible()) { ... }
+```
+
+### 4. No `waitForTimeout`
+
+Replace all hard sleeps with assertion-driven waits. Hard sleeps add wall time on fast runners and silently under-budget on slow ones.
+
+```typescript
+// Bad
+await page.waitForTimeout(2000);
+await expect(page.getByText("Score")).toBeVisible();
+
+// Good
+await expect(page.getByText("Score")).toBeVisible({ timeout: 8000 });
+```
+
+### 5. Non-deterministic outcomes
+
+Tests that exercise live RNG must use the `.or()` pattern for assertions rather than asserting a specific outcome. Tests that need deterministic assertions must use `injectEngineState()` to pre-seed the engine state.
+
+```typescript
+// Live RNG — assert either outcome
+await expect(
+  page.getByText("Hit").or(page.getByText("Next Hand")),
+).toBeVisible();
+
+// Deterministic — inject known state
+await injectEngineState(page, playerPhaseState());
+await expect(page.getByText("Hit")).toBeVisible();
+```
