@@ -13,6 +13,10 @@ import { Twenty48State } from "../../game/twenty48/types";
 import { Platform } from "react-native";
 (Platform as { OS: string }).OS = "web";
 
+jest.mock("expo-blur", () => ({
+  BlurView: ({ children }: { children?: React.ReactNode }) => <>{children}</>,
+}));
+
 // Mock storage — no saved game, no-op persistence.
 jest.mock("../../game/twenty48/storage", () => ({
   saveGame: jest.fn(),

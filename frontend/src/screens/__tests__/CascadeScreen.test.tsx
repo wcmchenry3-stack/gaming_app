@@ -13,6 +13,10 @@ import React from "react";
 import { act, create } from "react-test-renderer";
 import CascadeScreen from "../CascadeScreen";
 
+jest.mock("expo-blur", () => ({
+  BlurView: ({ children }: { children?: React.ReactNode }) => <>{children}</>,
+}));
+
 jest.mock("../../components/cascade/FruitGlyph", () => "FruitGlyph");
 jest.mock("../../components/cascade/NextFruitPreview", () => "NextFruitPreview");
 jest.mock("../../components/cascade/ThemeSelector", () => "ThemeSelector");

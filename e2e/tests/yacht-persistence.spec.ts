@@ -37,7 +37,7 @@ test.describe("Yacht — localStorage persistence (#183)", () => {
     expect(state.scores.chance).not.toBeNull();
   });
 
-  test("navigating back and returning to Yacht resumes the saved game", async ({
+  test("navigating away and returning to Yacht resumes the saved game", async ({
     page,
   }) => {
     // Play through one scoring action
@@ -48,8 +48,8 @@ test.describe("Yacht — localStorage persistence (#183)", () => {
     await page.getByRole("button", { name: /Chance: potential score/ }).click();
     await expect(page.getByText("Round 2 / 13")).toBeVisible();
 
-    // Go back to Home
-    await page.getByRole("button", { name: /back/i }).click();
+    // Go back to Home via URL (Lobby tab pop-to-root not reliable on web)
+    await page.goto("/");
     await expect(page.getByText("Gaming App").first()).toBeVisible();
 
     // Return to Yacht — should resume on Round 2

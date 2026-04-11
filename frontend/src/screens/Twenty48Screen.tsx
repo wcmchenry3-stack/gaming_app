@@ -6,6 +6,7 @@ import { useTranslation } from "react-i18next";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { HomeStackParamList } from "../../App";
 import { useTheme } from "../theme/ThemeContext";
+import { AppHeader, APP_HEADER_HEIGHT } from "../components/shared/AppHeader";
 import { Twenty48State } from "../game/twenty48/types";
 import { newGame, move as engineMove, Direction } from "../game/twenty48/engine";
 import {
@@ -30,7 +31,7 @@ type Props = {
 
 export default function Twenty48Screen({ navigation }: Props) {
   const { t } = useTranslation(["twenty48", "common", "errors"]);
-  const { colors, theme, toggle } = useTheme();
+  const { colors } = useTheme();
   const insets = useSafeAreaInsets();
 
   const [state, setState] = useState<Twenty48State | null>(null);
@@ -202,39 +203,14 @@ export default function Twenty48Screen({ navigation }: Props) {
         styles.container,
         {
           backgroundColor: colors.background,
-          paddingTop: Math.max(insets.top, 16),
+          paddingTop: APP_HEADER_HEIGHT + insets.top,
           paddingBottom: Math.max(insets.bottom, 16),
           paddingLeft: Math.max(insets.left, 16),
           paddingRight: Math.max(insets.right, 16),
         },
       ]}
     >
-      {/* Header */}
-      <View style={styles.header}>
-        <Pressable
-          style={styles.headerBtn}
-          onPress={() => navigation.goBack()}
-          accessibilityRole="button"
-          accessibilityLabel={t("common:nav.back")}
-        >
-          <Text style={[styles.headerBtnText, { color: colors.textMuted }]}>&#x2039;</Text>
-        </Pressable>
-
-        <Text style={[styles.title, { color: colors.text }]}>{t("twenty48:game.title")}</Text>
-
-        <Pressable
-          style={styles.headerBtn}
-          onPress={toggle}
-          accessibilityRole="button"
-          accessibilityLabel={t("common:theme.switchTo", {
-            mode: theme === "dark" ? t("common:theme.light") : t("common:theme.dark"),
-          })}
-        >
-          <Text style={[styles.headerBtnText, { color: colors.textMuted }]}>
-            {theme === "dark" ? t("common:theme.light") : t("common:theme.dark")}
-          </Text>
-        </Pressable>
-      </View>
+      <AppHeader title={t("game.title")} />
 
       {/* Score + New Game */}
       <View style={styles.scoreRow}>
@@ -315,26 +291,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     alignItems: "center",
-  },
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    width: "100%",
-    paddingHorizontal: 16,
-    paddingBottom: 8,
-  },
-  headerBtn: {
-    minWidth: 44,
-    minHeight: 44,
-    justifyContent: "center",
-  },
-  headerBtnText: {
-    fontSize: 17,
-  },
-  title: {
-    fontSize: 20,
-    fontWeight: "700",
   },
   scoreRow: {
     flexDirection: "row",

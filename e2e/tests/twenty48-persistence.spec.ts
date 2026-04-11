@@ -62,8 +62,8 @@ test.describe("2048 — state persistence", () => {
     await page.getByLabel("Game board").waitFor();
     await expect(page.locator('[aria-label="Current score: 64"]')).toBeVisible();
 
-    // Navigate home
-    await page.getByRole("button", { name: "Back" }).click();
+    // Navigate home via URL (Lobby tab pop-to-root not reliable on web)
+    await page.goto("/");
     await page.getByText("Gaming App").first().waitFor();
 
     // Return to 2048
