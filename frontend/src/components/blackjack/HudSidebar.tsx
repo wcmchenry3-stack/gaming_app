@@ -32,12 +32,12 @@ export default function HudSidebar({ currentPot, lastWin }: HudSidebarProps) {
   })();
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.surfaceAlt, borderColor: colors.border }]}>
+    <View
+      style={[styles.container, { backgroundColor: colors.surfaceAlt, borderColor: colors.border }]}
+    >
       {/* Current Pot */}
       <View style={styles.row}>
-        <Text
-          style={[styles.label, { color: colors.textMuted, fontFamily: typography.label }]}
-        >
+        <Text style={[styles.label, { color: colors.textMuted, fontFamily: typography.label }]}>
           {t("hud.currentPot")}
         </Text>
         <Text
@@ -52,9 +52,7 @@ export default function HudSidebar({ currentPot, lastWin }: HudSidebarProps) {
 
       {/* Last Win */}
       <View style={styles.row}>
-        <Text
-          style={[styles.label, { color: colors.textMuted, fontFamily: typography.label }]}
-        >
+        <Text style={[styles.label, { color: colors.textMuted, fontFamily: typography.label }]}>
           {t("hud.lastWin")}
         </Text>
         <Text
