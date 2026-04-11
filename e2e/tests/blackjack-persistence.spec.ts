@@ -55,9 +55,8 @@ test.describe("Blackjack — state persistence", () => {
     await page.getByRole("button", { name: /deal cards with/i }).click();
 
     // Wait for player or result phase
-    await expect(
-      page.getByText("Hit").or(page.getByText("Next Hand")),
-    ).toBeVisible({ timeout: 5000 });
+    const hitOrResult = page.getByText("Hit").or(page.getByText("Next Hand"));
+    await expect(hitOrResult).toBeVisible({ timeout: 5000 });
 
     const wasPlayerPhase = await page.getByText("Hit").isVisible();
 
