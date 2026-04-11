@@ -112,14 +112,22 @@ describe("BlackjackScreen — persistent table layout (GH #226)", () => {
   });
 
   it("table labels remain visible after transitioning back to betting via Next Hand", async () => {
-    // Inject a result-phase state so we can press Next Hand
+    // Inject a result-phase state so we can press Next Hand.
+    // placeBet uses real Math.random(), so ~8% of the time a natural blackjack
+    // skips past "player" phase and stand() would throw. Retry until we land
+    // in player phase, then stand to reach result phase.
     const resultState = (() => {
-      // Build a deterministic ended hand: deal, stand, which lands in result
-      let s = newGame();
-      s = placeBet(s, 100);
-      // Stand immediately (dealer will draw; eventually result phase)
-      s = stand(s);
-      return s;
+      for (let attempt = 0; attempt < 50; attempt++) {
+        let s = newGame();
+        s = placeBet(s, 100);
+        if (s.phase === "player") {
+          return stand(s);
+        }
+        if (s.phase === "result") {
+          return s;
+        }
+      }
+      throw new Error("Could not reach result phase in 50 attempts");
     })();
     (loadGame as jest.Mock).mockResolvedValueOnce(resultState);
 
