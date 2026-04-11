@@ -20,7 +20,10 @@ export default function ScorePill({ value, soft = false, concealed = false, vari
   if (variant === "dealer") {
     return (
       <View
-        style={[styles.dealerBadge, { backgroundColor: colors.surfaceHigh, borderColor: colors.border }]}
+        style={[
+          styles.dealerBadge,
+          { backgroundColor: colors.surfaceHigh, borderColor: colors.border },
+        ]}
         accessibilityLabel={concealed ? "Dealer score hidden" : `Dealer score ${label}`}
       >
         <Text style={[styles.dealerText, { color: colors.text }]}>{label}</Text>
@@ -36,7 +39,12 @@ export default function ScorePill({ value, soft = false, concealed = false, vari
     >
       {/* Gradient ring approximated with a cyan-tinted outer view */}
       <View style={[styles.playerRing, { backgroundColor: colors.accent }]}>
-        <View style={[styles.playerInner, { backgroundColor: colors.surface, borderColor: colors.accent }]}>
+        <View
+          style={[
+            styles.playerInner,
+            { backgroundColor: colors.surface, borderColor: colors.accent },
+          ]}
+        >
           <Text style={[styles.playerText, { color: colors.accent }]}>{label}</Text>
         </View>
       </View>

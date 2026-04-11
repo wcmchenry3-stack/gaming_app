@@ -1,6 +1,5 @@
 import React from "react";
 import { View, Text, StyleSheet } from "react-native";
-import { useTranslation } from "react-i18next";
 import { useTheme } from "../../theme/ThemeContext";
 import { HandResponse } from "../../game/blackjack/types";
 import PlayingCard from "./PlayingCard";
@@ -18,13 +17,7 @@ interface Props {
 // First two player cards get a gentle fan tilt
 const PLAYER_ROTATIONS: Record<number, number> = { 0: -3, 1: 2 };
 
-export default function HandDisplay({
-  hand,
-  label,
-  concealed = false,
-  variant = "dealer",
-}: Props) {
-  const { t } = useTranslation("blackjack");
+export default function HandDisplay({ hand, label, concealed = false, variant = "dealer" }: Props) {
   const { colors } = useTheme();
   const showScore = hand.cards.length > 0;
 
@@ -33,12 +26,7 @@ export default function HandDisplay({
       <Text style={[styles.label, { color: colors.textMuted }]}>{label}</Text>
 
       {showScore && (
-        <ScorePill
-          value={hand.value}
-          soft={hand.soft}
-          concealed={concealed}
-          variant={variant}
-        />
+        <ScorePill value={hand.value} soft={hand.soft} concealed={concealed} variant={variant} />
       )}
 
       <View style={styles.cards}>
