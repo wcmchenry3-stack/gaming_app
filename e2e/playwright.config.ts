@@ -30,11 +30,15 @@ export default defineConfig({
   retries: process.env.CI ? 2 : 0,
   workers: process.env.CI ? 2 : undefined,
   reporter: process.env.CI
-    ? [["github"], ["html", { outputFolder: "playwright-report" }]]
+    ? [
+        ["github"],
+        ["html", { outputFolder: "playwright-report" }],
+        ["json", { outputFile: "playwright-report/results.json" }],
+      ]
     : "list",
   use: {
     baseURL: "http://localhost:8081",
-    trace: "on-first-retry",
+    trace: "retain-on-failure",
     screenshot: "only-on-failure",
   },
   projects: [
@@ -65,10 +69,7 @@ export default defineConfig({
     },
     {
       name: "cross",
-      testMatch: [
-        "accessibility.spec.ts",
-        "ui-preferences.spec.ts",
-      ],
+      testMatch: ["accessibility.spec.ts", "ui-preferences.spec.ts"],
       use: { ...devices["Desktop Chrome"] },
     },
   ],
