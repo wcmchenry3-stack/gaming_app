@@ -13,6 +13,7 @@
 
 import { test, expect } from "@playwright/test";
 import {
+  BlackjackPage,
   gotoBlackjack,
   injectEngineState,
   playerPhaseState,
@@ -43,8 +44,9 @@ test.describe("Blackjack — betting panel and chip selector", () => {
   });
 
   test("clicking 100-chip button adds 100 to bet", async ({ page }) => {
-    await gotoBlackjack(page);
-    await page.getByRole("button", { name: /add 100 to bet/i }).click();
+    const bj = new BlackjackPage(page);
+    await bj.goto();
+    await bj.chipButton(100).click();
 
     await expect(
       page.getByRole("button", { name: /deal cards with 100-chip bet/i }),
@@ -52,8 +54,9 @@ test.describe("Blackjack — betting panel and chip selector", () => {
   });
 
   test("clicking 25-chip button adds 25 to bet", async ({ page }) => {
-    await gotoBlackjack(page);
-    await page.getByRole("button", { name: /add 25 to bet/i }).click();
+    const bj = new BlackjackPage(page);
+    await bj.goto();
+    await bj.chipButton(25).click();
 
     await expect(
       page.getByRole("button", { name: /deal cards with 25-chip bet/i }),
@@ -61,9 +64,10 @@ test.describe("Blackjack — betting panel and chip selector", () => {
   });
 
   test("multiple chip clicks accumulate the bet", async ({ page }) => {
-    await gotoBlackjack(page);
-    await page.getByRole("button", { name: /add 100 to bet/i }).click();
-    await page.getByRole("button", { name: /add 25 to bet/i }).click();
+    const bj = new BlackjackPage(page);
+    await bj.goto();
+    await bj.chipButton(100).click();
+    await bj.chipButton(25).click();
 
     // 100 + 25 = 125
     await expect(
@@ -72,8 +76,9 @@ test.describe("Blackjack — betting panel and chip selector", () => {
   });
 
   test("Clear Bet resets bet to 0 and disables Deal", async ({ page }) => {
-    await gotoBlackjack(page);
-    await page.getByRole("button", { name: /add 100 to bet/i }).click();
+    const bj = new BlackjackPage(page);
+    await bj.goto();
+    await bj.chipButton(100).click();
     await expect(
       page.getByRole("button", { name: /deal cards with 100-chip bet/i }),
     ).toBeVisible();
@@ -106,9 +111,8 @@ test.describe("Blackjack — betting panel and chip selector", () => {
       }),
     );
     await page.getByRole("button", { name: "Play Blackjack" }).click();
-    await expect(
-      page.getByRole("button", { name: /deal cards with/i }),
-    ).toBeVisible();
+    const bj = new BlackjackPage(page);
+    await expect(bj.dealButton()).toBeVisible();
 
     await expect(
       page.getByRole("button", { name: /500.*not available/i }),
@@ -137,16 +141,18 @@ test.describe("Blackjack — betting panel and chip selector", () => {
   });
 
   test("Deal button is enabled after placing a valid bet", async ({ page }) => {
-    await gotoBlackjack(page);
-    await page.getByRole("button", { name: /add 100 to bet/i }).click();
+    const bj = new BlackjackPage(page);
+    await bj.goto();
+    await bj.chipButton(100).click();
     await expect(
       page.getByRole("button", { name: /deal cards with 100-chip bet/i }),
     ).not.toBeDisabled();
   });
 
   test("pressing Deal with a valid bet starts the hand", async ({ page }) => {
-    await gotoBlackjack(page);
-    await page.getByRole("button", { name: /add 100 to bet/i }).click();
+    const bj = new BlackjackPage(page);
+    await bj.goto();
+    await bj.chipButton(100).click();
     await page
       .getByRole("button", { name: /deal cards with 100-chip bet/i })
       .click();
@@ -174,17 +180,17 @@ test.describe("Blackjack — betting panel and chip selector", () => {
   });
 
   test("BettingPanel is not shown during player phase", async ({ page }) => {
+    const bj = new BlackjackPage(page);
     await injectEngineState(page, playerPhaseState());
     await page.getByRole("button", { name: "Play Blackjack" }).click();
     await expect(page.getByText("Hit")).toBeVisible();
 
     // Deal button should not be visible
-    await expect(
-      page.getByRole("button", { name: /deal cards with/i }),
-    ).not.toBeVisible();
+    await expect(bj.dealButton()).not.toBeVisible();
   });
 
   test("BettingPanel returns after pressing Next Hand", async ({ page }) => {
+    const bj = new BlackjackPage(page);
     await injectEngineState(page, resultPhaseState());
     await page.getByRole("button", { name: "Play Blackjack" }).click();
 
@@ -192,8 +198,6 @@ test.describe("Blackjack — betting panel and chip selector", () => {
     await page.getByText("Next Hand").click();
 
     // BettingPanel with Deal button should be visible again
-    await expect(
-      page.getByRole("button", { name: /deal cards with/i }),
-    ).toBeVisible({ timeout: 5000 });
+    await expect(bj.dealButton()).toBeVisible({ timeout: 5000 });
   });
 });

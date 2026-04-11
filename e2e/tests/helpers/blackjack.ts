@@ -30,7 +30,13 @@ export interface InjectedEngineState {
   split_from_aces: boolean[];
 }
 
-/** Navigate from Home to Blackjack, clearing any saved state first. */
+/**
+ * Navigate from Home to Blackjack, clearing any saved state first.
+ *
+ * NOTE: The Deal button will be DISABLED on arrival (bet = 0).
+ * You must click a chip button before clicking Deal, or use
+ * injectEngineState() to land in player/result phase directly.
+ */
 export async function gotoBlackjack(page: Page): Promise<void> {
   await page.goto("/");
   await page.evaluate(() => localStorage.removeItem("blackjack_game_v2"));
@@ -126,6 +132,34 @@ export function resultPhaseState(
     ...emptySplitFields(),
     ...overrides,
   };
+}
+
+/**
+ * Page object for Blackjack screens.
+ *
+ * Centralises the three locator strings most likely to break on an i18n rename:
+ * chip buttons, the Deal button, and the bankroll display.
+ */
+export class BlackjackPage {
+  constructor(private page: Page) {}
+
+  async goto() {
+    await gotoBlackjack(this.page);
+  }
+
+  chipButton(amount: 5 | 25 | 100 | 500) {
+    return this.page.getByRole("button", {
+      name: new RegExp(`add ${amount} to bet`, "i"),
+    });
+  }
+
+  dealButton() {
+    return this.page.getByRole("button", { name: /deal cards with/i });
+  }
+
+  bankrollDisplay() {
+    return this.page.locator('[aria-label*="Bankroll:"]');
+  }
 }
 
 /** Game-over state: chips exhausted, phase=result. */

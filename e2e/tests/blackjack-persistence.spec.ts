@@ -9,6 +9,7 @@
 
 import { test, expect } from "@playwright/test";
 import {
+  BlackjackPage,
   gotoBlackjack,
   injectEngineState,
   playerPhaseState,
@@ -30,10 +31,9 @@ test.describe("Blackjack — state persistence", () => {
     await page.getByRole("button", { name: "Play Blackjack" }).click();
 
     // Should land directly in player phase, not betting
+    const bj = new BlackjackPage(page);
     await expect(page.getByText("Hit")).toBeVisible({ timeout: 5000 });
-    await expect(
-      page.getByRole("button", { name: /deal cards with/i }),
-    ).not.toBeVisible();
+    await expect(bj.dealButton()).not.toBeVisible();
   });
 
   test("injected result-phase state is loaded and shows outcome", async ({
@@ -50,9 +50,10 @@ test.describe("Blackjack — state persistence", () => {
   test("state is saved after dealing and restored on re-navigation", async ({
     page,
   }) => {
-    await gotoBlackjack(page);
-    await page.getByRole("button", { name: /add 100 to bet/i }).click();
-    await page.getByRole("button", { name: /deal cards with/i }).click();
+    const bj = new BlackjackPage(page);
+    await bj.goto();
+    await bj.chipButton(100).click();
+    await bj.dealButton().click();
 
     // Wait for player or result phase
     const hitOrResult = page.getByText("Hit").or(page.getByText("Next Hand"));
@@ -122,9 +123,8 @@ test.describe("Blackjack — state persistence", () => {
     await page.getByRole("button", { name: "Play Blackjack" }).click();
     await page.getByText("Next Hand").click();
 
-    await expect(
-      page.getByRole("button", { name: /deal cards with/i }),
-    ).toBeVisible({ timeout: 5000 });
+    const bj = new BlackjackPage(page);
+    await expect(bj.dealButton()).toBeVisible({ timeout: 5000 });
 
     const stored = await page.evaluate(() =>
       localStorage.getItem("blackjack_game_v2"),

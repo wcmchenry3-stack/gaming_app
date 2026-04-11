@@ -13,6 +13,7 @@
 
 import { test, expect } from "@playwright/test";
 import {
+  BlackjackPage,
   gotoBlackjack,
   injectEngineState,
   playerPhaseState,
@@ -40,7 +41,9 @@ test.describe("Blackjack — error paths and guardrails", () => {
     });
   });
 
-  test("navigating away from Blackjack player phase returns to Home", async ({ page }) => {
+  test("navigating away from Blackjack player phase returns to Home", async ({
+    page,
+  }) => {
     await injectEngineState(page, playerPhaseState());
     await page.getByRole("button", { name: "Play Blackjack" }).click();
     await expect(page.getByText("Hit")).toBeVisible();
@@ -95,12 +98,13 @@ test.describe("Blackjack — error paths and guardrails", () => {
   test("500-chip button is disabled when chips cap is lower than 500", async ({
     page,
   }) => {
-    await gotoBlackjack(page);
+    const bj = new BlackjackPage(page);
+    await bj.goto();
 
     // Place 400 chips (four 100s); now only 5 and 25 would still fit,
     // but 500 is definitely disabled
     for (let i = 0; i < 4; i++) {
-      await page.getByRole("button", { name: /add 100 to bet/i }).click();
+      await bj.chipButton(100).click();
     }
 
     await expect(
@@ -141,9 +145,8 @@ test.describe("Blackjack — error paths and guardrails", () => {
       .click();
 
     // Back in betting phase with fresh chip count
-    await expect(
-      page.getByRole("button", { name: /deal cards with/i }),
-    ).toBeVisible({ timeout: 5000 });
+    const bj = new BlackjackPage(page);
+    await expect(bj.dealButton()).toBeVisible({ timeout: 5000 });
     await expect(
       page.locator('[aria-label*="Bankroll: 1000 chips"]'),
     ).toBeVisible();
@@ -178,9 +181,8 @@ test.describe("Blackjack — error paths and guardrails", () => {
     await page.getByRole("button", { name: "Play Blackjack" }).click();
 
     // Should start fresh in betting phase, not crash
-    await expect(
-      page.getByRole("button", { name: /deal cards with/i }),
-    ).toBeVisible({ timeout: 5000 });
+    const bj = new BlackjackPage(page);
+    await expect(bj.dealButton()).toBeVisible({ timeout: 5000 });
     await expect(
       page.locator('[aria-label*="Bankroll: 1000 chips"]'),
     ).toBeVisible();
@@ -199,9 +201,8 @@ test.describe("Blackjack — error paths and guardrails", () => {
     await page.goto("/");
     await page.getByRole("button", { name: "Play Blackjack" }).click();
 
-    await expect(
-      page.getByRole("button", { name: /deal cards with/i }),
-    ).toBeVisible({ timeout: 5000 });
+    const bj = new BlackjackPage(page);
+    await expect(bj.dealButton()).toBeVisible({ timeout: 5000 });
   });
 
   // ---------------------------------------------------------------------------
@@ -224,9 +225,8 @@ test.describe("Blackjack — error paths and guardrails", () => {
     await page.getByRole("button", { name: "Play Blackjack" }).click();
     await page.getByText("Next Hand").click();
 
-    await expect(
-      page.getByRole("button", { name: /deal cards with/i }),
-    ).toBeVisible({ timeout: 5000 });
+    const bj = new BlackjackPage(page);
+    await expect(bj.dealButton()).toBeVisible({ timeout: 5000 });
     await expect(page.getByText("Dealer's Hand")).toBeVisible();
     await expect(page.getByText("Your Hand")).toBeVisible();
   });
