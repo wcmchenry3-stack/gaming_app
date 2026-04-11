@@ -22,11 +22,7 @@ jest.mock("../../../theme/ThemeContext", () => ({
   }),
 }));
 
-jest.mock("react-i18next", () => ({
-  useTranslation: () => ({
-    t: (key: string) => (key === "brand.wordmark" ? "BC Arcade" : key),
-  }),
-}));
+jest.mock("../../../../assets/logo.png", () => 1);
 
 describe("AppHeader", () => {
   it("renders the page title", () => {
@@ -34,9 +30,9 @@ describe("AppHeader", () => {
     expect(screen.getByText("Settings")).toBeTruthy();
   });
 
-  it("renders the BC Arcade wordmark", () => {
+  it("renders the BC Arcade logo image", () => {
     render(<AppHeader title="Profile" />);
-    expect(screen.getByText("BC Arcade")).toBeTruthy();
+    expect(screen.getByLabelText("BC Arcade")).toBeTruthy();
   });
 
   it("projects the rightSlot when provided", () => {

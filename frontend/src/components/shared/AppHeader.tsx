@@ -1,8 +1,7 @@
 import React from "react";
-import { View, Text, StyleSheet, Platform } from "react-native";
+import { View, Text, Image, StyleSheet, Platform } from "react-native";
 import { BlurView } from "expo-blur";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useTranslation } from "react-i18next";
 import { useTheme } from "../../theme/ThemeContext";
 import { typography } from "../../theme/typography";
 
@@ -22,7 +21,6 @@ function hexToRgba(hex: string, alpha: number): string {
 
 export function AppHeader({ title, rightSlot }: AppHeaderProps) {
   const { colors, theme } = useTheme();
-  const { t } = useTranslation("common");
   const insets = useSafeAreaInsets();
 
   const totalHeight = APP_HEADER_HEIGHT + insets.top;
@@ -55,13 +53,13 @@ export function AppHeader({ title, rightSlot }: AppHeaderProps) {
       )}
 
       <View style={[styles.content, { paddingTop: insets.top }]}>
-        <Text
-          style={[styles.wordmark, { color: colors.accent }]}
-          numberOfLines={1}
-          accessibilityRole="text"
-        >
-          {t("brand.wordmark")}
-        </Text>
+        <Image
+          source={require("../../../assets/logo.png")}
+          style={styles.logo}
+          resizeMode="contain"
+          accessibilityLabel="BC Arcade"
+          accessibilityRole="image"
+        />
 
         <Text
           style={[styles.title, { color: colors.text }]}
@@ -97,11 +95,9 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     paddingHorizontal: 24,
   },
-  wordmark: {
-    fontFamily: typography.heading,
-    fontSize: 13,
-    letterSpacing: -0.3,
-    minWidth: 80,
+  logo: {
+    width: 80,
+    height: 32,
   },
   title: {
     fontFamily: typography.heading,
