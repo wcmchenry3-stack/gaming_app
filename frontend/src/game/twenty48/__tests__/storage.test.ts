@@ -19,6 +19,8 @@ const sample: Twenty48State = {
   scoreDelta: 0,
   game_over: false,
   has_won: false,
+  startedAt: null,
+  accumulatedMs: 0,
 };
 
 describe("twenty48 storage", () => {
