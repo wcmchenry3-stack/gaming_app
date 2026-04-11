@@ -7,6 +7,7 @@
   "section.lower": "Нижняя часть",
   "section.total": "Итог",
   "bonus.label": "Бонус (≥63 = +35)",
+  "bonus.badge": "Бонус при 63",
   "bonus.progress": "{{subtotal}} / 63",
   "bonus.achieved": "{{subtotal}} / 63 ✓",
   "category.ones": "Единицы",

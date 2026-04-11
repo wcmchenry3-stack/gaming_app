@@ -1,5 +1,5 @@
 import React from "react";
-import { View, Text, StyleSheet, ScrollView } from "react-native";
+import { View, Text, StyleSheet, ScrollView, useWindowDimensions } from "react-native";
 import { useTranslation } from "react-i18next";
 import ScoreRow from "./ScoreRow";
 import { useTheme } from "../theme/ThemeContext";
@@ -15,7 +15,6 @@ const LOWER_CATEGORY_KEYS = [
   "chance",
 ] as const;
 
-// Map backend snake_case keys → i18n camelCase keys
 const CATEGORY_I18N_KEY: Record<string, string> = {
   ones: "category.ones",
   twos: "category.twos",
@@ -31,6 +30,8 @@ const CATEGORY_I18N_KEY: Record<string, string> = {
   yacht: "category.yacht",
   chance: "category.chance",
 };
+
+const WIDE_BREAKPOINT = 720;
 
 interface ScorecardProps {
   scores: Record<string, number | null>;
@@ -59,16 +60,34 @@ export default function Scorecard({
 }: ScorecardProps) {
   const { t } = useTranslation("yacht");
   const { colors } = useTheme();
+  const { width } = useWindowDimensions();
+  const isWide = width >= WIDE_BREAKPOINT;
   const canScore = rollsUsed > 0 && !gameOver;
 
-  return (
-    <ScrollView focusable style={[styles.container, { borderColor: colors.border }]}>
-      <Text style={[styles.sectionHeader, { backgroundColor: colors.sectionHeaderBg }]}>
-        {t("section.upper")}
-      </Text>
+  const upperBento = (
+    <View
+      style={[
+        styles.bento,
+        {
+          backgroundColor: colors.surfaceAlt,
+          borderColor: colors.border,
+          borderTopColor: colors.accent,
+        },
+      ]}
+    >
+      <View style={styles.bentoHeader}>
+        <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>{t("section.upper")}</Text>
+        <View
+          style={[styles.badge, { backgroundColor: colors.surface, borderColor: colors.accent }]}
+        >
+          <Text style={[styles.badgeText, { color: colors.accent }]}>{t("bonus.badge")}</Text>
+        </View>
+      </View>
       {UPPER_CATEGORY_KEYS.map((key) => (
         <ScoreRow
           key={key}
+          category={key}
+          tone="upper"
           label={t(CATEGORY_I18N_KEY[key])}
           score={scores[key]}
           potential={possibleScores[key]}
@@ -76,26 +95,38 @@ export default function Scorecard({
           onSelect={() => onScore(key)}
         />
       ))}
-      <View
-        style={[
-          styles.bonusRow,
-          { backgroundColor: colors.bonusBg, borderBottomColor: colors.border },
-        ]}
-      >
+      <View style={[styles.bonusRow, { borderTopColor: colors.border }]}>
         <Text style={[styles.bonusLabel, { color: colors.textMuted }]}>{t("bonus.label")}</Text>
-        <Text style={[styles.bonusValue, { color: colors.textMuted }]}>
+        <Text
+          style={[styles.bonusValue, { color: upperBonus > 0 ? colors.bonus : colors.textMuted }]}
+        >
           {upperBonus > 0
             ? t("bonus.achieved", { subtotal: upperSubtotal })
             : t("bonus.progress", { subtotal: upperSubtotal })}
         </Text>
       </View>
+    </View>
+  );
 
-      <Text style={[styles.sectionHeader, { backgroundColor: colors.sectionHeaderBg }]}>
-        {t("section.lower")}
-      </Text>
+  const lowerBento = (
+    <View
+      style={[
+        styles.bento,
+        {
+          backgroundColor: colors.surfaceAlt,
+          borderColor: colors.border,
+          borderTopColor: colors.secondary,
+        },
+      ]}
+    >
+      <View style={styles.bentoHeader}>
+        <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>{t("section.lower")}</Text>
+      </View>
       {LOWER_CATEGORY_KEYS.map((key) => (
         <ScoreRow
           key={key}
+          category={key}
+          tone="lower"
           label={t(CATEGORY_I18N_KEY[key])}
           score={scores[key]}
           potential={possibleScores[key]}
@@ -103,14 +134,8 @@ export default function Scorecard({
           onSelect={() => onScore(key)}
         />
       ))}
-
       {yachtBonusCount > 0 && (
-        <View
-          style={[
-            styles.bonusRow,
-            { backgroundColor: colors.bonusBg, borderBottomColor: colors.border },
-          ]}
-        >
+        <View style={[styles.bonusRow, { borderTopColor: colors.border }]}>
           <Text style={[styles.bonusLabel, { color: colors.textMuted }]}>
             {t("bonus.yachtLabel")}
           </Text>
@@ -119,10 +144,23 @@ export default function Scorecard({
           </Text>
         </View>
       )}
+    </View>
+  );
 
-      <View style={[styles.totalRow, { backgroundColor: colors.totalBg }]}>
-        <Text style={styles.totalLabel}>{t("section.total")}</Text>
-        <Text style={styles.totalValue}>{totalScore}</Text>
+  return (
+    <ScrollView focusable style={styles.container} contentContainerStyle={styles.content}>
+      <View style={[styles.grid, isWide && styles.gridWide]}>
+        <View style={isWide ? styles.col : undefined}>{upperBento}</View>
+        <View style={isWide ? styles.col : undefined}>{lowerBento}</View>
+      </View>
+      <View
+        style={[
+          styles.totalRow,
+          { backgroundColor: colors.surfaceHigh, borderColor: colors.accent },
+        ]}
+      >
+        <Text style={[styles.totalLabel, { color: colors.textMuted }]}>{t("section.total")}</Text>
+        <Text style={[styles.totalValue, { color: colors.accent }]}>{totalScore}</Text>
       </View>
     </ScrollView>
   );
@@ -131,48 +169,85 @@ export default function Scorecard({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    borderRadius: 8,
-    overflow: "hidden",
+  },
+  content: {
+    paddingBottom: 8,
+  },
+  grid: {
+    flexDirection: "column",
+    gap: 12,
+  },
+  gridWide: {
+    flexDirection: "row",
+  },
+  col: {
+    flex: 1,
+  },
+  bento: {
+    borderRadius: 14,
+    borderWidth: 1,
+    borderTopWidth: 2,
+    padding: 12,
+  },
+  bentoHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 10,
+    paddingHorizontal: 2,
+  },
+  sectionTitle: {
+    fontSize: 11,
+    fontWeight: "800",
+    letterSpacing: 1.5,
+    textTransform: "uppercase",
+  },
+  badge: {
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 6,
     borderWidth: 1,
   },
-  sectionHeader: {
-    color: "#fff",
-    fontSize: 13,
+  badgeText: {
+    fontSize: 10,
     fontWeight: "700",
-    paddingHorizontal: 12,
-    paddingVertical: 6,
     letterSpacing: 0.5,
   },
   bonusRow: {
     flexDirection: "row",
     justifyContent: "space-between",
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderBottomWidth: 1,
+    alignItems: "center",
+    paddingTop: 8,
+    paddingHorizontal: 4,
+    marginTop: 2,
+    borderTopWidth: 1,
   },
   bonusLabel: {
-    fontSize: 13,
+    fontSize: 12,
     fontStyle: "italic",
   },
   bonusValue: {
-    fontSize: 13,
-    fontWeight: "600",
+    fontSize: 12,
+    fontWeight: "700",
   },
   totalRow: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    paddingHorizontal: 12,
+    paddingHorizontal: 16,
     paddingVertical: 12,
+    marginTop: 12,
+    borderRadius: 12,
+    borderWidth: 1,
   },
   totalLabel: {
-    fontSize: 15,
-    fontWeight: "700",
-    color: "#fff",
+    fontSize: 11,
+    fontWeight: "800",
+    letterSpacing: 1.5,
+    textTransform: "uppercase",
   },
   totalValue: {
-    fontSize: 20,
-    fontWeight: "800",
-    color: "#facc15",
+    fontSize: 22,
+    fontWeight: "900",
   },
 });

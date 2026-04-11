@@ -7,6 +7,7 @@
   "section.lower": "하단 점수",
   "section.total": "총점",
   "bonus.label": "보너스 (≥63 = +35)",
+  "bonus.badge": "63에서 보너스",
   "bonus.progress": "{{subtotal}} / 63",
   "bonus.achieved": "{{subtotal}} / 63 ✓",
   "category.ones": "1점",
