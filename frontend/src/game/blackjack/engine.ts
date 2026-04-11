@@ -342,8 +342,8 @@ function settleWith(s: EngineState, outcome: "blackjack" | "win" | "lose" | "pus
 
 export function placeBet(s: EngineState, amount: number): EngineState {
   if (s.phase !== "betting") throw new Error("Not in betting phase.");
-  if (amount < 10 || amount > 500 || amount % 10 !== 0) {
-    throw new Error("Bet must be between 10 and 500 in multiples of 10.");
+  if (amount < 5 || amount > 500) {
+    throw new Error("Bet must be between 5 and 500.");
   }
   if (amount > s.chips) throw new Error("Insufficient chips.");
 

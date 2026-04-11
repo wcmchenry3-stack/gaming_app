@@ -2,7 +2,7 @@ from pydantic import BaseModel, Field
 
 
 class PlaceBetRequest(BaseModel):
-    amount: int = Field(..., ge=10, le=500, multiple_of=10)
+    amount: int = Field(..., ge=5, le=500)
 
 
 class RulesRequest(BaseModel):

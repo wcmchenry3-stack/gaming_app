@@ -152,15 +152,27 @@ class TestPlaceBet:
 
     def test_amount_below_minimum_returns_422(self):
         new_game()
-        assert bet(5).status_code == 422
+        assert bet(4).status_code == 422
+
+    def test_amount_zero_returns_422(self):
+        new_game()
+        assert bet(0).status_code == 422
 
     def test_amount_above_maximum_returns_422(self):
         new_game()
         assert bet(510).status_code == 422
 
-    def test_amount_not_multiple_of_10_returns_422(self):
+    def test_minimum_bet_of_5_accepted(self):
         new_game()
-        assert bet(15).status_code == 422
+        assert bet(5).status_code == 200
+
+    def test_amount_non_multiple_of_10_accepted(self):
+        new_game()
+        assert bet(15).status_code == 200
+
+    def test_amount_30_accepted(self):
+        new_game()
+        assert bet(30).status_code == 200
 
     def test_bet_wrong_phase_returns_400(self):
         _inject_player_phase()

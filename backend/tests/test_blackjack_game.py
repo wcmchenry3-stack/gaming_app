@@ -192,15 +192,30 @@ class TestPhaseMachine:
 class TestBetValidation:
     def test_bet_below_minimum_raises(self):
         with pytest.raises(ValueError):
-            BlackjackGame().place_bet(5)
+            BlackjackGame().place_bet(4)
+
+    def test_bet_zero_raises(self):
+        with pytest.raises(ValueError):
+            BlackjackGame().place_bet(0)
 
     def test_bet_above_maximum_raises(self):
         with pytest.raises(ValueError):
             BlackjackGame().place_bet(510)
 
-    def test_bet_not_multiple_of_10_raises(self):
-        with pytest.raises(ValueError):
-            BlackjackGame().place_bet(15)
+    def test_minimum_bet_of_5_accepted(self):
+        g = BlackjackGame()
+        g.place_bet(5)
+        assert g.phase in ("player", "result")
+
+    def test_bet_non_multiple_of_10_accepted(self):
+        g = BlackjackGame()
+        g.place_bet(15)
+        assert g.phase in ("player", "result")
+
+    def test_bet_30_accepted(self):
+        g = BlackjackGame()
+        g.place_bet(30)
+        assert g.phase in ("player", "result")
 
     def test_bet_exceeds_chips_raises(self):
         with pytest.raises(ValueError, match="Insufficient chips"):

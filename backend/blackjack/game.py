@@ -139,8 +139,8 @@ class BlackjackGame:
     def place_bet(self, amount: int) -> None:
         if self.phase != "betting":
             raise ValueError("Not in betting phase.")
-        if amount < 10 or amount > 500 or amount % 10 != 0:
-            raise ValueError("Bet must be between 10 and 500 in multiples of 10.")
+        if amount < 5 or amount > 500:
+            raise ValueError("Bet must be between 5 and 500.")
         if amount > self.chips:
             raise ValueError("Insufficient chips.")
 
