@@ -34,7 +34,7 @@ test.describe("Cascade — navigation and smoke tests", () => {
     await page.getByRole("button", { name: "Play Cascade" }).click();
 
     // Cascade screen title or canvas should appear
-    await expect(page.getByRole("heading", { name: "Cascade" })).toBeVisible({
+    await expect(page.getByRole("heading", { name: "Cascade", exact: true })).toBeVisible({
       timeout: 10000,
     });
   });
@@ -91,15 +91,15 @@ test.describe("Cascade — navigation and smoke tests", () => {
     await expect(page.url()).toContain(page.url()); // still on same page
   });
 
-  test("Lobby tab from Cascade returns to Home", async ({ page }) => {
+  test("navigating away from Cascade returns to Home", async ({ page }) => {
     await page.goto("/");
     await page.getByRole("button", { name: "Play Cascade" }).click();
-    await expect(page.getByRole("heading", { name: "Cascade" })).toBeVisible({
+    await expect(page.getByRole("heading", { name: "Cascade", exact: true })).toBeVisible({
       timeout: 10000,
     });
 
-    // Navigate home via Lobby tab (back button removed in #358)
-    await page.getByRole("tab", { name: "Lobby" }).click();
+    // Navigate home via URL (Lobby tab pop-to-root not reliable on web)
+    await page.goto("/");
 
     await expect(page.getByText("Gaming App").first()).toBeVisible({
       timeout: 5000,

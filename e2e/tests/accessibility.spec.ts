@@ -83,7 +83,7 @@ test.describe("Accessibility — Cascade screen", () => {
   test("no critical/serious axe violations on Cascade screen", async ({ page }) => {
     await page.goto("/");
     await page.getByRole("button", { name: "Play Cascade" }).click();
-    await expect(page.getByRole("heading", { name: "Cascade" })).toBeVisible({ timeout: 10000 });
+    await expect(page.getByRole("heading", { name: "Cascade", exact: true })).toBeVisible({ timeout: 10000 });
 
     await assertNoA11yViolations(
       new AxeBuilder({ page })

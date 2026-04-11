@@ -37,7 +37,7 @@ export async function gotoCascade(page: Page): Promise<void> {
   await page.goto("/");
   await page.getByRole("button", { name: "Play Cascade" }).click();
   await page
-    .getByRole("heading", { name: "Cascade" })
+    .getByRole("heading", { name: "Cascade", exact: true })
     .waitFor({ timeout: 10_000 });
   // Rapier WASM may take a moment to initialise — wait for the canvas label
   await page
