@@ -1,8 +1,17 @@
 import React from "react";
 import { render, fireEvent, waitFor } from "@testing-library/react-native";
+import * as ReactNative from "react-native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import HomeScreen from "../HomeScreen";
 import { ThemeProvider } from "../../theme/ThemeContext";
+
+jest.mock("expo-blur", () => ({
+  BlurView: ({ children }: { children?: React.ReactNode }) => <>{children}</>,
+}));
+
+jest.mock("expo-linear-gradient", () => ({
+  LinearGradient: ({ children }: { children?: React.ReactNode }) => <>{children}</>,
+}));
 
 // ---------------------------------------------------------------------------
 // Mock yacht storage — no saved game by default
@@ -44,7 +53,13 @@ const testInsets = {
   insets: { top: 47, bottom: 34, left: 0, right: 0 },
 };
 
-function renderScreen() {
+function renderScreen(windowWidth = 390) {
+  jest.spyOn(ReactNative, "useWindowDimensions").mockReturnValue({
+    width: windowWidth,
+    height: 844,
+    scale: 2,
+    fontScale: 1,
+  });
   return render(
     <SafeAreaProvider initialMetrics={testInsets}>
       <ThemeProvider>
@@ -99,5 +114,30 @@ describe("HomeScreen — game cards", () => {
         })
       )
     );
+  });
+});
+
+describe("HomeScreen — AppHeader", () => {
+  it("renders AppHeader with app title", () => {
+    const { getByRole } = renderScreen();
+    expect(getByRole("header")).toBeTruthy();
+  });
+});
+
+describe("HomeScreen — responsive layout (Galaxy Fold fix, #356)", () => {
+  it("renders all game cards at 280 px viewport width", () => {
+    const { getByLabelText } = renderScreen(280);
+    expect(getByLabelText("Play Yacht")).toBeTruthy();
+    expect(getByLabelText("Play Cascade")).toBeTruthy();
+    expect(getByLabelText("Play Blackjack")).toBeTruthy();
+    expect(getByLabelText("Play 2048")).toBeTruthy();
+  });
+
+  it("renders all game cards at 360 px viewport width", () => {
+    const { getByLabelText } = renderScreen(360);
+    expect(getByLabelText("Play Yacht")).toBeTruthy();
+    expect(getByLabelText("Play Cascade")).toBeTruthy();
+    expect(getByLabelText("Play Blackjack")).toBeTruthy();
+    expect(getByLabelText("Play 2048")).toBeTruthy();
   });
 });

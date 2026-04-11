@@ -1,14 +1,20 @@
 import React from "react";
-import { View, Text, Pressable, StyleSheet, FlatList } from "react-native";
+import { View, Text, Pressable, StyleSheet, FlatList, useWindowDimensions } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTranslation } from "react-i18next";
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import { LinearGradient } from "expo-linear-gradient";
 import { HomeStackParamList } from "../../App";
 import { newGame as newYachtGame } from "../game/yacht/engine";
 import { loadGame as loadYachtGame } from "../game/yacht/storage";
 import { useTheme } from "../theme/ThemeContext";
+import { typography } from "../theme/typography";
+import { AppHeader, APP_HEADER_HEIGHT } from "../components/shared/AppHeader";
 import OfflineBanner from "../components/OfflineBanner";
+
+/** Below this viewport width the grid collapses to a single column. */
+const SINGLE_COL_BREAKPOINT = 360;
 
 interface GameCard {
   key: string;
@@ -31,6 +37,9 @@ export default function HomeScreen() {
   ]);
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
+  const { width } = useWindowDimensions();
+
+  const numColumns = width < SINGLE_COL_BREAKPOINT ? 1 : 2;
 
   async function startYacht() {
     const saved = await loadYachtGame();
@@ -76,128 +85,162 @@ export default function HomeScreen() {
     [t("twenty48:game.title")]: t("twenty48:game.playLabel"),
   };
 
-  function renderCard({ item }: { item: GameCard }) {
+  // Cycle through BC Arcade accent colors for the gradient top border on each card.
+  const cardGradients: [string, string][] = [
+    [colors.tertiary, colors.secondary],
+    [colors.secondary, colors.accent],
+    [colors.accent, colors.accentBright],
+    [colors.accentBright, colors.tertiary],
+  ];
+
+  function renderCard({ item, index }: { item: GameCard; index: number }) {
+    const [gradStart, gradEnd] = cardGradients[index % cardGradients.length];
     return (
-      <View style={styles.cardWrapper}>
+      <View style={[styles.cardWrapper, numColumns === 1 && styles.cardWrapperFull]}>
         <Pressable
-          style={[
-            styles.card,
-            {
-              backgroundColor: colors.surfaceHigh,
-              borderTopColor: colors.accent,
-            },
-          ]}
+          style={[styles.card, { backgroundColor: colors.surfaceHigh }]}
           onPress={item.action}
           accessibilityRole="button"
           accessibilityLabel={playLabels[item.title] ?? item.title}
           accessibilityHint={item.description}
         >
-          <Text style={styles.cardEmoji}>{item.emoji}</Text>
-          <Text style={[styles.cardTitle, { color: colors.text }]}>{item.title}</Text>
+          {/* Gradient top border */}
+          <LinearGradient
+            colors={[gradStart, gradEnd]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 0 }}
+            style={styles.gradientBorder}
+          />
+
+          {/* Emoji icon zone */}
+          <View style={styles.emojiZone}>
+            <Text style={styles.cardEmoji}>{item.emoji}</Text>
+          </View>
+
+          {/* Title */}
+          <Text style={[styles.cardTitle, { color: colors.text }]} numberOfLines={1}>
+            {item.title}
+          </Text>
+
+          {/* Description */}
           <Text style={[styles.cardDesc, { color: colors.textMuted }]} numberOfLines={2}>
             {item.description}
           </Text>
-          <View style={[styles.playBtn, { backgroundColor: colors.accent }]}>
+
+          {/* Play button */}
+          <LinearGradient
+            colors={[gradStart, gradEnd]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 0 }}
+            style={styles.playBtn}
+          >
             <Text style={[styles.playBtnText, { color: colors.textOnAccent }]}>
-              {t("common:play", "Play")}
+              {playLabels[item.title] ?? t("common:play", "Play")}
             </Text>
-          </View>
+          </LinearGradient>
         </Pressable>
       </View>
     );
   }
 
   return (
-    <View
-      style={[
-        styles.container,
-        {
-          backgroundColor: colors.background,
-          paddingTop: insets.top,
-        },
-      ]}
-    >
+    <View style={[styles.screen, { backgroundColor: colors.background }]}>
+      <AppHeader title={t("common:app.title")} />
+
       <View style={styles.offlineBannerWrap}>
         <OfflineBanner />
       </View>
-      <Text style={[styles.title, { color: colors.text }]}>{t("common:app.title")}</Text>
-      <Text style={[styles.subtitle, { color: colors.textMuted }]}>{t("common:app.subtitle")}</Text>
 
       <FlatList
         data={games}
         renderItem={renderCard}
         keyExtractor={(item) => item.key}
-        numColumns={2}
-        contentContainerStyle={styles.grid}
-        columnWrapperStyle={styles.row}
-        scrollEnabled={false}
+        key={numColumns}
+        numColumns={numColumns}
+        contentContainerStyle={[
+          styles.grid,
+          {
+            paddingTop: APP_HEADER_HEIGHT + insets.top + 16,
+            paddingBottom: Math.max(insets.bottom, 16),
+            paddingHorizontal: 16,
+          },
+        ]}
+        columnWrapperStyle={numColumns > 1 ? styles.row : undefined}
+        scrollEnabled={true}
       />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  screen: {
     flex: 1,
-    alignItems: "center",
-    padding: 16,
   },
   offlineBannerWrap: {
     position: "absolute",
     left: 0,
     right: 0,
     top: 0,
-    zIndex: 10,
-  },
-  title: {
-    fontSize: 32,
-    fontWeight: "800",
-    marginTop: 24,
-    marginBottom: 4,
-  },
-  subtitle: {
-    fontSize: 15,
-    marginBottom: 24,
+    zIndex: 100,
   },
   grid: {
-    width: "100%",
-    maxWidth: 480,
+    gap: 16,
   },
   row: {
-    gap: 12,
-    marginBottom: 12,
+    gap: 16,
   },
   cardWrapper: {
     flex: 1,
   },
+  cardWrapperFull: {
+    flex: undefined,
+    width: "100%",
+  },
   card: {
     borderRadius: 24,
-    borderTopWidth: 3,
-    padding: 16,
+    overflow: "hidden",
     alignItems: "center",
+    paddingBottom: 12,
     gap: 8,
   },
+  gradientBorder: {
+    width: "100%",
+    height: 3,
+  },
+  emojiZone: {
+    height: 88,
+    alignItems: "center",
+    justifyContent: "center",
+  },
   cardEmoji: {
-    fontSize: 40,
-    marginTop: 4,
+    fontSize: 48,
   },
   cardTitle: {
-    fontSize: 16,
-    fontWeight: "700",
+    fontFamily: typography.heading,
+    fontSize: 14,
+    letterSpacing: -0.3,
+    paddingHorizontal: 8,
+    textAlign: "center",
   },
   cardDesc: {
-    fontSize: 12,
+    fontFamily: typography.body,
+    fontSize: 10,
+    lineHeight: 14,
     textAlign: "center",
-    lineHeight: 16,
+    paddingHorizontal: 12,
   },
   playBtn: {
     marginTop: 4,
-    paddingHorizontal: 24,
+    marginHorizontal: 12,
     paddingVertical: 8,
     borderRadius: 20,
+    alignSelf: "stretch",
+    alignItems: "center",
   },
   playBtnText: {
-    fontSize: 14,
-    fontWeight: "700",
+    fontFamily: typography.label,
+    fontSize: 9,
+    textTransform: "uppercase",
+    letterSpacing: 1,
   },
 });
