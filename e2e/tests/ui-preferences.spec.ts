@@ -19,6 +19,14 @@ async function gotoSettings(page: import("@playwright/test").Page) {
   await expect(page.getByTestId("theme-toggle-button")).toBeVisible();
 }
 
+// The language switcher testID sits on a wrapper <View> around the Pressable,
+// because react-native-web doesn't reliably forward testID on nested component
+// Pressables. A parent <div> click doesn't fire a child <div>'s onPress in DOM,
+// so we have to reach into the wrapper and click the inner button explicitly.
+function langSwitcherButton(page: import("@playwright/test").Page) {
+  return page.getByTestId("lang-switcher-trigger").getByRole("button");
+}
+
 test.describe("Theme toggle", () => {
   test.beforeEach(async ({ page }) => {
     await gotoSettings(page);
@@ -62,7 +70,7 @@ test.describe("Language switcher", () => {
   });
 
   test("switching to Spanish shows Spanish UI copy", async ({ page }) => {
-    await page.getByTestId("lang-switcher-trigger").click();
+    await langSwitcherButton(page).click();
     // Modal option accessibilityLabel is `${nativeLabel} — ${label}`; native labels
     // do not localize so "Español" is stable across the current UI language.
     await page.getByRole("button", { name: /Español/ }).click();
@@ -75,7 +83,7 @@ test.describe("Language switcher", () => {
   });
 
   test("switching to German shows German UI copy", async ({ page }) => {
-    await page.getByTestId("lang-switcher-trigger").click();
+    await langSwitcherButton(page).click();
     await page.getByRole("button", { name: /Deutsch/ }).click();
 
     await page.getByRole("tab", { name: "Lobby" }).click();
@@ -86,7 +94,7 @@ test.describe("Language switcher", () => {
 
   test("switching language and back to English restores English copy", async ({ page }) => {
     // ES first
-    await page.getByTestId("lang-switcher-trigger").click();
+    await langSwitcherButton(page).click();
     await page.getByRole("button", { name: /Español/ }).click();
     await page.getByRole("tab", { name: "Lobby" }).click();
     await expect(page.getByRole("button", { name: "Jugar Yacht" })).toBeVisible({
@@ -95,7 +103,7 @@ test.describe("Language switcher", () => {
 
     // Back to Settings — the trigger's aria-label is now localized, but testID is stable.
     await page.getByRole("tab", { name: "Settings" }).click();
-    await page.getByTestId("lang-switcher-trigger").click();
+    await langSwitcherButton(page).click();
     await page.getByRole("button", { name: /English/ }).click();
 
     await page.getByRole("tab", { name: "Lobby" }).click();
