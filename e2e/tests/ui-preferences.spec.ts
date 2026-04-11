@@ -1,97 +1,100 @@
 /**
  * ui-preferences.spec.ts
  *
- * E2E tests for theme toggle and language switcher.
+ * E2E tests for the theme toggle and language switcher, both of which live
+ * on the Settings tab (the lobby redesign in #309/#326 moved them off Home).
  *
  * Theme: toggles between dark/light mode — verifies the toggle button label changes.
- * Language: switching to a non-English locale changes visible UI copy.
+ * Language: switching to a non-English locale changes visible UI copy in the lobby.
+ *
+ * On web, LanguageSwitcher.web.tsx renders a native <select>, so tests use
+ * .selectOption() directly. The testID is used instead of the aria-label
+ * because the label localizes, which broke the round-trip test historically.
  */
 
-import { test, expect } from "@playwright/test";
-import { installYachtGameMock } from "./helpers/api-mock";
+import { test, expect, type Page } from "@playwright/test";
+
+async function gotoSettings(page: Page) {
+  await page.goto("/");
+  // BottomTabBar exposes each tab with role=tab + hardcoded English accessibilityLabel
+  // from TAB_ITEMS, so this navigation is stable across locale changes.
+  await page.getByRole("tab", { name: "Settings" }).click();
+  await expect(page.getByTestId("theme-toggle-button")).toBeVisible();
+}
 
 test.describe("Theme toggle", () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto("/");
+    await gotoSettings(page);
   });
 
-  test("theme toggle button is visible on Home", async ({ page }) => {
-    // The button shows either "Light mode" or "Dark mode" text
-    const toggle = page.getByRole("button", { name: /mode/i });
-    await expect(toggle).toBeVisible();
+  test("theme toggle button is visible in Settings", async ({ page }) => {
+    await expect(page.getByTestId("theme-toggle-button")).toBeVisible();
   });
 
   test("clicking theme toggle changes the button label", async ({ page }) => {
-    const toggle = page.getByRole("button", { name: /mode/i });
+    const toggle = page.getByTestId("theme-toggle-button");
     const initialLabel = await toggle.textContent();
 
     await toggle.click();
 
-    // Label should have changed (light ↔ dark)
     const newLabel = await toggle.textContent();
     expect(newLabel).not.toBe(initialLabel);
   });
 
-  test("theme toggle persists into Yacht game screen", async ({ page }) => {
-    await installYachtGameMock(page);
-
-    // Switch theme first
-    const toggle = page.getByRole("button", { name: /mode/i });
+  test("theme toggle persists across tab navigation", async ({ page }) => {
+    const toggle = page.getByTestId("theme-toggle-button");
     await toggle.click();
-    const themeAfterToggle = await toggle.textContent();
+    const labelAfterToggle = await toggle.textContent();
 
-    // Navigate to game
-    await page.getByRole("button", { name: "Play Yacht" }).click();
-    await expect(page.getByText("Round 1 / 13")).toBeVisible();
+    await page.getByRole("tab", { name: "Lobby" }).click();
+    await page.getByRole("tab", { name: "Settings" }).click();
 
-    // The game screen also has a theme toggle; its label should match
-    const gameToggle = page.getByRole("button", { name: /mode/i });
-    await expect(gameToggle).toBeVisible();
-    const gameToggleLabel = await gameToggle.textContent();
-    expect(gameToggleLabel).toBe(themeAfterToggle);
+    const labelAfterNav = await page.getByTestId("theme-toggle-button").textContent();
+    expect(labelAfterNav).toBe(labelAfterToggle);
   });
 });
 
 test.describe("Language switcher", () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto("/");
+    await gotoSettings(page);
   });
 
-  test("language switcher is visible on Home", async ({ page }) => {
-    // Language switcher has accessibilityLabel "Select language"
-    await expect(page.getByRole("combobox", { name: /language/i })).toBeVisible();
+  test("language switcher is visible in Settings", async ({ page }) => {
+    await expect(page.getByTestId("lang-switcher-select")).toBeVisible();
   });
 
   test("switching to Spanish shows Spanish UI copy", async ({ page }) => {
-    const switcher = page.getByRole("combobox", { name: /language/i });
-    await switcher.selectOption("es");
+    await page.getByTestId("lang-switcher-select").selectOption("es");
 
-    // Spanish locale: "game.playLabel" = "Jugar Yacht"
+    await page.getByRole("tab", { name: "Lobby" }).click();
     await expect(page.getByRole("button", { name: "Jugar Yacht" })).toBeVisible({
       timeout: 3000,
     });
   });
 
   test("switching to German shows German UI copy", async ({ page }) => {
-    const switcher = page.getByRole("combobox", { name: /language/i });
-    await switcher.selectOption("de");
+    await page.getByTestId("lang-switcher-select").selectOption("de");
 
-    // German: "game.playLabel" for yacht
+    await page.getByRole("tab", { name: "Lobby" }).click();
     await expect(page.getByRole("button", { name: "Yacht spielen" })).toBeVisible({
       timeout: 3000,
     });
   });
 
   test("switching language and back to English restores English copy", async ({ page }) => {
-    // Use the <select> element directly — its accessible name changes locale after selection
-    const switcher = page.locator("select").first();
+    await page.getByTestId("lang-switcher-select").selectOption("es");
 
-    await switcher.selectOption("es");
+    await page.getByRole("tab", { name: "Lobby" }).click();
     await expect(page.getByRole("button", { name: "Jugar Yacht" })).toBeVisible({
       timeout: 3000,
     });
 
-    await switcher.selectOption("en");
+    // Back to Settings — the <select>'s aria-label is now "Seleccionar idioma",
+    // but data-testid is stable so we don't need name-based selectors.
+    await page.getByRole("tab", { name: "Settings" }).click();
+    await page.getByTestId("lang-switcher-select").selectOption("en");
+
+    await page.getByRole("tab", { name: "Lobby" }).click();
     await expect(page.getByRole("button", { name: "Play Yacht" })).toBeVisible({
       timeout: 3000,
     });
