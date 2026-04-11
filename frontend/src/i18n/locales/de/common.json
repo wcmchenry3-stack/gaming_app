@@ -9,5 +9,6 @@
   "theme.lightShort": "Hell",
   "theme.darkShort": "Dunkel",
   "lang.switcherLabel": "Sprache wählen",
-  "network.offlineBanner": "Offline — Punkte werden bei erneuter Verbindung synchronisiert"
+  "network.offlineBanner": "Offline — Punkte werden bei erneuter Verbindung synchronisiert",
+  "brand.wordmark": "BC Arcade"
 }
