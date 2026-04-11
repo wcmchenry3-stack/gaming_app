@@ -183,12 +183,9 @@ test.describe("2048 — accessibility labels", () => {
     await page.getByRole("button", { name: "Play 2048" }).click();
     await page.getByLabel("Game board").waitFor();
 
-    await expect(page.locator('[aria-label="Current score: 128"]')).toBeVisible();
-  });
-
-  test("back button has accessible role and label", async ({ page }) => {
-    await gotoTwenty48(page);
-    await expect(page.getByRole("button", { name: "Back" })).toBeVisible();
+    await expect(
+      page.locator('[aria-label="Current score: 128"]'),
+    ).toBeVisible();
   });
 
   test("New Game button has accessible role and label", async ({ page }) => {

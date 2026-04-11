@@ -4,6 +4,10 @@ import GameScreen from "../GameScreen";
 import { ThemeProvider } from "../../theme/ThemeContext";
 import { saveGame, clearGame } from "../../game/yacht/storage";
 
+jest.mock("expo-blur", () => ({
+  BlurView: ({ children }: { children?: React.ReactNode }) => <>{children}</>,
+}));
+
 // ---------------------------------------------------------------------------
 // Mock yacht storage — no-op persistence
 // ---------------------------------------------------------------------------

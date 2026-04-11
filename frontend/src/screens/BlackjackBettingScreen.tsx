@@ -9,7 +9,7 @@ import { placeBet as enginePlaceBet, toViewState, DEFAULT_RULES } from "../game/
 import { useBlackjackGame } from "../game/blackjack/BlackjackGameContext";
 import BettingPanel from "../components/blackjack/BettingPanel";
 import BlackjackTable from "../components/blackjack/BlackjackTable";
-import BlackjackHeader from "../components/blackjack/BlackjackHeader";
+import { AppHeader, APP_HEADER_HEIGHT } from "../components/shared/AppHeader";
 
 type Props = {
   navigation: NativeStackNavigationProp<HomeStackParamList, "BlackjackBetting">;
@@ -45,13 +45,31 @@ export default function BlackjackBettingScreen({ navigation }: Props) {
         styles.container,
         {
           backgroundColor: colors.background,
-          paddingTop: insets.top,
+          paddingTop: APP_HEADER_HEIGHT + insets.top,
           paddingBottom: Math.max(insets.bottom, 16),
         },
       ]}
     >
-      {/* Shared header with bankroll */}
-      <BlackjackHeader chips={state?.chips ?? 1000} onBack={() => navigation.goBack()} />
+      <AppHeader
+        title={t("game.title")}
+        rightSlot={
+          state ? (
+            <View style={styles.bankroll}>
+              <Text style={[styles.bankrollLabel, { color: colors.textMuted }]}>
+                {t("header.bankrollLabel")}
+              </Text>
+              <Text
+                style={[styles.bankrollValue, { color: colors.text }]}
+                accessibilityLabel={t("header.bankrollAccessibilityLabel", {
+                  chips: state.chips,
+                })}
+              >
+                {state.chips.toLocaleString()}
+              </Text>
+            </View>
+          ) : undefined
+        }
+      />
 
       {/* Phase label */}
       {state && (
@@ -144,5 +162,19 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingBottom: 24,
     gap: 0,
+  },
+  bankroll: {
+    alignItems: "flex-end",
+  },
+  bankrollLabel: {
+    fontSize: 10,
+    textTransform: "uppercase",
+    letterSpacing: 0.8,
+    fontWeight: "500",
+  },
+  bankrollValue: {
+    fontSize: 16,
+    fontWeight: "700",
+    lineHeight: 20,
   },
 });

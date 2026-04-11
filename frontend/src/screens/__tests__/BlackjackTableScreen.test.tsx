@@ -6,6 +6,10 @@ import { ThemeProvider } from "../../theme/ThemeContext";
 import { loadGame } from "../../game/blackjack/storage";
 import { newGame, placeBet, stand, EngineState } from "../../game/blackjack/engine";
 
+jest.mock("expo-blur", () => ({
+  BlurView: ({ children }: { children?: React.ReactNode }) => <>{children}</>,
+}));
+
 // ---------------------------------------------------------------------------
 // Mock blackjack storage — no saved game by default, no-op persistence.
 // ---------------------------------------------------------------------------
@@ -80,14 +84,6 @@ describe("BlackjackTableScreen — player phase", () => {
     renderScreen();
     await screen.findByText("Hit");
     expect(screen.getByText("Stand")).toBeTruthy();
-  });
-
-  it("back button calls goBack()", async () => {
-    const nav = mockNav();
-    renderScreen(nav);
-    await screen.findByText("Hit");
-    fireEvent.press(screen.getByLabelText(/back/i));
-    expect(nav.goBack).toHaveBeenCalled();
   });
 
   it("chip balance is visible during player phase", async () => {

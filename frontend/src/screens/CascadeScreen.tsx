@@ -1,10 +1,9 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import { View, Text, Pressable, StyleSheet, LayoutChangeEvent } from "react-native";
+import { View, StyleSheet, LayoutChangeEvent } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTranslation } from "react-i18next";
-import { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import { HomeStackParamList } from "../../App";
 import { useTheme } from "../theme/ThemeContext";
+import { AppHeader, APP_HEADER_HEIGHT } from "../components/shared/AppHeader";
 import { FruitSetProvider, useFruitSet } from "../theme/FruitSetContext";
 import { FruitQueue } from "../game/cascade/fruitQueue";
 import { ControlledSpawnSelector, createSeededRng } from "../game/cascade/spawnSelector";
@@ -16,13 +15,9 @@ import ScoreDisplay from "../components/cascade/ScoreDisplay";
 import ThemeSelector from "../components/cascade/ThemeSelector";
 import GameOverOverlay from "../components/cascade/GameOverOverlay";
 
-type Props = {
-  navigation: NativeStackNavigationProp<HomeStackParamList, "Cascade">;
-};
-
-function CascadeGame({ navigation }: Props) {
+function CascadeGame() {
   const { t } = useTranslation(["cascade", "common"]);
-  const { colors, theme, toggle } = useTheme();
+  const { colors } = useTheme();
   const insets = useSafeAreaInsets();
   const { activeFruitSet } = useFruitSet();
 
@@ -198,39 +193,14 @@ function CascadeGame({ navigation }: Props) {
         styles.screen,
         {
           backgroundColor: colors.background,
-          paddingTop: Math.max(insets.top, 16),
+          paddingTop: APP_HEADER_HEIGHT + insets.top,
           paddingBottom: Math.max(insets.bottom, 16),
           paddingLeft: Math.max(insets.left, 16),
           paddingRight: Math.max(insets.right, 16),
         },
       ]}
     >
-      {/* Header */}
-      <View style={styles.header}>
-        <Pressable
-          onPress={() => navigation.goBack()}
-          style={styles.backBtn}
-          accessibilityRole="button"
-          accessibilityLabel={t("common:nav.backLabel")}
-        >
-          <Text style={[styles.backText, { color: colors.textMuted }]}>{t("common:nav.back")}</Text>
-        </Pressable>
-        <Text style={[styles.title, { color: colors.text }]} accessibilityRole="header">
-          {t("cascade:game.title")}
-        </Text>
-        <Pressable
-          onPress={toggle}
-          style={styles.themeToggle}
-          accessibilityRole="button"
-          accessibilityLabel={t("common:theme.switchTo", {
-            mode: theme === "dark" ? t("common:theme.light") : t("common:theme.dark"),
-          })}
-        >
-          <Text style={[styles.themeToggleText, { color: colors.textMuted }]}>
-            {theme === "dark" ? t("common:theme.lightShort") : t("common:theme.darkShort")}
-          </Text>
-        </Pressable>
-      </View>
+      <AppHeader title={t("game.title")} />
 
       {/* Score bar */}
       <ScoreDisplay score={score} />
@@ -264,10 +234,10 @@ function CascadeGame({ navigation }: Props) {
   );
 }
 
-export default function CascadeScreen(props: Props) {
+export default function CascadeScreen() {
   return (
     <FruitSetProvider>
-      <CascadeGame {...props} />
+      <CascadeGame />
     </FruitSetProvider>
   );
 }
@@ -276,17 +246,6 @@ const styles = StyleSheet.create({
   screen: {
     flex: 1,
   },
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    marginBottom: 10,
-  },
-  backBtn: { paddingVertical: 6, paddingRight: 12, minHeight: 44, justifyContent: "center" },
-  backText: { fontSize: 15 },
-  title: { fontSize: 20, fontWeight: "700" },
-  themeToggle: { paddingVertical: 6, paddingLeft: 12, minHeight: 44, justifyContent: "center" },
-  themeToggleText: { fontSize: 13 },
   hud: {
     flexDirection: "row",
     alignItems: "center",

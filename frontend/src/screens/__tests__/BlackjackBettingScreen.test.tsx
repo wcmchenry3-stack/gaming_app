@@ -7,6 +7,10 @@ import { loadGame } from "../../game/blackjack/storage";
 import { newGame } from "../../game/blackjack/engine";
 import { EngineState } from "../../game/blackjack/engine";
 
+jest.mock("expo-blur", () => ({
+  BlurView: ({ children }: { children?: React.ReactNode }) => <>{children}</>,
+}));
+
 // ---------------------------------------------------------------------------
 // Mock blackjack storage — no saved game by default, no-op persistence.
 // ---------------------------------------------------------------------------
@@ -54,14 +58,6 @@ describe("BlackjackBettingScreen — initial load", () => {
 // ---------------------------------------------------------------------------
 
 describe("BlackjackBettingScreen — header / navigation", () => {
-  it("back button calls navigation.goBack", async () => {
-    const nav = mockNav();
-    renderScreen(nav);
-    await screen.findByText("Deal");
-    fireEvent.press(screen.getByLabelText(/back/i));
-    expect(nav.goBack).toHaveBeenCalledTimes(1);
-  });
-
   it("shows Blackjack title", async () => {
     renderScreen();
     await waitFor(() => expect(screen.getByText("Blackjack")).toBeTruthy());

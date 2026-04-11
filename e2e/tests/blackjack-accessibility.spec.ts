@@ -27,21 +27,6 @@ test.describe("Blackjack — accessibility", () => {
   });
 
   // ---------------------------------------------------------------------------
-  // Navigation / header controls
-  // ---------------------------------------------------------------------------
-
-  test("back button has an accessible label", async ({ page }) => {
-    await gotoBlackjack(page);
-    await expect(page.getByRole("button", { name: /back/i })).toBeVisible();
-  });
-
-  test("theme toggle button has an accessible label", async ({ page }) => {
-    await gotoBlackjack(page);
-    // Label is "Switch to dark mode" or "Switch to light mode"
-    await expect(page.getByRole("button", { name: /mode/i })).toBeVisible();
-  });
-
-  // ---------------------------------------------------------------------------
   // Betting phase
   // ---------------------------------------------------------------------------
 

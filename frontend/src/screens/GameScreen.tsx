@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
-import { View, Text, StyleSheet, Pressable, useWindowDimensions } from "react-native";
+import { View, Text, StyleSheet, Pressable } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTranslation } from "react-i18next";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
@@ -21,6 +21,7 @@ import Scorecard from "../components/Scorecard";
 import GameOverModal from "../components/yacht/GameOverModal";
 import NewGameConfirmModal from "../components/yacht/NewGameConfirmModal";
 import { useTheme } from "../theme/ThemeContext";
+import { AppHeader, APP_HEADER_HEIGHT } from "../components/shared/AppHeader";
 
 type Props = {
   navigation: NativeStackNavigationProp<HomeStackParamList, "Game">;
@@ -29,10 +30,8 @@ type Props = {
 
 export default function GameScreen({ navigation, route }: Props) {
   const { t } = useTranslation(["yacht", "common"]);
-  const { colors, theme, toggle } = useTheme();
+  const { colors } = useTheme();
   const insets = useSafeAreaInsets();
-  const { width: viewportWidth } = useWindowDimensions();
-  const showHeaderTotal = viewportWidth >= 480;
   const [gameState, setGameState] = useState<GameState>(route.params.initialState);
   const [possibleScores, setPossibleScores] = useState<Record<string, number>>({});
   const [resetHeld, setResetHeld] = useState(false);
@@ -114,87 +113,43 @@ export default function GameScreen({ navigation, route }: Props) {
     void startNewGame();
   }, [startNewGame]);
 
+  const roundPill = (
+    <View
+      style={[styles.roundPill, { backgroundColor: colors.surfaceAlt, borderColor: colors.accent }]}
+    >
+      <Text style={[styles.roundPillText, { color: colors.accent }]}>
+        {t("round.header", { round: gameState.round })}
+      </Text>
+    </View>
+  );
+
   return (
     <View
       style={[
         styles.container,
         {
           backgroundColor: colors.background,
-          paddingTop: Math.max(insets.top, 16),
+          paddingTop: APP_HEADER_HEIGHT + insets.top,
           paddingBottom: Math.max(insets.bottom, 16),
           paddingLeft: Math.max(insets.left, 16),
           paddingRight: Math.max(insets.right, 16),
         },
       ]}
     >
-      {/* Header */}
-      <View
-        style={[
-          styles.header,
-          { backgroundColor: colors.headerBg, borderBottomColor: colors.border },
-        ]}
-      >
-        <View style={styles.headerSide}>
-          <Pressable
-            onPress={() => navigation.goBack()}
-            style={styles.navBtn}
-            accessibilityRole="button"
-            accessibilityLabel={t("common:nav.backLabel")}
-          >
-            <Text style={[styles.navText, { color: colors.textMuted }]}>
-              {t("common:nav.back")}
-            </Text>
-          </Pressable>
-        </View>
-        <View
-          style={[
-            styles.roundPill,
-            { backgroundColor: colors.surfaceAlt, borderColor: colors.accent },
-          ]}
+      <AppHeader title={t("game.title")} rightSlot={roundPill} />
+
+      {/* New Game */}
+      <View style={styles.actionRow}>
+        <Pressable
+          onPress={handleNewGamePress}
+          style={[styles.newGameBtn, { borderColor: colors.accent }]}
+          accessibilityRole="button"
+          accessibilityLabel={t("newGame.button")}
         >
-          <Text style={[styles.roundPillText, { color: colors.accent }]}>
-            {t("round.header", { round: gameState.round })}
-          </Text>
-        </View>
-        <View style={[styles.headerSide, styles.headerSideRight]}>
-          {showHeaderTotal && (
-            <View
-              style={styles.totalBox}
-              accessibilityElementsHidden
-              importantForAccessibility="no"
-            >
-              <Text style={[styles.totalLabel, { color: colors.textMuted }]}>
-                {t("section.total")}
-              </Text>
-              <Text style={[styles.totalValue, { color: colors.accent }]}>
-                {gameState.total_score}
-              </Text>
-            </View>
-          )}
-          <Pressable
-            onPress={handleNewGamePress}
-            style={[styles.newGameBtn, { borderColor: colors.accent }]}
-            accessibilityRole="button"
-            accessibilityLabel={t("newGame.button")}
-          >
-            <Text style={[styles.newGameText, { color: colors.accent }]}>
-              {t("newGame.button")}
-            </Text>
-          </Pressable>
-          <Pressable
-            onPress={toggle}
-            style={styles.navBtn}
-            accessibilityRole="button"
-            accessibilityLabel={t("common:theme.switchTo", {
-              mode: theme === "dark" ? t("common:theme.light") : t("common:theme.dark"),
-            })}
-          >
-            <Text style={[styles.navText, { color: colors.textMuted }]}>
-              {theme === "dark" ? t("common:theme.light") : t("common:theme.dark")}
-            </Text>
-          </Pressable>
-        </View>
+          <Text style={[styles.newGameText, { color: colors.accent }]}>{t("newGame.button")}</Text>
+        </Pressable>
       </View>
+
       {error && (
         <Text
           style={[styles.errorText, { color: colors.error }]}
@@ -253,39 +208,22 @@ export default function GameScreen({ navigation, route }: Props) {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  header: {
+  actionRow: {
     flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingVertical: 10,
-    paddingHorizontal: 12,
-    borderBottomWidth: 1,
-  },
-  headerSide: {
-    flex: 1,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-  },
-  headerSideRight: {
     justifyContent: "flex-end",
+    paddingHorizontal: 12,
+    paddingVertical: 6,
   },
   roundPill: {
-    paddingHorizontal: 14,
-    paddingVertical: 5,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
     borderRadius: 999,
     borderWidth: 1,
   },
   roundPillText: {
-    fontSize: 13,
+    fontSize: 11,
     fontWeight: "800",
     letterSpacing: 0.8,
-  },
-  navBtn: {
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    minHeight: 44,
-    justifyContent: "center",
   },
   newGameBtn: {
     paddingHorizontal: 10,
@@ -300,24 +238,6 @@ const styles = StyleSheet.create({
     fontWeight: "800",
     letterSpacing: 0.8,
     textTransform: "uppercase",
-  },
-  navText: {
-    fontSize: 13,
-    fontWeight: "600",
-  },
-  totalBox: {
-    alignItems: "flex-end",
-  },
-  totalLabel: {
-    fontSize: 9,
-    fontWeight: "800",
-    letterSpacing: 1.2,
-    textTransform: "uppercase",
-  },
-  totalValue: {
-    fontSize: 16,
-    fontWeight: "800",
-    lineHeight: 18,
   },
   errorText: {
     textAlign: "center",

@@ -34,7 +34,9 @@ test.describe("Cascade — navigation and smoke tests", () => {
     await page.getByRole("button", { name: "Play Cascade" }).click();
 
     // Cascade screen title or canvas should appear
-    await expect(page.getByRole("heading", { name: "Cascade" })).toBeVisible({ timeout: 10000 });
+    await expect(page.getByRole("heading", { name: "Cascade" })).toBeVisible({
+      timeout: 10000,
+    });
   });
 
   test("score display is visible on the Cascade screen", async ({ page }) => {
@@ -42,7 +44,9 @@ test.describe("Cascade — navigation and smoke tests", () => {
     await page.getByRole("button", { name: "Play Cascade" }).click();
 
     // Score display should show "Score" label
-    await expect(page.getByText("Score", { exact: true })).toBeVisible({ timeout: 10000 });
+    await expect(page.getByText("Score", { exact: true })).toBeVisible({
+      timeout: 10000,
+    });
   });
 
   test("tapping the canvas does not crash the app", async ({ page }) => {
@@ -87,15 +91,19 @@ test.describe("Cascade — navigation and smoke tests", () => {
     await expect(page.url()).toContain(page.url()); // still on same page
   });
 
-  test("back button from Cascade returns to Home", async ({ page }) => {
+  test("Lobby tab from Cascade returns to Home", async ({ page }) => {
     await page.goto("/");
     await page.getByRole("button", { name: "Play Cascade" }).click();
-    await expect(page.getByRole("heading", { name: "Cascade" })).toBeVisible({ timeout: 10000 });
+    await expect(page.getByRole("heading", { name: "Cascade" })).toBeVisible({
+      timeout: 10000,
+    });
 
-    // Click back
-    await page.getByRole("button", { name: /back/i }).click();
+    // Navigate home via Lobby tab (back button removed in #358)
+    await page.getByRole("tab", { name: "Lobby" }).click();
 
-    await expect(page.getByText("Gaming App").first()).toBeVisible({ timeout: 5000 });
+    await expect(page.getByText("Gaming App").first()).toBeVisible({
+      timeout: 5000,
+    });
     await expect(page.getByText("Choose a game")).toBeVisible();
   });
 });
