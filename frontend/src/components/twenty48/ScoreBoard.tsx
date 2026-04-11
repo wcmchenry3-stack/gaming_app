@@ -2,6 +2,7 @@ import React, { useEffect, useRef } from "react";
 import { View, Text, StyleSheet, Animated } from "react-native";
 import { useTranslation } from "react-i18next";
 import { useTheme } from "../../theme/ThemeContext";
+import { typography } from "../../theme/typography";
 
 interface ScoreBoardProps {
   score: number;
@@ -16,12 +17,9 @@ export default function ScoreBoard({ score, bestScore, scoreDelta }: ScoreBoardP
   // Score delta float animation.
   const deltaOpacity = useRef(new Animated.Value(0)).current;
   const deltaTranslateY = useRef(new Animated.Value(0)).current;
-  const lastDelta = useRef(0);
 
   useEffect(() => {
     if (scoreDelta <= 0) return;
-    lastDelta.current = scoreDelta;
-    // Reset to starting position below the score, then float upward.
     deltaOpacity.setValue(1);
     deltaTranslateY.setValue(0);
     Animated.parallel([
@@ -41,12 +39,13 @@ export default function ScoreBoard({ score, bestScore, scoreDelta }: ScoreBoardP
 
   return (
     <View style={styles.row}>
-      {/* Current score */}
-      <View style={[styles.box, { backgroundColor: colors.surface }]}>
+      <View
+        style={[styles.card, { backgroundColor: colors.surfaceAlt, borderTopColor: colors.accent }]}
+      >
         <Text style={[styles.label, { color: colors.textMuted }]}>{t("twenty48:score.label")}</Text>
         <View style={styles.valueWrap}>
           <Text
-            style={[styles.value, { color: colors.text }]}
+            style={[styles.value, { color: colors.accent }]}
             accessibilityLabel={t("twenty48:score.accessibilityLabel", { score })}
           >
             {score}
@@ -62,18 +61,23 @@ export default function ScoreBoard({ score, bestScore, scoreDelta }: ScoreBoardP
                 },
               ]}
               aria-hidden
+              testID="scoreboard-delta"
             >
-              +{lastDelta.current}
+              {`+${scoreDelta}`}
             </Animated.Text>
           )}
         </View>
       </View>
 
-      {/* Best score */}
-      <View style={[styles.box, { backgroundColor: colors.surface }]}>
+      <View
+        style={[
+          styles.card,
+          { backgroundColor: colors.surfaceAlt, borderTopColor: colors.secondary },
+        ]}
+      >
         <Text style={[styles.label, { color: colors.textMuted }]}>{t("twenty48:score.best")}</Text>
         <Text
-          style={[styles.value, { color: colors.text }]}
+          style={[styles.value, { color: colors.secondary }]}
           accessibilityLabel={t("twenty48:score.bestAccessibilityLabel", { score: bestScore })}
         >
           {bestScore}
@@ -86,32 +90,35 @@ export default function ScoreBoard({ score, bestScore, scoreDelta }: ScoreBoardP
 const styles = StyleSheet.create({
   row: {
     flexDirection: "row",
-    gap: 8,
+    gap: 12,
   },
-  box: {
+  card: {
+    flex: 1,
     paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 8,
+    paddingVertical: 12,
+    borderRadius: 12,
+    borderTopWidth: 2,
     alignItems: "center",
-    minWidth: 80,
   },
   label: {
+    fontFamily: typography.label,
     fontSize: 11,
-    fontWeight: "600",
     textTransform: "uppercase",
     letterSpacing: 0.8,
   },
   value: {
-    fontSize: 22,
-    fontWeight: "800",
+    fontFamily: typography.heading,
+    fontSize: 24,
+    letterSpacing: -0.5,
+    marginTop: 2,
   },
   valueWrap: {
     alignItems: "center",
   },
   delta: {
     position: "absolute",
+    fontFamily: typography.label,
     fontSize: 13,
-    fontWeight: "700",
     top: -14,
   },
 });
