@@ -4,7 +4,7 @@ import { GestureDetector, Gesture } from "react-native-gesture-handler";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTranslation } from "react-i18next";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import { RootStackParamList } from "../../App";
+import { HomeStackParamList } from "../../App";
 import { useTheme } from "../theme/ThemeContext";
 import { Twenty48State } from "../game/twenty48/types";
 import { newGame, move as engineMove, Direction } from "../game/twenty48/engine";
@@ -25,7 +25,7 @@ const SWIPE_THRESHOLD = 30;
 const MOVE_LOCK_MS = 120;
 
 type Props = {
-  navigation: NativeStackNavigationProp<RootStackParamList, "Twenty48">;
+  navigation: NativeStackNavigationProp<HomeStackParamList, "Twenty48">;
 };
 
 export default function Twenty48Screen({ navigation }: Props) {

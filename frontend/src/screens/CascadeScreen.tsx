@@ -3,7 +3,7 @@ import { View, Text, Pressable, StyleSheet, LayoutChangeEvent } from "react-nati
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTranslation } from "react-i18next";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import { RootStackParamList } from "../../App";
+import { HomeStackParamList } from "../../App";
 import { useTheme } from "../theme/ThemeContext";
 import { FruitSetProvider, useFruitSet } from "../theme/FruitSetContext";
 import { FruitQueue } from "../game/cascade/fruitQueue";
@@ -17,7 +17,7 @@ import ThemeSelector from "../components/cascade/ThemeSelector";
 import GameOverOverlay from "../components/cascade/GameOverOverlay";
 
 type Props = {
-  navigation: NativeStackNavigationProp<RootStackParamList, "Cascade">;
+  navigation: NativeStackNavigationProp<HomeStackParamList, "Cascade">;
 };
 
 function CascadeGame({ navigation }: Props) {
