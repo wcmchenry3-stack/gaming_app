@@ -11,7 +11,7 @@ interface BlackjackHeaderProps {
 
 export default function BlackjackHeader({ chips, onBack }: BlackjackHeaderProps) {
   const { t } = useTranslation("blackjack");
-  const { colors } = useTheme();
+  const { colors, theme, toggle } = useTheme();
 
   return (
     <View style={[styles.container, { backgroundColor: colors.headerBg }]}>
@@ -36,6 +36,23 @@ export default function BlackjackHeader({ chips, onBack }: BlackjackHeaderProps)
           {t("game.title")}
         </Text>
       </View>
+
+      {/* Theme toggle */}
+      <Pressable
+        onPress={toggle}
+        accessibilityRole="button"
+        accessibilityLabel={t("common:theme.switchTo" as Parameters<typeof t>[0], {
+          mode:
+            theme === "dark"
+              ? t("common:theme.light" as Parameters<typeof t>[0])
+              : t("common:theme.dark" as Parameters<typeof t>[0]),
+        })}
+        style={styles.themeToggle}
+      >
+        <Text style={[styles.themeToggleText, { color: colors.textMuted }]}>
+          {theme === "dark" ? "☀︎" : "☾"}
+        </Text>
+      </Pressable>
 
       {/* Bankroll */}
       <View style={styles.bankroll}>
@@ -88,8 +105,16 @@ const styles = StyleSheet.create({
     letterSpacing: 0.8,
     marginTop: 1,
   },
-  bankroll: {
+  themeToggle: {
     minWidth: 44,
+    minHeight: 44,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  themeToggleText: {
+    fontSize: 20,
+  },
+  bankroll: {
     alignItems: "flex-end",
   },
   bankrollLabel: {
