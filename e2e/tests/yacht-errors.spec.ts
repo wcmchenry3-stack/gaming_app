@@ -21,11 +21,12 @@ test.describe("Yacht — error paths and navigation", () => {
     await page.goto("/");
   });
 
-  test("back button from Yacht returns to Home", async ({ page }) => {
+  test("Lobby tab from Yacht returns to Home", async ({ page }) => {
     await page.getByRole("button", { name: "Play Yacht" }).click();
     await expect(page.getByText("Round 1 / 13")).toBeVisible();
 
-    await page.getByRole("button", { name: /back/i }).click();
+    // Navigate home via Lobby tab (back button removed in #358)
+    await page.getByRole("tab", { name: "Lobby" }).click();
 
     await expect(page.getByText("Gaming App").first()).toBeVisible();
   });

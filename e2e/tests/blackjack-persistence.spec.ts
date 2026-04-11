@@ -61,8 +61,8 @@ test.describe("Blackjack — state persistence", () => {
 
     const wasPlayerPhase = await page.getByText("Hit").isVisible();
 
-    // Navigate back to Home
-    await page.getByRole("button", { name: /back/i }).click();
+    // Navigate back to Home via Lobby tab (back button removed in #358)
+    await page.getByRole("tab", { name: "Lobby" }).click();
     await expect(page.getByText("Gaming App").first()).toBeVisible({
       timeout: 10000,
     });

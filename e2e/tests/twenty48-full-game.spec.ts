@@ -137,9 +137,10 @@ test.describe("2048 — full happy-path game journey", () => {
     });
   });
 
-  test("Back button returns to Home", async ({ page }) => {
+  test("Lobby tab returns to Home", async ({ page }) => {
     await gotoTwenty48(page);
-    await page.getByRole("button", { name: "Back" }).click();
+    // Navigate home via Lobby tab (back button removed in #358)
+    await page.getByRole("tab", { name: "Lobby" }).click();
     await expect(page.getByText("Gaming App").first()).toBeVisible({
       timeout: 10000,
     });

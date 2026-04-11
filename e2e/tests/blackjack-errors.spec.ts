@@ -31,20 +31,22 @@ test.describe("Blackjack — error paths and guardrails", () => {
   // Navigation
   // ---------------------------------------------------------------------------
 
-  test("back button from Blackjack navigates to Home", async ({ page }) => {
+  test("Lobby tab from Blackjack navigates to Home", async ({ page }) => {
     await gotoBlackjack(page);
-    await page.getByRole("button", { name: /back/i }).click();
+    // Navigate home via Lobby tab (back button removed in #358)
+    await page.getByRole("tab", { name: "Lobby" }).click();
     await expect(page.getByText("Gaming App").first()).toBeVisible({
       timeout: 10000,
     });
   });
 
-  test("back button works from player phase too", async ({ page }) => {
+  test("Lobby tab works from player phase too", async ({ page }) => {
     await injectEngineState(page, playerPhaseState());
     await page.getByRole("button", { name: "Play Blackjack" }).click();
     await expect(page.getByText("Hit")).toBeVisible();
 
-    await page.getByRole("button", { name: /back/i }).click();
+    // Navigate home via Lobby tab (back button removed in #358)
+    await page.getByRole("tab", { name: "Lobby" }).click();
     await expect(page.getByText("Gaming App").first()).toBeVisible({
       timeout: 10000,
     });

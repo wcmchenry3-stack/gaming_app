@@ -48,8 +48,8 @@ test.describe("Yacht — localStorage persistence (#183)", () => {
     await page.getByRole("button", { name: /Chance: potential score/ }).click();
     await expect(page.getByText("Round 2 / 13")).toBeVisible();
 
-    // Go back to Home
-    await page.getByRole("button", { name: /back/i }).click();
+    // Go back to Home via Lobby tab (back button removed in #358)
+    await page.getByRole("tab", { name: "Lobby" }).click();
     await expect(page.getByText("Gaming App").first()).toBeVisible();
 
     // Return to Yacht — should resume on Round 2
