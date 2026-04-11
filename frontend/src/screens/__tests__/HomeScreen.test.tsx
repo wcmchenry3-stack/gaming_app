@@ -75,7 +75,7 @@ describe("HomeScreen — game cards", () => {
   it("navigates to Blackjack when Blackjack card pressed", () => {
     const { getByLabelText } = renderScreen();
     fireEvent.press(getByLabelText("Play Blackjack"));
-    expect(mockNavigate).toHaveBeenCalledWith("Blackjack");
+    expect(mockNavigate).toHaveBeenCalledWith("BlackjackBetting");
   });
 
   it("navigates to Cascade when Cascade card pressed", () => {

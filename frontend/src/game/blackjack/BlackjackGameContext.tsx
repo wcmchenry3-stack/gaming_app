@@ -1,9 +1,5 @@
 import React, { createContext, useCallback, useContext, useEffect, useState } from "react";
-import {
-  newGame,
-  EngineState,
-  DEFAULT_RULES,
-} from "./engine";
+import { newGame, EngineState, DEFAULT_RULES } from "./engine";
 import { GameRules } from "./types";
 import { saveGame, loadGame, clearGame } from "./storage";
 

@@ -25,7 +25,7 @@ export default function BlackjackBettingScreen({ navigation }: Props) {
     if (!loading && engine && engine.phase !== "betting") {
       navigation.replace("BlackjackTable");
     }
-  }, [loading, engine?.phase, navigation]);
+  }, [loading, engine, navigation]);
 
   if (!engine && loading) {
     return (
