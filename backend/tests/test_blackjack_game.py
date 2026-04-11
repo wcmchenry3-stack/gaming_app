@@ -966,3 +966,39 @@ class TestNewHandResetsSplit:
         assert g._player_hands == []
         assert g._hand_bets == []
         assert g.is_split is False
+
+
+# ---------------------------------------------------------------------------
+# last_win
+# ---------------------------------------------------------------------------
+
+
+class TestLastWin:
+    def test_last_win_is_none_on_fresh_game(self):
+        assert BlackjackGame().last_win is None
+
+    def test_new_hand_carries_payout_into_last_win_on_win(self):
+        g = _in_result_phase(chips=1100, bet=100, outcome="win", payout=100)
+        g.new_hand()
+        assert g.last_win == 100
+
+    def test_new_hand_carries_negative_payout_on_loss(self):
+        g = _in_result_phase(chips=900, bet=100, outcome="lose", payout=-100)
+        g.new_hand()
+        assert g.last_win == -100
+
+    def test_new_hand_carries_zero_payout_on_push(self):
+        g = _in_result_phase(chips=1000, bet=100, outcome="push", payout=0)
+        g.new_hand()
+        assert g.last_win == 0
+
+    def test_last_win_updates_on_successive_hands(self):
+        g = _in_result_phase(chips=1100, bet=100, outcome="win", payout=100)
+        g.new_hand()
+        assert g.last_win == 100
+        # Simulate another result
+        g.payout = -50
+        g.outcome = "lose"
+        g.phase = "result"
+        g.new_hand()
+        assert g.last_win == -50

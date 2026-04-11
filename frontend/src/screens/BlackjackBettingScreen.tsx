@@ -1,5 +1,5 @@
 import React, { useEffect } from "react";
-import { View, Text, Pressable, StyleSheet, ActivityIndicator } from "react-native";
+import { View, Text, StyleSheet, ActivityIndicator } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTranslation } from "react-i18next";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
@@ -9,6 +9,7 @@ import { placeBet as enginePlaceBet, toViewState, DEFAULT_RULES } from "../game/
 import { useBlackjackGame } from "../game/blackjack/BlackjackGameContext";
 import BettingPanel from "../components/blackjack/BettingPanel";
 import BlackjackTable from "../components/blackjack/BlackjackTable";
+import BlackjackHeader from "../components/blackjack/BlackjackHeader";
 
 type Props = {
   navigation: NativeStackNavigationProp<RootStackParamList, "BlackjackBetting">;
@@ -16,7 +17,7 @@ type Props = {
 
 export default function BlackjackBettingScreen({ navigation }: Props) {
   const { t } = useTranslation(["blackjack", "common"]);
-  const { colors, theme, toggle } = useTheme();
+  const { colors } = useTheme();
   const insets = useSafeAreaInsets();
   const { engine, loading, error, apply, handleRulesChange } = useBlackjackGame();
 
@@ -44,39 +45,13 @@ export default function BlackjackBettingScreen({ navigation }: Props) {
         styles.container,
         {
           backgroundColor: colors.background,
-          paddingTop: Math.max(insets.top, 16),
+          paddingTop: insets.top,
           paddingBottom: Math.max(insets.bottom, 16),
-          paddingLeft: Math.max(insets.left, 16),
-          paddingRight: Math.max(insets.right, 16),
         },
       ]}
     >
-      {/* Header */}
-      <View style={styles.header}>
-        <Pressable
-          style={styles.headerBtn}
-          onPress={() => navigation.goBack()}
-          accessibilityRole="button"
-          accessibilityLabel={t("common:nav.back")}
-        >
-          <Text style={[styles.headerBtnText, { color: colors.textMuted }]}>‹</Text>
-        </Pressable>
-
-        <Text style={[styles.title, { color: colors.text }]}>{t("blackjack:game.title")}</Text>
-
-        <Pressable
-          style={styles.headerBtn}
-          onPress={toggle}
-          accessibilityRole="button"
-          accessibilityLabel={t("common:theme.switchTo", {
-            mode: theme === "dark" ? t("common:theme.light") : t("common:theme.dark"),
-          })}
-        >
-          <Text style={[styles.headerBtnText, { color: colors.textMuted }]}>
-            {theme === "dark" ? t("common:theme.light") : t("common:theme.dark")}
-          </Text>
-        </Pressable>
-      </View>
+      {/* Shared header with bankroll */}
+      <BlackjackHeader chips={state?.chips ?? 1000} onBack={() => navigation.goBack()} />
 
       {/* Phase label */}
       {state && (
@@ -126,31 +101,13 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingHorizontal: 16,
-    paddingBottom: 8,
-  },
-  headerBtn: {
-    minWidth: 44,
-    minHeight: 44,
-    justifyContent: "center",
-  },
-  headerBtnText: {
-    fontSize: 17,
-  },
-  title: {
-    fontSize: 20,
-    fontWeight: "700",
-  },
   phaseLabel: {
     textAlign: "center",
     fontSize: 13,
     fontWeight: "500",
     textTransform: "uppercase",
     letterSpacing: 0.8,
+    marginTop: 4,
     marginBottom: 4,
   },
   tableArea: {

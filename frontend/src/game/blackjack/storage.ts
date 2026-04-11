@@ -42,6 +42,10 @@ export async function loadGame(): Promise<EngineState | null> {
     if (!parsed.rules) {
       parsed.rules = DEFAULT_RULES;
     }
+    // Backfill lastWin for saves created before the HUD was added.
+    if (!("lastWin" in (parsed as object))) {
+      (parsed as unknown as Record<string, unknown>).lastWin = null;
+    }
     return parsed;
   } catch (e) {
     Sentry.captureException(e, { tags: { subsystem: "blackjack.storage", op: "load" } });

@@ -104,6 +104,7 @@ def _state_response(game: BlackjackGame) -> BlackjackStateResponse:
         dealer_hand=dealer_hand,
         outcome=game.outcome,
         payout=game.payout,
+        last_win=game.last_win,
         game_over=game_over,
         double_down_available=double_down_available,
         split_available=game.can_split(),

@@ -56,6 +56,8 @@ export interface EngineState {
   phase: "betting" | "player" | "result";
   outcome: "blackjack" | "win" | "lose" | "push" | null;
   payout: number;
+  /** Net chip delta from the previously completed hand. Null until at least one hand resolves. */
+  lastWin: number | null;
   deck: Card[];
   player_hand: Card[];
   dealer_hand: Card[];
@@ -271,6 +273,7 @@ export function toViewState(s: EngineState): BlackjackState {
     dealer_hand: handResponse(s.dealer_hand, concealing),
     outcome: s.outcome,
     payout: s.payout,
+    last_win: s.lastWin,
     game_over,
     double_down_available,
     split_available: canSplit(s),
@@ -316,6 +319,7 @@ export function newGame(deck?: Card[], rules?: GameRules): EngineState {
     phase: "betting",
     outcome: null,
     payout: 0,
+    lastWin: null,
     deck: deck ?? freshShuffledDeck(r.deck_count),
     player_hand: [],
     dealer_hand: [],
@@ -668,6 +672,7 @@ export function newHand(s: EngineState): EngineState {
     bet: 0,
     outcome: null,
     payout: 0,
+    lastWin: s.payout,
     doubled: false,
     deck,
     player_hand: [],

@@ -94,7 +94,7 @@ describe("BlackjackTableScreen — player phase", () => {
     renderScreen();
     await screen.findByText("Hit");
     await waitFor(() => {
-      expect(screen.queryByLabelText(/you have \d+ chips/i)).toBeTruthy();
+      expect(screen.queryByLabelText(/bankroll: \d+ chips/i)).toBeTruthy();
     });
   });
 
@@ -130,7 +130,7 @@ describe("BlackjackTableScreen — result phase", () => {
   it("chip balance is visible during result phase", async () => {
     renderScreen();
     await screen.findByText("Next Hand");
-    expect(screen.queryByLabelText(/you have \d+ chips/i)).toBeTruthy();
+    expect(screen.queryByLabelText(/bankroll: \d+ chips/i)).toBeTruthy();
   });
 
   it("Quit button calls goBack()", async () => {
