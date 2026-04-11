@@ -10,5 +10,9 @@
   "theme.darkShort": "ليل",
   "lang.switcherLabel": "اختر اللغة",
   "network.offlineBanner": "غير متصل — ستتم مزامنة النقاط عند إعادة الاتصال",
-  "brand.wordmark": "BC Arcade"
+  "brand.wordmark": "BC Arcade",
+  "nav.lobby": "الردهة",
+  "nav.ranks": "الترتيب",
+  "nav.profile": "الملف",
+  "nav.settings": "الإعدادات"
 }

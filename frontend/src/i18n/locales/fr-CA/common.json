@@ -10,5 +10,9 @@
   "theme.darkShort": "Sombre",
   "lang.switcherLabel": "Choisir langue",
   "network.offlineBanner": "Hors ligne — les scores seront synchronisés à la reconnexion",
-  "brand.wordmark": "BC Arcade"
+  "brand.wordmark": "BC Arcade",
+  "nav.lobby": "Accueil",
+  "nav.ranks": "Classement",
+  "nav.profile": "Profil",
+  "nav.settings": "Paramètres"
 }

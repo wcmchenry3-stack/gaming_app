@@ -10,5 +10,9 @@
   "theme.darkShort": "Тёмн.",
   "lang.switcherLabel": "Выбор языка",
   "network.offlineBanner": "Нет подключения — результаты синхронизируются при восстановлении",
-  "brand.wordmark": "BC Arcade"
+  "brand.wordmark": "BC Arcade",
+  "nav.lobby": "Лобби",
+  "nav.ranks": "Рейтинг",
+  "nav.profile": "Профиль",
+  "nav.settings": "Настройки"
 }

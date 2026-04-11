@@ -10,5 +10,9 @@
   "theme.darkShort": "כהה",
   "lang.switcherLabel": "בחירת שפה",
   "network.offlineBanner": "לא מקוון — הניקוד יסונכרן בעת חיבור מחדש",
-  "brand.wordmark": "BC Arcade"
+  "brand.wordmark": "BC Arcade",
+  "nav.lobby": "לובי",
+  "nav.ranks": "דירוג",
+  "nav.profile": "פרופיל",
+  "nav.settings": "הגדרות"
 }

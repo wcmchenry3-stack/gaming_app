@@ -16,8 +16,8 @@ import { test, expect, type Page } from "@playwright/test";
 
 async function gotoSettings(page: Page) {
   await page.goto("/");
-  // BottomTabBar exposes each tab with role=tab + hardcoded English accessibilityLabel
-  // from TAB_ITEMS, so this navigation is stable across locale changes.
+  // BottomTabBar exposes each tab with role=tab; initial load is English so
+  // "Settings" is valid here — only mid-test locale switches change the label.
   await page.getByRole("tab", { name: "Settings" }).click();
   await expect(page.getByTestId("theme-toggle-button")).toBeVisible();
 }
@@ -49,7 +49,9 @@ test.describe("Theme toggle", () => {
     await page.getByRole("tab", { name: "Lobby" }).click();
     await page.getByRole("tab", { name: "Settings" }).click();
 
-    const labelAfterNav = await page.getByTestId("theme-toggle-button").textContent();
+    const labelAfterNav = await page
+      .getByTestId("theme-toggle-button")
+      .textContent();
     expect(labelAfterNav).toBe(labelAfterToggle);
   });
 });
@@ -67,31 +69,39 @@ test.describe("Language switcher", () => {
     await page.getByTestId("lang-switcher-select").selectOption("es");
 
     await page.getByRole("tab", { name: "Lobby" }).click();
-    await expect(page.getByRole("button", { name: "Jugar Yacht" })).toBeVisible({
-      timeout: 3000,
-    });
+    await expect(page.getByRole("button", { name: "Jugar Yacht" })).toBeVisible(
+      {
+        timeout: 3000,
+      },
+    );
   });
 
   test("switching to German shows German UI copy", async ({ page }) => {
     await page.getByTestId("lang-switcher-select").selectOption("de");
 
     await page.getByRole("tab", { name: "Lobby" }).click();
-    await expect(page.getByRole("button", { name: "Yacht spielen" })).toBeVisible({
+    await expect(
+      page.getByRole("button", { name: "Yacht spielen" }),
+    ).toBeVisible({
       timeout: 3000,
     });
   });
 
-  test("switching language and back to English restores English copy", async ({ page }) => {
+  test("switching language and back to English restores English copy", async ({
+    page,
+  }) => {
     await page.getByTestId("lang-switcher-select").selectOption("es");
 
     await page.getByRole("tab", { name: "Lobby" }).click();
-    await expect(page.getByRole("button", { name: "Jugar Yacht" })).toBeVisible({
-      timeout: 3000,
-    });
+    await expect(page.getByRole("button", { name: "Jugar Yacht" })).toBeVisible(
+      {
+        timeout: 3000,
+      },
+    );
 
-    // Back to Settings — the <select>'s aria-label is now "Seleccionar idioma",
-    // but data-testid is stable so we don't need name-based selectors.
-    await page.getByRole("tab", { name: "Settings" }).click();
+    // Back to Settings — UI is now in Spanish so the tab label is "Ajustes".
+    // BottomTabBar uses t("nav.settings") so the accessible name localizes.
+    await page.getByRole("tab", { name: "Ajustes" }).click();
     await page.getByTestId("lang-switcher-select").selectOption("en");
 
     await page.getByRole("tab", { name: "Lobby" }).click();

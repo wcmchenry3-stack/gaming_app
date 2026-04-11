@@ -10,5 +10,9 @@
   "theme.darkShort": "Escuro",
   "lang.switcherLabel": "Selecionar idioma",
   "network.offlineBanner": "Offline — as pontuações serão sincronizadas ao reconectar",
-  "brand.wordmark": "BC Arcade"
+  "brand.wordmark": "BC Arcade",
+  "nav.lobby": "Saguão",
+  "nav.ranks": "Classificação",
+  "nav.profile": "Perfil",
+  "nav.settings": "Configurações"
 }
