@@ -125,9 +125,9 @@ test.describe("Blackjack — betting panel and chip selector", () => {
     await expect(
       page.getByRole("button", { name: /deal cards with 500-chip bet/i }),
     ).toBeVisible();
-    // All chip buttons should now be disabled
+    // 5-chip button should now be disabled (exact match avoids 25/500 ambiguity)
     await expect(
-      page.getByRole("button", { name: /5.*not available/i }),
+      page.getByRole("button", { name: "5-chip not available", exact: true }),
     ).toBeDisabled();
   });
 
