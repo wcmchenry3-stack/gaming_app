@@ -6,6 +6,10 @@ import { CardResponse } from "../../game/blackjack/types";
 
 interface Props {
   card: CardResponse;
+  /** Clockwise rotation in degrees — used for the player-hand card fan. */
+  rotation?: number;
+  /** "player" renders a larger card; "dealer" renders the compact default. */
+  variant?: "player" | "dealer";
 }
 
 const RED_SUITS = new Set(["♥", "♦"]);
@@ -20,22 +24,30 @@ function suitKey(suit: string): string {
   return map[suit] ?? suit;
 }
 
-export default function PlayingCard({ card }: Props) {
+export default function PlayingCard({ card, rotation = 0, variant = "dealer" }: Props) {
   const { t } = useTranslation("blackjack");
   const { colors } = useTheme();
+
+  const cardSizeStyle = variant === "player" ? styles.cardPlayer : styles.cardDealer;
+  const rankSizeStyle = variant === "player" ? styles.rankPlayer : styles.rankDealer;
+  const suitSizeStyle = variant === "player" ? styles.suitPlayer : styles.suitDealer;
+  const rotateStyle = rotation !== 0 ? { transform: [{ rotate: `${rotation}deg` }] } : undefined;
 
   if (card.face_down) {
     return (
       <View
         style={[
           styles.card,
-          styles.faceDown,
-          { borderColor: colors.border, backgroundColor: colors.surface },
+          cardSizeStyle,
+          { borderColor: colors.secondary, backgroundColor: colors.surface },
+          rotateStyle,
         ]}
         accessibilityLabel={t("card.faceDown")}
         accessibilityRole="image"
       >
-        <Text style={[styles.backPattern, { color: colors.textMuted }]}>?</Text>
+        <View style={[styles.cardBackInner, { borderColor: colors.secondary }]}>
+          <Text style={[styles.backPattern, { color: colors.secondary }]}>?</Text>
+        </View>
       </View>
     );
   }
@@ -47,39 +59,66 @@ export default function PlayingCard({ card }: Props) {
 
   return (
     <View
-      style={[styles.card, { borderColor: colors.border, backgroundColor: colors.surface }]}
+      style={[
+        styles.card,
+        cardSizeStyle,
+        { borderColor: colors.border, backgroundColor: colors.surface },
+        rotateStyle,
+      ]}
       accessibilityLabel={label}
       accessibilityRole="image"
     >
-      <Text style={[styles.rank, { color: rankColor }]}>{card.rank}</Text>
-      <Text style={[styles.suit, { color: rankColor }]}>{card.suit}</Text>
+      <Text style={[rankSizeStyle, { color: rankColor }]}>{card.rank}</Text>
+      <Text style={[suitSizeStyle, { color: rankColor }]}>{card.suit}</Text>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   card: {
-    width: 52,
-    height: 72,
-    borderRadius: 6,
+    borderRadius: 8,
     borderWidth: 1,
     alignItems: "center",
     justifyContent: "center",
     margin: 4,
     gap: 2,
   },
-  faceDown: {},
+  cardDealer: {
+    width: 52,
+    height: 72,
+  },
+  cardPlayer: {
+    width: 68,
+    height: 96,
+  },
+  cardBackInner: {
+    width: "70%",
+    height: "70%",
+    borderRadius: 4,
+    borderWidth: 1,
+    alignItems: "center",
+    justifyContent: "center",
+  },
   backPattern: {
-    fontSize: 24,
+    fontSize: 22,
     fontWeight: "700",
   },
-  rank: {
+  rankDealer: {
     fontSize: 16,
     fontWeight: "700",
     lineHeight: 20,
   },
-  suit: {
+  rankPlayer: {
+    fontSize: 20,
+    fontWeight: "700",
+    lineHeight: 24,
+  },
+  suitDealer: {
     fontSize: 18,
     lineHeight: 22,
+  },
+  suitPlayer: {
+    fontSize: 22,
+    lineHeight: 26,
   },
 });

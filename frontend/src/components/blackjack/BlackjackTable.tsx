@@ -35,7 +35,12 @@ export default function BlackjackTable({
 
   return (
     <View style={styles.container}>
-      <HandDisplay hand={dealerHand} label={t("hand.dealer")} concealed={isPlayerPhase} />
+      <HandDisplay
+        hand={dealerHand}
+        label={t("hand.dealer")}
+        concealed={isPlayerPhase}
+        variant="dealer"
+      />
       <View style={styles.divider} />
 
       {isSplit ? (
@@ -51,10 +56,17 @@ export default function BlackjackTable({
                 key={i}
                 style={[
                   styles.splitHand,
-                  isActive && { borderColor: colors.accent, borderWidth: 2 },
+                  isActive && {
+                    borderColor: colors.accent,
+                    borderWidth: 2,
+                    shadowColor: colors.accent,
+                    shadowOpacity: 0.4,
+                    shadowRadius: 8,
+                    elevation: 4,
+                  },
                 ]}
               >
-                <HandDisplay hand={hand} label={label} />
+                <HandDisplay hand={hand} label={label} variant="player" />
                 {bet != null && (
                   <Text style={[styles.handBet, { color: colors.textMuted }]}>{bet}</Text>
                 )}
@@ -85,7 +97,7 @@ export default function BlackjackTable({
           })}
         </View>
       ) : (
-        <HandDisplay hand={playerHand} label={t("hand.player")} />
+        <HandDisplay hand={playerHand} label={t("hand.player")} variant="player" />
       )}
     </View>
   );

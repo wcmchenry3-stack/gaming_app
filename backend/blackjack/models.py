@@ -26,6 +26,7 @@ class CardResponse(BaseModel):
 class HandResponse(BaseModel):
     cards: list[CardResponse]
     value: int  # 0 when the hand contains a face-down card
+    soft: bool = False  # True when an Ace is counted as 11
 
 
 class BlackjackStateResponse(BaseModel):

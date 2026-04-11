@@ -380,3 +380,32 @@ class TestDoubleDownAvailable:
         _current_game().chips = 50
         data = client.get("/blackjack/state", headers=SESSION_HEADERS).json()
         assert data["double_down_available"] is False
+
+
+# ---------------------------------------------------------------------------
+# HandResponse soft field
+# ---------------------------------------------------------------------------
+
+
+class TestHandResponseSoft:
+    def test_soft_false_for_hard_hand(self):
+        _inject_player_phase()  # 7 + 8 = hard 15
+        data = client.get("/blackjack/state", headers=SESSION_HEADERS).json()
+        assert data["player_hand"]["soft"] is False
+
+    def test_soft_true_for_soft_hand(self):
+        new_game()
+        g = _current_game()
+        g.chips = 1000
+        g.bet = 100
+        g._player_hand = [Card("♠", "A"), Card("♥", "6")]  # soft 17
+        g._dealer_hand = [Card("♦", "6"), Card("♣", "9")]
+        g.phase = "player"
+        data = client.get("/blackjack/state", headers=SESSION_HEADERS).json()
+        assert data["player_hand"]["soft"] is True
+
+    def test_dealer_soft_false_when_concealed(self):
+        _inject_player_phase()
+        data = client.get("/blackjack/state", headers=SESSION_HEADERS).json()
+        # Dealer hole card is hidden — soft must be False
+        assert data["dealer_hand"]["soft"] is False

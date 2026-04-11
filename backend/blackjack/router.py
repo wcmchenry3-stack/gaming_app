@@ -4,7 +4,7 @@ from fastapi import APIRouter, HTTPException, Request
 
 from limiter import limiter
 from session import get_session_id
-from .game import BlackjackGame, BlackjackRules, hand_value
+from .game import BlackjackGame, BlackjackRules, hand_value, is_soft_hand
 from .models import (
     BlackjackStateResponse,
     CardResponse,
@@ -47,8 +47,14 @@ def _hand_response(cards, conceal_hole: bool = False) -> HandResponse:
             card_responses.append(CardResponse(rank="?", suit="?", face_down=True))
         else:
             card_responses.append(CardResponse(rank=card.rank, suit=card.suit))
-    value = 0 if conceal_hole else hand_value(list(cards))
-    return HandResponse(cards=card_responses, value=value)
+    if conceal_hole:
+        value = 0
+        soft = False
+    else:
+        visible = list(cards)
+        value = hand_value(visible)
+        soft = is_soft_hand(visible)
+    return HandResponse(cards=card_responses, value=value, soft=soft)
 
 
 def _state_response(game: BlackjackGame) -> BlackjackStateResponse:
