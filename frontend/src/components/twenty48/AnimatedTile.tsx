@@ -102,9 +102,7 @@ export default function AnimatedTile({ tile, tileSize, gap }: AnimatedTileProps)
       accessibilityLabel={String(value)}
       accessibilityRole="image"
     >
-      <Text style={[styles.text, visual.text, { fontSize: getTileFontSize(value) }]}>
-        {value}
-      </Text>
+      <Text style={[styles.text, visual.text, { fontSize: getTileFontSize(value) }]}>{value}</Text>
     </Animated.View>
   );
 }
