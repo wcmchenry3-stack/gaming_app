@@ -12,6 +12,7 @@ export default function LanguageSwitcher() {
       value={i18n.language}
       onChange={(e) => i18n.changeLanguage(e.target.value)}
       aria-label={t("lang.switcherLabel")}
+      data-testid="lang-switcher-select"
       style={{
         backgroundColor: colors.surface,
         color: colors.textMuted,
