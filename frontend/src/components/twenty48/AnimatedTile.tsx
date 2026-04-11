@@ -20,30 +20,9 @@ import Animated, {
   Easing,
 } from "react-native-reanimated";
 import { TileData } from "../../game/twenty48/types";
-
-const TILE_COLORS: Record<number, string> = {
-  0: "transparent",
-  2: "#eee4da",
-  4: "#ede0c8",
-  8: "#f2b179",
-  16: "#f59563",
-  32: "#f67c5f",
-  64: "#f65e3b",
-  128: "#edcf72",
-  256: "#edcc61",
-  512: "#edc850",
-  1024: "#edc53f",
-  2048: "#edc22e",
-};
-
-const DARK_TEXT_VALUES = new Set([0, 2, 4]);
-
-function getFontSize(value: number): number {
-  if (value < 100) return 28;
-  if (value < 1000) return 22;
-  if (value < 10000) return 18;
-  return 14;
-}
+import { useTheme } from "../../theme/ThemeContext";
+import { typography } from "../../theme/typography";
+import { getTileFontSize, getTileVisual } from "./tileStyles";
 
 function tilePos(index: number, tileSize: number, gap: number): number {
   return gap + index * (tileSize + gap);
@@ -57,9 +36,8 @@ interface AnimatedTileProps {
 
 export default function AnimatedTile({ tile, tileSize, gap }: AnimatedTileProps) {
   const { id, value, row, col, prevRow, prevCol, isNew, isMerge } = tile;
-
-  const bg = TILE_COLORS[value] ?? "#3c3a32";
-  const textColor = DARK_TEXT_VALUES.has(value) ? "#776e65" : "#f9f6f2";
+  const { colors } = useTheme();
+  const visual = getTileVisual(value, colors);
 
   const targetTop = tilePos(row, tileSize, gap);
   const targetLeft = tilePos(col, tileSize, gap);
@@ -108,17 +86,23 @@ export default function AnimatedTile({ tile, tileSize, gap }: AnimatedTileProps)
     transform: [{ scale: scale.value }],
   }));
 
+  if (value === 0) {
+    return (
+      <Animated.View
+        style={[styles.tile, { width: tileSize, height: tileSize }, animStyle]}
+        accessibilityLabel="empty"
+        accessibilityRole="image"
+      />
+    );
+  }
+
   return (
     <Animated.View
-      style={[styles.tile, { width: tileSize, height: tileSize, backgroundColor: bg }, animStyle]}
-      accessibilityLabel={value > 0 ? String(value) : "empty"}
+      style={[styles.tile, { width: tileSize, height: tileSize }, visual.container, animStyle]}
+      accessibilityLabel={String(value)}
       accessibilityRole="image"
     >
-      {value > 0 && (
-        <Text style={[styles.text, { color: textColor, fontSize: getFontSize(value) }]}>
-          {value}
-        </Text>
-      )}
+      <Text style={[styles.text, visual.text, { fontSize: getTileFontSize(value) }]}>{value}</Text>
     </Animated.View>
   );
 }
@@ -126,11 +110,11 @@ export default function AnimatedTile({ tile, tileSize, gap }: AnimatedTileProps)
 const styles = StyleSheet.create({
   tile: {
     position: "absolute",
-    borderRadius: 6,
+    borderRadius: 8,
     alignItems: "center",
     justifyContent: "center",
   },
   text: {
-    fontWeight: "800",
+    fontFamily: typography.heading,
   },
 });
