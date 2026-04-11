@@ -69,7 +69,8 @@ const dark: Colors = {
   surfaceHigh: TOKENS.darkSurfaceHigh,
   border: "#2e2e38",
   text: "#e8e8f0",
-  textMuted: "#6e6e7a",
+  // WCAG AA: 5.83:1 on #25252c, 5.05:1 on #303034, 7.45:1 on #0e0e13
+  textMuted: "#a0a0ac",
   textFilled: "#4a4a56",
   textOnAccent: "#0e0e13",
   accent: TOKENS.accentDark,

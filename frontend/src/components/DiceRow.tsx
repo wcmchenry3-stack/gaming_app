@@ -71,7 +71,7 @@ export default function DiceRow({ dice, rollsUsed, gameOver, onRoll, resetHeld }
         }
         accessibilityState={{ disabled: !canRoll || rolling, busy: rolling }}
       >
-        <Text style={styles.rollButtonText}>
+        <Text style={[styles.rollButtonText, { color: colors.textOnAccent }]}>
           {rolling ? t("roll.rolling") : t("roll.button", { count: rollsLeft })}
         </Text>
       </Pressable>
@@ -99,7 +99,6 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   rollButtonText: {
-    color: "#fff",
     fontSize: 16,
     fontWeight: "700",
   },
