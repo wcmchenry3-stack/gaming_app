@@ -17,9 +17,16 @@ export default function GameOverModal({ visible, onPlayAgain, onHome }: Props) {
     <Modal visible={visible} transparent animationType="fade" accessibilityViewIsModal>
       <View style={styles.overlay}>
         <View
-          style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.border }]}
+          style={[
+            styles.card,
+            {
+              backgroundColor: colors.surface,
+              borderColor: colors.error,
+              borderTopColor: colors.error,
+            },
+          ]}
         >
-          <Text style={[styles.title, { color: colors.text }]}>{t("gameOver.title")}</Text>
+          <Text style={[styles.title, { color: colors.error }]}>{t("gameOver.title")}</Text>
           <Text style={[styles.body, { color: colors.textMuted }]}>{t("gameOver.body")}</Text>
 
           <Pressable
@@ -60,6 +67,7 @@ const styles = StyleSheet.create({
     maxWidth: 360,
     borderRadius: 16,
     borderWidth: 1,
+    borderTopWidth: 4,
     padding: 28,
     alignItems: "center",
     gap: 16,

@@ -15,6 +15,23 @@ export default function ResultBanner({ outcome, payout }: Props) {
   const outcomeKey = `outcome.${outcome}` as const;
   const outcomeText = t(outcomeKey as Parameters<typeof t>[0]);
 
+  // Per-outcome accent color: blackjack=tertiary lime, win=bonus green,
+  // lose=error red, push=textMuted
+  let accentColor: string;
+  switch (outcome) {
+    case "blackjack":
+      accentColor = colors.tertiary;
+      break;
+    case "win":
+      accentColor = colors.bonus;
+      break;
+    case "lose":
+      accentColor = colors.error;
+      break;
+    default: // push
+      accentColor = colors.textMuted;
+  }
+
   let payoutText: string;
   let payoutColor: string;
   if (payout > 0) {
@@ -29,8 +46,17 @@ export default function ResultBanner({ outcome, payout }: Props) {
   }
 
   return (
-    <View style={styles.container}>
-      <Text style={[styles.outcome, { color: colors.text }]}>{outcomeText}</Text>
+    <View
+      style={[
+        styles.container,
+        {
+          backgroundColor: colors.surfaceHigh,
+          borderColor: colors.border,
+          borderTopColor: accentColor,
+        },
+      ]}
+    >
+      <Text style={[styles.outcome, { color: accentColor }]}>{outcomeText}</Text>
       <Text
         style={[styles.payout, { color: payoutColor }]}
         accessibilityLabel={t("payout.accessibilityLabel", { amount: payout })}
@@ -43,15 +69,25 @@ export default function ResultBanner({ outcome, payout }: Props) {
 
 const styles = StyleSheet.create({
   container: {
+    width: "100%",
+    maxWidth: 320,
     alignItems: "center",
+    borderRadius: 12,
+    borderWidth: 1,
+    borderTopWidth: 4,
+    paddingVertical: 20,
+    paddingHorizontal: 24,
     gap: 6,
   },
   outcome: {
-    fontSize: 28,
+    fontSize: 30,
     fontWeight: "800",
+    textAlign: "center",
+    letterSpacing: -0.5,
   },
   payout: {
     fontSize: 20,
     fontWeight: "700",
+    textAlign: "center",
   },
 });
