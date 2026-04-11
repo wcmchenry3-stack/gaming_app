@@ -7,6 +7,7 @@
   "section.lower": "Section Basse",
   "section.total": "Score Total",
   "bonus.label": "Bonus (≥63 = +35)",
+  "bonus.badge": "Bonus à 63",
   "bonus.progress": "{{subtotal}} / 63",
   "bonus.achieved": "{{subtotal}} / 63 ✓",
   "category.ones": "As",

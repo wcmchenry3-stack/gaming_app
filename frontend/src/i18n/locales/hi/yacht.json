@@ -7,6 +7,7 @@
   "section.lower": "निचला सेक्शन",
   "section.total": "कुल स्कोर",
   "bonus.label": "बोनस (≥63 = +35)",
+  "bonus.badge": "63 पर बोनस",
   "bonus.progress": "{{subtotal}} / 63",
   "bonus.achieved": "{{subtotal}} / 63 ✓",
   "category.ones": "एक",

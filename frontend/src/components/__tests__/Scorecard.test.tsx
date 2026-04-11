@@ -56,21 +56,21 @@ describe("Scorecard", () => {
   });
 
   it("shows potential scores when rollsUsed > 0", () => {
+    // Use distinct values that don't collide with CategoryIcon glyphs (1–6)
     const { getByText } = renderScorecard({
       rollsUsed: 1,
-      possibleScores: { ones: 3, twos: 6 },
+      possibleScores: { ones: 17, twos: 23 },
     });
-    expect(getByText("3")).toBeTruthy();
-    expect(getByText("6")).toBeTruthy();
+    expect(getByText("17")).toBeTruthy();
+    expect(getByText("23")).toBeTruthy();
   });
 
   it("does not show potential scores when rollsUsed === 0", () => {
     const { queryByText } = renderScorecard({
       rollsUsed: 0,
-      possibleScores: { ones: 3 },
+      possibleScores: { ones: 17 },
     });
-    // The value "3" should not appear as a potential score
-    expect(queryByText("3")).toBeNull();
+    expect(queryByText("17")).toBeNull();
   });
 
   it("calls onScore with the correct category key when a row is pressed", () => {
@@ -80,14 +80,14 @@ describe("Scorecard", () => {
       possibleScores: { ones: 3 },
       onScore,
     });
-    fireEvent.press(getByRole("button", { name: /ones/i }));
+    fireEvent.press(getByRole("button", { name: /^Ones:/i }));
     expect(onScore).toHaveBeenCalledWith("ones");
   });
 
   it("does not call onScore when rollsUsed === 0", () => {
     const onScore = jest.fn();
     const { getByRole } = renderScorecard({ rollsUsed: 0, onScore });
-    fireEvent.press(getByRole("button", { name: /ones/i }));
+    fireEvent.press(getByRole("button", { name: /^Ones:/i }));
     expect(onScore).not.toHaveBeenCalled();
   });
 
@@ -99,20 +99,20 @@ describe("Scorecard", () => {
       possibleScores: { twos: 6 },
       onScore,
     });
-    fireEvent.press(getByRole("button", { name: /ones/i }));
+    fireEvent.press(getByRole("button", { name: /^Ones:/i }));
     expect(onScore).not.toHaveBeenCalled();
   });
 
   it("shows bonus progress text when upperBonus === 0", () => {
-    const { getByText } = renderScorecard({ upperSubtotal: 21, upperBonus: 0 });
-    // Bonus progress includes the subtotal
-    expect(getByText(/21/)).toBeTruthy();
+    const { getAllByText } = renderScorecard({ upperSubtotal: 21, upperBonus: 0 });
+    // Bonus progress is rendered in the upper bento row
+    expect(getAllByText(/21 \/ 63/).length).toBeGreaterThan(0);
   });
 
   it("shows bonus achieved text when upperBonus > 0", () => {
-    const { getByText } = renderScorecard({ upperSubtotal: 63, upperBonus: 35 });
-    // bonus.achieved = "{{subtotal}} / 63 ✓" — the ✓ is unique to the achieved state
-    expect(getByText(/✓/)).toBeTruthy();
+    const { getAllByText } = renderScorecard({ upperSubtotal: 63, upperBonus: 35 });
+    // bonus.achieved = "{{subtotal}} / 63 ✓"
+    expect(getAllByText(/✓/).length).toBeGreaterThan(0);
   });
 });
 
