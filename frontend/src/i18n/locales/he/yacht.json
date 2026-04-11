@@ -49,5 +49,10 @@
   "gameOver.playAgain": "שחק שוב",
   "gameOver.playAgainLabel": "התחל משחק חדש",
   "gameOver.dismiss": "לא תודה",
-  "gameOver.dismissLabel": "סגור והשאר את הניקוד הנוכחי גלוי"
+  "gameOver.dismissLabel": "סגור והשאר את הניקוד הנוכחי גלוי",
+  "newGame.button": "משחק חדש",
+  "newGame.confirm.title": "להתחיל משחק חדש?",
+  "newGame.confirm.body": "המשחק הנוכחי יאבד. הניקוד והסיבוב יאופסו.",
+  "newGame.confirm.confirm": "התחל משחק חדש",
+  "newGame.confirm.cancel": "ביטול"
 }

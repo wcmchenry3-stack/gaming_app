@@ -49,5 +49,10 @@
   "gameOver.playAgain": "Opnieuw",
   "gameOver.playAgainLabel": "Een nieuw spel starten",
   "gameOver.dismiss": "Nee bedankt",
-  "gameOver.dismissLabel": "Sluiten en huidige score zichtbaar houden"
+  "gameOver.dismissLabel": "Sluiten en huidige score zichtbaar houden",
+  "newGame.button": "Nieuw spel",
+  "newGame.confirm.title": "Nieuw spel starten?",
+  "newGame.confirm.body": "Je huidige spel gaat verloren. Score en ronde worden gereset.",
+  "newGame.confirm.confirm": "Nieuw spel starten",
+  "newGame.confirm.cancel": "Annuleren"
 }

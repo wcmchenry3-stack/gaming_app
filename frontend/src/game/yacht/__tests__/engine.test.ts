@@ -11,6 +11,7 @@ import {
   possibleScores,
   calculateScore,
   computeDerived,
+  isInProgress,
   setRng,
   createSeededRng,
   Category,
@@ -627,5 +628,31 @@ describe("seedable RNG (setRng + createSeededRng)", () => {
     const a = roll(newGame(), [false, false, false, false, false]);
     const b = roll(newGame(), [false, false, false, false, false]);
     expect(a.dice).not.toEqual(b.dice);
+  });
+});
+
+describe("isInProgress", () => {
+  it("returns false for a fresh new game", () => {
+    expect(isInProgress(newGame())).toBe(false);
+  });
+
+  it("returns true when rolls_used > 0", () => {
+    const g = newGame();
+    expect(isInProgress({ ...g, rolls_used: 1 })).toBe(true);
+  });
+
+  it("returns true when round > 1", () => {
+    const g = newGame();
+    expect(isInProgress({ ...g, round: 2 })).toBe(true);
+  });
+
+  it("returns true when any category has been scored", () => {
+    const g = newGame();
+    expect(isInProgress({ ...g, scores: { ...g.scores, chance: 12 } })).toBe(true);
+  });
+
+  it("returns true when a category is scored to 0 (still a decision made)", () => {
+    const g = newGame();
+    expect(isInProgress({ ...g, scores: { ...g.scores, yacht: 0 } })).toBe(true);
   });
 });

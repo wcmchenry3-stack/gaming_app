@@ -49,5 +49,10 @@
   "gameOver.playAgain": "Nochmal",
   "gameOver.playAgainLabel": "Ein neues Spiel starten",
   "gameOver.dismiss": "Nein danke",
-  "gameOver.dismissLabel": "Schließen und aktuelle Punktzahl sichtbar lassen"
+  "gameOver.dismissLabel": "Schließen und aktuelle Punktzahl sichtbar lassen",
+  "newGame.button": "Neues Spiel",
+  "newGame.confirm.title": "Neues Spiel starten?",
+  "newGame.confirm.body": "Das aktuelle Spiel geht verloren. Punkte und Runde werden zurückgesetzt.",
+  "newGame.confirm.confirm": "Neues Spiel starten",
+  "newGame.confirm.cancel": "Abbrechen"
 }

@@ -49,5 +49,10 @@
   "gameOver.playAgain": "Jogar de Novo",
   "gameOver.playAgainLabel": "Iniciar um novo jogo",
   "gameOver.dismiss": "Não, obrigado",
-  "gameOver.dismissLabel": "Fechar e manter a pontuação atual visível"
+  "gameOver.dismissLabel": "Fechar e manter a pontuação atual visível",
+  "newGame.button": "Novo jogo",
+  "newGame.confirm.title": "Iniciar novo jogo?",
+  "newGame.confirm.body": "O jogo atual será perdido. A pontuação e a rodada serão redefinidas.",
+  "newGame.confirm.confirm": "Iniciar novo jogo",
+  "newGame.confirm.cancel": "Cancelar"
 }
