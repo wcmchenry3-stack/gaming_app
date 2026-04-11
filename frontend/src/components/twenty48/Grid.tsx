@@ -1,5 +1,5 @@
 import React from "react";
-import { View, StyleSheet, useWindowDimensions } from "react-native";
+import { View, StyleSheet, Platform, useWindowDimensions } from "react-native";
 import { useTheme } from "../../theme/ThemeContext";
 import { TileData } from "../../game/twenty48/types";
 import AnimatedTile from "./AnimatedTile";
@@ -11,6 +11,18 @@ const MAX_BOARD = 360;
 interface GridProps {
   tiles: TileData[];
 }
+
+// Large drop shadow: native properties + web boxShadow via inline style.
+const BOARD_SHADOW =
+  Platform.OS === "web"
+    ? ({ boxShadow: "0 8px 40px rgba(0,0,0,0.6)" } as object)
+    : ({
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 8 },
+        shadowOpacity: 0.5,
+        shadowRadius: 24,
+        elevation: 24,
+      } as object);
 
 export default function Grid({ tiles }: GridProps) {
   const { width } = useWindowDimensions();
@@ -29,10 +41,7 @@ export default function Grid({ tiles }: GridProps) {
       slots.push(
         <View
           key={`slot-${r}-${c}`}
-          style={[
-            styles.slot,
-            { width: tileSize, height: tileSize, top, left, backgroundColor: colors.border },
-          ]}
+          style={[styles.slot, { width: tileSize, height: tileSize, top, left }]}
           accessibilityRole={isEmpty ? "image" : undefined}
           accessibilityLabel={isEmpty ? "empty" : undefined}
         />
@@ -44,7 +53,8 @@ export default function Grid({ tiles }: GridProps) {
     <View
       style={[
         styles.grid,
-        { width: boardWidth, height: boardWidth, backgroundColor: colors.border },
+        { width: boardWidth, height: boardWidth, backgroundColor: colors.surface },
+        BOARD_SHADOW,
       ]}
       accessible={true}
       accessibilityLabel="Game board"
@@ -59,11 +69,14 @@ export default function Grid({ tiles }: GridProps) {
 
 const styles = StyleSheet.create({
   grid: {
-    borderRadius: 10,
+    borderRadius: 32,
     position: "relative",
   },
   slot: {
     position: "absolute",
     borderRadius: 6,
+    backgroundColor: "#000000",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.05)",
   },
 });

@@ -160,6 +160,9 @@ export default function Twenty48Screen({ navigation }: Props) {
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [handleMove]);
 
+  // Blur filter for ambient glow blobs — web only (native uses opacity alone).
+  const glowBlur = Platform.OS === "web" ? ({ filter: "blur(80px)" } as object) : undefined;
+
   const swipeGesture = Gesture.Pan()
     .minDistance(SWIPE_THRESHOLD)
     .onEnd((e) => {
@@ -255,7 +258,22 @@ export default function Twenty48Screen({ navigation }: Props) {
 
       {/* Board */}
       <GestureDetector gesture={swipeGesture}>
-        <View style={styles.boardContainer}>{state && <Grid tiles={state.tiles} />}</View>
+        <View style={styles.boardContainer}>
+          {/* Ambient glow blobs — decorative, placed behind the grid */}
+          <View
+            style={[styles.glowTopLeft, { backgroundColor: colors.accent }, glowBlur]}
+            accessibilityElementsHidden
+            importantForAccessibility="no-hide-descendants"
+            pointerEvents="none"
+          />
+          <View
+            style={[styles.glowBottomRight, { backgroundColor: colors.secondary }, glowBlur]}
+            accessibilityElementsHidden
+            importantForAccessibility="no-hide-descendants"
+            pointerEvents="none"
+          />
+          {state && <Grid tiles={state.tiles} />}
+        </View>
       </GestureDetector>
 
       {/* Overlays */}
@@ -334,6 +352,25 @@ const styles = StyleSheet.create({
   boardContainer: {
     alignItems: "center",
     justifyContent: "center",
+    position: "relative",
+  },
+  glowTopLeft: {
+    position: "absolute",
+    width: 192,
+    height: 192,
+    top: -24,
+    left: -24,
+    borderRadius: 96,
+    opacity: 0.1,
+  },
+  glowBottomRight: {
+    position: "absolute",
+    width: 192,
+    height: 192,
+    bottom: -24,
+    right: -24,
+    borderRadius: 96,
+    opacity: 0.1,
   },
   error: {
     fontSize: 13,
