@@ -29,10 +29,7 @@ export function AppHeader({ title, rightSlot }: AppHeaderProps) {
   const bgColor = hexToRgba(colors.background, 0.7);
 
   return (
-    <View
-      accessibilityRole="header"
-      style={[styles.wrapper, { height: totalHeight }]}
-    >
+    <View accessibilityRole="header" style={[styles.wrapper, { height: totalHeight }]}>
       {Platform.OS === "web" ? (
         <View
           style={[
