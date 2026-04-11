@@ -281,6 +281,15 @@ function jokerActive(state: GameState): boolean {
 // Public API
 // ---------------------------------------------------------------------------
 
+export function isInProgress(state: GameState): boolean {
+  if (state.round > 1) return true;
+  if (state.rolls_used > 0) return true;
+  for (const cat of CATEGORIES) {
+    if (state.scores[cat] != null) return true;
+  }
+  return false;
+}
+
 export function newGame(): GameState {
   const scores: GameState["scores"] = {};
   for (const cat of CATEGORIES) scores[cat] = null;

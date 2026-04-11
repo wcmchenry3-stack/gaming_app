@@ -11,6 +11,7 @@ import {
   roll as engineRoll,
   score as engineScore,
   possibleScores as enginePossibleScores,
+  isInProgress,
   Category,
 } from "../game/yacht/engine";
 import { saveGame, clearGame } from "../game/yacht/storage";
@@ -18,6 +19,7 @@ import * as Sentry from "@sentry/react-native";
 import DiceRow from "../components/DiceRow";
 import Scorecard from "../components/Scorecard";
 import GameOverModal from "../components/yacht/GameOverModal";
+import NewGameConfirmModal from "../components/yacht/NewGameConfirmModal";
 import { useTheme } from "../theme/ThemeContext";
 
 type Props = {
@@ -36,6 +38,7 @@ export default function GameScreen({ navigation, route }: Props) {
   const [resetHeld, setResetHeld] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [gameKey, setGameKey] = useState(0);
+  const [confirmNewGameVisible, setConfirmNewGameVisible] = useState(false);
 
   // Keep a ref in sync so startNewGame can log the pre-reset state without
   // closing over a stale copy of gameState (useCallback has [] deps).
@@ -98,6 +101,19 @@ export default function GameScreen({ navigation, route }: Props) {
     });
   }, []);
 
+  const handleNewGamePress = useCallback(() => {
+    if (isInProgress(gameStateRef.current)) {
+      setConfirmNewGameVisible(true);
+    } else {
+      void startNewGame();
+    }
+  }, [startNewGame]);
+
+  const handleConfirmNewGame = useCallback(() => {
+    setConfirmNewGameVisible(false);
+    void startNewGame();
+  }, [startNewGame]);
+
   return (
     <View
       style={[
@@ -155,6 +171,16 @@ export default function GameScreen({ navigation, route }: Props) {
               </Text>
             </View>
           )}
+          <Pressable
+            onPress={handleNewGamePress}
+            style={[styles.newGameBtn, { borderColor: colors.accent }]}
+            accessibilityRole="button"
+            accessibilityLabel={t("newGame.button")}
+          >
+            <Text style={[styles.newGameText, { color: colors.accent }]}>
+              {t("newGame.button")}
+            </Text>
+          </Pressable>
           <Pressable
             onPress={toggle}
             style={styles.navBtn}
@@ -215,6 +241,12 @@ export default function GameScreen({ navigation, route }: Props) {
         onPlayAgain={startNewGame}
         onDismiss={() => navigation.goBack()}
       />
+
+      <NewGameConfirmModal
+        visible={confirmNewGameVisible}
+        onConfirm={handleConfirmNewGame}
+        onCancel={() => setConfirmNewGameVisible(false)}
+      />
     </View>
   );
 }
@@ -254,6 +286,20 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
     minHeight: 44,
     justifyContent: "center",
+  },
+  newGameBtn: {
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 999,
+    borderWidth: 1,
+    minHeight: 32,
+    justifyContent: "center",
+  },
+  newGameText: {
+    fontSize: 11,
+    fontWeight: "800",
+    letterSpacing: 0.8,
+    textTransform: "uppercase",
   },
   navText: {
     fontSize: 13,

@@ -49,5 +49,10 @@
   "gameOver.playAgain": "再玩一次",
   "gameOver.playAgainLabel": "开始新游戏",
   "gameOver.dismiss": "不用了",
-  "gameOver.dismissLabel": "关闭并保持当前分数可见"
+  "gameOver.dismissLabel": "关闭并保持当前分数可见",
+  "newGame.button": "新游戏",
+  "newGame.confirm.title": "开始新游戏？",
+  "newGame.confirm.body": "当前游戏将丢失。得分和回合将重置。",
+  "newGame.confirm.confirm": "开始新游戏",
+  "newGame.confirm.cancel": "取消"
 }

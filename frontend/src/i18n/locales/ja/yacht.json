@@ -49,5 +49,10 @@
   "gameOver.playAgain": "もう一度",
   "gameOver.playAgainLabel": "新しいゲームを始める",
   "gameOver.dismiss": "いいえ",
-  "gameOver.dismissLabel": "閉じて現在のスコアを表示したままにする"
+  "gameOver.dismissLabel": "閉じて現在のスコアを表示したままにする",
+  "newGame.button": "新しいゲーム",
+  "newGame.confirm.title": "新しいゲームを開始しますか?",
+  "newGame.confirm.body": "現在のゲームは失われます。スコアとラウンドがリセットされます。",
+  "newGame.confirm.confirm": "新しいゲームを開始",
+  "newGame.confirm.cancel": "キャンセル"
 }

@@ -49,5 +49,10 @@
   "gameOver.playAgain": "العب مجددًا",
   "gameOver.playAgainLabel": "ابدأ لعبة جديدة",
   "gameOver.dismiss": "لا شكرًا",
-  "gameOver.dismissLabel": "إغلاق وإبقاء النتيجة الحالية ظاهرة"
+  "gameOver.dismissLabel": "إغلاق وإبقاء النتيجة الحالية ظاهرة",
+  "newGame.button": "لعبة جديدة",
+  "newGame.confirm.title": "بدء لعبة جديدة؟",
+  "newGame.confirm.body": "ستفقد لعبتك الحالية. ستتم إعادة تعيين النتيجة والجولة.",
+  "newGame.confirm.confirm": "بدء لعبة جديدة",
+  "newGame.confirm.cancel": "إلغاء"
 }
