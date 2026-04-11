@@ -9,5 +9,6 @@
   "theme.lightShort": "ライト",
   "theme.darkShort": "ダーク",
   "lang.switcherLabel": "言語を選択",
-  "network.offlineBanner": "オフライン — 再接続時にスコアが同期されます"
+  "network.offlineBanner": "オフライン — 再接続時にスコアが同期されます",
+  "brand.wordmark": "BC Arcade"
 }

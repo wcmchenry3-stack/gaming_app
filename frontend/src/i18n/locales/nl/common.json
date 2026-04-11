@@ -9,5 +9,6 @@
   "theme.lightShort": "Licht",
   "theme.darkShort": "Donker",
   "lang.switcherLabel": "Kies taal",
-  "network.offlineBanner": "Offline — scores worden gesynchroniseerd bij opnieuw verbinden"
+  "network.offlineBanner": "Offline — scores worden gesynchroniseerd bij opnieuw verbinden",
+  "brand.wordmark": "BC Arcade"
 }

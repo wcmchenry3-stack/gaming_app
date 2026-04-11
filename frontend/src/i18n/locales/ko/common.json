@@ -9,5 +9,6 @@
   "theme.lightShort": "라이트",
   "theme.darkShort": "다크",
   "lang.switcherLabel": "언어 선택",
-  "network.offlineBanner": "오프라인 — 다시 연결되면 점수가 동기화됩니다"
+  "network.offlineBanner": "오프라인 — 다시 연결되면 점수가 동기화됩니다",
+  "brand.wordmark": "BC Arcade"
 }

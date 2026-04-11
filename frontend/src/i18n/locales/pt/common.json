@@ -9,5 +9,6 @@
   "theme.lightShort": "Claro",
   "theme.darkShort": "Escuro",
   "lang.switcherLabel": "Selecionar idioma",
-  "network.offlineBanner": "Offline — as pontuações serão sincronizadas ao reconectar"
+  "network.offlineBanner": "Offline — as pontuações serão sincronizadas ao reconectar",
+  "brand.wordmark": "BC Arcade"
 }
