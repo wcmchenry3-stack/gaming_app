@@ -45,6 +45,11 @@ describe("GameOverlay — game over state", () => {
     fireEvent.press(getByLabelText("Quit and return to home screen"));
     expect(onHome).toHaveBeenCalledTimes(1);
   });
+
+  it("renders the score callout with correct accessibility label", () => {
+    const { getByLabelText } = renderOverlay("game_over", { score: 512 });
+    expect(getByLabelText("Current score: 512")).toBeTruthy();
+  });
 });
 
 describe("GameOverlay — win state", () => {
@@ -75,5 +80,10 @@ describe("GameOverlay — win state", () => {
   it("does not show keep playing button when onKeepPlaying is not provided", () => {
     const { queryByLabelText } = renderOverlay("win");
     expect(queryByLabelText("Continue playing after reaching 2048")).toBeNull();
+  });
+
+  it("renders the score callout with correct accessibility label", () => {
+    const { getByLabelText } = renderOverlay("win", { score: 2048 });
+    expect(getByLabelText("Current score: 2048")).toBeTruthy();
   });
 });
