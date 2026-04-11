@@ -40,9 +40,7 @@ describe("AppHeader", () => {
   });
 
   it("projects the rightSlot when provided", () => {
-    render(
-      <AppHeader title="Game" rightSlot={<Text>Round 3 / 13</Text>} />
-    );
+    render(<AppHeader title="Game" rightSlot={<Text>Round 3 / 13</Text>} />);
     expect(screen.getByText("Round 3 / 13")).toBeTruthy();
   });
 
