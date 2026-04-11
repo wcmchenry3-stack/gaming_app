@@ -82,12 +82,12 @@ describe("BlackjackTableScreen — player phase", () => {
     expect(screen.getByText("Stand")).toBeTruthy();
   });
 
-  it("back button navigates to MainTabs", async () => {
+  it("back button calls goBack()", async () => {
     const nav = mockNav();
     renderScreen(nav);
     await screen.findByText("Hit");
     fireEvent.press(screen.getByLabelText(/back/i));
-    expect(nav.navigate).toHaveBeenCalledWith("MainTabs");
+    expect(nav.goBack).toHaveBeenCalled();
   });
 
   it("chip balance is visible during player phase", async () => {
@@ -133,12 +133,12 @@ describe("BlackjackTableScreen — result phase", () => {
     expect(screen.queryByLabelText(/you have \d+ chips/i)).toBeTruthy();
   });
 
-  it("Quit button navigates to MainTabs", async () => {
+  it("Quit button calls goBack()", async () => {
     const nav = mockNav();
     renderScreen(nav);
     await screen.findByText("Next Hand");
     fireEvent.press(screen.getByLabelText(/quit/i));
-    expect(nav.navigate).toHaveBeenCalledWith("MainTabs");
+    expect(nav.goBack).toHaveBeenCalled();
   });
 
   it("Next Hand calls navigation.replace('BlackjackBetting') via phase change", async () => {
