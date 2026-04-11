@@ -3,6 +3,14 @@ import { render } from "@testing-library/react-native";
 import ActionButtons from "../ActionButtons";
 import { ThemeProvider } from "../../../theme/ThemeContext";
 
+// ---------------------------------------------------------------------------
+// Mock icon libraries — string mocks are the safest approach for Expo
+// vector-icons in Jest: no require(), no ESLint violations, and the
+// component renders as a plain native view so other assertions still work.
+// ---------------------------------------------------------------------------
+jest.mock("@expo/vector-icons/MaterialIcons", () => "MockMaterialIcons");
+jest.mock("@expo/vector-icons/MaterialCommunityIcons", () => "MockMaterialCommunityIcons");
+
 function renderButtons(
   opts: {
     doubleDownAvailable?: boolean;
@@ -26,7 +34,7 @@ function renderButtons(
 }
 
 describe("ActionButtons", () => {
-  it("renders Hit, Stand, Double Down, and Split buttons", () => {
+  it("renders Hit, Stand, Double Down, and Split button labels", () => {
     const { getByText } = renderButtons();
     expect(getByText("Hit")).toBeTruthy();
     expect(getByText("Stand")).toBeTruthy();
