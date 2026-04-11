@@ -19,5 +19,7 @@
   "gameOver.home": "Accueil",
   "win.title": "Vous avez gagné !",
   "win.body": "Vous avez atteint 2048 ! Vous pouvez continuer pour un meilleur score.",
-  "controls.keyboardHint": "Ou utilise les touches fléchées"
+  "controls.keyboardHint": "Ou utilise les touches fléchées",
+  "stats.highestTile": "Highest Tile",
+  "stats.timePlayed": "Time Played"
 }

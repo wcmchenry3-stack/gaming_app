@@ -49,6 +49,8 @@ function stateWith(board: number[][], overrides: Partial<Twenty48State> = {}): T
     scoreDelta: 0,
     game_over: false,
     has_won: false,
+    startedAt: null,
+    accumulatedMs: 0,
     ...overrides,
   };
 }
@@ -460,5 +462,114 @@ describe("seedable RNG (setRng + createSeededRng)", () => {
     const flatB = b.board.flat();
     const anyDiff = flatA.some((v, i) => v !== flatB[i]);
     expect(anyDiff).toBe(true);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Timer tracking
+// ---------------------------------------------------------------------------
+
+describe("timer — newGame", () => {
+  it("initialises startedAt to null", () => {
+    expect(newGame().startedAt).toBeNull();
+  });
+
+  it("initialises accumulatedMs to 0", () => {
+    expect(newGame().accumulatedMs).toBe(0);
+  });
+});
+
+describe("timer — first move starts the clock", () => {
+  beforeEach(() => setRng(createSeededRng(1)));
+  afterEach(() => setRng(Math.random));
+
+  it("sets startedAt to a recent timestamp on the first move", () => {
+    const before = Date.now();
+    const s = move(
+      stateWith([
+        [2, 2, 0, 0],
+        [0, 0, 0, 0],
+        [0, 0, 0, 0],
+        [0, 0, 0, 0],
+      ]),
+      "left"
+    );
+    const after = Date.now();
+    expect(s.startedAt).not.toBeNull();
+    expect(s.startedAt).toBeGreaterThanOrEqual(before);
+    expect(s.startedAt).toBeLessThanOrEqual(after);
+  });
+
+  it("preserves accumulatedMs on non-terminal moves", () => {
+    const s = move(
+      stateWith(
+        [
+          [2, 2, 0, 0],
+          [0, 0, 0, 0],
+          [0, 0, 0, 0],
+          [0, 0, 0, 0],
+        ],
+        {
+          accumulatedMs: 5000,
+        }
+      ),
+      "left"
+    );
+    expect(s.accumulatedMs).toBe(5000);
+  });
+
+  it("resumes from existing startedAt on subsequent moves", () => {
+    const t0 = Date.now() - 3000;
+    const s1 = move(
+      stateWith(
+        [
+          [2, 2, 0, 0],
+          [0, 0, 0, 0],
+          [0, 0, 0, 0],
+          [0, 0, 0, 0],
+        ],
+        {
+          startedAt: t0,
+        }
+      ),
+      "left"
+    );
+    // startedAt should remain the same value (clock ticking from t0).
+    expect(s1.startedAt).toBe(t0);
+  });
+});
+
+describe("timer — game over freezes the clock", () => {
+  afterEach(() => setRng(Math.random));
+
+  it("sets startedAt to null and adds elapsed time to accumulatedMs when game ends", () => {
+    // Board: fully filled, one merge available (row 3 cols 2-3: 8+8).
+    // Moving right merges them → 16, leaving empty cell at [3,0].
+    // setRng(() => 0) spawns value 2 (rng < 0.9) at first empty in row-major
+    // order → [3,0]. Result board has no adjacent equal pairs → game_over.
+    //
+    // Verify result board is locked:
+    //   [4, 2, 4, 2]
+    //   [2, 4, 2, 4]
+    //   [4, 2, 4, 2]
+    //   [2, 4, 2, 16]   ← spawned 2 at [3,0]; no col/row adjacent equals.
+    const almostDoneBoard = [
+      [4, 2, 4, 2],
+      [2, 4, 2, 4],
+      [4, 2, 4, 2],
+      [4, 2, 8, 8], // merge 8+8→16 on right; spawn 2 at [3,0]
+    ];
+    setRng(() => 0);
+
+    const t0 = Date.now() - 2000;
+    const before = Date.now();
+    const result = move(stateWith(almostDoneBoard, { startedAt: t0, accumulatedMs: 500 }), "right");
+    const after = Date.now();
+
+    expect(result.game_over).toBe(true);
+    expect(result.startedAt).toBeNull();
+    // accumulatedMs = prior 500 ms + elapsed since t0 (≥ 2000 ms).
+    expect(result.accumulatedMs).toBeGreaterThanOrEqual(500 + (before - t0));
+    expect(result.accumulatedMs).toBeLessThanOrEqual(500 + (after - t0));
   });
 });

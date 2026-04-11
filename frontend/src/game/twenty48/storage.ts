@@ -36,6 +36,9 @@ export async function loadGame(): Promise<Twenty48State | null> {
     ) {
       return null;
     }
+    // Normalize timer fields — absent in states saved before timer was added.
+    parsed.startedAt = parsed.startedAt ?? null;
+    parsed.accumulatedMs = parsed.accumulatedMs ?? 0;
     return parsed;
   } catch (e) {
     Sentry.captureException(e, { tags: { subsystem: "twenty48.storage", op: "load" } });

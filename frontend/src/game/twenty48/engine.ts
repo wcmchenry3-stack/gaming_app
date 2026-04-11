@@ -322,7 +322,16 @@ export function newGame(): Twenty48State {
     for (let c = 0; c < SIZE; c++) if (idBoard[r][c] !== 0) spawnedIds.add(idBoard[r][c]);
 
   const tiles = buildTiles(board, idBoard, new Map(), new Set(), spawnedIds);
-  return { board, tiles, score: 0, scoreDelta: 0, game_over: false, has_won: false };
+  return {
+    board,
+    tiles,
+    score: 0,
+    scoreDelta: 0,
+    game_over: false,
+    has_won: false,
+    startedAt: null,
+    accumulatedMs: 0,
+  };
 }
 
 /**
@@ -387,6 +396,18 @@ export function move(state: Twenty48State, direction: Direction): Twenty48State 
   const has_won = state.has_won || boardHas2048(nextBoard);
   const game_over = isGameOver(nextBoard);
 
+  // --- Timer tracking ---
+  const now = Date.now();
+  // Start timer on first move of a session.
+  const activeStartedAt = state.startedAt ?? now;
+  let nextStartedAt: number | null = activeStartedAt;
+  let nextAccumulatedMs = state.accumulatedMs;
+  // Freeze when the game ends.
+  if (game_over) {
+    nextAccumulatedMs = nextAccumulatedMs + (now - activeStartedAt);
+    nextStartedAt = null;
+  }
+
   return {
     board: nextBoard,
     tiles,
@@ -394,5 +415,7 @@ export function move(state: Twenty48State, direction: Direction): Twenty48State 
     scoreDelta: gained,
     game_over,
     has_won,
+    startedAt: nextStartedAt,
+    accumulatedMs: nextAccumulatedMs,
   };
 }

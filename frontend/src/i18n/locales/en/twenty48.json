@@ -19,5 +19,7 @@
   "gameOver.newGame": "New Game",
   "gameOver.home": "Home",
   "win.title": "You Win!",
-  "win.body": "You reached 2048! You can keep playing for a higher score."
+  "win.body": "You reached 2048! You can keep playing for a higher score.",
+  "stats.highestTile": "Highest Tile",
+  "stats.timePlayed": "Time Played"
 }

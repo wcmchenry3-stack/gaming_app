@@ -19,5 +19,7 @@
   "gameOver.home": "होम",
   "win.title": "आप जीते!",
   "win.body": "आप 2048 तक पहुँच गए! उच्च स्कोर के लिए खेलना जारी रख सकते हैं।",
-  "controls.keyboardHint": "या तीर कुंजियों का उपयोग करें"
+  "controls.keyboardHint": "या तीर कुंजियों का उपयोग करें",
+  "stats.highestTile": "Highest Tile",
+  "stats.timePlayed": "Time Played"
 }

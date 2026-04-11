@@ -19,5 +19,7 @@
   "gameOver.home": "Startseite",
   "win.title": "Gewonnen!",
   "win.body": "Du hast 2048 erreicht! Du kannst weiterspielen für einen höheren Punktestand.",
-  "controls.keyboardHint": "Oder nutze die Pfeiltasten"
+  "controls.keyboardHint": "Oder nutze die Pfeiltasten",
+  "stats.highestTile": "Highest Tile",
+  "stats.timePlayed": "Time Played"
 }

@@ -19,5 +19,7 @@
   "gameOver.home": "Главная",
   "win.title": "Вы выиграли!",
   "win.body": "Вы достигли 2048! Можете продолжить игру для более высокого счёта.",
-  "controls.keyboardHint": "Или используйте клавиши со стрелками"
+  "controls.keyboardHint": "Или используйте клавиши со стрелками",
+  "stats.highestTile": "Highest Tile",
+  "stats.timePlayed": "Time Played"
 }

@@ -19,5 +19,7 @@
   "gameOver.home": "בית",
   "win.title": "ניצחת!",
   "win.body": "הגעת ל-2048! אתה יכול להמשיך לשחק לניקוד גבוה יותר.",
-  "controls.keyboardHint": "או השתמש במקשי החיצים"
+  "controls.keyboardHint": "או השתמש במקשי החיצים",
+  "stats.highestTile": "Highest Tile",
+  "stats.timePlayed": "Time Played"
 }
