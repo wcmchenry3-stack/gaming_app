@@ -34,7 +34,9 @@ test.describe("Cascade — navigation and smoke tests", () => {
     await page.getByRole("button", { name: "Play Cascade" }).click();
 
     // Cascade screen title or canvas should appear
-    await expect(page.getByRole("heading", { name: "Cascade", exact: true })).toBeVisible({
+    await expect(
+      page.getByRole("heading", { name: "Cascade", exact: true }),
+    ).toBeVisible({
       timeout: 10000,
     });
   });
@@ -65,9 +67,10 @@ test.describe("Cascade — navigation and smoke tests", () => {
       await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
     }
 
-    // Wait 2 seconds and verify the score element still exists (no crash)
-    await page.waitForTimeout(2000);
-    await expect(page.getByText("Score", { exact: true })).toBeVisible();
+    // Verify the score element still exists (no crash)
+    await expect(page.getByText("Score", { exact: true })).toBeVisible({
+      timeout: 8000,
+    });
   });
 
   test("multiple taps do not cause a crash or navigation", async ({ page }) => {
@@ -82,7 +85,9 @@ test.describe("Cascade — navigation and smoke tests", () => {
       // Drop 5 fruits at different x positions
       for (let i = 0; i < 5; i++) {
         await page.mouse.click(box.x + (box.width / 6) * (i + 1), box.y + 50);
-        await page.waitForTimeout(300);
+        await expect(page.getByText("Score", { exact: true })).toBeVisible({
+          timeout: 3000,
+        });
       }
     }
 
@@ -94,7 +99,9 @@ test.describe("Cascade — navigation and smoke tests", () => {
   test("navigating away from Cascade returns to Home", async ({ page }) => {
     await page.goto("/");
     await page.getByRole("button", { name: "Play Cascade" }).click();
-    await expect(page.getByRole("heading", { name: "Cascade", exact: true })).toBeVisible({
+    await expect(
+      page.getByRole("heading", { name: "Cascade", exact: true }),
+    ).toBeVisible({
       timeout: 10000,
     });
 

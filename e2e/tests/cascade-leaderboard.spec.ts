@@ -183,9 +183,9 @@ test.describe("Cascade — leaderboard API integration", () => {
     await page.getByPlaceholder("Enter your name").fill("Tester");
     await page.getByRole("button", { name: "Save score" }).click();
 
-    await expect(
-      page.getByText("Saved locally"),
-    ).toBeVisible({ timeout: 5_000 });
+    await expect(page.getByText("Saved locally")).toBeVisible({
+      timeout: 5_000,
+    });
   });
 
   // ---------------------------------------------------------------------------
@@ -218,7 +218,7 @@ test.describe("Cascade — leaderboard API integration", () => {
 
     // Attempt a click anyway — no POST should fire
     await saveBtn.click({ force: true });
-    await page.waitForTimeout(300);
+    await expect(saveBtn).toBeDisabled();
     expect(postCalled).toBe(false);
   });
 });

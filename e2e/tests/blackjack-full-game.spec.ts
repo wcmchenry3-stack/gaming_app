@@ -103,13 +103,11 @@ test.describe("Blackjack — full happy-path game journey", () => {
       await page.getByRole("button", { name: /deal cards with/i }).click();
 
       // Player or result phase
-      await expect(
-        page.getByText("Hit").or(page.getByText("Next Hand")),
-      ).toBeVisible({ timeout: 5000 });
+      const hitOrResult = page.getByText("Hit").or(page.getByText("Next Hand"));
+      await expect(hitOrResult).toBeVisible({ timeout: 5000 });
 
       // If player phase, stand to reach result
-      const hitVisible = await page.getByText("Hit").isVisible();
-      if (hitVisible) {
+      if (await page.getByText("Hit").isVisible()) {
         await page.getByRole("button", { name: /stand/i }).click();
         await expect(page.getByText("Next Hand")).toBeVisible({
           timeout: 5000,

@@ -15,7 +15,7 @@ import { injectEngineState, playerPhaseState } from "./helpers/blackjack";
 test.describe("Blackjack — double-down", () => {
   test.beforeEach(async ({ page }) => {
     await page.goto("/");
-    await page.evaluate(() => localStorage.removeItem("blackjack_game_v1"));
+    await page.evaluate(() => localStorage.removeItem("blackjack_game_v2"));
     await page.goto("/");
   });
 
@@ -40,7 +40,9 @@ test.describe("Blackjack — double-down", () => {
     await page.getByRole("button", { name: "Play Blackjack" }).click();
     await expect(page.getByText("Hit")).toBeVisible();
 
-    await page.getByRole("button", { name: /double down — double bet/i }).click();
+    await page
+      .getByRole("button", { name: /double down — double bet/i })
+      .click();
 
     // Dealer plays out and we land in result phase
     await expect(page.getByText("Next Hand")).toBeVisible({ timeout: 5000 });
@@ -52,10 +54,7 @@ test.describe("Blackjack — double-down", () => {
     page,
   }) => {
     // bet=100, chips=150 → need 200 to double, so disabled
-    await injectEngineState(
-      page,
-      playerPhaseState({ chips: 150, bet: 100 }),
-    );
+    await injectEngineState(page, playerPhaseState({ chips: 150, bet: 100 }));
     await page.getByRole("button", { name: "Play Blackjack" }).click();
     await expect(page.getByText("Hit")).toBeVisible();
 
@@ -95,7 +94,9 @@ test.describe("Blackjack — double-down", () => {
     await injectEngineState(page, playerPhaseState());
     await page.getByRole("button", { name: "Play Blackjack" }).click();
 
-    await page.getByRole("button", { name: /double down — double bet/i }).click();
+    await page
+      .getByRole("button", { name: /double down — double bet/i })
+      .click();
     await expect(page.getByText("Next Hand")).toBeVisible({ timeout: 5000 });
 
     // Chip display updated (won't be 1000 anymore — bet was 200 post-double)
