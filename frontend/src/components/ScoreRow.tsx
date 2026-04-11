@@ -1,5 +1,5 @@
 import React from "react";
-import { Pressable, Text, StyleSheet, View, Platform } from "react-native";
+import { Pressable, Text, StyleSheet, View, Platform, TextStyle } from "react-native";
 import { useTranslation } from "react-i18next";
 import { useTheme } from "../theme/ThemeContext";
 import CategoryIcon from "./yacht/CategoryIcon";
@@ -41,9 +41,9 @@ export default function ScoreRow({
     tone === "upper" ? "rgba(143,245,255,0.45)" : "rgba(214,116,255,0.45)";
 
   // neon text-shadow is only meaningful on web
-  const glowStyle =
+  const glowStyle: TextStyle | null =
     isFilled && Platform.OS === "web"
-      ? ({ textShadow: `0 0 10px ${glowColor}` } as any)
+      ? ({ textShadow: `0 0 10px ${glowColor}` } as TextStyle)
       : null;
 
   return (
