@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
-import { View, Text, StyleSheet, Modal, Pressable, useWindowDimensions } from "react-native";
+import { View, Text, StyleSheet, Pressable, useWindowDimensions } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTranslation } from "react-i18next";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
@@ -17,6 +17,7 @@ import { saveGame, clearGame } from "../game/yacht/storage";
 import * as Sentry from "@sentry/react-native";
 import DiceRow from "../components/DiceRow";
 import Scorecard from "../components/Scorecard";
+import GameOverModal from "../components/yacht/GameOverModal";
 import { useTheme } from "../theme/ThemeContext";
 
 type Props = {
@@ -205,61 +206,15 @@ export default function GameScreen({ navigation, route }: Props) {
         />
       </View>
 
-      {/* Game Over Modal */}
-      <Modal
+      <GameOverModal
         visible={gameState.game_over}
-        transparent
-        animationType="fade"
-        accessibilityViewIsModal
-      >
-        <View style={styles.modalOverlay}>
-          <View style={[styles.modalBox, { backgroundColor: colors.modalBg }]}>
-            <Text style={[styles.modalTitle, { color: colors.text }]} accessibilityRole="header">
-              {t("gameOver.title")}
-            </Text>
-            <Text style={[styles.modalScore, { color: colors.textMuted }]}>
-              {t("gameOver.finalScore")}
-            </Text>
-            <Text
-              style={[styles.modalScoreValue, { color: colors.accent }]}
-              accessibilityLabel={t("gameOver.scoreLabel", { score: gameState.total_score })}
-            >
-              {gameState.total_score}
-            </Text>
-            {gameState.upper_bonus > 0 && (
-              <Text style={[styles.modalBonus, { color: colors.bonus }]}>
-                {t("gameOver.upperBonus")}
-              </Text>
-            )}
-            {gameState.yacht_bonus_total > 0 && (
-              <Text style={[styles.modalBonus, { color: colors.bonus }]}>
-                {t("gameOver.yachtBonus", {
-                  count: gameState.yacht_bonus_count,
-                  total: gameState.yacht_bonus_total,
-                })}
-              </Text>
-            )}
-            <Pressable
-              style={[styles.modalButton, { backgroundColor: colors.accent }]}
-              onPress={startNewGame}
-              accessibilityRole="button"
-              accessibilityLabel={t("gameOver.playAgainLabel")}
-            >
-              <Text style={styles.modalButtonText}>{t("gameOver.playAgain")}</Text>
-            </Pressable>
-            <Pressable
-              style={[styles.modalDismissButton]}
-              onPress={() => navigation.goBack()}
-              accessibilityRole="button"
-              accessibilityLabel={t("gameOver.dismissLabel")}
-            >
-              <Text style={[styles.modalDismissText, { color: colors.textMuted }]}>
-                {t("gameOver.dismiss")}
-              </Text>
-            </Pressable>
-          </View>
-        </View>
-      </Modal>
+        totalScore={gameState.total_score}
+        upperBonus={gameState.upper_bonus}
+        yachtBonusCount={gameState.yacht_bonus_count}
+        yachtBonusTotal={gameState.yacht_bonus_total}
+        onPlayAgain={startNewGame}
+        onDismiss={() => navigation.goBack()}
+      />
     </View>
   );
 }
@@ -327,56 +282,5 @@ const styles = StyleSheet.create({
     flex: 1,
     marginHorizontal: 12,
     marginBottom: 12,
-  },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: "rgba(0,0,0,0.7)",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  modalBox: {
-    borderRadius: 16,
-    padding: 24,
-    alignItems: "center",
-    width: "85%",
-    maxWidth: 320,
-  },
-  modalTitle: {
-    fontSize: 28,
-    fontWeight: "800",
-    marginBottom: 8,
-  },
-  modalScore: {
-    fontSize: 16,
-    marginBottom: 4,
-  },
-  modalScoreValue: {
-    fontSize: 52,
-    fontWeight: "800",
-    marginBottom: 4,
-  },
-  modalBonus: {
-    fontSize: 13,
-    marginBottom: 16,
-  },
-  modalButton: {
-    paddingHorizontal: 32,
-    paddingVertical: 12,
-    borderRadius: 8,
-    marginTop: 8,
-  },
-  modalButtonText: {
-    color: "#fff",
-    fontSize: 16,
-    fontWeight: "700",
-  },
-  modalDismissButton: {
-    paddingHorizontal: 32,
-    paddingVertical: 12,
-    marginTop: 8,
-  },
-  modalDismissText: {
-    fontSize: 14,
-    fontWeight: "600",
   },
 });
