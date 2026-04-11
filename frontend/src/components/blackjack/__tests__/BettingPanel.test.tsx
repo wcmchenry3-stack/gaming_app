@@ -5,7 +5,7 @@ import { ThemeProvider } from "../../../theme/ThemeContext";
 import { DEFAULT_RULES } from "../../../game/blackjack/engine";
 
 function renderPanel(
-  overrides: Partial<{ chips: number; loading: boolean; error: string | null }> = {},
+  overrides: Partial<{ chips: number; loading: boolean; error: string | null }> = {}
 ) {
   const onDeal = jest.fn();
   const onRulesChange = jest.fn();
@@ -20,7 +20,7 @@ function renderPanel(
         rules={DEFAULT_RULES}
         onRulesChange={onRulesChange}
       />
-    </ThemeProvider>,
+    </ThemeProvider>
   );
   return { ...utils, onDeal, onRulesChange };
 }
