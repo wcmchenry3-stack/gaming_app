@@ -4,6 +4,7 @@ import { BlurView } from "expo-blur";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTheme } from "../../theme/ThemeContext";
 import { typography } from "../../theme/typography";
+import logoSource from "../../../assets/logo.png";
 
 export const APP_HEADER_HEIGHT = 64;
 
@@ -54,7 +55,7 @@ export function AppHeader({ title, rightSlot }: AppHeaderProps) {
 
       <View style={[styles.content, { paddingTop: insets.top }]}>
         <Image
-          source={require("../../../assets/logo.png")}
+          source={logoSource}
           style={styles.logo}
           resizeMode="contain"
           accessibilityLabel="BC Arcade"
