@@ -44,13 +44,10 @@ function CascadeGame({ navigation }: Props) {
   const gameOverRef = useRef(false);
   const activeFruitSetRef = useRef(activeFruitSet);
 
-  // Keep refs in sync with state for test hooks
-  useEffect(() => {
-    scoreRef.current = score;
-  }, [score]);
-  useEffect(() => {
-    gameOverRef.current = gameOver;
-  }, [gameOver]);
+  // Refs are updated synchronously at mutation sites (handleMerge,
+  // handleGameOver, handleRestart, and test hooks) so that Playwright reads
+  // see the latest value without waiting for a React commit to flush.
+  // Only activeFruitSetRef tracks a prop and is safe to sync via effect.
   useEffect(() => {
     activeFruitSetRef.current = activeFruitSet;
   }, [activeFruitSet]);
@@ -60,6 +57,8 @@ function CascadeGame({ navigation }: Props) {
     if (prevFruitSetId.current !== activeFruitSet.id) {
       prevFruitSetId.current = activeFruitSet.id;
       queueRef.current = new FruitQueue();
+      scoreRef.current = 0;
+      gameOverRef.current = false;
       setScore(0);
       setGameOver(false);
       setQueueVersion((v) => v + 1);
@@ -75,7 +74,9 @@ function CascadeGame({ navigation }: Props) {
 
   const handleMerge = useCallback(
     (event: MergeEvent) => {
-      setScore((s) => s + scoreForMerge(event.tier));
+      const delta = scoreForMerge(event.tier);
+      scoreRef.current += delta;
+      setScore((s) => s + delta);
       const merged = activeFruitSet.fruits[event.tier];
       if (merged) {
         canvasRef.current?.announceEvent(t("cascade:event.merged", { fruit: merged.name }));
@@ -86,6 +87,7 @@ function CascadeGame({ navigation }: Props) {
 
   const handleGameOver = useCallback(() => {
     canvasRef.current?.announceEvent(t("cascade:event.gameOver"));
+    gameOverRef.current = true;
     setGameOver(true);
   }, [t]);
 
@@ -148,8 +150,10 @@ function CascadeGame({ navigation }: Props) {
       canvasRef.current?.fastForward?.(ms);
     };
     g.__cascade_triggerGameOver = () => {
+      gameOverRef.current = true;
       setGameOver(true);
     };
+    g.__cascade_isReady = () => canvasRef.current?.isReady?.() === true;
     g.__cascade_spawnTierAt = (tier: number, x: number) => {
       if (gameOverRef.current) return;
       const def = activeFruitSetRef.current.fruits[tier];
@@ -163,11 +167,14 @@ function CascadeGame({ navigation }: Props) {
       delete g.__cascade_fastForward;
       delete g.__cascade_triggerGameOver;
       delete g.__cascade_spawnTierAt;
+      delete g.__cascade_isReady;
     };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   function handleRestart() {
     queueRef.current = new FruitQueue();
+    scoreRef.current = 0;
+    gameOverRef.current = false;
     setScore(0);
     setGameOver(false);
     setQueueVersion((v) => v + 1);

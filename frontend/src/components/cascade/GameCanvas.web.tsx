@@ -43,6 +43,8 @@ export interface GameCanvasHandle {
   /** Only populated when EXPO_PUBLIC_TEST_HOOKS=1 */
   getEngineState?: () => CascadeEngineState;
   fastForward?: (ms: number) => void;
+  /** True once the physics engine has finished async init (Rapier WASM loaded). */
+  isReady?: () => boolean;
 }
 
 interface Props {
@@ -406,6 +408,9 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
         },
         announceEvent(message) {
           AccessibilityInfo.announceForAccessibility(message);
+        },
+        isReady() {
+          return engineRef.current !== null;
         },
       };
 

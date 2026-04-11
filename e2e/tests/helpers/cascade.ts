@@ -43,6 +43,17 @@ export async function gotoCascade(page: Page): Promise<void> {
   await page
     .getByRole("img", { name: /Cascade game/i })
     .waitFor({ timeout: 15_000 });
+  // The canvas DOM mounts before Rapier WASM finishes async init; without
+  // this wait the first spawnTierAt() calls can silently no-op because
+  // engineRef is still null, causing flaky first-run failures (#375).
+  await page.waitForFunction(
+    () =>
+      (
+        window as { __cascade_isReady?: () => boolean }
+      ).__cascade_isReady?.() === true,
+    undefined,
+    { timeout: 15_000 },
+  );
 }
 
 /** Read the current engine state exposed by the test hook. */
