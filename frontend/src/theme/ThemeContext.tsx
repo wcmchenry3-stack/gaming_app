@@ -33,7 +33,7 @@ export interface Colors {
   fruitBackground: string;
 }
 
-// --- Neon Arcade design tokens ---
+// --- BC Arcade design tokens (see docs/BRANDING.md) ---
 const TOKENS = {
   // Dark backgrounds
   darkBg: "#0e0e13",
