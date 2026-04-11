@@ -4,6 +4,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTranslation } from "react-i18next";
 import { useTheme } from "../theme/ThemeContext";
 import LanguageSwitcher from "../components/LanguageSwitcher";
+import { AppHeader, APP_HEADER_HEIGHT } from "../components/shared/AppHeader";
 
 export default function SettingsScreen() {
   const { colors, theme, toggle } = useTheme();
@@ -12,11 +13,12 @@ export default function SettingsScreen() {
 
   return (
     <View
-      style={[styles.container, { backgroundColor: colors.background, paddingTop: insets.top }]}
+      style={[
+        styles.container,
+        { backgroundColor: colors.background, paddingTop: APP_HEADER_HEIGHT + insets.top },
+      ]}
     >
-      <Text style={[styles.title, { color: colors.text }]}>
-        {t("screens.settings", "Settings")}
-      </Text>
+      <AppHeader title={t("nav.settings")} />
 
       <View style={[styles.row, { borderColor: colors.border }]}>
         <Text style={[styles.label, { color: colors.text }]}>{t("theme.label", "Theme")}</Text>
@@ -47,7 +49,6 @@ export default function SettingsScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, padding: 24 },
-  title: { fontSize: 24, fontWeight: "700", marginBottom: 24, marginTop: 16 },
   row: {
     flexDirection: "row",
     alignItems: "center",
