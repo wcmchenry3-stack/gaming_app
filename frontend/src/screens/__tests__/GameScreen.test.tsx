@@ -250,6 +250,67 @@ describe("GameScreen — Play Again reset (GH #225)", () => {
 });
 
 // ---------------------------------------------------------------------------
+// GH #393 — New Game button branches
+// ---------------------------------------------------------------------------
+
+describe("GameScreen — New Game button (GH #393)", () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it("fresh game: tapping New Game resets immediately without showing confirm modal", async () => {
+    // round=1, rolls_used=0, all scores null → isInProgress() = false
+    const { getByRole, queryByText } = renderScreen();
+    await act(async () => {
+      fireEvent.press(getByRole("button", { name: /new game/i }));
+    });
+    // Confirm modal must NOT appear
+    expect(queryByText("Start new game?")).toBeNull();
+    // clearGame is called (startNewGame ran)
+    expect(clearGame).toHaveBeenCalled();
+  });
+
+  it("in-progress game: tapping New Game shows confirm modal", async () => {
+    // round=2 → isInProgress() = true
+    const { getByRole, getByText } = renderScreen({ round: 2 });
+    await act(async () => {
+      fireEvent.press(getByRole("button", { name: /new game/i }));
+    });
+    expect(getByText("Start new game?")).toBeTruthy();
+  });
+
+  it("confirm modal 'Start new game' calls startNewGame and closes modal", async () => {
+    const { getByRole, queryByText } = renderScreen({ round: 2 });
+    await act(async () => {
+      fireEvent.press(getByRole("button", { name: /new game/i }));
+    });
+    await act(async () => {
+      fireEvent.press(getByRole("button", { name: /start new game/i }));
+    });
+    // Modal closes
+    expect(queryByText("Start new game?")).toBeNull();
+    // startNewGame ran → clearGame called, round reset to 1
+    expect(clearGame).toHaveBeenCalled();
+    expect(getByRole("button", { name: /roll dice/i })).toBeTruthy();
+  });
+
+  it("confirm modal 'Cancel' does not call startNewGame and closes modal", async () => {
+    const { getByRole, queryByText, getByText } = renderScreen({ round: 2 });
+    await act(async () => {
+      fireEvent.press(getByRole("button", { name: /new game/i }));
+    });
+    await act(async () => {
+      fireEvent.press(getByRole("button", { name: /^cancel$/i }));
+    });
+    // Modal closes
+    expect(queryByText("Start new game?")).toBeNull();
+    // startNewGame did NOT run — clearGame not called, round still 2
+    expect(clearGame).not.toHaveBeenCalled();
+    expect(getByText(/round.*2/i)).toBeTruthy();
+  });
+});
+
+// ---------------------------------------------------------------------------
 // GH #263 — scorecard visual reset (upper & lower sections)
 // ---------------------------------------------------------------------------
 
