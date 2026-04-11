@@ -39,7 +39,9 @@ export default function SettingsScreen() {
         <Text style={[styles.label, { color: colors.text }]}>
           {t("settings.language", "Language")}
         </Text>
-        <LanguageSwitcher />
+        <View testID="lang-switcher-trigger">
+          <LanguageSwitcher />
+        </View>
       </View>
     </View>
   );
