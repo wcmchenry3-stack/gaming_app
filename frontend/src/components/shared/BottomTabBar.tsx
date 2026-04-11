@@ -17,6 +17,7 @@ export default function BottomTabBar({ state, navigation }: BottomTabBarProps) {
 
   return (
     <View
+      accessibilityRole="tablist"
       style={[
         styles.container,
         {
@@ -39,7 +40,7 @@ export default function BottomTabBar({ state, navigation }: BottomTabBarProps) {
             accessibilityLabel={tab.label}
           >
             <Text style={styles.emoji}>{tab.emoji}</Text>
-            <Text style={[styles.label, { color: focused ? "#0e0e13" : "#6e6e7a" }]}>
+            <Text style={[styles.label, { color: focused ? "#0e0e13" : colors.textMuted }]}>
               {tab.label}
             </Text>
           </Pressable>
