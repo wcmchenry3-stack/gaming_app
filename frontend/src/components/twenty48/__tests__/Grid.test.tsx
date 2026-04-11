@@ -50,4 +50,16 @@ describe("Grid", () => {
     expect(getAllByLabelText("4")).toHaveLength(1);
     expect(getAllByLabelText("8")).toHaveLength(1);
   });
+
+  it("marks all 16 empty slots with label 'empty' when no tiles are present", () => {
+    const { getAllByLabelText } = renderGrid([]);
+    expect(getAllByLabelText("empty")).toHaveLength(16);
+  });
+
+  it("only marks unoccupied cells as empty when tiles are present", () => {
+    // 2 tiles placed → 14 empty slots.
+    const tiles = [makeTile(1, 2, 0, 0), makeTile(2, 4, 3, 3)];
+    const { getAllByLabelText } = renderGrid(tiles);
+    expect(getAllByLabelText("empty")).toHaveLength(14);
+  });
 });
