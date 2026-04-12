@@ -22,25 +22,13 @@
     "React-jsinspector": [],
     "React-jsinspectorcdp": [],
     "React-jsinspectortracing": [],
-    "React-callinvoker": [
-      "0.83.4"
-    ],
+    "React-callinvoker": ["0.83.4"],
     "React-runtimeexecutor": [],
-    "React-perflogger": [
-      "0.83.4"
-    ],
-    "React-jsi": [
-      "0.83.4"
-    ],
-    "React-logger": [
-      "0.83.4"
-    ],
-    "React-debug": [
-      "0.83.4"
-    ],
-    "React-timing": [
-      "0.83.4"
-    ],
+    "React-perflogger": ["0.83.4"],
+    "React-jsi": ["0.83.4"],
+    "React-logger": ["0.83.4"],
+    "React-debug": ["0.83.4"],
+    "React-timing": ["0.83.4"],
     "React-utils": [],
     "hermes-engine": [],
     "ReactNativeDependencies": [],

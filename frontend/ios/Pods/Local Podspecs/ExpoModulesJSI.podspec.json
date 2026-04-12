@@ -28,17 +28,9 @@
     "ReactCommon": [],
     "React-runtimescheduler": []
   },
-  "source_files": [
-    "ios/JSI/**/*.{h,m,mm,swift,cpp}",
-    "common/cpp/JSI/**/*.{h,cpp}"
-  ],
-  "exclude_files": [
-    "ios/JSI/Tests"
-  ],
-  "private_header_files": [
-    "ios/JSI/**/*+Private.h",
-    "ios/JSI/**/Swift.h"
-  ],
+  "source_files": ["ios/JSI/**/*.{h,m,mm,swift,cpp}", "common/cpp/JSI/**/*.{h,cpp}"],
+  "exclude_files": ["ios/JSI/Tests"],
+  "private_header_files": ["ios/JSI/**/*+Private.h", "ios/JSI/**/Swift.h"],
   "testspecs": [
     {
       "name": "Tests",

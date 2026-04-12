@@ -4,10 +4,10 @@
 
 Two services are deployed via the `render.yaml` blueprint at the repo root:
 
-| Service | Type | Custom Domain |
-|---------|------|---------------|
-| `gaming-app-api` | Python Web Service | `https://dev-games-api.buffingchi.com` |
-| `gaming-app-frontend` | Static Site | `https://dev-games.buffingchi.com` |
+| Service               | Type               | Custom Domain                          |
+| --------------------- | ------------------ | -------------------------------------- |
+| `gaming-app-api`      | Python Web Service | `https://dev-games-api.buffingchi.com` |
+| `gaming-app-frontend` | Static Site        | `https://dev-games.buffingchi.com`     |
 
 The frontend's `EXPO_PUBLIC_API_URL` is automatically wired to the backend's URL by the blueprint.
 
@@ -40,10 +40,10 @@ and in `ALLOWED_ORIGINS` on the backend service.
 
 ## Environment Variables
 
-| Variable | Service | Value |
-|----------|---------|-------|
-| `EXPO_PUBLIC_API_URL` | gaming-app-frontend | `https://dev-games-api.buffingchi.com` (set in `render.yaml`) |
-| `EXPO_PUBLIC_SENTRY_DSN` | gaming-app-frontend | Secret — set in Render dashboard |
-| `PYTHON_VERSION` | gaming-app-api | `3.11.0` |
+| Variable                 | Service             | Value                                                         |
+| ------------------------ | ------------------- | ------------------------------------------------------------- |
+| `EXPO_PUBLIC_API_URL`    | gaming-app-frontend | `https://dev-games-api.buffingchi.com` (set in `render.yaml`) |
+| `EXPO_PUBLIC_SENTRY_DSN` | gaming-app-frontend | Secret — set in Render dashboard                              |
+| `PYTHON_VERSION`         | gaming-app-api      | `3.11.0`                                                      |
 
 Env vars are baked into the static bundle at build time. If you change them, redeploy the frontend.

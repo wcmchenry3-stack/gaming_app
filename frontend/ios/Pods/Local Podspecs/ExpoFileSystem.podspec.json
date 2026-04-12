@@ -23,9 +23,7 @@
     "DEFINES_MODULE": "YES"
   },
   "resource_bundles": {
-    "ExpoFileSystem_privacy": [
-      "PrivacyInfo.xcprivacy"
-    ]
+    "ExpoFileSystem_privacy": ["PrivacyInfo.xcprivacy"]
   },
   "source_files": "**/*.{h,m,swift}",
   "swift_version": "5.9"

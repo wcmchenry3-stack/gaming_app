@@ -15,11 +15,7 @@
     "tag": "v0.83.4"
   },
   "source_files": "",
-  "preserve_paths": [
-    "package.json",
-    "LICENSE",
-    "LICENSE-docs"
-  ],
+  "preserve_paths": ["package.json", "LICENSE", "LICENSE-docs"],
   "header_dir": "RCTLinking",
   "pod_target_xcconfig": {
     "USE_HEADERMAP": "YES",
@@ -28,15 +24,9 @@
   },
   "frameworks": "UIKit",
   "dependencies": {
-    "React-Core/RCTLinkingHeaders": [
-      "0.83.4"
-    ],
-    "ReactCommon/turbomodule/core": [
-      "0.83.4"
-    ],
-    "React-jsi": [
-      "0.83.4"
-    ],
+    "React-Core/RCTLinkingHeaders": ["0.83.4"],
+    "ReactCommon/turbomodule/core": ["0.83.4"],
+    "React-jsi": ["0.83.4"],
     "React-RCTFBReactNativeSpec": [],
     "ReactCommon": [],
     "React-NativeModulesApple": []

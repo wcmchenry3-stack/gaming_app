@@ -23,8 +23,7 @@ function CascadeGame() {
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
   const { activeFruitSet } = useFruitSet();
-  const navigation =
-    useNavigation<NativeStackNavigationProp<HomeStackParamList, "Cascade">>();
+  const navigation = useNavigation<NativeStackNavigationProp<HomeStackParamList, "Cascade">>();
 
   const [score, setScore] = useState(0);
   const [gameOver, setGameOver] = useState(false);

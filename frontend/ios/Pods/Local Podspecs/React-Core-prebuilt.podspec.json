@@ -22,9 +22,7 @@
     "ReactNativeDependencies": []
   },
   "pod_target_xcconfig": {
-    "HEADER_SEARCH_PATHS": [
-      "$(PODS_ROOT)/ReactNativeDependencies"
-    ]
+    "HEADER_SEARCH_PATHS": ["$(PODS_ROOT)/ReactNativeDependencies"]
   },
   "prepare_command": "CURRENT_PATH=$(pwd)\nXCFRAMEWORK_PATH=\"${CURRENT_PATH}/React.xcframework\"\n\n# Check if XCFRAMEWORK_PATH is empty\nif [ -z \"$XCFRAMEWORK_PATH\" ]; then\n  echo \"ERROR: XCFRAMEWORK_PATH is empty.\"\n  exit 0\nfi\n\nmkdir -p \"${XCFRAMEWORK_PATH}\"\nfind \"$CURRENT_PATH\" -mindepth 1 -maxdepth 1 ! -name \"$(basename \"$XCFRAMEWORK_PATH\")\" -exec mv {} \"$XCFRAMEWORK_PATH\" \\;",
   "script_phases": {

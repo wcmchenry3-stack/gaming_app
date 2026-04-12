@@ -34,11 +34,11 @@ Every past theme pain-point traces back to one of these steps being skipped or w
 
 Before running any scripts, document for each asset:
 
-| Asset | Body shape | Notes |
-|-------|-----------|-------|
-| e.g. apple | roughly circular | slight horizontal taper at top |
-| e.g. cherry | two spheres + long stem | stem shifts visual center far upward |
-| e.g. pineapple | oval body + tall crown | crown adds ~60% extra height |
+| Asset          | Body shape              | Notes                                |
+| -------------- | ----------------------- | ------------------------------------ |
+| e.g. apple     | roughly circular        | slight horizontal taper at top       |
+| e.g. cherry    | two spheres + long stem | stem shifts visual center far upward |
+| e.g. pineapple | oval body + tall crown  | crown adds ~60% extra height         |
 
 Assets with stems, crowns, tails, rings, or multi-body geometry will need careful offset/scale inspection in Phase 2.
 
@@ -46,9 +46,9 @@ Assets with stems, crowns, tails, rings, or multi-body geometry will need carefu
 
 `frontend/scripts/remove_backgrounds.py` supports two modes:
 
-| Mode | When to use |
-|------|------------|
-| `color` | Solid or near-solid backgrounds. Samples corner pixels to determine the background color. Fast and accurate for most cartoon/icon assets. |
+| Mode        | When to use                                                                                                                                                                          |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `color`     | Solid or near-solid backgrounds. Samples corner pixels to determine the background color. Fast and accurate for most cartoon/icon assets.                                            |
 | `celestial` | Complex backgrounds (gradients, starfields, checkerboards). Uses a two-pass color-distance + radial mask. Needed when single-threshold removal eats grey artwork (see: Moon, Venus). |
 
 **Test on the hardest asset first** — the greyest, most transparent, or most irregular one. If that passes, the rest will too.
@@ -72,6 +72,7 @@ Open every processed PNG and zoom in on:
 - **Body interior** — fully opaque? Good. Any eaten pixels (unexpected holes)? Threshold too aggressive.
 
 Pay particular attention to assets with:
+
 - Grey bodies on grey backgrounds (two-pass / `celestial` mode may be needed)
 - Thin features (stems, tails, antennae)
 - Semi-transparent glows or shadows
@@ -189,6 +190,7 @@ These checks have caught every cross-theme bug so far. Do all of them.
 Every sprite is clipped to a circle whose radius is computed by `spriteClipRadius()` in `fruitVertices.ts`. This radius is the minimum enclosing circle for the sprite's bounding rectangle, which is larger than the physics radius to accommodate assets with rings or large offsets.
 
 For each asset, confirm:
+
 - The visible sprite body sits inside the physics collision boundary
 - No art is clipped mid-body (the clip is large enough)
 
@@ -215,7 +217,7 @@ When two fruits touch, each fruit's background fill must not overwrite the other
 ```typescript
 // GameCanvas.web.tsx — drawFruitBody
 ctx.beginPath();
-ctx.arc(0, 0, r, 0, Math.PI * 2);  // fill stays within physics radius
+ctx.arc(0, 0, r, 0, Math.PI * 2); // fill stays within physics radius
 ctx.fill();
 ```
 
@@ -263,30 +265,30 @@ npx jest --testPathPattern="fruitAssets|fruitVertices"
 
 ## Key lessons by problem type
 
-| Problem | Root cause | Fix | Applies to all themes? |
-|---------|-----------|-----|----------------------|
-| Checkerboard ghost artifacts | Semi-transparent pixels retain bright RGB | `cleanImage()` zeros RGB when alpha < 200 | Yes |
-| Collision hull too large | Semi-transparent glow included in threshold | Raise alpha threshold in extraction | Yes |
-| Asymmetric body misaligned | Hull centered on image center, not body center | `spriteOffset` normalized to opaque bbox center | Yes |
-| Sprite visually offset | Offset computed from raw PNG | Always compute from processed PNG | Yes |
-| Black overlaps between fruits | Background `fillRect` bled beyond physics circle | Use `arc+fill` instead of `fillRect` for bg | Yes |
-| Rings clipped at physics radius | Clip hardcoded to `r`, not sprite extent | Use `spriteClipRadius()` for clip radius | Yes |
-| Planet grey eaten by removal | Single threshold too aggressive for grey bodies | Two-pass `celestial` mode with radial mask | Celestial-type themes |
-| Near-circle asset falls through floor | Polygon decomposition on small vertex count | Clear `verts` array, use native circle collider | Round-body assets |
+| Problem                               | Root cause                                       | Fix                                             | Applies to all themes? |
+| ------------------------------------- | ------------------------------------------------ | ----------------------------------------------- | ---------------------- |
+| Checkerboard ghost artifacts          | Semi-transparent pixels retain bright RGB        | `cleanImage()` zeros RGB when alpha < 200       | Yes                    |
+| Collision hull too large              | Semi-transparent glow included in threshold      | Raise alpha threshold in extraction             | Yes                    |
+| Asymmetric body misaligned            | Hull centered on image center, not body center   | `spriteOffset` normalized to opaque bbox center | Yes                    |
+| Sprite visually offset                | Offset computed from raw PNG                     | Always compute from processed PNG               | Yes                    |
+| Black overlaps between fruits         | Background `fillRect` bled beyond physics circle | Use `arc+fill` instead of `fillRect` for bg     | Yes                    |
+| Rings clipped at physics radius       | Clip hardcoded to `r`, not sprite extent         | Use `spriteClipRadius()` for clip radius        | Yes                    |
+| Planet grey eaten by removal          | Single threshold too aggressive for grey bodies  | Two-pass `celestial` mode with radial mask      | Celestial-type themes  |
+| Near-circle asset falls through floor | Polygon decomposition on small vertex count      | Clear `verts` array, use native circle collider | Round-body assets      |
 
 ---
 
 ## Files reference
 
-| File | Purpose |
-|------|---------|
-| `frontend/scripts/remove_backgrounds.py` | Background removal; may need a new mode per theme |
-| `frontend/scripts/extract_vertices.py` | Hull + sprite metadata extraction |
-| `frontend/assets/{theme}-vertices.json` | Runtime vertex/sprite data |
-| `frontend/assets/{theme}-icons/*.png` | Processed PNG assets |
-| `frontend/src/theme/fruitSets.ts` | Tier definitions per theme |
-| `frontend/src/theme/useFruitImages.ts` | Image loading hooks |
-| `frontend/src/game/cascade/fruitVertices.ts` | Runtime vertex lookup + `spriteClipRadius` |
-| `frontend/src/components/cascade/GameCanvas.web.tsx` | Web rendering (`cleanImage`, `drawFruitBody`) |
-| `frontend/src/components/cascade/GameCanvas.tsx` | Native rendering (`FruitBodySkia`) |
-| `frontend/src/game/cascade/__tests__/fruitAssets.test.ts` | Automated hull/sprite validation |
+| File                                                      | Purpose                                           |
+| --------------------------------------------------------- | ------------------------------------------------- |
+| `frontend/scripts/remove_backgrounds.py`                  | Background removal; may need a new mode per theme |
+| `frontend/scripts/extract_vertices.py`                    | Hull + sprite metadata extraction                 |
+| `frontend/assets/{theme}-vertices.json`                   | Runtime vertex/sprite data                        |
+| `frontend/assets/{theme}-icons/*.png`                     | Processed PNG assets                              |
+| `frontend/src/theme/fruitSets.ts`                         | Tier definitions per theme                        |
+| `frontend/src/theme/useFruitImages.ts`                    | Image loading hooks                               |
+| `frontend/src/game/cascade/fruitVertices.ts`              | Runtime vertex lookup + `spriteClipRadius`        |
+| `frontend/src/components/cascade/GameCanvas.web.tsx`      | Web rendering (`cleanImage`, `drawFruitBody`)     |
+| `frontend/src/components/cascade/GameCanvas.tsx`          | Native rendering (`FruitBodySkia`)                |
+| `frontend/src/game/cascade/__tests__/fruitAssets.test.ts` | Automated hull/sprite validation                  |

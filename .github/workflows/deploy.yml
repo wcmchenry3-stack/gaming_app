@@ -13,16 +13,16 @@ jobs:
     needs: ci
     uses: wcmchenry3-stack/.github/.github/workflows/called-deploy-render.yml@main
     with:
-      service-name: 'gaming-app-api'
-      service-id: 'srv-d6vk8c9r0fns73cbbfug'
-      zap-target-url: 'https://dev-games-api.buffingchi.com'
+      service-name: "gaming-app-api"
+      service-id: "srv-d6vk8c9r0fns73cbbfug"
+      zap-target-url: "https://dev-games-api.buffingchi.com"
     secrets: inherit
 
   deploy-frontend:
     needs: ci
     uses: wcmchenry3-stack/.github/.github/workflows/called-deploy-render.yml@main
     with:
-      service-name: 'gaming-app-frontend'
-      service-id: 'srv-d6vkanhr0fns73cbcol0'
-      zap-target-url: 'https://dev-games.buffingchi.com'
+      service-name: "gaming-app-frontend"
+      service-id: "srv-d6vkanhr0fns73cbcol0"
+      zap-target-url: "https://dev-games.buffingchi.com"
     secrets: inherit

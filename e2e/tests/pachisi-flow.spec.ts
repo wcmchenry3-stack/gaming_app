@@ -159,12 +159,16 @@ test.describe.skip("Pachisi — navigation and smoke tests", () => {
     });
   });
 
-  test("Roll button is visible on Pachisi screen (human's turn)", async ({ page }) => {
+  test("Roll button is visible on Pachisi screen (human's turn)", async ({
+    page,
+  }) => {
     await setupPachisiMocks(page);
     await page.goto("/");
     await page.getByRole("button", { name: "Play Pachisi" }).click();
 
-    await expect(page.getByRole("button", { name: "Roll the die" })).toBeVisible({
+    await expect(
+      page.getByRole("button", { name: "Roll the die" }),
+    ).toBeVisible({
       timeout: 10_000,
     });
   });
@@ -177,7 +181,9 @@ test.describe.skip("Pachisi — navigation and smoke tests", () => {
     await page.getByRole("button", { name: "Roll the die" }).click();
 
     // After rolling 6, valid moves should appear
-    await expect(page.getByRole("button", { name: /Move Piece 1/ })).toBeVisible({
+    await expect(
+      page.getByRole("button", { name: /Move Piece 1/ }),
+    ).toBeVisible({
       timeout: 5_000,
     });
   });
@@ -194,7 +200,9 @@ test.describe.skip("Pachisi — navigation and smoke tests", () => {
     await page.getByRole("button", { name: /Move Piece 1/ }).click();
 
     // After move, should show Roll button again (human's turn, roll phase)
-    await expect(page.getByRole("button", { name: "Roll the die" })).toBeVisible({
+    await expect(
+      page.getByRole("button", { name: "Roll the die" }),
+    ).toBeVisible({
       timeout: 5_000,
     });
   });
@@ -211,6 +219,8 @@ test.describe.skip("Pachisi — navigation and smoke tests", () => {
     // Navigate home via URL (Lobby tab pop-to-root not reliable on web)
     await page.goto("/");
 
-    await expect(page.getByText("Gaming App").first()).toBeVisible({ timeout: 5_000 });
+    await expect(page.getByText("Gaming App").first()).toBeVisible({
+      timeout: 5_000,
+    });
   });
 });

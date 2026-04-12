@@ -12,10 +12,7 @@
     "git": "https://github.com/facebook/react-native.git",
     "tag": "v0.83.4"
   },
-  "source_files": [
-    "executor/*.h",
-    "inspector-modern/chrome/*.h"
-  ],
+  "source_files": ["executor/*.h", "inspector-modern/chrome/*.h"],
   "public_header_files": "executor/HermesExecutorFactory.h",
   "pod_target_xcconfig": {
     "HEADER_SEARCH_PATHS": "\"${PODS_ROOT}/hermes-engine/destroot/include\" \"$(PODS_TARGET_SRCROOT)/..\" \"${PODS_ROOT}/React-jsinspector\" \"${PODS_ROOT}/React-jsinspectorcdp\" \"${PODS_ROOT}/React-jsinspectortracing\" \"${PODS_ROOT}/React-runtimeexecutor\" \"${PODS_ROOT}/React-runtimeexecutor/platform/ios\" \"${PODS_ROOT}/React-oscompat\"",
@@ -24,18 +21,12 @@
   },
   "header_dir": "reacthermes",
   "dependencies": {
-    "React-cxxreact": [
-      "0.83.4"
-    ],
-    "React-jsiexecutor": [
-      "0.83.4"
-    ],
+    "React-cxxreact": ["0.83.4"],
+    "React-jsiexecutor": ["0.83.4"],
     "React-jsinspector": [],
     "React-jsinspectorcdp": [],
     "React-jsinspectortracing": [],
-    "React-perflogger": [
-      "0.83.4"
-    ],
+    "React-perflogger": ["0.83.4"],
     "hermes-engine": [],
     "React-jsi": [],
     "React-runtimeexecutor": [],

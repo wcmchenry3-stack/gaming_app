@@ -18,19 +18,13 @@
     "exclude_files": "PlatformStubs/**/*"
   },
   "osx": {
-    "exclude_files": [
-      "RCTStatusBarManager.mm"
-    ]
+    "exclude_files": ["RCTStatusBarManager.mm"]
   },
   "visionos": {
-    "exclude_files": [
-      "RCTStatusBarManager.mm"
-    ]
+    "exclude_files": ["RCTStatusBarManager.mm"]
   },
   "tvos": {
-    "exclude_files": [
-      "RCTStatusBarManager.mm"
-    ]
+    "exclude_files": ["RCTStatusBarManager.mm"]
   },
   "header_dir": "CoreModules",
   "pod_target_xcconfig": {
@@ -40,18 +34,10 @@
   },
   "frameworks": "UIKit",
   "dependencies": {
-    "RCTTypeSafety": [
-      "0.83.4"
-    ],
-    "React-Core/CoreModulesHeaders": [
-      "0.83.4"
-    ],
-    "React-RCTImage": [
-      "0.83.4"
-    ],
-    "React-jsi": [
-      "0.83.4"
-    ],
+    "RCTTypeSafety": ["0.83.4"],
+    "React-Core/CoreModulesHeaders": ["0.83.4"],
+    "React-RCTImage": ["0.83.4"],
+    "React-jsi": ["0.83.4"],
     "React-RCTBlob": [],
     "React-debug": [],
     "React-runtimeexecutor": [],

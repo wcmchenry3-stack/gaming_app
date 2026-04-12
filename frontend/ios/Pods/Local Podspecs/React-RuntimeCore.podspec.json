@@ -12,14 +12,8 @@
     "git": "https://github.com/facebook/react-native.git",
     "tag": "v0.83.4"
   },
-  "source_files": [
-    "*.h",
-    "nativeviewconfig/*.h"
-  ],
-  "exclude_files": [
-    "iostests/*",
-    "tests/**/*.{cpp,h}"
-  ],
+  "source_files": ["*.h", "nativeviewconfig/*.h"],
+  "exclude_files": ["iostests/*", "tests/**/*.{cpp,h}"],
   "header_dir": "react/runtime",
   "pod_target_xcconfig": {
     "HEADER_SEARCH_PATHS": "\"$(PODS_ROOT)/Headers/Private/React-Core\" \"${PODS_TARGET_SRCROOT}/../..\" \"${PODS_ROOT}/React-runtimeexecutor\" \"${PODS_ROOT}/React-runtimeexecutor/platform/ios\" \"${PODS_ROOT}/React-Fabric\" \"${PODS_ROOT}/React-jsitooling\"",
