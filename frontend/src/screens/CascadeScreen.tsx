@@ -34,7 +34,7 @@ function CascadeGame() {
   const canvasRef = useRef<GameCanvasHandle>(null);
   const queueRef = useRef(new FruitQueue());
   const droppingRef = useRef(false);
-  const lastDropTimeRef = useRef<number>(0);
+  const lastDropTimeRef = useRef<number>(Date.now());
   const dropCountRef = useRef<number>(0);
   const prevFruitSetId = useRef(activeFruitSet.id);
 
