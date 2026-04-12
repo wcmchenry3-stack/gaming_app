@@ -35,8 +35,14 @@ jest.mock("react-i18next", () => ({
 jest.mock("../../FeedbackWidget/FeedbackWidget", () => {
   // eslint-disable-next-line @typescript-eslint/no-require-imports
   const { Text: RNText } = require("react-native");
-  return ({ visible }: { visible: boolean; onClose: () => void }) =>
-    visible ? <RNText>FeedbackWidgetMock</RNText> : null;
+  const FeedbackWidgetMock = ({
+    visible,
+  }: {
+    visible: boolean;
+    onClose: () => void;
+  }) => (visible ? <RNText>FeedbackWidgetMock</RNText> : null);
+  FeedbackWidgetMock.displayName = "FeedbackWidgetMock";
+  return FeedbackWidgetMock;
 });
 
 jest.mock("../../../../assets/logo.png", () => 1);
