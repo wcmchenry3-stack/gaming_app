@@ -293,8 +293,100 @@ jobs:
       working-directory: frontend
     secrets: inherit
 
-  # --- Phase 8: Gradle wrapper validation -----------------------------------
+  # --- Phase 8: Android release smoke test (Linux, path-filtered) ------------
+  # The debug build check cannot catch release-only failures (Sentry upload,
+  # release CMake config, ProGuard). This runs assembleRelease for a single ABI
+  # only when Android-relevant files change.
+
+  android-release-smoke:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Detect Android-relevant changes
+        id: changes
+        run: |
+          CHANGED=$(git diff --name-only "${{ github.event.pull_request.base.sha }}"...HEAD)
+          if echo "$CHANGED" | grep -qE 'frontend/android/|frontend/package\.json|frontend/package-lock\.json'; then
+            echo "should_run=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "should_run=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::No Android-relevant file changes — skipping release smoke test"
+          fi
+
+      - uses: actions/setup-java@v4
+        if: steps.changes.outputs.should_run == 'true'
+        with:
+          distribution: zulu
+          java-version: 17
+
+      - uses: actions/setup-node@v6
+        if: steps.changes.outputs.should_run == 'true'
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install JS dependencies
+        if: steps.changes.outputs.should_run == 'true'
+        run: npm ci
+
+      - name: Release build smoke test (arm64-v8a only)
+        if: steps.changes.outputs.should_run == 'true'
+        run: |
+          cd android
+          ./gradlew assembleRelease \
+            -PreactNativeArchitectures=arm64-v8a \
+            --no-daemon
+        env:
+          # Sentry upload is conditional on this token; omit to skip upload
+          # while still validating the rest of the release build chain
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+
+  # --- Phase 9: Sentry CLI auth validation (Linux, fast) --------------------
+  # Catches expired or misconfigured Sentry auth tokens before they break
+  # release builds. Runs only when Sentry config or the token may be affected.
+
+  sentry-cli-check:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Validate Sentry CLI auth
+        run: |
+          if [ -z "$SENTRY_AUTH_TOKEN" ]; then
+            echo "::warning::SENTRY_AUTH_TOKEN secret is not set — release builds will skip source map upload"
+            exit 0
+          fi
+          npx sentry-cli info
+          echo "Sentry CLI authenticated successfully"
+        env:
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+          SENTRY_ORG: buffing-chi
+          SENTRY_PROJECT: react-native
+
+  # --- Phase 10: Gradle wrapper + dependency version gate -------------------
   # Validates the Gradle wrapper JAR checksum to prevent supply-chain attacks.
+  # Also flags dependency version changes that warrant a full release build test.
 
   gradle-wrapper-check:
     if: github.event_name == 'pull_request'
@@ -310,5 +402,11 @@ jobs:
           CHANGED_FILES=$(git diff --name-only "${{ github.event.pull_request.base.sha }}"...HEAD)
           if echo "$CHANGED_FILES" | grep -qE 'frontend/android/(app/)?build\.gradle|frontend/android/settings\.gradle'; then
             echo "::notice::Android Gradle build files changed — ensure gradle.properties settings (SDK versions, Hermes, architectures) are still correct."
+          fi
+          if echo "$CHANGED_FILES" | grep -qE 'frontend/android/gradle\.properties|frontend/android/gradle/wrapper/gradle-wrapper\.properties'; then
+            echo "::warning::Gradle or wrapper version changed — verify android-release-smoke passes before merging."
+          fi
+          if echo "$CHANGED_FILES" | grep -qE 'frontend/package\.json'; then
+            echo "::notice::package.json changed — native module versions may have shifted. Check android-release-smoke and android-build-check results."
           fi
           echo "Gradle wrapper validation passed"
