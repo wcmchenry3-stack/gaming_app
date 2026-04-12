@@ -29,7 +29,6 @@ import { ThemeProvider } from "./src/theme/ThemeContext";
 import { useHtmlAttributes } from "./src/i18n/useHtmlAttributes";
 import { NetworkProvider } from "./src/game/_shared/NetworkContext";
 import { BlackjackGameProvider } from "./src/game/blackjack/BlackjackGameContext";
-import FeedbackButton from "./src/components/FeedbackWidget/FeedbackButton";
 import { SessionLogger } from "./src/components/FeedbackWidget/SessionLogger";
 
 // Start capturing console.warn / console.error for feedback submissions
@@ -119,7 +118,6 @@ function AppInner() {
               <Stack.Screen name="MainTabs" component={MainTabs} />
             </Stack.Navigator>
           </NavigationContainer>
-          <FeedbackButton />
         </BlackjackGameProvider>
       </ThemeProvider>
     </NetworkProvider>

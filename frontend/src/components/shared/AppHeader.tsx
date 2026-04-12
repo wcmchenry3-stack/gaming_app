@@ -1,10 +1,11 @@
-import React from "react";
+import React, { useState } from "react";
 import { View, Text, Image, StyleSheet, Platform, Pressable } from "react-native";
 import { BlurView } from "expo-blur";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTranslation } from "react-i18next";
 import { useTheme } from "../../theme/ThemeContext";
 import { typography } from "../../theme/typography";
+import FeedbackWidget from "../FeedbackWidget/FeedbackWidget";
 import logoSource from "../../../assets/logo.png";
 
 export const APP_HEADER_HEIGHT = 64;
@@ -25,7 +26,8 @@ function hexToRgba(hex: string, alpha: number): string {
 export function AppHeader({ title, rightSlot, onBack }: AppHeaderProps) {
   const { colors, theme } = useTheme();
   const insets = useSafeAreaInsets();
-  const { t } = useTranslation("common");
+  const { t } = useTranslation("feedback");
+  const [helpOpen, setHelpOpen] = useState(false);
 
   const totalHeight = APP_HEADER_HEIGHT + insets.top;
   const bgColor = hexToRgba(colors.background, 0.7);
@@ -86,7 +88,23 @@ export function AppHeader({ title, rightSlot, onBack }: AppHeaderProps) {
         </Text>
 
         <View style={styles.rightSlot}>{rightSlot ?? null}</View>
+
+        <Pressable
+          onPress={() => setHelpOpen(true)}
+          accessibilityRole="button"
+          accessibilityLabel={t("fab_label")}
+          style={({ pressed }) => [
+            styles.helpButton,
+            { backgroundColor: colors.accent },
+            pressed && styles.helpButtonPressed,
+          ]}
+          hitSlop={8}
+        >
+          <Text style={[styles.helpButtonText, { color: colors.textOnAccent }]}>?</Text>
+        </Pressable>
       </View>
+
+      <FeedbackWidget visible={helpOpen} onClose={() => setHelpOpen(false)} />
     </View>
   );
 }
@@ -138,5 +156,22 @@ const styles = StyleSheet.create({
   rightSlot: {
     minWidth: 80,
     alignItems: "flex-end",
+  },
+  helpButton: {
+    marginLeft: 12,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  helpButtonPressed: {
+    opacity: 0.7,
+  },
+  helpButtonText: {
+    fontFamily: typography.heading,
+    fontSize: 16,
+    fontWeight: "700",
+    lineHeight: 18,
   },
 });
