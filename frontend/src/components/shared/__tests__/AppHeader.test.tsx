@@ -8,6 +8,7 @@ jest.mock("react-i18next", () => ({
     t: (key: string) => {
       if (key === "nav.back") return "← Back";
       if (key === "nav.backLabel") return "Go back to home screen";
+      if (key === "fab_label") return "Send feedback";
       return key;
     },
   }),
@@ -30,15 +31,6 @@ jest.mock("../../../theme/ThemeContext", () => ({
       textOnAccent: "#0e0e13",
     },
     theme: "dark",
-  }),
-}));
-
-jest.mock("react-i18next", () => ({
-  useTranslation: () => ({
-    t: (key: string) => {
-      if (key === "fab_label") return "Send feedback";
-      return key;
-    },
   }),
 }));
 
