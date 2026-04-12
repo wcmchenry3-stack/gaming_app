@@ -9,4 +9,4 @@ jobs:
     uses: wcmchenry3-stack/.github/.github/workflows/called-schema-migration.yml@main
     with:
       working-directory: backend
-      python-version: '3.11'
+      python-version: "3.11"

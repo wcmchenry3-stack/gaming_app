@@ -4,9 +4,9 @@ Performance tests measure API response times and frontend Core Web Vitals. They 
 
 ## Tools
 
-| Layer | Tool | Config |
-|---|---|---|
-| Backend | [Locust](https://locust.io) 2.32.4 | `backend/perf/locustfile.py` |
+| Layer    | Tool                                                           | Config                       |
+| -------- | -------------------------------------------------------------- | ---------------------------- |
+| Backend  | [Locust](https://locust.io) 2.32.4                             | `backend/perf/locustfile.py` |
 | Frontend | [Lighthouse CI](https://github.com/GoogleChrome/lighthouse-ci) | `frontend/lighthouserc.json` |
 
 ---
@@ -75,21 +75,21 @@ Results are saved to `frontend/.lighthouseci/`. Open any `.html` file in a brows
 
 Defined in `backend/perf/thresholds.json`. These are calibrated for the Render free-tier deployment, measured after the warm-up step.
 
-| Scenario | Users | p95 target | Error rate |
-|---|---|---|---|
-| Game flow (sequential) | 1 | < 500 ms | 0% |
-| Leaderboard concurrent | 10 | < 300 ms | < 1% |
-| Read-only polling | 20 | < 200 ms | 0% |
+| Scenario               | Users | p95 target | Error rate |
+| ---------------------- | ----- | ---------- | ---------- |
+| Game flow (sequential) | 1     | < 500 ms   | 0%         |
+| Leaderboard concurrent | 10    | < 300 ms   | < 1%       |
+| Read-only polling      | 20    | < 200 ms   | 0%         |
 
 **Frontend thresholds** (in `frontend/lighthouserc.json`):
 
-| Metric | Warn threshold | Fail threshold |
-|---|---|---|
-| Performance score | < 0.75 | — (warn only) |
-| Accessibility score | < 0.90 | **< 0.90 (hard fail — WCAG 2.2 AA)** |
-| LCP | > 4000 ms | — (warn only) |
-| CLS | > 0.25 | — (warn only) |
-| TBT | > 600 ms | — (warn only) |
+| Metric              | Warn threshold | Fail threshold                       |
+| ------------------- | -------------- | ------------------------------------ |
+| Performance score   | < 0.75         | — (warn only)                        |
+| Accessibility score | < 0.90         | **< 0.90 (hard fail — WCAG 2.2 AA)** |
+| LCP                 | > 4000 ms      | — (warn only)                        |
+| CLS                 | > 0.25         | — (warn only)                        |
+| TBT                 | > 600 ms       | — (warn only)                        |
 
 To update thresholds, edit `backend/perf/thresholds.json` or `frontend/lighthouserc.json`.
 
@@ -98,11 +98,13 @@ To update thresholds, edit `backend/perf/thresholds.json` or `frontend/lighthous
 ## CI Workflow
 
 The `perf.yml` workflow runs:
+
 - **Nightly at 06:00 UTC** against the production Render URLs
 - **On demand** via GitHub Actions → "Run workflow" (configurable URL, users, duration)
 - **Post-deploy** when called from `deploy.yml` (1-user smoke check)
 
 To trigger manually:
+
 1. Go to Actions → "Performance Tests" → "Run workflow"
 2. Set the target URL (default: production), users, and duration
 

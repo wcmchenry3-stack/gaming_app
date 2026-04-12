@@ -14,11 +14,7 @@
   },
   "source_files": "Fabric/**/*.{h}",
   "compiler_flags": "-DRCT_NEW_ARCH_ENABLED=1",
-  "exclude_files": [
-    "**/tests/*",
-    "**/android/*",
-    " -DRCT_NEW_ARCH_ENABLED=1"
-  ],
+  "exclude_files": ["**/tests/*", "**/android/*", " -DRCT_NEW_ARCH_ENABLED=1"],
   "header_dir": "React",
   "module_name": "RCTFabric",
   "weak_frameworks": "JavaScriptCore",

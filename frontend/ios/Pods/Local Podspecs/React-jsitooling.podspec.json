@@ -20,12 +20,8 @@
     "HEADER_SEARCH_PATHS": "\"${PODS_ROOT}/React-debug\" \"${PODS_ROOT}/React-runtimeexecutor\" \"${PODS_ROOT}/React-runtimeexecutor/platform/ios\" \"${PODS_ROOT}/React-jsinspector\" \"${PODS_ROOT}/React-jsinspectorcdp\" \"${PODS_ROOT}/React-jsinspectortracing\" \"${PODS_ROOT}/React-utils\" \"${PODS_ROOT}/React-utils/react/utils/platform/ios\""
   },
   "dependencies": {
-    "React-cxxreact": [
-      "0.83.4"
-    ],
-    "React-jsi": [
-      "0.83.4"
-    ],
+    "React-cxxreact": ["0.83.4"],
+    "React-jsi": ["0.83.4"],
     "React-debug": [],
     "React-runtimeexecutor": [],
     "React-jsinspector": [],

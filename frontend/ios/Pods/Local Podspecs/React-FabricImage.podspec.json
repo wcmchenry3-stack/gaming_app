@@ -21,15 +21,9 @@
     "HEADER_SEARCH_PATHS": "\"$(PODS_TARGET_SRCROOT)/ReactCommon\" \"$(PODS_ROOT)/Headers/Private/Yoga\" \"${PODS_ROOT}/React-ImageManager\" \"${PODS_ROOT}/React-ImageManager/react/renderer/components/view/platform/cxx\" \"${PODS_ROOT}/React-ImageManager/react/renderer/imagemanager/platform/ios\" \"${PODS_ROOT}/ReactCommon\" \"${PODS_ROOT}/React-graphics\" \"${PODS_ROOT}/React-graphics/react/renderer/graphics/platform/ios\" \"${PODS_ROOT}/React-Fabric\" \"${PODS_ROOT}/React-Fabric/react/renderer/components/view/platform/cxx\" \"${PODS_ROOT}/React-Fabric/react/renderer/imagemanager/platform/ios\" \"${PODS_ROOT}/React-rendererdebug\""
   },
   "dependencies": {
-    "React-jsiexecutor": [
-      "0.83.4"
-    ],
-    "RCTRequired": [
-      "0.83.4"
-    ],
-    "RCTTypeSafety": [
-      "0.83.4"
-    ],
+    "React-jsiexecutor": ["0.83.4"],
+    "RCTRequired": ["0.83.4"],
+    "RCTTypeSafety": ["0.83.4"],
     "React-jsi": [],
     "React-logger": [],
     "React-featureflags": [],

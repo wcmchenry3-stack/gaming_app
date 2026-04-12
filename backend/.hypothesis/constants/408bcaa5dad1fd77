@@ -1,0 +1,4 @@
+# file: C:\Users\wcmch\claude_projects\gaming_app\backend\pachisi\game.py
+# hypothesis_version: 6.151.9
+
+[100, 'Not in move phase.', 'Not in roll phase.', 'PachisiGame', 'capture', 'extra_turn', 'game_over', 'move', 'no_moves', 'red', 'roll', 'yellow']

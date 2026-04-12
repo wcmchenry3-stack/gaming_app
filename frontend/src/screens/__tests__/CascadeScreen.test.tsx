@@ -17,6 +17,14 @@ jest.mock("expo-blur", () => ({
   BlurView: ({ children }: { children?: React.ReactNode }) => <>{children}</>,
 }));
 
+jest.mock("@react-navigation/native", () => ({
+  useNavigation: () => ({
+    popToTop: jest.fn(),
+    goBack: jest.fn(),
+    navigate: jest.fn(),
+  }),
+}));
+
 jest.mock("../../components/cascade/FruitGlyph", () => "FruitGlyph");
 jest.mock("../../components/cascade/NextFruitPreview", () => "NextFruitPreview");
 jest.mock("../../components/cascade/ThemeSelector", () => "ThemeSelector");

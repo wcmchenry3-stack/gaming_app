@@ -60,7 +60,9 @@ test.describe("2048 — state persistence", () => {
     await injectGameState(page, midGameState({ score: 64 }));
     await page.getByRole("button", { name: "Play 2048" }).click();
     await page.getByLabel("Game board").waitFor();
-    await expect(page.locator('[aria-label="Current score: 64"]')).toBeVisible();
+    await expect(
+      page.locator('[aria-label="Current score: 64"]'),
+    ).toBeVisible();
 
     // Navigate home via URL (Lobby tab pop-to-root not reliable on web)
     await page.goto("/");
@@ -71,7 +73,9 @@ test.describe("2048 — state persistence", () => {
     await page.getByLabel("Game board").waitFor();
 
     // Score preserved
-    await expect(page.locator('[aria-label="Current score: 64"]')).toBeVisible();
+    await expect(
+      page.locator('[aria-label="Current score: 64"]'),
+    ).toBeVisible();
   });
 
   test("game-over state: localStorage cleared automatically", async ({

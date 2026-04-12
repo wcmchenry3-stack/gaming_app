@@ -131,7 +131,7 @@ test.describe("Yacht — full 13-round game journey", () => {
     ];
     for (const cat of ALL_CATEGORY_LABELS) {
       await expect(
-        page.getByRole("button", { name: `${cat}: not available` })
+        page.getByRole("button", { name: `${cat}: not available` }),
       ).toBeVisible();
     }
 

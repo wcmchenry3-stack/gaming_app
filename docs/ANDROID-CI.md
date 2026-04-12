@@ -34,14 +34,14 @@ for security.
 
 ## Key Gradle files
 
-| File | Purpose |
-|---|---|
-| `frontend/android/build.gradle` | Root project: repositories, plugin dependencies |
-| `frontend/android/app/build.gradle` | App module: SDK versions, signing, dependencies, Sentry |
-| `frontend/android/settings.gradle` | Module includes, React Native + Expo autolinking |
-| `frontend/android/gradle.properties` | JVM args, architecture list, Hermes/New Arch toggles |
-| `frontend/android/gradle/wrapper/gradle-wrapper.properties` | Gradle distribution version (currently 9.0.0) |
-| `frontend/android/sentry.properties` | Sentry CLI config (uses env vars for org/project/token) |
+| File                                                        | Purpose                                                 |
+| ----------------------------------------------------------- | ------------------------------------------------------- |
+| `frontend/android/build.gradle`                             | Root project: repositories, plugin dependencies         |
+| `frontend/android/app/build.gradle`                         | App module: SDK versions, signing, dependencies, Sentry |
+| `frontend/android/settings.gradle`                          | Module includes, React Native + Expo autolinking        |
+| `frontend/android/gradle.properties`                        | JVM args, architecture list, Hermes/New Arch toggles    |
+| `frontend/android/gradle/wrapper/gradle-wrapper.properties` | Gradle distribution version (currently 9.0.0)           |
+| `frontend/android/sentry.properties`                        | Sentry CLI config (uses env vars for org/project/token) |
 
 ## JS bundle validation (GitHub Actions)
 
@@ -69,11 +69,11 @@ failures from blocking the build.
 
 ## Key differences from iOS CI
 
-| Aspect | iOS | Android |
-|---|---|---|
-| Build system | Xcode Cloud | Gradle → Play Console |
-| Native deps | CocoaPods (`pod install`) | Gradle (automatic) |
-| Lock file | `Podfile.lock` (committed) | None (Gradle resolves dynamically) |
-| CI compile check | `ios-build-check` (macOS) | `android-build-check` (Linux) |
-| Bundle check | iOS bundle check | `android-bundle-check` (Android platform) |
-| Signing | Xcode managed | Keystore + env vars |
+| Aspect           | iOS                        | Android                                   |
+| ---------------- | -------------------------- | ----------------------------------------- |
+| Build system     | Xcode Cloud                | Gradle → Play Console                     |
+| Native deps      | CocoaPods (`pod install`)  | Gradle (automatic)                        |
+| Lock file        | `Podfile.lock` (committed) | None (Gradle resolves dynamically)        |
+| CI compile check | `ios-build-check` (macOS)  | `android-build-check` (Linux)             |
+| Bundle check     | iOS bundle check           | `android-bundle-check` (Android platform) |
+| Signing          | Xcode managed              | Keystore + env vars                       |

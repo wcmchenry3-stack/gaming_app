@@ -22,9 +22,19 @@ export interface GameState {
 }
 
 const CATEGORIES = [
-  "ones", "twos", "threes", "fours", "fives", "sixes",
-  "three_of_a_kind", "four_of_a_kind", "full_house",
-  "small_straight", "large_straight", "yacht", "chance",
+  "ones",
+  "twos",
+  "threes",
+  "fours",
+  "fives",
+  "sixes",
+  "three_of_a_kind",
+  "four_of_a_kind",
+  "full_house",
+  "small_straight",
+  "large_straight",
+  "yacht",
+  "chance",
 ];
 
 function blankState(round = 1): GameState {
@@ -78,15 +88,18 @@ export async function installYachtGameMock(page: Page): Promise<void> {
     });
   });
 
-  await page.route(`${API_BASE}/yacht/possible-scores`, async (route: Route) => {
-    const unfilled = CATEGORIES.filter((c) => !(c in scored));
-    const possible = Object.fromEntries(unfilled.map((c) => [c, 15]));
-    await route.fulfill({
-      status: 200,
-      contentType: "application/json",
-      body: JSON.stringify({ possible_scores: possible }),
-    });
-  });
+  await page.route(
+    `${API_BASE}/yacht/possible-scores`,
+    async (route: Route) => {
+      const unfilled = CATEGORIES.filter((c) => !(c in scored));
+      const possible = Object.fromEntries(unfilled.map((c) => [c, 15]));
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({ possible_scores: possible }),
+      });
+    },
+  );
 
   await page.route(`${API_BASE}/yacht/score`, async (route: Route) => {
     const body = JSON.parse((await route.request().postData()) ?? "{}");
@@ -145,12 +158,15 @@ export async function installFlakyNewGameMock(page: Page): Promise<void> {
     });
   });
 
-  await page.route(`${API_BASE}/yacht/possible-scores`, async (route: Route) => {
-    const possible = Object.fromEntries(CATEGORIES.map((c) => [c, 15]));
-    await route.fulfill({
-      status: 200,
-      contentType: "application/json",
-      body: JSON.stringify({ possible_scores: possible }),
-    });
-  });
+  await page.route(
+    `${API_BASE}/yacht/possible-scores`,
+    async (route: Route) => {
+      const possible = Object.fromEntries(CATEGORIES.map((c) => [c, 15]));
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({ possible_scores: possible }),
+      });
+    },
+  );
 }

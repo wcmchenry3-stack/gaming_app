@@ -89,9 +89,7 @@
         },
         {
           "name": "switch",
-          "source_files": [
-            "react/renderer/components/switch/iosswitch/**/*.h"
-          ],
+          "source_files": ["react/renderer/components/switch/iosswitch/**/*.h"],
           "exclude_files": "react/renderer/components/switch/iosswitch/**/MacOS*.{m,mm,cpp,h}",
           "header_dir": "react/renderer/components/switch/"
         },

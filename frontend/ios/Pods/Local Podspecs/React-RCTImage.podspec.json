@@ -15,11 +15,7 @@
     "tag": "v0.83.4"
   },
   "source_files": "**/*.h",
-  "preserve_paths": [
-    "package.json",
-    "LICENSE",
-    "LICENSE-docs"
-  ],
+  "preserve_paths": ["package.json", "LICENSE", "LICENSE-docs"],
   "header_dir": "RCTImage",
   "pod_target_xcconfig": {
     "USE_HEADERMAP": "YES",
@@ -27,13 +23,7 @@
     "HEADER_SEARCH_PATHS": "\"${PODS_ROOT}/Headers/Public/ReactCodegen/react/renderer/components\" \"${PODS_ROOT}/React-RCTFBReactNativeSpec\" \"${PODS_ROOT}/ReactCommon\" \"${PODS_ROOT}/ReactCommon/react/nativemodule/core\" \"${PODS_ROOT}/React-NativeModulesApple\"",
     "DEFINES_MODULE": "YES"
   },
-  "frameworks": [
-    "Accelerate",
-    "UIKit",
-    "QuartzCore",
-    "ImageIO",
-    "CoreGraphics"
-  ],
+  "frameworks": ["Accelerate", "UIKit", "QuartzCore", "ImageIO", "CoreGraphics"],
   "dependencies": {
     "RCTTypeSafety": [],
     "React-jsi": [],

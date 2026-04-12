@@ -16,9 +16,7 @@
   "pod_target_xcconfig": {
     "CLANG_CXX_LANGUAGE_STANDARD": "c++20",
     "DEFINES_MODULE": "YES",
-    "HEADER_SEARCH_PATHS": [
-      "$(PODS_ROOT)/ReactNativeDependencies"
-    ]
+    "HEADER_SEARCH_PATHS": ["$(PODS_ROOT)/ReactNativeDependencies"]
   },
   "source_files": "**/*.h",
   "dependencies": {
@@ -26,10 +24,5 @@
     "ReactNativeDependencies": [],
     "React-Core-prebuilt": []
   },
-  "exclude_files": [
-    "jsi/jsilib-posix.cpp",
-    "jsi/jsilib-windows.cpp",
-    "**/test/*",
-    "jsi/jsi.cpp"
-  ]
+  "exclude_files": ["jsi/jsilib-posix.cpp", "jsi/jsilib-windows.cpp", "**/test/*", "jsi/jsi.cpp"]
 }

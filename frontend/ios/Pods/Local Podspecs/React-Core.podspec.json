@@ -66,17 +66,10 @@
     },
     {
       "name": "DevSupport",
-      "source_files": [
-        "React/DevSupport/*.h",
-        "React/Inspector/*.h"
-      ],
+      "source_files": ["React/DevSupport/*.h", "React/Inspector/*.h"],
       "dependencies": {
-        "React-Core/Default": [
-          "0.83.4"
-        ],
-        "React-Core/RCTWebSocket": [
-          "0.83.4"
-        ]
+        "React-Core/Default": ["0.83.4"],
+        "React-Core/RCTWebSocket": ["0.83.4"]
       },
       "private_header_files": "React/Inspector/RCTCxx*.h"
     },
@@ -84,9 +77,7 @@
       "name": "RCTWebSocket",
       "source_files": "Libraries/WebSocket/*.h",
       "dependencies": {
-        "React-Core/Default": [
-          "0.83.4"
-        ]
+        "React-Core/Default": ["0.83.4"]
       }
     },
     {

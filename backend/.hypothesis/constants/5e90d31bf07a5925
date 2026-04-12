@@ -1,0 +1,4 @@
+# file: C:\Users\wcmch\claude_projects\gaming_app\backend\cascade\router.py
+# hypothesis_version: 6.151.9
+
+[201, '/score', '/scores', '5/minute', '60/minute']

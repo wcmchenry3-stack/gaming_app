@@ -33,23 +33,24 @@ A calm, no-BS arcade of simple games designed for short moments — not long ses
 
 ## V1 Game Classification
 
-| Game | Status | Notes |
-|------|--------|-------|
-| Yacht | Public | Core game |
-| Blackjack | Public | Core game |
-| 2048 | Public | Core game |
-| Ludo | Beta (hidden) | Needs AI/animation polish |
-| Cascade | Beta (hidden) | Has collision/drop bugs |
+| Game      | Status        | Notes                     |
+| --------- | ------------- | ------------------------- |
+| Yacht     | Public        | Core game                 |
+| Blackjack | Public        | Core game                 |
+| 2048      | Public        | Core game                 |
+| Ludo      | Beta (hidden) | Needs AI/animation polish |
+| Cascade   | Beta (hidden) | Has collision/drop bugs   |
 
 ## Identity Tiers
 
-| Tier | Description | Status |
-|------|-------------|--------|
-| 0 | Anonymous (UUID session) | Done — ships with V1 |
-| 1 | Optional name input | Post-launch |
-| 2 | Google/Apple SSO (optional) | Post-launch — see #144 |
+| Tier | Description                 | Status                 |
+| ---- | --------------------------- | ---------------------- |
+| 0    | Anonymous (UUID session)    | Done — ships with V1   |
+| 1    | Optional name input         | Post-launch            |
+| 2    | Google/Apple SSO (optional) | Post-launch — see #144 |
 
 Login is always optional. Never block gameplay behind it. Prompt only after the user has played:
+
 - "Save your progress?" triggers optional login
 - "Try new games early?" triggers optional login
 

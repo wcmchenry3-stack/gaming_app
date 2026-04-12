@@ -14,10 +14,7 @@
   },
   "source_files": "FBReactNativeSpec/**/*.{h}",
   "compiler_flags": "-DRCT_NEW_ARCH_ENABLED=1",
-  "exclude_files": [
-    "FBReactNativeSpec/react/renderer/components",
-    " -DRCT_NEW_ARCH_ENABLED=1"
-  ],
+  "exclude_files": ["FBReactNativeSpec/react/renderer/components", " -DRCT_NEW_ARCH_ENABLED=1"],
   "header_dir": "FBReactNativeSpec",
   "pod_target_xcconfig": {
     "USE_HEADERMAP": "NO",

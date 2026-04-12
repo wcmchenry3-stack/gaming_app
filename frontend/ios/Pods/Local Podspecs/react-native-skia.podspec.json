@@ -30,12 +30,7 @@
     "OTHER_CPLUSPLUSFLAGS": "$(inherited) -DRCT_NEW_ARCH_ENABLED=1 ",
     "OTHER_SWIFT_FLAGS": "$(inherited) -DRCT_NEW_ARCH_ENABLED"
   },
-  "frameworks": [
-    "MetalKit",
-    "AVFoundation",
-    "AVKit",
-    "CoreMedia"
-  ],
+  "frameworks": ["MetalKit", "AVFoundation", "AVKit", "CoreMedia"],
   "ios": {
     "vendored_frameworks": [
       "libs/apple/ios/libskia.xcframework",
@@ -72,10 +67,7 @@
       "libs/apple/tvos/libsksg.xcframework"
     ]
   },
-  "source_files": [
-    "apple/**/*.{h,c,cc,cpp,m,mm,swift}",
-    "cpp/**/*.{h,cpp}"
-  ],
+  "source_files": ["apple/**/*.{h,c,cc,cpp,m,mm,swift}", "cpp/**/*.{h,cpp}"],
   "exclude_files": [
     "cpp/rnskia/RNDawnContext.h",
     "cpp/rnskia/RNDawnUtils.h",

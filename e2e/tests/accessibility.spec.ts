@@ -44,7 +44,9 @@ test.describe("Accessibility — Home screen", () => {
 });
 
 test.describe("Accessibility — Yacht game screen", () => {
-  test("no critical/serious axe violations on Game screen (pre-roll)", async ({ page }) => {
+  test("no critical/serious axe violations on Game screen (pre-roll)", async ({
+    page,
+  }) => {
     await installYachtGameMock(page);
     await page.goto("/");
 
@@ -56,7 +58,9 @@ test.describe("Accessibility — Yacht game screen", () => {
     );
   });
 
-  test("no critical/serious axe violations on Game screen (post-roll)", async ({ page }) => {
+  test("no critical/serious axe violations on Game screen (post-roll)", async ({
+    page,
+  }) => {
     await installYachtGameMock(page);
     await page.goto("/");
 
@@ -80,10 +84,14 @@ test.describe("Accessibility — Cascade screen", () => {
     });
   });
 
-  test("no critical/serious axe violations on Cascade screen", async ({ page }) => {
+  test("no critical/serious axe violations on Cascade screen", async ({
+    page,
+  }) => {
     await page.goto("/");
     await page.getByRole("button", { name: "Play Cascade" }).click();
-    await expect(page.getByRole("heading", { name: "Cascade", exact: true })).toBeVisible({ timeout: 10000 });
+    await expect(
+      page.getByRole("heading", { name: "Cascade", exact: true }),
+    ).toBeVisible({ timeout: 10000 });
 
     await assertNoA11yViolations(
       new AxeBuilder({ page })

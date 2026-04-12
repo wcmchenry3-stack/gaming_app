@@ -13,6 +13,7 @@ export const APP_HEADER_HEIGHT = 64;
 export interface AppHeaderProps {
   title: string;
   rightSlot?: React.ReactNode;
+  onBack?: () => void;
 }
 
 function hexToRgba(hex: string, alpha: number): string {
@@ -22,7 +23,7 @@ function hexToRgba(hex: string, alpha: number): string {
   return `rgba(${r}, ${g}, ${b}, ${alpha})`;
 }
 
-export function AppHeader({ title, rightSlot }: AppHeaderProps) {
+export function AppHeader({ title, rightSlot, onBack }: AppHeaderProps) {
   const { colors, theme } = useTheme();
   const insets = useSafeAreaInsets();
   const { t } = useTranslation("feedback");
@@ -58,13 +59,25 @@ export function AppHeader({ title, rightSlot }: AppHeaderProps) {
       )}
 
       <View style={[styles.content, { paddingTop: insets.top }]}>
-        <Image
-          source={logoSource}
-          style={styles.logo}
-          resizeMode="contain"
-          accessibilityLabel="BC Arcade"
-          accessibilityRole="image"
-        />
+        {onBack ? (
+          <Pressable
+            onPress={onBack}
+            accessibilityRole="button"
+            accessibilityLabel={t("nav.backLabel")}
+            style={({ pressed }) => [styles.backButton, pressed && styles.backButtonPressed]}
+            hitSlop={12}
+          >
+            <Text style={[styles.backText, { color: colors.text }]}>{t("nav.back")}</Text>
+          </Pressable>
+        ) : (
+          <Image
+            source={logoSource}
+            style={styles.logo}
+            resizeMode="contain"
+            accessibilityLabel="BC Arcade"
+            accessibilityRole="image"
+          />
+        )}
 
         <Text
           style={[styles.title, { color: colors.text }]}
@@ -119,6 +132,19 @@ const styles = StyleSheet.create({
   logo: {
     width: 80,
     height: 32,
+  },
+  backButton: {
+    width: 80,
+    height: 32,
+    justifyContent: "center",
+    alignItems: "flex-start",
+  },
+  backButtonPressed: {
+    opacity: 0.6,
+  },
+  backText: {
+    fontFamily: typography.heading,
+    fontSize: 15,
   },
   title: {
     fontFamily: typography.heading,
