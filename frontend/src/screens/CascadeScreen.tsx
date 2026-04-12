@@ -2,6 +2,9 @@ import React, { useCallback, useEffect, useRef, useState } from "react";
 import { View, StyleSheet, LayoutChangeEvent } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTranslation } from "react-i18next";
+import { useNavigation } from "@react-navigation/native";
+import { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import { HomeStackParamList } from "../../App";
 import { useTheme } from "../theme/ThemeContext";
 import { AppHeader, APP_HEADER_HEIGHT } from "../components/shared/AppHeader";
 import { FruitSetProvider, useFruitSet } from "../theme/FruitSetContext";
@@ -20,6 +23,8 @@ function CascadeGame() {
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
   const { activeFruitSet } = useFruitSet();
+  const navigation =
+    useNavigation<NativeStackNavigationProp<HomeStackParamList, "Cascade">>();
 
   const [score, setScore] = useState(0);
   const [gameOver, setGameOver] = useState(false);
@@ -200,7 +205,7 @@ function CascadeGame() {
         },
       ]}
     >
-      <AppHeader title={t("game.title")} />
+      <AppHeader title={t("game.title")} onBack={() => navigation.popToTop()} />
 
       {/* Score bar */}
       <ScoreDisplay score={score} />

@@ -210,7 +210,7 @@ export default function Twenty48Screen({ navigation }: Props) {
         },
       ]}
     >
-      <AppHeader title={t("game.title")} />
+      <AppHeader title={t("game.title")} onBack={() => navigation.popToTop()} />
 
       {/* Score + New Game */}
       <View style={styles.scoreRow}>

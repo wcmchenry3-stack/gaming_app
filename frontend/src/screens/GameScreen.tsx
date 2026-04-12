@@ -136,7 +136,11 @@ export default function GameScreen({ navigation, route }: Props) {
         },
       ]}
     >
-      <AppHeader title={t("game.title")} rightSlot={roundPill} />
+      <AppHeader
+        title={t("game.title")}
+        rightSlot={roundPill}
+        onBack={() => navigation.popToTop()}
+      />
 
       {/* New Game */}
       <View style={styles.actionRow}>
