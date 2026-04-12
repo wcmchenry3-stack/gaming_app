@@ -10,7 +10,7 @@ Policy references:
 
 Files matching ANY of these patterns trigger this policy:
 
-- `:\s*#[0-9a-fA-F]{3,8}|rgba?\s*\(|hsla?\s*\(|font-size:\s*[0-9]+px|font-family:\s*["']|tabindex=["'][1-9]`
+- `:\s*#[0-9a-fA-F]{3,8}|\brgba?\s*\(|\bhsla?\s*\(|font-size:\s*[0-9]+px|font-family:\s*["']|tabindex=["'][1-9]`
 
 Skip the following (checked against full path and basename):
 
