@@ -1,5 +1,15 @@
 // Top-level build file where you can add configuration options common to all sub-projects/modules.
 
+def javaVersion = JavaVersion.current()
+if (javaVersion > JavaVersion.VERSION_21) {
+  def hint = "AGP's CMake integration misinterprets JDK 22+ restricted-method " +
+    "warnings as build errors. Set JAVA_HOME to JDK 17 or 21 before building."
+  if (org.apache.tools.ant.taskdefs.condition.Os.isFamily(org.apache.tools.ant.taskdefs.condition.Os.FAMILY_MAC)) {
+    hint += "\n  Example: export JAVA_HOME=\$(/usr/libexec/java_home -v 17)"
+  }
+  throw new GradleException("JDK ${javaVersion} is not supported. ${hint}")
+}
+
 buildscript {
   repositories {
     google()
