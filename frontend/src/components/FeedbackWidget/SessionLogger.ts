@@ -9,7 +9,7 @@
 const MAX_ENTRIES = 200;
 
 interface LogEntry {
-  level: 'warn' | 'error';
+  level: "warn" | "error";
   ts: string; // ISO timestamp
   msg: string;
 }
@@ -20,16 +20,12 @@ let initialised = false;
 let originalWarn: typeof console.warn | null = null;
 let originalError: typeof console.error | null = null;
 
-function push(level: LogEntry['level'], args: unknown[]): void {
+function push(level: LogEntry["level"], args: unknown[]): void {
   const msg = args
     .map((a) =>
-      typeof a === 'string'
-        ? a
-        : a instanceof Error
-          ? `${a.name}: ${a.message}`
-          : JSON.stringify(a),
+      typeof a === "string" ? a : a instanceof Error ? `${a.name}: ${a.message}` : JSON.stringify(a)
     )
-    .join(' ');
+    .join(" ");
 
   if (buffer.length >= MAX_ENTRIES) {
     buffer.shift();
@@ -50,12 +46,12 @@ export const SessionLogger = {
     originalError = console.error.bind(console);
 
     console.warn = (...args: unknown[]) => {
-      push('warn', args);
+      push("warn", args);
       originalWarn!(...args);
     };
 
     console.error = (...args: unknown[]) => {
-      push('error', args);
+      push("error", args);
       originalError!(...args);
     };
   },
@@ -65,7 +61,7 @@ export const SessionLogger = {
    * GitHub issue. Most recent entries are at the bottom.
    */
   getLogs(): string {
-    return buffer.map((e) => `[${e.ts}] ${e.level.toUpperCase()} ${e.msg}`).join('\n');
+    return buffer.map((e) => `[${e.ts}] ${e.level.toUpperCase()} ${e.msg}`).join("\n");
   },
 
   /** Expose entry count — used in tests. */

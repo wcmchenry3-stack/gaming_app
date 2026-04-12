@@ -1,12 +1,12 @@
-import { renderHook, act } from '@testing-library/react-native';
-import { useFeedbackSubmit } from '../useFeedbackSubmit';
-import { SessionLogger } from '../SessionLogger';
+import { renderHook, act } from "@testing-library/react-native";
+import { useFeedbackSubmit } from "../useFeedbackSubmit";
+import { SessionLogger } from "../SessionLogger";
 
 // Ensure the global fetch mock is available
 const mockFetch = jest.fn() as jest.MockedFunction<typeof fetch>;
 global.fetch = mockFetch;
 
-const WORKER_URL = 'https://feedback-worker.wcmchenry3.workers.dev';
+const WORKER_URL = "https://feedback-worker.wcmchenry3.workers.dev";
 
 function mockEnv(url: string) {
   process.env.EXPO_PUBLIC_FEEDBACK_WORKER_URL = url;
@@ -24,26 +24,26 @@ afterEach(() => {
 });
 
 const basePayload = {
-  title: 'Test title',
-  description: 'Test description',
-  type: 'bug' as const,
+  title: "Test title",
+  description: "Test description",
+  type: "bug" as const,
 };
 
-describe('useFeedbackSubmit', () => {
-  describe('initial state', () => {
-    it('starts idle with no result or error', () => {
+describe("useFeedbackSubmit", () => {
+  describe("initial state", () => {
+    it("starts idle with no result or error", () => {
       const { result } = renderHook(() => useFeedbackSubmit());
-      expect(result.current.status).toBe('idle');
+      expect(result.current.status).toBe("idle");
       expect(result.current.result).toBeNull();
       expect(result.current.error).toBeNull();
     });
   });
 
-  describe('successful submission', () => {
-    it('transitions idle → submitting → success', async () => {
+  describe("successful submission", () => {
+    it("transitions idle → submitting → success", async () => {
       mockFetch.mockResolvedValueOnce({
         status: 201,
-        json: async () => ({ issueNumber: 42, issueUrl: 'https://github.com/issues/42' }),
+        json: async () => ({ issueNumber: 42, issueUrl: "https://github.com/issues/42" }),
         headers: { get: () => null },
       } as unknown as Response);
 
@@ -53,56 +53,62 @@ describe('useFeedbackSubmit', () => {
         await result.current.submit(basePayload);
       });
 
-      expect(result.current.status).toBe('success');
+      expect(result.current.status).toBe("success");
       expect(result.current.result).toEqual({
         issueNumber: 42,
-        issueUrl: 'https://github.com/issues/42',
+        issueUrl: "https://github.com/issues/42",
       });
       expect(result.current.error).toBeNull();
     });
 
-    it('sends appId: gaming_app in request body', async () => {
+    it("sends appId: gaming_app in request body", async () => {
       mockFetch.mockResolvedValueOnce({
         status: 201,
-        json: async () => ({ issueNumber: 1, issueUrl: 'https://github.com/issues/1' }),
+        json: async () => ({ issueNumber: 1, issueUrl: "https://github.com/issues/1" }),
         headers: { get: () => null },
       } as unknown as Response);
 
       const { result } = renderHook(() => useFeedbackSubmit());
-      await act(async () => { await result.current.submit(basePayload); });
+      await act(async () => {
+        await result.current.submit(basePayload);
+      });
 
       const [, init] = mockFetch.mock.calls[0];
       const body = JSON.parse((init as RequestInit).body as string);
-      expect(body.appId).toBe('gaming_app');
+      expect(body.appId).toBe("gaming_app");
     });
 
-    it('attaches session logs when present', async () => {
+    it("attaches session logs when present", async () => {
       SessionLogger.init();
-      console.warn('captured log');
+      console.warn("captured log");
 
       mockFetch.mockResolvedValueOnce({
         status: 201,
-        json: async () => ({ issueNumber: 1, issueUrl: '' }),
+        json: async () => ({ issueNumber: 1, issueUrl: "" }),
         headers: { get: () => null },
       } as unknown as Response);
 
       const { result } = renderHook(() => useFeedbackSubmit());
-      await act(async () => { await result.current.submit(basePayload); });
+      await act(async () => {
+        await result.current.submit(basePayload);
+      });
 
       const [, init] = mockFetch.mock.calls[0];
       const body = JSON.parse((init as RequestInit).body as string);
       expect(body.sessionLogs).toMatch(/captured log/);
     });
 
-    it('omits sessionLogs key when buffer is empty', async () => {
+    it("omits sessionLogs key when buffer is empty", async () => {
       mockFetch.mockResolvedValueOnce({
         status: 201,
-        json: async () => ({ issueNumber: 1, issueUrl: '' }),
+        json: async () => ({ issueNumber: 1, issueUrl: "" }),
         headers: { get: () => null },
       } as unknown as Response);
 
       const { result } = renderHook(() => useFeedbackSubmit());
-      await act(async () => { await result.current.submit(basePayload); });
+      await act(async () => {
+        await result.current.submit(basePayload);
+      });
 
       const [, init] = mockFetch.mock.calls[0];
       const body = JSON.parse((init as RequestInit).body as string);
@@ -110,22 +116,24 @@ describe('useFeedbackSubmit', () => {
     });
   });
 
-  describe('rate limit (429)', () => {
-    it('sets error kind: rate_limit with Retry-After from header', async () => {
+  describe("rate limit (429)", () => {
+    it("sets error kind: rate_limit with Retry-After from header", async () => {
       mockFetch.mockResolvedValueOnce({
         status: 429,
-        headers: { get: (h: string) => (h === 'Retry-After' ? '120' : null) },
+        headers: { get: (h: string) => (h === "Retry-After" ? "120" : null) },
         json: async () => ({}),
       } as unknown as Response);
 
       const { result } = renderHook(() => useFeedbackSubmit());
-      await act(async () => { await result.current.submit(basePayload); });
+      await act(async () => {
+        await result.current.submit(basePayload);
+      });
 
-      expect(result.current.status).toBe('error');
-      expect(result.current.error).toEqual({ kind: 'rate_limit', retryAfterSeconds: 120 });
+      expect(result.current.status).toBe("error");
+      expect(result.current.error).toEqual({ kind: "rate_limit", retryAfterSeconds: 120 });
     });
 
-    it('defaults retryAfterSeconds to 60 when Retry-After header absent', async () => {
+    it("defaults retryAfterSeconds to 60 when Retry-After header absent", async () => {
       mockFetch.mockResolvedValueOnce({
         status: 429,
         headers: { get: () => null },
@@ -133,14 +141,16 @@ describe('useFeedbackSubmit', () => {
       } as unknown as Response);
 
       const { result } = renderHook(() => useFeedbackSubmit());
-      await act(async () => { await result.current.submit(basePayload); });
+      await act(async () => {
+        await result.current.submit(basePayload);
+      });
 
       expect(result.current.error?.retryAfterSeconds).toBe(60);
     });
   });
 
-  describe('rejected (422)', () => {
-    it('sets error kind: rejected', async () => {
+  describe("rejected (422)", () => {
+    it("sets error kind: rejected", async () => {
       mockFetch.mockResolvedValueOnce({
         status: 422,
         headers: { get: () => null },
@@ -148,27 +158,31 @@ describe('useFeedbackSubmit', () => {
       } as unknown as Response);
 
       const { result } = renderHook(() => useFeedbackSubmit());
-      await act(async () => { await result.current.submit(basePayload); });
+      await act(async () => {
+        await result.current.submit(basePayload);
+      });
 
-      expect(result.current.status).toBe('error');
-      expect(result.current.error).toEqual({ kind: 'rejected' });
+      expect(result.current.status).toBe("error");
+      expect(result.current.error).toEqual({ kind: "rejected" });
     });
   });
 
-  describe('network error', () => {
-    it('sets error kind: network when fetch throws', async () => {
-      mockFetch.mockRejectedValueOnce(new Error('Network request failed'));
+  describe("network error", () => {
+    it("sets error kind: network when fetch throws", async () => {
+      mockFetch.mockRejectedValueOnce(new Error("Network request failed"));
 
       const { result } = renderHook(() => useFeedbackSubmit());
-      await act(async () => { await result.current.submit(basePayload); });
+      await act(async () => {
+        await result.current.submit(basePayload);
+      });
 
-      expect(result.current.status).toBe('error');
-      expect(result.current.error).toEqual({ kind: 'network' });
+      expect(result.current.status).toBe("error");
+      expect(result.current.error).toEqual({ kind: "network" });
     });
   });
 
-  describe('unknown error', () => {
-    it('sets error kind: unknown for unexpected status codes', async () => {
+  describe("unknown error", () => {
+    it("sets error kind: unknown for unexpected status codes", async () => {
       mockFetch.mockResolvedValueOnce({
         status: 500,
         headers: { get: () => null },
@@ -176,41 +190,49 @@ describe('useFeedbackSubmit', () => {
       } as unknown as Response);
 
       const { result } = renderHook(() => useFeedbackSubmit());
-      await act(async () => { await result.current.submit(basePayload); });
+      await act(async () => {
+        await result.current.submit(basePayload);
+      });
 
-      expect(result.current.status).toBe('error');
-      expect(result.current.error).toEqual({ kind: 'unknown' });
+      expect(result.current.status).toBe("error");
+      expect(result.current.error).toEqual({ kind: "unknown" });
     });
   });
 
-  describe('no-op when WORKER_URL unset', () => {
-    it('returns without calling fetch', async () => {
+  describe("no-op when WORKER_URL unset", () => {
+    it("returns without calling fetch", async () => {
       delete process.env.EXPO_PUBLIC_FEEDBACK_WORKER_URL;
 
       const { result } = renderHook(() => useFeedbackSubmit());
-      await act(async () => { await result.current.submit(basePayload); });
+      await act(async () => {
+        await result.current.submit(basePayload);
+      });
 
       expect(mockFetch).not.toHaveBeenCalled();
       // Status stays idle (no transition since the hook bails early before setStatus)
-      expect(result.current.status).toBe('idle');
+      expect(result.current.status).toBe("idle");
     });
   });
 
-  describe('reset()', () => {
-    it('clears status, result, and error back to initial state', async () => {
+  describe("reset()", () => {
+    it("clears status, result, and error back to initial state", async () => {
       mockFetch.mockResolvedValueOnce({
         status: 201,
-        json: async () => ({ issueNumber: 5, issueUrl: '' }),
+        json: async () => ({ issueNumber: 5, issueUrl: "" }),
         headers: { get: () => null },
       } as unknown as Response);
 
       const { result } = renderHook(() => useFeedbackSubmit());
-      await act(async () => { await result.current.submit(basePayload); });
-      expect(result.current.status).toBe('success');
+      await act(async () => {
+        await result.current.submit(basePayload);
+      });
+      expect(result.current.status).toBe("success");
 
-      act(() => { result.current.reset(); });
+      act(() => {
+        result.current.reset();
+      });
 
-      expect(result.current.status).toBe('idle');
+      expect(result.current.status).toBe("idle");
       expect(result.current.result).toBeNull();
       expect(result.current.error).toBeNull();
     });

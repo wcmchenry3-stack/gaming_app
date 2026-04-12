@@ -1,7 +1,7 @@
-import { useState } from 'react';
-import { SessionLogger } from './SessionLogger';
+import { useState } from "react";
+import { SessionLogger } from "./SessionLogger";
 
-export type FeedbackType = 'bug' | 'feature';
+export type FeedbackType = "bug" | "feature";
 
 export interface FeedbackPayload {
   title: string;
@@ -10,10 +10,10 @@ export interface FeedbackPayload {
   screenshotBase64?: string;
 }
 
-export type SubmitStatus = 'idle' | 'submitting' | 'success' | 'error';
+export type SubmitStatus = "idle" | "submitting" | "success" | "error";
 
 export interface SubmitError {
-  kind: 'rate_limit' | 'rejected' | 'network' | 'unknown';
+  kind: "rate_limit" | "rejected" | "network" | "unknown";
   retryAfterSeconds?: number;
 }
 
@@ -31,25 +31,27 @@ export interface UseFeedbackSubmit {
 }
 
 export function useFeedbackSubmit(): UseFeedbackSubmit {
-  const [status, setStatus] = useState<SubmitStatus>('idle');
+  const [status, setStatus] = useState<SubmitStatus>("idle");
   const [result, setResult] = useState<SubmitResult | null>(null);
   const [error, setError] = useState<SubmitError | null>(null);
 
   async function submit(payload: FeedbackPayload): Promise<void> {
     // Read env var lazily so tests can override it via process.env
-    const workerUrl = process.env.EXPO_PUBLIC_FEEDBACK_WORKER_URL ?? '';
+    const workerUrl = process.env.EXPO_PUBLIC_FEEDBACK_WORKER_URL ?? "";
     if (!workerUrl) {
       // Worker URL not configured — silently no-op in production builds
-      console.warn('[FeedbackWidget] EXPO_PUBLIC_FEEDBACK_WORKER_URL is not set — feedback disabled');
+      console.warn(
+        "[FeedbackWidget] EXPO_PUBLIC_FEEDBACK_WORKER_URL is not set — feedback disabled"
+      );
       return;
     }
 
-    setStatus('submitting');
+    setStatus("submitting");
     setError(null);
     setResult(null);
 
     const body = {
-      appId: 'gaming_app',
+      appId: "gaming_app",
       title: payload.title,
       description: payload.description,
       type: payload.type,
@@ -60,45 +62,45 @@ export function useFeedbackSubmit(): UseFeedbackSubmit {
     let response: Response;
     try {
       response = await fetch(`${workerUrl}/feedback`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
       });
     } catch {
-      setStatus('error');
-      setError({ kind: 'network' });
+      setStatus("error");
+      setError({ kind: "network" });
       return;
     }
 
     if (response.status === 201) {
       const data = (await response.json()) as SubmitResult;
       setResult(data);
-      setStatus('success');
+      setStatus("success");
       return;
     }
 
     if (response.status === 429) {
-      const retryAfter = response.headers.get('Retry-After');
-      setStatus('error');
+      const retryAfter = response.headers.get("Retry-After");
+      setStatus("error");
       setError({
-        kind: 'rate_limit',
+        kind: "rate_limit",
         retryAfterSeconds: retryAfter ? parseInt(retryAfter, 10) : 60,
       });
       return;
     }
 
     if (response.status === 422) {
-      setStatus('error');
-      setError({ kind: 'rejected' });
+      setStatus("error");
+      setError({ kind: "rejected" });
       return;
     }
 
-    setStatus('error');
-    setError({ kind: 'unknown' });
+    setStatus("error");
+    setError({ kind: "unknown" });
   }
 
   function reset(): void {
-    setStatus('idle');
+    setStatus("idle");
     setResult(null);
     setError(null);
   }

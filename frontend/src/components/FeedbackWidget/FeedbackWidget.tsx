@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import {
   ActivityIndicator,
   Modal,
@@ -8,10 +8,10 @@ import {
   Text,
   TextInput,
   View,
-} from 'react-native';
-import { useTranslation } from 'react-i18next';
-import { useTheme } from '../../theme/ThemeContext';
-import { useFeedbackSubmit, FeedbackType } from './useFeedbackSubmit';
+} from "react-native";
+import { useTranslation } from "react-i18next";
+import { useTheme } from "../../theme/ThemeContext";
+import { useFeedbackSubmit, FeedbackType } from "./useFeedbackSubmit";
 
 const TITLE_MAX = 120;
 const DESCRIPTION_MAX = 2000;
@@ -22,39 +22,39 @@ interface Props {
 }
 
 export default function FeedbackWidget({ visible, onClose }: Props) {
-  const { t } = useTranslation('feedback');
+  const { t } = useTranslation("feedback");
   const { colors } = useTheme();
   const { status, result, error, submit, reset } = useFeedbackSubmit();
 
-  const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
-  const [type, setType] = useState<FeedbackType>('bug');
-  const [titleError, setTitleError] = useState('');
-  const [descError, setDescError] = useState('');
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [type, setType] = useState<FeedbackType>("bug");
+  const [titleError, setTitleError] = useState("");
+  const [descError, setDescError] = useState("");
 
   function handleClose() {
     reset();
-    setTitle('');
-    setDescription('');
-    setType('bug');
-    setTitleError('');
-    setDescError('');
+    setTitle("");
+    setDescription("");
+    setType("bug");
+    setTitleError("");
+    setDescError("");
     onClose();
   }
 
   function validate(): boolean {
     let valid = true;
     if (!title.trim()) {
-      setTitleError(t('error_title_required'));
+      setTitleError(t("error_title_required"));
       valid = false;
     } else {
-      setTitleError('');
+      setTitleError("");
     }
     if (!description.trim()) {
-      setDescError(t('error_description_required'));
+      setDescError(t("error_description_required"));
       valid = false;
     } else {
-      setDescError('');
+      setDescError("");
     }
     return valid;
   }
@@ -64,7 +64,7 @@ export default function FeedbackWidget({ visible, onClose }: Props) {
     await submit({ title: title.trim(), description: description.trim(), type });
   }
 
-  const isSubmitting = status === 'submitting';
+  const isSubmitting = status === "submitting";
   const s = makeStyles(colors);
 
   return (
@@ -80,13 +80,13 @@ export default function FeedbackWidget({ visible, onClose }: Props) {
           {/* Header */}
           <View style={s.header}>
             <Text style={s.heading} accessibilityRole="header">
-              {t('title')}
+              {t("title")}
             </Text>
             <Pressable
               onPress={handleClose}
               style={s.closeBtn}
               accessibilityRole="button"
-              accessibilityLabel={t('close_label')}
+              accessibilityLabel={t("close_label")}
             >
               <Text style={s.closeBtnText}>✕</Text>
             </Pressable>
@@ -97,13 +97,13 @@ export default function FeedbackWidget({ visible, onClose }: Props) {
             contentContainerStyle={s.bodyContent}
             keyboardShouldPersistTaps="handled"
           >
-            {status === 'success' ? (
+            {status === "success" ? (
               /* ── Success state ── */
               <View style={s.successContainer} accessibilityLiveRegion="polite">
-                <Text style={s.successTitle}>{t('submit_success')}</Text>
+                <Text style={s.successTitle}>{t("submit_success")}</Text>
                 {result && (
                   <Text style={s.successSub}>
-                    {t('submit_success_issue', { number: result.issueNumber })}
+                    {t("submit_success_issue", { number: result.issueNumber })}
                   </Text>
                 )}
                 <Pressable
@@ -112,7 +112,7 @@ export default function FeedbackWidget({ visible, onClose }: Props) {
                   accessibilityRole="button"
                 >
                   <Text style={[s.primaryBtnText, { color: colors.textOnAccent }]}>
-                    {t('close_label')}
+                    {t("close_label")}
                   </Text>
                 </Pressable>
               </View>
@@ -120,37 +120,36 @@ export default function FeedbackWidget({ visible, onClose }: Props) {
               /* ── Form state ── */
               <>
                 {/* Error banner */}
-                {status === 'error' && error && (
+                {status === "error" && error && (
                   <View
                     style={[s.errorBanner, { borderColor: colors.error }]}
                     accessibilityLiveRegion="assertive"
                     accessibilityRole="alert"
                   >
                     <Text style={[s.errorBannerText, { color: colors.error }]}>
-                      {error.kind === 'rate_limit'
-                        ? t('submit_error_rate_limit', {
+                      {error.kind === "rate_limit"
+                        ? t("submit_error_rate_limit", {
                             seconds: error.retryAfterSeconds ?? 60,
                           })
-                        : error.kind === 'rejected'
-                          ? t('submit_error_rejected')
-                          : error.kind === 'network'
-                            ? t('submit_error_network')
-                            : t('submit_error')}
+                        : error.kind === "rejected"
+                          ? t("submit_error_rejected")
+                          : error.kind === "network"
+                            ? t("submit_error_network")
+                            : t("submit_error")}
                     </Text>
                   </View>
                 )}
 
                 {/* Type selector */}
-                <Text style={s.label}>{t('type_label')}</Text>
+                <Text style={s.label}>{t("type_label")}</Text>
                 <View style={s.typeRow}>
-                  {(['bug', 'feature'] as FeedbackType[]).map((ft) => (
+                  {(["bug", "feature"] as FeedbackType[]).map((ft) => (
                     <Pressable
                       key={ft}
                       style={[
                         s.typeChip,
                         {
-                          backgroundColor:
-                            type === ft ? colors.accent : colors.surface,
+                          backgroundColor: type === ft ? colors.accent : colors.surface,
                           borderColor: type === ft ? colors.accent : colors.border,
                         },
                       ]}
@@ -175,7 +174,7 @@ export default function FeedbackWidget({ visible, onClose }: Props) {
 
                 {/* Title field */}
                 <Text style={s.label} nativeID="feedback-title-label">
-                  {t('label_title')}
+                  {t("label_title")}
                 </Text>
                 <TextInput
                   style={[
@@ -189,9 +188,9 @@ export default function FeedbackWidget({ visible, onClose }: Props) {
                   value={title}
                   onChangeText={(v) => {
                     setTitle(v.slice(0, TITLE_MAX));
-                    if (titleError) setTitleError('');
+                    if (titleError) setTitleError("");
                   }}
-                  placeholder={t('placeholder_title')}
+                  placeholder={t("placeholder_title")}
                   placeholderTextColor={colors.textMuted}
                   maxLength={TITLE_MAX}
                   returnKeyType="next"
@@ -210,7 +209,7 @@ export default function FeedbackWidget({ visible, onClose }: Props) {
 
                 {/* Description field */}
                 <Text style={s.label} nativeID="feedback-desc-label">
-                  {t('label_description')}
+                  {t("label_description")}
                 </Text>
                 <TextInput
                   style={[
@@ -224,9 +223,9 @@ export default function FeedbackWidget({ visible, onClose }: Props) {
                   value={description}
                   onChangeText={(v) => {
                     setDescription(v.slice(0, DESCRIPTION_MAX));
-                    if (descError) setDescError('');
+                    if (descError) setDescError("");
                   }}
-                  placeholder={t('placeholder_description')}
+                  placeholder={t("placeholder_description")}
                   placeholderTextColor={colors.textMuted}
                   multiline
                   numberOfLines={5}
@@ -255,13 +254,13 @@ export default function FeedbackWidget({ visible, onClose }: Props) {
                   disabled={isSubmitting}
                   accessibilityRole="button"
                   accessibilityState={{ disabled: isSubmitting, busy: isSubmitting }}
-                  accessibilityLabel={t('submit')}
+                  accessibilityLabel={t("submit")}
                 >
                   {isSubmitting ? (
                     <ActivityIndicator color={colors.textOnAccent} />
                   ) : (
                     <Text style={[s.primaryBtnText, { color: colors.textOnAccent }]}>
-                      {t('submit')}
+                      {t("submit")}
                     </Text>
                   )}
                 </Pressable>
@@ -274,23 +273,23 @@ export default function FeedbackWidget({ visible, onClose }: Props) {
   );
 }
 
-function makeStyles(colors: ReturnType<typeof useTheme>['colors']) {
+function makeStyles(colors: ReturnType<typeof useTheme>["colors"]) {
   return StyleSheet.create({
     overlay: {
       flex: 1,
-      justifyContent: 'flex-end',
-      backgroundColor: 'rgba(0,0,0,0.55)',
+      justifyContent: "flex-end",
+      backgroundColor: "rgba(0,0,0,0.55)",
     },
     sheet: {
       backgroundColor: colors.surface,
       borderTopLeftRadius: 20,
       borderTopRightRadius: 20,
-      maxHeight: '90%',
+      maxHeight: "90%",
     },
     header: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'space-between',
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
       paddingHorizontal: 20,
       paddingVertical: 16,
       borderBottomWidth: StyleSheet.hairlineWidth,
@@ -298,7 +297,7 @@ function makeStyles(colors: ReturnType<typeof useTheme>['colors']) {
     },
     heading: {
       fontSize: 17,
-      fontWeight: '600',
+      fontWeight: "600",
       color: colors.text,
     },
     closeBtn: {
@@ -319,13 +318,13 @@ function makeStyles(colors: ReturnType<typeof useTheme>['colors']) {
     },
     label: {
       fontSize: 13,
-      fontWeight: '500',
+      fontWeight: "500",
       color: colors.textMuted,
       marginTop: 12,
       marginBottom: 4,
     },
     typeRow: {
-      flexDirection: 'row',
+      flexDirection: "row",
       gap: 10,
       marginBottom: 4,
     },
@@ -337,7 +336,7 @@ function makeStyles(colors: ReturnType<typeof useTheme>['colors']) {
     },
     typeChipText: {
       fontSize: 14,
-      fontWeight: '500',
+      fontWeight: "500",
     },
     input: {
       borderWidth: 1,
@@ -356,7 +355,7 @@ function makeStyles(colors: ReturnType<typeof useTheme>['colors']) {
     },
     charCount: {
       fontSize: 12,
-      textAlign: 'right',
+      textAlign: "right",
     },
     fieldError: {
       fontSize: 12,
@@ -374,28 +373,28 @@ function makeStyles(colors: ReturnType<typeof useTheme>['colors']) {
       marginTop: 20,
       paddingVertical: 14,
       borderRadius: 10,
-      alignItems: 'center',
-      justifyContent: 'center',
+      alignItems: "center",
+      justifyContent: "center",
     },
     primaryBtnText: {
       fontSize: 15,
-      fontWeight: '600',
+      fontWeight: "600",
     },
     successContainer: {
-      alignItems: 'center',
+      alignItems: "center",
       paddingVertical: 24,
       gap: 12,
     },
     successTitle: {
       fontSize: 17,
-      fontWeight: '600',
+      fontWeight: "600",
       color: colors.text,
-      textAlign: 'center',
+      textAlign: "center",
     },
     successSub: {
       fontSize: 14,
       color: colors.textMuted,
-      textAlign: 'center',
+      textAlign: "center",
     },
   });
 }
