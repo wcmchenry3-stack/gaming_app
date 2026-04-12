@@ -1,6 +1,6 @@
 import React from "react";
 import { Text } from "react-native";
-import { render, screen } from "@testing-library/react-native";
+import { fireEvent, render, screen } from "@testing-library/react-native";
 import { AppHeader, APP_HEADER_HEIGHT } from "../AppHeader";
 
 jest.mock("expo-blur", () => ({
@@ -17,10 +17,27 @@ jest.mock("../../../theme/ThemeContext", () => ({
       background: "#0e0e13",
       accent: "#8ff5ff",
       text: "#e8e8f0",
+      textOnAccent: "#0e0e13",
     },
     theme: "dark",
   }),
 }));
+
+jest.mock("react-i18next", () => ({
+  useTranslation: () => ({
+    t: (key: string) => {
+      if (key === "fab_label") return "Send feedback";
+      return key;
+    },
+  }),
+}));
+
+jest.mock("../../FeedbackWidget/FeedbackWidget", () => {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const { Text: RNText } = require("react-native");
+  return ({ visible }: { visible: boolean; onClose: () => void }) =>
+    visible ? <RNText>FeedbackWidgetMock</RNText> : null;
+});
 
 jest.mock("../../../../assets/logo.png", () => 1);
 
@@ -50,11 +67,13 @@ describe("AppHeader", () => {
     expect(getByRole("header", { name: "Lobby" })).toBeTruthy();
   });
 
-  it("does not render a back button", () => {
+  it("renders a help button that opens the FeedbackWidget when pressed", () => {
     render(<AppHeader title="2048" />);
-    expect(screen.queryByText(/back/i)).toBeNull();
-    expect(screen.queryByText(/←/)).toBeNull();
-    expect(screen.queryByRole("button")).toBeNull();
+    const helpBtn = screen.getByRole("button", { name: "Send feedback" });
+    expect(helpBtn).toBeTruthy();
+    expect(screen.queryByText("FeedbackWidgetMock")).toBeNull();
+    fireEvent.press(helpBtn);
+    expect(screen.getByText("FeedbackWidgetMock")).toBeTruthy();
   });
 
   it("exports APP_HEADER_HEIGHT as a positive number", () => {
