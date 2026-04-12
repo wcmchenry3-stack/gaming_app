@@ -218,6 +218,8 @@ const styles = StyleSheet.create({
   cardTitle: {
     fontFamily: typography.heading,
     fontSize: 14,
+    lineHeight: 18,
+    height: 18,
     letterSpacing: -0.3,
     paddingHorizontal: 8,
     textAlign: "center",
@@ -226,6 +228,7 @@ const styles = StyleSheet.create({
     fontFamily: typography.body,
     fontSize: 10,
     lineHeight: 14,
+    height: 28,
     textAlign: "center",
     paddingHorizontal: 12,
   },
