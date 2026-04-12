@@ -4,7 +4,15 @@ import resourcesToBackend from "i18next-resources-to-backend";
 import * as Localization from "expo-localization";
 import { LOCALES } from "./locales";
 
-type Namespace = "common" | "yacht" | "cascade" | "errors" | "blackjack" | "pachisi" | "twenty48";
+type Namespace =
+  | "common"
+  | "yacht"
+  | "cascade"
+  | "errors"
+  | "blackjack"
+  | "pachisi"
+  | "twenty48"
+  | "feedback";
 type TranslationModule = Promise<{ default: Record<string, string> }>;
 
 // Resolve the best supported locale from the device's preference list
@@ -30,6 +38,7 @@ const localeLoaders: Record<string, Record<Namespace, () => TranslationModule>> 
     blackjack: () => import("./locales/en/blackjack.json") as TranslationModule,
     pachisi: () => import("./locales/en/pachisi.json") as TranslationModule,
     twenty48: () => import("./locales/en/twenty48.json") as TranslationModule,
+    feedback: () => import("./locales/en/feedback.json") as TranslationModule,
   },
   "fr-CA": {
     common: () => import("./locales/fr-CA/common.json") as TranslationModule,
@@ -39,6 +48,7 @@ const localeLoaders: Record<string, Record<Namespace, () => TranslationModule>> 
     blackjack: () => import("./locales/fr-CA/blackjack.json") as TranslationModule,
     pachisi: () => import("./locales/fr-CA/pachisi.json") as TranslationModule,
     twenty48: () => import("./locales/fr-CA/twenty48.json") as TranslationModule,
+    feedback: () => import("./locales/fr-CA/feedback.json") as TranslationModule,
   },
   es: {
     common: () => import("./locales/es/common.json") as TranslationModule,
@@ -48,6 +58,7 @@ const localeLoaders: Record<string, Record<Namespace, () => TranslationModule>> 
     blackjack: () => import("./locales/es/blackjack.json") as TranslationModule,
     pachisi: () => import("./locales/es/pachisi.json") as TranslationModule,
     twenty48: () => import("./locales/es/twenty48.json") as TranslationModule,
+    feedback: () => import("./locales/es/feedback.json") as TranslationModule,
   },
   hi: {
     common: () => import("./locales/hi/common.json") as TranslationModule,
@@ -57,6 +68,7 @@ const localeLoaders: Record<string, Record<Namespace, () => TranslationModule>> 
     blackjack: () => import("./locales/hi/blackjack.json") as TranslationModule,
     pachisi: () => import("./locales/hi/pachisi.json") as TranslationModule,
     twenty48: () => import("./locales/hi/twenty48.json") as TranslationModule,
+    feedback: () => import("./locales/hi/feedback.json") as TranslationModule,
   },
   ar: {
     common: () => import("./locales/ar/common.json") as TranslationModule,
@@ -66,6 +78,7 @@ const localeLoaders: Record<string, Record<Namespace, () => TranslationModule>> 
     blackjack: () => import("./locales/ar/blackjack.json") as TranslationModule,
     pachisi: () => import("./locales/ar/pachisi.json") as TranslationModule,
     twenty48: () => import("./locales/ar/twenty48.json") as TranslationModule,
+    feedback: () => import("./locales/ar/feedback.json") as TranslationModule,
   },
   zh: {
     common: () => import("./locales/zh/common.json") as TranslationModule,
@@ -75,6 +88,7 @@ const localeLoaders: Record<string, Record<Namespace, () => TranslationModule>> 
     blackjack: () => import("./locales/zh/blackjack.json") as TranslationModule,
     pachisi: () => import("./locales/zh/pachisi.json") as TranslationModule,
     twenty48: () => import("./locales/zh/twenty48.json") as TranslationModule,
+    feedback: () => import("./locales/zh/feedback.json") as TranslationModule,
   },
   ja: {
     common: () => import("./locales/ja/common.json") as TranslationModule,
@@ -84,6 +98,7 @@ const localeLoaders: Record<string, Record<Namespace, () => TranslationModule>> 
     blackjack: () => import("./locales/ja/blackjack.json") as TranslationModule,
     pachisi: () => import("./locales/ja/pachisi.json") as TranslationModule,
     twenty48: () => import("./locales/ja/twenty48.json") as TranslationModule,
+    feedback: () => import("./locales/ja/feedback.json") as TranslationModule,
   },
   ko: {
     common: () => import("./locales/ko/common.json") as TranslationModule,
@@ -93,6 +108,7 @@ const localeLoaders: Record<string, Record<Namespace, () => TranslationModule>> 
     blackjack: () => import("./locales/ko/blackjack.json") as TranslationModule,
     pachisi: () => import("./locales/ko/pachisi.json") as TranslationModule,
     twenty48: () => import("./locales/ko/twenty48.json") as TranslationModule,
+    feedback: () => import("./locales/ko/feedback.json") as TranslationModule,
   },
   pt: {
     common: () => import("./locales/pt/common.json") as TranslationModule,
@@ -102,6 +118,7 @@ const localeLoaders: Record<string, Record<Namespace, () => TranslationModule>> 
     blackjack: () => import("./locales/pt/blackjack.json") as TranslationModule,
     pachisi: () => import("./locales/pt/pachisi.json") as TranslationModule,
     twenty48: () => import("./locales/pt/twenty48.json") as TranslationModule,
+    feedback: () => import("./locales/pt/feedback.json") as TranslationModule,
   },
   he: {
     common: () => import("./locales/he/common.json") as TranslationModule,
@@ -111,6 +128,7 @@ const localeLoaders: Record<string, Record<Namespace, () => TranslationModule>> 
     blackjack: () => import("./locales/he/blackjack.json") as TranslationModule,
     pachisi: () => import("./locales/he/pachisi.json") as TranslationModule,
     twenty48: () => import("./locales/he/twenty48.json") as TranslationModule,
+    feedback: () => import("./locales/he/feedback.json") as TranslationModule,
   },
   de: {
     common: () => import("./locales/de/common.json") as TranslationModule,
@@ -120,6 +138,7 @@ const localeLoaders: Record<string, Record<Namespace, () => TranslationModule>> 
     blackjack: () => import("./locales/de/blackjack.json") as TranslationModule,
     pachisi: () => import("./locales/de/pachisi.json") as TranslationModule,
     twenty48: () => import("./locales/de/twenty48.json") as TranslationModule,
+    feedback: () => import("./locales/de/feedback.json") as TranslationModule,
   },
   nl: {
     common: () => import("./locales/nl/common.json") as TranslationModule,
@@ -129,6 +148,7 @@ const localeLoaders: Record<string, Record<Namespace, () => TranslationModule>> 
     blackjack: () => import("./locales/nl/blackjack.json") as TranslationModule,
     pachisi: () => import("./locales/nl/pachisi.json") as TranslationModule,
     twenty48: () => import("./locales/nl/twenty48.json") as TranslationModule,
+    feedback: () => import("./locales/nl/feedback.json") as TranslationModule,
   },
   ru: {
     common: () => import("./locales/ru/common.json") as TranslationModule,
@@ -138,6 +158,7 @@ const localeLoaders: Record<string, Record<Namespace, () => TranslationModule>> 
     blackjack: () => import("./locales/ru/blackjack.json") as TranslationModule,
     pachisi: () => import("./locales/ru/pachisi.json") as TranslationModule,
     twenty48: () => import("./locales/ru/twenty48.json") as TranslationModule,
+    feedback: () => import("./locales/ru/feedback.json") as TranslationModule,
   },
 };
 
@@ -155,7 +176,7 @@ i18n
     lng: resolveLocale(),
     fallbackLng: "en",
     supportedLngs: LOCALES.map((l) => l.code),
-    ns: ["common", "yacht", "cascade", "errors", "blackjack", "pachisi", "twenty48"],
+    ns: ["common", "yacht", "cascade", "errors", "blackjack", "pachisi", "twenty48", "feedback"],
     defaultNS: "common",
     interpolation: { escapeValue: false },
     react: { useSuspense: true },

@@ -91,11 +91,12 @@ import errors from "./src/i18n/locales/en/errors.json";
 import blackjack from "./src/i18n/locales/en/blackjack.json";
 import pachisi from "./src/i18n/locales/en/pachisi.json";
 import twenty48 from "./src/i18n/locales/en/twenty48.json";
+import feedback from "./src/i18n/locales/en/feedback.json";
 
 i18n.use(initReactI18next).init({
   lng: "en",
   fallbackLng: "en",
-  ns: ["common", "yacht", "cascade", "errors", "blackjack", "pachisi", "twenty48"],
+  ns: ["common", "yacht", "cascade", "errors", "blackjack", "pachisi", "twenty48", "feedback"],
   defaultNS: "common",
   resources: {
     en: {
@@ -106,6 +107,7 @@ i18n.use(initReactI18next).init({
       blackjack,
       pachisi,
       twenty48,
+      feedback,
     },
   },
   interpolation: { escapeValue: false },
