@@ -14,7 +14,7 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.buffingchi.games",
-      "buildNumber": "1",
+      "buildNumber": "10006",
       "privacyManifests": {
         "NSPrivacyAccessedAPITypes": [
           {

@@ -1,0 +1,99 @@
+name: Version Sync
+
+# Triggered when release-please publishes a GitHub release.
+# Patches Android build.gradle, iOS project.pbxproj, app.json, and
+# package.json so all platform version fields stay in sync, then
+# opens a PR targeting dev.
+#
+# versionCode / CURRENT_PROJECT_VERSION formula:
+#   major * 10000 + minor * 100 + patch
+#   e.g. 1.0.6 → 10006, 1.1.0 → 10100, 2.0.0 → 20000
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  version-sync:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Parse version from tag
+        id: ver
+        run: |
+          TAG="${{ github.event.release.tag_name }}"
+          VERSION="${TAG#v}"
+          IFS='.' read -r major minor patch <<< "$VERSION"
+          VERSION_CODE=$(( major * 10000 + minor * 100 + patch ))
+          echo "version=$VERSION"       >> "$GITHUB_OUTPUT"
+          echo "version_code=$VERSION_CODE" >> "$GITHUB_OUTPUT"
+
+      - name: Patch frontend/package.json
+        run: |
+          node -e "
+            const fs = require('fs');
+            const pkg = JSON.parse(fs.readFileSync('frontend/package.json', 'utf8'));
+            pkg.version = '${{ steps.ver.outputs.version }}';
+            fs.writeFileSync('frontend/package.json', JSON.stringify(pkg, null, 2) + '\n');
+          "
+
+      - name: Patch frontend/app.json
+        run: |
+          node -e "
+            const fs = require('fs');
+            const app = JSON.parse(fs.readFileSync('frontend/app.json', 'utf8'));
+            app.expo.version = '${{ steps.ver.outputs.version }}';
+            app.expo.ios.buildNumber = '${{ steps.ver.outputs.version_code }}';
+            fs.writeFileSync('frontend/app.json', JSON.stringify(app, null, 2) + '\n');
+          "
+
+      - name: Patch Android versionName and versionCode
+        run: |
+          sed -i \
+            "s/versionCode [0-9]*/versionCode ${{ steps.ver.outputs.version_code }}/" \
+            frontend/android/app/build.gradle
+          sed -i \
+            "s/versionName \"[^\"]*\"/versionName \"${{ steps.ver.outputs.version }}\"/" \
+            frontend/android/app/build.gradle
+
+      - name: Patch iOS MARKETING_VERSION and CURRENT_PROJECT_VERSION
+        run: |
+          sed -i \
+            "s/MARKETING_VERSION = [^;]*/MARKETING_VERSION = ${{ steps.ver.outputs.version }}/" \
+            frontend/ios/GamingApp.xcodeproj/project.pbxproj
+          sed -i \
+            "s/CURRENT_PROJECT_VERSION = [0-9]*/CURRENT_PROJECT_VERSION = ${{ steps.ver.outputs.version_code }}/" \
+            frontend/ios/GamingApp.xcodeproj/project.pbxproj
+
+      - name: Open PR to dev
+        uses: peter-evans/create-pull-request@v7
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          branch: chore/sync-native-version-${{ steps.ver.outputs.version }}
+          base: dev
+          commit-message: "chore(release): sync native version to ${{ steps.ver.outputs.version }} [skip ci]"
+          title: "chore(release): sync native version to v${{ steps.ver.outputs.version }}"
+          body: |
+            Automated version sync after release `v${{ steps.ver.outputs.version }}`.
+
+            | File | Field | New value |
+            |------|-------|-----------|
+            | `frontend/package.json` | `version` | `${{ steps.ver.outputs.version }}` |
+            | `frontend/app.json` | `expo.version` | `${{ steps.ver.outputs.version }}` |
+            | `frontend/app.json` | `expo.ios.buildNumber` | `${{ steps.ver.outputs.version_code }}` |
+            | `frontend/android/app/build.gradle` | `versionName` | `${{ steps.ver.outputs.version }}` |
+            | `frontend/android/app/build.gradle` | `versionCode` | `${{ steps.ver.outputs.version_code }}` |
+            | `frontend/ios/.../project.pbxproj` | `MARKETING_VERSION` | `${{ steps.ver.outputs.version }}` |
+            | `frontend/ios/.../project.pbxproj` | `CURRENT_PROJECT_VERSION` | `${{ steps.ver.outputs.version_code }}` |
+
+            **versionCode formula:** `major × 10000 + minor × 100 + patch`
+
+            Closes #424
