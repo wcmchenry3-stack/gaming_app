@@ -21,10 +21,10 @@ jobs:
       # Cloudflare Bot Fight Mode blocks GHA runner IPs (Azure cloud ranges) before
       # the WAF skip rule fires — health checks must bypass the proxy.
       # See wcmchenry3-stack/.github#45.
-      backend-url: 'https://yahtzee-api.onrender.com'
-      health-path: '/health'
-      probe-path: '/yacht/state'
-      probe-expected-status: '400'
+      backend-url: "https://yahtzee-api.onrender.com"
+      health-path: "/health"
+      probe-path: "/yacht/state"
+      probe-expected-status: "400"
     secrets: inherit
 
   expo-compat:
@@ -47,8 +47,8 @@ jobs:
   local-path-check:
     uses: wcmchenry3-stack/.github/.github/workflows/called-local-path-check.yml@main
     with:
-      scan-paths: 'frontend/ios/GamingApp.xcodeproj,frontend/android'
-      file-patterns: '*.pbxproj,*.xcconfig,*.gradle,*.properties'
+      scan-paths: "frontend/ios/GamingApp.xcodeproj,frontend/android"
+      file-patterns: "*.pbxproj,*.xcconfig,*.gradle,*.properties"
     secrets: inherit
 
   # --- Existing checks ------------------------------------------------------
@@ -281,8 +281,8 @@ jobs:
     uses: wcmchenry3-stack/.github/.github/workflows/called-ios-build-check.yml@main
     with:
       working-directory: frontend
-      workspace-name: 'GamingApp.xcworkspace'
-      scheme: 'GamingApp'
+      workspace-name: "GamingApp.xcworkspace"
+      scheme: "GamingApp"
     secrets: inherit
 
   # --- Phase 7: Android build validation (Linux, moderate) ------------------

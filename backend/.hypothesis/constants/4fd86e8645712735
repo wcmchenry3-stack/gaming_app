@@ -1,0 +1,4 @@
+# file: C:\Users\wcmch\claude_projects\gaming_app\backend\yacht\router.py
+# hypothesis_version: 6.151.9
+
+[400, 404, 422, 500, '/new', '/possible-scores', '/roll', '/score', '/state', '10/minute', '20/minute', '30/minute', '60/minute']

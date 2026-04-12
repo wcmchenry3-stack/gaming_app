@@ -12,10 +12,7 @@
     "git": "https://github.com/facebook/react-native.git",
     "tag": "v0.83.4"
   },
-  "source_files": [
-    "*.h",
-    "platform/ios/**/*.h"
-  ],
+  "source_files": ["*.h", "platform/ios/**/*.h"],
   "header_dir": "react/renderer/graphics",
   "frameworks": "UIKit",
   "pod_target_xcconfig": {

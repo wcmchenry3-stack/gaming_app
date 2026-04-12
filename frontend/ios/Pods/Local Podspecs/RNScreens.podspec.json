@@ -17,9 +17,7 @@
     "git": "https://github.com/software-mansion/react-native-screens.git",
     "tag": "4.23.0"
   },
-  "source_files": [
-    "ios/**/*.{h,m,mm,cpp,swift}"
-  ],
+  "source_files": ["ios/**/*.{h,m,mm,cpp,swift}"],
   "project_header_files": "ios/bridging/Swift-Bridging.h",
   "requires_arc": true,
   "exclude_files": "ios/gamma/**/*.{h,m,mm,cpp,swift}",
@@ -57,14 +55,8 @@
   "subspecs": [
     {
       "name": "common",
-      "source_files": [
-        "common/cpp/**/*.{cpp,h}",
-        "cpp/**/*.{cpp,h}"
-      ],
-      "project_header_files": [
-        "common/cpp/**/*.h",
-        "cpp/**/*.h"
-      ],
+      "source_files": ["common/cpp/**/*.{cpp,h}", "cpp/**/*.{cpp,h}"],
+      "project_header_files": ["common/cpp/**/*.h", "cpp/**/*.h"],
       "header_dir": "rnscreens",
       "pod_target_xcconfig": {
         "HEADER_SEARCH_PATHS": "\"$(PODS_TARGET_SRCROOT)/common/cpp\""

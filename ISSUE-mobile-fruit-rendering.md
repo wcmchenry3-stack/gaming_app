@@ -12,13 +12,13 @@ The recent fruit rendering and collision boundary fixes (commit `671c584`) only 
 
 The app uses Metro's platform-specific file resolution (`.web.tsx` / `.native.ts`), so the web fixes never touched the mobile code paths:
 
-| Feature | Web (fixed) | Mobile (broken) |
-|---|---|---|
-| **Physics engine** | `engine.ts` — Rapier (WASM) | `engine.native.ts` — Matter.js |
-| **Collision shapes** | Convex hull polygons from vertex data | Hard-coded circles (`Matter.Bodies.circle`) |
-| **Rendering** | `GameCanvas.web.tsx` — Canvas 2D with clipping, background fill, sprite offset/scale | `GameCanvas.tsx` — Skia, basic image/circle draw |
-| **Boundary escape detection** | Yes (with Sentry logging) | None |
-| **Vertex data usage** | Loads `fruit-vertices.json`, applies RDP simplification | `collisionVerts: null` — explicitly skipped |
+| Feature                       | Web (fixed)                                                                          | Mobile (broken)                                  |
+| ----------------------------- | ------------------------------------------------------------------------------------ | ------------------------------------------------ |
+| **Physics engine**            | `engine.ts` — Rapier (WASM)                                                          | `engine.native.ts` — Matter.js                   |
+| **Collision shapes**          | Convex hull polygons from vertex data                                                | Hard-coded circles (`Matter.Bodies.circle`)      |
+| **Rendering**                 | `GameCanvas.web.tsx` — Canvas 2D with clipping, background fill, sprite offset/scale | `GameCanvas.tsx` — Skia, basic image/circle draw |
+| **Boundary escape detection** | Yes (with Sentry logging)                                                            | None                                             |
+| **Vertex data usage**         | Loads `fruit-vertices.json`, applies RDP simplification                              | `collisionVerts: null` — explicitly skipped      |
 
 ## Files That Need Updates
 

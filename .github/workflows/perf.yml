@@ -3,23 +3,23 @@ name: Performance Tests
 on:
   # Nightly against production
   schedule:
-    - cron: '0 6 * * *'
+    - cron: "0 6 * * *"
 
   # On-demand with configurable parameters
   workflow_dispatch:
     inputs:
       target_url:
-        description: 'Backend URL to test'
+        description: "Backend URL to test"
         required: true
-        default: 'https://dev-games-api.buffingchi.com'
+        default: "https://dev-games-api.buffingchi.com"
       users:
-        description: 'Concurrent users (leaderboard scenario)'
+        description: "Concurrent users (leaderboard scenario)"
         required: true
-        default: '10'
+        default: "10"
       run_time:
-        description: 'Test duration (e.g. 60s, 2m)'
+        description: "Test duration (e.g. 60s, 2m)"
         required: true
-        default: '60s'
+        default: "60s"
 
   # Callable by deploy.yml post-deploy (informational only)
   workflow_call:
@@ -27,12 +27,12 @@ on:
       target_url:
         type: string
         required: false
-        default: 'https://dev-games-api.buffingchi.com'
+        default: "https://dev-games-api.buffingchi.com"
 
 # No PR trigger — perf tests are never a merge gate.
 
 env:
-  DEFAULT_TARGET_URL: 'https://dev-games-api.buffingchi.com'
+  DEFAULT_TARGET_URL: "https://dev-games-api.buffingchi.com"
 
 jobs:
   warm-up:

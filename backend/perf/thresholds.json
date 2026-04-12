@@ -19,20 +19,14 @@
       "users": 10,
       "p95_ms": 300,
       "error_rate_pct": 1.0,
-      "endpoints": [
-        "POST /cascade/score",
-        "GET /cascade/scores"
-      ]
+      "endpoints": ["POST /cascade/score", "GET /cascade/scores"]
     },
     "stateless_reads": {
       "description": "Read-only polling (20 users)",
       "users": 20,
       "p95_ms": 200,
       "error_rate_pct": 0.0,
-      "endpoints": [
-        "GET /yacht/state",
-        "GET /yacht/possible-scores"
-      ]
+      "endpoints": ["GET /yacht/state", "GET /yacht/possible-scores"]
     }
   }
 }

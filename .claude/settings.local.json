@@ -10,7 +10,30 @@
       "Bash(git commit:*)",
       "Bash(git push:*)",
       "Bash(winget list:*)",
-      "Bash(python -m pip install -r requirements.txt -q)"
+      "Bash(python -m pip install -r requirements.txt -q)",
+      "Bash(python -m pytest tests/test_blackjack_game.py tests/test_blackjack_api.py -x -q)",
+      "Bash(npx jest:*)",
+      "Bash(npx tsc:*)",
+      "Bash(python -m pytest tests/test_blackjack_game.py tests/test_blackjack_api.py tests/test_blackjack_parity.py -q)",
+      "Bash(gh pr:*)",
+      "Bash(gh run:*)",
+      "Bash(npx eslint:*)",
+      "Bash(npx prettier:*)",
+      "Bash(xargs grep:*)",
+      "Bash(node:*)",
+      "Bash(gh api:*)",
+      "Bash(gh issue:*)",
+      "Bash(git show:*)",
+      "Bash(gh repo:*)",
+      "Bash(git fetch:*)",
+      "Bash(git merge:*)",
+      "Bash(git pull:*)",
+      "Bash(python3:*)",
+      "Bash(python -m pytest tests/ -q)",
+      "Bash(npx expo:*)",
+      "Bash(echo \"exit: $?\")",
+      "Bash(grep -v \"^$\")",
+      "Bash(grep:*)"
     ]
   }
 }

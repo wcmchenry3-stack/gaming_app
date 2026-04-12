@@ -1,0 +1,4 @@
+# file: C:\Users\wcmch\claude_projects\gaming_app\backend\blackjack\router.py
+# hypothesis_version: 6.151.9
+
+[400, 404, 500, '/bet', '/double-down', '/hit', '/new', '/new-hand', '/split', '/stand', '/state', '10/minute', '30/minute', '60/minute', '?', 'player', 'result']

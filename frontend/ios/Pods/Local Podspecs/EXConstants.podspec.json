@@ -32,9 +32,7 @@
   },
   "resource_bundles": {
     "EXConstants": [],
-    "ExpoConstants_privacy": [
-      "PrivacyInfo.xcprivacy"
-    ]
+    "ExpoConstants_privacy": ["PrivacyInfo.xcprivacy"]
   },
   "swift_version": "5.9"
 }

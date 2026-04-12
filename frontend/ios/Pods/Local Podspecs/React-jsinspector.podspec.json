@@ -27,9 +27,7 @@
     "React-jsinspectorcdp": [],
     "React-jsinspectornetwork": [],
     "React-jsinspectortracing": [],
-    "React-perflogger": [
-      "0.83.4"
-    ],
+    "React-perflogger": ["0.83.4"],
     "React-utils": [],
     "hermes-engine": [],
     "ReactNativeDependencies": [],

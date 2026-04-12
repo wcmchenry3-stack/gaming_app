@@ -19,8 +19,6 @@
     "React-Core-prebuilt": []
   },
   "pod_target_xcconfig": {
-    "HEADER_SEARCH_PATHS": [
-      "$(PODS_ROOT)/ReactNativeDependencies"
-    ]
+    "HEADER_SEARCH_PATHS": ["$(PODS_ROOT)/ReactNativeDependencies"]
   }
 }

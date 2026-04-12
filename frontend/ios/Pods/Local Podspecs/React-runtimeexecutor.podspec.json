@@ -13,10 +13,7 @@
     "git": "https://github.com/facebook/react-native.git",
     "tag": "v0.83.4"
   },
-  "source_files": [
-    "ReactCommon/*.h",
-    "platform/ios/**/*.h"
-  ],
+  "source_files": ["ReactCommon/*.h", "platform/ios/**/*.h"],
   "header_dir": "ReactCommon",
   "pod_target_xcconfig": {
     "USE_HEADERMAP": "NO",
@@ -27,9 +24,7 @@
   "dependencies": {
     "ReactNativeDependencies": [],
     "React-Core-prebuilt": [],
-    "React-jsi": [
-      "0.83.4"
-    ],
+    "React-jsi": ["0.83.4"],
     "React-featureflags": [],
     "React-debug": [],
     "React-utils": []

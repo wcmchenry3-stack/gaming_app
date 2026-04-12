@@ -58,9 +58,7 @@
   "compiler_flags": "-DFOLLY_MOBILE=1 -DFOLLY_USE_LIBCPP=1 -DFOLLY_CFG_NO_COROUTINES=1 -DFOLLY_HAVE_CLOCK_GETTIME=1 -Wno-comma -Wno-shorten-64-to-32",
   "source_files": "ios/**/*.{h,m,mm,swift}",
   "exclude_files": "ios/Tests",
-  "private_header_files": [
-    "ios/**/Swift.h"
-  ],
+  "private_header_files": ["ios/**/Swift.h"],
   "testspecs": [
     {
       "name": "Tests",

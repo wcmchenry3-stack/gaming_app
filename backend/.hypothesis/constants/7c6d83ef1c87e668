@@ -1,0 +1,4 @@
+# file: C:\Users\wcmch\claude_projects\gaming_app\backend\pachisi\router.py
+# hypothesis_version: 6.151.9
+
+[100, 400, 404, 500, '/move', '/new', '/new-game', '/roll', '/state', '10/minute', '30/minute', '60/minute', 'game_over']

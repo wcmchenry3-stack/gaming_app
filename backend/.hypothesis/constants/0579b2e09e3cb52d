@@ -1,0 +1,4 @@
+# file: C:\Users\wcmch\claude_projects\gaming_app\backend\main.py
+# hypothesis_version: 6.151.9
+
+[0.1, 413, 429, 500, 1000, 1024, '%(message)s', ',', '/blackjack', '/cascade', '/debug/error', '/health', '/yacht', '120/minute', '60', 'ALLOWED_ORIGINS', 'Content-Type', 'DENY', 'ENVIRONMENT', 'GET', 'Gaming App API', 'POST', 'Referrer-Policy', 'Retry-After', 'SENTRY_DSN', 'X-Frame-Options', 'X-Session-ID', 'application/json', 'audit', 'body_too_large', 'content-length', 'detail', 'event', 'http', 'ip', 'method', 'ms', 'nosniff', 'ok', 'path', 'rate_limit_exceeded', 'server', 'server_error', 'status', 'test']
