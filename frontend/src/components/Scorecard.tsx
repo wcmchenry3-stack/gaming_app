@@ -148,7 +148,7 @@ export default function Scorecard({
   );
 
   return (
-    <ScrollView focusable style={styles.container} contentContainerStyle={styles.content}>
+    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
       <View style={[styles.grid, isWide && styles.gridWide]}>
         <View style={isWide ? styles.col : undefined}>{upperBento}</View>
         <View style={isWide ? styles.col : undefined}>{lowerBento}</View>
@@ -169,8 +169,10 @@ export default function Scorecard({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    minHeight: 0,
   },
   content: {
+    flexGrow: 1,
     paddingBottom: 8,
   },
   grid: {

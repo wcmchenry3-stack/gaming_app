@@ -250,6 +250,7 @@ const styles = StyleSheet.create({
   },
   scorecardContainer: {
     flex: 1,
+    minHeight: 0,
     marginHorizontal: 12,
     marginBottom: 12,
   },
