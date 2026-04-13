@@ -66,7 +66,7 @@ export default function BlackjackTable({
                   },
                 ]}
               >
-                <HandDisplay hand={hand} label={label} variant="player" />
+                <HandDisplay hand={hand} label={label} variant="player" compact />
                 {bet != null && (
                   <Text style={[styles.handBet, { color: colors.textMuted }]}>{bet}</Text>
                 )}
@@ -116,13 +116,15 @@ const styles = StyleSheet.create({
   },
   handsRow: {
     flexDirection: "row",
-    flexWrap: "wrap",
     justifyContent: "center",
-    gap: 16,
+    alignItems: "flex-start",
+    width: "100%",
+    gap: 8,
   },
   splitHand: {
+    flex: 1,
     alignItems: "center",
-    padding: 8,
+    padding: 6,
     borderRadius: 10,
     borderWidth: 1,
     borderColor: "transparent",

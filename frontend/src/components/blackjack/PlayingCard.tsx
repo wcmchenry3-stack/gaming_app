@@ -10,6 +10,8 @@ interface Props {
   rotation?: number;
   /** "player" renders a larger card; "dealer" renders the compact default. */
   variant?: "player" | "dealer";
+  /** Shrink the player variant so two split hands fit side-by-side. */
+  compact?: boolean;
 }
 
 const RED_SUITS = new Set(["♥", "♦"]);
@@ -24,13 +26,31 @@ function suitKey(suit: string): string {
   return map[suit] ?? suit;
 }
 
-export default function PlayingCard({ card, rotation = 0, variant = "dealer" }: Props) {
+export default function PlayingCard({
+  card,
+  rotation = 0,
+  variant = "dealer",
+  compact = false,
+}: Props) {
   const { t } = useTranslation("blackjack");
   const { colors } = useTheme();
 
-  const cardSizeStyle = variant === "player" ? styles.cardPlayer : styles.cardDealer;
-  const rankSizeStyle = variant === "player" ? styles.rankPlayer : styles.rankDealer;
-  const suitSizeStyle = variant === "player" ? styles.suitPlayer : styles.suitDealer;
+  const isCompactPlayer = variant === "player" && compact;
+  const cardSizeStyle = isCompactPlayer
+    ? styles.cardPlayerCompact
+    : variant === "player"
+      ? styles.cardPlayer
+      : styles.cardDealer;
+  const rankSizeStyle = isCompactPlayer
+    ? styles.rankPlayerCompact
+    : variant === "player"
+      ? styles.rankPlayer
+      : styles.rankDealer;
+  const suitSizeStyle = isCompactPlayer
+    ? styles.suitPlayerCompact
+    : variant === "player"
+      ? styles.suitPlayer
+      : styles.suitDealer;
   const rotateStyle = rotation !== 0 ? { transform: [{ rotate: `${rotation}deg` }] } : undefined;
 
   if (card.face_down) {
@@ -91,6 +111,11 @@ const styles = StyleSheet.create({
     width: 68,
     height: 96,
   },
+  cardPlayerCompact: {
+    width: 48,
+    height: 68,
+    margin: 2,
+  },
   cardBackInner: {
     width: "70%",
     height: "70%",
@@ -113,6 +138,11 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     lineHeight: 24,
   },
+  rankPlayerCompact: {
+    fontSize: 15,
+    fontWeight: "700",
+    lineHeight: 18,
+  },
   suitDealer: {
     fontSize: 18,
     lineHeight: 22,
@@ -120,5 +150,9 @@ const styles = StyleSheet.create({
   suitPlayer: {
     fontSize: 22,
     lineHeight: 26,
+  },
+  suitPlayerCompact: {
+    fontSize: 16,
+    lineHeight: 20,
   },
 });

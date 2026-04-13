@@ -12,12 +12,20 @@ interface Props {
   /** "player" renders larger cards with fan rotation and neon score pill;
    *  "dealer" renders compact cards and glass badge score. */
   variant?: "player" | "dealer";
+  /** Shrink player-variant cards for split-hand side-by-side layout. */
+  compact?: boolean;
 }
 
 // First two player cards get a gentle fan tilt
 const PLAYER_ROTATIONS: Record<number, number> = { 0: -3, 1: 2 };
 
-export default function HandDisplay({ hand, label, concealed = false, variant = "dealer" }: Props) {
+export default function HandDisplay({
+  hand,
+  label,
+  concealed = false,
+  variant = "dealer",
+  compact = false,
+}: Props) {
   const { colors } = useTheme();
   const showScore = hand.cards.length > 0;
 
@@ -25,20 +33,21 @@ export default function HandDisplay({ hand, label, concealed = false, variant = 
     <View style={styles.container}>
       <Text style={[styles.label, { color: colors.textMuted }]}>{label}</Text>
 
-      {showScore && (
-        <ScorePill value={hand.value} soft={hand.soft} concealed={concealed} variant={variant} />
-      )}
-
       <View style={styles.cards}>
         {hand.cards.map((card, i) => (
           <PlayingCard
             key={i}
             card={card}
             variant={variant}
+            compact={compact}
             rotation={variant === "player" ? (PLAYER_ROTATIONS[i] ?? 0) : 0}
           />
         ))}
       </View>
+
+      {showScore && (
+        <ScorePill value={hand.value} soft={hand.soft} concealed={concealed} variant={variant} />
+      )}
     </View>
   );
 }
