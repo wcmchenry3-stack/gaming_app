@@ -206,13 +206,10 @@ function CascadeGame() {
     >
       <AppHeader title={t("game.title")} onBack={() => navigation.popToTop()} />
 
-      {/* Score bar */}
-      <ScoreDisplay score={score} />
-
-      {/* HUD */}
-      <View style={styles.hud}>
+      {/* Combined HUD: score + drop/next previews + high, all one row */}
+      <ScoreDisplay score={score}>
         <NextFruitPreview current={currentDef} next={nextDef} />
-      </View>
+      </ScoreDisplay>
 
       <ThemeSelector />
 
@@ -249,13 +246,6 @@ export default function CascadeScreen() {
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
-  },
-  hud: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 16,
-    marginBottom: 8,
   },
   canvasOuter: {
     flex: 1,
