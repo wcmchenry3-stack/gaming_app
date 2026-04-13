@@ -38,7 +38,11 @@ export interface EnqueueEventInput {
 
 export interface GameEventClient {
   init(): Promise<void>;
-  startGame(gameType: string, metadata?: Record<string, unknown>): string;
+  startGame(
+    gameType: string,
+    metadata?: Record<string, unknown>,
+    eventData?: Record<string, unknown>
+  ): string;
   enqueueEvent(gameId: string, event: EnqueueEventInput): void;
   completeGame(gameId: string, summary: CompleteSummary, eventData?: Record<string, unknown>): void;
   reportBug(
@@ -63,7 +67,11 @@ export class GameEventClientImpl implements GameEventClient {
   }
 
   /** Returns the new game id synchronously. */
-  startGame(gameType: string, metadata: Record<string, unknown> = {}): string {
+  startGame(
+    gameType: string,
+    metadata: Record<string, unknown> = {},
+    eventData?: Record<string, unknown>
+  ): string {
     const gameId = generateUUID();
     // Persist pending-game state synchronously in-memory, async to disk.
     // The event below grabs event_index 0 and we rely on the in-memory
@@ -73,7 +81,7 @@ export class GameEventClientImpl implements GameEventClient {
     // can tell when a game was opened even before any play happened.
     this.enqueueEventInternal(gameId, {
       type: "game_started",
-      data: { game_type: gameType, metadata },
+      data: eventData ?? { game_type: gameType, metadata },
     });
     return gameId;
   }
