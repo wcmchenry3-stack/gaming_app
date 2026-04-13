@@ -20,6 +20,8 @@ from cascade.router import router as cascade_router
 from blackjack.router import router as blackjack_router
 from pachisi.router import router as pachisi_router  # noqa: F401
 from yacht.router import router as yacht_router
+from games.router import router as games_router
+from logs.router import router as logs_router
 
 # ---------------------------------------------------------------------------
 # Audit logger — emits JSON lines; Render's log aggregator handles timestamps
@@ -48,6 +50,8 @@ app = FastAPI(title="Gaming App API")
 app.include_router(yacht_router, prefix="/yacht")
 app.include_router(cascade_router, prefix="/cascade")
 app.include_router(blackjack_router, prefix="/blackjack")
+app.include_router(games_router, prefix="/games")
+app.include_router(logs_router, prefix="/logs")
 # Pachisi disabled — needs total rewrite before re-enabling
 # app.include_router(pachisi_router, prefix="/pachisi")
 
@@ -100,18 +104,29 @@ _allowed_origins: list[str] = (
 #   5. security_headers  (@app.middleware decorator, innermost)
 # ---------------------------------------------------------------------------
 
-MAX_BODY_BYTES = 1_024  # 1 KB — generous for all valid game payloads (~50 bytes max)
+DEFAULT_MAX_BODY_BYTES = 1_024  # 1 KB — legacy game payloads (~50 bytes max)
+LARGE_BODY_BYTES = 256 * 1_024  # 256 KB — batched events + bug logs (#364)
+LARGE_BODY_PREFIXES = ("/games", "/logs")
+
+
+def _max_body_bytes_for(path: str) -> int:
+    for prefix in LARGE_BODY_PREFIXES:
+        if path.startswith(prefix):
+            return LARGE_BODY_BYTES
+    return DEFAULT_MAX_BODY_BYTES
 
 
 class MaxBodySizeMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next) -> Response:
         content_length = request.headers.get("content-length")
-        if content_length and int(content_length) > MAX_BODY_BYTES:
-            return Response(
-                content='{"detail":"Request body too large."}',
-                status_code=413,
-                media_type="application/json",
-            )
+        if content_length:
+            cap = _max_body_bytes_for(request.url.path)
+            if int(content_length) > cap:
+                return Response(
+                    content='{"detail":"Request body too large."}',
+                    status_code=413,
+                    media_type="application/json",
+                )
         return await call_next(request)
 
 
@@ -119,7 +134,7 @@ class MaxBodySizeMiddleware(BaseHTTPMiddleware):
 app.add_middleware(
     CORSMiddleware,
     allow_origins=_allowed_origins,
-    allow_methods=["GET", "POST"],
+    allow_methods=["GET", "POST", "PATCH"],
     allow_headers=["Content-Type", "X-Session-ID"],
 )
 app.add_middleware(MaxBodySizeMiddleware)
