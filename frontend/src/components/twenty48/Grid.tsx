@@ -15,7 +15,7 @@ interface GridProps {
 // Large drop shadow: native properties + web boxShadow via inline style.
 const BOARD_SHADOW =
   Platform.OS === "web"
-    ? ({ boxShadow: "0 8px 40px rgba(0,0,0,0.6)" } as object)
+    ? ({ boxShadow: "0 8px 40px #00000099" } as object)
     : ({
         shadowColor: "#000",
         shadowOffset: { width: 0, height: 8 },
@@ -41,7 +41,17 @@ export default function Grid({ tiles }: GridProps) {
       slots.push(
         <View
           key={`slot-${r}-${c}`}
-          style={[styles.slot, { width: tileSize, height: tileSize, top, left }]}
+          style={[
+            styles.slot,
+            {
+              width: tileSize,
+              height: tileSize,
+              top,
+              left,
+              backgroundColor: colors.surfaceAlt,
+              borderColor: colors.border,
+            },
+          ]}
           accessibilityRole={isEmpty ? "image" : undefined}
           accessibilityLabel={isEmpty ? "empty" : undefined}
         />
@@ -75,8 +85,6 @@ const styles = StyleSheet.create({
   slot: {
     position: "absolute",
     borderRadius: 6,
-    backgroundColor: "#000000",
     borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.05)",
   },
 });

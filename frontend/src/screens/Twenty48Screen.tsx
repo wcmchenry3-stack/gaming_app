@@ -215,7 +215,9 @@ export default function Twenty48Screen({ navigation }: Props) {
       {/* Score + New Game */}
       <View style={styles.scoreRow}>
         {state && (
-          <ScoreBoard score={state.score} bestScore={bestScore} scoreDelta={state.scoreDelta} />
+          <View style={styles.scoreBoardWrap}>
+            <ScoreBoard score={state.score} bestScore={bestScore} scoreDelta={state.scoreDelta} />
+          </View>
         )}
         <Pressable
           style={[styles.newGameBtn, { backgroundColor: colors.accent }]}
@@ -223,7 +225,7 @@ export default function Twenty48Screen({ navigation }: Props) {
           accessibilityRole="button"
           accessibilityLabel={t("twenty48:actions.newGameLabel")}
         >
-          <Text style={[styles.newGameBtnText, { color: colors.textOnAccent }]}>
+          <Text style={[styles.newGameBtnText, { color: colors.textOnAccent }]} numberOfLines={1}>
             {t("twenty48:actions.newGame")}
           </Text>
         </Pressable>
@@ -297,9 +299,16 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 12,
     marginBottom: 8,
+    width: "100%",
+    maxWidth: 360,
+  },
+  scoreBoardWrap: {
+    flex: 1,
+    minWidth: 0,
   },
   newGameBtn: {
-    paddingHorizontal: 16,
+    flexShrink: 0,
+    paddingHorizontal: 14,
     paddingVertical: 10,
     borderRadius: 8,
     minHeight: 44,
