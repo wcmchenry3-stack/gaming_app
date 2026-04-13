@@ -41,7 +41,7 @@ export default function BlackjackTable({
         concealed={isPlayerPhase}
         variant="dealer"
       />
-      <View style={styles.divider} />
+      <View style={[styles.divider, { backgroundColor: colors.border }]} />
 
       {isSplit ? (
         <View style={styles.handsRow}>
@@ -66,7 +66,7 @@ export default function BlackjackTable({
                   },
                 ]}
               >
-                <HandDisplay hand={hand} label={label} variant="player" />
+                <HandDisplay hand={hand} label={label} variant="player" compact />
                 {bet != null && (
                   <Text style={[styles.handBet, { color: colors.textMuted }]}>{bet}</Text>
                 )}
@@ -112,17 +112,19 @@ const styles = StyleSheet.create({
   divider: {
     width: "60%",
     height: 1,
-    backgroundColor: "rgba(128,128,128,0.2)",
+    opacity: 0.4,
   },
   handsRow: {
     flexDirection: "row",
-    flexWrap: "wrap",
     justifyContent: "center",
-    gap: 16,
+    alignItems: "flex-start",
+    width: "100%",
+    gap: 8,
   },
   splitHand: {
+    flex: 1,
     alignItems: "center",
-    padding: 8,
+    padding: 6,
     borderRadius: 10,
     borderWidth: 1,
     borderColor: "transparent",

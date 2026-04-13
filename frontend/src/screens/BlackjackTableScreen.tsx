@@ -47,6 +47,7 @@ export default function BlackjackTableScreen({ navigation }: Props) {
   }
 
   const state = engine ? toViewState(engine) : null;
+  const isSplit = (state?.player_hands?.length ?? 0) > 1;
 
   const handleHit = () => apply(engineHit);
   const handleStand = () => apply(engineStand);
@@ -114,8 +115,8 @@ export default function BlackjackTableScreen({ navigation }: Props) {
             />
           </View>
 
-          {/* Right spacer to balance the sidebar */}
-          <View style={styles.sidebarRight} />
+          {/* Right spacer to balance the sidebar — collapsed on split so both hands fit */}
+          {!isSplit && <View style={styles.sidebarRight} />}
         </View>
       )}
 
