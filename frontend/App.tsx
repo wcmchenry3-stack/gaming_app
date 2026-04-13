@@ -22,6 +22,7 @@ import BlackjackTableScreen from "./src/screens/BlackjackTableScreen";
 import Twenty48Screen from "./src/screens/Twenty48Screen";
 import LeaderboardScreen from "./src/screens/LeaderboardScreen";
 import ProfileScreen from "./src/screens/ProfileScreen";
+import GameDetailScreen from "./src/screens/GameDetailScreen";
 import SettingsScreen from "./src/screens/SettingsScreen";
 import BottomTabBar from "./src/components/shared/BottomTabBar";
 import { GameState } from "./src/game/yacht/types";
@@ -63,8 +64,14 @@ export type HomeStackParamList = {
   Twenty48: undefined;
 };
 
+export type ProfileStackParamList = {
+  ProfileHome: undefined;
+  GameDetail: { gameId: string };
+};
+
 const Stack = createNativeStackNavigator<RootStackParamList>();
 const HomeStack = createNativeStackNavigator<HomeStackParamList>();
+const ProfileStackNav = createNativeStackNavigator<ProfileStackParamList>();
 const Tab = createBottomTabNavigator();
 
 function LobbyStack() {
@@ -82,6 +89,15 @@ function LobbyStack() {
   );
 }
 
+function ProfileStack() {
+  return (
+    <ProfileStackNav.Navigator screenOptions={{ headerShown: false }}>
+      <ProfileStackNav.Screen name="ProfileHome" component={ProfileScreen} />
+      <ProfileStackNav.Screen name="GameDetail" component={GameDetailScreen} />
+    </ProfileStackNav.Navigator>
+  );
+}
+
 function MainTabs() {
   return (
     <Tab.Navigator
@@ -90,7 +106,7 @@ function MainTabs() {
     >
       <Tab.Screen name="Lobby" component={LobbyStack} />
       <Tab.Screen name="Ranks" component={LeaderboardScreen} />
-      <Tab.Screen name="Profile" component={ProfileScreen} />
+      <Tab.Screen name="Profile" component={ProfileStack} />
       <Tab.Screen name="Settings" component={SettingsScreen} />
     </Tab.Navigator>
   );

@@ -92,11 +92,22 @@ import blackjack from "./src/i18n/locales/en/blackjack.json";
 import pachisi from "./src/i18n/locales/en/pachisi.json";
 import twenty48 from "./src/i18n/locales/en/twenty48.json";
 import feedback from "./src/i18n/locales/en/feedback.json";
+import profile from "./src/i18n/locales/en/profile.json";
 
 i18n.use(initReactI18next).init({
   lng: "en",
   fallbackLng: "en",
-  ns: ["common", "yacht", "cascade", "errors", "blackjack", "pachisi", "twenty48", "feedback"],
+  ns: [
+    "common",
+    "yacht",
+    "cascade",
+    "errors",
+    "blackjack",
+    "pachisi",
+    "twenty48",
+    "feedback",
+    "profile",
+  ],
   defaultNS: "common",
   resources: {
     en: {
@@ -108,6 +119,7 @@ i18n.use(initReactI18next).init({
       pachisi,
       twenty48,
       feedback,
+      profile,
     },
   },
   interpolation: { escapeValue: false },
