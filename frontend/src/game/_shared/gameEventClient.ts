@@ -40,7 +40,7 @@ export interface GameEventClient {
   init(): Promise<void>;
   startGame(gameType: string, metadata?: Record<string, unknown>): string;
   enqueueEvent(gameId: string, event: EnqueueEventInput): void;
-  completeGame(gameId: string, summary: CompleteSummary): void;
+  completeGame(gameId: string, summary: CompleteSummary, eventData?: Record<string, unknown>): void;
   reportBug(
     level: BugLevel,
     source: string,
@@ -82,10 +82,14 @@ export class GameEventClientImpl implements GameEventClient {
     this.enqueueEventInternal(gameId, event);
   }
 
-  completeGame(gameId: string, summary: CompleteSummary): void {
+  completeGame(
+    gameId: string,
+    summary: CompleteSummary,
+    eventData?: Record<string, unknown>
+  ): void {
     this.enqueueEventInternal(gameId, {
       type: "game_ended",
-      data: summary as Record<string, unknown>,
+      data: eventData ?? (summary as Record<string, unknown>),
     });
     this.fireAndForget(this.games.complete(gameId, summary), "completeGame.mark");
   }
