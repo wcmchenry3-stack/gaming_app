@@ -17,6 +17,7 @@ from datetime import datetime, timezone
 import pytest
 from sqlalchemy import func, select
 from sqlalchemy.exc import DBAPIError, IntegrityError
+from sqlalchemy.orm import selectinload
 
 from db.base import get_session_factory
 from db.models import BugLog, EventType, Game, GameEvent, GameType
@@ -76,11 +77,24 @@ async def test_game_events_and_buglog_roundtrip() -> None:
         s.add(game)
         await s.flush()
 
-        game.events.append(
-            GameEvent(event_index=0, event_type_id=roll_type.id, data={"dice": [1, 2, 3, 4, 5]})
+        # Add events via session.add() rather than game.events.append() —
+        # the latter triggers an implicit lazy load of the collection, which
+        # fails under the async driver without a greenlet context.
+        s.add(
+            GameEvent(
+                game_id=game.id,
+                event_index=0,
+                event_type_id=roll_type.id,
+                data={"dice": [1, 2, 3, 4, 5]},
+            )
         )
-        game.events.append(
-            GameEvent(event_index=1, event_type_id=roll_type.id, data={"dice": [6, 6, 6, 6, 6]})
+        s.add(
+            GameEvent(
+                game_id=game.id,
+                event_index=1,
+                event_type_id=roll_type.id,
+                data={"dice": [6, 6, 6, 6, 6]},
+            )
         )
 
         bug = BugLog(
@@ -94,7 +108,13 @@ async def test_game_events_and_buglog_roundtrip() -> None:
         s.add(bug)
         await s.commit()
 
-        fetched = (await s.execute(select(Game).where(Game.session_id == sid))).scalar_one()
+        fetched = (
+            await s.execute(
+                select(Game)
+                .options(selectinload(Game.events))
+                .where(Game.session_id == sid)
+            )
+        ).scalar_one()
         assert fetched.final_score == 123
         assert fetched.outcome == "win"
         assert fetched.game_metadata == {"note": "smoke test"}
@@ -120,7 +140,11 @@ async def test_unknown_event_type_id_fails_fk() -> None:
         s.add(game)
         await s.flush()
 
-        game.events.append(GameEvent(event_index=0, event_type_id=999_999, data={}))
+        s.add(
+            GameEvent(
+                game_id=game.id, event_index=0, event_type_id=999_999, data={}
+            )
+        )
         with pytest.raises((IntegrityError, DBAPIError)):
             await s.commit()
         await s.rollback()
