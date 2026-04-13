@@ -225,10 +225,7 @@ export default function Twenty48Screen({ navigation }: Props) {
           accessibilityRole="button"
           accessibilityLabel={t("twenty48:actions.newGameLabel")}
         >
-          <Text
-            style={[styles.newGameBtnText, { color: colors.textOnAccent }]}
-            numberOfLines={1}
-          >
+          <Text style={[styles.newGameBtnText, { color: colors.textOnAccent }]} numberOfLines={1}>
             {t("twenty48:actions.newGame")}
           </Text>
         </Pressable>
