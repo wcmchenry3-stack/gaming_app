@@ -12,7 +12,8 @@ type Namespace =
   | "blackjack"
   | "pachisi"
   | "twenty48"
-  | "feedback";
+  | "feedback"
+  | "profile";
 type TranslationModule = Promise<{ default: Record<string, string> }>;
 
 // Resolve the best supported locale from the device's preference list
@@ -29,7 +30,7 @@ function resolveLocale(): string {
   return "en";
 }
 
-const localeLoaders: Record<string, Record<Namespace, () => TranslationModule>> = {
+const localeLoaders: Record<string, Partial<Record<Namespace, () => TranslationModule>>> = {
   en: {
     common: () => import("./locales/en/common.json") as TranslationModule,
     yacht: () => import("./locales/en/yacht.json") as TranslationModule,
@@ -39,6 +40,7 @@ const localeLoaders: Record<string, Record<Namespace, () => TranslationModule>> 
     pachisi: () => import("./locales/en/pachisi.json") as TranslationModule,
     twenty48: () => import("./locales/en/twenty48.json") as TranslationModule,
     feedback: () => import("./locales/en/feedback.json") as TranslationModule,
+    profile: () => import("./locales/en/profile.json") as TranslationModule,
   },
   "fr-CA": {
     common: () => import("./locales/fr-CA/common.json") as TranslationModule,
@@ -166,6 +168,10 @@ function loadLocaleNamespace(lng: string, ns: string): TranslationModule {
   const namespace = ns as Namespace;
   const localeNamespaces = localeLoaders[lng] ?? localeLoaders.en;
   const loader = localeNamespaces[namespace] ?? localeLoaders.en[namespace];
+  if (!loader) {
+    // Should only happen if a namespace is referenced before it's registered.
+    return Promise.resolve({ default: {} });
+  }
   return loader();
 }
 
@@ -176,7 +182,17 @@ i18n
     lng: resolveLocale(),
     fallbackLng: "en",
     supportedLngs: LOCALES.map((l) => l.code),
-    ns: ["common", "yacht", "cascade", "errors", "blackjack", "pachisi", "twenty48", "feedback"],
+    ns: [
+      "common",
+      "yacht",
+      "cascade",
+      "errors",
+      "blackjack",
+      "pachisi",
+      "twenty48",
+      "feedback",
+      "profile",
+    ],
     defaultNS: "common",
     interpolation: { escapeValue: false },
     react: { useSuspense: true },
