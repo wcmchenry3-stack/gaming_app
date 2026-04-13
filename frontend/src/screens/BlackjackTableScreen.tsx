@@ -1,5 +1,12 @@
 import React, { useCallback, useEffect, useState } from "react";
-import { View, Text, Pressable, StyleSheet, ActivityIndicator } from "react-native";
+import {
+  View,
+  Text,
+  Pressable,
+  StyleSheet,
+  ActivityIndicator,
+  useWindowDimensions,
+} from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTranslation } from "react-i18next";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
@@ -22,6 +29,13 @@ import HudSidebar from "../components/blackjack/HudSidebar";
 import NewGameConfirmModal from "../components/shared/NewGameConfirmModal";
 import { AppHeader, APP_HEADER_HEIGHT } from "../components/shared/AppHeader";
 
+// Below this viewport height, card sizes, action-button sizes, and table
+// padding collapse to compact variants so the dealer hand, player hand, and
+// action cluster all fit without overlapping. Catches Galaxy Fold unfolded
+// in landscape (~604dp), Fold unfolded in portrait (~725dp), and smaller
+// phones in landscape.
+const COMPACT_HEIGHT_BREAKPOINT = 780;
+
 type Props = {
   navigation: NativeStackNavigationProp<HomeStackParamList, "BlackjackTable">;
 };
@@ -30,6 +44,8 @@ export default function BlackjackTableScreen({ navigation }: Props) {
   const { t } = useTranslation(["blackjack", "common"]);
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
+  const { height } = useWindowDimensions();
+  const isCompact = height < COMPACT_HEIGHT_BREAKPOINT;
   const { engine, loading, error, apply, handlePlayAgain } = useBlackjackGame();
   const [confirmNewGameVisible, setConfirmNewGameVisible] = useState(false);
 
@@ -142,6 +158,7 @@ export default function BlackjackTableScreen({ navigation }: Props) {
               activeHandIndex={state.active_hand_index}
               handBets={state.hand_bets}
               handOutcomes={state.hand_outcomes}
+              compact={isCompact}
             />
           </View>
 
@@ -151,7 +168,7 @@ export default function BlackjackTableScreen({ navigation }: Props) {
       )}
 
       {/* Phase-specific controls */}
-      <View style={styles.controls}>
+      <View style={[styles.controls, isCompact && styles.controlsCompact]}>
         {state?.phase === "result" && (
           <>
             <ResultBanner outcome={state.outcome!} payout={state.payout} />
@@ -191,6 +208,7 @@ export default function BlackjackTableScreen({ navigation }: Props) {
             doubleDownAvailable={state.double_down_available}
             splitAvailable={state.split_available}
             loading={false}
+            compact={isCompact}
           />
         )}
 
@@ -258,6 +276,13 @@ const styles = StyleSheet.create({
     flex: 1,
     flexDirection: "row",
     alignItems: "stretch",
+    // minHeight: 0 allows this flex child to actually shrink below its
+    // intrinsic content height on constrained viewports (Galaxy Fold
+    // landscape etc.); overflow:hidden guarantees any residual overflow
+    // from the table contents can't visually bleed into the controls row
+    // below.
+    minHeight: 0,
+    overflow: "hidden",
   },
   sidebarLeft: {
     width: 88,
@@ -278,6 +303,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingBottom: 32,
     gap: 16,
+    // flexShrink: 0 keeps the action cluster fully rendered even when the
+    // tableRow above is competing for space — without this, on compact
+    // viewports the controls could be squeezed to zero height.
+    flexShrink: 0,
+  },
+  controlsCompact: {
+    paddingBottom: 12,
+    gap: 8,
   },
   resultActions: {
     width: "100%",

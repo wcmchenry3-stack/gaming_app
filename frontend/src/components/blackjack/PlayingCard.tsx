@@ -10,7 +10,9 @@ interface Props {
   rotation?: number;
   /** "player" renders a larger card; "dealer" renders the compact default. */
   variant?: "player" | "dealer";
-  /** Shrink the player variant so two split hands fit side-by-side. */
+  /** Shrink the card — either to fit two split hands side-by-side (player
+   *  variant) or to fit the whole table on short-height viewports (both
+   *  variants). */
   compact?: boolean;
 }
 
@@ -36,21 +38,28 @@ export default function PlayingCard({
   const { colors } = useTheme();
 
   const isCompactPlayer = variant === "player" && compact;
+  const isCompactDealer = variant === "dealer" && compact;
   const cardSizeStyle = isCompactPlayer
     ? styles.cardPlayerCompact
-    : variant === "player"
-      ? styles.cardPlayer
-      : styles.cardDealer;
+    : isCompactDealer
+      ? styles.cardDealerCompact
+      : variant === "player"
+        ? styles.cardPlayer
+        : styles.cardDealer;
   const rankSizeStyle = isCompactPlayer
     ? styles.rankPlayerCompact
-    : variant === "player"
-      ? styles.rankPlayer
-      : styles.rankDealer;
+    : isCompactDealer
+      ? styles.rankDealerCompact
+      : variant === "player"
+        ? styles.rankPlayer
+        : styles.rankDealer;
   const suitSizeStyle = isCompactPlayer
     ? styles.suitPlayerCompact
-    : variant === "player"
-      ? styles.suitPlayer
-      : styles.suitDealer;
+    : isCompactDealer
+      ? styles.suitDealerCompact
+      : variant === "player"
+        ? styles.suitPlayer
+        : styles.suitDealer;
   const rotateStyle = rotation !== 0 ? { transform: [{ rotate: `${rotation}deg` }] } : undefined;
 
   if (card.face_down) {
@@ -107,6 +116,11 @@ const styles = StyleSheet.create({
     width: 52,
     height: 72,
   },
+  cardDealerCompact: {
+    width: 40,
+    height: 56,
+    margin: 2,
+  },
   cardPlayer: {
     width: 68,
     height: 96,
@@ -133,6 +147,11 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     lineHeight: 20,
   },
+  rankDealerCompact: {
+    fontSize: 13,
+    fontWeight: "700",
+    lineHeight: 16,
+  },
   rankPlayer: {
     fontSize: 20,
     fontWeight: "700",
@@ -146,6 +165,10 @@ const styles = StyleSheet.create({
   suitDealer: {
     fontSize: 18,
     lineHeight: 22,
+  },
+  suitDealerCompact: {
+    fontSize: 14,
+    lineHeight: 18,
   },
   suitPlayer: {
     fontSize: 22,

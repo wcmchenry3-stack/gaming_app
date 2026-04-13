@@ -13,6 +13,9 @@ interface Props {
   doubleDownAvailable: boolean;
   splitAvailable: boolean;
   loading: boolean;
+  /** Shrink buttons and padding for short-height viewports (Galaxy Fold,
+   *  landscape phones) so the action cluster doesn't overlap the table. */
+  compact?: boolean;
 }
 
 export default function ActionButtons({
@@ -23,9 +26,11 @@ export default function ActionButtons({
   doubleDownAvailable,
   splitAvailable,
   loading,
+  compact = false,
 }: Props) {
   const { t } = useTranslation("blackjack");
   const { colors } = useTheme();
+  const iconSize = compact ? 22 : 28;
 
   const ddLabel = doubleDownAvailable
     ? t("actions.doubleDownLabel")
@@ -35,24 +40,37 @@ export default function ActionButtons({
 
   return (
     <View
-      style={[styles.cluster, { backgroundColor: colors.surfaceHigh, borderColor: colors.border }]}
+      style={[
+        styles.cluster,
+        compact && styles.clusterCompact,
+        { backgroundColor: colors.surfaceHigh, borderColor: colors.border },
+      ]}
     >
       {/* Hit — primary cyan gradient CTA */}
       <Pressable
-        style={[styles.btn, styles.btnHit, { backgroundColor: colors.accent }]}
+        style={[
+          styles.btn,
+          compact && styles.btnCompact,
+          styles.btnHit,
+          { backgroundColor: colors.accent },
+        ]}
         onPress={onHit}
         disabled={loading}
         accessibilityRole="button"
         accessibilityLabel={t("actions.hitLabel")}
         accessibilityState={{ disabled: loading, busy: loading }}
       >
-        <MaterialIcons name="add" size={28} color={colors.textOnAccent} />
+        <MaterialIcons name="add" size={iconSize} color={colors.textOnAccent} />
         <Text style={[styles.btnLabel, { color: colors.textOnAccent }]}>{t("actions.hit")}</Text>
       </Pressable>
 
       {/* Stand — secondary purple outline */}
       <Pressable
-        style={[styles.btn, { borderColor: colors.secondary, borderWidth: 2 }]}
+        style={[
+          styles.btn,
+          compact && styles.btnCompact,
+          { borderColor: colors.secondary, borderWidth: 2 },
+        ]}
         onPress={onStand}
         disabled={loading}
         accessibilityRole="button"
@@ -60,7 +78,7 @@ export default function ActionButtons({
         accessibilityState={{ disabled: loading, busy: loading }}
       >
         {/* hand-back-right is the closest MCI equivalent to Material Symbols front_hand */}
-        <MaterialCommunityIcons name="hand-back-right" size={28} color={colors.secondary} />
+        <MaterialCommunityIcons name="hand-back-right" size={iconSize} color={colors.secondary} />
         <Text style={[styles.btnLabel, { color: colors.secondary }]}>{t("actions.stand")}</Text>
       </Pressable>
 
@@ -68,6 +86,7 @@ export default function ActionButtons({
       <Pressable
         style={[
           styles.btn,
+          compact && styles.btnCompact,
           {
             borderColor: doubleDownAvailable ? colors.border : colors.border,
             borderWidth: 2,
@@ -83,7 +102,7 @@ export default function ActionButtons({
         {/* numeric-2-circle-outline is the closest MCI equivalent to Material Symbols stat_2 */}
         <MaterialCommunityIcons
           name="numeric-2-circle-outline"
-          size={28}
+          size={iconSize}
           color={colors.textMuted}
         />
         <Text style={[styles.btnLabel, styles.btnLabelSmall, { color: colors.textMuted }]}>
@@ -95,6 +114,7 @@ export default function ActionButtons({
       <Pressable
         style={[
           styles.btn,
+          compact && styles.btnCompact,
           {
             borderColor: colors.border,
             borderWidth: 2,
@@ -107,7 +127,7 @@ export default function ActionButtons({
         accessibilityLabel={splitLabel}
         accessibilityState={{ disabled: !splitAvailable || loading }}
       >
-        <MaterialIcons name="call-split" size={28} color={colors.textMuted} />
+        <MaterialIcons name="call-split" size={iconSize} color={colors.textMuted} />
         <Text style={[styles.btnLabel, { color: colors.textMuted }]}>{t("actions.split")}</Text>
       </Pressable>
     </View>
@@ -123,6 +143,11 @@ const styles = StyleSheet.create({
     borderRadius: 50,
     borderWidth: 1,
   },
+  clusterCompact: {
+    gap: 6,
+    paddingHorizontal: 8,
+    paddingVertical: 6,
+  },
   btn: {
     width: 80,
     height: 80,
@@ -130,6 +155,11 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     gap: 2,
+  },
+  btnCompact: {
+    width: 62,
+    height: 62,
+    borderRadius: 31,
   },
   btnHit: {
     // Shadow for the primary CTA glow effect
