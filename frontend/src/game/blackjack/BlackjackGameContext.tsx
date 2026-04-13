@@ -1,15 +1,24 @@
-import React, { createContext, useCallback, useContext, useEffect, useState } from "react";
-import { newGame, EngineState, DEFAULT_RULES } from "./engine";
+import React, { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
+import { newGame, EngineState, DEFAULT_RULES, handValue, isNaturalBlackjack, Card } from "./engine";
 import { GameRules } from "./types";
 import { saveGame, loadGame, clearGame } from "./storage";
+import { gameEventClient } from "../_shared/gameEventClient";
+
+/** Hint passed to apply() so the context can emit a typed player_action. */
+export type PlayerActionHint = "hit" | "stand" | "double" | "split" | null;
 
 interface BlackjackGameContextValue {
   engine: EngineState | null;
   loading: boolean;
   error: string | null;
-  apply: (fn: (s: EngineState) => EngineState) => void;
+  apply: (fn: (s: EngineState) => EngineState, action?: PlayerActionHint) => void;
   handleRulesChange: (rules: GameRules) => void;
   handlePlayAgain: () => void;
+}
+
+function activeHand(s: EngineState, idx: number): Card[] {
+  if (s.player_hands.length > 0 && s.player_hands[idx]) return s.player_hands[idx];
+  return s.player_hand;
 }
 
 const BlackjackGameContext = createContext<BlackjackGameContextValue | null>(null);
@@ -19,6 +28,46 @@ export function BlackjackGameProvider({ children }: { children: React.ReactNode 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Instrumentation session state (#370). Session = one blackjack game from
+  // chip allocation until chips=0 OR the provider unmounts.
+  const gameIdRef = useRef<string | null>(null);
+  const sessionStartedAtRef = useRef<number>(0);
+  const totalHandsRef = useRef(0);
+  const engineRef = useRef<EngineState | null>(null);
+  useEffect(() => {
+    engineRef.current = engine;
+  }, [engine]);
+
+  const startSession = useCallback((startingChips: number) => {
+    sessionStartedAtRef.current = Date.now();
+    totalHandsRef.current = 0;
+    gameIdRef.current = gameEventClient.startGame(
+      "blackjack",
+      {},
+      { starting_chips: startingChips }
+    );
+  }, []);
+
+  const endSession = useCallback((outcome: "completed" | "abandoned") => {
+    const gid = gameIdRef.current;
+    if (!gid) return;
+    const durationMs = Date.now() - sessionStartedAtRef.current;
+    try {
+      gameEventClient.completeGame(
+        gid,
+        { outcome, durationMs },
+        {
+          total_hands: totalHandsRef.current,
+          duration_ms: durationMs,
+          outcome,
+        }
+      );
+    } catch {
+      // Isolation
+    }
+    gameIdRef.current = null;
+  }, []);
+
   useEffect(() => {
     let active = true;
     loadGame()
@@ -27,6 +76,11 @@ export function BlackjackGameProvider({ children }: { children: React.ReactNode 
         const next = saved ?? newGame();
         setEngine(next);
         if (!saved) saveGame(next);
+        // Start an instrumented session unless the loaded state is already
+        // a chips-exhausted game-over state.
+        if (!(next.chips === 0 && next.phase === "result")) {
+          startSession(next.chips);
+        }
       })
       .finally(() => {
         if (active) setLoading(false);
@@ -34,6 +88,17 @@ export function BlackjackGameProvider({ children }: { children: React.ReactNode 
     return () => {
       active = false;
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Abandon the session if the provider unmounts with an open session.
+  useEffect(() => {
+    return () => {
+      if (gameIdRef.current) {
+        endSession("abandoned");
+      }
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Clear storage when player runs out of chips so relaunch starts fresh.
@@ -43,19 +108,108 @@ export function BlackjackGameProvider({ children }: { children: React.ReactNode 
     }
   }, [engine]);
 
+  const emitTransitionEvents = useCallback(
+    (prev: EngineState, next: EngineState, action: PlayerActionHint) => {
+      const gid = gameIdRef.current;
+      if (!gid) return;
+      try {
+        // bet_placed + hand_dealt: betting → player/result with a fresh deal
+        if (prev.phase === "betting" && next.phase !== "betting") {
+          gameEventClient.enqueueEvent(gid, {
+            type: "bet_placed",
+            data: {
+              amount: next.bet,
+              chips_remaining: Math.max(0, next.chips - next.bet),
+            },
+          });
+          gameEventClient.enqueueEvent(gid, {
+            type: "hand_dealt",
+            data: {
+              player_hand: next.player_hand,
+              dealer_up_card: next.dealer_hand[0] ?? null,
+              is_player_blackjack: isNaturalBlackjack(next.player_hand),
+            },
+          });
+        }
+
+        // player_action: hit / stand / double / split during player phase
+        if (prev.phase === "player" && action) {
+          const handIdx = prev.active_hand_index;
+          // For stand, the hand value is taken from prev (no card added).
+          // For hit/double/split, take it from next (the new card is there).
+          const sourceState = action === "stand" ? prev : next;
+          const hand = activeHand(sourceState, handIdx);
+          gameEventClient.enqueueEvent(gid, {
+            type: "player_action",
+            data: {
+              action,
+              hand_index: handIdx,
+              hand_value_after: handValue(hand),
+            },
+          });
+        }
+
+        // hand_resolved (single-hand): outcome just got filled in
+        const prevHadNoSplit = prev.player_hands.length === 0;
+        const nextHasNoSplit = next.player_hands.length === 0;
+        if (prevHadNoSplit && nextHasNoSplit && prev.outcome === null && next.outcome !== null) {
+          totalHandsRef.current += 1;
+          gameEventClient.enqueueEvent(gid, {
+            type: "hand_resolved",
+            data: {
+              hand_index: 0,
+              outcome: next.outcome,
+              payout_delta: next.payout,
+              chips_after: next.chips,
+            },
+          });
+        }
+
+        // hand_resolved (split): scan for newly-filled hand_outcomes slots
+        const outLen = next.hand_outcomes.length;
+        for (let i = 0; i < outLen; i++) {
+          const pOut = prev.hand_outcomes[i] ?? null;
+          const nOut = next.hand_outcomes[i] ?? null;
+          if (pOut === null && nOut !== null) {
+            totalHandsRef.current += 1;
+            gameEventClient.enqueueEvent(gid, {
+              type: "hand_resolved",
+              data: {
+                hand_index: i,
+                outcome: nOut,
+                payout_delta: next.hand_payouts[i] ?? 0,
+                chips_after: next.chips,
+              },
+            });
+          }
+        }
+
+        // game_ended: chips exhausted in result phase
+        if (next.chips === 0 && next.phase === "result") {
+          endSession("completed");
+        }
+      } catch {
+        // Isolation: never let instrumentation break gameplay.
+      }
+    },
+    [endSession]
+  );
+
   const apply = useCallback(
-    (fn: (s: EngineState) => EngineState) => {
+    (fn: (s: EngineState) => EngineState, action: PlayerActionHint = null) => {
       if (!engine) return;
       setError(null);
       try {
-        const next = fn(engine);
+        const prev = engine;
+        const next = fn(prev);
         setEngine(next);
         saveGame(next);
+        emitTransitionEvents(prev, next, action);
       } catch (e: unknown) {
         setError(e instanceof Error ? e.message : String(e));
       }
     },
-    [engine]
+    [engine, emitTransitionEvents]
   );
 
   const handleRulesChange = useCallback(
@@ -72,11 +226,19 @@ export function BlackjackGameProvider({ children }: { children: React.ReactNode 
   );
 
   const handlePlayAgain = useCallback(() => {
+    // If a session is still open, close it out. When chips hit 0 mid-hand,
+    // game_ended was already emitted by emitTransitionEvents — gameIdRef is
+    // null in that case and endSession is a no-op. Otherwise we're mid-game
+    // and the user pressed New Game, so this is an abandon.
+    if (gameIdRef.current) {
+      endSession("abandoned");
+    }
     const fresh = newGame(undefined, engine?.rules ?? DEFAULT_RULES);
     setEngine(fresh);
     saveGame(fresh);
     setError(null);
-  }, [engine]);
+    startSession(fresh.chips);
+  }, [engine, endSession, startSession]);
 
   return (
     <BlackjackGameContext.Provider
