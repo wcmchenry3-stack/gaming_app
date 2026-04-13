@@ -131,6 +131,9 @@ test.describe("2048 — full happy-path game journey", () => {
     await page.getByLabel("Game board").waitFor();
 
     await page.getByRole("button", { name: "Start a new 2048 game" }).click();
+    // Mid-game now shows a confirmation modal — click through.
+    await expect(page.getByText("Start new game?")).toBeVisible();
+    await page.getByRole("button", { name: "Start new game" }).click();
 
     await expect(page.locator('[aria-label="Current score: 0"]')).toBeVisible({
       timeout: 3000,
