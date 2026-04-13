@@ -53,7 +53,12 @@ def get_engine() -> AsyncEngine:
     if _engine is None:
         if not DATABASE_URL:
             raise RuntimeError("DATABASE_URL is not configured")
-        _engine = create_async_engine(DATABASE_URL, pool_pre_ping=True, pool_size=5, max_overflow=5)
+        # SQLite uses NullPool under the async driver and rejects pool_size /
+        # max_overflow. Only pass connection-pool tuning to Postgres.
+        kwargs: dict = {"pool_pre_ping": True}
+        if not DATABASE_URL.startswith("sqlite"):
+            kwargs.update({"pool_size": 5, "max_overflow": 5})
+        _engine = create_async_engine(DATABASE_URL, **kwargs)
     return _engine
 
 
