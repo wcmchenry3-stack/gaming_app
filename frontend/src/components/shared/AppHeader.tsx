@@ -63,11 +63,11 @@ export function AppHeader({ title, rightSlot, onBack }: AppHeaderProps) {
           <Pressable
             onPress={onBack}
             accessibilityRole="button"
-            accessibilityLabel={t("nav.backLabel")}
+            accessibilityLabel={t("common:nav.backLabel")}
             style={({ pressed }) => [styles.backButton, pressed && styles.backButtonPressed]}
             hitSlop={12}
           >
-            <Text style={[styles.backText, { color: colors.text }]}>{t("nav.back")}</Text>
+            <Text style={[styles.backText, { color: colors.text }]}>{t("common:nav.back")}</Text>
           </Pressable>
         ) : (
           <Image
