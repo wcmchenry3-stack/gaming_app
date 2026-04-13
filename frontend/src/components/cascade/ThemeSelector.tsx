@@ -34,7 +34,9 @@ export default function ThemeSelector() {
             style={[styles.tab, active && { backgroundColor: colors.accent }]}
           >
             <Text style={styles.emoji}>{TAB_EMOJIS[set.id] ?? ""}</Text>
-            <Text style={[styles.label, { color: active ? "#0e0e13" : colors.textMuted }]}>
+            <Text
+              style={[styles.label, { color: active ? colors.textOnAccent : colors.textMuted }]}
+            >
               {set.label}
             </Text>
           </Pressable>
@@ -48,18 +50,18 @@ const styles = StyleSheet.create({
   strip: {
     flexDirection: "row",
     alignSelf: "center",
-    borderRadius: 20,
-    padding: 3,
-    marginBottom: 12,
+    borderRadius: 16,
+    padding: 2,
+    marginBottom: 6,
   },
   tab: {
     flexDirection: "row",
     alignItems: "center",
     gap: 4,
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 18,
-    minHeight: 36,
+    paddingHorizontal: 14,
+    paddingVertical: 5,
+    borderRadius: 14,
+    minHeight: 28,
   },
   emoji: {
     fontSize: 16,

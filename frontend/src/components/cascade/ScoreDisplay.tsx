@@ -5,9 +5,10 @@ import { useTheme } from "../../theme/ThemeContext";
 
 interface Props {
   score: number;
+  children?: React.ReactNode;
 }
 
-export default function ScoreDisplay({ score }: Props) {
+export default function ScoreDisplay({ score, children }: Props) {
   const { t } = useTranslation("cascade");
   const { colors } = useTheme();
   const scale = useRef(new Animated.Value(1)).current;
@@ -45,6 +46,7 @@ export default function ScoreDisplay({ score }: Props) {
           {score.toLocaleString()}
         </Animated.Text>
       </View>
+      {children ? <View style={styles.center}>{children}</View> : null}
       <View style={styles.scoreSection}>
         <Text style={[styles.label, { color: colors.textMuted }]}>HIGH</Text>
         <Text style={[styles.score, { color: colors.textMuted }]}>0</Text>
@@ -59,9 +61,14 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     alignItems: "center",
     paddingHorizontal: 16,
-    paddingVertical: 8,
+    paddingVertical: 6,
+    gap: 12,
   },
   scoreSection: {
+    alignItems: "center",
+  },
+  center: {
+    flex: 1,
     alignItems: "center",
   },
   label: {
@@ -71,7 +78,7 @@ const styles = StyleSheet.create({
     marginBottom: 2,
   },
   score: {
-    fontSize: 32,
+    fontSize: 26,
     fontWeight: "800",
   },
 });

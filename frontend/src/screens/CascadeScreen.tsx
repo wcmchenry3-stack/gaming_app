@@ -206,18 +206,21 @@ function CascadeGame() {
     >
       <AppHeader title={t("game.title")} onBack={() => navigation.popToTop()} />
 
-      {/* Score bar */}
-      <ScoreDisplay score={score} />
-
-      {/* HUD */}
-      <View style={styles.hud}>
+      {/* Combined HUD: score + drop/next previews + high, all one row */}
+      <ScoreDisplay score={score}>
         <NextFruitPreview current={currentDef} next={nextDef} />
-      </View>
+      </ScoreDisplay>
 
       <ThemeSelector />
 
       {/* Canvas — portrait-constrained, centered */}
-      <View style={styles.canvasOuter} onLayout={onLayout}>
+      <View
+        style={[
+          styles.canvasOuter,
+          { backgroundColor: colors.surface, borderColor: colors.border },
+        ]}
+        onLayout={onLayout}
+      >
         {scale > 0 && (
           <GameCanvas
             ref={canvasRef}
@@ -250,13 +253,6 @@ const styles = StyleSheet.create({
   screen: {
     flex: 1,
   },
-  hud: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 16,
-    marginBottom: 8,
-  },
   canvasOuter: {
     flex: 1,
     alignItems: "center",
@@ -265,9 +261,8 @@ const styles = StyleSheet.create({
     borderTopRightRadius: 8,
     borderBottomLeftRadius: 48,
     borderBottomRightRadius: 48,
-    backgroundColor: "rgba(31,31,38,0.4)",
     borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.05)",
+    opacity: 0.95,
     overflow: "hidden",
   },
 });
