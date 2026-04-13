@@ -40,11 +40,7 @@ export interface GameEventClient {
   init(): Promise<void>;
   startGame(gameType: string, metadata?: Record<string, unknown>): string;
   enqueueEvent(gameId: string, event: EnqueueEventInput): void;
-  completeGame(
-    gameId: string,
-    summary: CompleteSummary,
-    eventData?: Record<string, unknown>
-  ): void;
+  completeGame(gameId: string, summary: CompleteSummary, eventData?: Record<string, unknown>): void;
   reportBug(
     level: BugLevel,
     source: string,
