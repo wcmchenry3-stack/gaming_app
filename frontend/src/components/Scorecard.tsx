@@ -1,5 +1,5 @@
 import React from "react";
-import { View, Text, StyleSheet, ScrollView, useWindowDimensions } from "react-native";
+import { View, Text, StyleSheet, ScrollView, useWindowDimensions, Platform } from "react-native";
 import { useTranslation } from "react-i18next";
 import ScoreRow from "./ScoreRow";
 import { useTheme } from "../theme/ThemeContext";
@@ -148,7 +148,15 @@ export default function Scorecard({
   );
 
   return (
-    <ScrollView focusable style={styles.container} contentContainerStyle={styles.content}>
+    <ScrollView
+      // focusable on web adds a tabIndex so axe's scrollable-region-focusable
+      // rule is satisfied and keyboard users can tab into the scorecard.
+      // Omitted on native — on iOS it interferes with nested scroll gestures
+      // and made the scorecard frozen (#454).
+      focusable={Platform.OS === "web"}
+      style={styles.container}
+      contentContainerStyle={styles.content}
+    >
       <View style={[styles.grid, isWide && styles.gridWide]}>
         <View style={isWide ? styles.col : undefined}>{upperBento}</View>
         <View style={isWide ? styles.col : undefined}>{lowerBento}</View>
@@ -169,8 +177,10 @@ export default function Scorecard({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    minHeight: 0,
   },
   content: {
+    flexGrow: 1,
     paddingBottom: 8,
   },
   grid: {
