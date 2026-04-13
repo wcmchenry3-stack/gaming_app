@@ -41,7 +41,7 @@ export default function BlackjackTable({
         concealed={isPlayerPhase}
         variant="dealer"
       />
-      <View style={styles.divider} />
+      <View style={[styles.divider, { backgroundColor: colors.border }]} />
 
       {isSplit ? (
         <View style={styles.handsRow}>
@@ -112,7 +112,7 @@ const styles = StyleSheet.create({
   divider: {
     width: "60%",
     height: 1,
-    backgroundColor: "rgba(128,128,128,0.2)",
+    opacity: 0.4,
   },
   handsRow: {
     flexDirection: "row",
