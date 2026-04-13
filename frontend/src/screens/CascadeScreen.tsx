@@ -18,6 +18,7 @@ import ScoreDisplay from "../components/cascade/ScoreDisplay";
 import ThemeSelector from "../components/cascade/ThemeSelector";
 import GameOverOverlay from "../components/cascade/GameOverOverlay";
 import NewGameConfirmModal from "../components/shared/NewGameConfirmModal";
+import { gameEventClient } from "../game/_shared/gameEventClient";
 
 function CascadeGame() {
   const { t } = useTranslation(["cascade", "common"]);
@@ -45,6 +46,59 @@ function CascadeGame() {
   const gameOverRef = useRef(false);
   const activeFruitSetRef = useRef(activeFruitSet);
 
+  // Instrumentation session state (#371). One session spans from mount
+  // until handleGameOver, a fruit-set switch, New Game, or unmount.
+  const gameIdRef = useRef<string | null>(null);
+  const completedRef = useRef(false);
+  const gameStartTimeRef = useRef<number>(Date.now());
+  const mergeCountRef = useRef(0);
+
+  const startInstrumentedSession = useCallback((themeId: string) => {
+    gameStartTimeRef.current = Date.now();
+    mergeCountRef.current = 0;
+    completedRef.current = false;
+    gameIdRef.current = gameEventClient.startGame(
+      "cascade",
+      {},
+      { fruit_set: themeId, theme: themeId, seed: null }
+    );
+  }, []);
+
+  const endInstrumentedSession = useCallback((outcome: "completed" | "abandoned") => {
+    const gid = gameIdRef.current;
+    if (!gid || completedRef.current) return;
+    const durationMs = Date.now() - gameStartTimeRef.current;
+    try {
+      gameEventClient.completeGame(
+        gid,
+        { finalScore: scoreRef.current, outcome, durationMs },
+        {
+          final_score: scoreRef.current,
+          duration_ms: durationMs,
+          theme: activeFruitSetRef.current.id,
+          total_drops: dropCountRef.current,
+          total_merges: mergeCountRef.current,
+          outcome,
+        }
+      );
+    } catch {
+      // Isolation
+    }
+    completedRef.current = true;
+    gameIdRef.current = null;
+  }, []);
+
+  // Start session on mount. Cleanup abandons if still open.
+  useEffect(() => {
+    startInstrumentedSession(activeFruitSetRef.current.id);
+    return () => {
+      if (gameIdRef.current && !completedRef.current) {
+        endInstrumentedSession("abandoned");
+      }
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   // Refs are updated synchronously at mutation sites (handleMerge,
   // handleGameOver, handleRestart, and test hooks) so that Playwright reads
   // see the latest value without waiting for a React commit to flush.
@@ -57,15 +111,19 @@ function CascadeGame() {
   useEffect(() => {
     if (prevFruitSetId.current !== activeFruitSet.id) {
       prevFruitSetId.current = activeFruitSet.id;
+      // Close out the previous session and open a fresh one for the new theme.
+      endInstrumentedSession(gameOverRef.current ? "completed" : "abandoned");
       queueRef.current = new FruitQueue();
       scoreRef.current = 0;
       gameOverRef.current = false;
+      dropCountRef.current = 0;
       setScore(0);
       setGameOver(false);
       setQueueVersion((v) => v + 1);
       canvasRef.current?.reset();
+      startInstrumentedSession(activeFruitSet.id);
     }
-  }, [activeFruitSet.id]);
+  }, [activeFruitSet.id, endInstrumentedSession, startInstrumentedSession]);
 
   const onLayout = useCallback((e: LayoutChangeEvent) => {
     const { width, height } = e.nativeEvent.layout;
@@ -78,6 +136,24 @@ function CascadeGame() {
       const delta = scoreForMerge(event.tier);
       scoreRef.current += delta;
       setScore((s) => s + delta);
+      mergeCountRef.current += 1;
+      const gid = gameIdRef.current;
+      if (gid && !completedRef.current) {
+        try {
+          gameEventClient.enqueueEvent(gid, {
+            type: "merge",
+            data: {
+              from_tier: event.tier - 1,
+              to_tier: event.tier,
+              x: event.x,
+              y: event.y,
+              score_after: scoreRef.current,
+            },
+          });
+        } catch {
+          // Isolation
+        }
+      }
       const merged = activeFruitSet.fruits[event.tier];
       if (merged) {
         canvasRef.current?.announceEvent(t("cascade:event.merged", { fruit: merged.name }));
@@ -90,7 +166,8 @@ function CascadeGame() {
     canvasRef.current?.announceEvent(t("cascade:event.gameOver"));
     gameOverRef.current = true;
     setGameOver(true);
-  }, [t]);
+    endInstrumentedSession("completed");
+  }, [t, endInstrumentedSession]);
 
   const handleTap = useCallback(
     (x: number) => {
@@ -113,6 +190,23 @@ function CascadeGame() {
       console.log(
         `[Cascade] drop #${dropCountRef.current} tier=${tier} x=${Math.round(x)} intervalMs=${interval}`
       );
+
+      const gid = gameIdRef.current;
+      if (gid && !completedRef.current) {
+        try {
+          gameEventClient.enqueueEvent(gid, {
+            type: "drop",
+            data: {
+              drop_index: dropCountRef.current,
+              fruit_tier: tier,
+              x,
+              score_before: scoreRef.current,
+            },
+          });
+        } catch {
+          // Isolation
+        }
+      }
 
       const def = activeFruitSet.fruits[tier];
       canvasRef.current?.drop(def, x);
@@ -173,13 +267,19 @@ function CascadeGame() {
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   function handleRestart() {
+    // Close out the existing session (abandoned if mid-game, completed if
+    // the user landed on game-over already — in that case endSession is a
+    // no-op via completedRef).
+    endInstrumentedSession(gameOverRef.current ? "completed" : "abandoned");
     queueRef.current = new FruitQueue();
     scoreRef.current = 0;
     gameOverRef.current = false;
+    dropCountRef.current = 0;
     setScore(0);
     setGameOver(false);
     setQueueVersion((v) => v + 1);
     canvasRef.current?.reset();
+    startInstrumentedSession(activeFruitSetRef.current.id);
   }
 
   const handleNewGamePress = useCallback(() => {
