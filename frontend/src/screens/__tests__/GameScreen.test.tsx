@@ -18,6 +18,32 @@ jest.mock("../../game/yacht/storage", () => ({
 }));
 
 // ---------------------------------------------------------------------------
+// Mock gameEventClient — record every call for instrumentation tests
+// ---------------------------------------------------------------------------
+type EnqueueArgs = [string, { type: string; data: Record<string, unknown> }];
+type CompleteArgs = [string, Record<string, unknown>, Record<string, unknown>];
+const mockStartGame = jest.fn((..._args: unknown[]) => "game-uuid-test");
+const mockEnqueueEvent = jest.fn((..._args: unknown[]) => undefined) as unknown as jest.Mock<
+  undefined,
+  EnqueueArgs
+>;
+const mockCompleteGame = jest.fn((..._args: unknown[]) => undefined) as unknown as jest.Mock<
+  undefined,
+  CompleteArgs
+>;
+jest.mock("../../game/_shared/gameEventClient", () => ({
+  gameEventClient: {
+    startGame: (...args: unknown[]) => mockStartGame(...args),
+    enqueueEvent: (...args: unknown[]) => (mockEnqueueEvent as unknown as jest.Mock)(...args),
+    completeGame: (...args: unknown[]) => (mockCompleteGame as unknown as jest.Mock)(...args),
+    init: jest.fn().mockResolvedValue(undefined),
+    reportBug: jest.fn(),
+    getQueueStats: jest.fn(),
+    clearAll: jest.fn().mockResolvedValue(undefined),
+  },
+}));
+
+// ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
 
@@ -317,6 +343,204 @@ describe("GameScreen — New Game button (GH #393)", () => {
 // ---------------------------------------------------------------------------
 // GH #263 — scorecard visual reset (upper & lower sections)
 // ---------------------------------------------------------------------------
+
+// ---------------------------------------------------------------------------
+// #368 — gameEventClient instrumentation
+// ---------------------------------------------------------------------------
+
+const RESERVED_KEYS = ["game_id", "event_index", "event_type"];
+
+describe("GameScreen — gameEventClient instrumentation (#368)", () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockStartGame.mockReturnValue("game-uuid-test");
+  });
+
+  it("calls startGame('yacht') on mount", () => {
+    renderScreen();
+    expect(mockStartGame).toHaveBeenCalledTimes(1);
+    expect(mockStartGame).toHaveBeenCalledWith("yacht");
+  });
+
+  it("does not start a new session when mounted with a game_over state", () => {
+    renderScreen({ game_over: true, total_score: 200 });
+    expect(mockStartGame).not.toHaveBeenCalled();
+  });
+
+  it("emits a 'roll' event after rolling with expected payload shape", async () => {
+    const { getByRole } = renderScreen();
+    await act(async () => {
+      fireEvent.press(getByRole("button", { name: /roll dice/i }));
+    });
+    const rollCall = mockEnqueueEvent.mock.calls.find((c) => c[1]?.type === "roll");
+    expect(rollCall).toBeDefined();
+    const [gameId, event] = rollCall!;
+    expect(gameId).toBe("game-uuid-test");
+    expect(event.data).toEqual(
+      expect.objectContaining({
+        held: expect.any(Array),
+        dice: expect.any(Array),
+        rolls_used_after: 1,
+      })
+    );
+    expect(event.data.held).toHaveLength(5);
+    expect(event.data.dice).toHaveLength(5);
+    for (const key of RESERVED_KEYS) {
+      expect(event.data).not.toHaveProperty(key);
+    }
+  });
+
+  it("emits a 'score' event with category, value, is_joker, and available_alternatives", async () => {
+    const { getByRole } = renderScreen();
+    await act(async () => {
+      fireEvent.press(getByRole("button", { name: /roll dice/i }));
+    });
+    await act(async () => {
+      fireEvent.press(getByRole("button", { name: /ones/i }));
+    });
+    const scoreCall = mockEnqueueEvent.mock.calls.find((c) => c[1]?.type === "score");
+    expect(scoreCall).toBeDefined();
+    const [, event] = scoreCall!;
+    expect(event.data.category).toBe("ones");
+    expect(typeof event.data.value).toBe("number");
+    expect(typeof event.data.is_joker).toBe("boolean");
+    expect(event.data.is_joker).toBe(false);
+    expect(event.data.available_alternatives).toBeTruthy();
+    expect(typeof event.data.available_alternatives).toBe("object");
+    for (const key of RESERVED_KEYS) {
+      expect(event.data).not.toHaveProperty(key);
+    }
+  });
+
+  it("capture ordering: a roll+score sequence emits roll before score", async () => {
+    const { getByRole } = renderScreen();
+    await act(async () => {
+      fireEvent.press(getByRole("button", { name: /roll dice/i }));
+    });
+    await act(async () => {
+      fireEvent.press(getByRole("button", { name: /ones/i }));
+    });
+    const types = mockEnqueueEvent.mock.calls.map((c) => c[1]?.type);
+    const rollIdx = types.indexOf("roll");
+    const scoreIdx = types.indexOf("score");
+    expect(rollIdx).toBeGreaterThanOrEqual(0);
+    expect(scoreIdx).toBeGreaterThan(rollIdx);
+  });
+
+  it("fires completeGame with snake_case payload when game_over is reached", async () => {
+    // Pre-fill the scorecard so scoring the final category triggers game_over.
+    const almostDone = {
+      dice: [1, 1, 1, 1, 1],
+      held: [false, false, false, false, false],
+      rolls_used: 1,
+      round: 13,
+      scores: {
+        ones: 3,
+        twos: 6,
+        threes: 9,
+        fours: 12,
+        fives: 15,
+        sixes: 18,
+        three_of_a_kind: 20,
+        four_of_a_kind: 0,
+        full_house: 25,
+        small_straight: 30,
+        large_straight: 40,
+        yacht: 50,
+        chance: null,
+      },
+      game_over: false,
+      upper_subtotal: 63,
+      upper_bonus: 35,
+      yacht_bonus_count: 0,
+      yacht_bonus_total: 0,
+      total_score: 228,
+    };
+    const { getByRole } = renderScreen(almostDone);
+    await act(async () => {
+      fireEvent.press(getByRole("button", { name: /chance/i }));
+    });
+    expect(mockCompleteGame).toHaveBeenCalledTimes(1);
+    const [, summary, eventData] = mockCompleteGame.mock.calls[0];
+    expect(summary).toEqual(
+      expect.objectContaining({ finalScore: expect.any(Number), outcome: "completed" })
+    );
+    expect(eventData).toEqual(
+      expect.objectContaining({
+        final_score: expect.any(Number),
+        upper_bonus: expect.any(Number),
+        yacht_bonus_total: expect.any(Number),
+        outcome: "completed",
+      })
+    );
+    for (const key of RESERVED_KEYS) {
+      expect(eventData).not.toHaveProperty(key);
+    }
+  });
+
+  it("fires completeGame with abandoned outcome when the screen unmounts mid-game", async () => {
+    const { getByRole, unmount } = renderScreen();
+    await act(async () => {
+      fireEvent.press(getByRole("button", { name: /roll dice/i }));
+    });
+    unmount();
+    expect(mockCompleteGame).toHaveBeenCalledTimes(1);
+    const [, summary, eventData] = mockCompleteGame.mock.calls[0];
+    expect(summary.outcome).toBe("abandoned");
+    expect(eventData.outcome).toBe("abandoned");
+    expect(eventData).toEqual(
+      expect.objectContaining({
+        final_score: expect.any(Number),
+        upper_bonus: expect.any(Number),
+        yacht_bonus_total: expect.any(Number),
+      })
+    );
+  });
+
+  it("does not double-fire game_ended: completeGame on unmount is skipped after natural end", async () => {
+    const { unmount } = renderScreen({ game_over: true, total_score: 250 });
+    unmount();
+    expect(mockCompleteGame).not.toHaveBeenCalled();
+  });
+
+  it("New Game mid-game abandons the old session and starts a new one", async () => {
+    const { getByRole } = renderScreen();
+    await act(async () => {
+      fireEvent.press(getByRole("button", { name: /roll dice/i }));
+    });
+    mockStartGame.mockClear();
+    mockStartGame.mockReturnValue("game-uuid-test-2");
+    // Mid-game New Game opens the confirm modal; confirm it to trigger startNewGame.
+    await act(async () => {
+      fireEvent.press(getByRole("button", { name: /new game/i }));
+    });
+    await act(async () => {
+      fireEvent.press(getByRole("button", { name: /start new game/i }));
+    });
+    expect(mockCompleteGame).toHaveBeenCalledTimes(1);
+    expect(mockCompleteGame.mock.calls[0][1].outcome).toBe("abandoned");
+    expect(mockStartGame).toHaveBeenCalledWith("yacht");
+  });
+
+  it("client failures do not block gameplay (enqueueEvent throws)", async () => {
+    mockEnqueueEvent.mockImplementationOnce(() => {
+      throw new Error("boom");
+    });
+    const { getByRole, getByText } = renderScreen();
+    // The throw inside handleRoll is caught and rendered as an error message —
+    // it must not crash the render tree and state must still advance.
+    await act(async () => {
+      fireEvent.press(getByRole("button", { name: /roll dice/i }));
+    });
+    expect(getByText("boom")).toBeTruthy();
+    // Round is still 1 (no score yet) and a subsequent successful enqueue works.
+    mockEnqueueEvent.mockClear();
+    await act(async () => {
+      fireEvent.press(getByRole("button", { name: /ones/i }));
+    });
+    expect(mockEnqueueEvent).toHaveBeenCalled();
+  });
+});
 
 describe("GameScreen — scorecard visual reset (GH #263)", () => {
   beforeEach(() => {
