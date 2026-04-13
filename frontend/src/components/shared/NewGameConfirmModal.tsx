@@ -7,10 +7,14 @@ interface Props {
   visible: boolean;
   onConfirm: () => void;
   onCancel: () => void;
+  /** Override the default "Start new game?" title. */
+  title?: string;
+  /** Override the default body copy about losing progress. */
+  body?: string;
 }
 
-export default function NewGameConfirmModal({ visible, onConfirm, onCancel }: Props) {
-  const { t } = useTranslation("yacht");
+export default function NewGameConfirmModal({ visible, onConfirm, onCancel, title, body }: Props) {
+  const { t } = useTranslation("common");
   const { colors } = useTheme();
 
   const confirmBg: ViewStyle =
@@ -29,7 +33,7 @@ export default function NewGameConfirmModal({ visible, onConfirm, onCancel }: Pr
       accessibilityViewIsModal
       onRequestClose={onCancel}
     >
-      <View style={[styles.overlay, { backgroundColor: "rgba(0,0,0,0.75)" }]}>
+      <View style={[styles.overlay, styles.overlayBg]}>
         <View
           style={[
             styles.card,
@@ -41,10 +45,10 @@ export default function NewGameConfirmModal({ visible, onConfirm, onCancel }: Pr
           ]}
         >
           <Text style={[styles.title, { color: colors.text }]} accessibilityRole="header">
-            {t("newGame.confirm.title")}
+            {title ?? t("newGame.confirm.title")}
           </Text>
           <Text style={[styles.body, { color: colors.textMuted }]}>
-            {t("newGame.confirm.body")}
+            {body ?? t("newGame.confirm.body")}
           </Text>
           <Pressable
             style={({ pressed }) => [
@@ -81,6 +85,9 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
+  },
+  overlayBg: {
+    backgroundColor: "#000000bf",
   },
   card: {
     borderRadius: 20,

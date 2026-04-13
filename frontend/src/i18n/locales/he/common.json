@@ -14,5 +14,10 @@
   "nav.lobby": "לובי",
   "nav.ranks": "דירוג",
   "nav.profile": "פרופיל",
-  "nav.settings": "הגדרות"
+  "nav.settings": "הגדרות",
+  "newGame.button": "משחק חדש",
+  "newGame.confirm.title": "להתחיל משחק חדש?",
+  "newGame.confirm.body": "המשחק הנוכחי יאבד. הניקוד והסיבוב יאופסו.",
+  "newGame.confirm.confirm": "התחל משחק חדש",
+  "newGame.confirm.cancel": "ביטול"
 }

@@ -14,5 +14,10 @@
   "nav.lobby": "Lobby",
   "nav.ranks": "Ranglijst",
   "nav.profile": "Profiel",
-  "nav.settings": "Instellingen"
+  "nav.settings": "Instellingen",
+  "newGame.button": "Nieuw spel",
+  "newGame.confirm.title": "Nieuw spel starten?",
+  "newGame.confirm.body": "Je huidige spel gaat verloren. Score en ronde worden gereset.",
+  "newGame.confirm.confirm": "Nieuw spel starten",
+  "newGame.confirm.cancel": "Annuleren"
 }

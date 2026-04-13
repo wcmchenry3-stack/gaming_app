@@ -49,10 +49,5 @@
   "gameOver.playAgain": "Rejouer",
   "gameOver.playAgainLabel": "Commencer une nouvelle partie",
   "gameOver.dismiss": "Non merci",
-  "gameOver.dismissLabel": "Fermer et garder le score actuel visible",
-  "newGame.button": "Nouvelle partie",
-  "newGame.confirm.title": "Commencer une nouvelle partie?",
-  "newGame.confirm.body": "Votre partie en cours sera perdue. Le score et la manche seront réinitialisés.",
-  "newGame.confirm.confirm": "Commencer une nouvelle partie",
-  "newGame.confirm.cancel": "Annuler"
+  "gameOver.dismissLabel": "Fermer et garder le score actuel visible"
 }

@@ -14,5 +14,10 @@
   "nav.lobby": "Saguão",
   "nav.ranks": "Classificação",
   "nav.profile": "Perfil",
-  "nav.settings": "Configurações"
+  "nav.settings": "Configurações",
+  "newGame.button": "Novo jogo",
+  "newGame.confirm.title": "Iniciar novo jogo?",
+  "newGame.confirm.body": "O jogo atual será perdido. A pontuação e a rodada serão redefinidas.",
+  "newGame.confirm.confirm": "Iniciar novo jogo",
+  "newGame.confirm.cancel": "Cancelar"
 }

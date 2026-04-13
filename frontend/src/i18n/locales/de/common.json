@@ -14,5 +14,10 @@
   "nav.lobby": "Lobby",
   "nav.ranks": "Rangliste",
   "nav.profile": "Profil",
-  "nav.settings": "Einstellungen"
+  "nav.settings": "Einstellungen",
+  "newGame.button": "Neues Spiel",
+  "newGame.confirm.title": "Neues Spiel starten?",
+  "newGame.confirm.body": "Das aktuelle Spiel geht verloren. Punkte und Runde werden zurückgesetzt.",
+  "newGame.confirm.confirm": "Neues Spiel starten",
+  "newGame.confirm.cancel": "Abbrechen"
 }

@@ -19,7 +19,7 @@ import * as Sentry from "@sentry/react-native";
 import DiceRow from "../components/DiceRow";
 import Scorecard from "../components/Scorecard";
 import GameOverModal from "../components/yacht/GameOverModal";
-import NewGameConfirmModal from "../components/yacht/NewGameConfirmModal";
+import NewGameConfirmModal from "../components/shared/NewGameConfirmModal";
 import { useTheme } from "../theme/ThemeContext";
 import { AppHeader, APP_HEADER_HEIGHT } from "../components/shared/AppHeader";
 
@@ -148,9 +148,11 @@ export default function GameScreen({ navigation, route }: Props) {
           onPress={handleNewGamePress}
           style={[styles.newGameBtn, { borderColor: colors.accent }]}
           accessibilityRole="button"
-          accessibilityLabel={t("newGame.button")}
+          accessibilityLabel={t("common:newGame.button")}
         >
-          <Text style={[styles.newGameText, { color: colors.accent }]}>{t("newGame.button")}</Text>
+          <Text style={[styles.newGameText, { color: colors.accent }]}>
+            {t("common:newGame.button")}
+          </Text>
         </Pressable>
       </View>
 

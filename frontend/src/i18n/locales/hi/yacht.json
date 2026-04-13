@@ -49,10 +49,5 @@
   "gameOver.playAgain": "फिर से खेलें",
   "gameOver.playAgainLabel": "नया खेल शुरू करें",
   "gameOver.dismiss": "नहीं धन्यवाद",
-  "gameOver.dismissLabel": "बंद करें और वर्तमान स्कोर दिखाए रखें",
-  "newGame.button": "नया गेम",
-  "newGame.confirm.title": "नया गेम शुरू करें?",
-  "newGame.confirm.body": "आपका वर्तमान गेम खो जाएगा। स्कोर और राउंड रीसेट हो जाएंगे।",
-  "newGame.confirm.confirm": "नया गेम शुरू करें",
-  "newGame.confirm.cancel": "रद्द करें"
+  "gameOver.dismissLabel": "बंद करें और वर्तमान स्कोर दिखाए रखें"
 }
