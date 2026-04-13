@@ -22,4 +22,15 @@ def _real_ip(request: Request) -> str:
     return request.client.host if request.client else "unknown"
 
 
+def session_key(request: Request) -> str:
+    """Rate-limit key bucketed by X-Session-ID, falling back to IP.
+
+    Used by the write API routes (#364) so limits are per-session — a single
+    session cannot exhaust the budget for everyone sharing its IP, and a
+    misbehaving session is isolated.
+    """
+    sid = request.headers.get("X-Session-ID", "").strip()
+    return sid or _real_ip(request)
+
+
 limiter = Limiter(key_func=_real_ip)
