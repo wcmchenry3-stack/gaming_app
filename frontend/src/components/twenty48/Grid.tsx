@@ -15,7 +15,7 @@ interface GridProps {
 // Large drop shadow: native properties + web boxShadow via inline style.
 const BOARD_SHADOW =
   Platform.OS === "web"
-    ? ({ boxShadow: "0 8px 40px rgba(0,0,0,0.6)" } as object)
+    ? ({ boxShadow: "0 8px 40px #00000099" } as object)
     : ({
         shadowColor: "#000",
         shadowOffset: { width: 0, height: 8 },
