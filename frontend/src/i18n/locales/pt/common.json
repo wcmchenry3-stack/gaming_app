@@ -19,5 +19,13 @@
   "newGame.confirm.title": "Iniciar novo jogo?",
   "newGame.confirm.body": "O jogo atual será perdido. A pontuação e a rodada serão redefinidas.",
   "newGame.confirm.confirm": "Iniciar novo jogo",
-  "newGame.confirm.cancel": "Cancelar"
+  "newGame.confirm.cancel": "Cancelar",
+  "clearLogs.label": "Limpar registros locais",
+  "clearLogs.description": "Apague todos os eventos e registros de erros pendentes de sincronização.",
+  "clearLogs.button": "Limpar",
+  "clearLogs.confirm.title": "Limpar registros locais?",
+  "clearLogs.confirm.body": "Isso removerá todos os eventos de jogo e registros de erros armazenados neste dispositivo. Os dados sincronizados permanecerão no servidor. Esta ação não pode ser desfeita.",
+  "clearLogs.confirm.confirm": "Limpar registros",
+  "clearLogs.confirm.cancel": "Cancelar",
+  "clearLogs.success": "Registros locais limpos"
 }

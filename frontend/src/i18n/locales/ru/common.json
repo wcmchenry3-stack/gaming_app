@@ -19,5 +19,13 @@
   "newGame.confirm.title": "Начать новую игру?",
   "newGame.confirm.body": "Текущая игра будет потеряна. Счёт и раунд сбросятся.",
   "newGame.confirm.confirm": "Начать новую игру",
-  "newGame.confirm.cancel": "Отмена"
+  "newGame.confirm.cancel": "Отмена",
+  "clearLogs.label": "Очистить логи",
+  "clearLogs.description": "Удалить все несинхронизированные события и отчёты об ошибках.",
+  "clearLogs.button": "Очистить",
+  "clearLogs.confirm.title": "Очистить логи?",
+  "clearLogs.confirm.body": "Это удалит все сохранённые на устройстве события и отчёты об ошибках. Синхронизированные данные останутся на сервере. Действие необратимо.",
+  "clearLogs.confirm.confirm": "Очистить логи",
+  "clearLogs.confirm.cancel": "Отмена",
+  "clearLogs.success": "Логи очищены"
 }
