@@ -110,9 +110,7 @@ async def test_game_events_and_buglog_roundtrip() -> None:
 
         fetched = (
             await s.execute(
-                select(Game)
-                .options(selectinload(Game.events))
-                .where(Game.session_id == sid)
+                select(Game).options(selectinload(Game.events)).where(Game.session_id == sid)
             )
         ).scalar_one()
         assert fetched.final_score == 123
@@ -140,11 +138,7 @@ async def test_unknown_event_type_id_fails_fk() -> None:
         s.add(game)
         await s.flush()
 
-        s.add(
-            GameEvent(
-                game_id=game.id, event_index=0, event_type_id=999_999, data={}
-            )
-        )
+        s.add(GameEvent(game_id=game.id, event_index=0, event_type_id=999_999, data={}))
         with pytest.raises((IntegrityError, DBAPIError)):
             await s.commit()
         await s.rollback()
