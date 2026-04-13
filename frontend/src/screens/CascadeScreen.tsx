@@ -214,7 +214,13 @@ function CascadeGame() {
       <ThemeSelector />
 
       {/* Canvas — portrait-constrained, centered */}
-      <View style={styles.canvasOuter} onLayout={onLayout}>
+      <View
+        style={[
+          styles.canvasOuter,
+          { backgroundColor: colors.surface, borderColor: colors.border },
+        ]}
+        onLayout={onLayout}
+      >
         {scale > 0 && (
           <GameCanvas
             ref={canvasRef}
@@ -255,9 +261,8 @@ const styles = StyleSheet.create({
     borderTopRightRadius: 8,
     borderBottomLeftRadius: 48,
     borderBottomRightRadius: 48,
-    backgroundColor: "rgba(31,31,38,0.4)",
     borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.05)",
+    opacity: 0.95,
     overflow: "hidden",
   },
 });

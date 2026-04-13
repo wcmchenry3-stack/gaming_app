@@ -34,7 +34,7 @@ export default function ThemeSelector() {
             style={[styles.tab, active && { backgroundColor: colors.accent }]}
           >
             <Text style={styles.emoji}>{TAB_EMOJIS[set.id] ?? ""}</Text>
-            <Text style={[styles.label, { color: active ? "#0e0e13" : colors.textMuted }]}>
+            <Text style={[styles.label, { color: active ? colors.textOnAccent : colors.textMuted }]}>
               {set.label}
             </Text>
           </Pressable>
