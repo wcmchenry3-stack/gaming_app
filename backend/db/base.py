@@ -39,21 +39,38 @@ def _normalize_url(raw: str) -> str:
 _raw_url = os.environ.get("DATABASE_URL", "").strip()
 DATABASE_URL: str | None = _normalize_url(_raw_url) if _raw_url else None
 
-engine: AsyncEngine | None = (
-    create_async_engine(DATABASE_URL, pool_pre_ping=True, pool_size=5, max_overflow=5)
-    if DATABASE_URL
-    else None
-)
+# Engine/session are created lazily so importing this module never fails
+# against a non-async DATABASE_URL (e.g. the sqlite URL used by CI's
+# schema-migration check). Runtime callers go through `get_engine()` /
+# `get_session()`, which raise clearly if DATABASE_URL is missing or not
+# async-compatible.
+_engine: AsyncEngine | None = None
+_session_factory: async_sessionmaker[AsyncSession] | None = None
 
-SessionLocal: async_sessionmaker[AsyncSession] | None = (
-    async_sessionmaker(engine, expire_on_commit=False, class_=AsyncSession)
-    if engine
-    else None
-)
+
+def get_engine() -> AsyncEngine:
+    global _engine
+    if _engine is None:
+        if not DATABASE_URL:
+            raise RuntimeError("DATABASE_URL is not configured")
+        _engine = create_async_engine(DATABASE_URL, pool_pre_ping=True, pool_size=5, max_overflow=5)
+    return _engine
+
+
+def get_session_factory() -> async_sessionmaker[AsyncSession]:
+    global _session_factory
+    if _session_factory is None:
+        _session_factory = async_sessionmaker(
+            get_engine(), expire_on_commit=False, class_=AsyncSession
+        )
+    return _session_factory
+
+
+def is_configured() -> bool:
+    return DATABASE_URL is not None
 
 
 async def get_session() -> AsyncIterator[AsyncSession]:
-    if SessionLocal is None:
-        raise RuntimeError("DATABASE_URL is not configured")
-    async with SessionLocal() as session:
+    factory = get_session_factory()
+    async with factory() as session:
         yield session

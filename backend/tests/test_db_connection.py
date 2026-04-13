@@ -15,7 +15,7 @@ import os
 import pytest
 from sqlalchemy import text
 
-from db.base import engine
+from db.base import get_engine
 
 pytestmark = pytest.mark.skipif(
     not os.environ.get("DATABASE_URL"),
@@ -25,7 +25,7 @@ pytestmark = pytest.mark.skipif(
 
 @pytest.mark.asyncio
 async def test_engine_select_one() -> None:
-    assert engine is not None
+    engine = get_engine()
     async with engine.connect() as conn:
         result = await conn.execute(text("SELECT 1"))
         assert result.scalar() == 1
@@ -33,7 +33,7 @@ async def test_engine_select_one() -> None:
 
 @pytest.mark.asyncio
 async def test_alembic_head_applied() -> None:
-    assert engine is not None
+    engine = get_engine()
     async with engine.connect() as conn:
         result = await conn.execute(text("SELECT version_num FROM alembic_version"))
         version = result.scalar()
