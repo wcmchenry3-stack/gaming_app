@@ -16,11 +16,11 @@ export interface AppHeaderProps {
   onBack?: () => void;
 }
 
-function hexToRgba(hex: string, alpha: number): string {
-  const r = parseInt(hex.slice(1, 3), 16);
-  const g = parseInt(hex.slice(3, 5), 16);
-  const b = parseInt(hex.slice(5, 7), 16);
-  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+function hexWithAlpha(hex: string, alpha: number): string {
+  const alphaHex = Math.round(alpha * 255)
+    .toString(16)
+    .padStart(2, "0");
+  return `${hex}${alphaHex}`;
 }
 
 export function AppHeader({ title, rightSlot, onBack }: AppHeaderProps) {
@@ -30,7 +30,7 @@ export function AppHeader({ title, rightSlot, onBack }: AppHeaderProps) {
   const [helpOpen, setHelpOpen] = useState(false);
 
   const totalHeight = APP_HEADER_HEIGHT + insets.top;
-  const bgColor = hexToRgba(colors.background, 0.7);
+  const bgColor = hexWithAlpha(colors.background, 0.7);
 
   return (
     <View accessibilityRole="header" style={[styles.wrapper, { height: totalHeight }]}>
