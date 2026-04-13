@@ -50,6 +50,10 @@ export interface GameEventRow {
   priority: Priority;
   retry_count: number;
   next_retry_at: number | null;
+  /** Set by SyncWorker on terminal failure (400, 403, repeated 413 on a
+   *  single row, etc). Dead-lettered rows are skipped by peek() but still
+   *  consume queue slots, so they age out via priority eviction or TTL. */
+  dead_lettered?: boolean;
 }
 
 export interface BugLogRow {
@@ -63,6 +67,7 @@ export interface BugLogRow {
   priority: Priority;
   retry_count: number;
   next_retry_at: number | null;
+  dead_lettered?: boolean;
 }
 
 export type Row = GameEventRow | BugLogRow;
@@ -220,16 +225,26 @@ export class EventStore {
    * Peek the N oldest rows across tiers, ordered by (priority desc,
    * created_at asc). SyncWorker uses this to build batches. Deleted rows
    * are the caller's responsibility — we don't mark peeked rows in any way.
+   *
+   * Dead-lettered rows are skipped unless `includeDeadLettered` is set.
+   * Rows with a future `next_retry_at` (set by backoff) are also skipped
+   * unless `now` is explicitly advanced past them.
    */
-  async peek(limit: number): Promise<Row[]> {
+  async peek(
+    limit: number,
+    opts: { includeDeadLettered?: boolean; includeFuture?: boolean; now?: number } = {}
+  ): Promise<Row[]> {
+    const now = opts.now ?? Date.now();
     return this.withLock(async () => {
       const out: Row[] = [];
       for (const tier of [Priority.LIFECYCLE, Priority.MID, Priority.GRANULAR, Priority.BUG_LOG]) {
-        // Order: lifecycle first (most important), then mid, then granular,
-        // then bug logs. Within each tier, oldest first.
         const rows = (await this.readTier(tier)).slice();
         rows.sort((a, b) => a.created_at - b.created_at);
         for (const row of rows) {
+          if (!opts.includeDeadLettered && row.dead_lettered) continue;
+          if (!opts.includeFuture && row.next_retry_at !== null && row.next_retry_at > now) {
+            continue;
+          }
           out.push(row);
           if (out.length >= limit) return out;
         }
