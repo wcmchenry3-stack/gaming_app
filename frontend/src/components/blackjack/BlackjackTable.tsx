@@ -17,6 +17,8 @@ interface Props {
   handBets?: number[];
   /** Per-hand outcomes (when split, in result phase). */
   handOutcomes?: (string | null)[];
+  /** Shrink card sizes and table padding on short-height viewports. */
+  compact?: boolean;
 }
 
 export default function BlackjackTable({
@@ -27,6 +29,7 @@ export default function BlackjackTable({
   activeHandIndex = 0,
   handBets,
   handOutcomes,
+  compact = false,
 }: Props) {
   const { t } = useTranslation("blackjack");
   const { colors } = useTheme();
@@ -34,12 +37,13 @@ export default function BlackjackTable({
   const isSplit = playerHands && playerHands.length > 1;
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, compact && styles.containerCompact]}>
       <HandDisplay
         hand={dealerHand}
         label={t("hand.dealer")}
         concealed={isPlayerPhase}
         variant="dealer"
+        compact={compact}
       />
       <View style={[styles.divider, { backgroundColor: colors.border }]} />
 
@@ -97,7 +101,12 @@ export default function BlackjackTable({
           })}
         </View>
       ) : (
-        <HandDisplay hand={playerHand} label={t("hand.player")} variant="player" />
+        <HandDisplay
+          hand={playerHand}
+          label={t("hand.player")}
+          variant="player"
+          compact={compact}
+        />
       )}
     </View>
   );
@@ -108,6 +117,9 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 20,
     width: "100%",
+  },
+  containerCompact: {
+    gap: 8,
   },
   divider: {
     width: "60%",

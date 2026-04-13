@@ -12,7 +12,9 @@ interface Props {
   /** "player" renders larger cards with fan rotation and neon score pill;
    *  "dealer" renders compact cards and glass badge score. */
   variant?: "player" | "dealer";
-  /** Shrink player-variant cards for split-hand side-by-side layout. */
+  /** Shrink cards for constrained layouts — used by split-hand side-by-side
+   *  rendering and by the whole table on short-height viewports. Shrinks
+   *  both the "player" and "dealer" variants when set. */
   compact?: boolean;
 }
 
@@ -30,8 +32,10 @@ export default function HandDisplay({
   const showScore = hand.cards.length > 0;
 
   return (
-    <View style={styles.container}>
-      <Text style={[styles.label, { color: colors.textMuted }]}>{label}</Text>
+    <View style={[styles.container, compact && styles.containerCompact]}>
+      <Text style={[styles.label, compact && styles.labelCompact, { color: colors.textMuted }]}>
+        {label}
+      </Text>
 
       <View style={styles.cards}>
         {hand.cards.map((card, i) => (
@@ -57,11 +61,17 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 8,
   },
+  containerCompact: {
+    gap: 2,
+  },
   label: {
     fontSize: 13,
     fontWeight: "600",
     textTransform: "uppercase",
     letterSpacing: 0.5,
+  },
+  labelCompact: {
+    fontSize: 11,
   },
   cards: {
     flexDirection: "row",
