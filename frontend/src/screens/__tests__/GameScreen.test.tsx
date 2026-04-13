@@ -22,15 +22,9 @@ jest.mock("../../game/yacht/storage", () => ({
 // ---------------------------------------------------------------------------
 type EnqueueArgs = [string, { type: string; data: Record<string, unknown> }];
 type CompleteArgs = [string, Record<string, unknown>, Record<string, unknown>];
-const mockStartGame = jest.fn((..._args: unknown[]) => "game-uuid-test");
-const mockEnqueueEvent = jest.fn((..._args: unknown[]) => undefined) as unknown as jest.Mock<
-  undefined,
-  EnqueueArgs
->;
-const mockCompleteGame = jest.fn((..._args: unknown[]) => undefined) as unknown as jest.Mock<
-  undefined,
-  CompleteArgs
->;
+const mockStartGame = jest.fn(() => "game-uuid-test");
+const mockEnqueueEvent = jest.fn() as unknown as jest.Mock<undefined, EnqueueArgs>;
+const mockCompleteGame = jest.fn() as unknown as jest.Mock<undefined, CompleteArgs>;
 jest.mock("../../game/_shared/gameEventClient", () => ({
   gameEventClient: {
     startGame: (...args: unknown[]) => mockStartGame(...args),
