@@ -31,7 +31,12 @@ const CATEGORY_I18N_KEY: Record<string, string> = {
   chance: "category.chance",
 };
 
-const WIDE_BREAKPOINT = 720;
+// 600dp catches tablets, Galaxy Fold unfolded (both orientations), and other
+// wide-aspect devices where showing the upper and lower sections side-by-side
+// eliminates the need to scroll within the scorecard. Phones in portrait
+// (iPhone ~390dp, typical Android ~410dp) remain below this and keep the
+// single-column stacked layout.
+const WIDE_BREAKPOINT = 600;
 
 interface ScorecardProps {
   scores: Record<string, number | null>;
