@@ -41,7 +41,17 @@ export default function Grid({ tiles }: GridProps) {
       slots.push(
         <View
           key={`slot-${r}-${c}`}
-          style={[styles.slot, { width: tileSize, height: tileSize, top, left }]}
+          style={[
+            styles.slot,
+            {
+              width: tileSize,
+              height: tileSize,
+              top,
+              left,
+              backgroundColor: colors.surfaceAlt,
+              borderColor: colors.border,
+            },
+          ]}
           accessibilityRole={isEmpty ? "image" : undefined}
           accessibilityLabel={isEmpty ? "empty" : undefined}
         />
@@ -75,8 +85,6 @@ const styles = StyleSheet.create({
   slot: {
     position: "absolute",
     borderRadius: 6,
-    backgroundColor: "#000000",
     borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.05)",
   },
 });
