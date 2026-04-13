@@ -81,10 +81,10 @@ export default function BlackjackTableScreen({ navigation }: Props) {
   const state = engine ? toViewState(engine) : null;
   const isSplit = (state?.player_hands?.length ?? 0) > 1;
 
-  const handleHit = () => apply(engineHit);
-  const handleStand = () => apply(engineStand);
-  const handleDoubleDown = () => apply(engineDoubleDown);
-  const handleSplit = () => apply(engineSplit);
+  const handleHit = () => apply(engineHit, "hit");
+  const handleStand = () => apply(engineStand, "stand");
+  const handleDoubleDown = () => apply(engineDoubleDown, "double");
+  const handleSplit = () => apply(engineSplit, "split");
   const handleNextHand = () => apply(engineNewHand);
 
   return (
