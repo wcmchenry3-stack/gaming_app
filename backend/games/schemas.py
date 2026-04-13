@@ -60,3 +60,50 @@ class GameStateResponse(BaseModel):
     final_score: int | None
     outcome: str | None
     duration_ms: int | None
+
+
+# ---------------------------------------------------------------------------
+# Read-side (#365)
+# ---------------------------------------------------------------------------
+
+
+class GameTypeStatsResponse(BaseModel):
+    played: int
+    best: int | None = None
+    avg: float | None = None
+    last_played_at: datetime | None = None
+    best_chips: int | None = None
+    current_chips: int | None = None
+
+
+class StatsResponse(BaseModel):
+    total_games: int
+    by_game: dict[str, GameTypeStatsResponse]
+    favorite_game: str | None
+
+
+class GameRowResponse(BaseModel):
+    id: uuid.UUID
+    game_type: str
+    started_at: datetime
+    completed_at: datetime | None
+    final_score: int | None
+    outcome: str | None
+    duration_ms: int | None
+    metadata: dict[str, Any] = Field(default_factory=dict)
+
+
+class GameHistoryResponse(BaseModel):
+    items: list[GameRowResponse]
+    next_cursor: str | None
+
+
+class GameEventResponse(BaseModel):
+    event_index: int
+    event_type: str
+    occurred_at: datetime
+    data: dict[str, Any]
+
+
+class GameDetailResponse(GameRowResponse):
+    events: list[GameEventResponse] | None = None
