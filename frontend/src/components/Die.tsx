@@ -70,7 +70,7 @@ export default function Die({ value, held, onPress, disabled, index }: DieProps)
           backgroundColor: held ? colors.heldBg : colors.dieBg,
           borderColor: held ? colors.heldBorder : colors.dieBorder,
           borderWidth: held ? 2 : 1,
-          transform: pressed && !disabled ? [{ scale: 0.95 }] : undefined,
+          transform: [{ scale: pressed && !disabled ? 0.95 : 1 }],
         },
         glowStyle,
         disabled && styles.disabled,
