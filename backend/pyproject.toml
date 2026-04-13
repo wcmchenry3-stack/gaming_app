@@ -4,6 +4,7 @@ markers = [
 ]
 testpaths = ["tests"]
 addopts = "--cov=. --cov-report=term-missing --cov-fail-under=80"
+asyncio_mode = "auto"
 
 [tool.coverage.run]
 omit = ["tests/*"]

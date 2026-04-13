@@ -13,6 +13,7 @@ from __future__ import annotations
 import os
 from typing import AsyncIterator
 
+from sqlalchemy import event
 from sqlalchemy.ext.asyncio import (
     AsyncEngine,
     AsyncSession,
@@ -53,7 +54,23 @@ def get_engine() -> AsyncEngine:
     if _engine is None:
         if not DATABASE_URL:
             raise RuntimeError("DATABASE_URL is not configured")
-        _engine = create_async_engine(DATABASE_URL, pool_pre_ping=True, pool_size=5, max_overflow=5)
+        # SQLite uses NullPool under the async driver and rejects pool_size /
+        # max_overflow. Only pass connection-pool tuning to Postgres.
+        kwargs: dict = {"pool_pre_ping": True}
+        if not DATABASE_URL.startswith("sqlite"):
+            kwargs.update({"pool_size": 5, "max_overflow": 5})
+        _engine = create_async_engine(DATABASE_URL, **kwargs)
+
+        # SQLite doesn't enforce foreign keys unless explicitly enabled per
+        # connection. Only affects the test DB; Postgres always enforces.
+        if DATABASE_URL.startswith("sqlite"):
+
+            @event.listens_for(_engine.sync_engine, "connect")
+            def _enable_sqlite_fk(dbapi_conn, _record):  # type: ignore[no-untyped-def]
+                cur = dbapi_conn.cursor()
+                cur.execute("PRAGMA foreign_keys = ON")
+                cur.close()
+
     return _engine
 
 
