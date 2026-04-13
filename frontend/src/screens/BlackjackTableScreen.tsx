@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { View, Text, Pressable, StyleSheet, ActivityIndicator } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTranslation } from "react-i18next";
@@ -19,6 +19,7 @@ import ActionButtons from "../components/blackjack/ActionButtons";
 import ResultBanner from "../components/blackjack/ResultBanner";
 import GameOverModal from "../components/blackjack/GameOverModal";
 import HudSidebar from "../components/blackjack/HudSidebar";
+import NewGameConfirmModal from "../components/shared/NewGameConfirmModal";
 import { AppHeader, APP_HEADER_HEIGHT } from "../components/shared/AppHeader";
 
 type Props = {
@@ -30,6 +31,7 @@ export default function BlackjackTableScreen({ navigation }: Props) {
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
   const { engine, loading, error, apply, handlePlayAgain } = useBlackjackGame();
+  const [confirmNewGameVisible, setConfirmNewGameVisible] = useState(false);
 
   // Redirect to BettingScreen when Next Hand transitions phase back to betting.
   useEffect(() => {
@@ -37,6 +39,20 @@ export default function BlackjackTableScreen({ navigation }: Props) {
       navigation.replace("BlackjackBetting");
     }
   }, [loading, engine, navigation]);
+
+  const currentPhase = engine?.phase;
+  const handleNewGamePress = useCallback(() => {
+    if (currentPhase && currentPhase !== "betting") {
+      setConfirmNewGameVisible(true);
+    } else {
+      handlePlayAgain();
+    }
+  }, [currentPhase, handlePlayAgain]);
+
+  const handleConfirmNewGame = useCallback(() => {
+    setConfirmNewGameVisible(false);
+    handlePlayAgain();
+  }, [handlePlayAgain]);
 
   if (!engine && loading) {
     return (
@@ -94,6 +110,20 @@ export default function BlackjackTableScreen({ navigation }: Props) {
           {t(`blackjack:phase.${state.phase}` as Parameters<typeof t>[0])}
         </Text>
       )}
+
+      {/* New Game */}
+      <View style={styles.actionRow}>
+        <Pressable
+          onPress={handleNewGamePress}
+          style={[styles.newGameBtn, { borderColor: colors.accent }]}
+          accessibilityRole="button"
+          accessibilityLabel={t("common:newGame.button")}
+        >
+          <Text style={[styles.newGameText, { color: colors.accent }]}>
+            {t("common:newGame.button")}
+          </Text>
+        </Pressable>
+      </View>
 
       {/* Table + HUD sidebar */}
       {state && (
@@ -176,6 +206,12 @@ export default function BlackjackTableScreen({ navigation }: Props) {
           onHome={() => navigation.goBack()}
         />
       )}
+
+      <NewGameConfirmModal
+        visible={confirmNewGameVisible}
+        onConfirm={handleConfirmNewGame}
+        onCancel={() => setConfirmNewGameVisible(false)}
+      />
     </View>
   );
 }
@@ -197,6 +233,26 @@ const styles = StyleSheet.create({
     letterSpacing: 0.8,
     marginTop: 4,
     marginBottom: 4,
+  },
+  actionRow: {
+    flexDirection: "row",
+    justifyContent: "flex-end",
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+  },
+  newGameBtn: {
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 999,
+    borderWidth: 1,
+    minHeight: 32,
+    justifyContent: "center",
+  },
+  newGameText: {
+    fontSize: 11,
+    fontWeight: "800",
+    letterSpacing: 0.8,
+    textTransform: "uppercase",
   },
   tableRow: {
     flex: 1,

@@ -14,5 +14,10 @@
   "nav.lobby": "Lobby",
   "nav.ranks": "Rangos",
   "nav.profile": "Perfil",
-  "nav.settings": "Ajustes"
+  "nav.settings": "Ajustes",
+  "newGame.button": "Nueva partida",
+  "newGame.confirm.title": "¿Empezar nueva partida?",
+  "newGame.confirm.body": "Perderás la partida actual. La puntuación y la ronda se reiniciarán.",
+  "newGame.confirm.confirm": "Empezar nueva partida",
+  "newGame.confirm.cancel": "Cancelar"
 }

@@ -14,5 +14,10 @@
   "nav.lobby": "الردهة",
   "nav.ranks": "الترتيب",
   "nav.profile": "الملف",
-  "nav.settings": "الإعدادات"
+  "nav.settings": "الإعدادات",
+  "newGame.button": "لعبة جديدة",
+  "newGame.confirm.title": "بدء لعبة جديدة؟",
+  "newGame.confirm.body": "ستفقد لعبتك الحالية. ستتم إعادة تعيين النتيجة والجولة.",
+  "newGame.confirm.confirm": "بدء لعبة جديدة",
+  "newGame.confirm.cancel": "إلغاء"
 }

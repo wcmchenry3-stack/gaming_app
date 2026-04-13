@@ -49,10 +49,5 @@
   "gameOver.playAgain": "다시 하기",
   "gameOver.playAgainLabel": "새 게임 시작",
   "gameOver.dismiss": "괜찮습니다",
-  "gameOver.dismissLabel": "닫고 현재 점수를 계속 표시",
-  "newGame.button": "새 게임",
-  "newGame.confirm.title": "새 게임을 시작할까요?",
-  "newGame.confirm.body": "현재 게임이 사라집니다. 점수와 라운드가 초기화됩니다.",
-  "newGame.confirm.confirm": "새 게임 시작",
-  "newGame.confirm.cancel": "취소"
+  "gameOver.dismissLabel": "닫고 현재 점수를 계속 표시"
 }

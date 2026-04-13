@@ -14,5 +14,10 @@
   "nav.lobby": "Accueil",
   "nav.ranks": "Classement",
   "nav.profile": "Profil",
-  "nav.settings": "Paramètres"
+  "nav.settings": "Paramètres",
+  "newGame.button": "Nouvelle partie",
+  "newGame.confirm.title": "Commencer une nouvelle partie?",
+  "newGame.confirm.body": "Votre partie en cours sera perdue. Le score et la manche seront réinitialisés.",
+  "newGame.confirm.confirm": "Commencer une nouvelle partie",
+  "newGame.confirm.cancel": "Annuler"
 }

@@ -14,5 +14,10 @@
   "nav.lobby": "大厅",
   "nav.ranks": "排名",
   "nav.profile": "个人",
-  "nav.settings": "设置"
+  "nav.settings": "设置",
+  "newGame.button": "新游戏",
+  "newGame.confirm.title": "开始新游戏？",
+  "newGame.confirm.body": "当前游戏将丢失。得分和回合将重置。",
+  "newGame.confirm.confirm": "开始新游戏",
+  "newGame.confirm.cancel": "取消"
 }

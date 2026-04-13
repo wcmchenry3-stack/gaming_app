@@ -20,6 +20,7 @@ import Grid from "../components/twenty48/Grid";
 import ScoreBoard from "../components/twenty48/ScoreBoard";
 import GameOverlay from "../components/twenty48/GameOverlay";
 import StatsBento from "../components/twenty48/StatsBento";
+import NewGameConfirmModal from "../components/shared/NewGameConfirmModal";
 
 const SWIPE_THRESHOLD = 30;
 /** How long (ms) to hold the move lock — matches slide animation duration. */
@@ -38,6 +39,7 @@ export default function Twenty48Screen({ navigation }: Props) {
   const [loading, setLoading] = useState(true);
   const [winDismissed, setWinDismissed] = useState(false);
   const [bestScore, setBestScore] = useState(0);
+  const [confirmNewGameVisible, setConfirmNewGameVisible] = useState(false);
 
   /** Blocks new moves while the slide animation plays. */
   const movingRef = useRef(false);
@@ -118,7 +120,7 @@ export default function Twenty48Screen({ navigation }: Props) {
     [state, executeMove]
   );
 
-  const handleNewGame = useCallback(() => {
+  const resetGame = useCallback(() => {
     movingRef.current = false;
     pendingMove.current = null;
     setWinDismissed(false);
@@ -126,6 +128,19 @@ export default function Twenty48Screen({ navigation }: Props) {
     setState(next);
     saveGame(next);
   }, []);
+
+  const handleNewGamePress = useCallback(() => {
+    if (state && state.score > 0 && !state.game_over) {
+      setConfirmNewGameVisible(true);
+    } else {
+      resetGame();
+    }
+  }, [state, resetGame]);
+
+  const handleConfirmNewGame = useCallback(() => {
+    setConfirmNewGameVisible(false);
+    resetGame();
+  }, [resetGame]);
 
   // When game ends, remove the saved state so a fresh game starts next launch.
   useEffect(() => {
@@ -221,7 +236,7 @@ export default function Twenty48Screen({ navigation }: Props) {
         )}
         <Pressable
           style={[styles.newGameBtn, { backgroundColor: colors.accent }]}
-          onPress={handleNewGame}
+          onPress={handleNewGamePress}
           accessibilityRole="button"
           accessibilityLabel={t("twenty48:actions.newGameLabel")}
         >
@@ -267,7 +282,7 @@ export default function Twenty48Screen({ navigation }: Props) {
         <GameOverlay
           type="win"
           score={state!.score}
-          onNewGame={handleNewGame}
+          onNewGame={resetGame}
           onKeepPlaying={() => setWinDismissed(true)}
           onHome={() => navigation.goBack()}
         />
@@ -276,10 +291,16 @@ export default function Twenty48Screen({ navigation }: Props) {
         <GameOverlay
           type="game_over"
           score={state!.score}
-          onNewGame={handleNewGame}
+          onNewGame={resetGame}
           onHome={() => navigation.goBack()}
         />
       )}
+
+      <NewGameConfirmModal
+        visible={confirmNewGameVisible}
+        onConfirm={handleConfirmNewGame}
+        onCancel={() => setConfirmNewGameVisible(false)}
+      />
     </View>
   );
 }

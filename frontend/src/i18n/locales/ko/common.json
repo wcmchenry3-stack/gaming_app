@@ -14,5 +14,10 @@
   "nav.lobby": "로비",
   "nav.ranks": "순위",
   "nav.profile": "프로필",
-  "nav.settings": "설정"
+  "nav.settings": "설정",
+  "newGame.button": "새 게임",
+  "newGame.confirm.title": "새 게임을 시작할까요?",
+  "newGame.confirm.body": "현재 게임이 사라집니다. 점수와 라운드가 초기화됩니다.",
+  "newGame.confirm.confirm": "새 게임 시작",
+  "newGame.confirm.cancel": "취소"
 }
