@@ -14,6 +14,7 @@ import sentry_sdk
 from sentry_sdk.integrations.fastapi import FastApiIntegration
 from sentry_sdk.integrations.starlette import StarletteIntegration
 
+from db.base import DATABASE_URL, engine
 from limiter import _real_ip, limiter
 from cascade.router import router as cascade_router
 from blackjack.router import router as blackjack_router
@@ -164,6 +165,22 @@ async def security_headers(request: Request, call_next) -> Response:
     if "server" in response.headers:
         del response.headers["server"]
     return response
+
+
+@app.on_event("startup")
+async def _db_health_check() -> None:
+    """Log DB reachability on boot. Non-fatal if DATABASE_URL is unset."""
+    if engine is None:
+        _audit_log.info(json.dumps({"event": "db_unconfigured"}))
+        return
+    try:
+        from sqlalchemy import text
+
+        async with engine.connect() as conn:
+            await conn.execute(text("SELECT 1"))
+        _audit_log.info(json.dumps({"event": "db_connected", "url": DATABASE_URL.split("@")[-1]}))
+    except Exception as exc:  # noqa: BLE001
+        _audit_log.error(json.dumps({"event": "db_connect_failed", "error": str(exc)}))
 
 
 @app.get("/health")
