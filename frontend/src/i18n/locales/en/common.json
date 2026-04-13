@@ -19,5 +19,13 @@
   "newGame.confirm.title": "Start new game?",
   "newGame.confirm.body": "Your current game will be lost. Score and round will reset.",
   "newGame.confirm.confirm": "Start new game",
-  "newGame.confirm.cancel": "Cancel"
+  "newGame.confirm.cancel": "Cancel",
+  "clearLogs.label": "Clear local logs",
+  "clearLogs.description": "Delete all queued events and bug logs that haven't synced yet.",
+  "clearLogs.button": "Clear",
+  "clearLogs.confirm.title": "Clear local logs?",
+  "clearLogs.confirm.body": "This will remove every queued game event and bug log stored on this device. Synced data stays on the server. This cannot be undone.",
+  "clearLogs.confirm.confirm": "Clear logs",
+  "clearLogs.confirm.cancel": "Cancel",
+  "clearLogs.success": "Local logs cleared"
 }

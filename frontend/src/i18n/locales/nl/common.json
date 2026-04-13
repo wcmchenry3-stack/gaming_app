@@ -19,5 +19,13 @@
   "newGame.confirm.title": "Nieuw spel starten?",
   "newGame.confirm.body": "Je huidige spel gaat verloren. Score en ronde worden gereset.",
   "newGame.confirm.confirm": "Nieuw spel starten",
-  "newGame.confirm.cancel": "Annuleren"
+  "newGame.confirm.cancel": "Annuleren",
+  "clearLogs.label": "Lokaal logboek wissen",
+  "clearLogs.description": "Verwijder alle wachtrij-evenementen en foutlogs die nog niet zijn gesynchroniseerd.",
+  "clearLogs.button": "Wissen",
+  "clearLogs.confirm.title": "Lokaal logboek wissen?",
+  "clearLogs.confirm.body": "Hiermee verwijder je alle wachtrij-evenementen en foutlogs op dit apparaat. Gesynchroniseerde gegevens blijven op de server. Dit kan niet ongedaan worden gemaakt.",
+  "clearLogs.confirm.confirm": "Logboek wissen",
+  "clearLogs.confirm.cancel": "Annuleren",
+  "clearLogs.success": "Lokaal logboek gewist"
 }

@@ -19,5 +19,13 @@
   "newGame.confirm.title": "새 게임을 시작할까요?",
   "newGame.confirm.body": "현재 게임이 사라집니다. 점수와 라운드가 초기화됩니다.",
   "newGame.confirm.confirm": "새 게임 시작",
-  "newGame.confirm.cancel": "취소"
+  "newGame.confirm.cancel": "취소",
+  "clearLogs.label": "로컬 로그 삭제",
+  "clearLogs.description": "동기화되지 않은 대기 중인 이벤트와 버그 로그를 삭제합니다.",
+  "clearLogs.button": "삭제",
+  "clearLogs.confirm.title": "로컬 로그를 삭제하시겠습니까?",
+  "clearLogs.confirm.body": "이 기기에 저장된 대기 중인 게임 이벤트와 버그 로그가 모두 삭제됩니다. 동기화된 데이터는 서버에 남아 있습니다. 이 작업은 되돌릴 수 없습니다.",
+  "clearLogs.confirm.confirm": "로그 삭제",
+  "clearLogs.confirm.cancel": "취소",
+  "clearLogs.success": "로컬 로그가 삭제되었습니다"
 }

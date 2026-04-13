@@ -19,5 +19,13 @@
   "newGame.confirm.title": "开始新游戏？",
   "newGame.confirm.body": "当前游戏将丢失。得分和回合将重置。",
   "newGame.confirm.confirm": "开始新游戏",
-  "newGame.confirm.cancel": "取消"
+  "newGame.confirm.cancel": "取消",
+  "clearLogs.label": "清除本地日志",
+  "clearLogs.description": "删除所有未同步的事件和错误日志。",
+  "clearLogs.button": "清除",
+  "clearLogs.confirm.title": "确认清除本地日志？",
+  "clearLogs.confirm.body": "这将删除设备上所有未同步的游戏事件和错误日志。已同步的数据将保留在服务器上。此操作无法撤销。",
+  "clearLogs.confirm.confirm": "确认清除",
+  "clearLogs.confirm.cancel": "取消",
+  "clearLogs.success": "本地日志已清除"
 }

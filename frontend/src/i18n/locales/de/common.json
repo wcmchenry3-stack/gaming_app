@@ -19,5 +19,13 @@
   "newGame.confirm.title": "Neues Spiel starten?",
   "newGame.confirm.body": "Das aktuelle Spiel geht verloren. Punkte und Runde werden zurückgesetzt.",
   "newGame.confirm.confirm": "Neues Spiel starten",
-  "newGame.confirm.cancel": "Abbrechen"
+  "newGame.confirm.cancel": "Abbrechen",
+  "clearLogs.label": "Lokale Logs löschen",
+  "clearLogs.description": "Alle wartenden Ereignisse und Fehlerprotokolle löschen, die noch nicht synchronisiert wurden.",
+  "clearLogs.button": "Löschen",
+  "clearLogs.confirm.title": "Lokale Logs löschen?",
+  "clearLogs.confirm.body": "Dies entfernt alle wartenden Spielevents und Fehlerprotokolle auf diesem Gerät. Synchronisierte Daten bleiben auf dem Server. Dieser Vorgang kann nicht rückgängig gemacht werden.",
+  "clearLogs.confirm.confirm": "Logs löschen",
+  "clearLogs.confirm.cancel": "Abbrechen",
+  "clearLogs.success": "Lokale Logs gelöscht"
 }

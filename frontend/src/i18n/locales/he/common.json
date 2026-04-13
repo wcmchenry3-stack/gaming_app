@@ -19,5 +19,13 @@
   "newGame.confirm.title": "להתחיל משחק חדש?",
   "newGame.confirm.body": "המשחק הנוכחי יאבד. הניקוד והסיבוב יאופסו.",
   "newGame.confirm.confirm": "התחל משחק חדש",
-  "newGame.confirm.cancel": "ביטול"
+  "newGame.confirm.cancel": "ביטול",
+  "clearLogs.label": "ניקוי לוגים מקומיים",
+  "clearLogs.description": "מוחק את כל האירועים והלוגים שלא סונכרנו עדיין.",
+  "clearLogs.button": "נקה",
+  "clearLogs.confirm.title": "לנקות לוגים מקומיים?",
+  "clearLogs.confirm.body": "זה יסיר את כל אירועי המשחק והלוגים שנשמרו במכשיר זה. נתונים מסונכרנים יישארו בשרת. פעולה זו אינה ניתנת לביטול.",
+  "clearLogs.confirm.confirm": "נקה לוגים",
+  "clearLogs.confirm.cancel": "ביטול",
+  "clearLogs.success": "הלוגים המקומיים נוקו"
 }

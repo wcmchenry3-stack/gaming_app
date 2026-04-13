@@ -19,5 +19,13 @@
   "newGame.confirm.title": "Commencer une nouvelle partie?",
   "newGame.confirm.body": "Votre partie en cours sera perdue. Le score et la manche seront réinitialisés.",
   "newGame.confirm.confirm": "Commencer une nouvelle partie",
-  "newGame.confirm.cancel": "Annuler"
+  "newGame.confirm.cancel": "Annuler",
+  "clearLogs.label": "Effacer les journaux locaux",
+  "clearLogs.description": "Supprime tous les événements en attente et les journaux d'erreurs non synchronisés.",
+  "clearLogs.button": "Effacer",
+  "clearLogs.confirm.title": "Effacer les journaux locaux?",
+  "clearLogs.confirm.body": "Cela supprimera tous les événements de jeu en attente et les journaux d'erreurs stockés sur cet appareil. Les données synchronisées resteront sur le serveur. Cette action est irréversible.",
+  "clearLogs.confirm.confirm": "Effacer les journaux",
+  "clearLogs.confirm.cancel": "Annuler",
+  "clearLogs.success": "Journaux locaux effacés"
 }
