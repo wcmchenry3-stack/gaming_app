@@ -33,9 +33,7 @@ export default function HandDisplay({
 
   return (
     <View style={[styles.container, compact && styles.containerCompact]}>
-      <Text
-        style={[styles.label, compact && styles.labelCompact, { color: colors.textMuted }]}
-      >
+      <Text style={[styles.label, compact && styles.labelCompact, { color: colors.textMuted }]}>
         {label}
       </Text>
 
