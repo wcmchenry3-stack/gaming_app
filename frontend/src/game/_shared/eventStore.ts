@@ -432,11 +432,7 @@ export class EventStore {
     let overageBytes = stats.sizeBytes - logConfig.MAX_SIZE_BYTES;
     if (overageRows <= 0 && overageBytes <= 0) return 0;
 
-    const poolTiers: Priority[] = [
-      Priority.BUG_LOG,
-      Priority.MID,
-      Priority.GRANULAR,
-    ];
+    const poolTiers: Priority[] = [Priority.BUG_LOG, Priority.MID, Priority.GRANULAR];
 
     type TierEntry = { tier: Priority; rows: Row[]; dirty: boolean };
     const entries: Record<Priority, TierEntry | undefined> = {
@@ -463,9 +459,7 @@ export class EventStore {
     // still win ties against granular events. Without this tiebreaker
     // the stable-sort insertion order would arbitrarily decide which
     // tier loses.
-    pool.sort(
-      (a, b) => a.row.created_at - b.row.created_at || b.tier - a.tier,
-    );
+    pool.sort((a, b) => a.row.created_at - b.row.created_at || b.tier - a.tier);
 
     let totalEvicted = 0;
     const dropped: Record<Priority, Set<number>> = {
