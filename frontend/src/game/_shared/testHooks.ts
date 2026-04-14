@@ -100,6 +100,18 @@ function generateSeedId(): string {
   });
 }
 
+// When no explicit createdAt is provided, anchor the seeded batch so the
+// newest row equals Date.now() and older rows recede into the past by
+// their per-row offset. Seeded rows must never be "in the future"
+// relative to wall-clock time, otherwise real enqueues that happen right
+// after the seed will look older than the fixture and get evicted first
+// by the #486 age-based pool policy. Explicit createdAt (from fixtures
+// like seedEvictionFixture) is honored as-is.
+function seedBaseTime(createdAt: number | undefined, count: number): number {
+  if (createdAt !== undefined) return createdAt;
+  return Date.now() - Math.max(0, count - 1);
+}
+
 function buildSeedGameEvents(spec: SeedEventSpec): GameEventRow[] {
   const {
     count,
@@ -109,7 +121,7 @@ function buildSeedGameEvents(spec: SeedEventSpec): GameEventRow[] {
     createdAt,
     startIndex = 0,
   } = spec;
-  const baseTime = createdAt ?? Date.now();
+  const baseTime = seedBaseTime(createdAt, count);
   const pri =
     priority !== undefined ? priority : logConfig.priorityForEvent("game_event", eventType);
   const rows: GameEventRow[] = [];
@@ -121,8 +133,7 @@ function buildSeedGameEvents(spec: SeedEventSpec): GameEventRow[] {
       event_index: startIndex + i,
       event_type: eventType,
       payload: { _seed: true, i },
-      // Use a small offset per row so ordering is stable and distinct even
-      // when the caller pins a fixed createdAt.
+      // Per-row offset keeps within-batch ordering stable and distinct.
       created_at: baseTime + i,
       priority: pri,
       retry_count: 0,
@@ -134,7 +145,7 @@ function buildSeedGameEvents(spec: SeedEventSpec): GameEventRow[] {
 
 function buildSeedBugLogs(spec: SeedBugLogSpec): BugLogRow[] {
   const { count, level = "warn", source = "__seed", createdAt, message = "seeded bug log" } = spec;
-  const baseTime = createdAt ?? Date.now();
+  const baseTime = seedBaseTime(createdAt, count);
   const rows: BugLogRow[] = [];
   for (let i = 0; i < count; i += 1) {
     rows.push({
