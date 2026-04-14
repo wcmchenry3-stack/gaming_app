@@ -382,23 +382,33 @@ export class EventStore {
   }
 
   private async evictToCapacityUnlocked(): Promise<number> {
+    // Batched eviction: compute the overage once, then walk tiers from
+    // highest priority (P3 granular, evicted first) down to P0 (bug logs,
+    // preserved longest), dropping as many oldest rows per tier as the
+    // remaining overage requires. This is a single read+write per tier
+    // instead of one per evicted row — the per-row loop was O(overage × n)
+    // on AsyncStorage, which blew up test fixtures that seeded 10k rows.
+    const stats = await this.statsUnlocked();
+    let overageRows = stats.totalRows - logConfig.MAX_ROWS;
+    let overageBytes = stats.sizeBytes - logConfig.MAX_SIZE_BYTES;
+    if (overageRows <= 0 && overageBytes <= 0) return 0;
+
     let totalEvicted = 0;
-    // Evict from highest priority tier first (P3 granular evicted first,
-    // bug logs last). Within a tier, FIFO by created_at.
     for (let pri = 3; pri >= 0; pri -= 1) {
-      // eslint-disable-next-line no-constant-condition
-      while (true) {
-        const s = await this.statsUnlocked();
-        if (s.totalRows <= logConfig.MAX_ROWS && s.sizeBytes <= logConfig.MAX_SIZE_BYTES) {
-          return totalEvicted;
-        }
-        const tierRows = await this.readTier(pri as Priority);
-        if (tierRows.length === 0) break;
-        // Drop oldest row in this tier.
-        tierRows.sort((a, b) => a.created_at - b.created_at);
-        tierRows.shift();
-        await this.writeTier(pri as Priority, tierRows);
-        totalEvicted += 1;
+      if (overageRows <= 0 && overageBytes <= 0) break;
+      const tierRows = await this.readTier(pri as Priority);
+      if (tierRows.length === 0) continue;
+      tierRows.sort((a, b) => a.created_at - b.created_at);
+
+      let drop = 0;
+      while (drop < tierRows.length && (overageRows > 0 || overageBytes > 0)) {
+        overageBytes -= rowBytes(tierRows[drop]);
+        overageRows -= 1;
+        drop += 1;
+      }
+      if (drop > 0) {
+        await this.writeTier(pri as Priority, tierRows.slice(drop));
+        totalEvicted += drop;
       }
     }
     return totalEvicted;

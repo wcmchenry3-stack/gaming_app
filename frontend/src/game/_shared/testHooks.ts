@@ -81,6 +81,7 @@ interface LogstoreTestHooks {
     gameId: string,
     summary: { finalScore?: number | null; outcome?: string | null; durationMs?: number | null }
   ) => void;
+  __eventStore_sweepTTL: (now?: number) => Promise<number>;
   __syncWorker_flush: () => Promise<FlushResult>;
   __syncWorker_getBackoffUntil: () => number;
   __logConfig_override: (partial: Partial<LogConfig>) => void;
@@ -181,6 +182,7 @@ export function registerLogstoreTestHooks(): () => void {
     gameEventClient.startGame(gameType, metadata);
   g.__gameEventClient_completeGame = (gameId, summary) =>
     gameEventClient.completeGame(gameId, summary);
+  g.__eventStore_sweepTTL = (now?: number) => eventStore.sweepTTL(now);
 
   g.__syncWorker_flush = () => syncWorker.flush();
   g.__syncWorker_getBackoffUntil = () => syncWorker.getBackoffUntil();
@@ -203,6 +205,7 @@ export function registerLogstoreTestHooks(): () => void {
     delete g.__gameEventClient_seedBugLogs;
     delete g.__gameEventClient_startGame;
     delete g.__gameEventClient_completeGame;
+    delete g.__eventStore_sweepTTL;
     delete g.__syncWorker_flush;
     delete g.__syncWorker_getBackoffUntil;
     delete g.__logConfig_override;
