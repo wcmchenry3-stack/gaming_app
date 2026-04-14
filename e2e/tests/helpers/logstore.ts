@@ -123,6 +123,53 @@ export async function getBackoffUntil(page: Page): Promise<number> {
   });
 }
 
+/** Drive gameEventClient.reportBug from the test runner. */
+export async function reportBug(
+  page: Page,
+  args: {
+    level?: "warn" | "error" | "fatal";
+    source?: string;
+    message?: string;
+    context?: Record<string, unknown>;
+  } = {},
+): Promise<void> {
+  const {
+    level = "warn",
+    source = "e2e",
+    message = "test bug",
+    context = {},
+  } = args;
+  await page.evaluate(
+    (a: {
+      level: "warn" | "error" | "fatal";
+      source: string;
+      message: string;
+      context: Record<string, unknown>;
+    }) => {
+      const g = globalThis as unknown as {
+        __gameEventClient_reportBug: (
+          lvl: "warn" | "error" | "fatal",
+          src: string,
+          m: string,
+          c?: Record<string, unknown>,
+        ) => void;
+      };
+      g.__gameEventClient_reportBug(a.level, a.source, a.message, a.context);
+    },
+    { level, source, message, context },
+  );
+}
+
+/** Run the TTL sweep. Optionally pass an override `now` to pin the cutoff. */
+export async function sweepTTL(page: Page, now?: number): Promise<number> {
+  return page.evaluate(async (nowArg: number | undefined) => {
+    const g = globalThis as unknown as {
+      __eventStore_sweepTTL: (n?: number) => Promise<number>;
+    };
+    return await g.__eventStore_sweepTTL(nowArg);
+  }, now);
+}
+
 // ---------------------------------------------------------------------------
 // Seeding
 // ---------------------------------------------------------------------------
