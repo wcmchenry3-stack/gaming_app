@@ -27,5 +27,8 @@
   "clearLogs.confirm.body": "이 기기에 저장된 대기 중인 게임 이벤트와 버그 로그가 모두 삭제됩니다. 동기화된 데이터는 서버에 남아 있습니다. 이 작업은 되돌릴 수 없습니다.",
   "clearLogs.confirm.confirm": "로그 삭제",
   "clearLogs.confirm.cancel": "취소",
-  "clearLogs.success": "로컬 로그가 삭제되었습니다"
+  "clearLogs.success": "로컬 로그가 삭제되었습니다",
+  "capacityWarning.title": "Queued game data is filling up",
+  "capacityWarning.body": "Clear it in Settings to keep the app running smoothly.",
+  "capacityWarning.dismiss": "Dismiss"
 }

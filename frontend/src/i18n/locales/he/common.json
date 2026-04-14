@@ -27,5 +27,8 @@
   "clearLogs.confirm.body": "זה יסיר את כל אירועי המשחק והלוגים שנשמרו במכשיר זה. נתונים מסונכרנים יישארו בשרת. פעולה זו אינה ניתנת לביטול.",
   "clearLogs.confirm.confirm": "נקה לוגים",
   "clearLogs.confirm.cancel": "ביטול",
-  "clearLogs.success": "הלוגים המקומיים נוקו"
+  "clearLogs.success": "הלוגים המקומיים נוקו",
+  "capacityWarning.title": "Queued game data is filling up",
+  "capacityWarning.body": "Clear it in Settings to keep the app running smoothly.",
+  "capacityWarning.dismiss": "Dismiss"
 }

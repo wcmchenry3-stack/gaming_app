@@ -27,5 +27,8 @@
   "clearLogs.confirm.body": "यह डिवाइस पर संग्रहीत सभी कतारबद्ध गेम इवेंट्स और बग लॉग्स हटा देगा। सिंक किया हुआ डेटा सर्वर पर रहेगा। इसे वापस नहीं लाया जा सकता।",
   "clearLogs.confirm.confirm": "लॉग्स साफ़ करें",
   "clearLogs.confirm.cancel": "रद्द करें",
-  "clearLogs.success": "लोकल लॉग्स साफ़ हो गए"
+  "clearLogs.success": "लोकल लॉग्स साफ़ हो गए",
+  "capacityWarning.title": "Queued game data is filling up",
+  "capacityWarning.body": "Clear it in Settings to keep the app running smoothly.",
+  "capacityWarning.dismiss": "Dismiss"
 }

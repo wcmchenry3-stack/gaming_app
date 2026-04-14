@@ -27,5 +27,8 @@
   "clearLogs.confirm.body": "Cela supprimera tous les événements de jeu en attente et les journaux d'erreurs stockés sur cet appareil. Les données synchronisées resteront sur le serveur. Cette action est irréversible.",
   "clearLogs.confirm.confirm": "Effacer les journaux",
   "clearLogs.confirm.cancel": "Annuler",
-  "clearLogs.success": "Journaux locaux effacés"
+  "clearLogs.success": "Journaux locaux effacés",
+  "capacityWarning.title": "Queued game data is filling up",
+  "capacityWarning.body": "Clear it in Settings to keep the app running smoothly.",
+  "capacityWarning.dismiss": "Dismiss"
 }
