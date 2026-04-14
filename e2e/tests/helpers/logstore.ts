@@ -423,9 +423,13 @@ export function mockSyncEndpoints(
   const apiBase = opts.apiBase ?? "http://localhost:8000";
   const script: MockMatcher[] = [];
   const calls: Array<{ method: string; url: string; body: unknown }> = [];
-  const defaultResponse: MockResponse = opts.defaultResponse ?? {
-    status: 200,
-    body: { accepted: 0, duplicates: 0, rejected: [] },
+  // Boxed so `setDefaultResponse` can swap it mid-test. Used by scenarios
+  // that need to flip offline → online without tearing down the route.
+  const state = {
+    defaultResponse: (opts.defaultResponse ?? {
+      status: 200,
+      body: { accepted: 0, duplicates: 0, rejected: [] },
+    }) as MockResponse,
   };
 
   const handler = async (
@@ -446,29 +450,41 @@ export function mockSyncEndpoints(
       (m) => m.method === method && m.pathRegex.test(url),
     );
     const entry = idx !== -1 ? script.splice(idx, 1)[0] : null;
-    const resp = entry ? entry.response : defaultResponse;
+    const resp = entry ? entry.response : state.defaultResponse;
     if (resp.abort) {
       await route.abort("failed");
       return;
     }
+    // Playwright's `fulfill({ headers })` only propagates headers that
+    // aren't implicitly set by contentType. Merge Content-Type into the
+    // headers map instead of passing contentType separately so custom
+    // headers like Retry-After reach the response.
     await route.fulfill({
       status: resp.status,
-      contentType: "application/json",
-      headers: resp.headers,
+      headers: { "content-type": "application/json", ...(resp.headers ?? {}) },
       body: JSON.stringify(resp.body ?? {}),
     });
   };
 
   return {
     install: async () => {
-      await page.route(`${apiBase}/games/**`, handler);
-      await page.route(`${apiBase}/logs/**`, handler);
+      // Regex patterns so we catch both the collection endpoint (POST
+      // /games with no suffix — game creation) and item endpoints
+      // (POST /games/:id/events, PATCH /games/:id/complete, POST /logs/bug).
+      // A glob like `/games/**` wouldn't match `/games` itself.
+      const escaped = apiBase.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      await page.route(new RegExp(`^${escaped}/games(/.*)?$`), handler);
+      await page.route(new RegExp(`^${escaped}/logs(/.*)?$`), handler);
     },
     onNext: (
       matcher: Omit<MockMatcher, "response">,
       response: MockResponse,
     ) => {
       script.push({ ...matcher, response });
+    },
+    /** Replace the fallback response returned when no `onNext` entry matches. */
+    setDefaultResponse: (response: MockResponse) => {
+      state.defaultResponse = response;
     },
     calls,
   };
