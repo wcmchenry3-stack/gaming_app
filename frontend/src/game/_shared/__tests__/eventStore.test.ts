@@ -491,4 +491,79 @@ describe("EventStore", () => {
     const keys = await AsyncStorage.getAllKeys();
     expect(keys.filter((k) => k.startsWith("event_queue_v1"))).toEqual([]);
   });
+
+  // -------------------------------------------------------------------------
+  // seedRows (#479 test-only bulk insert)
+  // -------------------------------------------------------------------------
+
+  describe("seedRows (test-only)", () => {
+    function makeGameRow(overrides: Partial<import("../eventStore").GameEventRow> = {}) {
+      const row: import("../eventStore").GameEventRow = {
+        id: `seed-${Math.random().toString(36).slice(2)}`,
+        log_type: "game_event",
+        game_id: "g",
+        event_index: 0,
+        event_type: "move",
+        payload: {},
+        created_at: Date.now(),
+        priority: Priority.GRANULAR,
+        retry_count: 0,
+        next_retry_at: null,
+        ...overrides,
+      };
+      return row;
+    }
+
+    it("bulk-inserts rows into the correct tiers", async () => {
+      await store.seedRows([
+        makeGameRow({ priority: Priority.GRANULAR, event_type: "move" }),
+        makeGameRow({ priority: Priority.MID, event_type: "score" }),
+        makeGameRow({ priority: Priority.LIFECYCLE, event_type: "game_started" }),
+      ]);
+      const stats = await store.stats();
+      expect(stats.totalRows).toBe(3);
+      expect(stats.byPriority[Priority.GRANULAR]).toBe(1);
+      expect(stats.byPriority[Priority.MID]).toBe(1);
+      expect(stats.byPriority[Priority.LIFECYCLE]).toBe(1);
+    });
+
+    it("runs a single eviction pass so a large seed is capped", async () => {
+      Object.assign(logConfig, { MAX_ROWS: 50 });
+      const rows = Array.from({ length: 200 }, (_, i) =>
+        makeGameRow({ id: `r${i}`, priority: Priority.GRANULAR, created_at: 1000 + i })
+      );
+      await store.seedRows(rows);
+      const stats = await store.stats();
+      expect(stats.totalRows).toBe(50);
+    });
+
+    it("is a no-op when given an empty list", async () => {
+      await store.seedRows([]);
+      const stats = await store.stats();
+      expect(stats.totalRows).toBe(0);
+    });
+
+    it("respects priority eviction order when seeded over cap with mixed tiers", async () => {
+      Object.assign(logConfig, { MAX_ROWS: 10 });
+      const rows = [
+        ...Array.from({ length: 20 }, (_, i) =>
+          makeGameRow({ id: `p3-${i}`, priority: Priority.GRANULAR, created_at: 1000 + i })
+        ),
+        ...Array.from({ length: 5 }, (_, i) =>
+          makeGameRow({
+            id: `p1-${i}`,
+            priority: Priority.LIFECYCLE,
+            event_type: "game_started",
+            created_at: 2000 + i,
+          })
+        ),
+      ];
+      await store.seedRows(rows);
+      const stats = await store.stats();
+      expect(stats.totalRows).toBe(10);
+      // All 5 lifecycle rows survive — granular is evicted first.
+      expect(stats.byPriority[Priority.LIFECYCLE]).toBe(5);
+      expect(stats.byPriority[Priority.GRANULAR]).toBe(5);
+    });
+  });
 });

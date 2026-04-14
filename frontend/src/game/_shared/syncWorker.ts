@@ -100,6 +100,11 @@ export class SyncWorker {
     }
   }
 
+  /** Inspect the current global backoff deadline (epoch ms). 0 = no backoff. */
+  getBackoffUntil(): number {
+    return this.backoffUntil;
+  }
+
   // -------------------------------------------------------------------------
   // flush()
   // -------------------------------------------------------------------------

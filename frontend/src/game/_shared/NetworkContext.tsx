@@ -14,6 +14,7 @@ import { scoreQueue } from "./scoreQueue";
 import { registerCascadeScoreHandler } from "../cascade/scoreSync";
 import { gameEventClient } from "./gameEventClient";
 import { syncWorker } from "./syncWorker";
+import { registerLogstoreTestHooks } from "./testHooks";
 
 const NetworkContext = createContext<NetworkStatus>({
   isOnline: true,
@@ -28,7 +29,8 @@ export function NetworkProvider({ children }: { children: React.ReactNode }) {
   const wasOnlineRef = useRef<boolean>(status.isOnline);
 
   // Start the log SyncWorker interval on mount and stop it on unmount.
-  // Also initialize the gameEventClient's in-memory pending-games state.
+  // Also initialize the gameEventClient's in-memory pending-games state
+  // and install e2e test hooks (no-op unless EXPO_PUBLIC_TEST_HOOKS=1).
   useEffect(() => {
     gameEventClient.init().catch((e) => {
       Sentry.captureException(e, {
@@ -36,7 +38,9 @@ export function NetworkProvider({ children }: { children: React.ReactNode }) {
       });
     });
     syncWorker.start();
+    const unregisterTestHooks = registerLogstoreTestHooks();
     return () => {
+      unregisterTestHooks();
       syncWorker.stop();
     };
   }, []);

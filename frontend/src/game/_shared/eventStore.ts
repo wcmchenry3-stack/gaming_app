@@ -320,6 +320,28 @@ export class EventStore {
     });
   }
 
+  /**
+   * Test-only: bulk-insert raw rows into the appropriate tiers and run a
+   * single eviction pass. Used by the #373 e2e harness to build large
+   * fixtures cheaply — a normal enqueue path would re-enter the lock once
+   * per row, and 10,000 rows times N ms of AsyncStorage write is infeasible.
+   * Public on the class because the test-only gate lives at the window hook
+   * layer, not here.
+   */
+  async seedRows(rows: Row[]): Promise<void> {
+    if (rows.length === 0) return;
+    return this.withLock(async () => {
+      const byTier: Record<Priority, Row[]> = { 0: [], 1: [], 2: [], 3: [] };
+      for (const row of rows) byTier[row.priority].push(row);
+      for (const tier of TIERS) {
+        if (byTier[tier].length === 0) continue;
+        const existing = await this.readTier(tier);
+        await this.writeTier(tier, existing.concat(byTier[tier]));
+      }
+      await this.evictToCapacityUnlocked();
+    });
+  }
+
   /** Capacity warning state (read/updated by gameEventClient). */
   async shouldShowCapacityWarning(stats?: QueueStats, now: number = Date.now()): Promise<boolean> {
     return this.withLock(async () => {
