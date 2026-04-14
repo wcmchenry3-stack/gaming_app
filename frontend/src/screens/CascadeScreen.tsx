@@ -11,6 +11,7 @@ import { FruitSetProvider, useFruitSet } from "../theme/FruitSetContext";
 import { FruitQueue } from "../game/cascade/fruitQueue";
 import { ControlledSpawnSelector, createSeededRng } from "../game/cascade/spawnSelector";
 import { MergeEvent, WORLD_W, WORLD_H } from "../game/cascade/engine";
+import type { FruitTier } from "../theme/fruitSets";
 import { scoreForMerge } from "../game/cascade/scoring";
 import GameCanvas, { GameCanvasHandle } from "../components/cascade/GameCanvas";
 import NextFruitPreview from "../components/cascade/NextFruitPreview";
@@ -19,6 +20,15 @@ import ThemeSelector from "../components/cascade/ThemeSelector";
 import GameOverOverlay from "../components/cascade/GameOverOverlay";
 import NewGameConfirmModal from "../components/shared/NewGameConfirmModal";
 import { gameEventClient } from "../game/_shared/gameEventClient";
+import {
+  saveGame as saveCascadeGame,
+  loadGame as loadCascadeGame,
+  clearGame as clearCascadeGame,
+  CascadeGameSnapshot,
+} from "../game/cascade/storage";
+
+/** Throttle for save-during-play — saves at most this often. */
+const SAVE_THROTTLE_MS = 2000;
 
 function CascadeGame() {
   const { t } = useTranslation(["cascade", "common"]);
@@ -52,6 +62,15 @@ function CascadeGame() {
   const completedRef = useRef(false);
   const gameStartTimeRef = useRef<number>(Date.now());
   const mergeCountRef = useRef(0);
+
+  // Reload persistence state (#216).
+  const lastSaveTimeRef = useRef<number>(0);
+  // Holds a loaded snapshot until the canvas signals ready via onReady,
+  // at which point we restore fruits onto the physics world.
+  const pendingLoadRef = useRef<CascadeGameSnapshot | null>(null);
+  // One-shot guard — load runs exactly once per screen mount, even if
+  // onReady fires multiple times because of canvas re-init.
+  const hasLoadedRef = useRef(false);
 
   const startInstrumentedSession = useCallback((themeId: string) => {
     gameStartTimeRef.current = Date.now();
@@ -99,6 +118,79 @@ function CascadeGame() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // #216 — Load any saved game on mount. The snapshot is held in
+  // `pendingLoadRef` until the canvas signals ready, at which point
+  // `handleCanvasReady` restores the fruits. Score + game-over state
+  // restore synchronously here so the HUD updates immediately.
+  useEffect(() => {
+    let active = true;
+    loadCascadeGame().then((snapshot) => {
+      if (!active || !snapshot) return;
+      // Don't restore a snapshot from a different theme — switching
+      // fruit sets should show a fresh board, not the previous skin's
+      // physics state.
+      if (snapshot.fruitSetId !== activeFruitSetRef.current.id) {
+        clearCascadeGame().catch(() => {});
+        return;
+      }
+      scoreRef.current = snapshot.score;
+      setScore(snapshot.score);
+      if (snapshot.gameOver) {
+        gameOverRef.current = true;
+        setGameOver(true);
+      }
+      pendingLoadRef.current = snapshot;
+    });
+    return () => {
+      active = false;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Fired by GameCanvas once the physics engine has finished init.
+  // At this point it's safe to call canvasRef.current.restoreFruits().
+  const handleCanvasReady = useCallback(() => {
+    if (hasLoadedRef.current) return;
+    const snapshot = pendingLoadRef.current;
+    if (!snapshot) return;
+    hasLoadedRef.current = true;
+    pendingLoadRef.current = null;
+    // Rebuild the queue so [current, next] match what the player saw.
+    // queueTiers is stored as plain numbers in the snapshot; cast back
+    // to the narrower FruitTier union (0..10) — the storage loader
+    // already validated these are finite numbers from a trusted save.
+    const [cur, nxt] = snapshot.queueTiers as [FruitTier, FruitTier];
+    queueRef.current = new FruitQueue(new ControlledSpawnSelector(), [cur, nxt]);
+    setQueueVersion((v) => v + 1);
+    // Restore fruits to the physics world. Web supports this; native
+    // no-ops and the board stays empty (score is still preserved).
+    canvasRef.current?.restoreFruits?.(snapshot.fruits, activeFruitSetRef.current);
+  }, []);
+
+  /** Build a snapshot from the current refs + canvas engine state. */
+  const buildSnapshot = useCallback((): CascadeGameSnapshot => {
+    const engineState = canvasRef.current?.getEngineState?.();
+    const fruits = engineState?.fruits ?? [];
+    return {
+      version: 1,
+      score: scoreRef.current,
+      gameOver: gameOverRef.current,
+      fruitSetId: activeFruitSetRef.current.id,
+      queueTiers: [queueRef.current.peek(), queueRef.current.peekNext()],
+      fruits: fruits.map((f) => ({ tier: f.tier, x: f.x, y: f.y })),
+      savedAt: Date.now(),
+    };
+  }, []);
+
+  /** Throttled save — called from gameplay triggers (merge, drop, etc). */
+  const saveGameThrottled = useCallback(() => {
+    const now = Date.now();
+    if (now - lastSaveTimeRef.current < SAVE_THROTTLE_MS) return;
+    lastSaveTimeRef.current = now;
+    if (gameOverRef.current) return;
+    saveCascadeGame(buildSnapshot()).catch(() => {});
+  }, [buildSnapshot]);
+
   // Refs are updated synchronously at mutation sites (handleMerge,
   // handleGameOver, handleRestart, and test hooks) so that Playwright reads
   // see the latest value without waiting for a React commit to flush.
@@ -121,6 +213,9 @@ function CascadeGame() {
       setGameOver(false);
       setQueueVersion((v) => v + 1);
       canvasRef.current?.reset();
+      // Drop any saved snapshot from the old theme — switching skins
+      // starts fresh, per the "different theme" guard in the load effect.
+      clearCascadeGame().catch(() => {});
       startInstrumentedSession(activeFruitSet.id);
     }
   }, [activeFruitSet.id, endInstrumentedSession, startInstrumentedSession]);
@@ -158,8 +253,12 @@ function CascadeGame() {
       if (merged) {
         canvasRef.current?.announceEvent(t("cascade:event.merged", { fruit: merged.name }));
       }
+      // #216 — merges are the highest-value save trigger. A player who
+      // just merged up a tier definitely wants that progress preserved
+      // across an accidental reload.
+      saveGameThrottled();
     },
-    [activeFruitSet, t]
+    [activeFruitSet, t, saveGameThrottled]
   );
 
   const handleGameOver = useCallback(() => {
@@ -167,6 +266,9 @@ function CascadeGame() {
     gameOverRef.current = true;
     setGameOver(true);
     endInstrumentedSession("completed");
+    // #216 — game over: clear the saved snapshot so the next mount
+    // starts with a fresh board instead of resuming a lost game.
+    clearCascadeGame().catch(() => {});
   }, [t, endInstrumentedSession]);
 
   const handleTap = useCallback(
@@ -211,11 +313,16 @@ function CascadeGame() {
       const def = activeFruitSet.fruits[tier];
       canvasRef.current?.drop(def, x);
 
+      // #216 — throttled save on drop. Merges already save on their own,
+      // but a player who drops a run of fruit without a merge should also
+      // have their board captured every couple of seconds.
+      saveGameThrottled();
+
       setTimeout(() => {
         droppingRef.current = false;
       }, 200);
     },
-    [gameOver, activeFruitSet]
+    [gameOver, activeFruitSet, saveGameThrottled]
   );
 
   // -------------------------------------------------------------------------
@@ -279,6 +386,12 @@ function CascadeGame() {
     setGameOver(false);
     setQueueVersion((v) => v + 1);
     canvasRef.current?.reset();
+    // #216 — user-initiated restart clears the saved snapshot and
+    // resets the throttle so the next drop saves immediately.
+    clearCascadeGame().catch(() => {});
+    lastSaveTimeRef.current = 0;
+    hasLoadedRef.current = true; // prevent onReady from re-applying any stale pending load
+    pendingLoadRef.current = null;
     startInstrumentedSession(activeFruitSetRef.current.id);
   }
 
@@ -362,6 +475,7 @@ function CascadeGame() {
             onMerge={handleMerge}
             onGameOver={handleGameOver}
             onTap={handleTap}
+            onReady={handleCanvasReady}
             width={WORLD_W}
             height={WORLD_H}
             scale={scale}

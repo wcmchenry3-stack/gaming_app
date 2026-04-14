@@ -49,12 +49,27 @@ export interface CascadeEngineState {
   fruits: Array<{ id: number; tier: number; x: number; y: number }>;
 }
 
+export interface SavedFruitInput {
+  tier: number;
+  x: number;
+  y: number;
+}
+
 export interface GameCanvasHandle {
   drop: (def: FruitDefinition, x: number) => void;
   reset: () => void;
   announceEvent: (message: string) => void;
-  /** Only populated when EXPO_PUBLIC_TEST_HOOKS=1 */
-  getEngineState?: () => CascadeEngineState;
+  /**
+   * Current engine state snapshot. Returns empty on native — native
+   * Skia canvas doesn't mirror bodies outside of React state yet, so
+   * #216 reload persistence falls back to saving score only on mobile.
+   */
+  getEngineState: () => CascadeEngineState;
+  /**
+   * Restore fruits from a saved snapshot. No-op on native until the
+   * native canvas exposes its body ref; see #216 PR description.
+   */
+  restoreFruits: (fruits: readonly SavedFruitInput[], fruitSet: FruitSet) => void;
   fastForward?: (ms: number) => void;
   /** True once the physics engine has finished async init (Rapier WASM loaded). */
   isReady?: () => boolean;
@@ -66,6 +81,8 @@ interface Props {
   onMerge: (event: MergeEvent) => void;
   onGameOver: () => void;
   onTap: (x: number) => void;
+  /** Fires once after createEngine() resolves. */
+  onReady?: () => void;
   width: number; // world width (px) — physics coordinate space
   height: number; // world height (px) — physics coordinate space
   scale: number; // display scale: canvas CSS size = world * scale
@@ -114,7 +131,7 @@ function FruitBodySkia({
 }
 
 const GameCanvas = forwardRef<GameCanvasHandle, Props>(
-  ({ fruitSet, nextDef, onMerge, onGameOver, onTap, width, height, scale }, ref) => {
+  ({ fruitSet, nextDef, onMerge, onGameOver, onTap, onReady, width, height, scale }, ref) => {
     const { colors } = useTheme();
     const { t } = useTranslation("cascade");
 
@@ -130,6 +147,7 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
     const lastFrameTimeRef = useRef<number>(0); // tracks last RAF timestamp for elapsed-time physics
     const onMergeRef = useRef(onMerge);
     const onGameOverRef = useRef(onGameOver);
+    const onReadyRef = useRef(onReady);
     const fruitSetRef = useRef(fruitSet);
 
     useEffect(() => {
@@ -138,6 +156,9 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
     useEffect(() => {
       onGameOverRef.current = onGameOver;
     }, [onGameOver]);
+    useEffect(() => {
+      onReadyRef.current = onReady;
+    }, [onReady]);
     useEffect(() => {
       fruitSetRef.current = fruitSet;
     }, [fruitSet]);
@@ -169,7 +190,9 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
         );
       } catch (err) {
         setEngineError(err instanceof Error ? err.message : String(err));
+        return;
       }
+      onReadyRef.current?.();
     }, [width, height, fruitSet]);
 
     useEffect(() => {
@@ -214,6 +237,15 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
         },
         announceEvent(message) {
           AccessibilityInfo.announceForAccessibility(message);
+        },
+        // Native fallbacks — the native Skia canvas doesn't expose its
+        // body ref, so #216 reload persistence saves score only on
+        // mobile. Full parity is tracked as a native-canvas follow-up.
+        getEngineState() {
+          return { fruitCount: 0, dangerRatio: 0, fruits: [] };
+        },
+        restoreFruits() {
+          // no-op
         },
       }),
       [initEngine, width]
