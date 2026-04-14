@@ -41,7 +41,7 @@ function parseRetryAfter(headerValue: string | null, now: number): number | null
 
 export class SyncApi {
   constructor(
-    private readonly fetchImpl: FetchLike = fetch,
+    private readonly fetchImpl: FetchLike = (url, init) => fetch(url, init),
     private readonly baseUrlResolver: () => string = resolveBaseUrl
   ) {}
 
