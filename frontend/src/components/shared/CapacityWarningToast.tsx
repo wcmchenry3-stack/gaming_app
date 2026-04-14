@@ -20,8 +20,15 @@ import * as Sentry from "@sentry/react-native";
 import { useTheme } from "../../theme/ThemeContext";
 import { eventStore } from "../../game/_shared/eventStore";
 
-/** How often to check whether the warning should be shown. */
-const POLL_INTERVAL_MS = 30_000;
+/**
+ * How often to check whether the warning should be shown. In production
+ * builds this is 30 s — generous since the underlying condition only
+ * shifts over many thousands of enqueue calls. In test builds (set via
+ * EXPO_PUBLIC_TEST_HOOKS=1 at build time) we drop it to 500 ms so the
+ * scenario 6 e2e spec can drive foreground/dismiss cycles without
+ * waiting real-time. Production users never see the faster interval.
+ */
+const POLL_INTERVAL_MS = process.env.EXPO_PUBLIC_TEST_HOOKS === "1" ? 500 : 30_000;
 
 interface Props {
   /**
