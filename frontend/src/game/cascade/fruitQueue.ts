@@ -5,10 +5,18 @@ export class FruitQueue {
   private queue: FruitTier[];
   private readonly selector: ControlledSpawnSelector;
 
-  constructor(selector: ControlledSpawnSelector = new ControlledSpawnSelector()) {
+  constructor(
+    selector: ControlledSpawnSelector = new ControlledSpawnSelector(),
+    initialQueue?: readonly [FruitTier, FruitTier]
+  ) {
     this.selector = selector;
-    // Pre-fill two: current + next preview
-    this.queue = [this.selector.next(), this.selector.next()];
+    // Pre-fill two: current + next preview. If a caller passes an
+    // `initialQueue` (used by #216's reload persistence to restore the
+    // [current, next] pair that was showing at save time), use those
+    // instead of pulling fresh values from the selector.
+    this.queue = initialQueue
+      ? [initialQueue[0], initialQueue[1]]
+      : [this.selector.next(), this.selector.next()];
   }
 
   peek(): FruitTier {

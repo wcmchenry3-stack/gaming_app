@@ -36,12 +36,30 @@ export interface CascadeEngineState {
   fruits: Array<{ id: number; tier: number; x: number; y: number }>;
 }
 
+export interface SavedFruitInput {
+  tier: number;
+  x: number;
+  y: number;
+}
+
 export interface GameCanvasHandle {
   drop: (def: FruitDefinition, x: number) => void;
   reset: () => void;
   announceEvent: (message: string) => void;
-  /** Only populated when EXPO_PUBLIC_TEST_HOOKS=1 */
-  getEngineState?: () => CascadeEngineState;
+  /**
+   * Returns the current engine state snapshot. Used by #216 reload
+   * persistence to serialize in-flight fruits, and by test hooks to
+   * inspect the physics state. Always available (was test-only in
+   * earlier versions).
+   */
+  getEngineState: () => CascadeEngineState;
+  /**
+   * Restore a set of fruits to specific (x, y) positions. Used by
+   * #216 reload persistence after loading a saved game. Fruits are
+   * spawned at rest; physics will settle them over the next frame or
+   * two.
+   */
+  restoreFruits: (fruits: readonly SavedFruitInput[], fruitSet: FruitSet) => void;
   fastForward?: (ms: number) => void;
   /** True once the physics engine has finished async init (Rapier WASM loaded). */
   isReady?: () => boolean;
@@ -53,6 +71,8 @@ interface Props {
   onMerge: (event: MergeEvent) => void;
   onGameOver: () => void;
   onTap: (x: number) => void;
+  /** Called once, after createEngine() resolves and the engine is ready to drop. */
+  onReady?: () => void;
   width: number; // world width (px) — physics coordinate space
   height: number; // world height (px) — physics coordinate space
   scale: number; // display scale: canvas CSS size = world * scale
@@ -133,7 +153,7 @@ function drawCollisionOverlay(
 }
 
 const GameCanvas = forwardRef<GameCanvasHandle, Props>(
-  ({ fruitSet, nextDef, onMerge, onGameOver, onTap, width, height, scale }, ref) => {
+  ({ fruitSet, nextDef, onMerge, onGameOver, onTap, onReady, width, height, scale }, ref) => {
     const { colors } = useTheme();
     const { t } = useTranslation("cascade");
 
@@ -141,6 +161,7 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
     const engineRef = useRef<EngineHandle | null>(null);
     const onMergeRef = useRef(onMerge);
     const onGameOverRef = useRef(onGameOver);
+    const onReadyRef = useRef(onReady);
     const fruitSetRef = useRef(fruitSet);
     const colorsRef = useRef(colors);
     const nextDefRef = useRef(nextDef);
@@ -156,6 +177,9 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
     useEffect(() => {
       onGameOverRef.current = onGameOver;
     }, [onGameOver]);
+    useEffect(() => {
+      onReadyRef.current = onReady;
+    }, [onReady]);
     useEffect(() => {
       fruitSetRef.current = fruitSet;
     }, [fruitSet]);
@@ -341,6 +365,9 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
           });
         }
       );
+      // Notify listeners — CascadeScreen uses this to know when it's
+      // safe to restore saved fruits via restoreFruits().
+      onReadyRef.current?.();
     }, [width, height, fruitSet]);
 
     useEffect(() => {
@@ -393,6 +420,28 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
     }, []); // intentionally empty — loop lives for component lifetime
 
     useImperativeHandle(ref, () => {
+      const getEngineState = (): CascadeEngineState => {
+        const bodies = bodiesRef.current;
+        const dangerY = height * DANGER_LINE_RATIO;
+        let dangerRatio = 0;
+        if (bodies.length > 0) {
+          const minTopY = Math.min(
+            ...bodies.map((b) => b.y - (fruitSetRef.current.fruits[b.tier]?.radius ?? 0))
+          );
+          dangerRatio = Math.max(0, Math.min(1, 1 - minTopY / dangerY));
+        }
+        return {
+          fruitCount: bodies.length,
+          dangerRatio,
+          fruits: bodies.map((b) => ({
+            id: b.id,
+            tier: b.tier,
+            x: Math.round(b.x),
+            y: Math.round(b.y),
+          })),
+        };
+      };
+
       const base: GameCanvasHandle = {
         drop(def, x) {
           if (!engineRef.current) return;
@@ -412,33 +461,28 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
         isReady() {
           return engineRef.current !== null;
         },
+        getEngineState,
+        restoreFruits(fruits, restoringSet) {
+          if (!engineRef.current) return;
+          for (const f of fruits) {
+            const def = restoringSet.fruits[f.tier];
+            if (!def) continue;
+            // Drop at the saved (x, y) with zero velocity. The fruit
+            // starts at rest and physics settles it over the next frame.
+            const clampedX = clamp(
+              f.x,
+              WALL_THICKNESS + def.radius,
+              width - WALL_THICKNESS - def.radius
+            );
+            engineRef.current.drop(def, restoringSet.id, clampedX, f.y);
+          }
+        },
       };
 
       if (process.env.EXPO_PUBLIC_TEST_HOOKS !== "1") return base;
 
       return {
         ...base,
-        getEngineState(): CascadeEngineState {
-          const bodies = bodiesRef.current;
-          const dangerY = height * DANGER_LINE_RATIO;
-          let dangerRatio = 0;
-          if (bodies.length > 0) {
-            const minTopY = Math.min(
-              ...bodies.map((b) => b.y - (fruitSetRef.current.fruits[b.tier]?.radius ?? 0))
-            );
-            dangerRatio = Math.max(0, Math.min(1, 1 - minTopY / dangerY));
-          }
-          return {
-            fruitCount: bodies.length,
-            dangerRatio,
-            fruits: bodies.map((b) => ({
-              id: b.id,
-              tier: b.tier,
-              x: Math.round(b.x),
-              y: Math.round(b.y),
-            })),
-          };
-        },
         fastForward(ms: number) {
           if (!engineRef.current) return;
           const STEP_S = 1 / 60; // ~16.67 ms per step
