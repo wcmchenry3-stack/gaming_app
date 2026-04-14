@@ -115,6 +115,22 @@ export class EventStore {
   // go through withLock.
   private lock: Promise<unknown> = Promise.resolve();
 
+  // Test-only: when > 0, enqueue paths await this many ms before running.
+  // Used by #482 scenario 8 (non-blocking proof) to simulate slow
+  // AsyncStorage writes and assert that gameplay frame cadence is
+  // unaffected. Gated at the test-hook layer; production never sets it.
+  private syntheticDelayMs = 0;
+
+  setSyntheticDelay(ms: number): void {
+    this.syntheticDelayMs = Math.max(0, ms);
+  }
+
+  private async maybeDelay(): Promise<void> {
+    if (this.syntheticDelayMs > 0) {
+      await new Promise((r) => setTimeout(r, this.syntheticDelayMs));
+    }
+  }
+
   private withLock<T>(fn: () => Promise<T>): Promise<T> {
     const next = this.lock.then(fn, fn);
     // Swallow errors for the lock chain — caller still sees the rejection.
@@ -173,6 +189,7 @@ export class EventStore {
     payload: Record<string, unknown>;
   }): Promise<GameEventRow> {
     return this.withLock(async () => {
+      await this.maybeDelay();
       const priority = logConfig.priorityForEvent("game_event", input.event_type);
       const row: GameEventRow = {
         id: generateId(),
@@ -201,6 +218,7 @@ export class EventStore {
     payload: Record<string, unknown>;
   }): Promise<BugLogRow> {
     return this.withLock(async () => {
+      await this.maybeDelay();
       const row: BugLogRow = {
         id: generateId(),
         log_type: "bug_log",

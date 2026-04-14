@@ -23,6 +23,7 @@ const HOOK_KEYS = [
   "__gameEventClient_startGame",
   "__gameEventClient_completeGame",
   "__eventStore_sweepTTL",
+  "__eventStore_setSyntheticDelay",
   "__syncWorker_flush",
   "__syncWorker_getBackoffUntil",
   "__logConfig_override",
