@@ -170,6 +170,20 @@ export async function sweepTTL(page: Page, now?: number): Promise<number> {
   }, now);
 }
 
+/**
+ * Inject a synthetic delay (ms) into every EventStore enqueue call.
+ * Used by scenario 8 (non-blocking proof) to prove gameplay stays
+ * responsive when AsyncStorage writes are slow. Pass 0 to clear.
+ */
+export async function setSyntheticDelay(page: Page, ms: number): Promise<void> {
+  await page.evaluate((delay: number) => {
+    const g = globalThis as unknown as {
+      __eventStore_setSyntheticDelay: (n: number) => void;
+    };
+    g.__eventStore_setSyntheticDelay(delay);
+  }, ms);
+}
+
 // ---------------------------------------------------------------------------
 // Seeding
 // ---------------------------------------------------------------------------
