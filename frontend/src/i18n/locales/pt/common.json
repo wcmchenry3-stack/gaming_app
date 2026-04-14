@@ -27,5 +27,8 @@
   "clearLogs.confirm.body": "Isso removerá todos os eventos de jogo e registros de erros armazenados neste dispositivo. Os dados sincronizados permanecerão no servidor. Esta ação não pode ser desfeita.",
   "clearLogs.confirm.confirm": "Limpar registros",
   "clearLogs.confirm.cancel": "Cancelar",
-  "clearLogs.success": "Registros locais limpos"
+  "clearLogs.success": "Registros locais limpos",
+  "capacityWarning.title": "Queued game data is filling up",
+  "capacityWarning.body": "Clear it in Settings to keep the app running smoothly.",
+  "capacityWarning.dismiss": "Dismiss"
 }

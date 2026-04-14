@@ -27,5 +27,8 @@
   "clearLogs.confirm.body": "Это удалит все сохранённые на устройстве события и отчёты об ошибках. Синхронизированные данные останутся на сервере. Действие необратимо.",
   "clearLogs.confirm.confirm": "Очистить логи",
   "clearLogs.confirm.cancel": "Отмена",
-  "clearLogs.success": "Логи очищены"
+  "clearLogs.success": "Логи очищены",
+  "capacityWarning.title": "Queued game data is filling up",
+  "capacityWarning.body": "Clear it in Settings to keep the app running smoothly.",
+  "capacityWarning.dismiss": "Dismiss"
 }

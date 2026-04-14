@@ -27,5 +27,8 @@
   "clearLogs.confirm.body": "This will remove every queued game event and bug log stored on this device. Synced data stays on the server. This cannot be undone.",
   "clearLogs.confirm.confirm": "Clear logs",
   "clearLogs.confirm.cancel": "Cancel",
-  "clearLogs.success": "Local logs cleared"
+  "clearLogs.success": "Local logs cleared",
+  "capacityWarning.title": "Queued game data is filling up",
+  "capacityWarning.body": "Clear it in Settings to keep the app running smoothly.",
+  "capacityWarning.dismiss": "Dismiss"
 }

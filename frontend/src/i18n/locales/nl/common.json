@@ -27,5 +27,8 @@
   "clearLogs.confirm.body": "Hiermee verwijder je alle wachtrij-evenementen en foutlogs op dit apparaat. Gesynchroniseerde gegevens blijven op de server. Dit kan niet ongedaan worden gemaakt.",
   "clearLogs.confirm.confirm": "Logboek wissen",
   "clearLogs.confirm.cancel": "Annuleren",
-  "clearLogs.success": "Lokaal logboek gewist"
+  "clearLogs.success": "Lokaal logboek gewist",
+  "capacityWarning.title": "Queued game data is filling up",
+  "capacityWarning.body": "Clear it in Settings to keep the app running smoothly.",
+  "capacityWarning.dismiss": "Dismiss"
 }

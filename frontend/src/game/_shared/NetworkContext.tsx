@@ -15,6 +15,7 @@ import { registerCascadeScoreHandler } from "../cascade/scoreSync";
 import { gameEventClient } from "./gameEventClient";
 import { syncWorker } from "./syncWorker";
 import { registerLogstoreTestHooks } from "./testHooks";
+import { CapacityWarningToast } from "../../components/shared/CapacityWarningToast";
 
 const NetworkContext = createContext<NetworkStatus>({
   isOnline: true,
@@ -60,7 +61,12 @@ export function NetworkProvider({ children }: { children: React.ReactNode }) {
     }
   }, [status.isOnline, status.isInitialized]);
 
-  return <NetworkContext.Provider value={status}>{children}</NetworkContext.Provider>;
+  return (
+    <NetworkContext.Provider value={status}>
+      {children}
+      <CapacityWarningToast />
+    </NetworkContext.Provider>
+  );
 }
 
 export function useNetwork(): NetworkStatus {

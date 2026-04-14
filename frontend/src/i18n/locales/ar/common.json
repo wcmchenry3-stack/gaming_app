@@ -27,5 +27,8 @@
   "clearLogs.confirm.body": "سيتم حذف جميع الأحداث وقوائم الأخطاء المخزنة على هذا الجهاز. ستبقى البيانات المزامنة على الخادم. لا يمكن التراجع عن هذا الإجراء.",
   "clearLogs.confirm.confirm": "مسح السجلات",
   "clearLogs.confirm.cancel": "إلغاء",
-  "clearLogs.success": "تم مسح السجلات المحلية"
+  "clearLogs.success": "تم مسح السجلات المحلية",
+  "capacityWarning.title": "Queued game data is filling up",
+  "capacityWarning.body": "Clear it in Settings to keep the app running smoothly.",
+  "capacityWarning.dismiss": "Dismiss"
 }

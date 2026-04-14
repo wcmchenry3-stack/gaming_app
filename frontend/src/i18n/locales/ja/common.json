@@ -27,5 +27,8 @@
   "clearLogs.confirm.body": "この操作で、端末に保存されているすべての未同期ゲームイベントとバグログが削除されます。同期済みデータはサーバーに残ります。この操作は元に戻せません。",
   "clearLogs.confirm.confirm": "ログを削除",
   "clearLogs.confirm.cancel": "キャンセル",
-  "clearLogs.success": "ローカルログを削除しました"
+  "clearLogs.success": "ローカルログを削除しました",
+  "capacityWarning.title": "Queued game data is filling up",
+  "capacityWarning.body": "Clear it in Settings to keep the app running smoothly.",
+  "capacityWarning.dismiss": "Dismiss"
 }

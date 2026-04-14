@@ -27,5 +27,8 @@
   "clearLogs.confirm.body": "这将删除设备上所有未同步的游戏事件和错误日志。已同步的数据将保留在服务器上。此操作无法撤销。",
   "clearLogs.confirm.confirm": "确认清除",
   "clearLogs.confirm.cancel": "取消",
-  "clearLogs.success": "本地日志已清除"
+  "clearLogs.success": "本地日志已清除",
+  "capacityWarning.title": "Queued game data is filling up",
+  "capacityWarning.body": "Clear it in Settings to keep the app running smoothly.",
+  "capacityWarning.dismiss": "Dismiss"
 }
