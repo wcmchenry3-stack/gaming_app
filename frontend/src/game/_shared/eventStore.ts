@@ -11,10 +11,32 @@
  *   event_queue_v1/tier/3   → granular events (P3, evicted first)
  *   event_queue_v1/meta     → { warningLastShownAt }
  *
- * Eviction policy at cap: walk tiers from high to low (P3→P2→P1→P0),
- * drop oldest rows in each tier until the queue fits MAX_ROWS /
- * MAX_SIZE_BYTES. This preserves bug logs longest but doesn't starve the
- * queue if one source goes runaway.
+ * Eviction policy at cap (#486 redesign):
+ *
+ *   1. P1 (lifecycle) is protected — never evicted unless the entire
+ *      non-P1 pool has already been drained. Lifecycle events are the
+ *      load-bearing story of a game (started / ended / resumed); losing
+ *      them silently corrupts analytics in a way no granular event can.
+ *      The epic's "FIFO-evictable at the hard cap" language still holds —
+ *      P1 is last-to-evict, not never-evict — so a pathological caller
+ *      filling the queue with only lifecycle events still drains via FIFO.
+ *
+ *   2. The rest of the queue (P0 bug logs, P2 mid, P3 granular) is one
+ *      age-based FIFO pool. Eviction drops the oldest rows across that
+ *      combined pool until the overage is covered, ignoring tier. Newer
+ *      rows survive regardless of tier — a fresh spam of P3 moves that
+ *      arrives after 5,000 ancient bug logs should evict the ancient bugs,
+ *      not the moves that just arrived.
+ *
+ *   3. logConfig.priorityForEvent still decides peek order (SyncWorker
+ *      drains P1 → P2 → P3 → P0) and still feeds the capacity-warning
+ *      signal. Only the eviction ordering changes.
+ *
+ * Why this replaces the old "tier-walk high → low" policy: see #486. The
+ * original P3-first walk couldn't satisfy scenario 13 of the #373
+ * acceptance gate — specifically the case where a burst of 5,000 fresh P3
+ * rows needs to survive at the expense of 5,000 older P0 rows. No pure
+ * tier ordering resolves that without an age dimension.
  *
  * All operations are single-writer — the store itself is not concurrency-
  * safe within one JS runtime, but the FE is single-threaded so that's fine.
@@ -400,35 +422,104 @@ export class EventStore {
   }
 
   private async evictToCapacityUnlocked(): Promise<number> {
-    // Batched eviction: compute the overage once, then walk tiers from
-    // highest priority (P3 granular, evicted first) down to P0 (bug logs,
-    // preserved longest), dropping as many oldest rows per tier as the
-    // remaining overage requires. This is a single read+write per tier
-    // instead of one per evicted row — the per-row loop was O(overage × n)
-    // on AsyncStorage, which blew up test fixtures that seeded 10k rows.
+    // #486 policy: age-based FIFO across the combined non-P1 pool, with
+    // P1 (lifecycle) as a last-resort drain once the pool is exhausted.
+    // See the file header for the full rationale. All reads and writes
+    // are batched one-per-tier so seeding 10k rows stays O(tiers) on
+    // AsyncStorage rather than O(overage).
     const stats = await this.statsUnlocked();
     let overageRows = stats.totalRows - logConfig.MAX_ROWS;
     let overageBytes = stats.sizeBytes - logConfig.MAX_SIZE_BYTES;
     if (overageRows <= 0 && overageBytes <= 0) return 0;
 
-    let totalEvicted = 0;
-    for (let pri = 3; pri >= 0; pri -= 1) {
-      if (overageRows <= 0 && overageBytes <= 0) break;
-      const tierRows = await this.readTier(pri as Priority);
-      if (tierRows.length === 0) continue;
-      tierRows.sort((a, b) => a.created_at - b.created_at);
+    const poolTiers: Priority[] = [
+      Priority.BUG_LOG,
+      Priority.MID,
+      Priority.GRANULAR,
+    ];
 
-      let drop = 0;
-      while (drop < tierRows.length && (overageRows > 0 || overageBytes > 0)) {
-        overageBytes -= rowBytes(tierRows[drop]);
-        overageRows -= 1;
-        drop += 1;
-      }
-      if (drop > 0) {
-        await this.writeTier(pri as Priority, tierRows.slice(drop));
-        totalEvicted += drop;
+    type TierEntry = { tier: Priority; rows: Row[]; dirty: boolean };
+    const entries: Record<Priority, TierEntry | undefined> = {
+      0: undefined,
+      1: undefined,
+      2: undefined,
+      3: undefined,
+    };
+
+    type Candidate = { tier: Priority; idx: number; row: Row };
+    const pool: Candidate[] = [];
+    for (const tier of poolTiers) {
+      const rows = await this.readTier(tier);
+      if (rows.length === 0) continue;
+      entries[tier] = { tier, rows, dirty: false };
+      for (let i = 0; i < rows.length; i += 1) {
+        pool.push({ tier, idx: i, row: rows[i] });
       }
     }
+    // Primary key: older first. Tiebreaker: when two rows share a
+    // created_at (serial enqueues inside the same millisecond, common in
+    // tests and during bursts), prefer evicting the row with the higher
+    // priority *number* — i.e. drop P3 before P2 before P0, so bug logs
+    // still win ties against granular events. Without this tiebreaker
+    // the stable-sort insertion order would arbitrarily decide which
+    // tier loses.
+    pool.sort(
+      (a, b) => a.row.created_at - b.row.created_at || b.tier - a.tier,
+    );
+
+    let totalEvicted = 0;
+    const dropped: Record<Priority, Set<number>> = {
+      0: new Set(),
+      1: new Set(),
+      2: new Set(),
+      3: new Set(),
+    };
+
+    for (const cand of pool) {
+      if (overageRows <= 0 && overageBytes <= 0) break;
+      dropped[cand.tier].add(cand.idx);
+      overageBytes -= rowBytes(cand.row);
+      overageRows -= 1;
+      totalEvicted += 1;
+    }
+
+    for (const tier of poolTiers) {
+      const entry = entries[tier];
+      if (!entry) continue;
+      const drop = dropped[tier];
+      if (drop.size === 0) continue;
+      entry.rows = entry.rows.filter((_, i) => !drop.has(i));
+      entry.dirty = true;
+    }
+
+    // Last-resort: the whole non-P1 pool couldn't cover the overage.
+    // Drop oldest P1 rows until the cap is met. This only fires when the
+    // queue is pathologically full of lifecycle events; normal workloads
+    // never touch this branch.
+    if (overageRows > 0 || overageBytes > 0) {
+      const p1Rows = (await this.readTier(Priority.LIFECYCLE)).slice();
+      if (p1Rows.length > 0) {
+        p1Rows.sort((a, b) => a.created_at - b.created_at);
+        let drop = 0;
+        while (drop < p1Rows.length && (overageRows > 0 || overageBytes > 0)) {
+          overageBytes -= rowBytes(p1Rows[drop]);
+          overageRows -= 1;
+          drop += 1;
+          totalEvicted += 1;
+        }
+        if (drop > 0) {
+          await this.writeTier(Priority.LIFECYCLE, p1Rows.slice(drop));
+        }
+      }
+    }
+
+    for (const tier of poolTiers) {
+      const entry = entries[tier];
+      if (entry && entry.dirty) {
+        await this.writeTier(tier, entry.rows);
+      }
+    }
+
     return totalEvicted;
   }
 

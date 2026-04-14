@@ -182,9 +182,10 @@ describe("EventStore", () => {
       expect(s.byPriority[Priority.BUG_LOG]).toBe(1);
     });
 
-    it("runaway bug_log scenario: bug logs FIFO-evicted before starving lifecycle", async () => {
+    it("runaway bug_log scenario: fresh granular events survive, old bugs yield (#486)", async () => {
       logConfig.MAX_ROWS = 100;
-      // Fill 99 bug logs + 1 lifecycle event.
+      // Fill 1 lifecycle (P1, protected) + 99 bug logs (P0, oldest non-P1
+      // rows in the queue).
       await store.enqueueEvent({
         game_id: "g",
         event_index: 0,
@@ -204,28 +205,11 @@ describe("EventStore", () => {
       expect(s.byPriority[Priority.BUG_LOG]).toBe(99);
       expect(s.byPriority[Priority.LIFECYCLE]).toBe(1);
 
-      // Now enqueue 5 more granular events. No higher-priority tier to evict,
-      // so oldest bug logs go (P0 is still lowest priority when it's the
-      // only populated tier above the granular ones).
-      //
-      // Actually: we evict P3 first. There's no P3 yet. Adding 5 granulars
-      // puts us at 105 rows. Eviction walks P3→P0, but since we just added
-      // P3 rows, those get evicted first… which is the *wrong* behavior for
-      // this scenario. The epic spec wants the bugs to eventually yield.
-      //
-      // The subtlety: the P3 granular events we JUST added are the newest
-      // of the P3 tier. Since FIFO evicts oldest-first, if granular is the
-      // only populated higher tier then those very rows stay. Here we walk
-      // P3 first and drop the oldest P3 — but only AS MANY AS WE JUST ADDED.
-      // After those are gone we drop from P0.
-      //
-      // Since we added exactly 5 P3 rows and need to drop 5, all 5 P3 rows
-      // are dropped and the bugs are untouched. That matches the strict
-      // priority interpretation: "P3 first" wins over "be fair to bugs".
-      //
-      // For the true runaway-bug scenario the epic describes (evict old
-      // bugs to make room for new moves), we need to exceed the cap *more*
-      // than the P3 rows we add in one shot. That's tested below.
+      // Enqueue 5 granular move events. Queue is 105 rows → evict 5.
+      // Under the #486 age-based pool policy, P1 is protected and the rest
+      // of the queue is one FIFO pool. The 5 oldest pool rows are the 5
+      // oldest bug logs (enqueued before the moves), so they get dropped
+      // and all 5 fresh granular rows survive.
       for (let i = 0; i < 5; i += 1) {
         await store.enqueueEvent({
           game_id: "g",
@@ -236,12 +220,8 @@ describe("EventStore", () => {
       }
       s = await store.stats();
       expect(s.totalRows).toBe(100);
-      // All 5 granular survived because they're the freshest; the 5 oldest
-      // bugs got evicted since there was nothing else to drop first.
-      // Actually no — under "P3 first" policy, the 5 granulars we just
-      // added get evicted before the bugs. So we should have 0 granular.
-      expect(s.byPriority[Priority.GRANULAR]).toBe(0);
-      expect(s.byPriority[Priority.BUG_LOG]).toBe(99);
+      expect(s.byPriority[Priority.GRANULAR]).toBe(5);
+      expect(s.byPriority[Priority.BUG_LOG]).toBe(94);
       expect(s.byPriority[Priority.LIFECYCLE]).toBe(1);
     });
 

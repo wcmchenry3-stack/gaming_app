@@ -214,23 +214,52 @@ export async function seedBugLogs(
 
 /**
  * Seed a mix of rows across all four priority tiers in a single batch.
- * Used by eviction scenarios (#480) that need to compose a 10k fixture.
+ * Used by eviction scenarios (#480, #486) that need to compose large
+ * fixtures.
+ *
+ * Timestamps are explicitly staggered across tiers so ordering is
+ * deterministic under the #486 age-based eviction policy: P3 rows are
+ * the oldest, then P2, then P1, then P0 (newest). Each tier reserves a
+ * 10,000,000 ms slot, which is wider than any plausible fixture size,
+ * so within-tier FIFO offsets can't leak into the next tier's slot.
+ * Base time is anchored far enough in the past that TTL sweeps don't
+ * accidentally expire the rows.
  */
 export async function seedEvictionFixture(
   page: Page,
   counts: { p0?: number; p1?: number; p2?: number; p3?: number },
 ): Promise<void> {
   const { p0 = 0, p1 = 0, p2 = 0, p3 = 0 } = counts;
-  if (p3) await seedEvents(page, { count: p3, priority: 3, eventType: "move" });
+  // Anchor all seeded rows ~11 h in the past so every staggered slot
+  // still lands before Date.now() and comfortably inside TTL_MS (7 d).
+  const TIER_SLOT = 10_000_000;
+  const base = Date.now() - 4 * TIER_SLOT;
+  if (p3)
+    await seedEvents(page, {
+      count: p3,
+      priority: 3,
+      eventType: "move",
+      createdAt: base,
+    });
   if (p2)
-    await seedEvents(page, { count: p2, priority: 2, eventType: "score" });
+    await seedEvents(page, {
+      count: p2,
+      priority: 2,
+      eventType: "score",
+      createdAt: base + TIER_SLOT,
+    });
   if (p1)
     await seedEvents(page, {
       count: p1,
       priority: 1,
       eventType: "game_started",
+      createdAt: base + 2 * TIER_SLOT,
     });
-  if (p0) await seedBugLogs(page, { count: p0 });
+  if (p0)
+    await seedBugLogs(page, {
+      count: p0,
+      createdAt: base + 3 * TIER_SLOT,
+    });
 }
 
 // ---------------------------------------------------------------------------
