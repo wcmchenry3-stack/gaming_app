@@ -402,9 +402,15 @@ describe("BlackjackGameContext — gameEventClient instrumentation (#370)", () =
 
   it("fires game_ended with snake_case payload when chips are exhausted", async () => {
     // Load a near-bust state: 50 chips, one loss wipes out the bankroll.
-    const base = placeBet({ ...engineNewGame(), chips: 50 }, 50);
+    // Construct directly instead of going through placeBet — placeBet uses
+    // the seeded RNG and can occasionally produce a natural blackjack,
+    // which settleWith's the state and adds +1.5× the bet before the test
+    // overrides player/dealer hands, leaving chips at 125 and making the
+    // subsequent stand not actually empty the bankroll.
     const lowChip: EngineState = {
-      ...base,
+      ...engineNewGame(),
+      chips: 50,
+      bet: 50,
       phase: "player",
       player_hand: [card("10", "♠"), card("6", "♥")],
       dealer_hand: [card("10", "♦"), card("9", "♣")], // dealer 19, stand → player loses
