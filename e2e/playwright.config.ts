@@ -8,11 +8,13 @@ import { join } from "path";
  * while always running the full suite on main PRs / pushes.
  *
  * Projects:
- *   yacht      — yacht-*.spec.ts
- *   blackjack  — blackjack-*.spec.ts
- *   twenty48   — twenty48-*.spec.ts
- *   pachisi    — pachisi-*.spec.ts
- *   cross      — accessibility.spec.ts, cascade-flow.spec.ts, ui-preferences.spec.ts
+ *   yacht       — yacht-*.spec.ts
+ *   blackjack   — blackjack-*.spec.ts
+ *   twenty48    — twenty48-*.spec.ts
+ *   pachisi     — pachisi-*.spec.ts
+ *   cross       — accessibility.spec.ts, cascade-flow.spec.ts, ui-preferences.spec.ts
+ *   logs-budget — logs-*.spec.ts (#373 acceptance gate, CPU-throttled to
+ *                  approximate mid-tier mobile device performance)
  *
  * In CI the e2e job passes --project flags based on dorny/paths-filter output.
  * Locally, `npx playwright test` runs all projects (no --project flag needed).
@@ -70,6 +72,16 @@ export default defineConfig({
     {
       name: "cross",
       testMatch: ["accessibility.spec.ts", "ui-preferences.spec.ts"],
+      use: { ...devices["Desktop Chrome"] },
+    },
+    {
+      // #373 acceptance gate — bounded queue + SyncWorker correctness under
+      // CPU throttling that approximates a mid-tier mobile device. CPU
+      // throttling is applied per spec via `page.emulateCPUThrottling(4)`
+      // in a beforeEach hook in the logs-*.spec.ts files (Playwright does
+      // not expose CPU throttling as a project-level option yet).
+      name: "logs-budget",
+      testMatch: "logs-*.spec.ts",
       use: { ...devices["Desktop Chrome"] },
     },
   ],
