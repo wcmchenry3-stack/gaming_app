@@ -100,6 +100,7 @@ export default function BlackjackTableScreen({ navigation }: Props) {
     >
       <AppHeader
         title={t("game.title")}
+        requireBack
         onBack={() => navigation.popToTop()}
         rightSlot={
           state ? (

@@ -437,6 +437,7 @@ function CascadeGame() {
     >
       <AppHeader
         title={t("game.title")}
+        requireBack
         onBack={() => navigation.popToTop()}
         rightSlot={
           <Pressable

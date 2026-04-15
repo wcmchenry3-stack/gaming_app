@@ -191,6 +191,36 @@ describe("BlackjackTableScreen — persistent table layout (GH #226)", () => {
 // reliably in the RNTL test environment.
 
 // ---------------------------------------------------------------------------
+// #498 — New Game mid-session from TableScreen should redirect to Betting
+// ---------------------------------------------------------------------------
+
+describe("BlackjackTableScreen — new game redirect (#498)", () => {
+  it("handlePlayAgain from player phase triggers navigation.replace('BlackjackBetting')", async () => {
+    (loadGame as jest.Mock).mockResolvedValue(makePlayerPhaseState());
+    const nav = mockNav();
+    render(
+      <ThemeProvider>
+        <BlackjackGameProvider>
+          <BlackjackTableScreen navigation={nav} />
+          <TestConsumer />
+        </BlackjackGameProvider>
+      </ThemeProvider>
+    );
+    await screen.findByText("Hit");
+    // Sanity: we're on player phase so the effect has not redirected yet.
+    expect(nav.replace).not.toHaveBeenCalled();
+
+    act(() => {
+      getCtx().handlePlayAgain();
+    });
+
+    await waitFor(() => {
+      expect(nav.replace).toHaveBeenCalledWith("BlackjackBetting");
+    });
+  });
+});
+
+// ---------------------------------------------------------------------------
 // #370 — gameEventClient instrumentation
 // ---------------------------------------------------------------------------
 
