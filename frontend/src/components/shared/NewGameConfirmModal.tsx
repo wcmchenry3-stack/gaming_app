@@ -54,7 +54,7 @@ export default function NewGameConfirmModal({ visible, onConfirm, onCancel, titl
             style={({ pressed }) => [
               styles.confirmButton,
               confirmBg,
-              pressed ? { transform: [{ scale: 0.96 }] } : null,
+              { transform: [{ scale: pressed ? 0.96 : 1 }] },
             ]}
             onPress={onConfirm}
             accessibilityRole="button"
