@@ -7,51 +7,16 @@ on:
     branches: [dev, main]
   workflow_call:
 
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
 jobs:
+  # === Tier 0: Hygiene gates (run immediately, must pass before tier 1) ====
+
   gate-main-source:
     uses: wcmchenry3-stack/.github/.github/workflows/called-gate-main-source.yml@main
     secrets: inherit
-
-  # --- Phase 1: Backend health + Expo compat (Linux, ~free) ----------------
-
-  backend-health:
-    uses: wcmchenry3-stack/.github/.github/workflows/called-backend-health.yml@main
-    with:
-      # Direct Render origin intentionally used here instead of dev-games-api.buffingchi.com.
-      # Cloudflare Bot Fight Mode blocks GHA runner IPs (Azure cloud ranges) before
-      # the WAF skip rule fires — health checks must bypass the proxy.
-      # See wcmchenry3-stack/.github#45.
-      backend-url: "https://yahtzee-api.onrender.com"
-      health-path: "/health"
-      probe-path: "/yacht/state"
-      probe-expected-status: "400"
-    secrets: inherit
-
-  expo-compat:
-    uses: wcmchenry3-stack/.github/.github/workflows/called-expo-compat.yml@main
-    with:
-      working-directory: frontend
-    secrets: inherit
-
-  # --- Phase 4: Sentry connectivity (Linux, ~free) -------------------------
-
-  sentry-check:
-    uses: wcmchenry3-stack/.github/.github/workflows/called-sentry-check.yml@main
-    with:
-      working-directory: backend
-    secrets:
-      SENTRY_DSN: ${{ secrets.SENTRY_BC_GAMES }}
-
-  # --- Lessons learned: local path detection (Linux, ~free) -----------------
-
-  local-path-check:
-    uses: wcmchenry3-stack/.github/.github/workflows/called-local-path-check.yml@main
-    with:
-      scan-paths: "frontend/ios/GamingApp.xcodeproj,frontend/android"
-      file-patterns: "*.pbxproj,*.xcconfig,*.gradle,*.properties"
-    secrets: inherit
-
-  # --- Existing checks ------------------------------------------------------
 
   secret-scan:
     uses: wcmchenry3-stack/.github/.github/workflows/called-secret-scan.yml@main
@@ -69,25 +34,68 @@ jobs:
       working-directory: frontend
     secrets: inherit
 
+  # === Tier 1: Substantive fast checks (need lint + secret-scan) ===========
+
+  backend-health:
+    needs: [lint-python, lint-frontend, secret-scan]
+    uses: wcmchenry3-stack/.github/.github/workflows/called-backend-health.yml@main
+    with:
+      # Direct Render origin intentionally used here instead of dev-games-api.buffingchi.com.
+      # Cloudflare Bot Fight Mode blocks GHA runner IPs (Azure cloud ranges) before
+      # the WAF skip rule fires — health checks must bypass the proxy.
+      # See wcmchenry3-stack/.github#45.
+      backend-url: "https://yahtzee-api.onrender.com"
+      health-path: "/health"
+      probe-path: "/yacht/state"
+      probe-expected-status: "400"
+    secrets: inherit
+
+  expo-compat:
+    needs: [lint-python, lint-frontend, secret-scan]
+    uses: wcmchenry3-stack/.github/.github/workflows/called-expo-compat.yml@main
+    with:
+      working-directory: frontend
+    secrets: inherit
+
+  sentry-check:
+    needs: [lint-python, lint-frontend, secret-scan]
+    uses: wcmchenry3-stack/.github/.github/workflows/called-sentry-check.yml@main
+    with:
+      working-directory: backend
+    secrets:
+      SENTRY_DSN: ${{ secrets.SENTRY_BC_GAMES }}
+
+  local-path-check:
+    needs: [lint-python, lint-frontend, secret-scan]
+    uses: wcmchenry3-stack/.github/.github/workflows/called-local-path-check.yml@main
+    with:
+      scan-paths: "frontend/ios/GamingApp.xcodeproj,frontend/android"
+      file-patterns: "*.pbxproj,*.xcconfig,*.gradle,*.properties"
+    secrets: inherit
+
   test-python:
+    needs: [lint-python, lint-frontend, secret-scan]
     uses: wcmchenry3-stack/.github/.github/workflows/called-test-python.yml@main
     with:
       working-directory: backend
     secrets: inherit
 
   test-frontend:
+    needs: [lint-python, lint-frontend, secret-scan]
     uses: wcmchenry3-stack/.github/.github/workflows/called-test-frontend.yml@main
     with:
       working-directory: frontend
     secrets: inherit
 
   cve-python:
+    needs: [lint-python, lint-frontend, secret-scan]
     uses: wcmchenry3-stack/.github/.github/workflows/called-cve-python.yml@main
     with:
       working-directory: backend
     secrets: inherit
 
   cve-frontend:
+    needs: [lint-python, lint-frontend, secret-scan]
     uses: wcmchenry3-stack/.github/.github/workflows/called-cve-frontend.yml@main
     with:
       working-directory: frontend
@@ -95,6 +103,7 @@ jobs:
 
   detect-e2e-scope:
     name: Detect E2E scope
+    needs: [lint-python, lint-frontend, secret-scan]
     runs-on: ubuntu-latest
     outputs:
       projects: ${{ steps.scope.outputs.projects }}
@@ -230,6 +239,7 @@ jobs:
 
   check-i18n:
     name: i18n completeness check
+    needs: [lint-python, lint-frontend, secret-scan]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
@@ -246,15 +256,17 @@ jobs:
         working-directory: frontend
 
   openai-policy:
+    needs: [lint-python, lint-frontend, secret-scan]
     uses: wcmchenry3-stack/.github/.github/workflows/called-openai-policy.yml@main
     secrets: inherit
 
-  # --- Phase 5: Android JS bundle validation (Linux, fast) -------------------
+  # --- Android JS bundle validation (Linux, fast) ---------------------------
   # Catches silent bundling failures BEFORE they reach EAS Build.
   # The Android build check below only compiles in Debug mode (skips bundling),
   # so it cannot detect issues with the JS bundler or entry-point resolution.
 
   android-bundle-check:
+    needs: [lint-python, lint-frontend, secret-scan]
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -290,9 +302,13 @@ jobs:
           fi
           echo "Android JS bundle created successfully (${BUNDLE_SIZE} bytes)"
 
-  # --- Phase 6: Xcode build validation (macOS, moderate) --------------------
+  # === Tier 2: Expensive checks (need unit tests; skipped on feat→dev) =====
+  # iOS/Android build checks run only on PRs targeting main or pushes to main.
+  # Closes #423: skip on feat→dev PRs to save macOS minutes.
 
   ios-build-check:
+    if: github.base_ref == 'main' || (github.event_name == 'push' && github.ref == 'refs/heads/main')
+    needs: [test-python, test-frontend]
     uses: wcmchenry3-stack/.github/.github/workflows/called-ios-build-check.yml@main
     with:
       working-directory: frontend
@@ -300,21 +316,21 @@ jobs:
       scheme: "GamingApp"
     secrets: inherit
 
-  # --- Phase 7: Android build validation (Linux, moderate) ------------------
-
   android-build-check:
+    if: github.base_ref == 'main' || (github.event_name == 'push' && github.ref == 'refs/heads/main')
+    needs: [test-python, test-frontend]
     uses: wcmchenry3-stack/.github/.github/workflows/called-android-build-check.yml@main
     with:
       working-directory: frontend
     secrets: inherit
 
-  # --- Phase 8: Android release smoke test (Linux, path-filtered) ------------
+  # Android release smoke test — path-filtered, runs on PRs only.
   # The debug build check cannot catch release-only failures (Sentry upload,
-  # release CMake config, ProGuard). This runs assembleRelease for a single ABI
-  # only when Android-relevant files change.
+  # release CMake config, ProGuard). Runs assembleRelease for a single ABI.
 
   android-release-smoke:
     if: github.event_name == 'pull_request'
+    needs: [test-python, test-frontend]
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -370,6 +386,7 @@ jobs:
 
   sentry-cli-check:
     if: github.event_name == 'pull_request'
+    needs: [lint-python, lint-frontend, secret-scan]
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -405,6 +422,7 @@ jobs:
 
   gradle-wrapper-check:
     if: github.event_name == 'pull_request'
+    needs: [lint-python, lint-frontend, secret-scan]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
