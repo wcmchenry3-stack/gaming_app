@@ -25,21 +25,40 @@ export class ApiError extends Error {
   }
 }
 
+/**
+ * Resolves the base URL for API calls.
+ *
+ * `EXPO_PUBLIC_*` variables are inlined into the bundle by Expo's web/native
+ * exporter at build time, so the value must be present when `npx expo export`
+ * runs — not at runtime. If we ship a non-dev bundle without it, every
+ * request will hit `http://localhost:8000` and fail with a `TypeError:
+ * Failed to fetch`, which is exactly what #511 documented.
+ *
+ * Rather than silently fall back (and then have Sentry record a flood of
+ * confusing per-request fetch errors), we throw at module load. That makes
+ * the misconfiguration impossible to miss: the app fails fast on boot with
+ * a clear message instead of pretending to work and then breaking on every
+ * score submit.
+ */
 function resolveBaseUrl(): string {
   const raw = process.env.EXPO_PUBLIC_API_URL;
-  if (!raw) {
-    if (__DEV__) {
-      return "http://localhost:8000";
-    }
-    Sentry.captureMessage("EXPO_PUBLIC_API_URL is not set in production build", {
-      level: "error",
-      tags: { subsystem: "httpClient", issue: "missing-env" },
-    });
-    // Fall back so the app doesn't hard-crash, but this will fail with a
-    // TypeError: Failed to fetch — which Sentry will capture separately.
+  if (raw) {
+    return raw.startsWith("http") ? raw : `https://${raw}`;
+  }
+  if (__DEV__) {
     return "http://localhost:8000";
   }
-  return raw.startsWith("http") ? raw : `https://${raw}`;
+  const msg =
+    "EXPO_PUBLIC_API_URL is not set in a non-dev build. " +
+    "Expo bakes EXPO_PUBLIC_* vars into the bundle at export time, so this " +
+    "must be present when `expo export` runs — set it on the Render service " +
+    "(see render.yaml) or in the build environment. Refusing to fall back to " +
+    "http://localhost:8000.";
+  Sentry.captureMessage(msg, {
+    level: "fatal",
+    tags: { subsystem: "httpClient", issue: "missing-env" },
+  });
+  throw new Error(msg);
 }
 
 export interface HttpClientOptions {
