@@ -226,6 +226,7 @@ export default function GameScreen({ navigation, route }: Props) {
       <AppHeader
         title={t("game.title")}
         rightSlot={roundPill}
+        requireBack
         onBack={() => navigation.popToTop()}
       />
 

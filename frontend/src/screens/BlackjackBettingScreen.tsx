@@ -52,6 +52,7 @@ export default function BlackjackBettingScreen({ navigation }: Props) {
     >
       <AppHeader
         title={t("game.title")}
+        requireBack
         onBack={() => navigation.popToTop()}
         rightSlot={
           state ? (
