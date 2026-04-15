@@ -372,6 +372,7 @@ describe("SyncWorker", () => {
   // occurrence self-explains. The original Sentry event only said
   // "400 on PATCH /complete" with no hint that the root cause was an
   // invalid `outcome` value.
+  // #519: Sentry extra now also includes attempt/maxAttempts/isFinal.
   it("400 on PATCH /complete surfaces the response body via captureMessage", async () => {
     // eslint-disable-next-line @typescript-eslint/no-require-imports
     const Sentry = require("@sentry/react-native");
@@ -398,8 +399,79 @@ describe("SyncWorker", () => {
           body: { detail: "Invalid outcome: 'completed'" },
           gameId: gid,
           sentOutcome: "completed",
+          attempt: 1,
+          isFinal: false,
         }),
       })
+    );
+  });
+
+  // -------------------------------------------------------------------------
+  // #519 — PATCH /complete retry on 400 (deployment-window resilience)
+  // -------------------------------------------------------------------------
+
+  // 400 on PATCH /complete must NOT immediately dead-letter the game.
+  // The root cause of #519 was a deployment-window mismatch: the server
+  // was running old code that rejected outcome="completed" while the new
+  // code was still being deployed. Retrying gives the deployment time to
+  // roll out.
+  it("400 on PATCH /complete retains the game after the first failure", async () => {
+    logConfig.MAX_COMPLETE_ATTEMPTS = 2;
+    api.defaultResponse = ok();
+    api.onNext((p) => p.endsWith("/complete"), err(400));
+
+    const gid = client.startGame("yacht");
+    client.completeGame(gid, { finalScore: 100, outcome: "completed" });
+    await flushMicro();
+    await worker.flush();
+
+    // Game must still be tracked — not forgotten yet.
+    expect(games.get(gid)).toBeDefined();
+    expect(games.get(gid)?.completeAttempts).toBe(1);
+    // Not yet counted as dead-lettered.
+    const result = await worker.flush();
+    // This second flush will succeed (api.defaultResponse = ok()).
+    expect(games.get(gid)).toBeUndefined(); // forgotten after 2xx
+  });
+
+  it("400 on PATCH /complete dead-letters after MAX_COMPLETE_ATTEMPTS", async () => {
+    logConfig.MAX_COMPLETE_ATTEMPTS = 2;
+    api.defaultResponse = ok();
+    api.onNext((p) => p.endsWith("/complete"), err(400));
+    api.onNext((p) => p.endsWith("/complete"), err(400));
+
+    const gid = client.startGame("yacht");
+    client.completeGame(gid, { finalScore: 100, outcome: "completed" });
+    await flushMicro();
+
+    // First failure — game kept.
+    await worker.flush();
+    expect(games.get(gid)).toBeDefined();
+
+    // Second failure — hits the cap, game forgotten.
+    const result = await worker.flush();
+    expect(games.get(gid)).toBeUndefined();
+    expect(result.deadLettered).toBe(1);
+  });
+
+  it("403 on PATCH /complete is immediately dead-lettered (permanent session mismatch)", async () => {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const Sentry = require("@sentry/react-native");
+    Sentry.captureMessage.mockClear();
+
+    api.defaultResponse = ok();
+    api.onNext((p) => p.endsWith("/complete"), err(403));
+
+    const gid = client.startGame("yacht");
+    client.completeGame(gid, { finalScore: 100, outcome: "completed" });
+    await flushMicro();
+    const result = await worker.flush();
+
+    expect(games.get(gid)).toBeUndefined();
+    expect(result.deadLettered).toBe(1);
+    expect(Sentry.captureMessage).toHaveBeenCalledWith(
+      expect.stringContaining("403 on PATCH /complete"),
+      expect.objectContaining({ level: "error" })
     );
   });
 

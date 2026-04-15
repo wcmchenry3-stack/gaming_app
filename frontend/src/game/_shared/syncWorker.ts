@@ -338,22 +338,39 @@ export class SyncWorker {
         if (g) g.startedSynced = false;
         continue;
       }
-      // 4xx (400/403/etc.) is a permanent, non-retryable rejection from
-      // the server. Include the response body so future occurrences
-      // self-explain in Sentry — the original #514 event only surfaced
-      // "400 on PATCH /complete" with no indication the root cause was
-      // an invalid `outcome` value.
+      if (res.status === 403) {
+        // Session mismatch — permanent, never retryable.
+        Sentry.captureMessage(`syncWorker: 403 on PATCH /complete ${gameId}`, {
+          level: "error",
+          extra: { body: res.body, gameId, sentOutcome: body.outcome },
+        });
+        await this.games.forget(gameId);
+        result.deadLettered += 1;
+        continue;
+      }
+      // 400 (and other non-403 4xx): retryable up to MAX_COMPLETE_ATTEMPTS.
+      // The original #519 Sentry event was a deployment-window mismatch —
+      // the server was running old code that rejected outcome="completed"
+      // before the #514 fix was deployed. Retrying instead of immediately
+      // dead-lettering gives the deployment time to roll out.
+      const attempts = await this.games.incrementCompleteAttempts(gameId);
+      const isFinal = attempts >= logConfig.MAX_COMPLETE_ATTEMPTS;
       Sentry.captureMessage(`syncWorker: ${res.status} on PATCH /complete ${gameId}`, {
-        level: res.status === 403 ? "error" : "warning",
+        level: "warning",
         extra: {
           status: res.status,
           body: res.body,
           gameId,
           sentOutcome: body.outcome,
+          attempt: attempts,
+          maxAttempts: logConfig.MAX_COMPLETE_ATTEMPTS,
+          isFinal,
         },
       });
-      await this.games.forget(gameId);
-      result.deadLettered += 1;
+      if (isFinal) {
+        await this.games.forget(gameId);
+        result.deadLettered += 1;
+      }
     }
     return true;
   }
