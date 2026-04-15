@@ -123,10 +123,7 @@ describe("AppHeader", () => {
 
     it("captures a Sentry warning when requireBack is set but onBack is missing", () => {
       render(<AppHeader title="Yacht" requireBack />);
-      expect(mockCaptureMessage).toHaveBeenCalledWith(
-        expect.stringContaining("Yacht"),
-        "warning"
-      );
+      expect(mockCaptureMessage).toHaveBeenCalledWith(expect.stringContaining("Yacht"), "warning");
     });
 
     it("does not warn when requireBack is unset", () => {
