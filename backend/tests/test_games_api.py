@@ -237,6 +237,37 @@ def test_complete_game_rejects_invalid_outcome(client: TestClient, session_id: s
     assert r.status_code == 400
 
 
+# #514: prior to this fix the set of valid outcomes only covered the blackjack
+# result vocabulary (`win` / `loss` / `push` / `blackjack`) plus `abandoned`,
+# so every natural game-end from a score-based game (yacht, cascade, twenty48)
+# came back 400 on `outcome="completed"`. Cover both vocabularies explicitly.
+@pytest.mark.parametrize(
+    "outcome",
+    [
+        # Result vocabulary
+        "win",
+        "loss",
+        "push",
+        "blackjack",
+        # Lifecycle vocabulary (#514)
+        "completed",
+        "abandoned",
+        "kept_playing",
+    ],
+)
+def test_complete_game_accepts_valid_outcomes(
+    client: TestClient, session_id: str, outcome: str
+) -> None:
+    gid = _new_game(client, session_id)
+    r = client.patch(
+        f"/games/{gid}/complete",
+        headers=_headers(session_id),
+        json={"final_score": 100, "outcome": outcome, "duration_ms": 5_000},
+    )
+    assert r.status_code == 200, r.text
+    assert r.json()["outcome"] == outcome
+
+
 def test_complete_game_cross_session_forbidden(client: TestClient, session_id: str) -> None:
     gid = _new_game(client, session_id)
     other = str(uuid.uuid4())

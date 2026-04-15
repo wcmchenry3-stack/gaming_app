@@ -335,6 +335,74 @@ describe("SyncWorker", () => {
     expect(patches.length).toBe(0);
   });
 
+  // #514: the in-memory CompleteSummary is camelCase for idiomatic TS, but
+  // the backend Pydantic schema is snake_case. Pydantic default is
+  // extra="ignore", so before this fix the camelCase fields were silently
+  // dropped and every completed game landed with final_score=NULL and
+  // duration_ms=NULL. Pin the wire format here so a future refactor can't
+  // quietly re-introduce the bug.
+  it("PATCH /complete body uses snake_case field names", async () => {
+    api.defaultResponse = ok();
+    const gid = client.startGame("yacht");
+    client.completeGame(gid, {
+      finalScore: 312,
+      outcome: "completed",
+      durationMs: 45_000,
+    });
+    await flushMicro();
+    await worker.flush();
+
+    const patch = api.calls.find(
+      (c) => c.method === "PATCH" && c.path === `/games/${gid}/complete`
+    );
+    expect(patch).toBeDefined();
+    expect(patch!.body).toEqual({
+      final_score: 312,
+      outcome: "completed",
+      duration_ms: 45_000,
+    });
+    // And the old camelCase keys must NOT be present — otherwise Pydantic
+    // would still ignore them, but it would leave us with a confusing
+    // double-keyed payload.
+    expect(patch!.body).not.toHaveProperty("finalScore");
+    expect(patch!.body).not.toHaveProperty("durationMs");
+  });
+
+  // #514: include the 400 response body in the Sentry warning so the next
+  // occurrence self-explains. The original Sentry event only said
+  // "400 on PATCH /complete" with no hint that the root cause was an
+  // invalid `outcome` value.
+  it("400 on PATCH /complete surfaces the response body via captureMessage", async () => {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const Sentry = require("@sentry/react-native");
+    Sentry.captureMessage.mockClear();
+
+    api.defaultResponse = ok();
+    api.onNext((p) => p.endsWith("/complete"), {
+      status: 400,
+      ok: false,
+      retryAfterMs: null,
+      body: { detail: "Invalid outcome: 'completed'" },
+    });
+    const gid = client.startGame("yacht");
+    client.completeGame(gid, { finalScore: 100, outcome: "completed" });
+    await flushMicro();
+    await worker.flush();
+
+    expect(Sentry.captureMessage).toHaveBeenCalledWith(
+      expect.stringContaining("400 on PATCH /complete"),
+      expect.objectContaining({
+        level: "warning",
+        extra: expect.objectContaining({
+          status: 400,
+          body: { detail: "Invalid outcome: 'completed'" },
+          gameId: gid,
+          sentOutcome: "completed",
+        }),
+      })
+    );
+  });
+
   // -------------------------------------------------------------------------
   // Bug logs
   // -------------------------------------------------------------------------

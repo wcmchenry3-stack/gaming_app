@@ -21,7 +21,33 @@ from sqlalchemy.orm import selectinload
 
 from db.models import EventType, Game, GameEvent, GameType
 
-_VALID_OUTCOMES = {"win", "loss", "push", "blackjack", "abandoned"}
+# Valid values for Game.outcome. Two vocabularies live here intentionally:
+#
+#   1. Result vocabulary — `win` / `loss` / `push` / `blackjack`. Came from
+#      blackjack where each round has a defined winner. Still used when a
+#      game surfaces a concrete player vs. dealer / player vs. house result.
+#
+#   2. Lifecycle vocabulary — `completed` / `abandoned` / `kept_playing`.
+#      Used by score-based games that have no win/loss semantics — Yacht,
+#      Cascade, Twenty48, etc. These ship whatever final score the player
+#      reached and just need to distinguish "game ended naturally" from
+#      "player quit mid-game" from "player chose to keep playing past the
+#      win condition" (2048 specifically).
+#
+# Both vocabularies are stored as-is in `game.outcome`; the backend does
+# not branch on the value, it just validates the string and records it for
+# analytics. Prior to #514 only the result vocabulary plus `abandoned`
+# were accepted, so every natural game-end PATCH from the score-based
+# games came back 400 on `outcome="completed"`.
+_VALID_OUTCOMES = {
+    "win",
+    "loss",
+    "push",
+    "blackjack",
+    "completed",
+    "abandoned",
+    "kept_playing",
+}
 
 
 class GameServiceError(Exception):

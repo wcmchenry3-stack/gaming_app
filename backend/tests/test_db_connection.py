@@ -38,4 +38,4 @@ async def test_alembic_head_applied() -> None:
         result = await conn.execute(text("SELECT version_num FROM alembic_version"))
         version = result.scalar()
         # Latest head — bump when a new migration lands.
-        assert version == "0002_games_events_lookups"
+        assert version == "0003_relax_games_outcome_constraint"
