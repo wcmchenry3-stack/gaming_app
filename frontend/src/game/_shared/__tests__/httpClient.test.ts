@@ -66,13 +66,21 @@ describe("httpClient — BASE_URL configuration", () => {
 describe("httpClient — error handling", () => {
   let request: (path: string, options?: RequestInit) => Promise<unknown>;
   const mockFetch = jest.fn();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let Sentry: any;
 
   beforeEach(() => {
     jest.resetModules();
     global.fetch = mockFetch;
     mockFetch.mockReset();
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    Sentry = require("@sentry/react-native");
+    Sentry.captureException.mockClear();
+    Sentry.captureMessage.mockClear();
+    Sentry.addBreadcrumb.mockClear();
     const { createGameClient } = require("../httpClient") as typeof import("../httpClient");
-    request = createGameClient({ apiTag: "test" });
+    // Default: never sample 5xx, so most tests can ignore the sampling path.
+    request = createGameClient({ apiTag: "test", serverErrorSampleRate: 0 });
   });
 
   it("throws Error with detail when response is not ok", async () => {
@@ -138,5 +146,136 @@ describe("httpClient — error handling", () => {
     const headers = callArgs.headers as Record<string, string>;
     expect(headers["Content-Type"]).toBe("application/json");
     expect(headers["X-Session-ID"]).toMatch(/^[0-9a-f-]{36}$/);
+  });
+});
+
+describe("httpClient — Sentry reporting (#513)", () => {
+  const mockFetch = jest.fn();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let Sentry: any;
+
+  beforeEach(() => {
+    jest.resetModules();
+    global.fetch = mockFetch;
+    mockFetch.mockReset();
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    Sentry = require("@sentry/react-native");
+    Sentry.captureException.mockClear();
+    Sentry.captureMessage.mockClear();
+    Sentry.addBreadcrumb.mockClear();
+  });
+
+  function makeRequest(opts: { sampleRate?: number; random?: () => number } = {}) {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const { createGameClient } = require("../httpClient") as typeof import("../httpClient");
+    return createGameClient({
+      apiTag: "test",
+      serverErrorSampleRate: opts.sampleRate ?? 0,
+      random: opts.random,
+    });
+  }
+
+  it("4xx (429) emits a warning breadcrumb and never calls captureMessage or captureException", async () => {
+    mockFetch.mockResolvedValueOnce({
+      ok: false,
+      status: 429,
+      statusText: "Too Many Requests",
+      json: () => Promise.resolve({ detail: "rate limited" }),
+    } as Response);
+    const request = makeRequest();
+    await expect(request("/cascade/score", { method: "POST" })).rejects.toThrow("rate limited");
+    const apiErrorCrumb = Sentry.addBreadcrumb.mock.calls.find(
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (c: any[]) => c[0]?.category === "api.error"
+    );
+    expect(apiErrorCrumb).toBeDefined();
+    expect(apiErrorCrumb[0]).toMatchObject({
+      category: "api.error",
+      level: "warning",
+      data: expect.objectContaining({ status: 429, api: "test" }),
+    });
+    expect(Sentry.captureMessage).not.toHaveBeenCalled();
+    expect(Sentry.captureException).not.toHaveBeenCalled();
+  });
+
+  it.each([400, 401, 403, 404, 409, 422])(
+    "%i 4xx never calls captureMessage or captureException",
+    async (status) => {
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status,
+        statusText: "Bad",
+        json: () => Promise.resolve({ detail: "nope" }),
+      } as Response);
+      const request = makeRequest();
+      await expect(request("/x")).rejects.toThrow();
+      expect(Sentry.captureMessage).not.toHaveBeenCalled();
+      expect(Sentry.captureException).not.toHaveBeenCalled();
+    }
+  );
+
+  it("5xx always emits a breadcrumb but only escalates to captureMessage when sample fires", async () => {
+    mockFetch.mockResolvedValue({
+      ok: false,
+      status: 500,
+      statusText: "Internal Server Error",
+      json: () => Promise.resolve({ detail: "boom" }),
+    } as Response);
+    // Sample miss: random() = 0.99 ≥ 0.1 → no captureMessage.
+    const requestMiss = makeRequest({ sampleRate: 0.1, random: () => 0.99 });
+    await expect(requestMiss("/x")).rejects.toThrow();
+    expect(Sentry.captureMessage).not.toHaveBeenCalled();
+    expect(Sentry.captureException).not.toHaveBeenCalled();
+    expect(
+      Sentry.addBreadcrumb.mock.calls.some(
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (c: any[]) => c[0]?.category === "api.error"
+      )
+    ).toBe(true);
+
+    Sentry.addBreadcrumb.mockClear();
+    // Sample hit: random() = 0 < 0.1 → captureMessage fires once.
+    const requestHit = makeRequest({ sampleRate: 0.1, random: () => 0 });
+    await expect(requestHit("/x")).rejects.toThrow();
+    expect(Sentry.captureMessage).toHaveBeenCalledTimes(1);
+    expect(Sentry.captureMessage).toHaveBeenCalledWith(
+      expect.stringContaining("5xx"),
+      expect.objectContaining({
+        level: "warning",
+        tags: expect.objectContaining({ errorType: "http5xx", status: "500" }),
+      })
+    );
+    expect(Sentry.captureException).not.toHaveBeenCalled();
+  });
+
+  it("network failure (TypeError) emits captureMessage warning, not captureException", async () => {
+    mockFetch.mockRejectedValueOnce(new TypeError("Failed to fetch"));
+    const request = makeRequest();
+    await expect(request("/x")).rejects.toThrow("Failed to fetch");
+    expect(Sentry.captureException).not.toHaveBeenCalled();
+    expect(Sentry.captureMessage).toHaveBeenCalledTimes(1);
+    expect(Sentry.captureMessage).toHaveBeenCalledWith(
+      expect.stringContaining("network failure"),
+      expect.objectContaining({
+        level: "warning",
+        tags: expect.objectContaining({ errorType: "network" }),
+      })
+    );
+  });
+
+  it("genuine unexpected JS error (non-Api, non-Type) is captured as an exception with stack", async () => {
+    // A RangeError from inside fetch is the kind of thing we want loud
+    // visibility on — it indicates a bug we wrote, not a network issue.
+    mockFetch.mockRejectedValueOnce(new RangeError("oops"));
+    const request = makeRequest();
+    await expect(request("/x")).rejects.toThrow("oops");
+    expect(Sentry.captureException).toHaveBeenCalledTimes(1);
+    expect(Sentry.captureException).toHaveBeenCalledWith(
+      expect.any(RangeError),
+      expect.objectContaining({
+        tags: expect.objectContaining({ errorType: "unexpected" }),
+      })
+    );
+    expect(Sentry.captureMessage).not.toHaveBeenCalled();
   });
 });

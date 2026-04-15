@@ -45,10 +45,19 @@ function resolveBaseUrl(): string {
 export interface HttpClientOptions {
   /** Sentry tag value, e.g. "cascade", "yacht". Used for per-game observability. */
   apiTag: string;
+  /**
+   * Probability (0..1) of escalating a 5xx response to a Sentry warning
+   * `captureMessage`. 4xx is never escalated. Defaults to 0.1 so persistent
+   * backend outages stay visible without flooding the dashboard. Tests
+   * override this to make sampling deterministic.
+   */
+  serverErrorSampleRate?: number;
+  /** Injection seam for deterministic sampling in tests. */
+  random?: () => number;
 }
 
 export function createGameClient(options: HttpClientOptions) {
-  const { apiTag } = options;
+  const { apiTag, serverErrorSampleRate = 0.1, random = Math.random } = options;
   const BASE_URL = resolveBaseUrl();
 
   Sentry.addBreadcrumb({
@@ -74,20 +83,60 @@ export function createGameClient(options: HttpClientOptions) {
       if (!res.ok) {
         const err = await res.json().catch(() => ({ detail: res.statusText }));
         const msg = err.detail ?? "Request failed";
-        Sentry.captureMessage(`API error: ${method} ${path} → ${res.status}`, {
+        // 4xx and 5xx are HTTP-layer outcomes, not JS exceptions. Emit a
+        // breadcrumb only — never `captureMessage` (which attaches a
+        // synthetic stack and creates a grouped Sentry issue per status
+        // code) and never `captureException`. See #513: a single 429
+        // status used to spawn a 476-event Sentry issue grouped on the
+        // ApiError constructor frame.
+        Sentry.addBreadcrumb({
+          category: "api.error",
           level: "warning",
-          extra: { url, status: res.status, detail: msg, platform: Platform.OS },
+          message: `${method} ${path} → ${res.status}`,
+          data: { url, status: res.status, detail: msg, platform: Platform.OS, api: apiTag },
         });
+        // 5xx only: optionally surface as a low-sample warning so a
+        // sustained backend outage still leaves a trail in the dashboard
+        // without flooding it. 4xx never escalates — those are client-
+        // side / expected-recoverable.
+        if (res.status >= 500 && random() < serverErrorSampleRate) {
+          Sentry.captureMessage(`API ${apiTag} 5xx: ${method} ${path} → ${res.status}`, {
+            level: "warning",
+            tags: { api: apiTag, errorType: "http5xx", status: String(res.status) },
+            extra: { url, detail: msg, platform: Platform.OS },
+          });
+        }
         throw new ApiError(msg, res.status);
       }
       return res.json();
     } catch (e) {
-      if (e instanceof TypeError) {
-        Sentry.captureException(e, {
-          extra: { url, platform: Platform.OS, method },
-          tags: { api: apiTag, errorType: "network" },
-        });
+      if (e instanceof ApiError) {
+        // Already breadcrumbed in the !res.ok branch above. Re-throw so
+        // callers can inspect `.status` and decide how to react.
+        throw e;
       }
+      if (e instanceof TypeError) {
+        // `fetch` throws TypeError for network-layer failures (offline,
+        // DNS, CORS, "Failed to fetch"). These are recoverable and
+        // distinct from a programming error — surface as a warning
+        // message, not a captured exception with a stack. The synthetic
+        // stack here would otherwise group every offline user under a
+        // single misleading issue.
+        Sentry.captureMessage(`API ${apiTag} network failure: ${method} ${path}`, {
+          level: "warning",
+          tags: { api: apiTag, errorType: "network" },
+          extra: { url, platform: Platform.OS, originalMessage: e.message },
+        });
+        throw e;
+      }
+      // Anything else is a genuine JS error from the request-building
+      // code (e.g. session-id read failure, unexpected throw inside a
+      // mocked fetch). Capture with stack — this is exactly the case
+      // where a stacktrace in Sentry is useful.
+      Sentry.captureException(e, {
+        extra: { url, platform: Platform.OS, method },
+        tags: { api: apiTag, errorType: "unexpected" },
+      });
       throw e;
     }
   };
