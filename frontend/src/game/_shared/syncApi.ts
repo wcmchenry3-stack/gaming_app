@@ -24,10 +24,27 @@ export interface SyncResponse {
   body: unknown;
 }
 
+/**
+ * See httpClient.resolveBaseUrl for the rationale behind throwing rather
+ * than silently falling back to localhost in non-dev builds (#511).
+ */
 function resolveBaseUrl(): string {
   const raw = process.env.EXPO_PUBLIC_API_URL;
-  if (!raw) return "http://localhost:8000";
-  return raw.startsWith("http") ? raw : `https://${raw}`;
+  if (raw) {
+    return raw.startsWith("http") ? raw : `https://${raw}`;
+  }
+  if (__DEV__) {
+    return "http://localhost:8000";
+  }
+  const msg =
+    "EXPO_PUBLIC_API_URL is not set in a non-dev build (syncApi). " +
+    "Expo bakes EXPO_PUBLIC_* vars into the bundle at export time. " +
+    "Refusing to fall back to http://localhost:8000.";
+  Sentry.captureMessage(msg, {
+    level: "fatal",
+    tags: { subsystem: "syncApi", issue: "missing-env" },
+  });
+  throw new Error(msg);
 }
 
 function parseRetryAfter(headerValue: string | null, now: number): number | null {

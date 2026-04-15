@@ -52,14 +52,37 @@ describe("httpClient — BASE_URL configuration", () => {
     );
   });
 
-  it("falls back to http://localhost:8000 when EXPO_PUBLIC_API_URL is not set", async () => {
+  it("falls back to http://localhost:8000 when EXPO_PUBLIC_API_URL is not set in dev", async () => {
     delete process.env.EXPO_PUBLIC_API_URL;
+    // jest-expo sets __DEV__ = true by default; assert that explicitly
+    // so this test fails loudly if the preset ever changes.
+    expect((globalThis as { __DEV__?: boolean }).__DEV__).toBe(true);
     const request = loadClient();
     await request("/any/path");
     expect(global.fetch as jest.Mock).toHaveBeenCalledWith(
       "http://localhost:8000/any/path",
       expect.any(Object)
     );
+  });
+
+  it("throws at module load when EXPO_PUBLIC_API_URL is not set in a non-dev build (#511)", () => {
+    delete process.env.EXPO_PUBLIC_API_URL;
+    const g = globalThis as { __DEV__?: boolean };
+    const originalDev = g.__DEV__;
+    g.__DEV__ = false;
+    try {
+      // Module-level throw happens inside createGameClient because BASE_URL
+      // is resolved eagerly. Verify both the throw and the Sentry breadcrumb.
+      expect(() => loadClient()).toThrow(/EXPO_PUBLIC_API_URL is not set/);
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      const Sentry = require("@sentry/react-native");
+      expect(Sentry.captureMessage).toHaveBeenCalledWith(
+        expect.stringContaining("EXPO_PUBLIC_API_URL is not set"),
+        expect.objectContaining({ level: "fatal" })
+      );
+    } finally {
+      g.__DEV__ = originalDev;
+    }
   });
 });
 
