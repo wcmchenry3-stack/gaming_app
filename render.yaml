@@ -1,22 +1,33 @@
 services:
-  # --- Python FastAPI backend ---
+  # --- Python FastAPI backend (dev environment) ---
+  # The -dev suffix is explicit: this service tracks the `dev` branch.
+  # A future prod environment should be a separate service (e.g.
+  # `gaming-app-api`) pinned to `main`, with its own Postgres.
   - type: web
-    name: gaming-app-api
+    name: gaming-app-api-dev
     runtime: python
+    branch: dev
     rootDir: backend
     buildCommand: pip install -r requirements.txt
-    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT --timeout-keep-alive 5 --limit-max-requests 10000
+    # alembic runs before uvicorn on every boot so schema stays in sync with
+    # models shipped on dev. It is idempotent — noop when already current.
+    startCommand: alembic upgrade head && uvicorn main:app --host 0.0.0.0 --port $PORT --timeout-keep-alive 5 --limit-max-requests 10000
     healthCheckPath: /health
     envVars:
       - key: PYTHON_VERSION
         value: 3.11.0
       - key: ALLOWED_ORIGINS
         value: "https://dev-games.buffingchi.com,https://dev-games-api.buffingchi.com"
+      - key: DATABASE_URL
+        sync: false
+      - key: SENTRY_DSN
+        sync: false
 
-  # --- Expo Web static frontend ---
+  # --- Expo Web static frontend (dev environment) ---
   - type: web
-    name: gaming-app-frontend
+    name: gaming-app-frontend-dev
     runtime: static
+    branch: dev
     rootDir: frontend
     # fetch-render-env.js merges EXPO_PUBLIC_API_URL (and SENTRY_DSN if set)
     # into .env before Expo bakes them into the static bundle.
