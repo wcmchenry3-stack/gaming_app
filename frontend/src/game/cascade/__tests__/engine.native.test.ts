@@ -380,5 +380,4 @@ describe("physics sub-stepping", () => {
     expect(updateSpy.mock.calls.length).toBeLessThanOrEqual(11);
     handle.cleanup();
   });
-
 });
