@@ -315,12 +315,7 @@ export class SyncWorker {
         outcome: summary.outcome ?? null,
         duration_ms: summary.durationMs ?? null,
       };
-      const res = await this.api.request(
-        "PATCH",
-        `/games/${gameId}/complete`,
-        body,
-        now
-      );
+      const res = await this.api.request("PATCH", `/games/${gameId}/complete`, body, now);
       result.attempted += 1;
       if (res.ok) {
         await this.games.markCompleteSynced(gameId);
