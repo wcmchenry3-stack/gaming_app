@@ -137,7 +137,7 @@ export default function GameDetailScreen({ navigation, route }: Props) {
         },
       ]}
     >
-      <AppHeader title={t("detail.title")} onBack={() => navigation.goBack()} />
+      <AppHeader title={t("detail.title")} requireBack onBack={() => navigation.goBack()} />
       {body}
     </View>
   );

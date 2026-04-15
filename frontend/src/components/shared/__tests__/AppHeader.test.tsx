@@ -45,6 +45,18 @@ jest.mock("../../FeedbackWidget/FeedbackWidget", () => {
 
 jest.mock("../../../../assets/logo.png", () => 1);
 
+const mockAddBreadcrumb = jest.fn();
+const mockCaptureMessage = jest.fn();
+jest.mock("@sentry/react-native", () => ({
+  addBreadcrumb: (...args: unknown[]) => mockAddBreadcrumb(...args),
+  captureMessage: (...args: unknown[]) => mockCaptureMessage(...args),
+}));
+
+beforeEach(() => {
+  mockAddBreadcrumb.mockClear();
+  mockCaptureMessage.mockClear();
+});
+
 describe("AppHeader", () => {
   it("renders the page title", () => {
     render(<AppHeader title="Settings" />);
@@ -93,5 +105,48 @@ describe("AppHeader", () => {
   it("exports APP_HEADER_HEIGHT as a positive number", () => {
     expect(typeof APP_HEADER_HEIGHT).toBe("number");
     expect(APP_HEADER_HEIGHT).toBeGreaterThan(0);
+  });
+
+  // #498 — telemetry: surface regressions where a screen silently drops
+  // onBack or the tap never reaches the handler.
+  describe("telemetry", () => {
+    it("records a mount breadcrumb with hasBack flag", () => {
+      render(<AppHeader title="Yacht" onBack={() => {}} requireBack />);
+      expect(mockAddBreadcrumb).toHaveBeenCalledWith(
+        expect.objectContaining({
+          category: "ui.header",
+          message: "AppHeader mount",
+          data: { title: "Yacht", hasBack: true, requireBack: true },
+        })
+      );
+    });
+
+    it("captures a Sentry warning when requireBack is set but onBack is missing", () => {
+      render(<AppHeader title="Yacht" requireBack />);
+      expect(mockCaptureMessage).toHaveBeenCalledWith(
+        expect.stringContaining("Yacht"),
+        "warning"
+      );
+    });
+
+    it("does not warn when requireBack is unset", () => {
+      render(<AppHeader title="Lobby" />);
+      expect(mockCaptureMessage).not.toHaveBeenCalled();
+    });
+
+    it("records a tap breadcrumb before invoking onBack", () => {
+      const onBack = jest.fn();
+      render(<AppHeader title="Yacht" onBack={onBack} requireBack />);
+      mockAddBreadcrumb.mockClear();
+      fireEvent.press(screen.getByRole("button", { name: "Go back to home screen" }));
+      expect(mockAddBreadcrumb).toHaveBeenCalledWith(
+        expect.objectContaining({
+          category: "ui.header",
+          message: "AppHeader back press",
+          data: { title: "Yacht" },
+        })
+      );
+      expect(onBack).toHaveBeenCalledTimes(1);
+    });
   });
 });

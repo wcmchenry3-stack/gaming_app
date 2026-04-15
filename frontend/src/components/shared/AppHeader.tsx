@@ -1,8 +1,9 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { View, Text, Image, StyleSheet, Platform, Pressable } from "react-native";
 import { BlurView } from "expo-blur";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTranslation } from "react-i18next";
+import * as Sentry from "@sentry/react-native";
 import { useTheme } from "../../theme/ThemeContext";
 import { typography } from "../../theme/typography";
 import FeedbackWidget from "../FeedbackWidget/FeedbackWidget";
@@ -14,6 +15,13 @@ export interface AppHeaderProps {
   title: string;
   rightSlot?: React.ReactNode;
   onBack?: () => void;
+  /**
+   * Screens that must always show a back button set this to true. If onBack
+   * is missing at mount, AppHeader reports a Sentry warning so a regression
+   * (e.g. accidental refactor that drops the handler) surfaces in telemetry
+   * instead of stranding users on the screen. See GH #498.
+   */
+  requireBack?: boolean;
 }
 
 function hexWithAlpha(hex: string, alpha: number): string {
@@ -23,7 +31,7 @@ function hexWithAlpha(hex: string, alpha: number): string {
   return `${hex}${alphaHex}`;
 }
 
-export function AppHeader({ title, rightSlot, onBack }: AppHeaderProps) {
+export function AppHeader({ title, rightSlot, onBack, requireBack = false }: AppHeaderProps) {
   const { colors, theme } = useTheme();
   const insets = useSafeAreaInsets();
   const { t } = useTranslation("feedback");
@@ -31,6 +39,42 @@ export function AppHeader({ title, rightSlot, onBack }: AppHeaderProps) {
 
   const totalHeight = APP_HEADER_HEIGHT + insets.top;
   const bgColor = hexWithAlpha(colors.background, 0.7);
+
+  // #498 — mount-time telemetry: record whether the back affordance is wired
+  // up so we can detect regressions where a screen silently drops onBack.
+  useEffect(() => {
+    Sentry.addBreadcrumb({
+      category: "ui.header",
+      level: "info",
+      message: "AppHeader mount",
+      data: { title, hasBack: !!onBack, requireBack },
+    });
+    if (requireBack && !onBack) {
+      Sentry.captureMessage(
+        `AppHeader[${title}] rendered without onBack despite requireBack`,
+        "warning"
+      );
+    }
+    // Intentionally run once per mount — we care about the initial render of
+    // each screen, not every prop toggle. Screens remount on navigation.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // #498 — tap-time telemetry: wrap onBack so a breadcrumb lands in Sentry
+  // the instant the press registers. If users report "back does nothing" we
+  // can distinguish "tap never fired" from "handler fired but navigation
+  // silently failed" by whether this breadcrumb is present.
+  const handleBackPress = onBack
+    ? () => {
+        Sentry.addBreadcrumb({
+          category: "ui.header",
+          level: "info",
+          message: "AppHeader back press",
+          data: { title },
+        });
+        onBack();
+      }
+    : undefined;
 
   return (
     <View accessibilityRole="header" style={[styles.wrapper, { height: totalHeight }]}>
@@ -59,9 +103,9 @@ export function AppHeader({ title, rightSlot, onBack }: AppHeaderProps) {
       )}
 
       <View style={[styles.content, { paddingTop: insets.top }]}>
-        {onBack ? (
+        {handleBackPress ? (
           <Pressable
-            onPress={onBack}
+            onPress={handleBackPress}
             accessibilityRole="button"
             accessibilityLabel={t("common:nav.backLabel")}
             style={({ pressed }) => [styles.backButton, pressed && styles.backButtonPressed]}
