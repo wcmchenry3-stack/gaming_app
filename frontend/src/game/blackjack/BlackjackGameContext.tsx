@@ -113,13 +113,17 @@ export function BlackjackGameProvider({ children }: { children: React.ReactNode 
       const gid = gameIdRef.current;
       if (!gid) return;
       try {
-        // bet_placed + hand_dealt: betting → player/result with a fresh deal
+        // bet_placed + hand_dealt: betting → player/result with a fresh deal.
+        // Read chips_remaining from prev.chips, not next.chips — placeBet can
+        // settle immediately on a natural blackjack, and next.chips would then
+        // reflect the post-settlement balance, not the chips the player has
+        // after merely locking in the bet. (closes #503)
         if (prev.phase === "betting" && next.phase !== "betting") {
           gameEventClient.enqueueEvent(gid, {
             type: "bet_placed",
             data: {
               amount: next.bet,
-              chips_remaining: Math.max(0, next.chips - next.bet),
+              chips_remaining: Math.max(0, prev.chips - next.bet),
             },
           });
           gameEventClient.enqueueEvent(gid, {
