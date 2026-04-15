@@ -37,7 +37,6 @@ from typing import Sequence, Union
 
 from alembic import op
 
-
 revision: str = "0003_relax_games_outcome_constraint"
 down_revision: Union[str, None] = "0002_games_events_lookups"
 branch_labels: Union[str, Sequence[str], None] = None
