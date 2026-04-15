@@ -107,7 +107,7 @@ export default function GameOverModal({
             style={({ pressed }) => [
               styles.playAgainButton,
               playAgainBg,
-              pressed ? { transform: [{ scale: 0.96 }] } : null,
+              { transform: [{ scale: pressed ? 0.96 : 1 }] },
             ]}
             onPress={onPlayAgain}
             accessibilityRole="button"

@@ -90,7 +90,11 @@ export default function DiceRow({ dice, rollsUsed, gameOver, onRoll, resetHeld }
           styles.rollButton,
           isCompact && styles.rollButtonCompact,
           rollButtonBg,
-          pressed && canRoll && !rolling ? { transform: [{ scale: 0.95 }] } : null,
+          // Always emit a transform (identity when not pressed) so it never
+          // goes undefined → null between renders. RN's ReactNativeAttributePayload
+          // coerces undefined props to null, and processTransform(null) crashes
+          // in _validateTransforms (__DEV__ only) with "forEach of null".
+          { transform: [{ scale: pressed && canRoll && !rolling ? 0.95 : 1 }] },
         ]}
         onPress={handleRoll}
         disabled={!canRoll || rolling}

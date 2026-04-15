@@ -86,7 +86,7 @@ export default function GameOverlay({
               style={({ pressed }) => [
                 styles.btn,
                 ctaStyle,
-                pressed && { transform: [{ scale: 0.96 }] },
+                { transform: [{ scale: pressed ? 0.96 : 1 }] },
               ]}
               onPress={onKeepPlaying}
               accessibilityRole="button"
@@ -103,7 +103,7 @@ export default function GameOverlay({
               styles.btn,
               isWin ? styles.outlineBtn : ctaStyle,
               isWin ? { borderColor: colors.border } : null,
-              !isWin && pressed && { transform: [{ scale: 0.96 }] },
+              { transform: [{ scale: !isWin && pressed ? 0.96 : 1 }] },
             ]}
             onPress={onNewGame}
             accessibilityRole="button"
