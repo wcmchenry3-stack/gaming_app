@@ -88,7 +88,12 @@ class Game(Base):
     __tablename__ = "games"
     __table_args__ = (
         CheckConstraint(
-            "outcome IS NULL OR outcome IN ('win','loss','push','blackjack','abandoned')",
+            # Two vocabularies coexist here — see _VALID_OUTCOMES in
+            # games/service.py for the rationale. Result vocabulary:
+            # win/loss/push/blackjack. Lifecycle vocabulary (#514):
+            # completed/abandoned/kept_playing.
+            "outcome IS NULL OR outcome IN "
+            "('win','loss','push','blackjack','completed','abandoned','kept_playing')",
             name="ck_games_outcome",
         ),
         Index("games_session_id_started_at_idx", "session_id", "started_at"),

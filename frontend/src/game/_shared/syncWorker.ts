@@ -302,12 +302,20 @@ export class SyncWorker {
       const outstanding = await this.hasOutstandingEvents(gameId, now);
       if (outstanding) continue;
 
-      const res = await this.api.request(
-        "PATCH",
-        `/games/${gameId}/complete`,
-        game.completeSummary ?? {},
-        now
-      );
+      // Serialize summary with snake_case field names to match the
+      // backend Pydantic schema (`final_score`, `duration_ms`). The
+      // in-memory `CompleteSummary` is camelCase, and Pydantic's
+      // default `extra="ignore"` silently dropped the camelCase keys —
+      // every game prior to #514 landed with final_score = NULL and
+      // duration_ms = NULL even when the PATCH succeeded. Transform
+      // at the wire boundary so the in-memory type stays idiomatic TS.
+      const summary = game.completeSummary ?? {};
+      const body = {
+        final_score: summary.finalScore ?? null,
+        outcome: summary.outcome ?? null,
+        duration_ms: summary.durationMs ?? null,
+      };
+      const res = await this.api.request("PATCH", `/games/${gameId}/complete`, body, now);
       result.attempted += 1;
       if (res.ok) {
         await this.games.markCompleteSynced(gameId);
@@ -330,8 +338,19 @@ export class SyncWorker {
         if (g) g.startedSynced = false;
         continue;
       }
+      // 4xx (400/403/etc.) is a permanent, non-retryable rejection from
+      // the server. Include the response body so future occurrences
+      // self-explain in Sentry — the original #514 event only surfaced
+      // "400 on PATCH /complete" with no indication the root cause was
+      // an invalid `outcome` value.
       Sentry.captureMessage(`syncWorker: ${res.status} on PATCH /complete ${gameId}`, {
         level: res.status === 403 ? "error" : "warning",
+        extra: {
+          status: res.status,
+          body: res.body,
+          gameId,
+          sentOutcome: body.outcome,
+        },
       });
       await this.games.forget(gameId);
       result.deadLettered += 1;
