@@ -41,7 +41,15 @@ export async function loadGame(): Promise<Twenty48State | null> {
     parsed.accumulatedMs = parsed.accumulatedMs ?? 0;
     return parsed;
   } catch (e) {
-    Sentry.captureException(e, { tags: { subsystem: "twenty48.storage", op: "load" } });
+    // Corrupt payload: recovery is complete (we remove the bad entry and
+    // return null, so the caller starts a fresh game). This is not an
+    // error — downgrade from captureException to a warning captureMessage
+    // so it doesn't page as a crash in Sentry. See #501.
+    Sentry.captureMessage("twenty48.storage: corrupt game payload, discarding", {
+      level: "warning",
+      tags: { subsystem: "twenty48.storage", op: "load" },
+      extra: { error: String(e), key: GAME_KEY },
+    });
     // Remove corrupted entry so it doesn't fail on every subsequent load.
     await AsyncStorage.removeItem(GAME_KEY).catch(() => {});
     return null;

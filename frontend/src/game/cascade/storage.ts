@@ -86,7 +86,14 @@ export async function loadGame(): Promise<CascadeGameSnapshot | null> {
       savedAt: typeof parsed.savedAt === "number" ? parsed.savedAt : Date.now(),
     };
   } catch (e) {
-    Sentry.captureException(e, { tags: { subsystem: "cascade.storage", op: "load" } });
+    // Corrupt payload: recovery is complete. See #501/#510 for the
+    // rationale behind downgrading this from captureException to a
+    // warning-level captureMessage.
+    Sentry.captureMessage("cascade.storage: corrupt game payload, discarding", {
+      level: "warning",
+      tags: { subsystem: "cascade.storage", op: "load" },
+      extra: { error: String(e), key: GAME_KEY },
+    });
     // Remove corrupted entry so it doesn't fail on every subsequent load.
     await AsyncStorage.removeItem(GAME_KEY).catch(() => {});
     return null;

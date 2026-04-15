@@ -1,6 +1,9 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import * as Sentry from "@sentry/react-native";
 import { saveGame, loadGame, clearGame, saveBestScore, loadBestScore } from "../storage";
 import { Twenty48State } from "../types";
+
+const GAME_KEY = "twenty48_game_v2";
 
 const sample: Twenty48State = {
   board: [
@@ -26,6 +29,8 @@ const sample: Twenty48State = {
 describe("twenty48 storage", () => {
   beforeEach(async () => {
     await AsyncStorage.clear();
+    (Sentry.captureException as jest.Mock).mockClear();
+    (Sentry.captureMessage as jest.Mock).mockClear();
   });
 
   it("saves and loads a game", async () => {
@@ -40,9 +45,26 @@ describe("twenty48 storage", () => {
   });
 
   it("returns null when saved data is corrupted", async () => {
-    await AsyncStorage.setItem("twenty48_game_v2", "not json");
+    await AsyncStorage.setItem(GAME_KEY, "not json");
     const loaded = await loadGame();
     expect(loaded).toBeNull();
+  });
+
+  // #501: corrupt payload is fully recovered — should be a warning, not
+  // an exception, and the corrupt entry must be cleared.
+  it("reports corrupt payload as warning (not exception) and clears the entry", async () => {
+    await AsyncStorage.setItem(GAME_KEY, "garbage{not json}");
+    expect(await loadGame()).toBeNull();
+    expect(Sentry.captureException).not.toHaveBeenCalled();
+    expect(Sentry.captureMessage).toHaveBeenCalledTimes(1);
+    expect(Sentry.captureMessage).toHaveBeenCalledWith(
+      expect.stringContaining("corrupt game payload"),
+      expect.objectContaining({
+        level: "warning",
+        tags: expect.objectContaining({ subsystem: "twenty48.storage", op: "load" }),
+      })
+    );
+    expect(await AsyncStorage.getItem(GAME_KEY)).toBeNull();
   });
 
   it("returns null when saved data has a different shape", async () => {

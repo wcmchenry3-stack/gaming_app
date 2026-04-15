@@ -48,7 +48,15 @@ export async function loadGame(): Promise<EngineState | null> {
     }
     return parsed;
   } catch (e) {
-    Sentry.captureException(e, { tags: { subsystem: "blackjack.storage", op: "load" } });
+    // Corrupt payload: recovery is complete (we remove the bad entry and
+    // return null, so the caller starts a fresh game). This is not an
+    // error — downgrade from captureException to a warning captureMessage
+    // so it doesn't page as a crash in Sentry. See #510.
+    Sentry.captureMessage("blackjack.storage: corrupt game payload, discarding", {
+      level: "warning",
+      tags: { subsystem: "blackjack.storage", op: "load" },
+      extra: { error: String(e), key: STORAGE_KEY },
+    });
     await AsyncStorage.removeItem(STORAGE_KEY).catch(() => {});
     return null;
   }

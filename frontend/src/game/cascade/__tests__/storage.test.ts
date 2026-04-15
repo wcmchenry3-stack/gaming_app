@@ -7,6 +7,7 @@
  */
 
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import * as Sentry from "@sentry/react-native";
 import { saveGame, loadGame, clearGame, CascadeGameSnapshot, SavedFruit } from "../storage";
 
 const KEY = "cascade_game_v1";
@@ -30,6 +31,8 @@ function makeSnapshot(overrides: Partial<CascadeGameSnapshot> = {}): CascadeGame
 describe("cascade/storage", () => {
   beforeEach(async () => {
     await AsyncStorage.clear();
+    (Sentry.captureException as jest.Mock).mockClear();
+    (Sentry.captureMessage as jest.Mock).mockClear();
   });
 
   describe("round-trip", () => {
@@ -121,6 +124,21 @@ describe("cascade/storage", () => {
       expect(await loadGame()).toBeNull();
       // Subsequent load sees nothing (the corrupt entry was removed).
       expect(await loadGame()).toBeNull();
+    });
+
+    // Same #501/#510 pattern: corrupt payload reports as warning.
+    it("reports corrupt payload as warning (not exception)", async () => {
+      await AsyncStorage.setItem(KEY, "{not json");
+      expect(await loadGame()).toBeNull();
+      expect(Sentry.captureException).not.toHaveBeenCalled();
+      expect(Sentry.captureMessage).toHaveBeenCalledTimes(1);
+      expect(Sentry.captureMessage).toHaveBeenCalledWith(
+        expect.stringContaining("corrupt game payload"),
+        expect.objectContaining({
+          level: "warning",
+          tags: expect.objectContaining({ subsystem: "cascade.storage", op: "load" }),
+        })
+      );
     });
   });
 });
