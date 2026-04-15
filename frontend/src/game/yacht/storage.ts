@@ -36,7 +36,14 @@ export async function loadGame(): Promise<GameState | null> {
     }
     return parsed;
   } catch (e) {
-    Sentry.captureException(e, { tags: { subsystem: "yacht.storage", op: "load" } });
+    // Corrupt payload: recovery is complete. See #501/#510 for the
+    // rationale behind downgrading this from captureException to a
+    // warning-level captureMessage.
+    Sentry.captureMessage("yacht.storage: corrupt game payload, discarding", {
+      level: "warning",
+      tags: { subsystem: "yacht.storage", op: "load" },
+      extra: { error: String(e), key: STORAGE_KEY },
+    });
     await AsyncStorage.removeItem(STORAGE_KEY).catch(() => {});
     return null;
   }

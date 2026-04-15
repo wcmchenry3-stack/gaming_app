@@ -1,4 +1,5 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import * as Sentry from "@sentry/react-native";
 import { saveGame, loadGame, clearGame } from "../storage";
 import { newGame, EngineState } from "../engine";
 
@@ -7,6 +8,8 @@ const STORAGE_KEY = "blackjack_game_v2";
 describe("blackjack storage", () => {
   beforeEach(async () => {
     await AsyncStorage.clear();
+    (Sentry.captureException as jest.Mock).mockClear();
+    (Sentry.captureMessage as jest.Mock).mockClear();
   });
 
   it("saves and loads a game", async () => {
@@ -21,13 +24,35 @@ describe("blackjack storage", () => {
   });
 
   it("returns null when saved data is corrupted", async () => {
-    await AsyncStorage.setItem("blackjack_game_v1", "not json");
+    // NB: previous revision of this test wrote to "blackjack_game_v1",
+    // which no longer exists as a key — so the test was passing because
+    // loadGame saw an empty slot, not because it survived a parse error.
+    // #510 exposed that: the actual key is v2.
+    await AsyncStorage.setItem(STORAGE_KEY, "not-valid-json{{{");
     expect(await loadGame()).toBeNull();
   });
 
   it("returns null when saved data has different shape", async () => {
-    await AsyncStorage.setItem("blackjack_game_v1", JSON.stringify({ foo: "bar" }));
+    await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify({ foo: "bar" }));
     expect(await loadGame()).toBeNull();
+  });
+
+  // #510: corrupt payload should be reported at WARNING level and the
+  // corrupt entry should be cleared so it doesn't re-fire every launch.
+  it("reports corrupt payload as warning (not exception) and clears the entry", async () => {
+    await AsyncStorage.setItem(STORAGE_KEY, "not-valid-json{{{");
+    expect(await loadGame()).toBeNull();
+    expect(Sentry.captureException).not.toHaveBeenCalled();
+    expect(Sentry.captureMessage).toHaveBeenCalledTimes(1);
+    expect(Sentry.captureMessage).toHaveBeenCalledWith(
+      expect.stringContaining("corrupt game payload"),
+      expect.objectContaining({
+        level: "warning",
+        tags: expect.objectContaining({ subsystem: "blackjack.storage", op: "load" }),
+      })
+    );
+    // Subsequent load sees a clean slot — the corrupt entry was removed.
+    expect(await AsyncStorage.getItem(STORAGE_KEY)).toBeNull();
   });
 
   it("clearGame removes the saved state", async () => {
