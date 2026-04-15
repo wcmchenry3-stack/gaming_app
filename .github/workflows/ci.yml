@@ -265,6 +265,11 @@ jobs:
     uses: wcmchenry3-stack/.github/.github/workflows/called-feedback-token-lint.yml@main
     secrets: inherit
 
+  provenance-coverage:
+    needs: [lint-python, lint-frontend, secret-scan]
+    uses: wcmchenry3-stack/.github/.github/workflows/called-provenance-coverage.yml@main
+    secrets: inherit
+
   # --- Android JS bundle validation (Linux, fast) ---------------------------
   # Catches silent bundling failures BEFORE they reach EAS Build.
   # The Android build check below only compiles in Debug mode (skips bundling),
