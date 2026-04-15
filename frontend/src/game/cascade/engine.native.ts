@@ -47,6 +47,11 @@ export interface BoundaryEscapeEvent {
 // With default scale 0.001 and y=1.4, that gives us a punchy-but-controllable fall.
 const MATTER_GRAVITY_Y = 1.4;
 
+// Fixed physics sub-step (60Hz). Matter warns at >16.67ms because collision
+// detection starts missing thin walls. step() breaks larger frame deltas
+// into N × FIXED_STEP_MS updates.
+const FIXED_STEP_MS = 1000 / 60;
+
 export async function createEngine(
   W: number,
   H: number,
@@ -183,10 +188,17 @@ export async function createEngine(
 
   return {
     step(dt?: number): BodySnapshot[] {
-      let elapsed = dt ?? 1 / 60;
-      // Clamp: min 1/120s, max 1/30s
-      elapsed = Math.max(1 / 120, Math.min(elapsed, 1 / 30));
-      Matter.Engine.update(engine, elapsed * 1000);
+      // Matter recommends physics steps ≤ 16.67ms; larger steps let
+      // fast bodies tunnel through thin static walls (#499). Break a
+      // large frame into fixed sub-steps. Clamp total elapsed to 1/6s
+      // so a backgrounded tab can't schedule a hundred catch-up steps.
+      const rawElapsed = dt ?? 1 / 60;
+      let remainingMs = Math.min(rawElapsed, 1 / 6) * 1000;
+      while (remainingMs > 0.01) {
+        const stepMs = Math.min(remainingMs, FIXED_STEP_MS);
+        Matter.Engine.update(engine, stepMs);
+        remainingMs -= stepMs;
+      }
 
       processMerges();
 

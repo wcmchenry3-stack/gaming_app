@@ -4,6 +4,7 @@
  * Uses the real matter.js library (pure JS, no mocks needed).
  * Explicitly imports engine.native.ts to bypass Jest's default resolution.
  */
+import Matter from "matter-js";
 import { createEngine } from "../engine.native";
 import type { EngineHandle } from "../engine.shared";
 import { FRUIT_SETS } from "../../../theme/fruitSets";
@@ -347,6 +348,36 @@ describe("boundary escape", () => {
     handle.step(1 / 60);
     expect(onBoundaryEscape).toHaveBeenCalledTimes(1);
     expect(onGameOver).not.toHaveBeenCalled();
+    handle.cleanup();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Physics sub-stepping (#499) — large frame deltas must be broken into
+// ≤16.67ms sub-steps so fast bodies can't tunnel through static walls.
+// ---------------------------------------------------------------------------
+
+describe("physics sub-stepping", () => {
+  it("splits a 33ms frame into two Matter.Engine.update calls", async () => {
+    const handle = await createEngine(W, H, fruitSet, jest.fn(), jest.fn(), jest.fn());
+    const updateSpy = jest.spyOn(Matter.Engine, "update");
+    handle.step(1 / 30); // 33.33ms
+    expect(updateSpy).toHaveBeenCalledTimes(2);
+    // Each sub-step should be at or under the 60Hz fixed step (~16.67ms).
+    for (const call of updateSpy.mock.calls) {
+      expect(call[1]).toBeLessThanOrEqual(1000 / 60 + 0.001);
+    }
+    handle.cleanup();
+  });
+
+  it("clamps a huge frame delta (1s) to ≤ 1/6s of simulated time", async () => {
+    const handle = await createEngine(W, H, fruitSet, jest.fn(), jest.fn(), jest.fn());
+    const updateSpy = jest.spyOn(Matter.Engine, "update");
+    handle.step(1); // 1 second — would be 60 sub-steps uncapped
+    const totalMs = updateSpy.mock.calls.reduce((sum, c) => sum + (c[1] as number), 0);
+    // 1/6s cap = ~166.67ms. Allow a hair of float drift.
+    expect(totalMs).toBeLessThanOrEqual(1000 / 6 + 0.1);
+    expect(updateSpy.mock.calls.length).toBeLessThanOrEqual(11);
     handle.cleanup();
   });
 });
