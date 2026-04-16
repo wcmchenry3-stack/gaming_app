@@ -18,19 +18,19 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from db.base import get_session_factory
 from db.models import Game, GameType
 from limiter import limiter
+from vocab import GameType as GameTypeEnum
 
 from .models import LeaderboardResponse, ScoreEntry, ScoreSubmitRequest
 
 router = APIRouter()
 
 LEADERBOARD_LIMIT = 10
-_CASCADE_GAME_TYPE = "cascade"
 _CASCADE_SESSION = "cascade-anon"  # placeholder until SSO; rows still rank
 
 
 async def _cascade_game_type_id(db: AsyncSession) -> int:
     row = (
-        await db.execute(select(GameType.id).where(GameType.name == _CASCADE_GAME_TYPE))
+        await db.execute(select(GameType.id).where(GameType.name == GameTypeEnum.CASCADE))
     ).scalar_one_or_none()
     if row is None:
         raise HTTPException(
