@@ -334,3 +334,120 @@ The epic listed `/celestial_images/` as "suspected dead weight." Investigation f
 - The actual paths are `celestial-icons/` and `cosmos-baked/` (not `celestial_images/`).
 - Both are actively imported and in use.
 - A third set (`source-icons/cosmos/`) is the pipeline input — intentional and necessary locally.
+
+---
+
+## Per-Game Size Budget, Standalone Criteria, and Pachisi Decision
+
+> **Epic 2a — Story #530** | Authored: 2026-04-15 | Depends on: #527, #528, #529 | No code changes in this section.
+
+### Baseline recap (from #527, #528, #529)
+
+| Metric | Measured value |
+|---|---|
+| Total on-device (JS + assets) | ~79 MB |
+| JS bundle (Hermes, shipped) | 4.5 MB |
+| Bundled assets | 74.8 MB |
+| Cascade game assets (images + JSON) | ~65 MB PNG (~15 MB target after WebP, Epic 2b) |
+| Yacht / Blackjack / 2048 game assets | **0 MB** — fully code-rendered |
+| Cascade JS contribution | ~60 KB (source) |
+| Other games JS contribution (each) | ~20–40 KB (source) |
+
+### Per-game size budget
+
+Three of the four shipped games (Yacht, Blackjack, 2048) contribute **zero game-specific assets** — their game state is rendered in code. Cascade is the sole asset-heavy game, and its footprint is driven by a two-theme image set that will be addressed separately in Epic 2b.
+
+Based on this baseline the standard budget for new games is:
+
+| Component | Budget | Notes |
+|---|---|---|
+| **Game-specific JS** | < 100 KB source | Current games: 20–65 KB each — budget is generous |
+| **Game-specific assets** | **≤ 5 MB** | Per game, after optimisation (WebP, appropriate resolution) |
+| **Combined per-game** | **≤ 5.1 MB** | Shared assets (logo, fonts, navigation icons) are excluded from this budget |
+
+**What "game-specific assets" means:** Images, sounds, fonts, and data files that are only required by a single game and would not exist if that game were removed. Shared infrastructure (app logo, navigation icons, i18n strings) is excluded.
+
+**Why 5 MB:** A single-theme casual game with 12–15 game piece images at appropriate display resolution (WebP, ~200×200 px, ~20–40 KB each) lands at ~0.5–0.6 MB per theme. Even a two-theme game is well under 5 MB. This leaves room for additional assets (backgrounds, overlays, sound effects) while keeping growth bounded.
+
+**What 5 MB enables comfortably:**
+- Card games, dice games, puzzle games (code-rendered): trivially under budget
+- A single-theme image game (12 pieces, WebP): ~0.5–1 MB
+- A two-theme image game (24 pieces, WebP): ~1–2 MB
+- A game with short ambient audio clip (~30s, compressed OGG/AAC): 1–3 MB
+
+### Cascade grandfathering
+
+Cascade is grandfathered above the 5 MB budget. It predates this policy and carries significant asset weight for legitimate design reasons (two full image themes). Its current footprint and Epic 2b reduction target:
+
+| State | Asset size | Notes |
+|---|---|---|
+| Current (PNG) | ~65 MB | fruit-icons/ + celestial-icons/ + baked sets |
+| Target after Epic 2b (WebP) | ~10–15 MB | Estimated 70–80% PNG-to-WebP reduction |
+| Optimisation opportunities | | Remove pumpkin + milkyway reserved imports (~6.7 MB); convert logo.png to purpose-sized WebP (~0.5 MB target) |
+
+Cascade's larger footprint is tracked separately in Epic 2b and does not set a precedent for future games.
+
+### Audio strategy
+
+Offline audio is not currently implemented in any game. If added in a future epic, audio budgets would apply to all games under the same per-game ceiling:
+
+| Audio type | Typical size | Notes |
+|---|---|---|
+| Short ambient loop (30s, OGG 128 kbps) | ~0.5 MB | Fits easily within 5 MB budget |
+| Full game track (3 min, OGG 128 kbps) | ~3 MB | Uses majority of budget — weigh carefully |
+| Sound effects set (10 clips) | ~0.5–1 MB | Usually fine |
+
+**Policy:** If a game requires more than one background track or a large sound effect library (> 2 MB audio alone), evaluate against the standalone game criteria below.
+
+### Standalone game criteria
+
+A game must be built as a standalone app if it meets **any** of the following thresholds. A game that approaches but does not meet these thresholds should still be reviewed before development begins.
+
+| Criterion | Threshold | Reason |
+|---|---|---|
+| Game-specific assets after optimisation | **> 20 MB** | Directly drives download size and install growth beyond reasonable suite overhead |
+| Game requires a unique native library | **Any** | Each native `.so` adds 5–15 MB per ABI to the binary; libraries not shared with other suite games are unjustifiable in a shared app |
+| Game-specific audio | **> 3 MB** | Indicates a soundtrack-level audio investment that belongs in a dedicated product |
+| Requires a native rendering engine not already in the suite | **Any** (e.g., 3D via React Native Three Fiber, GPU shaders) | New GPU/rendering native libs dominate binary size |
+
+**Evaluation process for a proposed new game before development begins:**
+1. Estimate asset requirements (themes × pieces × resolution × format)
+2. Estimate audio requirements (track count, length, format)
+3. Identify any required native libraries not already in `frontend/package.json`
+4. If any standalone threshold is met → build as a separate app
+5. If assets are 10–20 MB (approaching threshold) → bring to team for review before starting
+6. Document the evaluation result in the game's design document and `GAME-CONTRACT.md` checklist
+
+### Galaga-style game evaluation (worked example)
+
+A Galaga-style arcade shooter is listed as a potential future paid game. Evaluated against the criteria above:
+
+| Requirement | Estimate | Budget impact |
+|---|---|---|
+| Sprite sheet (player, enemies, bullets, explosions) | 5–15 MB | ~5–15 MB |
+| Background parallax layers | 2–5 MB | ~2–5 MB |
+| Audio (theme music + sound effects) | 3–8 MB | ~3–8 MB |
+| Particle systems | Code-rendered, no assets | ~0 MB |
+| Potential native library (GPU particles, 3D elements) | 8–15 MB per ABI | Standalone trigger |
+| **Estimated total** | **10–38 MB** | **Likely exceeds threshold** |
+
+**Provisional verdict:** A Galaga-style game almost certainly exceeds the 20 MB asset threshold and may require a unique native rendering library. **Build as a standalone app if pursued.** Confirm this evaluation against the actual design spec before development begins.
+
+### Pachisi decision
+
+**Status: Deferred — product decision pending.**
+
+Pachisi is currently disabled in `frontend/App.tsx` (route commented out, no static import). Its bundle contribution is **confirmed zero** — no Pachisi files appear in the Android bundle. Its backend router is imported but not registered in `backend/main.py:57–58`.
+
+The two options on the table:
+
+| Option | Implication |
+|---|---|
+| **(A) Stays in suite — rewrite required** | Pachisi must implement the `GameModule` protocol (Epic 3) before re-enabling. Existing component and game files remain in repo under that contract. |
+| **(B) Removed from codebase** | All `src/game/pachisi/`, `src/components/pachisi/`, `src/screens/PachisiScreen.tsx`, and backend routes deleted. Decision is irreversible without git history. |
+
+Neither option affects the current app size — Pachisi is already excluded from the bundle.
+
+The Pachisi size contribution, if re-enabled, would be minimal (code-rendered board game, no large assets) and would not approach the standalone threshold. Size is not a factor in this decision; it is a product/prioritisation decision.
+
+**This decision is tracked in Epic 3** (which includes Pachisi's path as a required acceptance criterion). Close this item when Epic 3's Pachisi acceptance criterion is resolved.
