@@ -409,14 +409,41 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
         if (lastFrameTimeRef.current === 0) lastFrameTimeRef.current = timestamp;
         const elapsed = (timestamp - lastFrameTimeRef.current) / 1000; // seconds
         lastFrameTimeRef.current = timestamp;
+
+        // Warn when dt hits the engine clamp boundaries (1/120 s – 1/30 s).
+        // Triggers on: slow frames, foldable display-panel switches, tab
+        // backgrounding, or a blocking network call on the main thread.
+        if (__DEV__ && elapsed > 0 && (elapsed > 1 / 30 || elapsed < 1 / 120)) {
+          console.warn(
+            `[GameCanvas] dt=${elapsed.toFixed(4)}s outside [1/120, 1/30] — will be clamped by engine`
+          );
+        }
+
         if (engineRef.current) {
           bodiesRef.current = engineRef.current.step(elapsed);
         }
         drawRef.current();
         id = requestAnimationFrame(loop);
       }
+
+      // When the tab/display becomes visible again after a suspension (e.g.
+      // foldable display-panel switch, app backgrounding), reset the frame
+      // timer so the first post-resume frame doesn't simulate accumulated
+      // idle time.  Without this, a long suspension produces a large elapsed
+      // that — even after the engine clamps it to 1/30 s — can trigger the
+      // upward-velocity anomaly reported in #552.
+      function handleVisibilityChange() {
+        if (!document.hidden) {
+          lastFrameTimeRef.current = 0;
+        }
+      }
+      document.addEventListener("visibilitychange", handleVisibilityChange);
+
       id = requestAnimationFrame(loop);
-      return () => cancelAnimationFrame(id);
+      return () => {
+        cancelAnimationFrame(id);
+        document.removeEventListener("visibilitychange", handleVisibilityChange);
+      };
     }, []); // intentionally empty — loop lives for component lifetime
 
     useImperativeHandle(ref, () => {

@@ -90,6 +90,15 @@ export class MockWorld {
   _fireCollision(h1: number, h2: number) {
     this._activeEventQueue?._push(h1, h2, true);
   }
+
+  /**
+   * Test helper: force the next createRigidBody call to reuse a specific
+   * handle index.  Used to simulate Rapier's generational-arena handle
+   * recycling so the tier-snapshot guard in processMerges can be exercised.
+   */
+  _forceNextHandle(n: number) {
+    this._bodyHandleCounter = n;
+  }
 }
 
 const mockColliderDescBuilder = () => ({
@@ -105,9 +114,27 @@ const RAPIER_MOCK = {
   World: jest.fn().mockImplementation(() => new MockWorld()),
   EventQueue: jest.fn().mockImplementation(() => new MockEventQueue()),
   RigidBodyDesc: {
-    dynamic: () => ({
-      setTranslation: (x: number, y: number) => ({ x, y }),
-    }),
+    dynamic: () => {
+      let _x = 0,
+        _y = 0;
+      const builder = {
+        get x() {
+          return _x;
+        },
+        get y() {
+          return _y;
+        },
+        setTranslation(x: number, y: number) {
+          _x = x;
+          _y = y;
+          return builder;
+        },
+        setCcdEnabled(_enabled: boolean) {
+          return builder;
+        },
+      };
+      return builder;
+    },
   },
   ColliderDesc: {
     ball: jest.fn().mockImplementation(() => mockColliderDescBuilder()),
