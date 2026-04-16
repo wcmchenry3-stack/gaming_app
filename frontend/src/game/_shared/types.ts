@@ -6,7 +6,7 @@
  * pattern.
  */
 
-export type GameType = "cascade" | "yacht" | "blackjack" | "twenty48" | "pachisi";
+export type { GameType } from "../../api/vocab";
 
 /**
  * A score submission waiting to be sent to the server.

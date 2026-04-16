@@ -6,8 +6,12 @@
  *   python backend/scripts/gen_vocab_ts.py > frontend/src/api/vocab.ts
  *
  * The backend CI test (tests/test_vocab.py) will fail if this file
- * drifts from the Python enum.
+ * drifts from the Python enums (GameType, GameOutcome).
  */
+
+export const GAME_TYPES = ["yacht", "twenty48", "blackjack", "cascade", "pachisi"] as const;
+
+export type GameType = (typeof GAME_TYPES)[number];
 
 export const GAME_OUTCOMES = [
   "win",
