@@ -38,9 +38,16 @@ from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from db.base import Base
+from vocab import GameOutcome
 
 # JSONB on Postgres, JSON (TEXT) on sqlite — both round-trip Python dicts.
 _JSONB = JSON().with_variant(JSONB(), "postgresql")
+
+# Built from GameOutcome in vocab.py — the single source of truth.
+# Adding a value to the enum is the only change needed; this string rebuilds automatically.
+_OUTCOME_CHECK = "outcome IS NULL OR outcome IN ({})".format(
+    ",".join(f"'{v.value}'" for v in GameOutcome)
+)
 
 
 class GameType(Base):
@@ -87,15 +94,7 @@ class EventType(Base):
 class Game(Base):
     __tablename__ = "games"
     __table_args__ = (
-        CheckConstraint(
-            # Two vocabularies coexist here — see _VALID_OUTCOMES in
-            # games/service.py for the rationale. Result vocabulary:
-            # win/loss/push/blackjack. Lifecycle vocabulary (#514):
-            # completed/abandoned/kept_playing.
-            "outcome IS NULL OR outcome IN "
-            "('win','loss','push','blackjack','completed','abandoned','kept_playing')",
-            name="ck_games_outcome",
-        ),
+        CheckConstraint(_OUTCOME_CHECK, name="ck_games_outcome"),
         Index("games_session_id_started_at_idx", "session_id", "started_at"),
         Index(
             "games_user_id_started_at_idx",
