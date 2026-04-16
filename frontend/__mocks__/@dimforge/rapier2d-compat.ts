@@ -129,6 +129,7 @@ const RAPIER_MOCK = {
           _y = y;
           return builder;
         },
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         setCcdEnabled(_enabled: boolean) {
           return builder;
         },
