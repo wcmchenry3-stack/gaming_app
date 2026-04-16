@@ -397,11 +397,17 @@ jobs:
           cd android
           ./gradlew assembleRelease \
             -PreactNativeArchitectures=arm64-v8a \
+            -PUPLOAD_STORE_FILE=debug.keystore \
+            -PUPLOAD_STORE_PASSWORD=android \
+            -PUPLOAD_KEY_ALIAS=androiddebugkey \
+            -PUPLOAD_KEY_PASSWORD=android \
             --no-daemon
         # No SENTRY_AUTH_TOKEN: sentry.gradle skips source-map upload when the
         # token is absent, so the smoke test validates the build chain only.
-        # Signing uses the generated debug.keystore via the app/build.gradle
-        # fallback (UPLOAD_STORE_FILE not set → falls back to debug.keystore).
+        # Signing is overridden to use the generated debug.keystore so the
+        # production upload-keystore.jks (gitignored) is not required in CI.
+        # gradle.properties sets UPLOAD_STORE_FILE=../upload-keystore.jks which
+        # would fail; these -P flags take precedence over gradle.properties.
 
   # --- Phase 9: Sentry CLI auth validation (Linux, fast) --------------------
   # Catches expired or misconfigured Sentry auth tokens before they break
