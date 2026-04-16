@@ -428,9 +428,8 @@ describe("SyncWorker", () => {
     // Game must still be tracked — not forgotten yet.
     expect(games.get(gid)).toBeDefined();
     expect(games.get(gid)?.completeAttempts).toBe(1);
-    // Not yet counted as dead-lettered.
-    const result = await worker.flush();
     // This second flush will succeed (api.defaultResponse = ok()).
+    await worker.flush();
     expect(games.get(gid)).toBeUndefined(); // forgotten after 2xx
   });
 
