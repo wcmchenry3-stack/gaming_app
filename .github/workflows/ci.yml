@@ -385,10 +385,8 @@ jobs:
           ./gradlew assembleRelease \
             -PreactNativeArchitectures=arm64-v8a \
             --no-daemon
-        env:
-          # Sentry upload is conditional on this token; omit to skip upload
-          # while still validating the rest of the release build chain
-          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+        # No SENTRY_AUTH_TOKEN: sentry.gradle skips source-map upload when the
+        # token is absent, so the smoke test validates the build chain only.
 
   # --- Phase 9: Sentry CLI auth validation (Linux, fast) --------------------
   # Catches expired or misconfigured Sentry auth tokens before they break
