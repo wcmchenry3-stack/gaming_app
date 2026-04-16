@@ -116,7 +116,11 @@ export async function createEngine(
   let gameOverFired = false;
 
   // Merges are queued during collision events and processed synchronously after draining.
-  const mergeQueue: Array<[number, number]> = [];
+  // The third element is the tier snapshotted at enqueue time; processMerges re-verifies
+  // both body tiers against this snapshot to guard against Rapier arena handle reuse
+  // (a body removed during a merge can have its handle recycled for the newly spawned
+  // body, making fruitMap.get(handle) return the wrong tier in subsequent queue entries).
+  const mergeQueue: Array<[number, number, number]> = []; // [handleA, handleB, tier]
 
   function spawnAt(
     def: FruitDefinition,
@@ -128,7 +132,9 @@ export async function createEngine(
     console.log(
       `[Engine] spawn tier=${def.tier} source=${source} totalBefore=${fruitMap.size} t=${Date.now()}`
     );
-    const rbDesc = R.RigidBodyDesc.dynamic().setTranslation(x * SCALE, y * SCALE);
+    const rbDesc = R.RigidBodyDesc.dynamic()
+      .setTranslation(x * SCALE, y * SCALE)
+      .setCcdEnabled(true);
     const rb = world.createRigidBody(rbDesc);
 
     const nameKey = (def as { nameKey?: string }).nameKey ?? def.name.toLowerCase();
@@ -198,16 +204,20 @@ export async function createEngine(
     if (mergeQueue.length > 0) {
       console.log(`[Engine] processMerges queueLen=${mergeQueue.length} t=${Date.now()}`);
     }
-    for (const [ha, hb] of mergeQueue) {
+    for (const [ha, hb, enqueuedTier] of mergeQueue) {
       const fa = fruitMap.get(ha);
       const fb = fruitMap.get(hb);
       if (!fa || !fb || fa.isMerging || fb.isMerging) continue;
-      if (fa.fruitTier !== fb.fruitTier) continue;
+      // Re-verify tiers against the snapshot captured at enqueue time.
+      // Rapier's generational arena can reuse a handle after removeRigidBody,
+      // so fruitMap.get(ha) may now point to a newly spawned body with a
+      // different tier — causing a phantom cross-tier merge if unchecked.
+      if (fa.fruitTier !== enqueuedTier || fb.fruitTier !== enqueuedTier) continue;
 
       fa.isMerging = true;
       fb.isMerging = true;
 
-      const tier = fa.fruitTier;
+      const tier = enqueuedTier;
       const rba = world.getRigidBody(ha);
       const rbb = world.getRigidBody(hb);
       if (!rba || !rbb) continue;
@@ -255,7 +265,7 @@ export async function createEngine(
         const fb = fruitMap.get(rbh2);
         if (!fa || !fb || fa.isMerging || fb.isMerging) return;
         if (fa.fruitTier === fb.fruitTier) {
-          mergeQueue.push([rbh1, rbh2]);
+          mergeQueue.push([rbh1, rbh2, fa.fruitTier]); // snapshot tier at enqueue
         }
       });
 

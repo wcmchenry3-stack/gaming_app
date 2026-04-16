@@ -380,6 +380,129 @@ describe("cleanup", () => {
 });
 
 // ---------------------------------------------------------------------------
+// Tier-snapshot guard (handle-reuse protection)
+// ---------------------------------------------------------------------------
+
+describe("tier-snapshot guard", () => {
+  /**
+   * Simulate Rapier's generational-arena handle recycling:
+   *
+   *  1. Drop three tier-2 fruits (bodies 0, 1, 2; colliders 1003–1005).
+   *  2. Fire two collisions: [1003,1004] (body 0+1) and [1003,1005] (body 0+2).
+   *     Both pairs are same-tier at drain time, so both are enqueued as
+   *     [0,1,tier=2] and [0,2,tier=2].
+   *  3. Force the next body handle to 0 so the tier-3 fruit spawned from the
+   *     first merge reuses body handle 0.
+   *  4. processMerges processes [0,1,2]: merges correctly → onMerge fires once.
+   *     fruitMap[0] now points to the newly spawned tier-3 body.
+   *  5. processMerges processes [0,2,2]: fruitMap[0].fruitTier(3) !== enqueuedTier(2)
+   *     → guard fires, merge skipped → onMerge is NOT called a second time.
+   */
+  it("skips a merge pair when the body tier no longer matches the enqueued tier", async () => {
+    const onMerge = jest.fn();
+    const handle = await createEngine(W, H, fruitSet, onMerge, jest.fn());
+    const world = getWorld();
+
+    // bodies 0, 1, 2 are tier-2; colliders 1003, 1004, 1005
+    handle.drop(fruitSet.fruits[2], fruitSet.id, 100, 300);
+    handle.drop(fruitSet.fruits[2], fruitSet.id, 110, 300);
+    handle.drop(fruitSet.fruits[2], fruitSet.id, 120, 300);
+    handle.step();
+
+    // Two collision events sharing body 0 — both look same-tier at drain time.
+    world._fireCollision(1003, 1004); // [body0, body1] → enqueued [0,1,tier=2]
+    world._fireCollision(1003, 1005); // [body0, body2] → enqueued [0,2,tier=2]
+
+    // Force the tier-3 fruit spawned by the first merge to reuse handle 0.
+    // This simulates Rapier's arena recycling the freed slot immediately.
+    world._forceNextHandle(0);
+
+    handle.step(); // drain + processMerges
+
+    // First pair [0,1,2] merges cleanly: onMerge fires once for tier 2.
+    // Second pair [0,2,2]: fruitMap[0] is now tier 3 (recycled body) —
+    // the snapshot guard rejects it, so no second merge fires.
+    expect(onMerge).toHaveBeenCalledTimes(1);
+    expect(onMerge).toHaveBeenCalledWith(expect.objectContaining({ tier: 2 }));
+  });
+
+  it("still merges normally when no handle reuse occurs", async () => {
+    const onMerge = jest.fn();
+    const handle = await createEngine(W, H, fruitSet, onMerge, jest.fn());
+    const world = getWorld();
+
+    handle.drop(fruitSet.fruits[3], fruitSet.id, 100, 300);
+    handle.drop(fruitSet.fruits[3], fruitSet.id, 110, 300);
+    handle.step();
+
+    world._fireCollision(1003, 1004);
+    handle.step();
+
+    expect(onMerge).toHaveBeenCalledTimes(1);
+    expect(onMerge).toHaveBeenCalledWith(expect.objectContaining({ tier: 3 }));
+  });
+});
+
+// ---------------------------------------------------------------------------
+// CCD (Continuous Collision Detection)
+// ---------------------------------------------------------------------------
+
+describe("CCD enablement", () => {
+  it("calls setCcdEnabled(true) on every spawned fruit body", async () => {
+    const setCcdSpy = jest.fn().mockImplementation(function (this: unknown) {
+      return this;
+    });
+    const origDynamic = RAPIER_MOCK.RigidBodyDesc.dynamic;
+    RAPIER_MOCK.RigidBodyDesc.dynamic = () => {
+      const builder = origDynamic();
+      builder.setCcdEnabled = setCcdSpy;
+      return builder;
+    };
+
+    try {
+      const handle = await createEngine(W, H, fruitSet, jest.fn(), jest.fn());
+      handle.drop(fruitSet.fruits[1], fruitSet.id, 150, 300);
+      handle.drop(fruitSet.fruits[2], fruitSet.id, 160, 300);
+      handle.step();
+      expect(setCcdSpy).toHaveBeenCalledTimes(2);
+      expect(setCcdSpy).toHaveBeenCalledWith(true);
+    } finally {
+      RAPIER_MOCK.RigidBodyDesc.dynamic = origDynamic;
+    }
+  });
+
+  it("calls setCcdEnabled(true) on the body spawned by a merge", async () => {
+    const setCcdSpy = jest.fn().mockImplementation(function (this: unknown) {
+      return this;
+    });
+    const origDynamic = RAPIER_MOCK.RigidBodyDesc.dynamic;
+    RAPIER_MOCK.RigidBodyDesc.dynamic = () => {
+      const builder = origDynamic();
+      builder.setCcdEnabled = setCcdSpy;
+      return builder;
+    };
+
+    try {
+      const handle = await createEngine(W, H, fruitSet, jest.fn(), jest.fn());
+      const world = getWorld();
+
+      handle.drop(fruitSet.fruits[2], fruitSet.id, 100, 300);
+      handle.drop(fruitSet.fruits[2], fruitSet.id, 110, 300);
+      handle.step(); // 2 drops → 2 CCD calls so far
+      setCcdSpy.mockClear();
+
+      world._fireCollision(1003, 1004);
+      handle.step(); // merge fires → spawns tier-3 body → 1 more CCD call
+
+      expect(setCcdSpy).toHaveBeenCalledTimes(1);
+      expect(setCcdSpy).toHaveBeenCalledWith(true);
+    } finally {
+      RAPIER_MOCK.RigidBodyDesc.dynamic = origDynamic;
+    }
+  });
+});
+
+// ---------------------------------------------------------------------------
 // Exported types / constants
 // ---------------------------------------------------------------------------
 
