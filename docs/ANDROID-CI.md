@@ -40,7 +40,7 @@ for security.
 | `frontend/android/app/build.gradle`                         | App module: SDK versions, signing, dependencies, Sentry |
 | `frontend/android/settings.gradle`                          | Module includes, React Native + Expo autolinking        |
 | `frontend/android/gradle.properties`                        | JVM args, architecture list, Hermes/New Arch toggles    |
-| `frontend/android/gradle/wrapper/gradle-wrapper.properties` | Gradle distribution version (currently 9.0.0)           |
+| `frontend/android/gradle/wrapper/gradle-wrapper.properties` | Gradle distribution version (currently 8.13)            |
 | `frontend/android/sentry.properties`                        | Sentry CLI config (uses env vars for org/project/token) |
 
 ## JS bundle validation (GitHub Actions)
