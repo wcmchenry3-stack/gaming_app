@@ -5,7 +5,7 @@
  *   - gameType / metadata — needed by SyncWorker to POST /games
  *   - startedSynced — has POST /games returned 2xx?
  *   - nextEventIndex — monotonic counter used when enqueueing events
- *   - completed / completeSummary / completeSynced — for PATCH /complete
+ *   - completed / completeSummary / completeSynced / completeAttempts — for PATCH /complete
  *
  * Storage: in-memory map is authoritative; AsyncStorage persists the same
  * map under `pending_games_v1`. On init() we rehydrate from disk. The
@@ -40,6 +40,11 @@ export interface PendingGame {
   completed: boolean;
   completeSummary: CompleteSummary | null;
   completeSynced: boolean;
+  /** How many times PATCH /complete has returned a non-retryable 4xx. Used
+   * to survive deployment-window mismatches where the server temporarily
+   * rejects a valid outcome value. Missing on pre-#519 persisted records —
+   * always read as `game.completeAttempts ?? 0`. */
+  completeAttempts: number;
 }
 
 export class PendingGamesStore {
@@ -98,6 +103,7 @@ export class PendingGamesStore {
       completed: false,
       completeSummary: null,
       completeSynced: false,
+      completeAttempts: 0,
     });
     return this.persist();
   }
@@ -145,6 +151,16 @@ export class PendingGamesStore {
     if (!game || game.startedSynced) return Promise.resolve();
     game.startedSynced = true;
     return this.persist();
+  }
+
+  /** SyncWorker calls this after a non-403 4xx on PATCH /complete.
+   * Increments the attempt counter, persists, and returns the new count. */
+  incrementCompleteAttempts(gameId: string): Promise<number> {
+    const game = this.games.get(gameId);
+    if (!game) return Promise.resolve(0);
+    const next = (game.completeAttempts ?? 0) + 1;
+    game.completeAttempts = next;
+    return this.persist().then(() => next);
   }
 
   /** SyncWorker marks PATCH /complete confirmed. */
