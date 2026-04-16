@@ -5,6 +5,8 @@
  * these in sync when the backend contract changes.
  */
 
+export type { GameOutcome } from "./vocab";
+
 export interface GameTypeStats {
   played: number;
   best: number | null;
@@ -26,7 +28,7 @@ export interface GameRow {
   started_at: string;
   completed_at: string | null;
   final_score: number | null;
-  outcome: string | null;
+  outcome: GameOutcome | null;
   duration_ms: number | null;
   metadata: Record<string, unknown>;
 }
