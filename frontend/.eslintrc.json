@@ -5,7 +5,7 @@
     "sourceType": "module",
     "ecmaFeatures": { "jsx": true }
   },
-  "plugins": ["@typescript-eslint", "react", "react-hooks"],
+  "plugins": ["@typescript-eslint", "react", "react-hooks", "import"],
   "extends": [
     "eslint:recommended",
     "plugin:@typescript-eslint/recommended",
@@ -22,7 +22,24 @@
   },
   "rules": {
     "react/react-in-jsx-scope": "off",
-    "react/prop-types": "off"
+    "react/prop-types": "off",
+    "import/no-restricted-paths": [
+      "error",
+      {
+        "zones": [
+          {
+            "target": "./src/game",
+            "from": "./src/components",
+            "message": "Game engines must not import from components/. Keep logic and UI separate."
+          },
+          {
+            "target": "./src/game",
+            "from": "./src/screens",
+            "message": "Game engines must not import from screens/. Keep logic and UI separate."
+          }
+        ]
+      }
+    ]
   },
   "ignorePatterns": [
     "node_modules/",
