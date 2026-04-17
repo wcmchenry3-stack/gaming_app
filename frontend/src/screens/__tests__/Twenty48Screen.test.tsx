@@ -194,12 +194,15 @@ import { TileData } from "../../game/twenty48/types";
 function tilesFor(board: number[][]): TileData[] {
   const tiles: TileData[] = [];
   let id = 100;
-  for (let r = 0; r < board.length; r++)
-    for (let c = 0; c < board[r].length; c++)
-      if (board[r][c] !== 0)
+  for (let r = 0; r < board.length; r++) {
+    const row = board[r];
+    if (row === undefined) continue;
+    for (let c = 0; c < row.length; c++) {
+      const cell = row[c];
+      if (cell !== undefined && cell !== 0)
         tiles.push({
           id: id++,
-          value: board[r][c],
+          value: cell,
           row: r,
           col: c,
           prevRow: r,
@@ -207,6 +210,8 @@ function tilesFor(board: number[][]): TileData[] {
           isNew: false,
           isMerge: false,
         });
+    }
+  }
   return tiles;
 }
 
@@ -224,6 +229,8 @@ const NOOP_LEFT_STATE: Twenty48State = {
   scoreDelta: 0,
   game_over: false,
   has_won: false,
+  startedAt: null,
+  accumulatedMs: 0,
 };
 
 const WON_BOARD = [
@@ -239,6 +246,8 @@ const WON_STATE: Twenty48State = {
   scoreDelta: 0,
   game_over: false,
   has_won: true,
+  startedAt: null,
+  accumulatedMs: 0,
 };
 
 // A filled board with no possible merges — game is over.
@@ -255,6 +264,8 @@ const GAME_OVER_STATE: Twenty48State = {
   scoreDelta: 0,
   game_over: true,
   has_won: false,
+  startedAt: null,
+  accumulatedMs: 0,
 };
 
 // ---------------------------------------------------------------------------
@@ -427,7 +438,9 @@ describe("Twenty48Screen — gameEventClient instrumentation (#369)", () => {
     (loadGame as jest.Mock).mockResolvedValueOnce(null);
     await mountAndSettle();
     expect(mockStartGame).toHaveBeenCalledTimes(1);
-    const [gameType, , eventData] = mockStartGame.mock.calls[0];
+    const startCall = mockStartGame.mock.calls[0];
+    if (startCall === undefined) throw new Error("Expected startGame call");
+    const [gameType, , eventData] = startCall;
     expect(gameType).toBe("twenty48");
     expect(eventData).toBeDefined();
     const initialBoard = eventData!.initial_board as number[];
@@ -513,7 +526,9 @@ describe("Twenty48Screen — gameEventClient instrumentation (#369)", () => {
     });
 
     expect(mockCompleteGame).toHaveBeenCalledTimes(1);
-    const [, summary, eventData] = mockCompleteGame.mock.calls[0];
+    const completeCall = mockCompleteGame.mock.calls[0];
+    if (completeCall === undefined) throw new Error("Expected completeGame call");
+    const [, summary, eventData] = completeCall;
     expect(summary.outcome).toBe("completed");
     expect(eventData).toEqual(
       expect.objectContaining({
@@ -544,7 +559,9 @@ describe("Twenty48Screen — gameEventClient instrumentation (#369)", () => {
     });
 
     expect(mockCompleteGame).toHaveBeenCalledTimes(1);
-    const [, summary, eventData] = mockCompleteGame.mock.calls[0];
+    const keptPlayingCall = mockCompleteGame.mock.calls[0];
+    if (keptPlayingCall === undefined) throw new Error("Expected completeGame call");
+    const [, summary, eventData] = keptPlayingCall;
     expect(summary.outcome).toBe("kept_playing");
     expect(eventData.outcome).toBe("kept_playing");
     expect(eventData).toEqual(
@@ -563,7 +580,7 @@ describe("Twenty48Screen — gameEventClient instrumentation (#369)", () => {
     mockCompleteGame.mockClear();
     unmount();
     expect(mockCompleteGame).toHaveBeenCalledTimes(1);
-    expect(mockCompleteGame.mock.calls[0][1].outcome).toBe("abandoned");
+    expect(mockCompleteGame.mock.calls[0]?.[1]?.outcome).toBe("abandoned");
   });
 
   it("does not double-fire game_ended: unmount after completion is a no-op", async () => {
@@ -592,7 +609,7 @@ describe("Twenty48Screen — gameEventClient instrumentation (#369)", () => {
     });
 
     expect(mockCompleteGame).toHaveBeenCalledTimes(1);
-    expect(mockCompleteGame.mock.calls[0][1].outcome).toBe("abandoned");
+    expect(mockCompleteGame.mock.calls[0]?.[1]?.outcome).toBe("abandoned");
     expect(mockStartGame).toHaveBeenCalledWith("twenty48", {}, expect.any(Object));
   });
 

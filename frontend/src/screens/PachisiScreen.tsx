@@ -86,8 +86,9 @@ export default function PachisiScreen({ navigation }: Props) {
 
     // Auto-move when only one piece can move
     if (s.phase === "move" && s.valid_moves.length === 1 && s.current_player === HUMAN_PLAYER) {
+      const autoMove = s.valid_moves[0];
       autoMoveTimer.current = setTimeout(() => {
-        call(() => pachisiApi.move(s.valid_moves[0]));
+        if (autoMove !== undefined) call(() => pachisiApi.move(autoMove));
       }, AUTO_MOVE_DELAY_MS);
     }
   }

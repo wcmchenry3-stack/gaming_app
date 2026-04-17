@@ -288,7 +288,9 @@ describe("BlackjackGameContext — gameEventClient instrumentation (#370)", () =
     renderWithConsumer();
     await settle();
     expect(mockStartGame).toHaveBeenCalledTimes(1);
-    const [gameType, meta, eventData] = mockStartGame.mock.calls[0];
+    const startCall = mockStartGame.mock.calls[0];
+    if (startCall === undefined) throw new Error("Expected startGame call");
+    const [gameType, meta, eventData] = startCall;
     expect(gameType).toBe("blackjack");
     expect(meta).toEqual({});
     expect(eventData).toEqual({ starting_chips: 1000 });
@@ -454,7 +456,9 @@ describe("BlackjackGameContext — gameEventClient instrumentation (#370)", () =
     });
 
     expect(mockCompleteGame).toHaveBeenCalledTimes(1);
-    const [, summary, eventData] = mockCompleteGame.mock.calls[0];
+    const completeCall = mockCompleteGame.mock.calls[0];
+    if (completeCall === undefined) throw new Error("Expected completeGame call");
+    const [, summary, eventData] = completeCall;
     expect(summary.outcome).toBe("completed");
     expect(eventData).toEqual(
       expect.objectContaining({
@@ -476,7 +480,7 @@ describe("BlackjackGameContext — gameEventClient instrumentation (#370)", () =
     mockCompleteGame.mockClear();
     unmount();
     expect(mockCompleteGame).toHaveBeenCalledTimes(1);
-    expect(mockCompleteGame.mock.calls[0][1].outcome).toBe("abandoned");
+    expect(mockCompleteGame.mock.calls[0]?.[1]?.outcome).toBe("abandoned");
   });
 
   it("New Game mid-session abandons the old session and starts a new one", async () => {
@@ -491,7 +495,7 @@ describe("BlackjackGameContext — gameEventClient instrumentation (#370)", () =
     });
 
     expect(mockCompleteGame).toHaveBeenCalledTimes(1);
-    expect(mockCompleteGame.mock.calls[0][1].outcome).toBe("abandoned");
+    expect(mockCompleteGame.mock.calls[0]?.[1]?.outcome).toBe("abandoned");
     expect(mockStartGame).toHaveBeenCalledWith("blackjack", {}, { starting_chips: 1000 });
   });
 

@@ -15,13 +15,17 @@ describe("TRACK_INDEX_TO_CELL", () => {
   });
 
   it("maps Red entry (0) to a cell in the left arm area", () => {
-    const [row, col] = TRACK_INDEX_TO_CELL[0];
+    const cell0 = TRACK_INDEX_TO_CELL[0];
+    if (cell0 === undefined) throw new Error("Expected cell at index 0");
+    const [row, col] = cell0;
     expect(row).toBe(6);
     expect(col).toBe(1);
   });
 
   it("maps Yellow entry (26) to a cell in the right arm area", () => {
-    const [row, col] = TRACK_INDEX_TO_CELL[26];
+    const cell26 = TRACK_INDEX_TO_CELL[26];
+    if (cell26 === undefined) throw new Error("Expected cell at index 26");
+    const [row, col] = cell26;
     expect(row).toBe(8);
     expect(col).toBe(13);
   });
@@ -35,20 +39,25 @@ describe("TRACK_INDEX_TO_CELL", () => {
     for (let i = 0; i < 52; i++) {
       const cell = TRACK_INDEX_TO_CELL[i];
       expect(cell).toBeDefined();
+      if (cell === undefined) continue;
       cells.add(`${cell[0]},${cell[1]}`);
     }
     expect(cells.size).toBe(52);
   });
 
   it("maps Red home col start (52) inside the top arm", () => {
-    const [row, col] = TRACK_INDEX_TO_CELL[52];
+    const cell52 = TRACK_INDEX_TO_CELL[52];
+    if (cell52 === undefined) throw new Error("Expected cell at index 52");
+    const [row, col] = cell52;
     expect(col).toBe(7); // middle col of top arm
     expect(row).toBeGreaterThanOrEqual(1);
     expect(row).toBeLessThanOrEqual(5);
   });
 
   it("maps Yellow home col start (64) inside the right arm", () => {
-    const [row, col] = TRACK_INDEX_TO_CELL[64];
+    const cell64 = TRACK_INDEX_TO_CELL[64];
+    if (cell64 === undefined) throw new Error("Expected cell at index 64");
+    const [row, col] = cell64;
     expect(row).toBe(7); // middle row of right arm
     expect(col).toBeGreaterThanOrEqual(9);
     expect(col).toBeLessThanOrEqual(13);
@@ -132,7 +141,7 @@ describe("HOME_BASE_CELLS", () => {
   });
 
   it("Red spawn slots are within Red home base (rows 0-5, cols 0-5)", () => {
-    for (const [r, c] of HOME_BASE_CELLS.red) {
+    for (const [r, c] of HOME_BASE_CELLS["red"] ?? []) {
       expect(r).toBeGreaterThanOrEqual(0);
       expect(r).toBeLessThanOrEqual(5);
       expect(c).toBeGreaterThanOrEqual(0);
@@ -141,7 +150,7 @@ describe("HOME_BASE_CELLS", () => {
   });
 
   it("Yellow spawn slots are within Yellow home base (rows 9-14, cols 9-14)", () => {
-    for (const [r, c] of HOME_BASE_CELLS.yellow) {
+    for (const [r, c] of HOME_BASE_CELLS["yellow"] ?? []) {
       expect(r).toBeGreaterThanOrEqual(9);
       expect(r).toBeLessThanOrEqual(14);
       expect(c).toBeGreaterThanOrEqual(9);

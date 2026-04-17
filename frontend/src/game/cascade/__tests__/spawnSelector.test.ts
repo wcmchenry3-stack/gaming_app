@@ -24,7 +24,7 @@ describe("ControlledSpawnSelector", () => {
 
     BASE_SPAWN_WEIGHTS.forEach((weight, tier) => {
       const expectedRatio = weight / totalWeight;
-      const observedRatio = stats.frequencyByTier[tier] / 5000;
+      const observedRatio = (stats.frequencyByTier[tier] ?? 0) / 5000;
       // Soft correction should not dramatically override base weights.
       expect(Math.abs(observedRatio - expectedRatio)).toBeLessThan(0.06);
     });
@@ -37,8 +37,8 @@ describe("ControlledSpawnSelector", () => {
     const pureRng = createSeededRng(99);
     const pureRun = simulateSpawns(8000, () => randomSpawnTierPure(pureRng));
 
-    expect(controlledRun.stats.longestDroughtByTier[4]).toBeLessThan(
-      pureRun.stats.longestDroughtByTier[4]
+    expect(controlledRun.stats.longestDroughtByTier[4] ?? 0).toBeLessThan(
+      pureRun.stats.longestDroughtByTier[4] ?? 0
     );
     expect(controlledRun.stats.longestRepeatStreak).toBeLessThanOrEqual(
       pureRun.stats.longestRepeatStreak

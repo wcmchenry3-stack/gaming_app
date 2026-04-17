@@ -43,14 +43,14 @@ describe("fruitSets structure", () => {
       it("radii increase monotonically with tier", () => {
         const sorted = [...set.fruits].sort((a, b) => a.tier - b.tier);
         for (let i = 1; i < sorted.length; i++) {
-          expect(sorted[i].radius).toBeGreaterThan(sorted[i - 1].radius);
+          expect(sorted[i]?.radius).toBeGreaterThan(sorted[i - 1]?.radius ?? 0);
         }
       });
 
       it("score values increase monotonically with tier (except tier 10 bonus)", () => {
         const sorted = [...set.fruits].sort((a, b) => a.tier - b.tier);
         for (let i = 1; i < sorted.length - 1; i++) {
-          expect(sorted[i].scoreValue).toBeGreaterThan(sorted[i - 1].scoreValue);
+          expect(sorted[i]?.scoreValue).toBeGreaterThan(sorted[i - 1]?.scoreValue ?? 0);
         }
       });
     });
@@ -59,13 +59,13 @@ describe("fruitSets structure", () => {
   it("radii are identical across all sets for each tier", () => {
     const sets = Object.values(FRUIT_SETS);
     for (const tier of ALL_TIERS) {
-      const radii = sets.map((s) => s.fruits[tier].radius);
+      const radii = sets.map((s) => s.fruits[tier]?.radius ?? 0);
       expect(new Set(radii).size).toBe(1);
     }
   });
 
   it("uses the requested smallest-to-largest order for cosmos", () => {
-    expect(FRUIT_SETS.cosmos.fruits.map((fruit) => fruit.name)).toEqual([
+    expect(FRUIT_SETS["cosmos"]?.fruits.map((fruit) => fruit.name)).toEqual([
       "Moon",
       "Pluto",
       "Mercury",

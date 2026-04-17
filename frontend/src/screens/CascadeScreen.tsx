@@ -311,6 +311,7 @@ function CascadeGame() {
       }
 
       const def = activeFruitSet.fruits[tier];
+      if (def === undefined) return;
       canvasRef.current?.drop(def, x);
 
       // #216 — throttled save on drop. Merges already save on their own,
@@ -346,6 +347,7 @@ function CascadeGame() {
       const tier = queueRef.current.consume();
       setQueueVersion((v) => v + 1);
       const def = activeFruitSetRef.current.fruits[tier];
+      if (def === undefined) return;
       canvasRef.current?.drop(def, x);
     };
     g.__cascade_fastForward = (ms: number) => {
@@ -455,7 +457,9 @@ function CascadeGame() {
 
       {/* Combined HUD: score + drop/next previews + high, all one row */}
       <ScoreDisplay score={score}>
-        <NextFruitPreview current={currentDef} next={nextDef} />
+        {currentDef !== undefined && nextDef !== undefined && (
+          <NextFruitPreview current={currentDef} next={nextDef} />
+        )}
       </ScoreDisplay>
 
       <ThemeSelector />
@@ -468,7 +472,7 @@ function CascadeGame() {
         ]}
         onLayout={onLayout}
       >
-        {scale > 0 && (
+        {scale > 0 && currentDef !== undefined && (
           <GameCanvas
             ref={canvasRef}
             fruitSet={activeFruitSet}

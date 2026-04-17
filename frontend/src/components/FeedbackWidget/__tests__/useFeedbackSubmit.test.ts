@@ -73,7 +73,9 @@ describe("useFeedbackSubmit", () => {
         await result.current.submit(basePayload);
       });
 
-      const [, init] = mockFetch.mock.calls[0];
+      const firstCall = mockFetch.mock.calls[0];
+      if (firstCall === undefined) throw new Error("Expected fetch to be called");
+      const [, init] = firstCall;
       const body = JSON.parse((init as RequestInit).body as string);
       expect(body.appId).toBe("gaming_app");
     });
@@ -93,7 +95,9 @@ describe("useFeedbackSubmit", () => {
         await result.current.submit(basePayload);
       });
 
-      const [, init] = mockFetch.mock.calls[0];
+      const firstCall = mockFetch.mock.calls[0];
+      if (firstCall === undefined) throw new Error("Expected fetch to be called");
+      const [, init] = firstCall;
       const body = JSON.parse((init as RequestInit).body as string);
       expect(body.sessionLogs).toMatch(/captured log/);
     });
@@ -110,7 +114,9 @@ describe("useFeedbackSubmit", () => {
         await result.current.submit(basePayload);
       });
 
-      const [, init] = mockFetch.mock.calls[0];
+      const firstCall = mockFetch.mock.calls[0];
+      if (firstCall === undefined) throw new Error("Expected fetch to be called");
+      const [, init] = firstCall;
       const body = JSON.parse((init as RequestInit).body as string);
       expect(body.sessionLogs).toBeUndefined();
     });

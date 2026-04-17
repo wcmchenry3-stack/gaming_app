@@ -49,13 +49,16 @@ export function slideAndMerge(line: readonly number[]): { line: number[]; score:
   let score = 0;
   let i = 0;
   while (i < compacted.length) {
-    if (i + 1 < compacted.length && compacted[i] === compacted[i + 1]) {
-      const val = compacted[i] * 2;
+    const curr = compacted[i];
+    const next = compacted[i + 1];
+    if (curr === undefined) break;
+    if (i + 1 < compacted.length && next !== undefined && curr === next) {
+      const val = curr * 2;
       merged.push(val);
       score += val;
       i += 2;
     } else {
-      merged.push(compacted[i]);
+      merged.push(curr);
       i += 1;
     }
   }
@@ -71,9 +74,11 @@ function slideAndMergeWithIds(
   const cv: number[] = [];
   const ci: number[] = [];
   for (let k = 0; k < values.length; k++) {
-    if (values[k] !== 0) {
-      cv.push(values[k]);
-      ci.push(ids[k]);
+    const v = values[k];
+    const id = ids[k];
+    if (v !== undefined && id !== undefined && v !== 0) {
+      cv.push(v);
+      ci.push(id);
     }
   }
 
@@ -83,8 +88,12 @@ function slideAndMergeWithIds(
   let score = 0;
   let i = 0;
   while (i < cv.length) {
-    if (i + 1 < cv.length && cv[i] === cv[i + 1]) {
-      const val = cv[i] * 2;
+    const curr = cv[i];
+    const currId = ci[i];
+    if (curr === undefined || currId === undefined) break;
+    const next = cv[i + 1];
+    if (i + 1 < cv.length && next !== undefined && curr === next) {
+      const val = curr * 2;
       const id = nextId();
       outV.push(val);
       outI.push(id);
@@ -92,8 +101,8 @@ function slideAndMergeWithIds(
       score += val;
       i += 2;
     } else {
-      outV.push(cv[i]);
-      outI.push(ci[i]);
+      outV.push(curr);
+      outI.push(currId);
       i++;
     }
   }
@@ -106,7 +115,7 @@ function slideAndMergeWithIds(
 
 function transpose(board: readonly number[][]): number[][] {
   return Array.from({ length: SIZE }, (_, c) =>
-    Array.from({ length: SIZE }, (_, r) => board[r][c])
+    Array.from({ length: SIZE }, (_, r) => board[r]?.[c] ?? 0)
   );
 }
 
@@ -121,7 +130,7 @@ function cloneIds(ids: readonly number[][]): number[][] {
 function boardsEqual(a: readonly number[][], b: readonly number[][]): boolean {
   for (let r = 0; r < SIZE; r++) {
     for (let c = 0; c < SIZE; c++) {
-      if (a[r][c] !== b[r][c]) return false;
+      if ((a[r]?.[c] ?? -1) !== (b[r]?.[c] ?? -1)) return false;
     }
   }
   return true;
@@ -165,13 +174,19 @@ function spawnTile(board: number[][], idBoard: number[][]): void {
   const empty: Array<[number, number]> = [];
   for (let r = 0; r < SIZE; r++) {
     for (let c = 0; c < SIZE; c++) {
-      if (board[r][c] === 0) empty.push([r, c]);
+      if ((board[r]?.[c] ?? -1) === 0) empty.push([r, c]);
     }
   }
   if (empty.length === 0) return;
-  const [r, c] = empty[Math.floor(_rng() * empty.length)];
-  board[r][c] = _rng() < 0.9 ? 2 : 4;
-  idBoard[r][c] = nextId();
+  const pos = empty[Math.floor(_rng() * empty.length)];
+  if (pos === undefined) return;
+  const [r, c] = pos;
+  const boardRow = board[r];
+  const idBoardRow = idBoard[r];
+  if (boardRow !== undefined && idBoardRow !== undefined) {
+    boardRow[c] = _rng() < 0.9 ? 2 : 4;
+    idBoardRow[c] = nextId();
+  }
 }
 
 /**
@@ -180,9 +195,10 @@ function spawnTile(board: number[][], idBoard: number[][]): void {
 export function isGameOver(board: readonly number[][]): boolean {
   for (let r = 0; r < SIZE; r++) {
     for (let c = 0; c < SIZE; c++) {
-      if (board[r][c] === 0) return false;
-      if (c + 1 < SIZE && board[r][c] === board[r][c + 1]) return false;
-      if (r + 1 < SIZE && board[r][c] === board[r + 1][c]) return false;
+      const cell = board[r]?.[c] ?? 0;
+      if (cell === 0) return false;
+      if (c + 1 < SIZE && cell === (board[r]?.[c + 1] ?? -1)) return false;
+      if (r + 1 < SIZE && cell === (board[r + 1]?.[c] ?? -1)) return false;
     }
   }
   return true;
@@ -211,12 +227,12 @@ function buildTiles(
   const tiles: TileData[] = [];
   for (let r = 0; r < SIZE; r++) {
     for (let c = 0; c < SIZE; c++) {
-      const id = idBoard[r][c];
+      const id = idBoard[r]?.[c] ?? 0;
       if (id === 0) continue;
       const prev = prevPositions.get(id);
       tiles.push({
         id,
-        value: board[r][c],
+        value: board[r]?.[c] ?? 0,
         row: r,
         col: c,
         prevRow: prev?.row ?? null,
@@ -239,7 +255,10 @@ function positionMap(tiles: readonly TileData[]): Map<number, { row: number; col
 /** Derive an ID board from a tiles array. */
 function idBoardFromTiles(tiles: readonly TileData[]): number[][] {
   const board = Array.from({ length: SIZE }, () => Array(SIZE).fill(0));
-  for (const t of tiles) board[t.row][t.col] = t.id;
+  for (const t of tiles) {
+    const row = board[t.row];
+    if (row !== undefined) row[t.col] = t.id;
+  }
   return board;
 }
 
@@ -255,7 +274,10 @@ function applyLeft(
   let score = 0;
   const mergedIds = new Set<number>();
   for (let r = 0; r < SIZE; r++) {
-    const result = slideAndMergeWithIds(board[r], idBoard[r]);
+    const row = board[r];
+    const idRow = idBoard[r];
+    if (row === undefined || idRow === undefined) continue;
+    const result = slideAndMergeWithIds(row, idRow);
     board[r] = result.values;
     idBoard[r] = result.ids;
     score += result.score;
@@ -271,8 +293,11 @@ function applyRight(
   let score = 0;
   const mergedIds = new Set<number>();
   for (let r = 0; r < SIZE; r++) {
-    const revV = [...board[r]].reverse();
-    const revI = [...idBoard[r]].reverse();
+    const row = board[r];
+    const idRow = idBoard[r];
+    if (row === undefined || idRow === undefined) continue;
+    const revV = [...row].reverse();
+    const revI = [...idRow].reverse();
     const result = slideAndMergeWithIds(revV, revI);
     board[r] = result.values.reverse();
     idBoard[r] = result.ids.reverse();
@@ -319,7 +344,10 @@ export function newGame(): Twenty48State {
   // All tiles in a new game are "new" (spawn animation).
   const spawnedIds = new Set<number>();
   for (let r = 0; r < SIZE; r++)
-    for (let c = 0; c < SIZE; c++) if (idBoard[r][c] !== 0) spawnedIds.add(idBoard[r][c]);
+    for (let c = 0; c < SIZE; c++) {
+      const id = idBoard[r]?.[c] ?? 0;
+      if (id !== 0) spawnedIds.add(id);
+    }
 
   const tiles = buildTiles(board, idBoard, new Map(), new Set(), spawnedIds);
   return {
@@ -385,7 +413,7 @@ export function move(state: Twenty48State, direction: Direction): Twenty48State 
   // Find the newly spawned ID (the one in nextIdBoard not in prevPositions).
   for (let r = 0; r < SIZE; r++) {
     for (let c = 0; c < SIZE; c++) {
-      const id = nextIdBoard[r][c];
+      const id = nextIdBoard[r]?.[c] ?? 0;
       if (id !== 0 && !prevPositions.has(id) && !mergedIds.has(id)) {
         spawnedIds.add(id);
       }

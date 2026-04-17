@@ -27,7 +27,7 @@ const mockEnqueueEvent = jest.fn() as unknown as jest.Mock<undefined, EnqueueArg
 const mockCompleteGame = jest.fn() as unknown as jest.Mock<undefined, CompleteArgs>;
 jest.mock("../../game/_shared/gameEventClient", () => ({
   gameEventClient: {
-    startGame: (...args: unknown[]) => mockStartGame(...args),
+    startGame: (...args: unknown[]) => (mockStartGame as jest.Mock)(...args),
     enqueueEvent: (...args: unknown[]) => (mockEnqueueEvent as unknown as jest.Mock)(...args),
     completeGame: (...args: unknown[]) => (mockCompleteGame as unknown as jest.Mock)(...args),
     init: jest.fn().mockResolvedValue(undefined),
@@ -455,7 +455,9 @@ describe("GameScreen — gameEventClient instrumentation (#368)", () => {
       fireEvent.press(getByRole("button", { name: /chance/i }));
     });
     expect(mockCompleteGame).toHaveBeenCalledTimes(1);
-    const [, summary, eventData] = mockCompleteGame.mock.calls[0];
+    const completeCall = mockCompleteGame.mock.calls[0];
+    if (completeCall === undefined) throw new Error("Expected completeGame call");
+    const [, summary, eventData] = completeCall;
     expect(summary).toEqual(
       expect.objectContaining({ finalScore: expect.any(Number), outcome: "completed" })
     );
@@ -479,7 +481,9 @@ describe("GameScreen — gameEventClient instrumentation (#368)", () => {
     });
     unmount();
     expect(mockCompleteGame).toHaveBeenCalledTimes(1);
-    const [, summary, eventData] = mockCompleteGame.mock.calls[0];
+    const abandonCall = mockCompleteGame.mock.calls[0];
+    if (abandonCall === undefined) throw new Error("Expected completeGame call");
+    const [, summary, eventData] = abandonCall;
     expect(summary.outcome).toBe("abandoned");
     expect(eventData.outcome).toBe("abandoned");
     expect(eventData).toEqual(
@@ -512,7 +516,7 @@ describe("GameScreen — gameEventClient instrumentation (#368)", () => {
       fireEvent.press(getByRole("button", { name: /start new game/i }));
     });
     expect(mockCompleteGame).toHaveBeenCalledTimes(1);
-    expect(mockCompleteGame.mock.calls[0][1].outcome).toBe("abandoned");
+    expect(mockCompleteGame.mock.calls[0]?.[1]?.outcome).toBe("abandoned");
     expect(mockStartGame).toHaveBeenCalledWith("yacht");
   });
 

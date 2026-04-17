@@ -129,7 +129,9 @@ function sumDice(dice: readonly number[]): number {
 function hasRun(uniqueSorted: readonly number[], length: number): boolean {
   let run = 1;
   for (let i = 1; i < uniqueSorted.length; i++) {
-    if (uniqueSorted[i] === uniqueSorted[i - 1] + 1) {
+    const curr = uniqueSorted[i];
+    const prev = uniqueSorted[i - 1];
+    if (curr !== undefined && prev !== undefined && curr === prev + 1) {
       run += 1;
       if (run >= length) return true;
     } else {
@@ -343,7 +345,9 @@ export function score(state: GameState, category: Category): GameState {
   if (joker) {
     nextYachtBonusCount += 1;
     const face = state.dice[0];
+    if (face === undefined) throw new Error("Unexpected: dice array is empty");
     const upperCat = FACE_TO_UPPER[face];
+    if (upperCat === undefined) throw new Error(`Unknown die face: ${face}`);
 
     if (state.scores[upperCat] === null || state.scores[upperCat] === undefined) {
       // Priority 1: MUST use corresponding upper category
@@ -402,7 +406,9 @@ export function possibleScores(state: GameState): Record<string, number> {
 
 function jokerPossibleScores(state: GameState): Record<string, number> {
   const face = state.dice[0];
+  if (face === undefined) return {};
   const upperCat = FACE_TO_UPPER[face];
+  if (upperCat === undefined) return {};
 
   // Priority 1: mandatory upper
   if (state.scores[upperCat] === null || state.scores[upperCat] === undefined) {

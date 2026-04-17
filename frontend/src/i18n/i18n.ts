@@ -166,8 +166,10 @@ const localeLoaders: Record<string, Partial<Record<Namespace, () => TranslationM
 
 function loadLocaleNamespace(lng: string, ns: string): TranslationModule {
   const namespace = ns as Namespace;
-  const localeNamespaces = localeLoaders[lng] ?? localeLoaders.en;
-  const loader = localeNamespaces[namespace] ?? localeLoaders.en[namespace];
+  const fallback: Partial<Record<Namespace, () => TranslationModule>> = localeLoaders["en"] ?? {};
+  const localeNamespaces: Partial<Record<Namespace, () => TranslationModule>> =
+    localeLoaders[lng] ?? fallback;
+  const loader = localeNamespaces[namespace] ?? fallback[namespace];
   if (!loader) {
     // Should only happen if a namespace is referenced before it's registered.
     return Promise.resolve({ default: {} });

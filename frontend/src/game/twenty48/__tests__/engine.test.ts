@@ -27,11 +27,14 @@ function stateWith(board: number[][], overrides: Partial<Twenty48State> = {}): T
   const tiles: TileData[] = [];
   let id = 1000; // use high IDs to avoid collisions with engine-generated IDs
   for (let r = 0; r < board.length; r++) {
-    for (let c = 0; c < board[r].length; c++) {
-      if (board[r][c] !== 0) {
+    const row = board[r];
+    if (row === undefined) continue;
+    for (let c = 0; c < row.length; c++) {
+      const cell = row[c];
+      if (cell !== undefined && cell !== 0) {
         tiles.push({
           id: id++,
-          value: board[r][c],
+          value: cell,
           row: r,
           col: c,
           prevRow: r,
@@ -173,7 +176,7 @@ describe("move", () => {
       [0, 0, 0, 0],
     ]);
     const next = move(s, "left");
-    expect(next.board[1][0]).toBe(4);
+    expect(next.board[1]?.[0]).toBe(4);
     expect(next.score).toBe(4);
   });
 
@@ -185,7 +188,7 @@ describe("move", () => {
       [0, 0, 0, 0],
     ]);
     const next = move(s, "right");
-    expect(next.board[1][3]).toBe(4);
+    expect(next.board[1]?.[3]).toBe(4);
     expect(next.score).toBe(4);
   });
 
@@ -197,7 +200,7 @@ describe("move", () => {
       [0, 0, 0, 0],
     ]);
     const next = move(s, "up");
-    expect(next.board[0][1]).toBe(4);
+    expect(next.board[0]?.[1]).toBe(4);
     expect(next.score).toBe(4);
   });
 
@@ -209,7 +212,7 @@ describe("move", () => {
       [0, 2, 0, 0],
     ]);
     const next = move(s, "down");
-    expect(next.board[3][1]).toBe(4);
+    expect(next.board[3]?.[1]).toBe(4);
     expect(next.score).toBe(4);
   });
 
@@ -332,7 +335,7 @@ describe("has_won", () => {
     ]);
     const next = move(s, "left");
     expect(next.has_won).toBe(true);
-    expect(next.board[0][0]).toBe(2048);
+    expect(next.board[0]?.[0]).toBe(2048);
   });
 
   it("has_won stays true after more moves (keep playing)", () => {
@@ -367,7 +370,7 @@ describe("spawn probability", () => {
         }
       }
     }
-    const ratio2 = counts[2] / (counts[2] + counts[4]);
+    const ratio2 = (counts[2] ?? 0) / ((counts[2] ?? 0) + (counts[4] ?? 0));
     expect(ratio2).toBeGreaterThanOrEqual(0.85);
     expect(ratio2).toBeLessThanOrEqual(0.95);
   });

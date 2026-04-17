@@ -73,7 +73,7 @@ export default function DiceRow({ dice, rollsUsed, gameOver, onRoll, resetHeld }
             key={i}
             index={i}
             value={val}
-            held={held[i]}
+            held={held[i] ?? false}
             onPress={() => toggleHeld(i)}
             disabled={rollsUsed === 0 || gameOver}
           />

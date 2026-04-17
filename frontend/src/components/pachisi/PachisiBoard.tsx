@@ -31,9 +31,9 @@ interface Props {
 function cellBg(role: CellRole, colors: ReturnType<typeof useTheme>["colors"]): string {
   switch (role) {
     case "home_base_red":
-      return PLAYER_HOME_BG.red;
+      return PLAYER_HOME_BG["red"] ?? colors.surface;
     case "home_base_yellow":
-      return PLAYER_HOME_BG.yellow;
+      return PLAYER_HOME_BG["yellow"] ?? colors.surface;
     case "home_base_unused":
       return colors.surface;
     case "home_col_red":

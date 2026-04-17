@@ -127,10 +127,14 @@ function drawCollisionOverlay(
 
   if (verts && verts.length >= 3) {
     // Draw the actual polygon collider
+    const v0 = verts[0];
+    if (v0 === undefined) return;
     ctx.beginPath();
-    ctx.moveTo(verts[0].x * radius, verts[0].y * radius);
+    ctx.moveTo(v0.x * radius, v0.y * radius);
     for (let i = 1; i < verts.length; i++) {
-      ctx.lineTo(verts[i].x * radius, verts[i].y * radius);
+      const v = verts[i];
+      if (v === undefined) continue;
+      ctx.lineTo(v.x * radius, v.y * radius);
     }
     ctx.closePath();
     ctx.strokeStyle = "rgba(0,255,0,0.8)";

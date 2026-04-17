@@ -25,8 +25,8 @@ describe("ScoreQueue", () => {
     const fresh = new ScoreQueue();
     const items = await fresh.peek();
     expect(items).toHaveLength(2);
-    expect(items[0].payload.player_name).toBe("A");
-    expect(items[1].payload.player_name).toBe("B");
+    expect(items[0]?.payload.player_name).toBe("A");
+    expect(items[1]?.payload.player_name).toBe("B");
   });
 
   it("flush removes items whose handler resolves successfully", async () => {
@@ -45,7 +45,9 @@ describe("ScoreQueue", () => {
     queue.registerHandler("cascade", jest.fn().mockRejectedValue(new Error("500")));
     const result = await queue.flush();
     expect(result).toEqual({ attempted: 1, succeeded: 0, failed: 1, remaining: 1 });
-    const [item] = await queue.peek();
+    const peeked = await queue.peek();
+    const item = peeked[0];
+    if (item === undefined) throw new Error("Expected item");
     expect(item.attempts).toBe(1);
     expect(item.last_error).toBe("500");
   });

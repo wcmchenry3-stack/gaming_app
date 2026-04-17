@@ -180,7 +180,7 @@ export async function createEngine(
 
       if (tier < 10) {
         const nextDef = fruitSet.fruits[(tier + 1) as FruitTier];
-        spawnAt(nextDef, fruitSet.id, midX, midY);
+        if (nextDef !== undefined) spawnAt(nextDef, fruitSet.id, midX, midY);
       }
     }
     mergeQueue.length = 0;

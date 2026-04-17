@@ -93,8 +93,8 @@ export default function Scorecard({
           key={key}
           category={key}
           tone="upper"
-          label={t(CATEGORY_I18N_KEY[key])}
-          score={scores[key]}
+          label={t(CATEGORY_I18N_KEY[key] ?? "")}
+          score={scores[key] ?? null}
           potential={possibleScores[key]}
           canScore={canScore}
           onSelect={() => onScore(key)}
@@ -132,8 +132,8 @@ export default function Scorecard({
           key={key}
           category={key}
           tone="lower"
-          label={t(CATEGORY_I18N_KEY[key])}
-          score={scores[key]}
+          label={t(CATEGORY_I18N_KEY[key] ?? "")}
+          score={scores[key] ?? null}
           potential={possibleScores[key]}
           canScore={canScore}
           onSelect={() => onScore(key)}

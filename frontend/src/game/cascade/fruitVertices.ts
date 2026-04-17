@@ -47,9 +47,12 @@ function simplifyVertices(verts: VertexPoint[], maxCount: number): VertexPoint[]
     let maxIdx = 0;
     const first = points[0];
     const last = points[points.length - 1];
+    if (first === undefined || last === undefined) return points;
 
     for (let i = 1; i < points.length - 1; i++) {
-      const d = perpendicularDist(points[i], first, last);
+      const pt = points[i];
+      if (pt === undefined) continue;
+      const d = perpendicularDist(pt, first, last);
       if (d > maxDist) {
         maxDist = d;
         maxIdx = i;
@@ -65,7 +68,8 @@ function simplifyVertices(verts: VertexPoint[], maxCount: number): VertexPoint[]
   }
 
   // Close the polygon for RDP, then remove duplicate closing vertex
-  const closed = [...verts, verts[0]];
+  const firstVert = verts[0];
+  const closed: VertexPoint[] = firstVert !== undefined ? [...verts, firstVert] : [...verts];
 
   // Binary search for the smallest epsilon that yields ≤ maxCount vertices
   let lo = 0;

@@ -34,7 +34,7 @@ interface ParityFixture {
 
 function runAction(state: EngineState, action: string): EngineState {
   if (action.startsWith("bet:")) {
-    return placeBet(state, parseInt(action.split(":")[1], 10));
+    return placeBet(state, parseInt(action.split(":")[1] ?? "0", 10));
   }
   if (action === "hit") return hit(state);
   if (action === "stand") return stand(state);

@@ -6,7 +6,7 @@ describe("LOCALES", () => {
   });
 
   it("includes English as the first locale", () => {
-    expect(LOCALES[0].code).toBe("en");
+    expect(LOCALES[0]?.code).toBe("en");
   });
 
   it("all locales have required fields", () => {

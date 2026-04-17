@@ -322,7 +322,9 @@ export class EventStore {
         const rows = await this.readTier(tier);
         let mutated = false;
         for (let i = 0; i < rows.length; i += 1) {
-          const replacement = byId.get(rows[i].id);
+          const row = rows[i];
+          if (row === undefined) continue;
+          const replacement = byId.get(row.id);
           if (replacement) {
             rows[i] = replacement;
             mutated = true;
@@ -449,7 +451,8 @@ export class EventStore {
       if (rows.length === 0) continue;
       entries[tier] = { tier, rows, dirty: false };
       for (let i = 0; i < rows.length; i += 1) {
-        pool.push({ tier, idx: i, row: rows[i] });
+        const row = rows[i];
+        if (row !== undefined) pool.push({ tier, idx: i, row });
       }
     }
     // Primary key: older first. Tiebreaker: when two rows share a
@@ -496,7 +499,9 @@ export class EventStore {
         p1Rows.sort((a, b) => a.created_at - b.created_at);
         let drop = 0;
         while (drop < p1Rows.length && (overageRows > 0 || overageBytes > 0)) {
-          overageBytes -= rowBytes(p1Rows[drop]);
+          const r = p1Rows[drop];
+          if (r === undefined) break;
+          overageBytes -= rowBytes(r);
           overageRows -= 1;
           drop += 1;
           totalEvicted += 1;

@@ -18,14 +18,25 @@ const _engine: typeof import("../engine") = require(
 const { createEngine } = _engine;
 import type { EngineHandle, BodySnapshot } from "../engine.shared";
 import { DANGER_LINE_RATIO, WALL_THICKNESS } from "../engine.shared";
-import { FRUIT_SETS } from "../../../theme/fruitSets";
+import { FRUIT_SETS, FruitSet, FruitDefinition } from "../../../theme/fruitSets";
 import { MockWorld } from "../../../../__mocks__/@dimforge/rapier2d-compat";
 
 // Access the live mock module so tests can inspect call counts
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const RAPIER_MOCK = require("@dimforge/rapier2d-compat").default;
 
-const fruitSet = FRUIT_SETS["fruits"];
+function requireFruitSet(id: string): FruitSet {
+  const fs = FRUIT_SETS[id];
+  if (fs === undefined) throw new Error(`FruitSet '${id}' not found`);
+  return fs;
+}
+const fruitSet: FruitSet = requireFruitSet("fruits");
+
+function fruit(tier: number): FruitDefinition {
+  const f = fruitSet.fruits[tier];
+  if (f === undefined) throw new Error(`No fruit for tier ${tier}`);
+  return f;
+}
 const W = 300;
 const H = 600;
 
@@ -36,7 +47,9 @@ const H = 600;
 /** Return the MockWorld instance created by the most recent createEngine call. */
 function getWorld(): MockWorld {
   const results = (RAPIER_MOCK.World as jest.Mock).mock.results;
-  return results[results.length - 1].value as MockWorld;
+  const last = results[results.length - 1];
+  if (last === undefined) throw new Error("No World mock results");
+  return last.value as MockWorld;
 }
 
 async function buildEngine(onMerge = jest.fn(), onGameOver = jest.fn()): Promise<EngineHandle> {
@@ -81,23 +94,25 @@ describe("step", () => {
 
   it("returns a snapshot for each dropped fruit", async () => {
     const handle = await buildEngine();
-    handle.drop(fruitSet.fruits[0], fruitSet.id, 150, 100);
-    handle.drop(fruitSet.fruits[1], fruitSet.id, 160, 100);
+    handle.drop(fruit(0), fruitSet.id, 150, 100);
+    handle.drop(fruit(1), fruitSet.id, 160, 100);
     expect(handle.step()).toHaveLength(2);
   });
 
   it("snapshot positions are close to drop coordinates (pixels)", async () => {
     const handle = await buildEngine();
-    handle.drop(fruitSet.fruits[2], fruitSet.id, 150, 100);
-    const [snap] = handle.step();
+    handle.drop(fruit(2), fruitSet.id, 150, 100);
+    const snap = handle.step()[0];
+    if (snap === undefined) throw new Error("Expected snapshot");
     expect(snap.x).toBeCloseTo(150, 0);
     expect(snap.y).toBeCloseTo(100, 0);
   });
 
   it("snapshot has id, tier, and angle fields", async () => {
     const handle = await buildEngine();
-    handle.drop(fruitSet.fruits[3], fruitSet.id, 150, 200);
-    const [snap] = handle.step() as BodySnapshot[];
+    handle.drop(fruit(3), fruitSet.id, 150, 200);
+    const snap = (handle.step() as BodySnapshot[])[0];
+    if (snap === undefined) throw new Error("Expected snapshot");
     expect(snap).toHaveProperty("id");
     expect(snap.tier).toBe(3);
     expect(typeof snap.angle).toBe("number");
@@ -111,10 +126,10 @@ describe("step", () => {
 describe("drop", () => {
   it("spawns a fruit visible in the next step", async () => {
     const handle = await buildEngine();
-    handle.drop(fruitSet.fruits[1], fruitSet.id, 150, 100);
+    handle.drop(fruit(1), fruitSet.id, 150, 100);
     const snaps = handle.step();
     expect(snaps).toHaveLength(1);
-    expect(snaps[0].tier).toBe(1);
+    expect(snaps[0]?.tier).toBe(1);
   });
 
   it("uses ball collider for sets without vertex data", async () => {
@@ -122,10 +137,12 @@ describe("drop", () => {
     const noVertexSet = {
       id: "test_no_verts",
       label: "Test",
-      fruits: FRUIT_SETS["fruits"].fruits.map((f) => ({ ...f, icon: undefined })),
+      fruits: fruitSet.fruits.map((f) => ({ ...f, icon: undefined })),
     };
     const handle = await createEngine(W, H, noVertexSet, jest.fn(), jest.fn());
-    handle.drop(noVertexSet.fruits[0], "test_no_verts", 150, 100);
+    const noVertexFruit0 = noVertexSet.fruits[0];
+    if (noVertexFruit0 === undefined) throw new Error("Expected fruit");
+    handle.drop(noVertexFruit0, "test_no_verts", 150, 100);
     expect(RAPIER_MOCK.ColliderDesc.ball).toHaveBeenCalled();
   });
 });
@@ -140,8 +157,8 @@ describe("merge detection", () => {
     const handle = await createEngine(W, H, fruitSet, onMerge, jest.fn());
     const world = getWorld();
 
-    handle.drop(fruitSet.fruits[1], fruitSet.id, 100, 300);
-    handle.drop(fruitSet.fruits[1], fruitSet.id, 110, 300);
+    handle.drop(fruit(1), fruitSet.id, 100, 300);
+    handle.drop(fruit(1), fruitSet.id, 110, 300);
     handle.step(); // register bodies; world assigns collider handles 1003 & 1004
 
     // Wall colliders get 1000–1002; fruit colliders get 1003–1004
@@ -157,8 +174,8 @@ describe("merge detection", () => {
     const handle = await createEngine(W, H, fruitSet, onMerge, jest.fn());
     const world = getWorld();
 
-    handle.drop(fruitSet.fruits[0], fruitSet.id, 100, 300);
-    handle.drop(fruitSet.fruits[2], fruitSet.id, 110, 300);
+    handle.drop(fruit(0), fruitSet.id, 100, 300);
+    handle.drop(fruit(2), fruitSet.id, 110, 300);
     handle.step();
 
     world._fireCollision(1003, 1004);
@@ -172,8 +189,8 @@ describe("merge detection", () => {
     const handle = await createEngine(W, H, fruitSet, onMerge, jest.fn());
     const world = getWorld();
 
-    handle.drop(fruitSet.fruits[2], fruitSet.id, 100, 300);
-    handle.drop(fruitSet.fruits[2], fruitSet.id, 110, 300);
+    handle.drop(fruit(2), fruitSet.id, 100, 300);
+    handle.drop(fruit(2), fruitSet.id, 110, 300);
     handle.step();
 
     world._fireCollision(1003, 1004);
@@ -188,8 +205,8 @@ describe("merge detection", () => {
     const handle = await createEngine(W, H, fruitSet, onMerge, jest.fn());
     const world = getWorld();
 
-    handle.drop(fruitSet.fruits[3], fruitSet.id, 100, 300);
-    handle.drop(fruitSet.fruits[3], fruitSet.id, 110, 300);
+    handle.drop(fruit(3), fruitSet.id, 100, 300);
+    handle.drop(fruit(3), fruitSet.id, 110, 300);
     handle.step();
 
     world._fireCollision(1003, 1004);
@@ -205,8 +222,8 @@ describe("merge detection", () => {
     const handle = await createEngine(W, H, fruitSet, onMerge, jest.fn());
     const world = getWorld();
 
-    handle.drop(fruitSet.fruits[10], fruitSet.id, 100, 300);
-    handle.drop(fruitSet.fruits[10], fruitSet.id, 110, 300);
+    handle.drop(fruit(10), fruitSet.id, 100, 300);
+    handle.drop(fruit(10), fruitSet.id, 110, 300);
     handle.step();
 
     world._fireCollision(1003, 1004);
@@ -230,7 +247,7 @@ describe("game-over detection", () => {
 
     // tier-0 radius = 18. Top = y - 18. For top < dangerY (108): y < 126.
     // Spawn at y=50 (top = 32, well above the danger line).
-    handle.drop(fruitSet.fruits[0], fruitSet.id, 150, 50);
+    handle.drop(fruit(0), fruitSet.id, 150, 50);
     handle.step(); // freshly created — within grace period, no game over yet
 
     expect(onGameOver).not.toHaveBeenCalled();
@@ -248,7 +265,7 @@ describe("game-over detection", () => {
     const onGameOver = jest.fn();
     const handle = await createEngine(W, H, fruitSet, jest.fn(), onGameOver);
 
-    handle.drop(fruitSet.fruits[0], fruitSet.id, 150, 50);
+    handle.drop(fruit(0), fruitSet.id, 150, 50);
     handle.step(); // within 2s grace period
 
     expect(onGameOver).not.toHaveBeenCalled();
@@ -259,7 +276,7 @@ describe("game-over detection", () => {
     const handle = await createEngine(W, H, fruitSet, jest.fn(), onGameOver);
 
     // tier-0 radius=18, y=300 → top = 282 > dangerY (108) → safe
-    handle.drop(fruitSet.fruits[0], fruitSet.id, 150, 300);
+    handle.drop(fruit(0), fruitSet.id, 150, 300);
 
     jest.useFakeTimers();
     jest.setSystemTime(Date.now() + 3000);
@@ -273,7 +290,7 @@ describe("game-over detection", () => {
     const onGameOver = jest.fn();
     const handle = await createEngine(W, H, fruitSet, jest.fn(), onGameOver);
 
-    handle.drop(fruitSet.fruits[0], fruitSet.id, 150, 50);
+    handle.drop(fruit(0), fruitSet.id, 150, 50);
 
     jest.useFakeTimers();
     jest.setSystemTime(Date.now() + 3000);
@@ -292,7 +309,7 @@ describe("game-over detection", () => {
 describe("boundary escape", () => {
   // tier-0 radius = 18px, margin = 2 * 18 = 36px
   // SCALE = 0.01: physics coord = pixel * 0.01
-  const RADIUS = fruitSet.fruits[0].radius; // 18
+  const RADIUS = fruit(0).radius; // 18
   const MARGIN = RADIUS * 2; // 36
 
   async function buildEscapeEngine() {
@@ -304,7 +321,7 @@ describe("boundary escape", () => {
 
   it("fires onBoundaryEscape and removes body when fruit escapes below floor", async () => {
     const { handle, onBoundaryEscape } = await buildEscapeEngine();
-    handle.drop(fruitSet.fruits[0], fruitSet.id, 150, 300);
+    handle.drop(fruit(0), fruitSet.id, 150, 300);
     handle.step(); // register body (handle 0)
     const world = getWorld();
     const body = world._bodies.get(0)!;
@@ -319,7 +336,7 @@ describe("boundary escape", () => {
 
   it("fires onBoundaryEscape and removes body when fruit escapes through left wall", async () => {
     const { handle, onBoundaryEscape } = await buildEscapeEngine();
-    handle.drop(fruitSet.fruits[0], fruitSet.id, 150, 300);
+    handle.drop(fruit(0), fruitSet.id, 150, 300);
     handle.step();
     const world = getWorld();
     const body = world._bodies.get(0)!;
@@ -332,7 +349,7 @@ describe("boundary escape", () => {
 
   it("fires onBoundaryEscape and removes body when fruit escapes through right wall", async () => {
     const { handle, onBoundaryEscape } = await buildEscapeEngine();
-    handle.drop(fruitSet.fruits[0], fruitSet.id, 150, 300);
+    handle.drop(fruit(0), fruitSet.id, 150, 300);
     handle.step();
     const world = getWorld();
     const body = world._bodies.get(0)!;
@@ -345,7 +362,7 @@ describe("boundary escape", () => {
 
   it("does NOT fire onBoundaryEscape for a fruit inside the escape margin", async () => {
     const { handle, onBoundaryEscape } = await buildEscapeEngine();
-    handle.drop(fruitSet.fruits[0], fruitSet.id, 150, 300);
+    handle.drop(fruit(0), fruitSet.id, 150, 300);
     handle.step();
     const world = getWorld();
     const body = world._bodies.get(0)!;
@@ -358,7 +375,7 @@ describe("boundary escape", () => {
 
   it("escape does not trigger game-over", async () => {
     const { handle, onBoundaryEscape, onGameOver } = await buildEscapeEngine();
-    handle.drop(fruitSet.fruits[0], fruitSet.id, 150, 300);
+    handle.drop(fruit(0), fruitSet.id, 150, 300);
     handle.step();
     const world = getWorld();
     world._bodies.get(0)!._y = (H + MARGIN + 10) * 0.01;
@@ -404,9 +421,9 @@ describe("tier-snapshot guard", () => {
     const world = getWorld();
 
     // bodies 0, 1, 2 are tier-2; colliders 1003, 1004, 1005
-    handle.drop(fruitSet.fruits[2], fruitSet.id, 100, 300);
-    handle.drop(fruitSet.fruits[2], fruitSet.id, 110, 300);
-    handle.drop(fruitSet.fruits[2], fruitSet.id, 120, 300);
+    handle.drop(fruit(2), fruitSet.id, 100, 300);
+    handle.drop(fruit(2), fruitSet.id, 110, 300);
+    handle.drop(fruit(2), fruitSet.id, 120, 300);
     handle.step();
 
     // Two collision events sharing body 0 — both look same-tier at drain time.
@@ -431,8 +448,8 @@ describe("tier-snapshot guard", () => {
     const handle = await createEngine(W, H, fruitSet, onMerge, jest.fn());
     const world = getWorld();
 
-    handle.drop(fruitSet.fruits[3], fruitSet.id, 100, 300);
-    handle.drop(fruitSet.fruits[3], fruitSet.id, 110, 300);
+    handle.drop(fruit(3), fruitSet.id, 100, 300);
+    handle.drop(fruit(3), fruitSet.id, 110, 300);
     handle.step();
 
     world._fireCollision(1003, 1004);
@@ -461,8 +478,8 @@ describe("CCD enablement", () => {
 
     try {
       const handle = await createEngine(W, H, fruitSet, jest.fn(), jest.fn());
-      handle.drop(fruitSet.fruits[1], fruitSet.id, 150, 300);
-      handle.drop(fruitSet.fruits[2], fruitSet.id, 160, 300);
+      handle.drop(fruit(1), fruitSet.id, 150, 300);
+      handle.drop(fruit(2), fruitSet.id, 160, 300);
       handle.step();
       expect(setCcdSpy).toHaveBeenCalledTimes(2);
       expect(setCcdSpy).toHaveBeenCalledWith(true);
@@ -486,8 +503,8 @@ describe("CCD enablement", () => {
       const handle = await createEngine(W, H, fruitSet, jest.fn(), jest.fn());
       const world = getWorld();
 
-      handle.drop(fruitSet.fruits[2], fruitSet.id, 100, 300);
-      handle.drop(fruitSet.fruits[2], fruitSet.id, 110, 300);
+      handle.drop(fruit(2), fruitSet.id, 100, 300);
+      handle.drop(fruit(2), fruitSet.id, 110, 300);
       handle.step(); // 2 drops → 2 CCD calls so far
       setCcdSpy.mockClear();
 
@@ -517,7 +534,7 @@ describe("exported constants and types", () => {
   });
 
   it("BodySnapshot type includes angle field", () => {
-    const snap: BodySnapshot = { id: 1, x: 100, y: 200, tier: 3, angle: 0.5 };
+    const snap: BodySnapshot = { id: 1, x: 100, y: 200, tier: 3, angle: 0.5, collisionVerts: null };
     expect(snap.angle).toBe(0.5);
   });
 });

@@ -31,6 +31,7 @@ const SAMPLE_DETAIL: GameDetailResponse = {
   duration_ms: 600000,
   metadata: {},
   events: null,
+  players: [],
 };
 
 const mockNavigation = {

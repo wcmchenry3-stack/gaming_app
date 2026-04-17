@@ -66,8 +66,8 @@ export default function BettingPanel({
             amount={denom}
             onPress={() => addChip(denom)}
             disabled={bet + denom > maxBet || loading}
-            chipColor={chipColors[i]}
-            textColor={chipTextColors[i]}
+            chipColor={chipColors[i] ?? colors.accent}
+            textColor={chipTextColors[i] ?? colors.textOnAccent}
             sublabel={denom === 500 ? t("chip.vipCredits") : undefined}
           />
         ))}
