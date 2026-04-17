@@ -141,11 +141,17 @@ export function createGameClient(options: HttpClientOptions) {
         // message, not a captured exception with a stack. The synthetic
         // stack here would otherwise group every offline user under a
         // single misleading issue.
-        Sentry.captureMessage(`API ${apiTag} network failure: ${method} ${path}`, {
-          level: "warning",
-          tags: { api: apiTag, errorType: "network" },
-          extra: { url, platform: Platform.OS, originalMessage: e.message },
-        });
+        //
+        // In dev mode, network failures against localhost are expected
+        // (backend not running) — skip Sentry to avoid flooding the
+        // dashboard with dev noise (#571).
+        if (!__DEV__) {
+          Sentry.captureMessage(`API ${apiTag} network failure: ${method} ${path}`, {
+            level: "warning",
+            tags: { api: apiTag, errorType: "network" },
+            extra: { url, platform: Platform.OS, originalMessage: e.message },
+          });
+        }
         throw e;
       }
       // Anything else is a genuine JS error from the request-building

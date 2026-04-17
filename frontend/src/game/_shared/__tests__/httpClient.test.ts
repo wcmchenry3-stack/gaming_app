@@ -271,19 +271,14 @@ describe("httpClient — Sentry reporting (#513)", () => {
     expect(Sentry.captureException).not.toHaveBeenCalled();
   });
 
-  it("network failure (TypeError) emits captureMessage warning, not captureException", async () => {
+  it("network failure (TypeError) skips captureMessage in dev mode (#571)", async () => {
     mockFetch.mockRejectedValueOnce(new TypeError("Failed to fetch"));
     const request = makeRequest();
     await expect(request("/x")).rejects.toThrow("Failed to fetch");
     expect(Sentry.captureException).not.toHaveBeenCalled();
-    expect(Sentry.captureMessage).toHaveBeenCalledTimes(1);
-    expect(Sentry.captureMessage).toHaveBeenCalledWith(
-      expect.stringContaining("network failure"),
-      expect.objectContaining({
-        level: "warning",
-        tags: expect.objectContaining({ errorType: "network" }),
-      })
-    );
+    // __DEV__ is true in the test environment — network failures are
+    // suppressed to avoid flooding Sentry with dev-mode localhost noise.
+    expect(Sentry.captureMessage).not.toHaveBeenCalled();
   });
 
   it("genuine unexpected JS error (non-Api, non-Type) is captured as an exception with stack", async () => {
