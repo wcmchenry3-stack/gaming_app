@@ -28,13 +28,33 @@ export async function loadGame(): Promise<Twenty48State | null> {
     const raw = await AsyncStorage.getItem(GAME_KEY);
     if (!raw) return null;
     const parsed = JSON.parse(raw) as Twenty48State;
+    // Minimum viability check — only discard if the core fields are missing.
     if (
       !Array.isArray(parsed.board) ||
       parsed.board.length !== 4 ||
-      typeof parsed.score !== "number" ||
-      !Array.isArray(parsed.tiles)
+      typeof parsed.score !== "number"
     ) {
       return null;
+    }
+    // Backfill tiles array for saves created before v2 tile animation data (#570).
+    if (!Array.isArray(parsed.tiles)) {
+      let nextId = 0;
+      parsed.tiles = parsed.board.flatMap((row, r) =>
+        row.map((val, c) =>
+          val > 0
+            ? { id: nextId++, value: val, row: r, col: c, prevRow: null, prevCol: null, isNew: false, isMerge: false }
+            : null,
+        ).filter((t): t is NonNullable<typeof t> => t !== null),
+      );
+    }
+    if (typeof parsed.scoreDelta !== "number") {
+      parsed.scoreDelta = 0;
+    }
+    if (typeof parsed.game_over !== "boolean") {
+      parsed.game_over = false;
+    }
+    if (typeof parsed.has_won !== "boolean") {
+      parsed.has_won = false;
     }
     // Normalize timer fields — absent in states saved before timer was added.
     parsed.startedAt = parsed.startedAt ?? null;

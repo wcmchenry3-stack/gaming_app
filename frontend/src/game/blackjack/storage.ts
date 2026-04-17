@@ -25,18 +25,41 @@ export async function loadGame(): Promise<EngineState | null> {
     const raw = await AsyncStorage.getItem(STORAGE_KEY);
     if (!raw) return null;
     const parsed = JSON.parse(raw) as EngineState;
-    // Sanity check — shape drift discards rather than crashing.
+    // Minimum viability check — only discard if the core fields are missing.
     if (
       typeof parsed.chips !== "number" ||
       typeof parsed.bet !== "number" ||
       typeof parsed.phase !== "string" ||
       !Array.isArray(parsed.deck) ||
       !Array.isArray(parsed.player_hand) ||
-      !Array.isArray(parsed.dealer_hand) ||
-      !Array.isArray(parsed.player_hands) ||
-      !Array.isArray(parsed.hand_bets)
+      !Array.isArray(parsed.dealer_hand)
     ) {
       return null;
+    }
+    // Backfill split-hand arrays for saves created before split was added (#569).
+    if (!Array.isArray(parsed.player_hands)) {
+      parsed.player_hands = [parsed.player_hand];
+    }
+    if (!Array.isArray(parsed.hand_bets)) {
+      parsed.hand_bets = [parsed.bet];
+    }
+    if (!Array.isArray(parsed.hand_outcomes)) {
+      parsed.hand_outcomes = [parsed.outcome ?? null];
+    }
+    if (!Array.isArray(parsed.hand_payouts)) {
+      parsed.hand_payouts = [parsed.payout ?? 0];
+    }
+    if (!Array.isArray(parsed.split_from_aces)) {
+      parsed.split_from_aces = [false];
+    }
+    if (typeof parsed.active_hand_index !== "number") {
+      parsed.active_hand_index = 0;
+    }
+    if (typeof parsed.split_count !== "number") {
+      parsed.split_count = 0;
+    }
+    if (typeof parsed.doubled !== "boolean") {
+      parsed.doubled = false;
     }
     // Backfill rules for saves created before configurable rules.
     if (!parsed.rules) {

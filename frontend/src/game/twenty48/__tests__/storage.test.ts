@@ -73,11 +73,15 @@ describe("twenty48 storage", () => {
     expect(loaded).toBeNull();
   });
 
-  it("returns null for v1 payloads (missing tiles array)", async () => {
+  it("backfills tiles array for v1 payloads instead of discarding (#570)", async () => {
     const v1Payload = { board: sample.board, score: 0, game_over: false, has_won: false };
     await AsyncStorage.setItem("twenty48_game_v2", JSON.stringify(v1Payload));
     const loaded = await loadGame();
-    expect(loaded).toBeNull();
+    expect(loaded).not.toBeNull();
+    expect(Array.isArray(loaded!.tiles)).toBe(true);
+    expect(loaded!.scoreDelta).toBe(0);
+    expect(loaded!.startedAt).toBeNull();
+    expect(loaded!.accumulatedMs).toBe(0);
   });
 
   it("clearGame removes the saved state", async () => {

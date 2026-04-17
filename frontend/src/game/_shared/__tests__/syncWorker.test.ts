@@ -368,16 +368,14 @@ describe("SyncWorker", () => {
     expect(patch!.body).not.toHaveProperty("durationMs");
   });
 
-  // #514: include the 400 response body in the Sentry warning so the next
-  // occurrence self-explains. The original Sentry event only said
-  // "400 on PATCH /complete" with no hint that the root cause was an
-  // invalid `outcome` value.
-  // #519: Sentry extra now also includes attempt/maxAttempts/isFinal.
-  it("400 on PATCH /complete surfaces the response body via captureMessage", async () => {
+  // #572: Sentry warning is only emitted on the final retry attempt to avoid
+  // flooding the dashboard with per-retry noise during deployment windows.
+  it("400 on PATCH /complete does NOT emit captureMessage until final attempt", async () => {
     // eslint-disable-next-line @typescript-eslint/no-require-imports
     const Sentry = require("@sentry/react-native");
     Sentry.captureMessage.mockClear();
 
+    logConfig.MAX_COMPLETE_ATTEMPTS = 2;
     api.defaultResponse = ok();
     api.onNext((p) => p.endsWith("/complete"), {
       status: 400,
@@ -390,6 +388,18 @@ describe("SyncWorker", () => {
     await flushMicro();
     await worker.flush();
 
+    // First attempt — no Sentry warning yet.
+    expect(Sentry.captureMessage).not.toHaveBeenCalled();
+
+    // Second attempt (final) — dead-letters and emits warning.
+    api.onNext((p) => p.endsWith("/complete"), {
+      status: 400,
+      ok: false,
+      retryAfterMs: null,
+      body: { detail: "Invalid outcome: 'completed'" },
+    });
+    await worker.flush();
+
     expect(Sentry.captureMessage).toHaveBeenCalledWith(
       expect.stringContaining("400 on PATCH /complete"),
       expect.objectContaining({
@@ -399,8 +409,8 @@ describe("SyncWorker", () => {
           body: { detail: "Invalid outcome: 'completed'" },
           gameId: gid,
           sentOutcome: "completed",
-          attempt: 1,
-          isFinal: false,
+          attempt: 2,
+          maxAttempts: 2,
         }),
       })
     );
