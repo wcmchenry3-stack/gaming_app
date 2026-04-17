@@ -61,6 +61,10 @@ Before requesting review, confirm:
 - [ ] Accessibility checklist completed (frontend PRs)
 - [ ] PR title follows Conventional Commits format
 
+## Adding new games
+
+See [`docs/GAME-CONTRACT.md`](docs/GAME-CONTRACT.md) for the full protocol — vocabulary sources of truth, `GameModule` Protocol, metadata models, stats shaping, and the step-by-step checklist.
+
 ## Reporting bugs
 
 Open a GitHub issue using the **Bug report** template. For security
