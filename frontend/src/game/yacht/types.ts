@@ -2,6 +2,8 @@
  * Yacht API response shapes.
  */
 
+import type { GameOutcome, GameSession } from "../_shared/types";
+
 export interface GameState {
   dice: number[];
   held: boolean[];
@@ -18,4 +20,13 @@ export interface GameState {
 
 export interface PossibleScores {
   possible_scores: Record<string, number>;
+}
+
+export type YachtSession = GameSession<GameState>;
+
+/** Outcome for a completed Yacht game. */
+export interface YachtOutcome extends GameOutcome {
+  /** Breakdown of upper and lower section totals. */
+  upperTotal: number;
+  lowerTotal: number;
 }

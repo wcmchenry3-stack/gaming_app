@@ -2,6 +2,8 @@
  * Pachisi API response shapes.
  */
 
+import type { GameSession } from "../_shared/types";
+
 export interface PieceResponse {
   index: number;
   position: number; // -1=base, 0-51=outer track, 52-57=red home col, 64-69=yellow home col, 100=finished
@@ -28,3 +30,5 @@ export interface PachisiState {
   cpu_player: string | null;
   last_event: string | null;
 }
+
+export type PachisiSession = GameSession<PachisiState>;

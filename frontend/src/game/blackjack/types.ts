@@ -2,6 +2,8 @@
  * Blackjack API response shapes.
  */
 
+import type { GameOutcome, GameSession } from "../_shared/types";
+
 export interface CardResponse {
   rank: string;
   suit: string;
@@ -41,4 +43,12 @@ export interface BlackjackState {
   rules: GameRules;
   /** Net chip delta from the previously completed hand. Null until at least one hand resolves. */
   last_win: number | null;
+}
+
+export type BlackjackSession = GameSession<BlackjackState>;
+
+/** Outcome for a completed Blackjack hand. */
+export interface BlackjackOutcome extends GameOutcome {
+  /** Raw outcome string from the server ("blackjack" | "win" | "lose" | "push"). */
+  handResult: string | null;
 }
