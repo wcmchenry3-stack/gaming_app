@@ -279,8 +279,7 @@ export function toViewState(s: EngineState): BlackjackState {
     bet: s.bet,
     player_hand: isSplit
       ? handResponse(
-          s.player_hands[Math.min(s.active_hand_index, s.player_hands.length - 1)] ??
-            s.player_hand,
+          s.player_hands[Math.min(s.active_hand_index, s.player_hands.length - 1)] ?? s.player_hand,
           false
         )
       : handResponse(s.player_hand, false),
