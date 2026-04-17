@@ -128,6 +128,7 @@ class Game(Base):
     game_metadata: Mapped[dict] = mapped_column(
         "metadata", _JSONB, nullable=False, server_default="{}"
     )
+    players: Mapped[list] = mapped_column(_JSONB, nullable=False, server_default="[]")
 
     game_type: Mapped[GameType] = relationship(back_populates="games")
     events: Mapped[list["GameEvent"]] = relationship(

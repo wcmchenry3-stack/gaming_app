@@ -72,6 +72,7 @@ async def create_game(
     client_id: uuid.UUID | None,
     game_type_name: str,
     metadata: dict[str, Any],
+    players: list[dict[str, Any]],
 ) -> Game:
     gt = await _resolve_game_type(session, game_type_name)
 
@@ -89,6 +90,7 @@ async def create_game(
         session_id=session_id,
         game_type_id=gt.id,
         game_metadata=metadata or {},
+        players=players,
     )
     session.add(game)
     await session.commit()
@@ -325,6 +327,7 @@ class GameRow:
     outcome: str | None
     duration_ms: int | None
     metadata: dict[str, Any]
+    players: list[dict[str, Any]]
 
 
 @dataclass
@@ -361,6 +364,7 @@ async def list_games_for_session(
             outcome=g.outcome,
             duration_ms=g.duration_ms,
             metadata=g.game_metadata,
+            players=g.players or [],
         )
         for g, name in rows[:limit]
     ]
@@ -401,6 +405,7 @@ async def get_game_detail(
         outcome=game.outcome,
         duration_ms=game.duration_ms,
         metadata=game.game_metadata,
+        players=game.players or [],
     )
     events: list[dict[str, Any]] | None = None
     if include_events:

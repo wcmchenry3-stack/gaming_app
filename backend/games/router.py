@@ -56,6 +56,7 @@ def _to_row(g) -> GameRowResponse:
         outcome=g.outcome,
         duration_ms=g.duration_ms,
         metadata=g.metadata,
+        players=g.players,
     )
 
 
@@ -113,6 +114,7 @@ async def get_game_detail(
         outcome=row.outcome,
         duration_ms=row.duration_ms,
         metadata=row.metadata,
+        players=row.players,
         events=events,
     )
 
@@ -126,6 +128,8 @@ async def get_game_detail(
 @limiter.limit("10/minute", key_func=session_key)
 async def create_game(request: Request, body: CreateGameRequest) -> CreateGameResponse:
     sid = get_session_id(request)
+    # Default to the creating session when the client omits players (#543).
+    players = [p.model_dump() for p in body.players] if body.players else [{"player_id": sid}]
     factory = get_session_factory()
     async with factory() as db:
         try:
@@ -135,6 +139,7 @@ async def create_game(request: Request, body: CreateGameRequest) -> CreateGameRe
                 client_id=body.id,
                 game_type_name=body.game_type,
                 metadata=body.metadata,
+                players=players,
             )
         except service.GameServiceError as e:
             raise HTTPException(status_code=e.status_code, detail=e.detail)
