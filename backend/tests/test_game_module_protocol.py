@@ -11,7 +11,6 @@ from games.registry import get_module
 from pachisi.module import module as pachisi_module
 from vocab import GameType
 
-
 # ---------------------------------------------------------------------------
 # Protocol conformance
 # ---------------------------------------------------------------------------
@@ -23,9 +22,7 @@ from vocab import GameType
     ids=["blackjack", "cascade", "pachisi"],
 )
 def test_module_satisfies_protocol(mod) -> None:
-    assert isinstance(mod, GameModule), (
-        f"{mod!r} does not satisfy the GameModule Protocol"
-    )
+    assert isinstance(mod, GameModule), f"{mod!r} does not satisfy the GameModule Protocol"
 
 
 def test_blackjack_module_game_type() -> None:

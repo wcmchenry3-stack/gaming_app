@@ -272,8 +272,7 @@ async def get_stats_for_session(session: AsyncSession, *, session_id: str) -> St
         )
     ).all()
     latest_score_by_name: dict[str, int | None] = {
-        name: (int(score) if score is not None else None)
-        for name, score in latest_score_rows
+        name: (int(score) if score is not None else None) for name, score in latest_score_rows
     }
 
     # --- build per-game stats via module dispatch -------------------------
@@ -294,9 +293,11 @@ async def get_stats_for_session(session: AsyncSession, *, session_id: str) -> St
         }
 
         game_module = get_module(name)
-        shaped = game_module.stats_shape(raw) if game_module is not None else {
-            k: v for k, v in raw.items() if k != "latest_score"
-        }
+        shaped = (
+            game_module.stats_shape(raw)
+            if game_module is not None
+            else {k: v for k, v in raw.items() if k != "latest_score"}
+        )
 
         by_game[name] = GameTypeStats(
             played=shaped.get("played", 0),
