@@ -20,6 +20,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from db.models import EventType, Game, GameEvent, GameType
+from games.registry import get_module
 from vocab import GameOutcome
 
 _VALID_OUTCOMES = frozenset(v.value for v in GameOutcome)
@@ -219,7 +220,11 @@ async def get_stats_for_session(session: AsyncSession, *, session_id: str) -> St
 
     Only counts completed games — in-progress games are excluded from
     played/best/avg so the leaderboard stays stable until a game finishes.
+
+    Per-game stat shaping is delegated to each module's ``stats_shape()``
+    method via the registry (#541).  No game-name branches live here.
     """
+    # --- aggregate query -------------------------------------------------
     rows = (
         await session.execute(
             select(
@@ -239,6 +244,38 @@ async def get_stats_for_session(session: AsyncSession, *, session_id: str) -> St
         )
     ).all()
 
+    # --- pre-fetch latest final_score per game type in one query ---------
+    # Used by modules (e.g. Blackjack) that need the most-recent score.
+    # Subquery: per game_type_id, find the max(completed_at).
+    latest_sq = (
+        select(
+            Game.game_type_id,
+            func.max(Game.completed_at).label("max_completed_at"),
+        )
+        .where(
+            Game.session_id == session_id,
+            Game.completed_at.is_not(None),
+        )
+        .group_by(Game.game_type_id)
+        .subquery()
+    )
+    latest_score_rows = (
+        await session.execute(
+            select(GameType.name, Game.final_score)
+            .join(GameType, Game.game_type_id == GameType.id)
+            .join(
+                latest_sq,
+                (Game.game_type_id == latest_sq.c.game_type_id)
+                & (Game.completed_at == latest_sq.c.max_completed_at),
+            )
+            .where(Game.session_id == session_id)
+        )
+    ).all()
+    latest_score_by_name: dict[str, int | None] = {
+        name: (int(score) if score is not None else None) for name, score in latest_score_rows
+    }
+
+    # --- build per-game stats via module dispatch -------------------------
     by_game: dict[str, GameTypeStats] = {}
     total = 0
     favorite: str | None = None
@@ -246,38 +283,31 @@ async def get_stats_for_session(session: AsyncSession, *, session_id: str) -> St
 
     for name, played, best, avg, last_played in rows:
         total += played
-        stats = GameTypeStats(
-            played=played,
-            best=int(best) if best is not None else None,
-            avg=round(float(avg), 1) if avg is not None else None,
-            last_played_at=last_played,
+
+        raw: dict = {
+            "played": played,
+            "best": int(best) if best is not None else None,
+            "avg": round(float(avg), 1) if avg is not None else None,
+            "last_played_at": last_played,
+            "latest_score": latest_score_by_name.get(name),
+        }
+
+        game_module = get_module(name)
+        shaped = (
+            game_module.stats_shape(raw)
+            if game_module is not None
+            else {k: v for k, v in raw.items() if k != "latest_score"}
         )
-        # Blackjack renames `best` → `best_chips` and adds `current_chips`
-        # (latest completed game's final_score). Keep generic fields None so
-        # the JSON output reflects the spec shape per game type.
-        if name == "blackjack":
-            stats.best_chips = stats.best
-            stats.best = None
-            stats.avg = None
-            latest = (
-                await session.execute(
-                    select(Game.final_score)
-                    .where(
-                        Game.session_id == session_id,
-                        Game.game_type_id
-                        == (
-                            select(GameType.id)
-                            .where(GameType.name == "blackjack")
-                            .scalar_subquery()
-                        ),
-                        Game.completed_at.is_not(None),
-                    )
-                    .order_by(Game.completed_at.desc())
-                    .limit(1)
-                )
-            ).scalar_one_or_none()
-            stats.current_chips = int(latest) if latest is not None else None
-        by_game[name] = stats
+
+        by_game[name] = GameTypeStats(
+            played=shaped.get("played", 0),
+            best=shaped.get("best"),
+            avg=shaped.get("avg"),
+            last_played_at=shaped.get("last_played_at"),
+            best_chips=shaped.get("best_chips"),
+            current_chips=shaped.get("current_chips"),
+        )
+
         if played > favorite_count:
             favorite = name
             favorite_count = played
