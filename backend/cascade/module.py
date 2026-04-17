@@ -6,6 +6,7 @@ structural subtyping — no inheritance required.
 
 from __future__ import annotations
 
+from cascade.models import CascadeMetadata
 from vocab import GameType
 
 
@@ -17,6 +18,7 @@ class CascadeModule:
     """
 
     game_type = GameType.CASCADE
+    metadata_model = CascadeMetadata
 
     def stats_shape(self, raw_stats: dict) -> dict:
         return {k: v for k, v in raw_stats.items() if k != "latest_score"}

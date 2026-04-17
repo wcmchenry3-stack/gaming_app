@@ -6,7 +6,9 @@ import uuid
 from datetime import datetime
 from typing import Any
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
+
+from games.registry import get_module
 
 # ---------------------------------------------------------------------------
 # Request models
@@ -17,6 +19,19 @@ class CreateGameRequest(BaseModel):
     id: uuid.UUID | None = None
     game_type: str = Field(..., min_length=1, max_length=64)
     metadata: dict[str, Any] = Field(default_factory=dict)
+
+    @model_validator(mode="after")
+    def validate_game_metadata(self) -> "CreateGameRequest":
+        """Validate metadata against the per-game model if one is registered.
+
+        Unregistered game types (e.g. future games not yet in the registry)
+        skip validation so new game types can be seeded in the DB before their
+        module is implemented.
+        """
+        mod = get_module(self.game_type)
+        if mod is not None:
+            mod.metadata_model.model_validate(self.metadata)
+        return self
 
 
 class EventIn(BaseModel):
