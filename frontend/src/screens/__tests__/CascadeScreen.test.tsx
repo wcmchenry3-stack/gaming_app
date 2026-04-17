@@ -237,7 +237,9 @@ describe("CascadeScreen — gameEventClient instrumentation (#371)", () => {
   it("calls startGame('cascade') with fruit_set/theme on mount", () => {
     renderScreen();
     expect(mockStartGame).toHaveBeenCalledTimes(1);
-    const [gameType, meta, eventData] = mockStartGame.mock.calls[0];
+    const startCall = mockStartGame.mock.calls[0];
+    if (startCall === undefined) throw new Error("Expected startGame call");
+    const [gameType, meta, eventData] = startCall;
     expect(gameType).toBe("cascade");
     expect(meta).toEqual({});
     expect(eventData).toEqual(
@@ -314,10 +316,10 @@ describe("CascadeScreen — gameEventClient instrumentation (#371)", () => {
     });
     const drops = mockEnqueueEvent.mock.calls.map((c) => c[1]).filter((e) => e?.type === "drop");
     expect(drops.length).toBe(2);
-    expect(drops[0].data.drop_index).toBe(1);
-    expect(drops[1].data.drop_index).toBe(2);
-    expect(drops[0].data.x).toBe(50);
-    expect(drops[1].data.x).toBe(250);
+    expect(drops[0]?.data.drop_index).toBe(1);
+    expect(drops[1]?.data.drop_index).toBe(2);
+    expect(drops[0]?.data.x).toBe(50);
+    expect(drops[1]?.data.x).toBe(250);
   });
 
   it("fires completeGame with snake_case payload on handleGameOver", () => {
@@ -335,7 +337,9 @@ describe("CascadeScreen — gameEventClient instrumentation (#371)", () => {
       canvas.props.__onGameOver();
     });
     expect(mockCompleteGame).toHaveBeenCalledTimes(1);
-    const [, summary, eventData] = mockCompleteGame.mock.calls[0];
+    const completeCall = mockCompleteGame.mock.calls[0];
+    if (completeCall === undefined) throw new Error("Expected completeGame call");
+    const [, summary, eventData] = completeCall;
     expect(summary.outcome).toBe("completed");
     expect(eventData).toEqual(
       expect.objectContaining({
@@ -420,7 +424,7 @@ describe("CascadeScreen — gameEventClient instrumentation (#371)", () => {
       renderer.unmount();
     });
     expect(mockCompleteGame).toHaveBeenCalledTimes(1);
-    expect(mockCompleteGame.mock.calls[0][1].outcome).toBe("abandoned");
+    expect(mockCompleteGame.mock.calls[0]?.[1]?.outcome).toBe("abandoned");
   });
 
   it("client failures do not block gameplay (enqueueEvent throws)", () => {

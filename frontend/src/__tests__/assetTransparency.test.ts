@@ -46,10 +46,10 @@ function getCornerAlphas(filePath: string): CornerAlphas | null {
 
   // pngjs gives raw RGBA bytes row-major; alpha is every 4th byte starting at index 3
   const stride = width * 4;
-  const topLeft = data[3];
-  const topRight = data[(width - 1) * 4 + 3];
-  const bottomLeft = data[(height - 1) * stride + 3];
-  const bottomRight = data[(height - 1) * stride + (width - 1) * 4 + 3];
+  const topLeft = data[3] ?? 0;
+  const topRight = data[(width - 1) * 4 + 3] ?? 0;
+  const bottomLeft = data[(height - 1) * stride + 3] ?? 0;
+  const bottomRight = data[(height - 1) * stride + (width - 1) * 4 + 3] ?? 0;
 
   return { topLeft, topRight, bottomLeft, bottomRight };
 }

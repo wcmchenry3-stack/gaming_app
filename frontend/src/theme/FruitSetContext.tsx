@@ -9,8 +9,14 @@ interface FruitSetContextValue {
   setFruitSetById: (id: string) => void;
 }
 
+const DEFAULT_FRUIT_SET_VALUE: FruitSet = FRUIT_SETS[DEFAULT_FRUIT_SET] ?? {
+  id: DEFAULT_FRUIT_SET,
+  label: "Fruits",
+  fruits: [],
+};
+
 const FruitSetContext = createContext<FruitSetContextValue>({
-  activeFruitSet: FRUIT_SETS[DEFAULT_FRUIT_SET],
+  activeFruitSet: DEFAULT_FRUIT_SET_VALUE,
   setFruitSetById: () => {},
 });
 
@@ -38,7 +44,9 @@ export function FruitSetProvider({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <FruitSetContext.Provider value={{ activeFruitSet: FRUIT_SETS[activeId], setFruitSetById }}>
+    <FruitSetContext.Provider
+      value={{ activeFruitSet: FRUIT_SETS[activeId] ?? DEFAULT_FRUIT_SET_VALUE, setFruitSetById }}
+    >
       {children}
     </FruitSetContext.Provider>
   );

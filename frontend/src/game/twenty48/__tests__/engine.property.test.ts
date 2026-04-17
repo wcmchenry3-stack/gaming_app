@@ -31,11 +31,14 @@ function tilesFromBoard(board: number[][]): TileData[] {
   const tiles: TileData[] = [];
   let id = 5000;
   for (let r = 0; r < board.length; r++) {
-    for (let c = 0; c < board[r].length; c++) {
-      if (board[r][c] !== 0) {
+    const row = board[r];
+    if (row === undefined) continue;
+    for (let c = 0; c < row.length; c++) {
+      const cell = row[c];
+      if (cell !== undefined && cell !== 0) {
         tiles.push({
           id: id++,
-          value: board[r][c],
+          value: cell,
           row: r,
           col: c,
           prevRow: r,
@@ -79,6 +82,8 @@ const stateArb: fc.Arbitrary<Twenty48State> = boardArb.map((board) => ({
   scoreDelta: 0,
   game_over: false,
   has_won: false,
+  startedAt: null,
+  accumulatedMs: 0,
 }));
 
 /** Any board that is not game-over (has at least one empty cell or adjacent match). */
@@ -106,9 +111,10 @@ function nonZeroCount(board: number[][]): number {
 function hasAdjacentMatch(board: number[][]): boolean {
   for (let r = 0; r < SIZE; r++) {
     for (let c = 0; c < SIZE; c++) {
-      if (board[r][c] === 0) continue;
-      if (c + 1 < SIZE && board[r][c] === board[r][c + 1]) return true;
-      if (r + 1 < SIZE && board[r][c] === board[r + 1][c]) return true;
+      const cell = board[r]?.[c];
+      if (cell === undefined || cell === 0) continue;
+      if (c + 1 < SIZE && cell === board[r]?.[c + 1]) return true;
+      if (r + 1 < SIZE && cell === board[r + 1]?.[c]) return true;
     }
   }
   return false;
@@ -268,6 +274,8 @@ describe("move — score invariants", () => {
           scoreDelta: 0,
           game_over: false,
           has_won: false,
+          startedAt: null,
+          accumulatedMs: 0,
         };
         // Use a seeded RNG to avoid flaky spawn positions.
         setRng(createSeededRng(1));
@@ -325,6 +333,8 @@ describe("move — tile count invariants", () => {
             scoreDelta: 0,
             game_over: false,
             has_won: false,
+            startedAt: null,
+            accumulatedMs: 0,
           };
           setRng(createSeededRng(42));
           const next = move(state, "left");
@@ -380,6 +390,8 @@ describe("move — has_won is sticky", () => {
             scoreDelta: 0,
             game_over: false,
             has_won: false,
+            startedAt: null,
+            accumulatedMs: 0,
           };
           setRng(rng);
           const afterWin = move(state, "left");
@@ -440,6 +452,8 @@ describe("isGameOver — properties", () => {
           scoreDelta: 0,
           game_over: false, // bypass the game-over guard to reach boardsEqual check
           has_won: false,
+          startedAt: null,
+          accumulatedMs: 0,
         };
         const directions: Direction[] = ["up", "down", "left", "right"];
         for (const d of directions) {

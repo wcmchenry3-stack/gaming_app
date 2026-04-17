@@ -46,6 +46,7 @@ describe("GameEventClient", () => {
     const rows = await store.peek(10);
     expect(rows.length).toBe(1);
     const row = rows[0];
+    if (row === undefined) throw new Error("Expected row");
     expect(row.log_type).toBe("game_event");
     if (row.log_type === "game_event") {
       expect(row.game_id).toBe(id);

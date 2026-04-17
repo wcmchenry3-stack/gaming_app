@@ -255,10 +255,12 @@ export class SyncWorker {
     }
     if (res.status === 413) {
       if (chunk.length === 1) {
-        await this.markDeadLettered([chunk[0].id]);
+        const first = chunk[0];
+        if (first === undefined) return false;
+        await this.markDeadLettered([first.id]);
         result.deadLettered += 1;
         Sentry.captureMessage(
-          `syncWorker: single-row 413 on ${gameId} event_index=${chunk[0].event_index}`,
+          `syncWorker: single-row 413 on ${gameId} event_index=${first.event_index}`,
           { level: "warning" }
         );
         return true;

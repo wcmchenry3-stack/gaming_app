@@ -71,6 +71,7 @@ const SAMPLE_GAMES: GameHistoryResponse = {
       outcome: "completed",
       duration_ms: 600000,
       metadata: {},
+      players: [],
     },
     {
       id: "g2",
@@ -81,6 +82,7 @@ const SAMPLE_GAMES: GameHistoryResponse = {
       outcome: "completed",
       duration_ms: 300000,
       metadata: {},
+      players: [],
     },
     {
       id: "g3",
@@ -91,6 +93,7 @@ const SAMPLE_GAMES: GameHistoryResponse = {
       outcome: "abandoned",
       duration_ms: 900000,
       metadata: {},
+      players: [],
     },
   ],
   next_cursor: null,

@@ -115,8 +115,8 @@ describe("cascade/storage", () => {
       await writeRaw(snap);
       const loaded = await loadGame();
       expect(loaded?.fruits).toHaveLength(2);
-      expect(loaded?.fruits[0].tier).toBe(0);
-      expect(loaded?.fruits[1].tier).toBe(3);
+      expect(loaded?.fruits[0]?.tier).toBe(0);
+      expect(loaded?.fruits[1]?.tier).toBe(3);
     });
 
     it("returns null and deletes the entry when the stored JSON is corrupt", async () => {

@@ -185,7 +185,7 @@ describe("simulateSpawns — distribution property tests", () => {
         const totalWeight = BASE_SPAWN_WEIGHTS.reduce((a, b) => a + b, 0);
         return BASE_SPAWN_WEIGHTS.every((w, tier) => {
           const expected = w / totalWeight;
-          const observed = stats.frequencyByTier[tier] / N;
+          const observed = (stats.frequencyByTier[tier] ?? 0) / N;
           return Math.abs(observed - expected) < 0.3; // generous tolerance
         });
       }),

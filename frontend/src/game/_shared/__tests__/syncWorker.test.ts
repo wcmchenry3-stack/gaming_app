@@ -41,7 +41,8 @@ class MockSyncApi {
     this.calls.push({ method, path, body });
     const idx = this.scripts.findIndex((s) => s.match(path));
     if (idx !== -1) {
-      const [hit] = this.scripts.splice(idx, 1);
+      const hit = this.scripts.splice(idx, 1)[0];
+      if (hit === undefined) throw new Error("splice returned empty");
       return hit.res;
     }
     return this.defaultResponse;

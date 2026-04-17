@@ -94,7 +94,11 @@ export default function HomeScreen() {
   ];
 
   function renderCard({ item, index }: { item: GameCard; index: number }) {
-    const [gradStart, gradEnd] = cardGradients[index % cardGradients.length];
+    const gradient = cardGradients[index % cardGradients.length] ?? [
+      colors.secondary,
+      colors.accent,
+    ];
+    const [gradStart, gradEnd] = gradient;
     return (
       <View style={[styles.cardWrapper, numColumns === 1 && styles.cardWrapperFull]}>
         <Pressable

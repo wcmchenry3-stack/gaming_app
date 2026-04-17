@@ -8,7 +8,13 @@
 
 import fruitVerticesRaw from "../../../../assets/fruit-vertices.json";
 import cosmosVerticesRaw from "../../../../assets/cosmos-vertices.json";
-import { FRUIT_SETS, FruitDefinition } from "../../../theme/fruitSets";
+import { FRUIT_SETS, FruitSet, FruitDefinition } from "../../../theme/fruitSets";
+
+function requireFruitSet(id: string): FruitSet {
+  const fs = FRUIT_SETS[id];
+  if (fs === undefined) throw new Error(`FruitSet '${id}' not found`);
+  return fs;
+}
 import { getVerticesForFruit, getSpriteInfo } from "../fruitVertices";
 
 interface AssetEntry {
@@ -26,7 +32,7 @@ function nameKeyFor(def: FruitDefinition): string {
 // ---------------------------------------------------------------------------
 
 describe("fruit vertex data completeness", () => {
-  const fruitSet = FRUIT_SETS.fruits;
+  const fruitSet = requireFruitSet("fruits");
   const fruitMap = fruitVerticesRaw as unknown as Record<string, AssetEntry>;
 
   it("has vertex data for every fruit tier", () => {
@@ -34,7 +40,7 @@ describe("fruit vertex data completeness", () => {
       if (!def.icon) continue; // skip emoji-only entries
       const key = nameKeyFor(def);
       expect(fruitMap[key]).toBeDefined();
-      expect(fruitMap[key].verts.length).toBeGreaterThanOrEqual(3);
+      expect(fruitMap[key]?.verts.length).toBeGreaterThanOrEqual(3);
     }
   });
 
@@ -43,6 +49,7 @@ describe("fruit vertex data completeness", () => {
       if (!def.icon) continue;
       const key = nameKeyFor(def);
       const entry = fruitMap[key];
+      if (entry === undefined) throw new Error(`Missing vertex entry for key: ${key}`);
       expect(entry.spriteOffset).toHaveLength(2);
       expect(entry.spriteScale).toHaveLength(2);
       expect(entry.spriteScale[0]).toBeGreaterThan(0);
@@ -56,7 +63,7 @@ describe("fruit vertex data completeness", () => {
 // ---------------------------------------------------------------------------
 
 describe("fruit vertex quality", () => {
-  const fruitSet = FRUIT_SETS.fruits;
+  const fruitSet = requireFruitSet("fruits");
 
   it.each(fruitSet.fruits.filter((d) => d.icon).map((d) => [nameKeyFor(d), d.name] as const))(
     "%s (%s) — hull fills at least 60%% of [-1,1] range",
@@ -115,7 +122,7 @@ describe("fruit vertex quality", () => {
 // ---------------------------------------------------------------------------
 
 describe("fruit sprite alignment", () => {
-  const fruitSet = FRUIT_SETS.fruits;
+  const fruitSet = requireFruitSet("fruits");
 
   it.each(fruitSet.fruits.filter((d) => d.icon).map((d) => [nameKeyFor(d), d.name] as const))(
     "%s (%s) — spriteScale is reasonable (0.8–3.0)",
@@ -146,7 +153,7 @@ describe("fruit sprite alignment", () => {
 // ---------------------------------------------------------------------------
 
 describe("fruit hull polygon validity", () => {
-  const fruitSet = FRUIT_SETS.fruits;
+  const fruitSet = requireFruitSet("fruits");
 
   it.each(fruitSet.fruits.filter((d) => d.icon).map((d) => [nameKeyFor(d), d.name] as const))(
     "%s (%s) — polygon has non-zero area (not degenerate)",
@@ -158,7 +165,8 @@ describe("fruit hull polygon validity", () => {
       const n = verts!.length;
       for (let i = 0; i < n; i++) {
         const j = (i + 1) % n;
-        area += verts![i].x * verts![j].y - verts![j].x * verts![i].y;
+        area +=
+          (verts![i]?.x ?? 0) * (verts![j]?.y ?? 0) - (verts![j]?.x ?? 0) * (verts![i]?.y ?? 0);
       }
       area = Math.abs(area) / 2;
       // Area should be meaningful (> 0.1 in normalised space)
@@ -173,7 +181,10 @@ describe("fruit hull polygon validity", () => {
       expect(verts).not.toBeNull();
       for (let i = 0; i < verts!.length; i++) {
         const j = (i + 1) % verts!.length;
-        const dist = Math.hypot(verts![i].x - verts![j].x, verts![i].y - verts![j].y);
+        const dist = Math.hypot(
+          (verts![i]?.x ?? 0) - (verts![j]?.x ?? 0),
+          (verts![i]?.y ?? 0) - (verts![j]?.y ?? 0)
+        );
         expect(dist).toBeGreaterThan(0.001);
       }
     }
@@ -187,7 +198,7 @@ describe("fruit hull polygon validity", () => {
 describe("fruitSets ↔ vertex JSON key alignment", () => {
   it("every fruit with an icon has a matching vertex JSON entry", () => {
     const fruitMap = fruitVerticesRaw as unknown as Record<string, AssetEntry>;
-    for (const def of FRUIT_SETS.fruits.fruits) {
+    for (const def of requireFruitSet("fruits").fruits) {
       if (!def.icon) continue;
       const key = nameKeyFor(def);
       expect(fruitMap).toHaveProperty(key);
@@ -196,7 +207,7 @@ describe("fruitSets ↔ vertex JSON key alignment", () => {
 
   it("every cosmos entry with an icon has a matching vertex JSON entry", () => {
     const cosmosMap = cosmosVerticesRaw as unknown as Record<string, AssetEntry>;
-    for (const def of FRUIT_SETS.cosmos.fruits) {
+    for (const def of requireFruitSet("cosmos").fruits) {
       if (!def.icon) continue;
       const key = nameKeyFor(def);
       expect(cosmosMap).toHaveProperty(key);

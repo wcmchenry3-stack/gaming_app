@@ -471,7 +471,7 @@ describe("toViewState", () => {
 
   it("reveals dealer hand during result phase", () => {
     const view = toViewState(stateInResult());
-    expect(view.dealer_hand.cards[0].face_down).toBe(false);
+    expect(view.dealer_hand.cards[0]?.face_down).toBe(false);
     expect(view.dealer_hand.value).toBeGreaterThan(0);
   });
 
@@ -845,8 +845,8 @@ describe("split", () => {
     expect(next.player_hands).toHaveLength(2);
     expect(next.player_hands[0]).toHaveLength(2);
     expect(next.player_hands[1]).toHaveLength(2);
-    expect(next.player_hands[0][0].rank).toBe("8");
-    expect(next.player_hands[1][0].rank).toBe("8");
+    expect(next.player_hands[0]?.[0]?.rank).toBe("8");
+    expect(next.player_hands[1]?.[0]?.rank).toBe("8");
   });
 
   it("creates matching bets", () => {
@@ -877,8 +877,8 @@ describe("split", () => {
   it("splits 10-value cards (K+J)", () => {
     const s = splitSetup({ player: [c("♠", "K"), c("♥", "J")] });
     const next = split(s);
-    expect(next.player_hands[0][0].rank).toBe("K");
-    expect(next.player_hands[1][0].rank).toBe("J");
+    expect(next.player_hands[0]?.[0]?.rank).toBe("K");
+    expect(next.player_hands[1]?.[0]?.rank).toBe("J");
   });
 
   it("stays in player phase after split", () => {
@@ -899,7 +899,7 @@ describe("split", () => {
 describe("split hit/stand", () => {
   it("hit adds card to active split hand", () => {
     const s = split(splitSetup({ deck: [c("♠", "3"), c("♥", "5"), c("♦", "2")] }));
-    const initial = s.player_hands[0].length;
+    const initial = s.player_hands[0]?.length ?? 0;
     const next = hit(s);
     expect(next.player_hands[0]).toHaveLength(initial + 1);
   });
@@ -931,7 +931,7 @@ describe("split hit/stand", () => {
     // Override hand 0 to make bustable, override deck with bust card
     s = {
       ...s,
-      player_hands: [[c("♠", "K"), c("♥", "5")], s.player_hands[1]],
+      player_hands: [[c("♠", "K"), c("♥", "5")], s.player_hands[1] ?? []],
       deck: [c("♠", "Q")],
     };
     const next = hit(s);
@@ -1089,7 +1089,7 @@ describe("resplit", () => {
     );
     expect(s.split_count).toBe(1);
     // Force hand 0 to be a pair for resplit
-    s = { ...s, player_hands: [[c("♠", "8"), c("♦", "8")], s.player_hands[1]] };
+    s = { ...s, player_hands: [[c("♠", "8"), c("♦", "8")], s.player_hands[1] ?? []] };
     s = split(s);
     expect(s.split_count).toBe(2);
     s = { ...s, player_hands: [[c("♠", "8"), c("♣", "8")], ...s.player_hands.slice(1)] };

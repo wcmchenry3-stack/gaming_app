@@ -20,11 +20,11 @@ export class FruitQueue {
   }
 
   peek(): FruitTier {
-    return this.queue[0];
+    return this.queue[0] ?? 0;
   }
 
   peekNext(): FruitTier {
-    return this.queue[1];
+    return this.queue[1] ?? 0;
   }
 
   consume(): FruitTier {

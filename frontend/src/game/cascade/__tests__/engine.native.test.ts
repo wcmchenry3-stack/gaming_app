@@ -7,11 +7,23 @@
 import Matter from "matter-js";
 import { createEngine } from "../engine.native";
 import type { EngineHandle } from "../engine.shared";
-import { FRUIT_SETS } from "../../../theme/fruitSets";
+import { FRUIT_SETS, FruitSet, FruitDefinition } from "../../../theme/fruitSets";
 
-const fruitSet = FRUIT_SETS["fruits"];
+function requireFruitSet(id: string): FruitSet {
+  const fs = FRUIT_SETS[id];
+  if (fs === undefined) throw new Error(`FruitSet '${id}' not found`);
+  return fs;
+}
+const fruitSet: FruitSet = requireFruitSet("fruits");
 const W = 300;
 const H = 600;
+
+/** Get a FruitDefinition by tier index, throws if missing. */
+function fruit(tier: number): FruitDefinition {
+  const f = fruitSet.fruits[tier];
+  if (f === undefined) throw new Error(`No fruit for tier ${tier}`);
+  return f;
+}
 
 async function buildEngine(
   onMerge = jest.fn(),
@@ -53,34 +65,34 @@ describe("createEngine", () => {
 describe("drop and step", () => {
   it("returns a snapshot with correct tier after dropping a fruit", async () => {
     const handle = await buildEngine();
-    const tier0 = fruitSet.fruits[0];
+    const tier0 = fruit(0);
     handle.drop(tier0, "fruits", W / 2, 30);
     const snapshots = handle.step(1 / 60);
     expect(snapshots).toHaveLength(1);
-    expect(snapshots[0].tier).toBe(0);
-    expect(typeof snapshots[0].x).toBe("number");
-    expect(typeof snapshots[0].y).toBe("number");
-    expect(typeof snapshots[0].angle).toBe("number");
+    expect(snapshots[0]?.tier).toBe(0);
+    expect(typeof snapshots[0]?.x).toBe("number");
+    expect(typeof snapshots[0]?.y).toBe("number");
+    expect(typeof snapshots[0]?.angle).toBe("number");
     handle.cleanup();
   });
 
   it("fruits fall under gravity (y increases over time)", async () => {
     const handle = await buildEngine();
-    const tier0 = fruitSet.fruits[0];
+    const tier0 = fruit(0);
     handle.drop(tier0, "fruits", W / 2, 50);
     handle.step(1 / 60);
-    const y1 = handle.step(1 / 60)[0].y;
+    const y1 = handle.step(1 / 60)[0]?.y ?? 0;
     // Step many more frames
     for (let i = 0; i < 10; i++) handle.step(1 / 60);
-    const y2 = handle.step(1 / 60)[0].y;
+    const y2 = handle.step(1 / 60)[0]?.y ?? 0;
     expect(y2).toBeGreaterThan(y1);
     handle.cleanup();
   });
 
   it("multiple drops produce multiple snapshots", async () => {
     const handle = await buildEngine();
-    handle.drop(fruitSet.fruits[0], "fruits", W / 4, 30);
-    handle.drop(fruitSet.fruits[1], "fruits", (3 * W) / 4, 30);
+    handle.drop(fruit(0), "fruits", W / 4, 30);
+    handle.drop(fruit(1), "fruits", (3 * W) / 4, 30);
     const snapshots = handle.step(1 / 60);
     expect(snapshots).toHaveLength(2);
     const tiers = snapshots.map((s) => s.tier).sort();
@@ -97,7 +109,7 @@ describe("merge detection", () => {
   it("same-tier fruits merge when they collide", async () => {
     const onMerge = jest.fn();
     const handle = await buildEngine(onMerge);
-    const tier0 = fruitSet.fruits[0];
+    const tier0 = fruit(0);
 
     // Drop two same-tier fruits close together so they collide when falling
     handle.drop(tier0, "fruits", W / 2 - 5, 30);
@@ -117,7 +129,7 @@ describe("merge detection", () => {
   it("merge spawns tier+1 fruit", async () => {
     const onMerge = jest.fn();
     const handle = await buildEngine(onMerge);
-    const tier0 = fruitSet.fruits[0];
+    const tier0 = fruit(0);
 
     // Drop two tier-0 fruits on top of each other
     handle.drop(tier0, "fruits", W / 2, 30);
@@ -143,8 +155,8 @@ describe("merge detection", () => {
     const handle = await buildEngine(onMerge);
 
     // Drop tier 0 and tier 1 close together
-    handle.drop(fruitSet.fruits[0], "fruits", W / 2, 30);
-    handle.drop(fruitSet.fruits[1], "fruits", W / 2, 60);
+    handle.drop(fruit(0), "fruits", W / 2, 30);
+    handle.drop(fruit(1), "fruits", W / 2, 60);
 
     for (let i = 0; i < 200; i++) {
       handle.step(1 / 60);
@@ -171,7 +183,7 @@ describe("game over", () => {
 
     // Drop a fruit above the danger line (dangerY = H * 0.18 = 108px)
     // The fruit's top edge (y - radius) must be < 108
-    const tier0 = fruitSet.fruits[0];
+    const tier0 = fruit(0);
     handle.drop(tier0, "fruits", W / 2, 50);
 
     // Step once so the fruit exists in the world
@@ -196,7 +208,7 @@ describe("game over", () => {
 describe("cleanup", () => {
   it("does not throw", async () => {
     const handle = await buildEngine();
-    handle.drop(fruitSet.fruits[0], "fruits", W / 2, 30);
+    handle.drop(fruit(0), "fruits", W / 2, 30);
     handle.step(1 / 60);
     expect(() => handle.cleanup()).not.toThrow();
   });
@@ -210,7 +222,7 @@ describe("merge detection — extended", () => {
   it("does NOT spawn a new fruit when merging tier-10 (watermelon disappears)", async () => {
     const onMerge = jest.fn();
     const handle = await buildEngine(onMerge);
-    const tier10 = fruitSet.fruits[10]; // radius = 98
+    const tier10 = fruit(10); // radius = 98
 
     // Drop two tier-10 fruits nearly on top of each other — overlap triggers immediate collision
     handle.drop(tier10, "fruits", W / 2 - 5, 50);
@@ -242,7 +254,7 @@ describe("game-over detection — extended", () => {
     jest.spyOn(Date, "now").mockReturnValue(fakeNow);
 
     const handle = await buildEngine(jest.fn(), onGameOver);
-    handle.drop(fruitSet.fruits[0], "fruits", W / 2, 50);
+    handle.drop(fruit(0), "fruits", W / 2, 50);
 
     // Step within the grace period — time hasn't advanced
     handle.step(1 / 60);
@@ -258,7 +270,7 @@ describe("game-over detection — extended", () => {
 
     const handle = await buildEngine(jest.fn(), onGameOver);
     // y=500 → top = 500 - 18 = 482 > dangerY (108) → safe
-    handle.drop(fruitSet.fruits[0], "fruits", W / 2, 500);
+    handle.drop(fruit(0), "fruits", W / 2, 500);
     handle.step(1 / 60);
 
     (Date.now as jest.Mock).mockReturnValue(fakeNow + 5000);
@@ -274,7 +286,7 @@ describe("game-over detection — extended", () => {
     jest.spyOn(Date, "now").mockReturnValue(fakeNow);
 
     const handle = await buildEngine(jest.fn(), onGameOver);
-    handle.drop(fruitSet.fruits[0], "fruits", W / 2, 50);
+    handle.drop(fruit(0), "fruits", W / 2, 50);
     handle.step(1 / 60);
 
     (Date.now as jest.Mock).mockReturnValue(fakeNow + 5000);
@@ -293,7 +305,7 @@ describe("game-over detection — extended", () => {
 
 describe("boundary escape", () => {
   // tier-0 radius = 18, margin = 36
-  const RADIUS = fruitSet.fruits[0].radius; // 18
+  const RADIUS = fruit(0).radius; // 18
   const MARGIN = RADIUS * 2; // 36
 
   async function buildEscape() {
@@ -306,7 +318,7 @@ describe("boundary escape", () => {
   it("fires callback and removes body when fruit is dropped below the floor", async () => {
     const { handle, onBoundaryEscape } = await buildEscape();
     // Drop directly below the floor — py > H + margin on first step
-    handle.drop(fruitSet.fruits[0], "fruits", W / 2, H + MARGIN + 10);
+    handle.drop(fruit(0), "fruits", W / 2, H + MARGIN + 10);
     const snapshots = handle.step(1 / 60);
     expect(onBoundaryEscape).toHaveBeenCalledTimes(1);
     expect(onBoundaryEscape).toHaveBeenCalledWith(expect.objectContaining({ tier: 0 }));
@@ -317,7 +329,7 @@ describe("boundary escape", () => {
 
   it("fires callback and removes body when fruit is dropped past the left wall", async () => {
     const { handle, onBoundaryEscape } = await buildEscape();
-    handle.drop(fruitSet.fruits[0], "fruits", -MARGIN - 10, H / 2);
+    handle.drop(fruit(0), "fruits", -MARGIN - 10, H / 2);
     const snapshots = handle.step(1 / 60);
     expect(onBoundaryEscape).toHaveBeenCalledTimes(1);
     expect(snapshots).toHaveLength(0);
@@ -326,7 +338,7 @@ describe("boundary escape", () => {
 
   it("fires callback and removes body when fruit is dropped past the right wall", async () => {
     const { handle, onBoundaryEscape } = await buildEscape();
-    handle.drop(fruitSet.fruits[0], "fruits", W + MARGIN + 10, H / 2);
+    handle.drop(fruit(0), "fruits", W + MARGIN + 10, H / 2);
     const snapshots = handle.step(1 / 60);
     expect(onBoundaryEscape).toHaveBeenCalledTimes(1);
     expect(snapshots).toHaveLength(0);
@@ -336,7 +348,7 @@ describe("boundary escape", () => {
   it("does NOT fire callback for a fruit inside the escape margin", async () => {
     const { handle, onBoundaryEscape } = await buildEscape();
     // px = W + RADIUS = 318, which is < W + MARGIN (336)
-    handle.drop(fruitSet.fruits[0], "fruits", W + RADIUS, H / 2);
+    handle.drop(fruit(0), "fruits", W + RADIUS, H / 2);
     handle.step(1 / 60);
     expect(onBoundaryEscape).not.toHaveBeenCalled();
     handle.cleanup();
@@ -344,7 +356,7 @@ describe("boundary escape", () => {
 
   it("escape does not trigger game-over", async () => {
     const { handle, onBoundaryEscape, onGameOver } = await buildEscape();
-    handle.drop(fruitSet.fruits[0], "fruits", W / 2, H + MARGIN + 10);
+    handle.drop(fruit(0), "fruits", W / 2, H + MARGIN + 10);
     handle.step(1 / 60);
     expect(onBoundaryEscape).toHaveBeenCalledTimes(1);
     expect(onGameOver).not.toHaveBeenCalled();

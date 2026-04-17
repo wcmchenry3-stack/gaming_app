@@ -10,6 +10,7 @@ export default function LanguageSwitcher() {
   const [open, setOpen] = useState(false);
 
   const current = LOCALES.find((l) => l.code === i18n.language) ?? LOCALES[0];
+  if (current === undefined) return null;
 
   function select(code: string) {
     i18n.changeLanguage(code);

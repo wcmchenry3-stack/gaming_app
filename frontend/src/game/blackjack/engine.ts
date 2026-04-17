@@ -82,7 +82,7 @@ export function handValue(cards: readonly Card[]): number {
   let total = 0;
   let aces = 0;
   for (const c of cards) {
-    total += RANK_VALUES[c.rank];
+    total += RANK_VALUES[c.rank] ?? 0;
     if (c.rank === "A") aces += 1;
   }
   while (total > 21 && aces > 0) {
@@ -105,7 +105,7 @@ export function isSoftHand(cards: readonly Card[]): boolean {
   let rawTotal = 0;
   let numAces = 0;
   for (const c of cards) {
-    rawTotal += RANK_VALUES[c.rank];
+    rawTotal += RANK_VALUES[c.rank] ?? 0;
     if (c.rank === "A") numAces += 1;
   }
   if (numAces === 0) return false;
@@ -117,8 +117,11 @@ export function isSoftHand(cards: readonly Card[]): boolean {
 
 function cardsCanSplit(cards: readonly Card[]): boolean {
   if (cards.length !== 2) return false;
-  const a = cards[0].rank;
-  const b = cards[1].rank;
+  const cardA = cards[0];
+  const cardB = cards[1];
+  if (cardA === undefined || cardB === undefined) return false;
+  const a = cardA.rank;
+  const b = cardB.rank;
   if (a === b) return true;
   return (RANK_VALUES[a] ?? 0) === 10 && (RANK_VALUES[b] ?? 0) === 10;
 }
@@ -164,7 +167,12 @@ function freshShuffledDeck(deckCount: number = 1): Card[] {
   // Fisher–Yates shuffle
   for (let i = deck.length - 1; i > 0; i--) {
     const j = Math.floor(_rng() * (i + 1));
-    [deck[i], deck[j]] = [deck[j], deck[i]];
+    const tmp = deck[i];
+    const dj = deck[j];
+    if (tmp !== undefined && dj !== undefined) {
+      deck[i] = dj;
+      deck[j] = tmp;
+    }
   }
   return deck;
 }
@@ -220,8 +228,11 @@ export function canSplit(s: EngineState): boolean {
   let handBet: number;
   let totalWagered: number;
   if (isSplit) {
-    hand = s.player_hands[s.active_hand_index];
-    handBet = s.hand_bets[s.active_hand_index];
+    const h = s.player_hands[s.active_hand_index];
+    const hb = s.hand_bets[s.active_hand_index];
+    if (h === undefined || hb === undefined) return false;
+    hand = h;
+    handBet = hb;
     totalWagered = s.hand_bets.reduce((a, b) => a + b, 0);
   } else {
     hand = s.player_hand;
@@ -243,9 +254,11 @@ export function toViewState(s: EngineState): BlackjackState {
       const hand = s.player_hands[s.active_hand_index];
       const handBet = s.hand_bets[s.active_hand_index];
       const isAceHand = s.split_from_aces[s.active_hand_index];
-      const totalWagered = s.hand_bets.reduce((a, b) => a + b, 0);
-      const freeStack = s.chips - totalWagered;
-      double_down_available = hand.length === 2 && !isAceHand && freeStack >= handBet;
+      if (hand !== undefined && handBet !== undefined) {
+        const totalWagered = s.hand_bets.reduce((a, b) => a + b, 0);
+        const freeStack = s.chips - totalWagered;
+        double_down_available = hand.length === 2 && !isAceHand && freeStack >= handBet;
+      }
     } else {
       double_down_available = s.player_hand.length === 2 && s.chips >= s.bet * 2;
     }
@@ -266,7 +279,7 @@ export function toViewState(s: EngineState): BlackjackState {
     bet: s.bet,
     player_hand: isSplit
       ? handResponse(
-          s.player_hands[Math.min(s.active_hand_index, s.player_hands.length - 1)],
+          s.player_hands[Math.min(s.active_hand_index, s.player_hands.length - 1)] ?? s.player_hand,
           false
         )
       : handResponse(s.player_hand, false),
@@ -413,7 +426,7 @@ function determineAndSettle(s: EngineState): EngineState {
 // ---------------------------------------------------------------------------
 
 function settleHand(s: EngineState, idx: number, outcome: "win" | "lose" | "push"): EngineState {
-  const bet = s.hand_bets[idx];
+  const bet = s.hand_bets[idx] ?? 0;
   let delta = 0;
   if (outcome === "win") delta = bet;
   else if (outcome === "lose") delta = -bet;
@@ -437,7 +450,8 @@ function finishIfAllHandsDone(s: EngineState): EngineState {
     const dv = handValue(working.dealer_hand);
     const dealerBust = dv > 21;
     for (const i of unsettled) {
-      const pv = handValue(working.player_hands[i]);
+      const ph = working.player_hands[i];
+      const pv = ph !== undefined ? handValue(ph) : 0;
       if (dealerBust || pv > dv) {
         working = settleHand(working, i, "win");
       } else if (pv === dv) {
@@ -487,7 +501,7 @@ export function hit(s: EngineState): EngineState {
     const { deck, card } = deal(s.deck);
     const newHands = s.player_hands.map((h, i) => (i === s.active_hand_index ? [...h, card] : h));
     let next: EngineState = { ...s, deck, player_hands: newHands };
-    if (handValue(newHands[s.active_hand_index]) > 21) {
+    if (handValue(newHands[s.active_hand_index] ?? []) > 21) {
       next = settleHand(next, s.active_hand_index, "lose");
       return advanceHand(next);
     }
@@ -521,6 +535,9 @@ export function doubleDown(s: EngineState): EngineState {
     const idx = s.active_hand_index;
     const hand = s.player_hands[idx];
     const handBet = s.hand_bets[idx];
+    if (hand === undefined || handBet === undefined) {
+      throw new Error("Invalid split state: hand index out of bounds");
+    }
 
     if (s.split_from_aces[idx]) {
       throw new Error("Cannot double down on split aces.");
@@ -540,7 +557,7 @@ export function doubleDown(s: EngineState): EngineState {
     newBets[idx] = handBet * 2;
 
     let next: EngineState = { ...s, deck, player_hands: newHands, hand_bets: newBets };
-    if (handValue(newHands[idx]) > 21) {
+    if (handValue(newHands[idx] ?? []) > 21) {
       next = settleHand(next, idx, "lose");
     }
     return advanceHand(next);
@@ -571,8 +588,10 @@ export function split(s: EngineState): EngineState {
   if (s.split_count >= MAX_SPLITS) throw new Error("Maximum number of splits reached.");
 
   const isSplit = s.split_count > 0;
-  const hand = isSplit ? s.player_hands[s.active_hand_index] : s.player_hand;
-  const handBet = isSplit ? s.hand_bets[s.active_hand_index] : s.bet;
+  const hand: readonly Card[] = isSplit
+    ? (s.player_hands[s.active_hand_index] ?? s.player_hand)
+    : s.player_hand;
+  const handBet: number = isSplit ? (s.hand_bets[s.active_hand_index] ?? s.bet) : s.bet;
 
   if (!cardsCanSplit(hand)) throw new Error("Hand cannot be split.");
 
@@ -580,9 +599,12 @@ export function split(s: EngineState): EngineState {
   const freeStack = s.chips - totalWagered;
   if (freeStack < handBet) throw new Error("Insufficient chips to split.");
 
-  const isAceSplit = hand[0].rank === "A";
   const cardA = hand[0];
   const cardB = hand[1];
+  if (cardA === undefined || cardB === undefined) {
+    throw new Error("Invalid hand: expected 2 cards for split.");
+  }
+  const isAceSplit = cardA.rank === "A";
 
   let next: EngineState;
 
@@ -646,7 +668,7 @@ export function split(s: EngineState): EngineState {
   if (isAceSplit) {
     const idx = next.active_hand_index;
     for (const i of [idx, idx + 1]) {
-      if (handValue(next.player_hands[i]) > 21) {
+      if (handValue(next.player_hands[i] ?? []) > 21) {
         next = settleHand(next, i, "lose");
       }
     }

@@ -46,7 +46,7 @@ export function selectWeightedTier(weights: number[], rng: RandomSource = Math.r
   let roll = rng();
 
   for (let tier = 0; tier < SPAWN_TIER_COUNT; tier++) {
-    roll -= normalized[tier];
+    roll -= normalized[tier] ?? 0;
     if (roll <= 0) return tier as FruitTier;
   }
 
@@ -78,7 +78,7 @@ export class ControlledSpawnSelector {
 
     for (let tier = 0; tier < SPAWN_TIER_COUNT; tier++) {
       const baseWeight = BASE_SPAWN_WEIGHTS[tier] ?? 1;
-      const droughtDrops = this.dropsSinceSeen[tier];
+      const droughtDrops = this.dropsSinceSeen[tier] ?? 0;
       const droughtBoost =
         droughtDrops <= DROUGHT_BOOST_START_AFTER
           ? 1
@@ -108,7 +108,7 @@ export class ControlledSpawnSelector {
 
   private recordSpawn(tier: FruitTier) {
     for (let i = 0; i < SPAWN_TIER_COUNT; i++) {
-      this.dropsSinceSeen[i] += 1;
+      this.dropsSinceSeen[i] = (this.dropsSinceSeen[i] ?? 0) + 1;
     }
     this.dropsSinceSeen[tier] = 0;
 

@@ -25,14 +25,25 @@ const _engine: typeof import("../engine") = require(
 const { createEngine } = _engine;
 import type { EngineHandle } from "../engine.shared";
 import { scoreForMerge } from "../scoring";
-import { FRUIT_SETS } from "../../../theme/fruitSets";
+import { FRUIT_SETS, FruitSet, FruitDefinition } from "../../../theme/fruitSets";
 import { MockWorld } from "../../../../__mocks__/@dimforge/rapier2d-compat";
 
 // Access live mock module to inspect constructor call counts
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const RAPIER_MOCK = require("@dimforge/rapier2d-compat").default;
 
-const fruitSet = FRUIT_SETS["fruits"];
+function requireFruitSet(id: string): FruitSet {
+  const fs = FRUIT_SETS[id];
+  if (fs === undefined) throw new Error(`FruitSet '${id}' not found`);
+  return fs;
+}
+const fruitSet: FruitSet = requireFruitSet("fruits");
+
+function fruit(tier: number): FruitDefinition {
+  const f = fruitSet.fruits[tier];
+  if (f === undefined) throw new Error(`No fruit for tier ${tier}`);
+  return f;
+}
 const W = 300;
 const H = 600;
 
@@ -43,7 +54,9 @@ const H = 600;
 /** Return the MockWorld created by the most recent createEngine call. */
 function getWorld(): MockWorld {
   const results = (RAPIER_MOCK.World as jest.Mock).mock.results;
-  return results[results.length - 1].value as MockWorld;
+  const last = results[results.length - 1];
+  if (last === undefined) throw new Error("No World mock results");
+  return last.value as MockWorld;
 }
 
 async function buildEngine(onMerge = jest.fn(), onGameOver = jest.fn()): Promise<EngineHandle> {
@@ -66,8 +79,8 @@ describe("chain merge: tier 0 → tier 1", () => {
     const world = getWorld();
 
     // Wall colliders get handles 1000–1002; first two fruit colliders get 1003, 1004
-    handle.drop(fruitSet.fruits[0], fruitSet.id, 100, 300);
-    handle.drop(fruitSet.fruits[0], fruitSet.id, 110, 300);
+    handle.drop(fruit(0), fruitSet.id, 100, 300);
+    handle.drop(fruit(0), fruitSet.id, 110, 300);
     handle.step();
 
     world._fireCollision(1003, 1004);
@@ -81,8 +94,8 @@ describe("chain merge: tier 0 → tier 1", () => {
     const handle = await buildEngine();
     const world = getWorld();
 
-    handle.drop(fruitSet.fruits[0], fruitSet.id, 100, 300);
-    handle.drop(fruitSet.fruits[0], fruitSet.id, 110, 300);
+    handle.drop(fruit(0), fruitSet.id, 100, 300);
+    handle.drop(fruit(0), fruitSet.id, 110, 300);
     handle.step();
     world._fireCollision(1003, 1004);
     handle.step();
@@ -104,14 +117,14 @@ describe("chain merge: tier 1 → tier 2", () => {
     const world = getWorld();
 
     // First merge: two tier-0 → tier-1 (colliders 1003, 1004)
-    handle.drop(fruitSet.fruits[0], fruitSet.id, 100, 300);
-    handle.drop(fruitSet.fruits[0], fruitSet.id, 110, 300);
+    handle.drop(fruit(0), fruitSet.id, 100, 300);
+    handle.drop(fruit(0), fruitSet.id, 110, 300);
     handle.step();
     world._fireCollision(1003, 1004);
     handle.step(); // spawns tier-1 at collider 1005
 
     // Second merge: spawned tier-1 collides with a freshly dropped tier-1 (collider 1006)
-    handle.drop(fruitSet.fruits[1], fruitSet.id, 120, 300);
+    handle.drop(fruit(1), fruitSet.id, 120, 300);
     handle.step(); // assigns collider 1006
     world._fireCollision(1005, 1006);
     handle.step();
@@ -125,13 +138,13 @@ describe("chain merge: tier 1 → tier 2", () => {
     const handle = await buildEngine();
     const world = getWorld();
 
-    handle.drop(fruitSet.fruits[0], fruitSet.id, 100, 300);
-    handle.drop(fruitSet.fruits[0], fruitSet.id, 110, 300);
+    handle.drop(fruit(0), fruitSet.id, 100, 300);
+    handle.drop(fruit(0), fruitSet.id, 110, 300);
     handle.step();
     world._fireCollision(1003, 1004);
     handle.step(); // spawns tier-1 at 1005
 
-    handle.drop(fruitSet.fruits[1], fruitSet.id, 120, 300);
+    handle.drop(fruit(1), fruitSet.id, 120, 300);
     handle.step(); // assigns 1006
     world._fireCollision(1005, 1006);
     handle.step();
@@ -155,14 +168,14 @@ describe("score accumulation across a merge sequence", () => {
     const world = getWorld();
 
     // Merge 1: tier 0 → scores scoreForMerge(0) = 2
-    handle.drop(fruitSet.fruits[0], fruitSet.id, 100, 300);
-    handle.drop(fruitSet.fruits[0], fruitSet.id, 110, 300);
+    handle.drop(fruit(0), fruitSet.id, 100, 300);
+    handle.drop(fruit(0), fruitSet.id, 110, 300);
     handle.step();
     world._fireCollision(1003, 1004);
     handle.step(); // spawns tier-1 at 1005
 
     // Merge 2: tier 1 → scores scoreForMerge(1) = 4
-    handle.drop(fruitSet.fruits[1], fruitSet.id, 120, 300);
+    handle.drop(fruit(1), fruitSet.id, 120, 300);
     handle.step(); // assigns 1006
     world._fireCollision(1005, 1006);
     handle.step();
@@ -182,24 +195,24 @@ describe("score accumulation across a merge sequence", () => {
     const world = getWorld();
 
     // Merge 1: colliders 1003, 1004
-    handle.drop(fruitSet.fruits[0], fruitSet.id, 50, 500);
-    handle.drop(fruitSet.fruits[0], fruitSet.id, 60, 500);
+    handle.drop(fruit(0), fruitSet.id, 50, 500);
+    handle.drop(fruit(0), fruitSet.id, 60, 500);
     handle.step();
     world._fireCollision(1003, 1004);
     handle.step();
 
     // After first merge a tier-1 spawns at 1005.
     // Merge 2 uses two new tier-0 drops → 1006, 1007
-    handle.drop(fruitSet.fruits[0], fruitSet.id, 100, 500);
-    handle.drop(fruitSet.fruits[0], fruitSet.id, 110, 500);
+    handle.drop(fruit(0), fruitSet.id, 100, 500);
+    handle.drop(fruit(0), fruitSet.id, 110, 500);
     handle.step();
     world._fireCollision(1006, 1007);
     handle.step();
 
     // After merge 2, spawned tier-1 gets collider 1008.
     // Merge 3 uses two new tier-0 drops → colliders 1009, 1010
-    handle.drop(fruitSet.fruits[0], fruitSet.id, 150, 500);
-    handle.drop(fruitSet.fruits[0], fruitSet.id, 160, 500);
+    handle.drop(fruit(0), fruitSet.id, 150, 500);
+    handle.drop(fruit(0), fruitSet.id, 160, 500);
     handle.step();
     world._fireCollision(1009, 1010);
     handle.step();
@@ -219,8 +232,8 @@ describe("watermelon tier-10 merge", () => {
     const handle = await buildEngine(onMerge);
     const world = getWorld();
 
-    handle.drop(fruitSet.fruits[10], fruitSet.id, 100, 300);
-    handle.drop(fruitSet.fruits[10], fruitSet.id, 110, 300);
+    handle.drop(fruit(10), fruitSet.id, 100, 300);
+    handle.drop(fruit(10), fruitSet.id, 110, 300);
     handle.step();
     world._fireCollision(1003, 1004);
     handle.step();
@@ -238,8 +251,8 @@ describe("watermelon tier-10 merge", () => {
     const handle = await buildEngine(onMerge);
     const world = getWorld();
 
-    handle.drop(fruitSet.fruits[10], fruitSet.id, 100, 300);
-    handle.drop(fruitSet.fruits[10], fruitSet.id, 110, 300);
+    handle.drop(fruit(10), fruitSet.id, 100, 300);
+    handle.drop(fruit(10), fruitSet.id, 110, 300);
     handle.step();
     world._fireCollision(1003, 1004);
     handle.step();
@@ -259,9 +272,9 @@ describe("game-over with multiple fruits above the danger line", () => {
 
     // tier-0 radius ≈ 18px. Top = y - 18. dangerY = H * DANGER_LINE_RATIO ≈ 108px.
     // Placing at y=50 → top = 32, well above the danger line.
-    handle.drop(fruitSet.fruits[0], fruitSet.id, 130, 50);
-    handle.drop(fruitSet.fruits[0], fruitSet.id, 150, 50);
-    handle.drop(fruitSet.fruits[0], fruitSet.id, 170, 50);
+    handle.drop(fruit(0), fruitSet.id, 130, 50);
+    handle.drop(fruit(0), fruitSet.id, 150, 50);
+    handle.drop(fruit(0), fruitSet.id, 170, 50);
     handle.step(); // within grace period — no game-over yet
 
     expect(onGameOver).not.toHaveBeenCalled();
@@ -278,7 +291,7 @@ describe("game-over with multiple fruits above the danger line", () => {
     const onGameOver = jest.fn();
     const handle = await buildEngine(jest.fn(), onGameOver);
 
-    handle.drop(fruitSet.fruits[0], fruitSet.id, 150, 50);
+    handle.drop(fruit(0), fruitSet.id, 150, 50);
 
     jest.useFakeTimers();
     jest.setSystemTime(Date.now() + 3001);
@@ -308,8 +321,8 @@ describe("determinism", () => {
       );
       const world = getWorld();
 
-      handle.drop(fruitSet.fruits[2], fruitSet.id, 150, 300);
-      handle.drop(fruitSet.fruits[2], fruitSet.id, 160, 300);
+      handle.drop(fruit(2), fruitSet.id, 150, 300);
+      handle.drop(fruit(2), fruitSet.id, 160, 300);
       handle.step();
       world._fireCollision(1003, 1004);
       handle.step();
@@ -329,9 +342,9 @@ describe("determinism", () => {
   it("body count is consistent across identical drop sequences", async () => {
     async function runDrops(): Promise<number> {
       const handle = await buildEngine();
-      handle.drop(fruitSet.fruits[1], fruitSet.id, 100, 300);
-      handle.drop(fruitSet.fruits[2], fruitSet.id, 150, 300);
-      handle.drop(fruitSet.fruits[3], fruitSet.id, 200, 300);
+      handle.drop(fruit(1), fruitSet.id, 100, 300);
+      handle.drop(fruit(2), fruitSet.id, 150, 300);
+      handle.drop(fruit(3), fruitSet.id, 200, 300);
       return handle.step().length;
     }
 
@@ -353,8 +366,8 @@ describe("cleanup after multi-step simulation", () => {
     const handle = await buildEngine();
     const world = getWorld();
 
-    handle.drop(fruitSet.fruits[0], fruitSet.id, 100, 300);
-    handle.drop(fruitSet.fruits[0], fruitSet.id, 110, 300);
+    handle.drop(fruit(0), fruitSet.id, 100, 300);
+    handle.drop(fruit(0), fruitSet.id, 110, 300);
     handle.step();
     world._fireCollision(1003, 1004);
     handle.step();
