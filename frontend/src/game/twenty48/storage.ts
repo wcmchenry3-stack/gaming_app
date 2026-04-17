@@ -40,11 +40,22 @@ export async function loadGame(): Promise<Twenty48State | null> {
     if (!Array.isArray(parsed.tiles)) {
       let nextId = 0;
       parsed.tiles = parsed.board.flatMap((row, r) =>
-        row.map((val, c) =>
-          val > 0
-            ? { id: nextId++, value: val, row: r, col: c, prevRow: null, prevCol: null, isNew: false, isMerge: false }
-            : null,
-        ).filter((t): t is NonNullable<typeof t> => t !== null),
+        row
+          .map((val, c) =>
+            val > 0
+              ? {
+                  id: nextId++,
+                  value: val,
+                  row: r,
+                  col: c,
+                  prevRow: null,
+                  prevCol: null,
+                  isNew: false,
+                  isMerge: false,
+                }
+              : null
+          )
+          .filter((t): t is NonNullable<typeof t> => t !== null)
       );
     }
     if (typeof parsed.scoreDelta !== "number") {

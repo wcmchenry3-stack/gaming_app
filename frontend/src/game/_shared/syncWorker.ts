@@ -358,17 +358,20 @@ export class SyncWorker {
       // Only emit a Sentry warning on the final attempt to avoid flooding
       // the dashboard with per-retry noise during deployment windows (#572).
       if (isFinal) {
-        Sentry.captureMessage(`syncWorker: ${res.status} on PATCH /complete ${gameId} (dead-lettered)`, {
-          level: "warning",
-          extra: {
-            status: res.status,
-            body: res.body,
-            gameId,
-            sentOutcome: body.outcome,
-            attempt: attempts,
-            maxAttempts: logConfig.MAX_COMPLETE_ATTEMPTS,
-          },
-        });
+        Sentry.captureMessage(
+          `syncWorker: ${res.status} on PATCH /complete ${gameId} (dead-lettered)`,
+          {
+            level: "warning",
+            extra: {
+              status: res.status,
+              body: res.body,
+              gameId,
+              sentOutcome: body.outcome,
+              attempt: attempts,
+              maxAttempts: logConfig.MAX_COMPLETE_ATTEMPTS,
+            },
+          }
+        );
         await this.games.forget(gameId);
         result.deadLettered += 1;
       }
