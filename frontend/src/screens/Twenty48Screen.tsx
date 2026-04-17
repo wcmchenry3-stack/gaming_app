@@ -1,12 +1,12 @@
 import React, { useEffect, useState, useCallback, useRef } from "react";
-import { View, Text, Pressable, StyleSheet, ActivityIndicator, Platform } from "react-native";
+import { View, Text, Pressable, StyleSheet, Platform } from "react-native";
 import { GestureDetector, Gesture } from "react-native-gesture-handler";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTranslation } from "react-i18next";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { HomeStackParamList } from "../../App";
 import { useTheme } from "../theme/ThemeContext";
-import { AppHeader, APP_HEADER_HEIGHT } from "../components/shared/AppHeader";
+import { GameShell } from "../components/shared/GameShell";
 import { Twenty48State } from "../game/twenty48/types";
 import { newGame, move as engineMove, Direction } from "../game/twenty48/engine";
 import {
@@ -306,32 +306,22 @@ export default function Twenty48Screen({ navigation }: Props) {
     })
     .runOnJS(true);
 
-  if (!state && loading) {
-    return (
-      <View style={[styles.centered, { backgroundColor: colors.background }]}>
-        <ActivityIndicator color={colors.accent} size="large" />
-      </View>
-    );
-  }
-
   const showWinOverlay = state?.has_won && !winDismissed && !state.game_over;
   const showGameOverOverlay = state?.game_over;
 
   return (
-    <View
-      style={[
-        styles.container,
-        {
-          backgroundColor: colors.background,
-          paddingTop: APP_HEADER_HEIGHT + insets.top,
-          paddingBottom: Math.max(insets.bottom, 16),
-          paddingLeft: Math.max(insets.left, 16),
-          paddingRight: Math.max(insets.right, 16),
-        },
-      ]}
+    <GameShell
+      title={t("game.title")}
+      requireBack
+      onBack={() => navigation.popToTop()}
+      loading={!state && loading}
+      style={{
+        paddingBottom: Math.max(insets.bottom, 16),
+        paddingLeft: Math.max(insets.left, 16),
+        paddingRight: Math.max(insets.right, 16),
+        alignItems: "center",
+      }}
     >
-      <AppHeader title={t("game.title")} requireBack onBack={() => navigation.popToTop()} />
-
       {/* Score + New Game */}
       <View style={styles.scoreRow}>
         {state && (
@@ -410,20 +400,11 @@ export default function Twenty48Screen({ navigation }: Props) {
         onConfirm={handleConfirmNewGame}
         onCancel={() => setConfirmNewGameVisible(false)}
       />
-    </View>
+    </GameShell>
   );
 }
 
 const styles = StyleSheet.create({
-  centered: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  container: {
-    flex: 1,
-    alignItems: "center",
-  },
   scoreRow: {
     flexDirection: "row",
     alignItems: "center",

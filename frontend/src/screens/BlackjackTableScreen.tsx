@@ -1,12 +1,5 @@
 import React, { useCallback, useEffect, useState } from "react";
-import {
-  View,
-  Text,
-  Pressable,
-  StyleSheet,
-  ActivityIndicator,
-  useWindowDimensions,
-} from "react-native";
+import { View, Text, Pressable, StyleSheet, useWindowDimensions } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTranslation } from "react-i18next";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
@@ -27,7 +20,7 @@ import ResultBanner from "../components/blackjack/ResultBanner";
 import GameOverModal from "../components/blackjack/GameOverModal";
 import HudSidebar from "../components/blackjack/HudSidebar";
 import NewGameConfirmModal from "../components/shared/NewGameConfirmModal";
-import { AppHeader, APP_HEADER_HEIGHT } from "../components/shared/AppHeader";
+import { GameShell } from "../components/shared/GameShell";
 
 // Below this viewport height, card sizes, action-button sizes, and table
 // padding collapse to compact variants so the dealer hand, player hand, and
@@ -70,14 +63,6 @@ export default function BlackjackTableScreen({ navigation }: Props) {
     handlePlayAgain();
   }, [handlePlayAgain]);
 
-  if (!engine && loading) {
-    return (
-      <View style={[styles.centered, { backgroundColor: colors.background }]}>
-        <ActivityIndicator color={colors.accent} size="large" />
-      </View>
-    );
-  }
-
   const state = engine ? toViewState(engine) : null;
   const isSplit = (state?.player_hands?.length ?? 0) > 1;
 
@@ -88,39 +73,30 @@ export default function BlackjackTableScreen({ navigation }: Props) {
   const handleNextHand = () => apply(engineNewHand);
 
   return (
-    <View
-      style={[
-        styles.container,
-        {
-          backgroundColor: colors.background,
-          paddingTop: APP_HEADER_HEIGHT + insets.top,
-          paddingBottom: Math.max(insets.bottom, 16),
-        },
-      ]}
+    <GameShell
+      title={t("game.title")}
+      requireBack
+      onBack={() => navigation.popToTop()}
+      loading={!engine && loading}
+      style={{ paddingBottom: Math.max(insets.bottom, 16) }}
+      rightSlot={
+        state ? (
+          <View style={styles.bankroll}>
+            <Text style={[styles.bankrollLabel, { color: colors.textMuted }]}>
+              {t("header.bankrollLabel")}
+            </Text>
+            <Text
+              style={[styles.bankrollValue, { color: colors.text }]}
+              accessibilityLabel={t("header.bankrollAccessibilityLabel", {
+                chips: state.chips,
+              })}
+            >
+              {state.chips.toLocaleString()}
+            </Text>
+          </View>
+        ) : undefined
+      }
     >
-      <AppHeader
-        title={t("game.title")}
-        requireBack
-        onBack={() => navigation.popToTop()}
-        rightSlot={
-          state ? (
-            <View style={styles.bankroll}>
-              <Text style={[styles.bankrollLabel, { color: colors.textMuted }]}>
-                {t("header.bankrollLabel")}
-              </Text>
-              <Text
-                style={[styles.bankrollValue, { color: colors.text }]}
-                accessibilityLabel={t("header.bankrollAccessibilityLabel", {
-                  chips: state.chips,
-                })}
-              >
-                {state.chips.toLocaleString()}
-              </Text>
-            </View>
-          ) : undefined
-        }
-      />
-
       {/* Phase label */}
       {state && (
         <Text style={[styles.phaseLabel, { color: colors.textMuted }]}>
@@ -231,16 +207,11 @@ export default function BlackjackTableScreen({ navigation }: Props) {
         onConfirm={handleConfirmNewGame}
         onCancel={() => setConfirmNewGameVisible(false)}
       />
-    </View>
+    </GameShell>
   );
 }
 
 const styles = StyleSheet.create({
-  centered: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-  },
   container: {
     flex: 1,
   },

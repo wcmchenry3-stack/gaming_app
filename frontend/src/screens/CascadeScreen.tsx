@@ -6,7 +6,7 @@ import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { HomeStackParamList } from "../../App";
 import { useTheme } from "../theme/ThemeContext";
-import { AppHeader, APP_HEADER_HEIGHT } from "../components/shared/AppHeader";
+import { GameShell } from "../components/shared/GameShell";
 import { FruitSetProvider, useFruitSet } from "../theme/FruitSetContext";
 import { FruitQueue } from "../game/cascade/fruitQueue";
 import { ControlledSpawnSelector, createSeededRng } from "../game/cascade/spawnSelector";
@@ -425,36 +425,28 @@ function CascadeGame() {
       : 0;
 
   return (
-    <View
-      style={[
-        styles.screen,
-        {
-          backgroundColor: colors.background,
-          paddingTop: APP_HEADER_HEIGHT + insets.top,
-          paddingBottom: Math.max(insets.bottom, 16),
-          paddingLeft: Math.max(insets.left, 16),
-          paddingRight: Math.max(insets.right, 16),
-        },
-      ]}
+    <GameShell
+      title={t("game.title")}
+      requireBack
+      onBack={() => navigation.popToTop()}
+      style={{
+        paddingBottom: Math.max(insets.bottom, 16),
+        paddingLeft: Math.max(insets.left, 16),
+        paddingRight: Math.max(insets.right, 16),
+      }}
+      rightSlot={
+        <Pressable
+          onPress={handleNewGamePress}
+          style={[styles.newGameBtn, { borderColor: colors.accent }]}
+          accessibilityRole="button"
+          accessibilityLabel={t("common:newGame.button")}
+        >
+          <Text style={[styles.newGameText, { color: colors.accent }]}>
+            {t("common:newGame.button")}
+          </Text>
+        </Pressable>
+      }
     >
-      <AppHeader
-        title={t("game.title")}
-        requireBack
-        onBack={() => navigation.popToTop()}
-        rightSlot={
-          <Pressable
-            onPress={handleNewGamePress}
-            style={[styles.newGameBtn, { borderColor: colors.accent }]}
-            accessibilityRole="button"
-            accessibilityLabel={t("common:newGame.button")}
-          >
-            <Text style={[styles.newGameText, { color: colors.accent }]}>
-              {t("common:newGame.button")}
-            </Text>
-          </Pressable>
-        }
-      />
-
       {/* Combined HUD: score + drop/next previews + high, all one row */}
       <ScoreDisplay score={score}>
         {currentDef !== undefined && nextDef !== undefined && (
@@ -495,7 +487,7 @@ function CascadeGame() {
         onConfirm={handleConfirmNewGame}
         onCancel={() => setConfirmNewGameVisible(false)}
       />
-    </View>
+    </GameShell>
   );
 }
 
@@ -508,9 +500,6 @@ export default function CascadeScreen() {
 }
 
 const styles = StyleSheet.create({
-  screen: {
-    flex: 1,
-  },
   newGameBtn: {
     paddingHorizontal: 10,
     paddingVertical: 5,
