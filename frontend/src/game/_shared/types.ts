@@ -6,7 +6,8 @@
  * pattern.
  */
 
-export type { GameType } from "../../api/vocab";
+import type { GameType } from "../../api/vocab";
+export type { GameType };
 
 /**
  * A score submission waiting to be sent to the server.
@@ -29,3 +30,49 @@ export interface PendingSubmission {
  * Throwing from the handler keeps the item in the queue for a later retry.
  */
 export type SubmitHandler = (item: PendingSubmission) => Promise<void>;
+
+// ---------------------------------------------------------------------------
+// Session lifecycle interfaces (#544)
+// ---------------------------------------------------------------------------
+
+/**
+ * Identity and display info for a game participant.
+ * Designed with multiplayer in mind — all games carry Player[] even when
+ * single-player (array length = 1).
+ */
+export interface Player {
+  id: string;
+  displayName: string;
+}
+
+/**
+ * The result of a completed game round.
+ *
+ * `winner` uses the house/player vocabulary from OutcomeVocabulary; null
+ * means the outcome is not yet determined or the game type has no winner
+ * concept (e.g. pure score-chase games).
+ */
+export interface GameOutcome {
+  winner: "player" | "house" | "draw" | null;
+  finalScore: number | null;
+}
+
+/**
+ * A live or completed game session bound to a specific game type.
+ *
+ * `TState`  — the game's server-side (or local) state snapshot.
+ * `TAction` — reserved for typed action dispatch via useGameSync (#549).
+ *             Use the `_actionType` phantom field in per-game session types
+ *             to bind this parameter without forcing runtime allocation.
+ */
+export interface GameSession<TState, TAction = unknown> {
+  id: string;
+  gameType: GameType;
+  state: TState;
+  status: "active" | "completed" | "abandoned";
+  /**
+   * Phantom field — never assigned at runtime.
+   * Binds TAction so useGameSync can infer the dispatch type from a session.
+   */
+  readonly _actionType?: TAction;
+}
