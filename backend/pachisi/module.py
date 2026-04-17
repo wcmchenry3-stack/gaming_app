@@ -6,6 +6,7 @@ structural subtyping — no inheritance required.
 
 from __future__ import annotations
 
+from pachisi.models import PachisiMetadata
 from vocab import GameType
 
 
@@ -17,6 +18,7 @@ class PachisiModule:
     """
 
     game_type = GameType.PACHISI
+    metadata_model = PachisiMetadata
 
     def stats_shape(self, raw_stats: dict) -> dict:
         return {k: v for k, v in raw_stats.items() if k != "latest_score"}

@@ -1,4 +1,14 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
+
+
+class PachisiMetadata(BaseModel):
+    """Validated metadata shape for Pachisi game rows (#539).
+
+    Pachisi state lives in-memory; no metadata fields are required.
+    ``extra="forbid"`` rejects unexpected keys.
+    """
+
+    model_config = ConfigDict(extra="forbid")
 
 
 class MoveRequest(BaseModel):
