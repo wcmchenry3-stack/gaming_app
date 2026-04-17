@@ -7,6 +7,11 @@
 
 export type { GameOutcome, GameType } from "./vocab";
 
+/** A player participating in a game (#543). Mirrors backend PlayerRef. */
+export interface PlayerRef {
+  player_id: string;
+}
+
 export interface GameTypeStats {
   played: number;
   best: number | null;
@@ -31,6 +36,7 @@ export interface GameRow {
   outcome: GameOutcome | null;
   duration_ms: number | null;
   metadata: Record<string, unknown>;
+  players: PlayerRef[];
 }
 
 export interface GameHistoryResponse {

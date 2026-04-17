@@ -11,6 +11,22 @@ from pydantic import BaseModel, Field, model_validator
 from games.registry import get_module
 
 # ---------------------------------------------------------------------------
+# Shared sub-models
+# ---------------------------------------------------------------------------
+
+
+class PlayerRef(BaseModel):
+    """A player participating in a game (#543).
+
+    Today all games are single-player, so ``players`` is always length 1.
+    The model is intentionally minimal so multiplayer can extend it without
+    a breaking change (add ``display_name``, ``role``, etc. later).
+    """
+
+    player_id: str = Field(..., min_length=1, max_length=128)
+
+
+# ---------------------------------------------------------------------------
 # Request models
 # ---------------------------------------------------------------------------
 
@@ -19,6 +35,7 @@ class CreateGameRequest(BaseModel):
     id: uuid.UUID | None = None
     game_type: str = Field(..., min_length=1, max_length=64)
     metadata: dict[str, Any] = Field(default_factory=dict)
+    players: list[PlayerRef] = Field(default_factory=list)
 
     @model_validator(mode="after")
     def validate_game_metadata(self) -> "CreateGameRequest":
@@ -106,6 +123,7 @@ class GameRowResponse(BaseModel):
     outcome: str | None
     duration_ms: int | None
     metadata: dict[str, Any] = Field(default_factory=dict)
+    players: list[PlayerRef] = Field(default_factory=list)
 
 
 class GameHistoryResponse(BaseModel):
