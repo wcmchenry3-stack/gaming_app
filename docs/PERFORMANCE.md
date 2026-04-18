@@ -199,7 +199,7 @@ The Android export produces a single Hermes bytecode file. Module sizes below ar
 
 **`@dimforge/rapier2d-compat` is absent from the Android bundle.** The `.native.ts` extension on `frontend/src/game/cascade/engine.native.ts` causes Metro to select the native engine (matter-js) on Android. Rapier2D is web-only and adds zero weight to the Android build.
 
-**Pachisi is confirmed not bundled.** Zero Pachisi-related files appear in the 2,065 source files. The commented-out `App.tsx` route and absent import statement mean Metro excludes all of `src/game/pachisi/`, `src/components/pachisi/`, and `src/screens/PachisiScreen.tsx` from the Android bundle.
+**Pachisi has been removed from the codebase (#550).** All `src/game/pachisi/`, `src/components/pachisi/`, `src/screens/PachisiScreen.tsx`, and backend routes were deleted. The Android bundle is unaffected.
 
 **App code is ~260 KB (~3.1%) of JS.** All five game engines, screens, shared infrastructure, and i18n strings together are a small fraction of the total. JS bundle size is not where the size problem lives — assets are.
 
@@ -435,19 +435,6 @@ A Galaga-style arcade shooter is listed as a potential future paid game. Evaluat
 
 ### Pachisi decision
 
-**Status: Deferred — product decision pending.**
+**Status: Resolved — removed in #550.**
 
-Pachisi is currently disabled in `frontend/App.tsx` (route commented out, no static import). Its bundle contribution is **confirmed zero** — no Pachisi files appear in the Android bundle. Its backend router is imported but not registered in `backend/main.py:57–58`.
-
-The two options on the table:
-
-| Option | Implication |
-|---|---|
-| **(A) Stays in suite — rewrite required** | Pachisi must implement the `GameModule` protocol (Epic 3) before re-enabling. Existing component and game files remain in repo under that contract. |
-| **(B) Removed from codebase** | All `src/game/pachisi/`, `src/components/pachisi/`, `src/screens/PachisiScreen.tsx`, and backend routes deleted. Decision is irreversible without git history. |
-
-Neither option affects the current app size — Pachisi is already excluded from the bundle.
-
-The Pachisi size contribution, if re-enabled, would be minimal (code-rendered board game, no large assets) and would not approach the standalone threshold. Size is not a factor in this decision; it is a product/prioritisation decision.
-
-**This decision is tracked in Epic 3** (which includes Pachisi's path as a required acceptance criterion). Close this item when Epic 3's Pachisi acceptance criterion is resolved.
+Pachisi was removed from the codebase (Path A). All frontend directories (`src/game/pachisi/`, `src/components/pachisi/`, `src/screens/PachisiScreen.tsx`), the backend router, and DB seed row were deleted. The Android bundle is unaffected.

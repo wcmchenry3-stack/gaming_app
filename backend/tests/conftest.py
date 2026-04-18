@@ -46,8 +46,9 @@ def pytest_configure(config: pytest.Config) -> None:
     backend = Path(__file__).resolve().parent.parent
     env = os.environ.copy()
     env["DATABASE_URL"] = f"sqlite:///{db_path}"
+    import sys
     subprocess.run(
-        ["alembic", "upgrade", "head"],
+        [sys.executable, "-m", "alembic", "upgrade", "head"],
         cwd=backend,
         env=env,
         check=True,

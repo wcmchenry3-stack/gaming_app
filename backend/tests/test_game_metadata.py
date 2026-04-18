@@ -12,7 +12,6 @@ from pydantic import ValidationError
 from blackjack.models import BlackjackMetadata
 from cascade.models import CascadeMetadata
 from games.schemas import CreateGameRequest
-from pachisi.models import PachisiMetadata
 
 # ---------------------------------------------------------------------------
 # BlackjackMetadata unit tests
@@ -53,20 +52,6 @@ def test_cascade_metadata_rejects_unknown_field() -> None:
 
 
 # ---------------------------------------------------------------------------
-# PachisiMetadata unit tests
-# ---------------------------------------------------------------------------
-
-
-def test_pachisi_metadata_empty_dict_valid() -> None:
-    PachisiMetadata.model_validate({})
-
-
-def test_pachisi_metadata_rejects_unknown_field() -> None:
-    with pytest.raises(ValidationError):
-        PachisiMetadata.model_validate({"cpu_player": "yellow"})
-
-
-# ---------------------------------------------------------------------------
 # CreateGameRequest metadata validation
 # ---------------------------------------------------------------------------
 
@@ -90,15 +75,6 @@ def test_create_game_request_invalid_cascade_metadata_raises_422() -> None:
     with pytest.raises(ValidationError):
         CreateGameRequest(game_type="cascade", metadata={"player_name": "x" * 65})
 
-
-def test_create_game_request_valid_pachisi_metadata() -> None:
-    req = CreateGameRequest(game_type="pachisi", metadata={})
-    assert req.metadata == {}
-
-
-def test_create_game_request_invalid_pachisi_metadata_raises_422() -> None:
-    with pytest.raises(ValidationError):
-        CreateGameRequest(game_type="pachisi", metadata={"cpu": "red"})
 
 
 def test_create_game_request_unregistered_game_type_skips_validation() -> None:

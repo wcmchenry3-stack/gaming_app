@@ -11,7 +11,6 @@ import { join } from "path";
  *   yacht       — yacht-*.spec.ts
  *   blackjack   — blackjack-*.spec.ts
  *   twenty48    — twenty48-*.spec.ts
- *   pachisi     — pachisi-*.spec.ts
  *   cross       — accessibility.spec.ts, cascade-flow.spec.ts, ui-preferences.spec.ts
  *   logs-budget — logs-*.spec.ts (#373 acceptance gate, CPU-throttled to
  *                  approximate mid-tier mobile device performance)
@@ -57,11 +56,6 @@ export default defineConfig({
     {
       name: "twenty48",
       testMatch: "twenty48-*.spec.ts",
-      use: { ...devices["Desktop Chrome"] },
-    },
-    {
-      name: "pachisi",
-      testMatch: "pachisi-*.spec.ts",
       use: { ...devices["Desktop Chrome"] },
     },
     {

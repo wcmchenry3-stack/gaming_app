@@ -31,7 +31,6 @@ export default function HomeScreen() {
     "yacht",
     "cascade",
     "blackjack",
-    "pachisi",
     "twenty48",
     "errors",
   ]);

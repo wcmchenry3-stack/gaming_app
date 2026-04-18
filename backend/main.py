@@ -18,7 +18,6 @@ from db.base import DATABASE_URL, get_engine, is_configured
 from limiter import _real_ip, limiter
 from cascade.router import router as cascade_router
 from blackjack.router import router as blackjack_router
-from pachisi.router import router as pachisi_router  # noqa: F401
 from yacht.router import router as yacht_router
 from games.router import router as games_router
 from logs.router import router as logs_router
@@ -54,8 +53,6 @@ app.include_router(blackjack_router, prefix="/blackjack")
 app.include_router(games_router, prefix="/games")
 app.include_router(logs_router, prefix="/logs")
 app.include_router(stats_router, prefix="/stats")
-# Pachisi disabled — needs total rewrite before re-enabling
-# app.include_router(pachisi_router, prefix="/pachisi")
 
 # ---------------------------------------------------------------------------
 # Rate limiting

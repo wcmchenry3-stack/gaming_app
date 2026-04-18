@@ -33,7 +33,7 @@ async def test_seed_data_present() -> None:
     factory = get_session_factory()
     async with factory() as s:
         gt_names = (await s.execute(select(GameType.name).order_by(GameType.id))).scalars().all()
-        assert gt_names == ["yacht", "twenty48", "blackjack", "cascade", "pachisi"]
+        assert gt_names == ["yacht", "twenty48", "blackjack", "cascade"]
 
         total = (await s.execute(select(func.count()).select_from(EventType))).scalar_one()
         assert total >= 17

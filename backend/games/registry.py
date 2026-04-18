@@ -10,7 +10,6 @@ from __future__ import annotations
 
 from blackjack.module import module as blackjack_module
 from cascade.module import module as cascade_module
-from pachisi.module import module as pachisi_module
 
 from games.protocol import GameModule
 
@@ -19,7 +18,6 @@ from games.protocol import GameModule
 _REGISTRY: dict[str, GameModule] = {
     blackjack_module.game_type.value: blackjack_module,
     cascade_module.game_type.value: cascade_module,
-    pachisi_module.game_type.value: pachisi_module,
 }
 
 

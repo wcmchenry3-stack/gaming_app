@@ -60,7 +60,6 @@ export type HomeStackParamList = {
   Cascade: undefined;
   BlackjackBetting: undefined;
   BlackjackTable: undefined;
-  Pachisi: undefined;
   Twenty48: undefined;
 };
 
@@ -82,8 +81,6 @@ function LobbyStack() {
       <HomeStack.Screen name="Cascade" component={CascadeScreen} />
       <HomeStack.Screen name="BlackjackBetting" component={BlackjackBettingScreen} />
       <HomeStack.Screen name="BlackjackTable" component={BlackjackTableScreen} />
-      {/* Pachisi disabled — needs total rewrite before re-enabling */}
-      {/* <HomeStack.Screen name="Pachisi" component={PachisiScreen} /> */}
       <HomeStack.Screen name="Twenty48" component={Twenty48Screen} />
     </HomeStack.Navigator>
   );

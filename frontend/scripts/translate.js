@@ -52,7 +52,7 @@ function parseArgs() {
         .map((l) => l.code)
         .join(" | ")}`
     );
-    console.error("  Namespaces:  common | yacht | cascade | errors | blackjack | ludo");
+    console.error("  Namespaces:  common | yacht | cascade | errors | blackjack | twenty48");
     process.exit(1);
   }
 
