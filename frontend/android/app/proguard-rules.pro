@@ -11,4 +11,13 @@
 -keep class com.swmansion.reanimated.** { *; }
 -keep class com.facebook.react.turbomodule.** { *; }
 
-# Add any project specific keep options here:
+# Expo modules — auto-linking uses reflection to instantiate module classes
+-keep class expo.modules.** { *; }
+
+# Sentry — native crash handler and ANR detection rely on reflection
+-keep class io.sentry.** { *; }
+-dontwarn io.sentry.**
+
+# Preserve source file names and line numbers for readable Sentry crash reports
+-keepattributes SourceFile,LineNumberTable
+-renamesourcefileattribute SourceFile
