@@ -71,7 +71,7 @@ export type ProfileStackParamList = {
 };
 
 function withSuspense<P extends object>(Component: React.ComponentType<P>): React.FC<P> {
-  return (props: P) => (
+  const Wrapped = (props: P) => (
     <Suspense
       fallback={
         <View style={{ flex: 1 }}>
@@ -82,6 +82,8 @@ function withSuspense<P extends object>(Component: React.ComponentType<P>): Reac
       <Component {...props} />
     </Suspense>
   );
+  Wrapped.displayName = `WithSuspense(${Component.displayName ?? Component.name ?? "Component"})`;
+  return Wrapped;
 }
 
 const LazyCascadeScreen = withSuspense(CascadeScreen);
