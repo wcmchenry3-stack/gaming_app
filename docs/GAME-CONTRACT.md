@@ -33,7 +33,6 @@ class GameType(str, Enum):
     TWENTY48  = "twenty48"
     BLACKJACK = "blackjack"
     CASCADE   = "cascade"
-    PACHISI   = "pachisi"
 ```
 
 The Python enum and the DB table are kept in sync by a CI test (`tests/test_vocab.py`) that fails if any enum member is missing a DB row or vice versa. The TypeScript `GAME_TYPES as const` in `frontend/src/api/vocab.ts` is **generated** from the enum — never edit it by hand.
@@ -226,7 +225,7 @@ A hook that manages the game session lifecycle — creating, polling, and comple
 
 ### 2.4 ESLint import zones *(TBD)*
 
-Cross-game import paths (e.g. a Blackjack screen importing from `../pachisi/`) will be forbidden via `no-restricted-imports` or an import-zone plugin rule. The exact configuration will be documented here when implemented.
+Cross-game import paths (e.g. a Blackjack screen importing from `../cascade/`) will be forbidden via `no-restricted-imports` or an import-zone plugin rule. The exact configuration will be documented here when implemented.
 
 ---
 

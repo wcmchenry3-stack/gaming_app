@@ -12,9 +12,6 @@ from fastapi.testclient import TestClient
 from main import app
 
 import yacht.router as yacht_router
-
-# Pachisi router is disabled in main.py — import kept for reset only
-import pachisi.router as pachisi_router
 import blackjack.router as blackjack_router
 
 client = TestClient(app)
@@ -26,11 +23,9 @@ SESSION_HEADERS = {"X-Session-ID": TEST_SESSION_ID}
 @pytest.fixture(autouse=True)
 def reset_all():
     yacht_router.reset_game()
-    pachisi_router.reset_game()
     blackjack_router.reset_game()
     yield
     yacht_router.reset_game()
-    pachisi_router.reset_game()
     blackjack_router.reset_game()
 
 
@@ -57,34 +52,6 @@ class TestYacht404Detail:
 
     def test_possible_scores_404_has_detail(self):
         res = client.get("/yacht/possible-scores", headers=SESSION_HEADERS)
-        assert res.status_code == 404
-        assert "detail" in res.json()
-
-
-# ---------------------------------------------------------------------------
-# Pachisi — disabled (needs total rewrite), skipped
-# ---------------------------------------------------------------------------
-
-
-@pytest.mark.skip(reason="Pachisi router disabled — needs total rewrite")
-class TestPachisi404Detail:
-    def test_state_404_has_detail(self):
-        res = client.get("/pachisi/state", headers=SESSION_HEADERS)
-        assert res.status_code == 404
-        assert "detail" in res.json()
-
-    def test_roll_404_has_detail(self):
-        res = client.post("/pachisi/roll", headers=SESSION_HEADERS)
-        assert res.status_code == 404
-        assert "detail" in res.json()
-
-    def test_move_404_has_detail(self):
-        res = client.post("/pachisi/move", json={"piece_index": 0}, headers=SESSION_HEADERS)
-        assert res.status_code == 404
-        assert "detail" in res.json()
-
-    def test_new_game_404_has_detail(self):
-        res = client.post("/pachisi/new-game", headers=SESSION_HEADERS)
         assert res.status_code == 404
         assert "detail" in res.json()
 
@@ -139,9 +106,6 @@ class TestMissingSessionHeader:
         [
             ("POST", "/yacht/new"),
             ("GET", "/yacht/state"),
-            # Pachisi disabled — skipped
-            # ("POST", "/pachisi/new"),
-            # ("GET", "/pachisi/state"),
             ("POST", "/blackjack/new"),
             ("GET", "/blackjack/state"),
         ],

@@ -73,8 +73,7 @@ function formatGameType(raw: string): string {
       return "Yacht";
     case "cascade":
       return "Cascade";
-    case "pachisi":
-      return "Pachisi";
+
     default:
       return raw;
   }

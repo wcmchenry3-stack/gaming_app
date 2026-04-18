@@ -9,7 +9,7 @@
  * drifts from the Python enums (GameType, GameOutcome).
  */
 
-export const GAME_TYPES = ["yacht", "twenty48", "blackjack", "cascade", "pachisi"] as const;
+export const GAME_TYPES = ["yacht", "twenty48", "blackjack", "cascade"] as const;
 
 export type GameType = (typeof GAME_TYPES)[number];
 

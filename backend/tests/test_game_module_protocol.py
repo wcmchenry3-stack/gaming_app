@@ -8,7 +8,6 @@ from blackjack.module import module as blackjack_module
 from cascade.module import module as cascade_module
 from games.protocol import GameModule
 from games.registry import get_module
-from pachisi.module import module as pachisi_module
 from vocab import GameType
 
 # ---------------------------------------------------------------------------
@@ -18,8 +17,8 @@ from vocab import GameType
 
 @pytest.mark.parametrize(
     "mod",
-    [blackjack_module, cascade_module, pachisi_module],
-    ids=["blackjack", "cascade", "pachisi"],
+    [blackjack_module, cascade_module],
+    ids=["blackjack", "cascade"],
 )
 def test_module_satisfies_protocol(mod) -> None:
     assert isinstance(mod, GameModule), f"{mod!r} does not satisfy the GameModule Protocol"
@@ -33,10 +32,6 @@ def test_cascade_module_game_type() -> None:
     assert cascade_module.game_type == GameType.CASCADE
 
 
-def test_pachisi_module_game_type() -> None:
-    assert pachisi_module.game_type == GameType.PACHISI
-
-
 # ---------------------------------------------------------------------------
 # Registry
 # ---------------------------------------------------------------------------
@@ -45,7 +40,6 @@ def test_pachisi_module_game_type() -> None:
 def test_registry_returns_correct_modules() -> None:
     assert get_module("blackjack") is blackjack_module
     assert get_module("cascade") is cascade_module
-    assert get_module("pachisi") is pachisi_module
 
 
 def test_registry_returns_none_for_unknown() -> None:
@@ -115,28 +109,4 @@ def test_cascade_stats_shape_preserves_aggregate_fields() -> None:
 
 def test_cascade_stats_shape_strips_latest_score() -> None:
     shaped = cascade_module.stats_shape(_RAW_CASCADE)
-    assert "latest_score" not in shaped
-
-
-# ---------------------------------------------------------------------------
-# PachisiModule.stats_shape — pass-through, strips latest_score
-# ---------------------------------------------------------------------------
-
-_RAW_PACHISI = {
-    "played": 2,
-    "best": 1,
-    "avg": 1.0,
-    "last_played_at": None,
-    "latest_score": 1,
-}
-
-
-def test_pachisi_stats_shape_preserves_aggregate_fields() -> None:
-    shaped = pachisi_module.stats_shape(_RAW_PACHISI)
-    assert shaped["played"] == 2
-    assert shaped["best"] == 1
-
-
-def test_pachisi_stats_shape_strips_latest_score() -> None:
-    shaped = pachisi_module.stats_shape(_RAW_PACHISI)
     assert "latest_score" not in shaped

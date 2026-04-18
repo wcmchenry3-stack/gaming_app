@@ -89,7 +89,6 @@ import yacht from "./src/i18n/locales/en/yacht.json";
 import cascade from "./src/i18n/locales/en/cascade.json";
 import errors from "./src/i18n/locales/en/errors.json";
 import blackjack from "./src/i18n/locales/en/blackjack.json";
-import pachisi from "./src/i18n/locales/en/pachisi.json";
 import twenty48 from "./src/i18n/locales/en/twenty48.json";
 import feedback from "./src/i18n/locales/en/feedback.json";
 import profile from "./src/i18n/locales/en/profile.json";
@@ -97,17 +96,7 @@ import profile from "./src/i18n/locales/en/profile.json";
 i18n.use(initReactI18next).init({
   lng: "en",
   fallbackLng: "en",
-  ns: [
-    "common",
-    "yacht",
-    "cascade",
-    "errors",
-    "blackjack",
-    "pachisi",
-    "twenty48",
-    "feedback",
-    "profile",
-  ],
+  ns: ["common", "yacht", "cascade", "errors", "blackjack", "twenty48", "feedback", "profile"],
   defaultNS: "common",
   resources: {
     en: {
@@ -116,7 +105,6 @@ i18n.use(initReactI18next).init({
       cascade,
       errors,
       blackjack,
-      pachisi,
       twenty48,
       feedback,
       profile,
