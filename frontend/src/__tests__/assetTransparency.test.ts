@@ -68,6 +68,36 @@ const ASSET_DIRS = [
 // Tests
 // ---------------------------------------------------------------------------
 
+// ---------------------------------------------------------------------------
+// No raw PNGs in icon asset directories (#581)
+// ---------------------------------------------------------------------------
+
+describe("No raw PNGs in icon asset directories", () => {
+  const ASSETS_ROOT = path.join(FRONTEND_ROOT, "assets");
+  const EXEMPT_DIRS = new Set(["source-icons"]);
+
+  const subdirs = fs
+    .readdirSync(ASSETS_ROOT, { withFileTypes: true })
+    .filter((e) => e.isDirectory())
+    .map((e) => e.name)
+    .filter((name) => !name.endsWith("-baked") && !EXEMPT_DIRS.has(name));
+
+  for (const dirName of subdirs) {
+    it(`assets/${dirName} contains no raw PNG files`, () => {
+      const dirPath = path.join(ASSETS_ROOT, dirName);
+      const pngFiles = fs.readdirSync(dirPath).filter((f) => f.endsWith(".png"));
+      if (pngFiles.length > 0) {
+        throw new Error(
+          `Found raw PNG(s) in assets/${dirName}: ${pngFiles.join(", ")} — ` +
+            `run \`python frontend/scripts/convert_icons_to_webp.py frontend/assets/${dirName}\` to convert`
+        );
+      }
+    });
+  }
+});
+
+// ---------------------------------------------------------------------------
+
 describe("WebP asset transparency (post background-removal)", () => {
   for (const dir of ASSET_DIRS) {
     const dirName = path.basename(dir);

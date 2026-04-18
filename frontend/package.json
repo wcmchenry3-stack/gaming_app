@@ -13,7 +13,8 @@
     "translate": "node scripts/translate.js",
     "check-i18n": "node scripts/check-i18n-strings.js",
     "process-assets": "python scripts/remove_backgrounds.py",
-    "extract-vertices": "python scripts/extract_vertices.py"
+    "extract-vertices": "python scripts/extract_vertices.py",
+    "bundlesize": "bundlesize"
   },
   "jest": {
     "preset": "jest-expo",
@@ -81,6 +82,7 @@
     "@types/react": "~19.2.2",
     "@typescript-eslint/eslint-plugin": "^8.16.0",
     "@typescript-eslint/parser": "^8.16.0",
+    "bundlesize2": "^0.0.31",
     "eslint": "^8.57.0",
     "eslint-plugin-import": "^2.32.0",
     "eslint-plugin-react": "^7.37.0",
@@ -93,6 +95,13 @@
     "source-map-explorer": "^2.5.3",
     "typescript": "~5.9.2"
   },
+  "bundlesize": [
+    {
+      "path": "./dist/index.android.bundle",
+      "maxSize": "5 mB",
+      "compression": "none"
+    }
+  ],
   "private": true,
   "overrides": {
     "picomatch": ">=2.3.2 <4 || >=4.0.4",
