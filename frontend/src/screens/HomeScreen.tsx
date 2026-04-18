@@ -35,8 +35,10 @@ export default function HomeScreen() {
   const numColumns = width < SINGLE_COL_BREAKPOINT ? 1 : 2;
 
   useEffect(() => {
-    const coldStartMs = performance.now() - APP_START_MS;
-    console.log(`[cold-start] HomeScreen ready: ${coldStartMs.toFixed(1)} ms`);
+    if (APP_START_MS > 0) {
+      const coldStartMs = performance.now() - APP_START_MS;
+      console.log(`[cold-start] HomeScreen ready: ${coldStartMs.toFixed(1)} ms`);
+    }
   }, []);
 
   async function startYacht() {
