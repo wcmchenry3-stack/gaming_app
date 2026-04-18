@@ -65,6 +65,24 @@ describe("httpClient — BASE_URL configuration", () => {
     );
   });
 
+  it("throws at module load when EXPO_PUBLIC_API_URL is localhost in a non-dev build (#571)", () => {
+    process.env.EXPO_PUBLIC_API_URL = "http://localhost:8000";
+    const g = globalThis as { __DEV__?: boolean };
+    const originalDev = g.__DEV__;
+    g.__DEV__ = false;
+    try {
+      expect(() => loadClient()).toThrow(/resolves to localhost/);
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      const Sentry = require("@sentry/react-native");
+      expect(Sentry.captureMessage).toHaveBeenCalledWith(
+        expect.stringContaining("resolves to localhost"),
+        expect.objectContaining({ level: "fatal" })
+      );
+    } finally {
+      g.__DEV__ = originalDev;
+    }
+  });
+
   it("throws at module load when EXPO_PUBLIC_API_URL is not set in a non-dev build (#511)", () => {
     delete process.env.EXPO_PUBLIC_API_URL;
     const g = globalThis as { __DEV__?: boolean };
