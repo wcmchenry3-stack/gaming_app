@@ -438,3 +438,77 @@ A Galaga-style arcade shooter is listed as a potential future paid game. Evaluat
 **Status: Resolved — removed in #550.**
 
 Pachisi was removed from the codebase (Path A). All frontend directories (`src/game/pachisi/`, `src/components/pachisi/`, `src/screens/PachisiScreen.tsx`), the backend router, and DB seed row were deleted. The Android bundle is unaffected.
+
+---
+
+## Lazy Loading Decision
+
+> **Epic 2a — Story #557** | Implemented: 2026-04-18 | Branch: `feat/lazy-loading-557` | Expo SDK 55 / Hermes / Android + iOS
+
+### Methodology
+
+Cold-start time is measured from the JS-side start time (captured in `src/utils/appTiming.ts` at module-load — the earliest reachable JS timestamp) to when `HomeScreen`'s `useEffect` fires on first render. The delta is logged via:
+
+```
+[cold-start] HomeScreen ready: <N> ms
+```
+
+**Android — read from device:**
+
+```bash
+# With static imports (baseline — checkout commit before this PR):
+adb logcat -s ReactNativeJS | grep cold-start
+
+# With lazy imports (this branch):
+adb logcat -s ReactNativeJS | grep cold-start
+```
+
+Build for release before measuring: `cd frontend/android && ./gradlew assembleRelease`
+
+**iOS — read from device:**
+
+```bash
+# Physical device (Xcode must be open and device connected):
+# Xcode → Window → Devices and Simulators → select device → open Console
+# Filter by "cold-start"
+
+# Simulator (faster iteration, less representative):
+xcrun simctl spawn booted log stream --level debug 2>/dev/null | grep cold-start
+```
+
+Build via Xcode for a Release scheme before measuring — debug builds include the Metro bundler and are not representative of cold-start.
+
+Navigation-to-game-screen time (jank check) is measured manually: note the timestamp when the navigation gesture is initiated and when the screen's first frame renders (visible as a spinner duration).
+
+### Measurements
+
+Cold-start timing via `performance.now()` instrumentation (`src/utils/appTiming.ts` + `HomeScreen` `useEffect`) was not capturable in the Expo Go dev-server environment: Metro's own `lazy=true` bundle splitting loads `appTiming.ts` as a deferred chunk, so the timestamp is not set before `HomeScreen` mounts. This instrumentation is correct for a production build (where Metro lazy bundling is not active) — see methodology above for how to measure against a release build.
+
+| Metric | Platform | Static imports (baseline) | Lazy imports | Notes |
+|---|---|---|---|---|
+| Cold-start: JS start → HomeScreen ready | Android | not captured | not captured | Expo Go dev server — see above |
+| Cold-start: JS start → HomeScreen ready | iOS | not captured | not captured | Expo Go dev server — see above |
+| Navigation → lazy screen (tab): first visit | iOS simulator | no spinner | brief spinner | Correct — module loads once, cached thereafter |
+| Navigation → lazy screen (tab): repeat visit | iOS simulator | no spinner | no spinner | Correct — cached module renders synchronously |
+| Navigation → `Twenty48Screen` (stack): every visit | iOS simulator | no spinner | **visible spinner** | ⚠️ See stack-screen finding below |
+
+### Stack-screen spinner finding
+
+**Observed:** `Twenty48Screen` shows a visible loading spinner on every navigation, not just the first. This is because React Navigation unmounts stack screens when the user presses back — so on each return visit, React mounts a fresh component tree with a new `Suspense` boundary. Even though `React.lazy()` caches the resolved module, the new Suspense boundary evaluates it synchronously and should not flash in theory; in practice a brief spinner is visible in the dev build, likely exaggerated by Metro's dev-mode overhead.
+
+**Risk in production:** In a production Hermes build (no Metro dev server), the cached lazy module resolves synchronously and the Suspense fallback should not render at all on repeat visits. This needs verification against a release build before ship.
+
+**If the spinner persists in release:** convert `CascadeScreen`, `BlackjackBettingScreen`, `BlackjackTableScreen`, and `Twenty48Screen` back to static imports. Tab screens (`LeaderboardScreen`, `SettingsScreen`, `GameDetailScreen`) do not have this problem and can remain lazy regardless.
+
+### Decision
+
+**Lazy loading adopted** — `React.lazy()` applied to 7 non-initial screens: `CascadeScreen`, `BlackjackBettingScreen`, `BlackjackTableScreen`, `Twenty48Screen`, `LeaderboardScreen`, `GameDetailScreen`, `SettingsScreen`. `HomeScreen`, `GameScreen`, and `ProfileScreen` remain eager.
+
+**Rationale:** Even if the Hermes cold-start delta is small (expected, per issue #557 notes: "Hermes bytecode already strips most parse-time cost"), lazy loading provides a structural benefit: module-level side-effects in game screens (Matter.js world setup, Skia canvas initialization, context providers) are deferred until the user navigates to those screens. This reduces work before `HomeScreen` is interactive regardless of parse-time savings.
+
+**Implementation notes:**
+- A `withSuspense` HOC wraps each lazy component at the `Screen` registration site, so the spinner is scoped to the navigating screen rather than replacing the entire app.
+- `HomeScreen` and `GameScreen` (Yacht) are kept eager — they are the two most common landing destinations and must never show a spinner.
+- `ProfileScreen` is kept eager as it is the initial screen of `ProfileStack` and is always pre-mounted when the tab bar renders.
+- The `appTiming.ts` module (`src/utils/appTiming.ts`) remains in the codebase as timing infrastructure for future cold-start regression checks against release builds.
+- **Follow-up required:** verify the stack-screen spinner finding against a release build before merging to `main`.
