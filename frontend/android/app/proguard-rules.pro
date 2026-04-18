@@ -14,8 +14,10 @@
 # Expo modules — auto-linking uses reflection to instantiate module classes
 -keep class expo.modules.** { *; }
 
-# Sentry — native crash handler and ANR detection rely on reflection
+# Sentry — native crash handler and ANR detection rely on reflection;
+# annotations used for integration configuration at runtime
 -keep class io.sentry.** { *; }
+-keepattributes *Annotation*
 -dontwarn io.sentry.**
 
 # Preserve source file names and line numbers for readable Sentry crash reports
