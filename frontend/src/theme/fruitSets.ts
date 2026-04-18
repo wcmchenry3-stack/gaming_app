@@ -1,29 +1,29 @@
 import { ImageSourcePropType } from "react-native";
 
-import cherryIcon from "../../assets/fruit-icons/cherry.png";
-import blueberryIcon from "../../assets/fruit-icons/blueberry.png";
-import lemonIcon from "../../assets/fruit-icons/lemon.png";
-import grapesIcon from "../../assets/fruit-icons/grapes.png";
-import orangeIcon from "../../assets/fruit-icons/orange.png";
-import appleIcon from "../../assets/fruit-icons/apple.png";
-import peachIcon from "../../assets/fruit-icons/peach.png";
-import coconutIcon from "../../assets/fruit-icons/coconut.png";
-import dragonfruitIcon from "../../assets/fruit-icons/dragonfruit.png";
-import pineappleIcon from "../../assets/fruit-icons/pineapple.png";
-import watermelonIcon from "../../assets/fruit-icons/watermelon.png";
-import pumpkinIcon from "../../assets/fruit-icons/pumpkin.png"; // reserved for future use
-import moonIcon from "../../assets/celestial-icons/moon.png";
-import plutoIcon from "../../assets/celestial-icons/pluto.png";
-import mercuryIcon from "../../assets/celestial-icons/mercury.png";
-import marsIcon from "../../assets/celestial-icons/mars.png";
-import venusIcon from "../../assets/celestial-icons/venus.png";
-import earthIcon from "../../assets/celestial-icons/earth.png";
-import neptuneIcon from "../../assets/celestial-icons/neptune.png";
-import uranusIcon from "../../assets/celestial-icons/uranus.png";
-import saturnIcon from "../../assets/celestial-icons/saturn.png";
-import jupiterIcon from "../../assets/celestial-icons/jupiter.png";
-import sunIcon from "../../assets/celestial-icons/sun.png";
-import milkyWayIcon from "../../assets/celestial-icons/milkyway.png"; // reserved for future use
+import cherryIcon from "../../assets/fruit-icons/cherry.webp";
+import blueberryIcon from "../../assets/fruit-icons/blueberry.webp";
+import lemonIcon from "../../assets/fruit-icons/lemon.webp";
+import grapesIcon from "../../assets/fruit-icons/grapes.webp";
+import orangeIcon from "../../assets/fruit-icons/orange.webp";
+import appleIcon from "../../assets/fruit-icons/apple.webp";
+import peachIcon from "../../assets/fruit-icons/peach.webp";
+import coconutIcon from "../../assets/fruit-icons/coconut.webp";
+import dragonfruitIcon from "../../assets/fruit-icons/dragonfruit.webp";
+import pineappleIcon from "../../assets/fruit-icons/pineapple.webp";
+import watermelonIcon from "../../assets/fruit-icons/watermelon.webp";
+import pumpkinIcon from "../../assets/fruit-icons/pumpkin.webp"; // reserved for future use
+import moonIcon from "../../assets/celestial-icons/moon.webp";
+import plutoIcon from "../../assets/celestial-icons/pluto.webp";
+import mercuryIcon from "../../assets/celestial-icons/mercury.webp";
+import marsIcon from "../../assets/celestial-icons/mars.webp";
+import venusIcon from "../../assets/celestial-icons/venus.webp";
+import earthIcon from "../../assets/celestial-icons/earth.webp";
+import neptuneIcon from "../../assets/celestial-icons/neptune.webp";
+import uranusIcon from "../../assets/celestial-icons/uranus.webp";
+import saturnIcon from "../../assets/celestial-icons/saturn.webp";
+import jupiterIcon from "../../assets/celestial-icons/jupiter.webp";
+import sunIcon from "../../assets/celestial-icons/sun.webp";
+import milkyWayIcon from "../../assets/celestial-icons/milkyway.webp"; // reserved for future use
 
 // Pre-baked game canvas icons — composited, clipped, ready for single drawImage
 import cherryBaked from "../../assets/fruits-baked/cherry.png";
