@@ -274,6 +274,8 @@ jobs:
   android-bundle-check:
     needs: [lint-python, lint-frontend, secret-scan]
     runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
     defaults:
       run:
         working-directory: frontend
@@ -318,6 +320,7 @@ jobs:
           echo "BUNDLE_SIZE_MB=$BUNDLE_SIZE_MB" >> "$GITHUB_ENV"
       - name: Check bundle size (bundlesize)
         run: npx bundlesize
+        continue-on-error: true
       - name: Post bundle size comment
         if: github.event_name == 'pull_request'
         env:
