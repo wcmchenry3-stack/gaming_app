@@ -537,6 +537,8 @@ Commit the update in the same PR as the size-increasing change so reviewers can 
 
 Every pull request receives an automated comment from `android-bundle-check` showing the current bundle size and delta vs the 4.5 MB baseline. No action is needed unless the delta is large or the hard limit is breached.
 
+For new game additions specifically, the reviewer checklist in [`docs/GAME-CONTRACT.md` — Size Budget](GAME-CONTRACT.md#size-budget) requires the delta to stay ≤ 200 KB.
+
 ### WebP icon enforcement
 
 A separate CI gate in `test-frontend` (`assetTransparency.test.ts`) asserts that no raw PNGs exist in non-exempt icon subdirectories under `frontend/assets/`. To convert new PNGs before staging:

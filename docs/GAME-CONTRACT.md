@@ -254,8 +254,16 @@ Use this checklist when adding a new game. Each item links to the file to create
 - [ ] **`frontend/src/game/mygame/types.ts`** — per-game state and action types extending `GameSession<TState, TAction>`
 - [ ] **Screen** — uses `GameShell` and `useGameSync`; passes ESLint import zone check
 - [ ] **`noUncheckedIndexedAccess`** clean — no suppression comments
-- [ ] **Size budget gate** — bundle does not exceed the per-game chunk budget (Epic #524 / #558)
 - [ ] **Icon assets are WebP** — any new icons added to `assets/fruit-icons/` or `assets/celestial-icons/` must be converted before committing: `python frontend/scripts/convert_icons_to_webp.py <dir>`. Raw PNGs in non-exempt asset directories will fail CI (`assetTransparency.test.ts`).
+
+### Size Budget
+
+Before merging a new game, verify all four items below. The `android-bundle-check` CI job enforces the hard limit automatically; the remaining items are reviewer responsibilities. See [`docs/PERFORMANCE.md` — JS Bundle Size Guardrail](PERFORMANCE.md#js-bundle-size-guardrail) for full details on the tooling and how to update thresholds.
+
+- [ ] **JS bundle delta ≤ 200 KB** — the `android-bundle-check` PR comment must show Δ ≤ +200 KB vs the 4.5 MB baseline. If exceeded, justify in the PR description with a measurement showing the addition is unavoidable.
+- [ ] **No new PNG assets in `assets/`** — all new icon/image assets must be WebP. Exception: Skia pre-composited textures in `*-baked/` directories (separate pipeline — document the exception explicitly in the PR if used).
+- [ ] **New asset directories audited** — confirm new assets are not accidentally bundled via an unintended import. Check the Metro bundle output (`--assets-dest`) before opening the PR.
+- [ ] **`docs/PERFORMANCE.md` asset inventory updated** — add new directories to the Directory Map table with size, file count, and "Bundled?" column.
 
 ### Validation
 
