@@ -76,7 +76,6 @@ def test_create_game_request_invalid_cascade_metadata_raises_422() -> None:
         CreateGameRequest(game_type="cascade", metadata={"player_name": "x" * 65})
 
 
-
 def test_create_game_request_unregistered_game_type_skips_validation() -> None:
     # yacht/twenty48 are in GameType but not yet in the registry — should not raise
     req = CreateGameRequest(game_type="yacht", metadata={"anything": True})

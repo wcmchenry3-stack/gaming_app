@@ -26,14 +26,7 @@ interface GameCard {
 
 export default function HomeScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<HomeStackParamList, "Home">>();
-  const { t } = useTranslation([
-    "common",
-    "yacht",
-    "cascade",
-    "blackjack",
-    "twenty48",
-    "errors",
-  ]);
+  const { t } = useTranslation(["common", "yacht", "cascade", "blackjack", "twenty48", "errors"]);
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();

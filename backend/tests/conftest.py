@@ -16,6 +16,7 @@ from __future__ import annotations
 
 import os
 import subprocess
+import sys
 import tempfile
 from pathlib import Path
 
@@ -46,7 +47,6 @@ def pytest_configure(config: pytest.Config) -> None:
     backend = Path(__file__).resolve().parent.parent
     env = os.environ.copy()
     env["DATABASE_URL"] = f"sqlite:///{db_path}"
-    import sys
     subprocess.run(
         [sys.executable, "-m", "alembic", "upgrade", "head"],
         cwd=backend,

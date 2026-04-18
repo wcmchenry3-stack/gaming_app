@@ -110,5 +110,3 @@ def test_cascade_stats_shape_preserves_aggregate_fields() -> None:
 def test_cascade_stats_shape_strips_latest_score() -> None:
     shaped = cascade_module.stats_shape(_RAW_CASCADE)
     assert "latest_score" not in shaped
-
-
