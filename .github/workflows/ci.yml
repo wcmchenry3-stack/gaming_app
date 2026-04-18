@@ -288,25 +288,61 @@ jobs:
         run: npm ci
       - name: Create Android JS bundle
         run: |
+          mkdir -p dist
           ENTRY_FILE=$(node -e "require('expo/scripts/resolveAppEntry')" . android absolute | tail -n 1)
           npx expo export:embed \
             --platform android \
             --dev false \
             --entry-file "$ENTRY_FILE" \
-            --bundle-output /tmp/index.android.bundle \
+            --bundle-output dist/index.android.bundle \
             --assets-dest /tmp/assets
       - name: Validate bundle
         run: |
-          if [ ! -f /tmp/index.android.bundle ]; then
+          if [ ! -f dist/index.android.bundle ]; then
             echo "::error::index.android.bundle was not created — the Android app will crash on launch"
             exit 1
           fi
-          BUNDLE_SIZE=$(stat --printf="%s" /tmp/index.android.bundle)
+          BUNDLE_SIZE=$(stat --printf="%s" dist/index.android.bundle)
           if [ "$BUNDLE_SIZE" -lt 1000 ]; then
             echo "::error::index.android.bundle is only ${BUNDLE_SIZE} bytes — likely corrupted"
             exit 1
           fi
-          echo "Android JS bundle created successfully (${BUNDLE_SIZE} bytes)"
+          BUNDLE_SIZE_MB=$(awk "BEGIN {printf \"%.2f\", $BUNDLE_SIZE / 1048576}")
+          MAX_BYTES=5242880
+          if [ "$BUNDLE_SIZE" -gt "$MAX_BYTES" ]; then
+            echo "::error::JS bundle exceeds 5 MB hard limit: ${BUNDLE_SIZE_MB} MB (${BUNDLE_SIZE} bytes). See docs/PERFORMANCE.md for how to update the limit."
+            exit 1
+          fi
+          echo "Android JS bundle: ${BUNDLE_SIZE_MB} MB (${BUNDLE_SIZE} bytes) — within 5 MB limit"
+          echo "BUNDLE_SIZE_BYTES=$BUNDLE_SIZE" >> "$GITHUB_ENV"
+          echo "BUNDLE_SIZE_MB=$BUNDLE_SIZE_MB" >> "$GITHUB_ENV"
+      - name: Check bundle size (bundlesize)
+        run: npx bundlesize
+      - name: Post bundle size comment
+        if: github.event_name == 'pull_request'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          BASELINE_BYTES=4718592
+          DELTA_BYTES=$(( BUNDLE_SIZE_BYTES - BASELINE_BYTES ))
+          if [ "$DELTA_BYTES" -gt 0 ]; then
+            DELTA_STR="+$(awk "BEGIN {printf \"%.0f\", $DELTA_BYTES / 1024}") KB"
+          else
+            DELTA_STR="$(awk "BEGIN {printf \"%.0f\", $DELTA_BYTES / 1024}") KB"
+          fi
+          COMMENT="### Bundle size report
+          | | Size |
+          |---|---|
+          | JS bundle (Hermes, Android) | ${BUNDLE_SIZE_MB} MB |
+          | Delta vs 4.5 MB baseline | ${DELTA_STR} |
+          | Hard limit | 5.0 MB |
+
+          _Measured from \`dist/index.android.bundle\` (uncompressed Hermes bytecode). See [PERFORMANCE.md](../blob/${GITHUB_HEAD_REF}/docs/PERFORMANCE.md#js-bundle-size-guardrail) for details._"
+          gh pr comment "${{ github.event.pull_request.number }}" \
+            --body "$COMMENT" \
+            --edit-last 2>/dev/null || \
+          gh pr comment "${{ github.event.pull_request.number }}" \
+            --body "$COMMENT"
 
   # === Tier 2: Expensive checks (need unit tests; skipped on feat→dev) =====
   # iOS/Android build checks run only on PRs targeting main or pushes to main.

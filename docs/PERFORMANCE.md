@@ -512,3 +512,40 @@ Cold-start timing via `performance.now()` instrumentation (`src/utils/appTiming.
 - `ProfileScreen` is kept eager as it is the initial screen of `ProfileStack` and is always pre-mounted when the tab bar renders.
 - The `appTiming.ts` module (`src/utils/appTiming.ts`) remains in the codebase as timing infrastructure for future cold-start regression checks against release builds.
 - **Follow-up required:** verify the stack-screen spinner finding against a release build before merging to `main`.
+
+---
+
+## JS Bundle Size Guardrail
+
+> **Epic 2b — Issues #556 / #581** | Implemented: 2026-04-18 | Branch: `feat/webp-enforcement-bundle-limit-556-581`
+
+### Hard limit
+
+The `android-bundle-check` CI job enforces a **5 MB hard limit** on the uncompressed Hermes bytecode bundle (`dist/index.android.bundle`). The job fails if the limit is exceeded. Additionally, `bundlesize2` runs against `frontend/.bundlesize.json` to provide a structured pass/fail report.
+
+**Baseline at time of implementation:** 4.5 MB (pre-#554/#555 measurement from PERFORMANCE.md asset inventory). The limit is set at 4.5 MB × 1.11 ≈ 5.0 MB to allow ~10% headroom for normal feature growth.
+
+### Updating the limit
+
+When a deliberate size increase is approved (e.g. a new game or major feature), update both:
+1. `frontend/.bundlesize.json` — the `maxSize` field
+2. The `MAX_BYTES` and baseline comment in the `android-bundle-check` CI step
+
+Commit the update in the same PR as the size-increasing change so reviewers can see both together.
+
+### PR comment
+
+Every pull request receives an automated comment from `android-bundle-check` showing the current bundle size and delta vs the 4.5 MB baseline. No action is needed unless the delta is large or the hard limit is breached.
+
+### WebP icon enforcement
+
+A separate CI gate in `test-frontend` (`assetTransparency.test.ts`) asserts that no raw PNGs exist in non-exempt icon subdirectories under `frontend/assets/`. To convert new PNGs before staging:
+
+```bash
+python frontend/scripts/convert_icons_to_webp.py frontend/assets/fruit-icons
+python frontend/scripts/convert_icons_to_webp.py frontend/assets/celestial-icons
+```
+
+**Exempt directories** (must stay PNG, never pass to the script):
+- `*-baked/` (`fruits-baked/`, `cosmos-baked/`) — Skia pipeline textures
+- `source-icons/` — local pipeline inputs, not bundled

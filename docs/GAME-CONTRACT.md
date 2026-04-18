@@ -255,6 +255,7 @@ Use this checklist when adding a new game. Each item links to the file to create
 - [ ] **Screen** — uses `GameShell` and `useGameSync`; passes ESLint import zone check
 - [ ] **`noUncheckedIndexedAccess`** clean — no suppression comments
 - [ ] **Size budget gate** — bundle does not exceed the per-game chunk budget (Epic #524 / #558)
+- [ ] **Icon assets are WebP** — any new icons added to `assets/fruit-icons/` or `assets/celestial-icons/` must be converted before committing: `python frontend/scripts/convert_icons_to_webp.py <dir>`. Raw PNGs in non-exempt asset directories will fail CI (`assetTransparency.test.ts`).
 
 ### Validation
 

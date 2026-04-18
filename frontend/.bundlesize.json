@@ -1,0 +1,7 @@
+[
+  {
+    "path": "./dist/index.android.bundle",
+    "maxSize": "5 mB",
+    "compression": "none"
+  }
+]
