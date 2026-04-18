@@ -55,13 +55,15 @@ export default function BlackjackTableScreen({ navigation }: Props) {
       setConfirmNewGameVisible(true);
     } else {
       handlePlayAgain();
+      navigation.replace("BlackjackBetting");
     }
-  }, [currentPhase, handlePlayAgain]);
+  }, [currentPhase, handlePlayAgain, navigation]);
 
   const handleConfirmNewGame = useCallback(() => {
     setConfirmNewGameVisible(false);
     handlePlayAgain();
-  }, [handlePlayAgain]);
+    navigation.replace("BlackjackBetting");
+  }, [handlePlayAgain, navigation]);
 
   const state = engine ? toViewState(engine) : null;
   const isSplit = (state?.player_hands?.length ?? 0) > 1;
