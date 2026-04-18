@@ -41,7 +41,8 @@ function resolveBaseUrl(): string {
   const raw = process.env.EXPO_PUBLIC_API_URL;
   if (raw) {
     const resolved = raw.startsWith("http") ? raw : `https://${raw}`;
-    if (!__DEV__ && isLocalhost(resolved)) {
+    const isTestBuild = process.env.EXPO_PUBLIC_TEST_HOOKS === "1";
+    if (!__DEV__ && !isTestBuild && isLocalhost(resolved)) {
       const msg =
         "EXPO_PUBLIC_API_URL resolves to localhost in a non-dev build (syncApi). " +
         "Set EXPO_PUBLIC_API_URL to the production API URL on the Render service.";
