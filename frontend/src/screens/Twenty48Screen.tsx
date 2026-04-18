@@ -21,7 +21,7 @@ import ScoreBoard from "../components/twenty48/ScoreBoard";
 import GameOverlay from "../components/twenty48/GameOverlay";
 import StatsBento from "../components/twenty48/StatsBento";
 import NewGameConfirmModal from "../components/shared/NewGameConfirmModal";
-import { gameEventClient } from "../game/_shared/gameEventClient";
+import { useGameSync } from "../game/_shared/useGameSync";
 
 function flattenBoard(board: number[][]): number[] {
   return board.flat();
@@ -59,26 +59,19 @@ export default function Twenty48Screen({ navigation }: Props) {
   /** One queued move — fires immediately after the current animation ends. */
   const pendingMove = useRef<Direction | null>(null);
 
-  // Game event instrumentation (#369). One session per game from load /
+  // Game event instrumentation (#369 / #549). One session per game from load /
   // reset until game_over OR keep-playing. After a keep-playing end, further
   // moves are still playable but aren't tracked — they belong to no session.
-  const gameIdRef = useRef<string | null>(null);
-  const completedRef = useRef(false);
+  const {
+    start: syncStart,
+    enqueue: syncEnqueue,
+    complete: syncComplete,
+  } = useGameSync("twenty48");
   const moveCountRef = useRef(0);
   const stateRef = useRef<Twenty48State | null>(null);
   useEffect(() => {
     stateRef.current = state;
   }, [state]);
-
-  const startInstrumentedSession = useCallback((s: Twenty48State) => {
-    moveCountRef.current = 0;
-    completedRef.current = false;
-    gameIdRef.current = gameEventClient.startGame(
-      "twenty48",
-      {},
-      { initial_board: flattenBoard(s.board) }
-    );
-  }, []);
 
   const endedPayload = useCallback(
     (s: Twenty48State, outcome: "completed" | "abandoned" | "kept_playing") => ({
@@ -89,20 +82,6 @@ export default function Twenty48Screen({ navigation }: Props) {
       outcome,
     }),
     []
-  );
-
-  const endInstrumentedSession = useCallback(
-    (s: Twenty48State, outcome: "completed" | "abandoned" | "kept_playing") => {
-      const gid = gameIdRef.current;
-      if (!gid || completedRef.current) return;
-      gameEventClient.completeGame(
-        gid,
-        { finalScore: s.score, outcome, durationMs: computeDurationMs(s) },
-        endedPayload(s, outcome)
-      );
-      completedRef.current = true;
-    },
-    [endedPayload]
   );
 
   // Disable back swipe gesture on this screen.
@@ -125,7 +104,8 @@ export default function Twenty48Screen({ navigation }: Props) {
       setBestScore(best);
       setLoading(false);
       if (!next.game_over) {
-        startInstrumentedSession(next);
+        moveCountRef.current = 0;
+        syncStart({ initial_board: flattenBoard(next.board) });
       }
     });
     return () => {
@@ -134,16 +114,7 @@ export default function Twenty48Screen({ navigation }: Props) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Abandon the session on unmount if still open.
-  useEffect(() => {
-    return () => {
-      const s = stateRef.current;
-      if (s && !completedRef.current && gameIdRef.current) {
-        endInstrumentedSession(s, "abandoned");
-      }
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  // Unmount cleanup is handled by useGameSync (abandons any open session).
 
   // Update and persist best score whenever score improves.
   useEffect(() => {
@@ -169,27 +140,23 @@ export default function Twenty48Screen({ navigation }: Props) {
       }
       setState(next);
       saveGame(next);
-      const gid = gameIdRef.current;
-      if (gid && !completedRef.current) {
-        moveCountRef.current += 1;
-        try {
-          gameEventClient.enqueueEvent(gid, {
-            type: "move",
-            data: {
-              direction,
-              score_delta: next.scoreDelta,
-              score_after: next.score,
-              highest_tile_after: highestTile(next.board),
-              is_game_over: next.game_over,
-              has_won: next.has_won,
-            },
-          });
-          if (next.game_over) {
-            endInstrumentedSession(next, "completed");
-          }
-        } catch {
-          // Isolation: instrumentation failures must never block gameplay.
-        }
+      moveCountRef.current += 1;
+      syncEnqueue({
+        type: "move",
+        data: {
+          direction,
+          score_delta: next.scoreDelta,
+          score_after: next.score,
+          highest_tile_after: highestTile(next.board),
+          is_game_over: next.game_over,
+          has_won: next.has_won,
+        },
+      });
+      if (next.game_over) {
+        syncComplete(
+          { finalScore: next.score, outcome: "completed", durationMs: computeDurationMs(next) },
+          endedPayload(next, "completed")
+        );
       }
       // Hold the lock for the slide animation duration, then fire any queued move.
       setTimeout(() => {
@@ -204,7 +171,7 @@ export default function Twenty48Screen({ navigation }: Props) {
         }
       }, MOVE_LOCK_MS);
     },
-    [endInstrumentedSession]
+    [endedPayload, syncComplete, syncEnqueue]
   );
 
   const handleMove = useCallback(
@@ -223,16 +190,21 @@ export default function Twenty48Screen({ navigation }: Props) {
     movingRef.current = false;
     pendingMove.current = null;
     setWinDismissed(false);
-    // Close out the previous session if it's still open.
+    // Close out the previous session with proper payload (if still open).
     const prev = stateRef.current;
-    if (prev && !completedRef.current && gameIdRef.current) {
-      endInstrumentedSession(prev, prev.game_over ? "completed" : "abandoned");
+    if (prev) {
+      const outcome = prev.game_over ? "completed" : "abandoned";
+      syncComplete(
+        { finalScore: prev.score, outcome, durationMs: computeDurationMs(prev) },
+        endedPayload(prev, outcome)
+      );
     }
     const next = newGame();
     setState(next);
     saveGame(next);
-    startInstrumentedSession(next);
-  }, [endInstrumentedSession, startInstrumentedSession]);
+    moveCountRef.current = 0;
+    syncStart({ initial_board: flattenBoard(next.board) });
+  }, [endedPayload, syncComplete, syncStart]);
 
   const handleNewGamePress = useCallback(() => {
     if (state && state.score > 0 && !state.game_over) {
@@ -381,7 +353,12 @@ export default function Twenty48Screen({ navigation }: Props) {
           onKeepPlaying={() => {
             setWinDismissed(true);
             const s = stateRef.current;
-            if (s) endInstrumentedSession(s, "kept_playing");
+            if (s) {
+              syncComplete(
+                { finalScore: s.score, outcome: "kept_playing", durationMs: computeDurationMs(s) },
+                endedPayload(s, "kept_playing")
+              );
+            }
           }}
           onHome={() => navigation.goBack()}
         />

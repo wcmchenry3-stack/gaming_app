@@ -2,7 +2,7 @@ import React, { createContext, useCallback, useContext, useEffect, useRef, useSt
 import { newGame, EngineState, DEFAULT_RULES, handValue, isNaturalBlackjack, Card } from "./engine";
 import { GameRules } from "./types";
 import { saveGame, loadGame, clearGame } from "./storage";
-import { gameEventClient } from "../_shared/gameEventClient";
+import { useGameSync } from "../_shared/useGameSync";
 
 /** Hint passed to apply() so the context can emit a typed player_action. */
 export type PlayerActionHint = "hit" | "stand" | "double" | "split" | null;
@@ -28,9 +28,13 @@ export function BlackjackGameProvider({ children }: { children: React.ReactNode 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Instrumentation session state (#370). Session = one blackjack game from
-  // chip allocation until chips=0 OR the provider unmounts.
-  const gameIdRef = useRef<string | null>(null);
+  // Instrumentation session state (#370 / #549). Session = one blackjack game
+  // from chip allocation until chips=0 OR the provider unmounts.
+  const {
+    start: syncStart,
+    enqueue: syncEnqueue,
+    complete: syncComplete,
+  } = useGameSync("blackjack");
   const sessionStartedAtRef = useRef<number>(0);
   const totalHandsRef = useRef(0);
   const engineRef = useRef<EngineState | null>(null);
@@ -38,23 +42,19 @@ export function BlackjackGameProvider({ children }: { children: React.ReactNode 
     engineRef.current = engine;
   }, [engine]);
 
-  const startSession = useCallback((startingChips: number) => {
-    sessionStartedAtRef.current = Date.now();
-    totalHandsRef.current = 0;
-    gameIdRef.current = gameEventClient.startGame(
-      "blackjack",
-      {},
-      { starting_chips: startingChips }
-    );
-  }, []);
+  const startSession = useCallback(
+    (startingChips: number) => {
+      sessionStartedAtRef.current = Date.now();
+      totalHandsRef.current = 0;
+      syncStart({ starting_chips: startingChips });
+    },
+    [syncStart]
+  );
 
-  const endSession = useCallback((outcome: "completed" | "abandoned") => {
-    const gid = gameIdRef.current;
-    if (!gid) return;
-    const durationMs = Date.now() - sessionStartedAtRef.current;
-    try {
-      gameEventClient.completeGame(
-        gid,
+  const endSession = useCallback(
+    (outcome: "completed" | "abandoned") => {
+      const durationMs = Date.now() - sessionStartedAtRef.current;
+      syncComplete(
         { outcome, durationMs },
         {
           total_hands: totalHandsRef.current,
@@ -62,11 +62,9 @@ export function BlackjackGameProvider({ children }: { children: React.ReactNode 
           outcome,
         }
       );
-    } catch {
-      // Isolation
-    }
-    gameIdRef.current = null;
-  }, []);
+    },
+    [syncComplete]
+  );
 
   useEffect(() => {
     let active = true;
@@ -91,15 +89,7 @@ export function BlackjackGameProvider({ children }: { children: React.ReactNode 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Abandon the session if the provider unmounts with an open session.
-  useEffect(() => {
-    return () => {
-      if (gameIdRef.current) {
-        endSession("abandoned");
-      }
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  // Unmount cleanup is handled by useGameSync (abandons any open session).
 
   // Clear storage when player runs out of chips so relaunch starts fresh.
   useEffect(() => {
@@ -110,93 +100,87 @@ export function BlackjackGameProvider({ children }: { children: React.ReactNode 
 
   const emitTransitionEvents = useCallback(
     (prev: EngineState, next: EngineState, action: PlayerActionHint) => {
-      const gid = gameIdRef.current;
-      if (!gid) return;
-      try {
-        // bet_placed + hand_dealt: betting → player/result with a fresh deal.
-        // Read chips_remaining from prev.chips, not next.chips — placeBet can
-        // settle immediately on a natural blackjack, and next.chips would then
-        // reflect the post-settlement balance, not the chips the player has
-        // after merely locking in the bet. (closes #503)
-        if (prev.phase === "betting" && next.phase !== "betting") {
-          gameEventClient.enqueueEvent(gid, {
-            type: "bet_placed",
-            data: {
-              amount: next.bet,
-              chips_remaining: Math.max(0, prev.chips - next.bet),
-            },
-          });
-          gameEventClient.enqueueEvent(gid, {
-            type: "hand_dealt",
-            data: {
-              player_hand: next.player_hand,
-              dealer_up_card: next.dealer_hand[0] ?? null,
-              is_player_blackjack: isNaturalBlackjack(next.player_hand),
-            },
-          });
-        }
+      // bet_placed + hand_dealt: betting → player/result with a fresh deal.
+      // Read chips_remaining from prev.chips, not next.chips — placeBet can
+      // settle immediately on a natural blackjack, and next.chips would then
+      // reflect the post-settlement balance, not the chips the player has
+      // after merely locking in the bet. (closes #503)
+      if (prev.phase === "betting" && next.phase !== "betting") {
+        syncEnqueue({
+          type: "bet_placed",
+          data: {
+            amount: next.bet,
+            chips_remaining: Math.max(0, prev.chips - next.bet),
+          },
+        });
+        syncEnqueue({
+          type: "hand_dealt",
+          data: {
+            player_hand: next.player_hand,
+            dealer_up_card: next.dealer_hand[0] ?? null,
+            is_player_blackjack: isNaturalBlackjack(next.player_hand),
+          },
+        });
+      }
 
-        // player_action: hit / stand / double / split during player phase
-        if (prev.phase === "player" && action) {
-          const handIdx = prev.active_hand_index;
-          // For stand, the hand value is taken from prev (no card added).
-          // For hit/double/split, take it from next (the new card is there).
-          const sourceState = action === "stand" ? prev : next;
-          const hand = activeHand(sourceState, handIdx);
-          gameEventClient.enqueueEvent(gid, {
-            type: "player_action",
-            data: {
-              action,
-              hand_index: handIdx,
-              hand_value_after: handValue(hand),
-            },
-          });
-        }
+      // player_action: hit / stand / double / split during player phase
+      if (prev.phase === "player" && action) {
+        const handIdx = prev.active_hand_index;
+        // For stand, the hand value is taken from prev (no card added).
+        // For hit/double/split, take it from next (the new card is there).
+        const sourceState = action === "stand" ? prev : next;
+        const hand = activeHand(sourceState, handIdx);
+        syncEnqueue({
+          type: "player_action",
+          data: {
+            action,
+            hand_index: handIdx,
+            hand_value_after: handValue(hand),
+          },
+        });
+      }
 
-        // hand_resolved (single-hand): outcome just got filled in
-        const prevHadNoSplit = prev.player_hands.length === 0;
-        const nextHasNoSplit = next.player_hands.length === 0;
-        if (prevHadNoSplit && nextHasNoSplit && prev.outcome === null && next.outcome !== null) {
+      // hand_resolved (single-hand): outcome just got filled in
+      const prevHadNoSplit = prev.player_hands.length === 0;
+      const nextHasNoSplit = next.player_hands.length === 0;
+      if (prevHadNoSplit && nextHasNoSplit && prev.outcome === null && next.outcome !== null) {
+        totalHandsRef.current += 1;
+        syncEnqueue({
+          type: "hand_resolved",
+          data: {
+            hand_index: 0,
+            outcome: next.outcome,
+            payout_delta: next.payout,
+            chips_after: next.chips,
+          },
+        });
+      }
+
+      // hand_resolved (split): scan for newly-filled hand_outcomes slots
+      const outLen = next.hand_outcomes.length;
+      for (let i = 0; i < outLen; i++) {
+        const pOut = prev.hand_outcomes[i] ?? null;
+        const nOut = next.hand_outcomes[i] ?? null;
+        if (pOut === null && nOut !== null) {
           totalHandsRef.current += 1;
-          gameEventClient.enqueueEvent(gid, {
+          syncEnqueue({
             type: "hand_resolved",
             data: {
-              hand_index: 0,
-              outcome: next.outcome,
-              payout_delta: next.payout,
+              hand_index: i,
+              outcome: nOut,
+              payout_delta: next.hand_payouts[i] ?? 0,
               chips_after: next.chips,
             },
           });
         }
+      }
 
-        // hand_resolved (split): scan for newly-filled hand_outcomes slots
-        const outLen = next.hand_outcomes.length;
-        for (let i = 0; i < outLen; i++) {
-          const pOut = prev.hand_outcomes[i] ?? null;
-          const nOut = next.hand_outcomes[i] ?? null;
-          if (pOut === null && nOut !== null) {
-            totalHandsRef.current += 1;
-            gameEventClient.enqueueEvent(gid, {
-              type: "hand_resolved",
-              data: {
-                hand_index: i,
-                outcome: nOut,
-                payout_delta: next.hand_payouts[i] ?? 0,
-                chips_after: next.chips,
-              },
-            });
-          }
-        }
-
-        // game_ended: chips exhausted in result phase
-        if (next.chips === 0 && next.phase === "result") {
-          endSession("completed");
-        }
-      } catch {
-        // Isolation: never let instrumentation break gameplay.
+      // game_ended: chips exhausted in result phase
+      if (next.chips === 0 && next.phase === "result") {
+        endSession("completed");
       }
     },
-    [endSession]
+    [endSession, syncEnqueue]
   );
 
   const apply = useCallback(
@@ -231,12 +215,10 @@ export function BlackjackGameProvider({ children }: { children: React.ReactNode 
 
   const handlePlayAgain = useCallback(() => {
     // If a session is still open, close it out. When chips hit 0 mid-hand,
-    // game_ended was already emitted by emitTransitionEvents — gameIdRef is
-    // null in that case and endSession is a no-op. Otherwise we're mid-game
-    // and the user pressed New Game, so this is an abandon.
-    if (gameIdRef.current) {
-      endSession("abandoned");
-    }
+    // game_ended was already emitted by emitTransitionEvents — syncComplete
+    // is idempotent and the guard in useGameSync makes this a no-op.
+    // Otherwise we're mid-game and the user pressed New Game (abandon).
+    endSession("abandoned");
     const fresh = newGame(undefined, engine?.rules ?? DEFAULT_RULES);
     setEngine(fresh);
     saveGame(fresh);
