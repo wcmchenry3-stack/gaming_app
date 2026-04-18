@@ -317,7 +317,7 @@ jobs:
           echo "BUNDLE_SIZE_BYTES=$BUNDLE_SIZE" >> "$GITHUB_ENV"
           echo "BUNDLE_SIZE_MB=$BUNDLE_SIZE_MB" >> "$GITHUB_ENV"
       - name: Check bundle size (bundlesize)
-        run: npx bundlesize
+        run: npx bundlesize --config .bundlesize.json
       - name: Post bundle size comment
         if: github.event_name == 'pull_request'
         env:
