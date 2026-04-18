@@ -22,6 +22,7 @@ import * as Sentry from "@sentry/react-native";
 import { GameType, PendingSubmission, SubmitHandler } from "./types";
 
 const STORAGE_KEY = "pending_score_queue_v1";
+const MAX_SCORE_ATTEMPTS = 5;
 
 function generateUUID(): string {
   if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
@@ -138,8 +139,19 @@ export class ScoreQueue {
           succeeded += 1;
         } catch (e) {
           failed += 1;
-          const msg = e instanceof Error ? e.message : String(e);
-          remaining.push({ ...item, attempts: item.attempts + 1, last_error: msg });
+          const nextAttempts = item.attempts + 1;
+          if (nextAttempts >= MAX_SCORE_ATTEMPTS) {
+            Sentry.captureMessage(
+              `scoreQueue: dead-lettering ${item.game_type} score after ${nextAttempts} attempts`,
+              {
+                level: "warning",
+                extra: { item, error: e instanceof Error ? e.message : String(e) },
+              }
+            );
+          } else {
+            const msg = e instanceof Error ? e.message : String(e);
+            remaining.push({ ...item, attempts: nextAttempts, last_error: msg });
+          }
         }
       }
       await this.write(remaining);

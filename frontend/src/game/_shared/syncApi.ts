@@ -28,10 +28,32 @@ export interface SyncResponse {
  * See httpClient.resolveBaseUrl for the rationale behind throwing rather
  * than silently falling back to localhost in non-dev builds (#511).
  */
+function isLocalhost(url: string): boolean {
+  try {
+    const { hostname } = new URL(url);
+    return hostname === "localhost" || hostname === "127.0.0.1" || hostname === "::1";
+  } catch {
+    return false;
+  }
+}
+
 function resolveBaseUrl(): string {
   const raw = process.env.EXPO_PUBLIC_API_URL;
   if (raw) {
-    return raw.startsWith("http") ? raw : `https://${raw}`;
+    const resolved = raw.startsWith("http") ? raw : `https://${raw}`;
+    const isTestBuild = process.env.EXPO_PUBLIC_TEST_HOOKS === "1";
+    if (!__DEV__ && !isTestBuild && isLocalhost(resolved)) {
+      const msg =
+        "EXPO_PUBLIC_API_URL resolves to localhost in a non-dev build (syncApi). " +
+        "Set EXPO_PUBLIC_API_URL to the production API URL on the Render service.";
+      Sentry.captureMessage(msg, {
+        level: "fatal",
+        tags: { subsystem: "syncApi", issue: "localhost-in-prod" },
+        extra: { raw },
+      });
+      throw new Error(msg);
+    }
+    return resolved;
   }
   if (__DEV__) {
     return "http://localhost:8000";

@@ -77,6 +77,29 @@ describe("ScoreQueue", () => {
     expect(await queue.size()).toBe(1);
   });
 
+  it("dead-letters an item after MAX_SCORE_ATTEMPTS failures and emits Sentry warning", async () => {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const Sentry = require("@sentry/react-native");
+    Sentry.captureMessage.mockClear();
+
+    await queue.enqueue("cascade", { player_name: "A", score: 1 });
+    const handler = jest.fn().mockRejectedValue(new Error("network failure"));
+    queue.registerHandler("cascade", handler);
+
+    // Flush MAX_SCORE_ATTEMPTS (5) times — item should be dropped on the 5th.
+    for (let i = 0; i < 4; i++) {
+      const r = await queue.flush();
+      expect(r.remaining).toBe(1);
+    }
+    const final = await queue.flush();
+    expect(final.remaining).toBe(0);
+    expect(await queue.size()).toBe(0);
+    expect(Sentry.captureMessage).toHaveBeenCalledWith(
+      expect.stringContaining("dead-lettering cascade score"),
+      expect.objectContaining({ level: "warning" })
+    );
+  });
+
   it("flush returns zero-result when queue is empty", async () => {
     const result = await queue.flush();
     expect(result).toEqual({ attempted: 0, succeeded: 0, failed: 0, remaining: 0 });
