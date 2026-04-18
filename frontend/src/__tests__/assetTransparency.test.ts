@@ -3,23 +3,22 @@
  *
  * Asset transparency smoke test — CI gate
  * ----------------------------------------
- * Verifies that every sprite PNG in the fruit-icons and celestial-icons
+ * Verifies that every sprite WebP in the fruit-icons and celestial-icons
  * directories has transparent corner pixels (alpha < 200), confirming that
- * `scripts/remove_backgrounds.py` has been run on the assets.
+ * `scripts/remove_backgrounds.py` has been run and the conversion preserved
+ * the alpha channel.
  *
- * This test will FAIL on CI if the script has not been run, preventing
- * un-processed opaque-background assets from shipping.
+ * This test will FAIL on CI if unprocessed opaque-background assets ship.
  */
 
-// Each 2048×2048 RGBA PNG takes ~5–15 s to fully decompress in Node.js.
-// With 24 files across two directories the suite runs ~200 s total.
-// The extended timeout below prevents false-positive CI failures.
+// Each 2048×2048 WebP takes ~1–3 s to decode with sharp.
+// 24 files across two directories: ~60 s. Keep a generous timeout.
 jest.setTimeout(300_000);
 
 import * as fs from "fs";
 import * as path from "path";
 // eslint-disable-next-line @typescript-eslint/no-require-imports
-const { PNG } = require("pngjs");
+const sharp = require("sharp");
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -32,19 +31,19 @@ interface CornerAlphas {
   bottomRight: number;
 }
 
-function getCornerAlphas(filePath: string): CornerAlphas | null {
-  const buf = fs.readFileSync(filePath);
-  let png: { width: number; height: number; data: Buffer };
+async function getCornerAlphas(filePath: string): Promise<CornerAlphas | null> {
+  let result: { data: Buffer; info: { width: number; height: number; channels: number } };
   try {
-    png = PNG.sync.read(buf);
+    result = await sharp(filePath).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
   } catch {
-    return null; // unreadable PNG — skip
+    return null; // unreadable file — skip
   }
 
-  const { width, height, data } = png;
-  if (!data || width < 1 || height < 1) return null;
+  const { data, info } = result;
+  const { width, height, channels } = info;
+  if (!data || width < 1 || height < 1 || channels < 4) return null;
 
-  // pngjs gives raw RGBA bytes row-major; alpha is every 4th byte starting at index 3
+  // raw RGBA bytes, row-major; alpha is every 4th byte starting at index 3
   const stride = width * 4;
   const topLeft = data[3] ?? 0;
   const topRight = data[(width - 1) * 4 + 3] ?? 0;
@@ -69,24 +68,24 @@ const ASSET_DIRS = [
 // Tests
 // ---------------------------------------------------------------------------
 
-describe("PNG asset transparency (post background-removal)", () => {
+describe("WebP asset transparency (post background-removal)", () => {
   for (const dir of ASSET_DIRS) {
     const dirName = path.basename(dir);
-    const pngFiles = fs.readdirSync(dir).filter((f) => f.endsWith(".png"));
+    const webpFiles = fs.readdirSync(dir).filter((f) => f.endsWith(".webp"));
 
     describe(`assets/${dirName}`, () => {
-      it("contains at least one PNG file", () => {
-        expect(pngFiles.length).toBeGreaterThan(0);
+      it("contains at least one WebP file", () => {
+        expect(webpFiles.length).toBeGreaterThan(0);
       });
 
-      for (const file of pngFiles) {
+      for (const file of webpFiles) {
         const filePath = path.join(dir, file);
 
-        it(`${file} — corner pixels are transparent (alpha < 200)`, () => {
-          const alphas = getCornerAlphas(filePath);
+        it(`${file} — corner pixels are transparent (alpha < 200)`, async () => {
+          const alphas = await getCornerAlphas(filePath);
 
           if (alphas === null) {
-            // Unreadable PNG — skip rather than fail
+            // Unreadable file — skip rather than fail
             return;
           }
 
