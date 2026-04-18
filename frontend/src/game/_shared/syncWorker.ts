@@ -350,33 +350,23 @@ export class SyncWorker {
         result.deadLettered += 1;
         continue;
       }
-      // 400 (and other non-403 4xx): retryable up to MAX_COMPLETE_ATTEMPTS.
-      // The original #519 Sentry event was a deployment-window mismatch —
-      // the server was running old code that rejected outcome="completed"
-      // before the #514 fix was deployed. Retrying instead of immediately
-      // dead-lettering gives the deployment time to roll out.
-      const attempts = await this.games.incrementCompleteAttempts(gameId);
-      const isFinal = attempts >= logConfig.MAX_COMPLETE_ATTEMPTS;
-      // Only emit a Sentry warning on the final attempt to avoid flooding
-      // the dashboard with per-retry noise during deployment windows (#572).
-      if (isFinal) {
-        Sentry.captureMessage(
-          `syncWorker: ${res.status} on PATCH /complete ${gameId} (dead-lettered)`,
-          {
-            level: "warning",
-            extra: {
-              status: res.status,
-              body: res.body,
-              gameId,
-              sentOutcome: body.outcome,
-              attempt: attempts,
-              maxAttempts: logConfig.MAX_COMPLETE_ATTEMPTS,
-            },
-          }
-        );
-        await this.games.forget(gameId);
-        result.deadLettered += 1;
-      }
+      // 400 (and other non-403 4xx): permanent — dead-letter immediately.
+      // The backend has accepted "completed" in _VALID_OUTCOMES since #514;
+      // a 400 now means a genuine bad request that won't be fixed by retrying.
+      Sentry.captureMessage(
+        `syncWorker: ${res.status} on PATCH /complete ${gameId} (dead-lettered)`,
+        {
+          level: "error",
+          extra: {
+            status: res.status,
+            body: res.body,
+            gameId,
+            sentOutcome: body.outcome,
+          },
+        }
+      );
+      await this.games.forget(gameId);
+      result.deadLettered += 1;
     }
     return true;
   }
