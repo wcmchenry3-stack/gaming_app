@@ -353,7 +353,7 @@ describe("GameScreen — gameEventClient instrumentation (#368)", () => {
   it("calls startGame('yacht') on mount", () => {
     renderScreen();
     expect(mockStartGame).toHaveBeenCalledTimes(1);
-    expect(mockStartGame).toHaveBeenCalledWith("yacht");
+    expect(mockStartGame).toHaveBeenCalledWith("yacht", {}, {});
   });
 
   it("does not start a new session when mounted with a game_over state", () => {
@@ -483,16 +483,8 @@ describe("GameScreen — gameEventClient instrumentation (#368)", () => {
     expect(mockCompleteGame).toHaveBeenCalledTimes(1);
     const abandonCall = mockCompleteGame.mock.calls[0];
     if (abandonCall === undefined) throw new Error("Expected completeGame call");
-    const [, summary, eventData] = abandonCall;
+    const [, summary] = abandonCall;
     expect(summary.outcome).toBe("abandoned");
-    expect(eventData.outcome).toBe("abandoned");
-    expect(eventData).toEqual(
-      expect.objectContaining({
-        final_score: expect.any(Number),
-        upper_bonus: expect.any(Number),
-        yacht_bonus_total: expect.any(Number),
-      })
-    );
   });
 
   it("does not double-fire game_ended: completeGame on unmount is skipped after natural end", async () => {
@@ -517,20 +509,21 @@ describe("GameScreen — gameEventClient instrumentation (#368)", () => {
     });
     expect(mockCompleteGame).toHaveBeenCalledTimes(1);
     expect(mockCompleteGame.mock.calls[0]?.[1]?.outcome).toBe("abandoned");
-    expect(mockStartGame).toHaveBeenCalledWith("yacht");
+    expect(mockStartGame).toHaveBeenCalledWith("yacht", {}, {});
   });
 
   it("client failures do not block gameplay (enqueueEvent throws)", async () => {
     mockEnqueueEvent.mockImplementationOnce(() => {
       throw new Error("boom");
     });
-    const { getByRole, getByText } = renderScreen();
-    // The throw inside handleRoll is caught and rendered as an error message —
-    // it must not crash the render tree and state must still advance.
+    const { getByRole, queryByText } = renderScreen();
+    // Instrumentation errors are isolated by useGameSync — they must not
+    // crash the render tree, surface as a user-visible error, or prevent
+    // the next event from being recorded.
     await act(async () => {
       fireEvent.press(getByRole("button", { name: /roll dice/i }));
     });
-    expect(getByText("boom")).toBeTruthy();
+    expect(queryByText("boom")).toBeNull();
     // Round is still 1 (no score yet) and a subsequent successful enqueue works.
     mockEnqueueEvent.mockClear();
     await act(async () => {

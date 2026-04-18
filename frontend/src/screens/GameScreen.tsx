@@ -15,7 +15,7 @@ import {
   Category,
 } from "../game/yacht/engine";
 import { saveGame, clearGame } from "../game/yacht/storage";
-import { gameEventClient } from "../game/_shared/gameEventClient";
+import { useGameSync } from "../game/_shared/useGameSync";
 import * as Sentry from "@sentry/react-native";
 import DiceRow from "../components/DiceRow";
 import Scorecard from "../components/Scorecard";
@@ -47,10 +47,8 @@ export default function GameScreen({ navigation, route }: Props) {
     gameStateRef.current = gameState;
   }, [gameState]);
 
-  // Game event instrumentation (#368). One gameEventClient session per
-  // mounted screen; Play Again / New Game starts a fresh session.
-  const gameIdRef = useRef<string | null>(null);
-  const completedRef = useRef(false);
+  // Game event instrumentation (#368 / #549).
+  const { start: syncStart, enqueue: syncEnqueue, complete: syncComplete } = useGameSync("yacht");
 
   function endedPayload(s: GameState, outcome: "completed" | "abandoned") {
     return {
@@ -62,22 +60,9 @@ export default function GameScreen({ navigation, route }: Props) {
   }
 
   useEffect(() => {
-    if (gameIdRef.current !== null) return;
     if (gameStateRef.current.game_over) return;
-    gameIdRef.current = gameEventClient.startGame("yacht");
-    completedRef.current = false;
-    return () => {
-      const gid = gameIdRef.current;
-      if (gid && !completedRef.current) {
-        const s = gameStateRef.current;
-        gameEventClient.completeGame(
-          gid,
-          { finalScore: s.total_score, outcome: "abandoned" },
-          endedPayload(s, "abandoned")
-        );
-        completedRef.current = true;
-      }
-    };
+    syncStart();
+    // Unmount abandon is handled by useGameSync.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -96,17 +81,14 @@ export default function GameScreen({ navigation, route }: Props) {
     try {
       const next = engineRoll(gameState, held);
       setGameState(next);
-      const gid = gameIdRef.current;
-      if (gid) {
-        gameEventClient.enqueueEvent(gid, {
-          type: "roll",
-          data: {
-            held: [...next.held],
-            dice: [...next.dice],
-            rolls_used_after: next.rolls_used,
-          },
-        });
-      }
+      syncEnqueue({
+        type: "roll",
+        data: {
+          held: [...next.held],
+          dice: [...next.dice],
+          rolls_used_after: next.rolls_used,
+        },
+      });
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : String(e));
     }
@@ -120,27 +102,22 @@ export default function GameScreen({ navigation, route }: Props) {
       const next = engineScore(prev, category as Category);
       setGameState(next);
       setResetHeld((r) => !r);
-      const gid = gameIdRef.current;
-      if (gid) {
-        const value = next.scores[category as Category] ?? 0;
-        const isJoker = next.yacht_bonus_count > prev.yacht_bonus_count;
-        gameEventClient.enqueueEvent(gid, {
-          type: "score",
-          data: {
-            category,
-            value,
-            is_joker: isJoker,
-            available_alternatives: alternatives,
-          },
-        });
-        if (next.game_over && !completedRef.current) {
-          gameEventClient.completeGame(
-            gid,
-            { finalScore: next.total_score, outcome: "completed" },
-            endedPayload(next, "completed")
-          );
-          completedRef.current = true;
-        }
+      const value = next.scores[category as Category] ?? 0;
+      const isJoker = next.yacht_bonus_count > prev.yacht_bonus_count;
+      syncEnqueue({
+        type: "score",
+        data: {
+          category,
+          value,
+          is_joker: isJoker,
+          available_alternatives: alternatives,
+        },
+      });
+      if (next.game_over) {
+        syncComplete(
+          { finalScore: next.total_score, outcome: "completed" },
+          endedPayload(next, "completed")
+        );
       }
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : String(e));
@@ -160,32 +137,24 @@ export default function GameScreen({ navigation, route }: Props) {
       },
       level: "info",
     });
-    // Close out the previous session if it's still open (mid-game abandon).
-    // If the game completed naturally, handleScore already fired game_ended.
-    const prevGid = gameIdRef.current;
-    if (prevGid && !completedRef.current) {
-      const outcome = prev.game_over ? "completed" : "abandoned";
-      gameEventClient.completeGame(
-        prevGid,
-        { finalScore: prev.total_score, outcome },
-        endedPayload(prev, outcome)
-      );
-      completedRef.current = true;
-    }
+    // If the game is mid-play, close the session as abandoned with the full
+    // payload. If game_over is true, syncComplete was already called in
+    // handleScore — this is a no-op due to the completedRef guard.
+    const outcome = prev.game_over ? "completed" : "abandoned";
+    syncComplete({ finalScore: prev.total_score, outcome }, endedPayload(prev, outcome));
     await clearGame();
     setGameState(newGame());
     setGameKey((k) => k + 1);
     setResetHeld((r) => !r);
     setError(null);
     // Start a new instrumentation session for the fresh game.
-    gameIdRef.current = gameEventClient.startGame("yacht");
-    completedRef.current = false;
+    syncStart();
     Sentry.addBreadcrumb({
       category: "yacht.game",
       message: "startNewGame: reset complete",
       level: "info",
     });
-  }, []);
+  }, [syncComplete, syncStart]);
 
   const handleNewGamePress = useCallback(() => {
     if (isInProgress(gameStateRef.current)) {
