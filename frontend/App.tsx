@@ -1,3 +1,4 @@
+import "./src/utils/appTiming"; // must be first — captures JS-side cold-start timestamp
 import "./src/i18n/i18n";
 import React, { Suspense } from "react";
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from "react-native";
@@ -16,14 +17,7 @@ import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import * as Sentry from "@sentry/react-native";
 import HomeScreen from "./src/screens/HomeScreen";
 import GameScreen from "./src/screens/GameScreen";
-import CascadeScreen from "./src/screens/CascadeScreen";
-import BlackjackBettingScreen from "./src/screens/BlackjackBettingScreen";
-import BlackjackTableScreen from "./src/screens/BlackjackTableScreen";
-import Twenty48Screen from "./src/screens/Twenty48Screen";
-import LeaderboardScreen from "./src/screens/LeaderboardScreen";
 import ProfileScreen from "./src/screens/ProfileScreen";
-import GameDetailScreen from "./src/screens/GameDetailScreen";
-import SettingsScreen from "./src/screens/SettingsScreen";
 import BottomTabBar from "./src/components/shared/BottomTabBar";
 import { GameState } from "./src/game/yacht/types";
 import { ThemeProvider } from "./src/theme/ThemeContext";
@@ -31,6 +25,14 @@ import { useHtmlAttributes } from "./src/i18n/useHtmlAttributes";
 import { NetworkProvider } from "./src/game/_shared/NetworkContext";
 import { BlackjackGameProvider } from "./src/game/blackjack/BlackjackGameContext";
 import { SessionLogger } from "./src/components/FeedbackWidget/SessionLogger";
+
+const CascadeScreen = React.lazy(() => import("./src/screens/CascadeScreen"));
+const BlackjackBettingScreen = React.lazy(() => import("./src/screens/BlackjackBettingScreen"));
+const BlackjackTableScreen = React.lazy(() => import("./src/screens/BlackjackTableScreen"));
+const Twenty48Screen = React.lazy(() => import("./src/screens/Twenty48Screen"));
+const LeaderboardScreen = React.lazy(() => import("./src/screens/LeaderboardScreen"));
+const GameDetailScreen = React.lazy(() => import("./src/screens/GameDetailScreen"));
+const SettingsScreen = React.lazy(() => import("./src/screens/SettingsScreen"));
 
 // Start capturing console.warn / console.error for feedback submissions
 SessionLogger.init();
@@ -68,6 +70,28 @@ export type ProfileStackParamList = {
   GameDetail: { gameId: string };
 };
 
+function withSuspense<P extends object>(Component: React.ComponentType<P>): React.FC<P> {
+  return (props: P) => (
+    <Suspense
+      fallback={
+        <View style={{ flex: 1 }}>
+          <ActivityIndicator style={{ flex: 1 }} />
+        </View>
+      }
+    >
+      <Component {...props} />
+    </Suspense>
+  );
+}
+
+const LazyCascadeScreen = withSuspense(CascadeScreen);
+const LazyBlackjackBettingScreen = withSuspense(BlackjackBettingScreen);
+const LazyBlackjackTableScreen = withSuspense(BlackjackTableScreen);
+const LazyTwenty48Screen = withSuspense(Twenty48Screen);
+const LazyLeaderboardScreen = withSuspense(LeaderboardScreen);
+const LazyGameDetailScreen = withSuspense(GameDetailScreen);
+const LazySettingsScreen = withSuspense(SettingsScreen);
+
 const Stack = createNativeStackNavigator<RootStackParamList>();
 const HomeStack = createNativeStackNavigator<HomeStackParamList>();
 const ProfileStackNav = createNativeStackNavigator<ProfileStackParamList>();
@@ -78,10 +102,10 @@ function LobbyStack() {
     <HomeStack.Navigator screenOptions={{ headerShown: false }}>
       <HomeStack.Screen name="Home" component={HomeScreen} />
       <HomeStack.Screen name="Game" component={GameScreen} />
-      <HomeStack.Screen name="Cascade" component={CascadeScreen} />
-      <HomeStack.Screen name="BlackjackBetting" component={BlackjackBettingScreen} />
-      <HomeStack.Screen name="BlackjackTable" component={BlackjackTableScreen} />
-      <HomeStack.Screen name="Twenty48" component={Twenty48Screen} />
+      <HomeStack.Screen name="Cascade" component={LazyCascadeScreen} />
+      <HomeStack.Screen name="BlackjackBetting" component={LazyBlackjackBettingScreen} />
+      <HomeStack.Screen name="BlackjackTable" component={LazyBlackjackTableScreen} />
+      <HomeStack.Screen name="Twenty48" component={LazyTwenty48Screen} />
     </HomeStack.Navigator>
   );
 }
@@ -90,7 +114,7 @@ function ProfileStack() {
   return (
     <ProfileStackNav.Navigator screenOptions={{ headerShown: false }}>
       <ProfileStackNav.Screen name="ProfileHome" component={ProfileScreen} />
-      <ProfileStackNav.Screen name="GameDetail" component={GameDetailScreen} />
+      <ProfileStackNav.Screen name="GameDetail" component={LazyGameDetailScreen} />
     </ProfileStackNav.Navigator>
   );
 }
@@ -102,9 +126,9 @@ function MainTabs() {
       screenOptions={{ headerShown: false }}
     >
       <Tab.Screen name="Lobby" component={LobbyStack} />
-      <Tab.Screen name="Ranks" component={LeaderboardScreen} />
+      <Tab.Screen name="Ranks" component={LazyLeaderboardScreen} />
       <Tab.Screen name="Profile" component={ProfileStack} />
-      <Tab.Screen name="Settings" component={SettingsScreen} />
+      <Tab.Screen name="Settings" component={LazySettingsScreen} />
     </Tab.Navigator>
   );
 }

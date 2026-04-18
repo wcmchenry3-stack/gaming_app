@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { View, Text, Pressable, StyleSheet, FlatList, useWindowDimensions } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTranslation } from "react-i18next";
@@ -12,6 +12,7 @@ import { useTheme } from "../theme/ThemeContext";
 import { typography } from "../theme/typography";
 import { AppHeader, APP_HEADER_HEIGHT } from "../components/shared/AppHeader";
 import OfflineBanner from "../components/OfflineBanner";
+import { APP_START_MS } from "../utils/appTiming";
 
 /** Below this viewport width the grid collapses to a single column. */
 const SINGLE_COL_BREAKPOINT = 360;
@@ -32,6 +33,11 @@ export default function HomeScreen() {
   const { width } = useWindowDimensions();
 
   const numColumns = width < SINGLE_COL_BREAKPOINT ? 1 : 2;
+
+  useEffect(() => {
+    const coldStartMs = performance.now() - APP_START_MS;
+    console.log(`[cold-start] HomeScreen ready: ${coldStartMs.toFixed(1)} ms`);
+  }, []);
 
   async function startYacht() {
     const saved = await loadYachtGame();
