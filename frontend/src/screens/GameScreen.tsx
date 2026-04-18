@@ -22,7 +22,7 @@ import Scorecard from "../components/Scorecard";
 import GameOverModal from "../components/yacht/GameOverModal";
 import NewGameConfirmModal from "../components/shared/NewGameConfirmModal";
 import { useTheme } from "../theme/ThemeContext";
-import { AppHeader, APP_HEADER_HEIGHT } from "../components/shared/AppHeader";
+import { GameShell } from "../components/shared/GameShell";
 
 type Props = {
   navigation: NativeStackNavigationProp<HomeStackParamList, "Game">;
@@ -211,25 +211,18 @@ export default function GameScreen({ navigation, route }: Props) {
   );
 
   return (
-    <View
-      style={[
-        styles.container,
-        {
-          backgroundColor: colors.background,
-          paddingTop: APP_HEADER_HEIGHT + insets.top,
-          paddingBottom: Math.max(insets.bottom, 16),
-          paddingLeft: Math.max(insets.left, 16),
-          paddingRight: Math.max(insets.right, 16),
-        },
-      ]}
+    <GameShell
+      title={t("game.title")}
+      rightSlot={roundPill}
+      requireBack
+      onBack={() => navigation.popToTop()}
+      error={error}
+      style={{
+        paddingBottom: Math.max(insets.bottom, 16),
+        paddingLeft: Math.max(insets.left, 16),
+        paddingRight: Math.max(insets.right, 16),
+      }}
     >
-      <AppHeader
-        title={t("game.title")}
-        rightSlot={roundPill}
-        requireBack
-        onBack={() => navigation.popToTop()}
-      />
-
       {/* New Game */}
       <View style={styles.actionRow}>
         <Pressable
@@ -243,16 +236,6 @@ export default function GameScreen({ navigation, route }: Props) {
           </Text>
         </Pressable>
       </View>
-
-      {error && (
-        <Text
-          style={[styles.errorText, { color: colors.error }]}
-          accessibilityLiveRegion="assertive"
-          accessibilityRole="alert"
-        >
-          {error}
-        </Text>
-      )}
 
       {/* Dice */}
       <DiceRow
@@ -296,12 +279,11 @@ export default function GameScreen({ navigation, route }: Props) {
         onConfirm={handleConfirmNewGame}
         onCancel={() => setConfirmNewGameVisible(false)}
       />
-    </View>
+    </GameShell>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1 },
   actionRow: {
     flexDirection: "row",
     justifyContent: "flex-end",
