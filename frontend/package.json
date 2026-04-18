@@ -95,6 +95,13 @@
     "source-map-explorer": "^2.5.3",
     "typescript": "~5.9.2"
   },
+  "bundlesize": [
+    {
+      "path": "./dist/index.android.bundle",
+      "maxSize": "5 mB",
+      "compression": "none"
+    }
+  ],
   "private": true,
   "overrides": {
     "picomatch": ">=2.3.2 <4 || >=4.0.4",

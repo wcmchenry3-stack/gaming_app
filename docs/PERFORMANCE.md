@@ -521,14 +521,14 @@ Cold-start timing via `performance.now()` instrumentation (`src/utils/appTiming.
 
 ### Hard limit
 
-The `android-bundle-check` CI job enforces a **5 MB hard limit** on the uncompressed Hermes bytecode bundle (`dist/index.android.bundle`). The job fails if the limit is exceeded. Additionally, `bundlesize2` runs against `frontend/.bundlesize.json` to provide a structured pass/fail report.
+The `android-bundle-check` CI job enforces a **5 MB hard limit** on the uncompressed Hermes bytecode bundle (`dist/index.android.bundle`). The job fails if the limit is exceeded. Additionally, `bundlesize2` runs against the `"bundlesize"` config in `frontend/package.json` to provide a structured pass/fail report.
 
 **Baseline at time of implementation:** 4.5 MB (pre-#554/#555 measurement from PERFORMANCE.md asset inventory). The limit is set at 4.5 MB × 1.11 ≈ 5.0 MB to allow ~10% headroom for normal feature growth.
 
 ### Updating the limit
 
 When a deliberate size increase is approved (e.g. a new game or major feature), update both:
-1. `frontend/.bundlesize.json` — the `maxSize` field
+1. `frontend/package.json` — the `"bundlesize"` array `maxSize` field
 2. The `MAX_BYTES` and baseline comment in the `android-bundle-check` CI step
 
 Commit the update in the same PR as the size-increasing change so reviewers can see both together.
