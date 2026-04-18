@@ -62,11 +62,6 @@ export interface LogConfig {
   /** Rows exceeding this retry count are dead-lettered. */
   MAX_RETRY_COUNT: number;
 
-  /** How many 4xx failures on PATCH /complete before a game is dead-lettered.
-   * Kept above 1 so a deployment-window mismatch (old server rejecting a
-   * valid outcome) doesn't permanently lose the game on the first try. */
-  MAX_COMPLETE_ATTEMPTS: number;
-
   /** Per-row payload caps — oversized payloads are truncated on enqueue. */
   MAX_EVENT_PAYLOAD_BYTES: number;
   MAX_BUG_CONTEXT_BYTES: number;
@@ -94,7 +89,6 @@ export const logConfig: LogConfig = {
   BACKOFF_BASE_MS: 1000,
   BACKOFF_MAX_MS: 30 * 60 * 1000, // 30 min
   MAX_RETRY_COUNT: 10,
-  MAX_COMPLETE_ATTEMPTS: 3,
   MAX_EVENT_PAYLOAD_BYTES: 8 * 1024, // 8 KB
   MAX_BUG_CONTEXT_BYTES: 16 * 1024, // 16 KB
   REPORT_BUG_MAX_PER_MINUTE_PER_SOURCE: 10,
@@ -123,7 +117,6 @@ export function resetLogConfig(): void {
     BACKOFF_BASE_MS: 1000,
     BACKOFF_MAX_MS: 30 * 60 * 1000,
     MAX_RETRY_COUNT: 10,
-    MAX_COMPLETE_ATTEMPTS: 3,
     MAX_EVENT_PAYLOAD_BYTES: 8 * 1024,
     MAX_BUG_CONTEXT_BYTES: 16 * 1024,
     REPORT_BUG_MAX_PER_MINUTE_PER_SOURCE: 10,

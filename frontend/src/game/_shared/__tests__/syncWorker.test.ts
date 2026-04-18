@@ -369,14 +369,14 @@ describe("SyncWorker", () => {
     expect(patch!.body).not.toHaveProperty("durationMs");
   });
 
-  // #572: Sentry warning is only emitted on the final retry attempt to avoid
-  // flooding the dashboard with per-retry noise during deployment windows.
-  it("400 on PATCH /complete does NOT emit captureMessage until final attempt", async () => {
+  // #572/#553: 400 on PATCH /complete is now terminal — dead-letter immediately.
+  // The backend has accepted "completed" since #514; a 400 is a permanent
+  // bad-request that retrying cannot fix.
+  it("400 on PATCH /complete dead-letters immediately and emits Sentry error", async () => {
     // eslint-disable-next-line @typescript-eslint/no-require-imports
     const Sentry = require("@sentry/react-native");
     Sentry.captureMessage.mockClear();
 
-    logConfig.MAX_COMPLETE_ATTEMPTS = 2;
     api.defaultResponse = ok();
     api.onNext((p) => p.endsWith("/complete"), {
       status: 400,
@@ -387,81 +387,22 @@ describe("SyncWorker", () => {
     const gid = client.startGame("yacht");
     client.completeGame(gid, { finalScore: 100, outcome: "completed" });
     await flushMicro();
-    await worker.flush();
+    const result = await worker.flush();
 
-    // First attempt — no Sentry warning yet.
-    expect(Sentry.captureMessage).not.toHaveBeenCalled();
-
-    // Second attempt (final) — dead-letters and emits warning.
-    api.onNext((p) => p.endsWith("/complete"), {
-      status: 400,
-      ok: false,
-      retryAfterMs: null,
-      body: { detail: "Invalid outcome: 'completed'" },
-    });
-    await worker.flush();
-
+    expect(games.get(gid)).toBeUndefined();
+    expect(result.deadLettered).toBe(1);
     expect(Sentry.captureMessage).toHaveBeenCalledWith(
       expect.stringContaining("400 on PATCH /complete"),
       expect.objectContaining({
-        level: "warning",
+        level: "error",
         extra: expect.objectContaining({
           status: 400,
           body: { detail: "Invalid outcome: 'completed'" },
           gameId: gid,
           sentOutcome: "completed",
-          attempt: 2,
-          maxAttempts: 2,
         }),
       })
     );
-  });
-
-  // -------------------------------------------------------------------------
-  // #519 — PATCH /complete retry on 400 (deployment-window resilience)
-  // -------------------------------------------------------------------------
-
-  // 400 on PATCH /complete must NOT immediately dead-letter the game.
-  // The root cause of #519 was a deployment-window mismatch: the server
-  // was running old code that rejected outcome="completed" while the new
-  // code was still being deployed. Retrying gives the deployment time to
-  // roll out.
-  it("400 on PATCH /complete retains the game after the first failure", async () => {
-    logConfig.MAX_COMPLETE_ATTEMPTS = 2;
-    api.defaultResponse = ok();
-    api.onNext((p) => p.endsWith("/complete"), err(400));
-
-    const gid = client.startGame("yacht");
-    client.completeGame(gid, { finalScore: 100, outcome: "completed" });
-    await flushMicro();
-    await worker.flush();
-
-    // Game must still be tracked — not forgotten yet.
-    expect(games.get(gid)).toBeDefined();
-    expect(games.get(gid)?.completeAttempts).toBe(1);
-    // This second flush will succeed (api.defaultResponse = ok()).
-    await worker.flush();
-    expect(games.get(gid)).toBeUndefined(); // forgotten after 2xx
-  });
-
-  it("400 on PATCH /complete dead-letters after MAX_COMPLETE_ATTEMPTS", async () => {
-    logConfig.MAX_COMPLETE_ATTEMPTS = 2;
-    api.defaultResponse = ok();
-    api.onNext((p) => p.endsWith("/complete"), err(400));
-    api.onNext((p) => p.endsWith("/complete"), err(400));
-
-    const gid = client.startGame("yacht");
-    client.completeGame(gid, { finalScore: 100, outcome: "completed" });
-    await flushMicro();
-
-    // First failure — game kept.
-    await worker.flush();
-    expect(games.get(gid)).toBeDefined();
-
-    // Second failure — hits the cap, game forgotten.
-    const result = await worker.flush();
-    expect(games.get(gid)).toBeUndefined();
-    expect(result.deadLettered).toBe(1);
   });
 
   it("403 on PATCH /complete is immediately dead-lettered (permanent session mismatch)", async () => {
