@@ -192,6 +192,34 @@ describe("fruit hull polygon validity", () => {
 });
 
 // ---------------------------------------------------------------------------
+// ---------------------------------------------------------------------------
+// Visual tier progression — each tier must appear ≥10% larger than the previous
+// ---------------------------------------------------------------------------
+
+describe("cosmos visual tier progression", () => {
+  it("each cosmos tier shows ≥10% visual size growth over the previous tier", () => {
+    const cosmosMap = cosmosVerticesRaw as unknown as Record<string, AssetEntry>;
+    const fruits = requireFruitSet("cosmos").fruits;
+    const sorted = [...fruits].sort((a, b) => a.tier - b.tier);
+    for (let i = 1; i < sorted.length; i++) {
+      const prev = sorted[i - 1]!;
+      const curr = sorted[i]!;
+      const prevKey = nameKeyFor(prev);
+      const currKey = nameKeyFor(curr);
+      const prevScale = cosmosMap[prevKey]?.spriteScale[0] ?? 1;
+      const currScale = cosmosMap[currKey]?.spriteScale[0] ?? 1;
+      const prevVis = prev.radius * prevScale;
+      const currVis = curr.radius * currScale;
+      const growth = (currVis - prevVis) / prevVis;
+      expect(growth).toBeGreaterThanOrEqual(
+        0.1,
+        `T${prev.tier} ${prev.name} → T${curr.tier} ${curr.name}: visual growth ${(growth * 100).toFixed(1)}% < 10%`
+      );
+    }
+  });
+});
+
+// ---------------------------------------------------------------------------
 // Cross-check: fruitSets nameKey matches vertex JSON keys
 // ---------------------------------------------------------------------------
 
