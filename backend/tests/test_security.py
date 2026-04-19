@@ -349,13 +349,19 @@ def test_rate_limit_429_has_retry_after(client_default):
 
 @pytest.mark.security
 def test_cascade_score_strict_limit(client_default):
-    """POST /cascade/score has a 5/minute limit."""
+    """PATCH /cascade/score/:id has a 10/minute limit per (session, URL).
+
+    All 11 requests target the same game_id so they share one rate-limit bucket.
+    """
+    fake_id = str(uuid.uuid4())
+    sid = _sid()
     responses = [
-        client_default.post(
-            "/cascade/score",
-            json={"player_name": "tester", "score": i},
+        client_default.patch(
+            f"/cascade/score/{fake_id}",
+            json={"player_name": "tester"},
+            headers={"X-Session-ID": sid},
         )
-        for i in range(7)
+        for _ in range(11)
     ]
     assert any(r.status_code == 429 for r in responses)
 

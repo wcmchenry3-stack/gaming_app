@@ -2,16 +2,17 @@
 
 The in-memory leaderboard that preceded #366 lost every score on restart.
 This test exercises the DB-backed replacement by:
-  1. POSTing a score via one TestClient
-  2. Disposing the engine pool (proxy for a process restart — drops all
-     open connections)
+  1. Creating and completing a game via the unified games pipeline
+  2. Disposing the engine pool (proxy for a process restart)
   3. Re-opening a fresh TestClient and asserting the score is still visible
 
-Uses a dedicated SQLite file so autouse clean_db_tables fixture in
+Uses a dedicated SQLite file so the autouse clean_db_tables fixture in
 conftest.py does NOT wipe the row (we disable that fixture for this module).
 """
 
 from __future__ import annotations
+
+import uuid
 
 import pytest
 from fastapi.testclient import TestClient
@@ -19,8 +20,6 @@ from fastapi.testclient import TestClient
 from db.base import get_engine
 
 
-# Disable the autouse table-clearing fixture for this file: the whole point
-# is that data survives across in-process "restarts".
 @pytest.fixture(autouse=True)
 async def _clean_db_tables():
     yield
@@ -29,12 +28,30 @@ async def _clean_db_tables():
 async def test_cascade_score_survives_engine_dispose() -> None:
     from main import app
 
+    sid = str(uuid.uuid4())
+    headers = {"X-Session-ID": sid}
+
     with TestClient(app) as c1:
-        r = c1.post(
-            "/cascade/score",
-            json={"player_name": "PersistenceTester", "score": 4242},
+        # Create game
+        r = c1.post("/games", json={"game_type": "cascade"}, headers=headers)
+        assert r.status_code in (200, 201), r.text
+        game_id = r.json()["id"]
+
+        # Complete with score
+        r = c1.patch(
+            f"/games/{game_id}/complete",
+            json={"final_score": 4242, "outcome": "completed"},
+            headers=headers,
         )
-        assert r.status_code == 201, r.text
+        assert r.status_code == 200, r.text
+
+        # Set player name
+        r = c1.patch(
+            f"/cascade/score/{game_id}",
+            json={"player_name": "PersistenceTester"},
+            headers=headers,
+        )
+        assert r.status_code == 200, r.text
 
     # Proxy for "backend restart" — drop connection pool.
     engine = get_engine()

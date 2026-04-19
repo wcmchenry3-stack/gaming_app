@@ -4,19 +4,17 @@ from pydantic import BaseModel, ConfigDict, Field
 class CascadeMetadata(BaseModel):
     """Validated metadata shape for Cascade game rows (#539).
 
-    ``player_name`` is optional here because the generic ``POST /games``
-    endpoint may be called without a name; the Cascade-specific
-    ``POST /cascade/score`` route always supplies it internally.
-    ``extra="forbid"`` rejects unknown keys.
+    ``player_name`` is optional because a game may be created before the
+    player has entered their name; ``PATCH /cascade/score/{game_id}`` sets it
+    after game-over.  ``extra="forbid"`` rejects unknown keys.
     """
 
     model_config = ConfigDict(extra="forbid")
     player_name: str = Field(default="", max_length=64)
 
 
-class ScoreSubmitRequest(BaseModel):
+class SetPlayerNameRequest(BaseModel):
     player_name: str = Field(..., min_length=1, max_length=32)
-    score: int = Field(..., ge=0)
 
 
 class ScoreEntry(BaseModel):

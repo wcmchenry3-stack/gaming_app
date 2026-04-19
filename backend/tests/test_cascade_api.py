@@ -1,9 +1,25 @@
+"""Tests for the Cascade leaderboard API (#477).
+
+All leaderboard entries are now created via the unified games pipeline:
+  1. POST /games          → creates the game row (handled by SyncWorker in prod)
+  2. PATCH /games/:id/complete → records final_score
+  3. PATCH /cascade/score/:id  → sets player_name, returns rank
+
+GET /cascade/scores remains unchanged.
+"""
+
+import uuid
+
 import pytest
 from fastapi.testclient import TestClient
+
 import cascade.router as cascade_router_module
 from main import app
 
 client = TestClient(app)
+
+TEST_SESSION = str(uuid.uuid4())
+SESSION_HEADERS = {"X-Session-ID": TEST_SESSION}
 
 
 @pytest.fixture(autouse=True)
@@ -13,39 +29,104 @@ def reset_leaderboard():
     cascade_router_module.reset_leaderboard()
 
 
-def _submit(player_name: str, score: int):
-    return client.post("/cascade/score", json={"player_name": player_name, "score": score})
+def _create_game(session_id: str = TEST_SESSION) -> str:
+    """POST /games and return the new game_id."""
+    res = client.post(
+        "/games",
+        json={"game_type": "cascade"},
+        headers={"X-Session-ID": session_id},
+    )
+    assert res.status_code in (200, 201), res.text
+    return res.json()["id"]
+
+
+def _complete_game(game_id: str, score: int, session_id: str = TEST_SESSION) -> None:
+    """PATCH /games/:id/complete."""
+    from limiter import limiter
+
+    limiter.reset()
+    res = client.patch(
+        f"/games/{game_id}/complete",
+        json={"final_score": score, "outcome": "completed"},
+        headers={"X-Session-ID": session_id},
+    )
+    assert res.status_code == 200, res.text
+
+
+def _set_name(game_id: str, player_name: str, session_id: str = TEST_SESSION):
+    """PATCH /cascade/score/:id — sets player_name, returns ScoreEntry."""
+    return client.patch(
+        f"/cascade/score/{game_id}",
+        json={"player_name": player_name},
+        headers={"X-Session-ID": session_id},
+    )
+
+
+def _submit(player_name: str, score: int, session_id: str = TEST_SESSION):
+    """Create + complete + name a game in one call. Returns the PATCH response."""
+    from limiter import limiter
+
+    limiter.reset()
+    gid = _create_game(session_id)
+    _complete_game(gid, score, session_id)
+    return _set_name(gid, player_name, session_id)
 
 
 # ---------------------------------------------------------------------------
-# POST /cascade/score
+# PATCH /cascade/score/{game_id}
 # ---------------------------------------------------------------------------
 
 
-class TestSubmitScore:
-    def test_valid_submission_returns_201(self):
-        res = _submit("Alice", 500)
-        assert res.status_code == 201
+class TestSetPlayerName:
+    def test_valid_update_returns_200_with_score_entry(self):
+        gid = _create_game()
+        _complete_game(gid, 500)
+        res = _set_name(gid, "Alice")
+        assert res.status_code == 200
         body = res.json()
         assert body["player_name"] == "Alice"
         assert body["score"] == 500
-        assert body["rank"] == 1  # first entry
+        assert body["rank"] == 1
 
     def test_missing_player_name_returns_422(self):
-        res = client.post("/cascade/score", json={"score": 100})
-        assert res.status_code == 422
-
-    def test_missing_score_returns_422(self):
-        res = client.post("/cascade/score", json={"player_name": "Bob"})
+        gid = _create_game()
+        _complete_game(gid, 100)
+        res = client.patch(
+            f"/cascade/score/{gid}",
+            json={},
+            headers=SESSION_HEADERS,
+        )
         assert res.status_code == 422
 
     def test_empty_player_name_returns_422(self):
-        res = _submit("", 100)
+        gid = _create_game()
+        _complete_game(gid, 100)
+        res = _set_name(gid, "")
         assert res.status_code == 422
 
-    def test_negative_score_returns_422(self):
-        res = _submit("Alice", -1)
-        assert res.status_code == 422
+    def test_unknown_game_id_returns_404(self):
+        unknown_id = str(uuid.uuid4())
+        res = _set_name(unknown_id, "Alice")
+        assert res.status_code == 404
+
+    def test_wrong_session_returns_404(self):
+        gid = _create_game(session_id=str(uuid.uuid4()))
+        res = _set_name(gid, "Alice", session_id=str(uuid.uuid4()))
+        assert res.status_code == 404
+
+    def test_missing_session_header_returns_400(self):
+        gid = _create_game()
+        _complete_game(gid, 100)
+        res = client.patch(f"/cascade/score/{gid}", json={"player_name": "Alice"})
+        assert res.status_code == 400
+
+    def test_can_update_player_name_on_already_named_game(self):
+        gid = _create_game()
+        _complete_game(gid, 200)
+        _set_name(gid, "Alice")
+        res = _set_name(gid, "AliceUpdated")
+        assert res.status_code == 200
+        assert res.json()["player_name"] == "AliceUpdated"
 
 
 # ---------------------------------------------------------------------------
@@ -79,11 +160,11 @@ class TestGetScores:
         from limiter import limiter
 
         for i in range(15):
-            limiter.reset()  # bypass rate limit — this test targets cap logic, not limiting
+            limiter.reset()
             _submit(f"Player{i}", i * 10)
         scores = client.get("/cascade/scores").json()["scores"]
         assert len(scores) == 10
-        assert scores[0]["score"] == 140  # top score kept
+        assert scores[0]["score"] == 140
 
 
 # ---------------------------------------------------------------------------
@@ -96,153 +177,114 @@ class TestSubmitRank:
         assert _submit("Alice", 500).json()["rank"] == 1
 
     def test_lower_score_ranked_lower(self):
-        from limiter import limiter
-
-        limiter.reset()
         _submit("Alice", 500)
-        limiter.reset()
         body = _submit("Bob", 200).json()
         assert body["rank"] == 2
 
     def test_highest_score_takes_rank_1(self):
-        from limiter import limiter
-
-        limiter.reset()
         _submit("Alice", 200)
-        limiter.reset()
         body = _submit("Bob", 500).json()
         assert body["rank"] == 1
 
     def test_middle_insert(self):
-        from limiter import limiter
-
         for name, score in [("A", 500), ("B", 300), ("C", 100)]:
-            limiter.reset()
             _submit(name, score)
-        limiter.reset()
         body = _submit("Middle", 400).json()
-        # 500, 400, 300, 100 → Middle is rank 2
         assert body["rank"] == 2
 
     def test_new_tie_ranks_below_existing(self):
-        from limiter import limiter
-
-        limiter.reset()
         _submit("Alice", 500)
-        limiter.reset()
         body = _submit("Tied", 500).json()
-        # Stable sort: older entry stays first, new entry takes rank 2.
         assert body["rank"] == 2
 
     def test_off_leaderboard_returns_rank_11(self):
-        """Submit 10 high scores then an 11th lower one — rank should be 11."""
-        from limiter import limiter
-
         for i in range(10):
-            limiter.reset()
             _submit(f"Top{i}", 1000)
-        limiter.reset()
         body = _submit("Lowly", 1).json()
         assert body["rank"] == 11
 
     def test_middle_insert_renumbers_tail(self):
-        """Inserting into the middle shifts everyone below by one rank."""
-        from limiter import limiter
-
         for name, score in [("A", 500), ("B", 300), ("C", 100)]:
-            limiter.reset()
             _submit(name, score)
-        limiter.reset()
         _submit("Middle", 400)
         scores = client.get("/cascade/scores").json()["scores"]
-        # A@500 rank=1, Middle@400 rank=2, B@300 rank=3, C@100 rank=4
         ranks_by_name = {s["player_name"]: s["rank"] for s in scores}
         assert ranks_by_name == {"A": 1, "Middle": 2, "B": 3, "C": 4}
 
     def test_leaderboard_returns_sequential_ranks(self):
-        from limiter import limiter
-
         for name, score in [("A", 500), ("B", 300), ("C", 100)]:
-            limiter.reset()
             _submit(name, score)
         scores = client.get("/cascade/scores").json()["scores"]
         assert [s["rank"] for s in scores] == [1, 2, 3]
 
 
 # ---------------------------------------------------------------------------
-# Rate limiter (#204)
+# Rate limiter
 # ---------------------------------------------------------------------------
 
 
 class TestRateLimit:
-    def test_sixth_submission_returns_429(self):
-        """POST /cascade/score is limited to 5/minute; 6th call must 429."""
+    def test_eleventh_set_name_returns_429(self):
+        """PATCH /cascade/score/:id is limited to 10/minute per (session, URL).
+
+        slowapi uses URL-based key scoping by default, so the bucket is keyed
+        on (session_id, /cascade/score/<game_id>). We exhaust the limit by
+        calling set_name 11 times on the *same* game ID.
+        """
         from limiter import limiter
 
-        # 5 allowed submissions
-        for i in range(5):
-            res = _submit(f"Player{i}", i * 10)
-            assert res.status_code == 201
+        limiter.reset()
+        gid = _create_game()
+        _complete_game(gid, 100)
+        limiter.reset()
 
-        # 6th should be rate-limited
-        res = _submit("Excess", 999)
+        # First 10 set-name calls on the same game should succeed
+        for i in range(10):
+            res = _set_name(gid, f"Player{i}")
+            assert res.status_code == 200, f"call {i+1} returned {res.status_code}"
+
+        # 11th on the same URL should be rate-limited
+        res = _set_name(gid, "Excess")
         assert res.status_code == 429
 
-        # Cleanup: reset so other tests aren't affected
         limiter.reset()
 
 
 # ---------------------------------------------------------------------------
-# Tie-break ordering (#204)
+# Tie-break ordering
 # ---------------------------------------------------------------------------
 
 
 class TestTieBreak:
     def test_older_score_ranks_higher_on_tie(self):
-        """When two entries share the same score, insertion order decides rank.
-        The first-inserted entry wins (stable sort on score descending)."""
-        from limiter import limiter
-
-        limiter.reset()
         _submit("Alice", 100)
-        limiter.reset()
-        body = _submit("Bob", 100).json()
-
+        _submit("Bob", 100)
         scores = client.get("/cascade/scores").json()["scores"]
-        assert scores[0]["player_name"] == "Alice"  # older entry is rank 1
-        assert scores[1]["player_name"] == "Bob"  # newer entry is rank 2
-        assert body["rank"] == 2  # confirmed in submission response too
+        assert scores[0]["player_name"] == "Alice"
+        assert scores[1]["player_name"] == "Bob"
+
+    def test_new_tie_response_rank_is_2(self):
+        _submit("Alice", 100)
+        body = _submit("Bob", 100).json()
+        assert body["rank"] == 2
 
 
 # ---------------------------------------------------------------------------
-# Duplicate player names (#204)
+# Duplicate player names
 # ---------------------------------------------------------------------------
 
 
 class TestDuplicateNames:
     def test_duplicate_name_both_entries_kept(self):
-        """Policy: append-only. Two submissions from the same name both appear
-        on the leaderboard (neither overwrites the other)."""
-        from limiter import limiter
-
-        limiter.reset()
         _submit("Alice", 100)
-        limiter.reset()
         _submit("Alice", 200)
-
         scores = client.get("/cascade/scores").json()["scores"]
         alice_entries = [s for s in scores if s["player_name"] == "Alice"]
         assert len(alice_entries) == 2
 
     def test_duplicate_name_ordered_by_score(self):
-        """Both Alice entries appear, higher score ranked first."""
-        from limiter import limiter
-
-        limiter.reset()
         _submit("Alice", 100)
-        limiter.reset()
         _submit("Alice", 200)
-
         scores = client.get("/cascade/scores").json()["scores"]
         alice_scores = [s["score"] for s in scores if s["player_name"] == "Alice"]
-        assert alice_scores == [200, 100]  # descending
+        assert alice_scores == [200, 100]
