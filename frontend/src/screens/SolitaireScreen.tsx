@@ -401,10 +401,7 @@ export default function SolitaireScreen() {
           </View>
 
           <View
-            style={[
-              styles.boardWrap,
-              outerWidth > 0 ? { height: BOARD_HEIGHT * scale } : null,
-            ]}
+            style={[styles.boardWrap, outerWidth > 0 ? { height: BOARD_HEIGHT * scale } : null]}
             accessibilityLabel={t("solitaire:a11y.boardRegion")}
           >
             <View
