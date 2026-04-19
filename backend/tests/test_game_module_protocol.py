@@ -8,6 +8,7 @@ from blackjack.module import module as blackjack_module
 from cascade.module import module as cascade_module
 from games.protocol import GameModule
 from games.registry import get_module
+from solitaire.module import module as solitaire_module
 from vocab import GameType
 
 # ---------------------------------------------------------------------------
@@ -17,8 +18,8 @@ from vocab import GameType
 
 @pytest.mark.parametrize(
     "mod",
-    [blackjack_module, cascade_module],
-    ids=["blackjack", "cascade"],
+    [blackjack_module, cascade_module, solitaire_module],
+    ids=["blackjack", "cascade", "solitaire"],
 )
 def test_module_satisfies_protocol(mod) -> None:
     assert isinstance(mod, GameModule), f"{mod!r} does not satisfy the GameModule Protocol"
@@ -32,6 +33,10 @@ def test_cascade_module_game_type() -> None:
     assert cascade_module.game_type == GameType.CASCADE
 
 
+def test_solitaire_module_game_type() -> None:
+    assert solitaire_module.game_type == GameType.SOLITAIRE
+
+
 # ---------------------------------------------------------------------------
 # Registry
 # ---------------------------------------------------------------------------
@@ -40,6 +45,7 @@ def test_cascade_module_game_type() -> None:
 def test_registry_returns_correct_modules() -> None:
     assert get_module("blackjack") is blackjack_module
     assert get_module("cascade") is cascade_module
+    assert get_module("solitaire") is solitaire_module
 
 
 def test_registry_returns_none_for_unknown() -> None:
@@ -109,4 +115,29 @@ def test_cascade_stats_shape_preserves_aggregate_fields() -> None:
 
 def test_cascade_stats_shape_strips_latest_score() -> None:
     shaped = cascade_module.stats_shape(_RAW_CASCADE)
+    assert "latest_score" not in shaped
+
+
+# ---------------------------------------------------------------------------
+# SolitaireModule.stats_shape — pass-through, strips latest_score
+# ---------------------------------------------------------------------------
+
+_RAW_SOLITAIRE = {
+    "played": 4,
+    "best": 1200,
+    "avg": 650.0,
+    "last_played_at": None,
+    "latest_score": 780,
+}
+
+
+def test_solitaire_stats_shape_preserves_aggregate_fields() -> None:
+    shaped = solitaire_module.stats_shape(_RAW_SOLITAIRE)
+    assert shaped["played"] == 4
+    assert shaped["best"] == 1200
+    assert shaped["avg"] == 650.0
+
+
+def test_solitaire_stats_shape_strips_latest_score() -> None:
+    shaped = solitaire_module.stats_shape(_RAW_SOLITAIRE)
     assert "latest_score" not in shaped
