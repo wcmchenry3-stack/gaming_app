@@ -335,6 +335,7 @@ function CascadeGame() {
       canvasRef.current?.fastForward?.(ms);
     };
     g.__cascade_triggerGameOver = () => {
+      completedGameIdRef.current = getGameId();
       gameOverRef.current = true;
       setGameOver(true);
     };
