@@ -209,7 +209,9 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
       let id: number;
       function loop(timestamp: number) {
         if (lastFrameTimeRef.current === 0) lastFrameTimeRef.current = timestamp;
-        const elapsed = (timestamp - lastFrameTimeRef.current) / 1000; // seconds
+        // Clamp to 1/30s (33ms) so a panel-switch or tab-resume can't feed a
+        // multi-second delta that causes impulse spikes and boundary tunnelling.
+        const elapsed = Math.min((timestamp - lastFrameTimeRef.current) / 1000, 1 / 30);
         lastFrameTimeRef.current = timestamp;
         if (engineRef.current) {
           setBodies(engineRef.current.step(elapsed));

@@ -180,7 +180,19 @@ export async function createEngine(
 
       if (tier < 10) {
         const nextDef = fruitSet.fruits[(tier + 1) as FruitTier];
-        if (nextDef !== undefined) spawnAt(nextDef, fruitSet.id, midX, midY);
+        if (nextDef !== undefined) {
+          // Clamp spawn to valid physics bounds so the merged body never
+          // starts inside a wall (which causes Matter.js corrective impulses
+          // that can shoot the fruit through the wall — no CCD for dynamic bodies).
+          const innerLeft = WALL_THICKNESS + nextDef.radius;
+          const innerRight = W - WALL_THICKNESS - nextDef.radius;
+          const spawnX = Math.max(innerLeft, Math.min(innerRight, midX));
+          const spawnY = Math.max(
+            nextDef.radius,
+            Math.min(H - WALL_THICKNESS - nextDef.radius, midY)
+          );
+          spawnAt(nextDef, fruitSet.id, spawnX, spawnY);
+        }
       }
     }
     mergeQueue.length = 0;
@@ -201,6 +213,39 @@ export async function createEngine(
       }
 
       processMerges();
+
+      // Safety net: hard-clamp any body that drifted slightly outside the
+      // left/right walls and zero inward velocity so it can't re-tunnel next
+      // frame. This catches the rare case where Matter.js corrective impulses
+      // from polygon vertex decomposition push a body through a thin wall.
+      // Only applies within the escape margin — bodies farther outside are
+      // left for the escape-detection pass below to remove.
+      {
+        const allBodiesAfterMerge = Matter.Composite.allBodies(world);
+        fruitMap.forEach((fb, bodyId) => {
+          const body = allBodiesAfterMerge.find((b) => b.id === bodyId);
+          if (!body) return;
+          const innerLeft = WALL_THICKNESS + fb.fruitRadius;
+          const innerRight = W - WALL_THICKNESS - fb.fruitRadius;
+          const escapeMargin = fb.fruitRadius * 2;
+          let px = body.position.x;
+          let vx = body.velocity.x;
+          let clamped = false;
+          if (px < innerLeft && px >= -escapeMargin) {
+            px = innerLeft;
+            vx = Math.max(0, vx);
+            clamped = true;
+          } else if (px > innerRight && px <= W + escapeMargin) {
+            px = innerRight;
+            vx = Math.min(0, vx);
+            clamped = true;
+          }
+          if (clamped) {
+            Matter.Body.setPosition(body, { x: px, y: body.position.y });
+            Matter.Body.setVelocity(body, { x: vx, y: body.velocity.y });
+          }
+        });
+      }
 
       // Game-over detection
       if (!gameOverFired) {
