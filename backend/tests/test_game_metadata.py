@@ -12,6 +12,7 @@ from pydantic import ValidationError
 from blackjack.models import BlackjackMetadata
 from cascade.models import CascadeMetadata
 from games.schemas import CreateGameRequest
+from hearts.models import HeartsMetadata
 from solitaire.models import SolitaireMetadata
 
 # ---------------------------------------------------------------------------
@@ -74,6 +75,30 @@ def test_solitaire_metadata_player_name_too_long() -> None:
 def test_solitaire_metadata_rejects_unknown_field() -> None:
     with pytest.raises(ValidationError):
         SolitaireMetadata.model_validate({"score": 9999})
+
+
+# ---------------------------------------------------------------------------
+# HeartsMetadata unit tests
+# ---------------------------------------------------------------------------
+
+
+def test_hearts_metadata_empty_dict_valid() -> None:
+    HeartsMetadata.model_validate({})
+
+
+def test_hearts_metadata_player_name_valid() -> None:
+    m = HeartsMetadata.model_validate({"player_name": "Alice"})
+    assert m.player_name == "Alice"
+
+
+def test_hearts_metadata_player_name_too_long() -> None:
+    with pytest.raises(ValidationError):
+        HeartsMetadata.model_validate({"player_name": "x" * 65})
+
+
+def test_hearts_metadata_rejects_unknown_field() -> None:
+    with pytest.raises(ValidationError):
+        HeartsMetadata.model_validate({"score": 9999})
 
 
 # ---------------------------------------------------------------------------
