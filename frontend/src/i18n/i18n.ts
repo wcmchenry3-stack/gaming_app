@@ -11,6 +11,7 @@ type Namespace =
   | "errors"
   | "blackjack"
   | "twenty48"
+  | "solitaire"
   | "feedback"
   | "profile";
 type TranslationModule = Promise<{ default: Record<string, string> }>;
@@ -37,6 +38,7 @@ const localeLoaders: Record<string, Partial<Record<Namespace, () => TranslationM
     errors: () => import("./locales/en/errors.json") as TranslationModule,
     blackjack: () => import("./locales/en/blackjack.json") as TranslationModule,
     twenty48: () => import("./locales/en/twenty48.json") as TranslationModule,
+    solitaire: () => import("./locales/en/solitaire.json") as TranslationModule,
     feedback: () => import("./locales/en/feedback.json") as TranslationModule,
     profile: () => import("./locales/en/profile.json") as TranslationModule,
   },
@@ -170,7 +172,17 @@ i18n
     lng: resolveLocale(),
     fallbackLng: "en",
     supportedLngs: LOCALES.map((l) => l.code),
-    ns: ["common", "yacht", "cascade", "errors", "blackjack", "twenty48", "feedback", "profile"],
+    ns: [
+      "common",
+      "yacht",
+      "cascade",
+      "errors",
+      "blackjack",
+      "twenty48",
+      "solitaire",
+      "feedback",
+      "profile",
+    ],
     defaultNS: "common",
     interpolation: { escapeValue: false },
     react: { useSuspense: true },

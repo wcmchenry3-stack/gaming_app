@@ -1,0 +1,16 @@
+{
+  "game.title": "Solitaire",
+  "drawMode.title": "Choose Draw Mode",
+  "drawMode.body": "How many cards should the stock flip each tap?",
+  "drawMode.draw1": "Draw 1",
+  "drawMode.draw3": "Draw 3",
+  "hud.scoreLabel": "Score: {{score}}",
+  "hud.movesLabel": "Moves: {{moves}}",
+  "buttons.undo": "Undo",
+  "buttons.autoComplete": "Auto-Complete",
+  "buttons.submitScore": "Submit Score",
+  "a11y.invalidMove": "Invalid move",
+  "a11y.boardRegion": "Solitaire board",
+  "win.title": "You Won!",
+  "win.scoreLabel": "Final score: {{score}}"
+}
