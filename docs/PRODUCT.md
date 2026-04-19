@@ -14,7 +14,7 @@ A calm, no-BS arcade of simple games designed for short moments — not long ses
 
 ## Never Build
 
-- Timers or cooldowns
+- Countdown timers, time pressure, or cooldowns — informational elapsed displays (e.g. a stopwatch that pauses on background and stops on win, with no scoring impact) are allowed
 - Grind loops
 - Behavior manipulation (dark patterns)
 - Forced ads to continue playing
@@ -26,7 +26,6 @@ A calm, no-BS arcade of simple games designed for short moments — not long ses
 
 ## Game Roster Strategy
 
-- Cap at 5-6 games maximum
 - New games must earn their slot via the "replacement test": is the new game better than an existing one? If no, don't add it.
 - Use the app yourself daily. Notice which game you open most and which feels frictionless.
 - Add one game at a time.
