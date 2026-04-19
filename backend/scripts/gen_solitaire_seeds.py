@@ -330,9 +330,7 @@ def apply_move(s: State, m: tuple) -> State:
         )
     if kind == "draw":
         n = min(s.draw_mode, len(s.stock))
-        drawn = tuple(
-            Card(c.suit, c.rank, True) for c in reversed(s.stock[len(s.stock) - n :])
-        )
+        drawn = tuple(Card(c.suit, c.rank, True) for c in reversed(s.stock[len(s.stock) - n :]))
         return State(
             draw_mode=s.draw_mode,
             tableau=s.tableau,

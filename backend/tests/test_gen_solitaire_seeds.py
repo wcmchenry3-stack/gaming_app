@@ -35,7 +35,6 @@ from gen_solitaire_seeds import (  # noqa: E402
     lcg,
 )
 
-
 # ---------------------------------------------------------------------------
 # LCG parity with TS engine
 # ---------------------------------------------------------------------------
@@ -137,9 +136,7 @@ def test_deal_all_52_cards_present() -> None:
 
 def _won_state() -> State:
     # All 52 cards sitting on foundations, piles in canonical order.
-    foundations = tuple(
-        tuple(Card(suit, r, True) for r in range(1, 14)) for suit in SUITS
-    )
+    foundations = tuple(tuple(Card(suit, r, True) for r in range(1, 14)) for suit in SUITS)
     return State(
         draw_mode=1,
         tableau=((), (), (), (), (), (), ()),
