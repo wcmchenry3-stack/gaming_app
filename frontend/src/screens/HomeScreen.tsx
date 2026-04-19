@@ -5,6 +5,7 @@ import { useTranslation } from "react-i18next";
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { LinearGradient } from "expo-linear-gradient";
+import * as Sentry from "@sentry/react-native";
 import { HomeStackParamList } from "../../App";
 import { newGame as newYachtGame } from "../game/yacht/engine";
 import { loadGame as loadYachtGame } from "../game/yacht/storage";
@@ -37,7 +38,7 @@ export default function HomeScreen() {
   useEffect(() => {
     if (APP_START_MS > 0) {
       const coldStartMs = performance.now() - APP_START_MS;
-      console.log(`[cold-start] HomeScreen ready: ${coldStartMs.toFixed(1)} ms`);
+      Sentry.metrics.distribution("cold_start_ms", coldStartMs, { unit: "millisecond" });
     }
   }, []);
 

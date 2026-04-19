@@ -74,6 +74,12 @@ jest.mock("@sentry/react-native", () => ({
   wrap: (c: unknown) => c,
   ReactNavigationInstrumentation: jest.fn(),
   ReactNativeTracing: jest.fn(),
+  metrics: {
+    distribution: jest.fn(),
+    increment: jest.fn(),
+    gauge: jest.fn(),
+    set: jest.fn(),
+  },
 }));
 
 // AsyncStorage mock (replaces localStorage in ThemeContext / FruitSetContext)
