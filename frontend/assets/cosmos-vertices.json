@@ -217,14 +217,14 @@
       [-0.047547, -0.996981]
     ],
     "spriteOffset": [0.000755, -0.000755],
-    "spriteScale": [1.54566, 1.54566],
-    "bakedClipR": 2.186961
+    "spriteScale": [1.663, 1.663],
+    "bakedClipR": 2.352905
   },
   "jupiter": {
     "verts": [],
     "spriteOffset": [0.003328, -0.019967],
-    "spriteScale": [1.703827, 1.703827],
-    "bakedClipR": 2.426076
+    "spriteScale": [1.724, 1.724],
+    "bakedClipR": 2.454604
   },
   "mars": {
     "verts": [
@@ -1087,8 +1087,8 @@
       [-0.06104, -0.996986]
     ],
     "spriteOffset": [0.000754, -0.000754],
-    "spriteScale": [1.543331, 1.543331],
-    "bakedClipR": 2.183666
+    "spriteScale": [1.675, 1.675],
+    "bakedClipR": 2.369874
   },
   "pluto": {
     "verts": [
@@ -1286,8 +1286,8 @@
   "sun": {
     "verts": [],
     "spriteOffset": [-0.006452, -0.014516],
-    "spriteScale": [1.651613, 1.651613],
-    "bakedClipR": 2.350567
+    "spriteScale": [1.763, 1.763],
+    "bakedClipR": 2.508092
   },
   "uranus": {
     "verts": [],

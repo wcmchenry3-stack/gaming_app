@@ -182,9 +182,13 @@ def main() -> None:
         baked_clip_r: dict[str, float] = {}
 
         for name, sprite in vertices.items():
-            src_png: pathlib.Path = theme["icon_dir"] / f"{name}.png"
-            if not src_png.exists():
-                print(f"  SKIP  {name}: {src_png} not found")
+            src_png: pathlib.Path | None = next(
+                (theme["icon_dir"] / f"{name}{ext}" for ext in (".png", ".webp")
+                 if (theme["icon_dir"] / f"{name}{ext}").exists()),
+                None,
+            )
+            if src_png is None:
+                print(f"  SKIP  {name}: no .png or .webp found in {theme['icon_dir']}")
                 continue
 
             out_png: pathlib.Path = theme["out_dir"] / f"{name}.png"
