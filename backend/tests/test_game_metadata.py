@@ -12,6 +12,7 @@ from pydantic import ValidationError
 from blackjack.models import BlackjackMetadata
 from cascade.models import CascadeMetadata
 from games.schemas import CreateGameRequest
+from solitaire.models import SolitaireMetadata
 
 # ---------------------------------------------------------------------------
 # BlackjackMetadata unit tests
@@ -52,6 +53,30 @@ def test_cascade_metadata_rejects_unknown_field() -> None:
 
 
 # ---------------------------------------------------------------------------
+# SolitaireMetadata unit tests
+# ---------------------------------------------------------------------------
+
+
+def test_solitaire_metadata_empty_dict_valid() -> None:
+    SolitaireMetadata.model_validate({})
+
+
+def test_solitaire_metadata_player_name_valid() -> None:
+    m = SolitaireMetadata.model_validate({"player_name": "Alice"})
+    assert m.player_name == "Alice"
+
+
+def test_solitaire_metadata_player_name_too_long() -> None:
+    with pytest.raises(ValidationError):
+        SolitaireMetadata.model_validate({"player_name": "x" * 65})
+
+
+def test_solitaire_metadata_rejects_unknown_field() -> None:
+    with pytest.raises(ValidationError):
+        SolitaireMetadata.model_validate({"score": 9999})
+
+
+# ---------------------------------------------------------------------------
 # CreateGameRequest metadata validation
 # ---------------------------------------------------------------------------
 
@@ -74,6 +99,16 @@ def test_create_game_request_valid_cascade_metadata() -> None:
 def test_create_game_request_invalid_cascade_metadata_raises_422() -> None:
     with pytest.raises(ValidationError):
         CreateGameRequest(game_type="cascade", metadata={"player_name": "x" * 65})
+
+
+def test_create_game_request_valid_solitaire_metadata() -> None:
+    req = CreateGameRequest(game_type="solitaire", metadata={"player_name": "Bob"})
+    assert req.metadata["player_name"] == "Bob"
+
+
+def test_create_game_request_invalid_solitaire_metadata_raises_422() -> None:
+    with pytest.raises(ValidationError):
+        CreateGameRequest(game_type="solitaire", metadata={"player_name": "x" * 65})
 
 
 def test_create_game_request_unregistered_game_type_skips_validation() -> None:

@@ -1,7 +1,7 @@
 /**
  * Shared vocabulary constants — DO NOT edit by hand.
  *
- * Source of truth: backend/vocab.py (GameOutcome enum).
+ * Source of truth: backend/vocab.py (GameType, GameOutcome enums).
  * To update: edit backend/vocab.py, then run:
  *   python backend/scripts/gen_vocab_ts.py > frontend/src/api/vocab.ts
  *
@@ -9,7 +9,13 @@
  * drifts from the Python enums (GameType, GameOutcome).
  */
 
-export const GAME_TYPES = ["yacht", "twenty48", "blackjack", "cascade"] as const;
+export const GAME_TYPES = [
+  "yacht",
+  "twenty48",
+  "blackjack",
+  "cascade",
+  "solitaire",
+] as const;
 
 export type GameType = (typeof GAME_TYPES)[number];
 
@@ -24,3 +30,4 @@ export const GAME_OUTCOMES = [
 ] as const;
 
 export type GameOutcome = (typeof GAME_OUTCOMES)[number];
+

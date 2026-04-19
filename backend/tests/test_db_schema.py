@@ -1,7 +1,7 @@
 """Schema smoke tests for #363.
 
 Skipped unless DATABASE_URL is set. Verifies:
-  1. Seed data present (4 game_types, 17 baseline event_types).
+  1. Seed data present (5 game_types, 17 baseline event_types).
   2. A game + events + bug_log round-trip via SQLAlchemy ORM.
   3. Unknown event_type_id fails the FK constraint.
   4. Invalid games.outcome fails the CHECK constraint.
@@ -33,7 +33,7 @@ async def test_seed_data_present() -> None:
     factory = get_session_factory()
     async with factory() as s:
         gt_names = (await s.execute(select(GameType.name).order_by(GameType.id))).scalars().all()
-        assert gt_names == ["yacht", "twenty48", "blackjack", "cascade"]
+        assert gt_names == ["yacht", "twenty48", "blackjack", "cascade", "solitaire"]
 
         total = (await s.execute(select(func.count()).select_from(EventType))).scalar_one()
         assert total >= 17
