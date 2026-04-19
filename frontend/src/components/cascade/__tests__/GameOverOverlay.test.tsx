@@ -18,7 +18,7 @@ import { scoreQueue } from "../../../game/_shared/scoreQueue";
 
 jest.mock("../../../game/cascade/api", () => ({
   cascadeApi: {
-    submitScore: jest.fn(),
+    submitPlayerName: jest.fn(),
   },
 }));
 
@@ -53,10 +53,12 @@ jest.mock("../../../theme/ThemeContext", () => ({
   }),
 }));
 
-const mockSubmitScore = cascadeApi.submitScore as jest.Mock;
+const mockSubmitPlayerName = cascadeApi.submitPlayerName as jest.Mock;
 
-function renderOverlay(score = 1234, onRestart = jest.fn()) {
-  return render(<GameOverOverlay score={score} onRestart={onRestart} />);
+const GAME_ID = "test-game-id-abc";
+
+function renderOverlay(score = 1234, gameId: string | null = GAME_ID, onRestart = jest.fn()) {
+  return render(<GameOverOverlay score={score} gameId={gameId} onRestart={onRestart} />);
 }
 
 // ---------------------------------------------------------------------------
@@ -65,7 +67,7 @@ function renderOverlay(score = 1234, onRestart = jest.fn()) {
 
 describe("GameOverOverlay", () => {
   beforeEach(() => {
-    mockSubmitScore.mockReset();
+    mockSubmitPlayerName.mockReset();
     mockEnqueue.mockReset();
     mockEnqueue.mockResolvedValue(undefined);
     useNetworkMock.mockReturnValue({ isOnline: true, isInitialized: true });
@@ -80,21 +82,21 @@ describe("GameOverOverlay", () => {
   it("pressing save with no name does not call the API", () => {
     renderOverlay();
     fireEvent.press(screen.getByLabelText("Save score"));
-    expect(mockSubmitScore).not.toHaveBeenCalled();
+    expect(mockSubmitPlayerName).not.toHaveBeenCalled();
   });
 
-  it("pressing save after entering a name calls the API", async () => {
-    mockSubmitScore.mockResolvedValueOnce({ player_name: "Alice", score: 1234, rank: 1 });
+  it("pressing save after entering a name calls the API with gameId and player_name", async () => {
+    mockSubmitPlayerName.mockResolvedValueOnce({ player_name: "Alice", score: 1234, rank: 1 });
     renderOverlay(1234);
     fireEvent.changeText(screen.getByLabelText("Your name"), "Alice");
     fireEvent.press(screen.getByLabelText("Save score"));
-    await waitFor(() => expect(mockSubmitScore).toHaveBeenCalledWith("Alice", 1234));
+    await waitFor(() => expect(mockSubmitPlayerName).toHaveBeenCalledWith(GAME_ID, "Alice"));
   });
 
   it("shows saved confirmation with the leaderboard rank (#2), not the score", async () => {
     // Regression guard for #195: previously the score was displayed where
     // rank belonged ("Saved! #1234" for a score=1234 / rank=2).
-    mockSubmitScore.mockResolvedValueOnce({ player_name: "Alice", score: 1234, rank: 2 });
+    mockSubmitPlayerName.mockResolvedValueOnce({ player_name: "Alice", score: 1234, rank: 2 });
     renderOverlay(1234);
 
     fireEvent.changeText(screen.getByLabelText("Your name"), "Alice");
@@ -103,11 +105,11 @@ describe("GameOverOverlay", () => {
     await waitFor(() => {
       expect(screen.getByText("Saved! #2")).toBeTruthy();
     });
-    expect(mockSubmitScore).toHaveBeenCalledWith("Alice", 1234);
+    expect(mockSubmitPlayerName).toHaveBeenCalledWith(GAME_ID, "Alice");
   });
 
   it("shows error message when submit fails", async () => {
-    mockSubmitScore.mockRejectedValueOnce(new Error("Network error"));
+    mockSubmitPlayerName.mockRejectedValueOnce(new Error("Invalid score"));
     renderOverlay(1234);
 
     fireEvent.changeText(screen.getByLabelText("Your name"), "Bob");
@@ -118,9 +120,19 @@ describe("GameOverOverlay", () => {
     });
   });
 
+  it("shows error when gameId is null", async () => {
+    renderOverlay(1234, null);
+    fireEvent.changeText(screen.getByLabelText("Your name"), "Alice");
+    fireEvent.press(screen.getByLabelText("Save score"));
+    await waitFor(() => {
+      expect(screen.getByText(/Could not save score/i)).toBeTruthy();
+    });
+    expect(mockSubmitPlayerName).not.toHaveBeenCalled();
+  });
+
   it("calls onRestart when Play Again is pressed", () => {
     const onRestart = jest.fn();
-    renderOverlay(100, onRestart);
+    renderOverlay(100, GAME_ID, onRestart);
     fireEvent.press(screen.getByLabelText("Play again"));
     expect(onRestart).toHaveBeenCalledTimes(1);
   });
@@ -134,16 +146,16 @@ describe("GameOverOverlay", () => {
 
     await waitFor(() => {
       expect(mockEnqueue).toHaveBeenCalledWith("cascade", {
+        game_id: GAME_ID,
         player_name: "Alice",
-        score: 4850,
       });
     });
-    expect(mockSubmitScore).not.toHaveBeenCalled();
+    expect(mockSubmitPlayerName).not.toHaveBeenCalled();
     expect(screen.getByText(/Saved locally/i)).toBeTruthy();
   });
 
   it("queues score when online submit fails with a network error (TypeError)", async () => {
-    mockSubmitScore.mockRejectedValueOnce(new TypeError("Failed to fetch"));
+    mockSubmitPlayerName.mockRejectedValueOnce(new TypeError("Failed to fetch"));
     renderOverlay(1234);
 
     fireEvent.changeText(screen.getByLabelText("Your name"), "Bob");
@@ -151,15 +163,15 @@ describe("GameOverOverlay", () => {
 
     await waitFor(() => {
       expect(mockEnqueue).toHaveBeenCalledWith("cascade", {
+        game_id: GAME_ID,
         player_name: "Bob",
-        score: 1234,
       });
     });
     expect(screen.getByText(/Saved locally/i)).toBeTruthy();
   });
 
   it("shows error (no queue) when online submit fails with an app error", async () => {
-    mockSubmitScore.mockRejectedValueOnce(new Error("Invalid score"));
+    mockSubmitPlayerName.mockRejectedValueOnce(new Error("Invalid score"));
     renderOverlay(1234);
 
     fireEvent.changeText(screen.getByLabelText("Your name"), "Bob");

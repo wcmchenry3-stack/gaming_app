@@ -8,10 +8,10 @@ import { LeaderboardResponse, ScoreEntry } from "./types";
 const request = createGameClient({ apiTag: "cascade" });
 
 export const cascadeApi = {
-  submitScore: (player_name: string, score: number) =>
-    request<ScoreEntry>("/cascade/score", {
-      method: "POST",
-      body: JSON.stringify({ player_name, score }),
+  submitPlayerName: (gameId: string, player_name: string) =>
+    request<ScoreEntry>(`/cascade/score/${gameId}`, {
+      method: "PATCH",
+      body: JSON.stringify({ player_name }),
     }),
 
   getLeaderboard: () => request<LeaderboardResponse>("/cascade/scores"),

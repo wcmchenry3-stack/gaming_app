@@ -57,6 +57,8 @@ export interface UseGameSyncReturn {
     message: string,
     context?: Record<string, unknown>
   ) => void;
+  /** Return the current game ID, or null if no session is open. */
+  getGameId: () => string | null;
 }
 
 export function useGameSync(gameType: GameType): UseGameSyncReturn {
@@ -137,5 +139,7 @@ export function useGameSync(gameType: GameType): UseGameSyncReturn {
     []
   );
 
-  return { start, enqueue, complete, restart, reportBug };
+  const getGameId = useCallback(() => gameIdRef.current, []);
+
+  return { start, enqueue, complete, restart, reportBug, getGameId };
 }

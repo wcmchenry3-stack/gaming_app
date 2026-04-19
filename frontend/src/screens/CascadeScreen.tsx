@@ -58,7 +58,14 @@ function CascadeGame() {
 
   // Instrumentation session state (#371 / #549). One session spans from mount
   // until handleGameOver, a fruit-set switch, New Game, or unmount.
-  const { start: syncStart, enqueue: syncEnqueue, complete: syncComplete } = useGameSync("cascade");
+  const {
+    start: syncStart,
+    enqueue: syncEnqueue,
+    complete: syncComplete,
+    getGameId,
+  } = useGameSync("cascade");
+  // Holds the game ID captured at game-over so GameOverOverlay can PATCH /cascade/score/{id}.
+  const completedGameIdRef = useRef<string | null>(null);
   const gameStartTimeRef = useRef<number>(Date.now());
   const mergeCountRef = useRef(0);
 
@@ -244,11 +251,13 @@ function CascadeGame() {
     canvasRef.current?.announceEvent(t("cascade:event.gameOver"));
     gameOverRef.current = true;
     setGameOver(true);
+    // Capture game ID before complete() nulls it out — overlay needs it for PATCH /cascade/score/:id.
+    completedGameIdRef.current = getGameId();
     endInstrumentedSession("completed");
     // #216 — game over: clear the saved snapshot so the next mount
     // starts with a fresh board instead of resuming a lost game.
     clearCascadeGame().catch(() => {});
-  }, [t, endInstrumentedSession]);
+  }, [t, endInstrumentedSession, getGameId]);
 
   const handleTap = useCallback(
     (x: number) => {
@@ -326,6 +335,7 @@ function CascadeGame() {
       canvasRef.current?.fastForward?.(ms);
     };
     g.__cascade_triggerGameOver = () => {
+      completedGameIdRef.current = getGameId();
       gameOverRef.current = true;
       setGameOver(true);
     };
@@ -452,7 +462,13 @@ function CascadeGame() {
         )}
       </View>
 
-      {gameOver && <GameOverOverlay score={score} onRestart={handleRestart} />}
+      {gameOver && (
+        <GameOverOverlay
+          score={score}
+          gameId={completedGameIdRef.current}
+          onRestart={handleRestart}
+        />
+      )}
 
       <NewGameConfirmModal
         visible={confirmNewGameVisible}
