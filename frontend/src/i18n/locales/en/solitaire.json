@@ -12,5 +12,10 @@
   "a11y.invalidMove": "Invalid move",
   "a11y.boardRegion": "Solitaire board",
   "win.title": "You Won!",
-  "win.scoreLabel": "Final score: {{score}}"
+  "win.scoreLabel": "Final score: {{score}}",
+  "win.namePlaceholder": "Enter your name",
+  "win.nameLabel": "Your name",
+  "win.nameHint": "Enter your name to save your score to the leaderboard",
+  "win.savedRank": "Saved! #{{rank}}",
+  "buttons.retrySubmit": "Retry"
 }
