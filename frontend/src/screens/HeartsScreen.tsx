@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import { Modal, Pressable, StyleSheet, Text, View } from "react-native";
+import { Modal, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { useTranslation } from "react-i18next";
 import { useTheme } from "../theme/ThemeContext";
@@ -20,15 +20,20 @@ import {
   selectPassCard,
 } from "../game/hearts/engine";
 import { selectCardToPlay, selectCardsToPass } from "../game/hearts/ai";
+import { clearGame, loadGame, saveGame } from "../game/hearts/storage";
+import { heartsApi } from "../game/hearts/api";
+import { useGameSync } from "../game/_shared/useGameSync";
 import type { Card, HeartsState, TrickCard } from "../game/hearts/types";
 
 const HUMAN = 0;
+const MAX_NAME_LENGTH = 32;
 
 function delay(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 type LastTrick = { readonly trick: readonly TrickCard[]; readonly winnerIndex: number } | null;
+type SubmitState = "idle" | "submitting" | "done" | "error";
 
 // Compact face-down card stack for narrow side slots.
 function CompactHand({
@@ -77,9 +82,20 @@ export default function HeartsScreen() {
   const [gameState, setGameState] = useState<HeartsState>(() => dealGame());
   const [lastTrick, setLastTrick] = useState<LastTrick>(null);
   const [showScores, setShowScores] = useState(false);
+  const [playerName, setPlayerName] = useState("");
+  const [submitState, setSubmitState] = useState<SubmitState>("idle");
 
   const unmountedRef = useRef(false);
   const loopActiveRef = useRef(false);
+  const syncStartedRef = useRef(false);
+  const gameStateRef = useRef<HeartsState>(gameState);
+
+  const { start: syncStart, complete: syncComplete } = useGameSync("hearts");
+
+  // Keep ref in sync for use in event listeners.
+  useEffect(() => {
+    gameStateRef.current = gameState;
+  });
 
   useEffect(
     () => () => {
@@ -88,7 +104,35 @@ export default function HeartsScreen() {
     []
   );
 
+  // ─── Load saved game on mount ──────────────────────────────────────────────
+  useEffect(() => {
+    loadGame().then((saved) => {
+      if (saved && !unmountedRef.current) setGameState(saved);
+    });
+  }, []);
+
+  // ─── Abandon on back-navigation ───────────────────────────────────────────
+  useEffect(() => {
+    const unsub = navigation.addListener("beforeRemove", () => {
+      if (!syncStartedRef.current) return;
+      if (gameStateRef.current.isComplete) return;
+      syncComplete(
+        { outcome: "abandoned", finalScore: 0, durationMs: 0 },
+        { outcome: "abandoned" }
+      );
+      syncStartedRef.current = false;
+    });
+    return unsub;
+  }, [navigation, syncComplete]);
+
   const playerLabels = [t("player.you"), t("player.left"), t("player.top"), t("player.right")];
+
+  // ─── Start sync on first card play ────────────────────────────────────────
+  function ensureSyncStarted() {
+    if (syncStartedRef.current) return;
+    syncStartedRef.current = true;
+    syncStart({ initial_score: 0 });
+  }
 
   // ─── AI turn loop ─────────────────────────────────────────────────────────
   const runAiTurns = useCallback(async (initial: HeartsState) => {
@@ -110,6 +154,7 @@ export default function HeartsScreen() {
 
         if (completedTrick) {
           setLastTrick({ trick: completedTrick, winnerIndex: s.currentLeaderIndex });
+          void saveGame(s);
         }
         setGameState(s);
 
@@ -124,7 +169,7 @@ export default function HeartsScreen() {
     }
   }, []);
 
-  // Trigger AI loop when it's their turn; wait for lastTrick display to clear first.
+  // Trigger AI loop when it's their turn; wait for lastTrick display first.
   useEffect(() => {
     if (gameState.phase !== "playing") return;
     if (gameState.currentPlayerIndex === HUMAN) return;
@@ -133,9 +178,20 @@ export default function HeartsScreen() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [gameState.phase, gameState.currentPlayerIndex, gameState.tricksPlayedInHand, lastTrick]);
 
+  // Complete sync when game is over.
+  useEffect(() => {
+    if (gameState.phase !== "game_over") return;
+    if (!syncStartedRef.current) return;
+    const humanScore = gameState.cumulativeScores[HUMAN] ?? 0;
+    const finalScore = Math.max(0, 100 - humanScore);
+    syncComplete({ outcome: "completed", finalScore, durationMs: 0 }, { final_score: finalScore });
+    syncStartedRef.current = false;
+  }, [gameState.phase, gameState.cumulativeScores, syncComplete]);
+
   // ─── Human card play ──────────────────────────────────────────────────────
   function handleCardPress(card: Card) {
     if (gameState.currentPlayerIndex !== HUMAN || gameState.phase !== "playing") return;
+    ensureSyncStarted();
     const willComplete = gameState.currentTrick.length === 3;
     const completedTrick: readonly TrickCard[] | null = willComplete
       ? [...gameState.currentTrick, { card, playerIndex: HUMAN }]
@@ -143,16 +199,19 @@ export default function HeartsScreen() {
 
     const newState = playCard(gameState, HUMAN, card);
 
-    if (completedTrick && newState.phase === "playing") {
-      setLastTrick({ trick: completedTrick, winnerIndex: newState.currentLeaderIndex });
-      setGameState(newState);
-      setTimeout(() => {
-        if (!unmountedRef.current) setLastTrick(null);
-      }, 1500);
-    } else {
-      setLastTrick(null);
-      setGameState(newState);
+    if (completedTrick) {
+      void saveGame(newState);
+      if (newState.phase === "playing") {
+        setLastTrick({ trick: completedTrick, winnerIndex: newState.currentLeaderIndex });
+        setGameState(newState);
+        setTimeout(() => {
+          if (!unmountedRef.current) setLastTrick(null);
+        }, 1500);
+        return;
+      }
     }
+    setLastTrick(null);
+    setGameState(newState);
   }
 
   // ─── Passing ──────────────────────────────────────────────────────────────
@@ -174,14 +233,34 @@ export default function HeartsScreen() {
   // ─── Hand end / next hand ─────────────────────────────────────────────────
   function handleNextHand() {
     setLastTrick(null);
-    setGameState(dealNextHand(gameState));
+    const next = dealNextHand(gameState);
+    setGameState(next);
+    void saveGame(next);
   }
 
-  // ─── Game over ────────────────────────────────────────────────────────────
+  // ─── Game over / play again ───────────────────────────────────────────────
+  async function handleSubmitScore() {
+    if (!playerName.trim() || submitState === "submitting" || submitState === "done") return;
+    setSubmitState("submitting");
+    const humanScore = gameState.cumulativeScores[HUMAN] ?? 0;
+    const score = Math.max(0, 100 - humanScore);
+    try {
+      await heartsApi.submitScore(playerName.trim(), score);
+      setSubmitState("done");
+    } catch {
+      setSubmitState("error");
+    }
+  }
+
   function handlePlayAgain() {
     setLastTrick(null);
+    setSubmitState("idle");
+    setPlayerName("");
     loopActiveRef.current = false;
-    setGameState(dealGame());
+    syncStartedRef.current = false;
+    clearGame().catch(() => {});
+    const fresh = dealGame();
+    setGameState(fresh);
   }
 
   // ─── Derived state ────────────────────────────────────────────────────────
@@ -317,15 +396,88 @@ export default function HeartsScreen() {
                 handScores={[...gameState.handScores]}
                 dangerIndex={dangerIndex}
               />
+
+              {submitState !== "done" && (
+                <>
+                  <TextInput
+                    style={[
+                      styles.nameInput,
+                      {
+                        color: colors.text,
+                        borderColor: colors.border,
+                        backgroundColor: colors.surfaceAlt,
+                      },
+                    ]}
+                    value={playerName}
+                    onChangeText={setPlayerName}
+                    placeholder={t("game_over.name_placeholder")}
+                    placeholderTextColor={colors.textMuted}
+                    maxLength={MAX_NAME_LENGTH}
+                    accessibilityLabel={t("game_over.name_placeholder")}
+                    editable={submitState !== "submitting"}
+                  />
+                  <Pressable
+                    style={[
+                      styles.btn,
+                      {
+                        backgroundColor:
+                          playerName.trim() && submitState !== "submitting"
+                            ? colors.accent
+                            : colors.surfaceAlt,
+                      },
+                    ]}
+                    onPress={() => void handleSubmitScore()}
+                    disabled={!playerName.trim() || submitState === "submitting"}
+                    accessibilityRole="button"
+                    accessibilityLabel={
+                      submitState === "submitting"
+                        ? t("game_over.submitting")
+                        : submitState === "error"
+                          ? t("game_over.retry")
+                          : t("game_over.submit")
+                    }
+                    accessibilityState={{
+                      disabled: !playerName.trim() || submitState === "submitting",
+                    }}
+                  >
+                    <Text
+                      style={[
+                        styles.btnText,
+                        {
+                          color:
+                            playerName.trim() && submitState !== "submitting"
+                              ? colors.textOnAccent
+                              : colors.textMuted,
+                        },
+                      ]}
+                    >
+                      {submitState === "submitting"
+                        ? t("game_over.submitting")
+                        : submitState === "error"
+                          ? t("game_over.retry")
+                          : t("game_over.submit")}
+                    </Text>
+                  </Pressable>
+                  {submitState === "error" && (
+                    <Text style={[styles.errorText, { color: colors.error }]}>
+                      {t("game_over.submit_error")}
+                    </Text>
+                  )}
+                </>
+              )}
+              {submitState === "done" && (
+                <Text style={[styles.successText, { color: colors.accent }]}>
+                  {t("game_over.submitted")}
+                </Text>
+              )}
+
               <Pressable
-                style={[styles.btn, { backgroundColor: colors.accent }]}
+                style={[styles.btn, { backgroundColor: colors.surfaceAlt }]}
                 onPress={handlePlayAgain}
                 accessibilityRole="button"
                 accessibilityLabel={t("game_over.again")}
               >
-                <Text style={[styles.btnText, { color: colors.textOnAccent }]}>
-                  {t("game_over.again")}
-                </Text>
+                <Text style={[styles.btnText, { color: colors.text }]}>{t("game_over.again")}</Text>
               </Pressable>
             </View>
           </View>
@@ -423,6 +575,23 @@ const styles = StyleSheet.create({
   btnText: {
     fontSize: 16,
     fontWeight: "700",
+  },
+  nameInput: {
+    width: "100%",
+    borderWidth: 1,
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    fontSize: 15,
+  },
+  errorText: {
+    fontSize: 13,
+    textAlign: "center",
+  },
+  successText: {
+    fontSize: 15,
+    fontWeight: "600",
+    textAlign: "center",
   },
   headerBtn: {
     paddingHorizontal: 8,
