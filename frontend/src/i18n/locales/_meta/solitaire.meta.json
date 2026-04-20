@@ -1,0 +1,371 @@
+{
+  "game.title": {
+    "component": "HomeScreen",
+    "description": "Name of the Solitaire game card.",
+    "tone": "neutral",
+    "characterLimit": 15,
+    "placeholders": [],
+    "doNotTranslate": [],
+    "notes": "Use the locale's standard name for Klondike / classic Solitaire."
+  },
+  "game.description": {
+    "component": "HomeScreen",
+    "description": "One-line description on the Solitaire game card.",
+    "tone": "casual, punchy",
+    "characterLimit": 60,
+    "placeholders": [],
+    "doNotTranslate": [],
+    "notes": null
+  },
+  "game.playLabel": {
+    "component": "HomeScreen",
+    "description": "Accessibility label for the Solitaire play button.",
+    "tone": "functional",
+    "characterLimit": 25,
+    "placeholders": [],
+    "doNotTranslate": [],
+    "notes": null
+  },
+  "drawMode.title": {
+    "component": "SolitaireScreen (pre-game modal)",
+    "description": "Title asking the player to choose draw-1 or draw-3.",
+    "tone": "neutral",
+    "characterLimit": 30,
+    "placeholders": [],
+    "doNotTranslate": [],
+    "notes": null
+  },
+  "drawMode.body": {
+    "component": "SolitaireScreen (pre-game modal)",
+    "description": "Body text explaining the draw-mode choice.",
+    "tone": "casual",
+    "characterLimit": 80,
+    "placeholders": [],
+    "doNotTranslate": [],
+    "notes": null
+  },
+  "drawMode.one": {
+    "component": "SolitaireScreen (pre-game modal)",
+    "description": "Button label selecting draw-one mode.",
+    "tone": "functional",
+    "characterLimit": 20,
+    "placeholders": [],
+    "doNotTranslate": [],
+    "notes": "Keep the numeral 1 literally."
+  },
+  "drawMode.three": {
+    "component": "SolitaireScreen (pre-game modal)",
+    "description": "Button label selecting draw-three mode.",
+    "tone": "functional",
+    "characterLimit": 20,
+    "placeholders": [],
+    "doNotTranslate": [],
+    "notes": "Keep the numeral 3 literally."
+  },
+  "score.label": {
+    "component": "SolitaireScreen HUD",
+    "description": "Live score readout at the top of the board.",
+    "tone": "functional",
+    "characterLimit": 20,
+    "placeholders": ["{{score}}"],
+    "doNotTranslate": [],
+    "notes": null
+  },
+  "score.moves": {
+    "component": "SolitaireScreen HUD",
+    "description": "Live move-count readout at the top of the board.",
+    "tone": "functional",
+    "characterLimit": 20,
+    "placeholders": ["{{moves}}"],
+    "doNotTranslate": [],
+    "notes": null
+  },
+  "action.undo": {
+    "component": "SolitaireScreen header",
+    "description": "Undo button in the header.",
+    "tone": "functional",
+    "characterLimit": 10,
+    "placeholders": [],
+    "doNotTranslate": [],
+    "notes": null
+  },
+  "action.autoComplete": {
+    "component": "SolitaireScreen",
+    "description": "Button that finishes a trivially-winnable deal in one tap.",
+    "tone": "functional",
+    "characterLimit": 18,
+    "placeholders": [],
+    "doNotTranslate": [],
+    "notes": null
+  },
+  "action.newGame": {
+    "component": "SolitaireScreen header",
+    "description": "New Game button in the header.",
+    "tone": "functional",
+    "characterLimit": 12,
+    "placeholders": [],
+    "doNotTranslate": [],
+    "notes": null
+  },
+  "action.submitScore": {
+    "component": "SolitaireScreen win modal",
+    "description": "Primary CTA on the win modal — submits the score to the leaderboard.",
+    "tone": "confident",
+    "characterLimit": 18,
+    "placeholders": [],
+    "doNotTranslate": [],
+    "notes": null
+  },
+  "action.dealAgain": {
+    "component": "SolitaireScreen",
+    "description": "Button label to deal a fresh game after finishing one.",
+    "tone": "casual",
+    "characterLimit": 14,
+    "placeholders": [],
+    "doNotTranslate": [],
+    "notes": null
+  },
+  "win.title": {
+    "component": "SolitaireScreen win modal",
+    "description": "Header of the win modal — celebrates the win.",
+    "tone": "celebratory",
+    "characterLimit": 20,
+    "placeholders": [],
+    "doNotTranslate": [],
+    "notes": null
+  },
+  "win.score": {
+    "component": "SolitaireScreen win modal",
+    "description": "Line showing the final score on the win modal.",
+    "tone": "neutral",
+    "characterLimit": 30,
+    "placeholders": ["{{score}}"],
+    "doNotTranslate": [],
+    "notes": null
+  },
+  "win.rank": {
+    "component": "SolitaireScreen win modal",
+    "description": "Confirmation after a successful leaderboard submit.",
+    "tone": "celebratory",
+    "characterLimit": 20,
+    "placeholders": ["{{rank}}"],
+    "doNotTranslate": [],
+    "notes": "Keep the '#' literal."
+  },
+  "win.namePlaceholder": {
+    "component": "SolitaireScreen win modal",
+    "description": "Placeholder inside the name text field.",
+    "tone": "neutral",
+    "characterLimit": 22,
+    "placeholders": [],
+    "doNotTranslate": [],
+    "notes": null
+  },
+  "win.nameLabel": {
+    "component": "SolitaireScreen win modal",
+    "description": "Accessibility label for the name text field.",
+    "tone": "functional",
+    "characterLimit": 16,
+    "placeholders": [],
+    "doNotTranslate": [],
+    "notes": null
+  },
+  "win.nameHint": {
+    "component": "SolitaireScreen win modal",
+    "description": "Accessibility hint explaining what the name is used for.",
+    "tone": "functional",
+    "characterLimit": 80,
+    "placeholders": [],
+    "doNotTranslate": [],
+    "notes": null
+  },
+  "stock.recycle": {
+    "component": "SolitaireScreen",
+    "description": "Warning that recycling the waste back to stock costs 50 points after the first time.",
+    "tone": "informational",
+    "characterLimit": 60,
+    "placeholders": [],
+    "doNotTranslate": [],
+    "notes": null
+  },
+  "pile.stock.label": {
+    "component": "StockWastePile",
+    "description": "Accessibility label on the stock pile — announces draw mode and remaining cards.",
+    "tone": "functional",
+    "characterLimit": 80,
+    "placeholders": ["{{count}}", "{{remaining}}"],
+    "doNotTranslate": [],
+    "notes": "{{count}} is the draw mode (1 or 3); {{remaining}} is how many cards are left."
+  },
+  "pile.stock.empty": {
+    "component": "StockWastePile",
+    "description": "Accessibility label when the stock is empty and tapping will recycle.",
+    "tone": "functional",
+    "characterLimit": 80,
+    "placeholders": ["{{count}}"],
+    "doNotTranslate": [],
+    "notes": "{{count}} is the draw mode."
+  },
+  "pile.waste.empty": {
+    "component": "StockWastePile",
+    "description": "Accessibility label on the empty waste slot.",
+    "tone": "functional",
+    "characterLimit": 28,
+    "placeholders": [],
+    "doNotTranslate": [],
+    "notes": null
+  },
+  "pile.tableau.label": {
+    "component": "TableauPile",
+    "description": "Accessibility label on a non-empty tableau column.",
+    "tone": "functional",
+    "characterLimit": 60,
+    "placeholders": ["{{col}}", "{{count}}"],
+    "doNotTranslate": [],
+    "notes": "{{col}} is the 1-indexed column; {{count}} is the number of cards in it."
+  },
+  "pile.tableau.empty": {
+    "component": "TableauPile",
+    "description": "Accessibility label on an empty tableau column slot.",
+    "tone": "functional",
+    "characterLimit": 40,
+    "placeholders": ["{{col}}"],
+    "doNotTranslate": [],
+    "notes": null
+  },
+  "pile.foundation.empty": {
+    "component": "FoundationPile",
+    "description": "Accessibility label on an empty foundation pile.",
+    "tone": "functional",
+    "characterLimit": 40,
+    "placeholders": ["{{suit}}"],
+    "doNotTranslate": [],
+    "notes": "{{suit}} is already-localized suit name."
+  },
+  "suit.spades": {
+    "component": "CardView / FoundationPile",
+    "description": "Suit name — Spades.",
+    "tone": "neutral",
+    "characterLimit": 16,
+    "placeholders": [],
+    "doNotTranslate": [],
+    "notes": "Use the standard card-game name in the locale."
+  },
+  "suit.hearts": {
+    "component": "CardView / FoundationPile",
+    "description": "Suit name — Hearts.",
+    "tone": "neutral",
+    "characterLimit": 16,
+    "placeholders": [],
+    "doNotTranslate": [],
+    "notes": "Use the standard card-game name in the locale."
+  },
+  "suit.diamonds": {
+    "component": "CardView / FoundationPile",
+    "description": "Suit name — Diamonds.",
+    "tone": "neutral",
+    "characterLimit": 16,
+    "placeholders": [],
+    "doNotTranslate": [],
+    "notes": "Use the standard card-game name in the locale."
+  },
+  "suit.clubs": {
+    "component": "CardView / FoundationPile",
+    "description": "Suit name — Clubs.",
+    "tone": "neutral",
+    "characterLimit": 16,
+    "placeholders": [],
+    "doNotTranslate": [],
+    "notes": "Use the standard card-game name in the locale."
+  },
+  "card.faceDown": {
+    "component": "CardView",
+    "description": "Accessibility label for a face-down card.",
+    "tone": "functional",
+    "characterLimit": 24,
+    "placeholders": [],
+    "doNotTranslate": [],
+    "notes": null
+  },
+  "card.faceDownSelected": {
+    "component": "CardView",
+    "description": "Accessibility label for a face-down card that is currently selected.",
+    "tone": "functional",
+    "characterLimit": 32,
+    "placeholders": [],
+    "doNotTranslate": [],
+    "notes": null
+  },
+  "card.faceUp": {
+    "component": "CardView",
+    "description": "Accessibility label for a face-up card — 'Ace of Spades', etc.",
+    "tone": "functional",
+    "characterLimit": 40,
+    "placeholders": ["{{rank}}", "{{suit}}"],
+    "doNotTranslate": [],
+    "notes": "{{rank}} is rendered as 'A','2'-'10','J','Q','K' — do not translate single-letter ranks. {{suit}} is already-localized."
+  },
+  "card.faceUpSelected": {
+    "component": "CardView",
+    "description": "Accessibility label for a face-up card that is selected.",
+    "tone": "functional",
+    "characterLimit": 48,
+    "placeholders": ["{{rank}}", "{{suit}}"],
+    "doNotTranslate": [],
+    "notes": "Same conventions as card.faceUp; add a '(selected)' annotation idiomatic to the locale."
+  },
+  "a11y.boardRegion": {
+    "component": "SolitaireScreen",
+    "description": "Accessibility region label wrapping the whole board.",
+    "tone": "functional",
+    "characterLimit": 30,
+    "placeholders": [],
+    "doNotTranslate": [],
+    "notes": null
+  },
+  "a11y.invalidMove": {
+    "component": "SolitaireScreen",
+    "description": "Announcement fired when the player attempts an illegal move.",
+    "tone": "functional",
+    "characterLimit": 24,
+    "placeholders": [],
+    "doNotTranslate": [],
+    "notes": null
+  },
+  "error.saveFailed": {
+    "component": "SolitaireScreen",
+    "description": "Error message when saving progress to local storage fails.",
+    "tone": "apologetic, clear",
+    "characterLimit": 60,
+    "placeholders": [],
+    "doNotTranslate": [],
+    "notes": null
+  },
+  "error.loadFailed": {
+    "component": "SolitaireScreen",
+    "description": "Error message when restoring a saved game fails.",
+    "tone": "apologetic, clear",
+    "characterLimit": 60,
+    "placeholders": [],
+    "doNotTranslate": [],
+    "notes": null
+  },
+  "error.submitFailed": {
+    "component": "SolitaireScreen win modal",
+    "description": "Error message when submitting the score to the leaderboard fails.",
+    "tone": "apologetic, clear",
+    "characterLimit": 60,
+    "placeholders": [],
+    "doNotTranslate": [],
+    "notes": null
+  },
+  "error.submitRetry": {
+    "component": "SolitaireScreen win modal",
+    "description": "Button label that retries a failed leaderboard submit.",
+    "tone": "action",
+    "characterLimit": 12,
+    "placeholders": [],
+    "doNotTranslate": [],
+    "notes": null
+  }
+}

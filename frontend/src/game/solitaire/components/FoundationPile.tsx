@@ -8,6 +8,7 @@
 
 import React from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
+import { useTranslation } from "react-i18next";
 
 import { useTheme } from "../../../theme/ThemeContext";
 import type { Card, Suit } from "../types";
@@ -18,13 +19,6 @@ const SUIT_SYMBOL: Record<Suit, string> = {
   hearts: "♥",
   diamonds: "♦",
   clubs: "♣",
-};
-
-const SUIT_NAME: Record<Suit, string> = {
-  spades: "Spades",
-  hearts: "Hearts",
-  diamonds: "Diamonds",
-  clubs: "Clubs",
 };
 
 export interface FoundationPileProps {
@@ -41,6 +35,7 @@ export default function FoundationPile({
   onPress,
 }: FoundationPileProps) {
   const { colors } = useTheme();
+  const { t } = useTranslation("solitaire");
 
   // Non-empty: show the top card (always face-up on foundations).
   if (pile.length > 0) {
@@ -57,7 +52,7 @@ export default function FoundationPile({
   }
 
   // Empty: suit-symbol placeholder.
-  const label = `Empty ${SUIT_NAME[suit]} foundation`;
+  const label = t("pile.foundation.empty", { suit: t(`suit.${suit}` as const) });
   const style = [
     styles.empty,
     {

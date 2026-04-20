@@ -9,6 +9,7 @@
 
 import React from "react";
 import { Pressable, StyleSheet, Text, View, ViewStyle } from "react-native";
+import { useTranslation } from "react-i18next";
 
 import { useTheme } from "../../../theme/ThemeContext";
 import type { Card, Suit } from "../types";
@@ -28,13 +29,6 @@ const SUIT_SYMBOL: Record<Suit, string> = {
   clubs: "♣",
 };
 
-const SUIT_NAME: Record<Suit, string> = {
-  spades: "Spades",
-  hearts: "Hearts",
-  diamonds: "Diamonds",
-  clubs: "Clubs",
-};
-
 function rankLabel(rank: number): string {
   return RANK_LABEL[rank] ?? String(rank);
 }
@@ -52,6 +46,7 @@ export interface CardViewProps {
 
 export default function CardView({ card, selected = false, onPress }: CardViewProps) {
   const { colors } = useTheme();
+  const { t } = useTranslation("solitaire");
 
   const borderColor = selected ? colors.accent : colors.border;
   const borderWidth = selected ? 2 : 1;
@@ -69,7 +64,7 @@ export default function CardView({ card, selected = false, onPress }: CardViewPr
     return (
       <Wrapper
         onPress={onPress}
-        label={selected ? "Selected face-down card" : "Face-down card"}
+        label={selected ? t("card.faceDownSelected") : t("card.faceDown")}
         style={containerStyle}
       >
         {null}
@@ -80,7 +75,10 @@ export default function CardView({ card, selected = false, onPress }: CardViewPr
   const suitSymbol = SUIT_SYMBOL[card.suit];
   const rank = rankLabel(card.rank);
   const textColor = cardColor(card) === "red" ? colors.error : colors.text;
-  const label = `${rank} of ${SUIT_NAME[card.suit]}${selected ? " (selected)" : ""}`;
+  const suitName = t(`suit.${card.suit}` as const);
+  const label = selected
+    ? t("card.faceUpSelected", { rank, suit: suitName })
+    : t("card.faceUp", { rank, suit: suitName });
 
   return (
     <Wrapper onPress={onPress} label={label} style={containerStyle}>
