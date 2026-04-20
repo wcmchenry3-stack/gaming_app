@@ -13,6 +13,7 @@ type Namespace =
   | "twenty48"
   | "solitaire"
   | "hearts"
+  | "sudoku"
   | "feedback"
   | "profile";
 type TranslationModule = Promise<{ default: Record<string, string> }>;
@@ -41,6 +42,7 @@ const localeLoaders: Record<string, Partial<Record<Namespace, () => TranslationM
     twenty48: () => import("./locales/en/twenty48.json") as TranslationModule,
     solitaire: () => import("./locales/en/solitaire.json") as TranslationModule,
     hearts: () => import("./locales/en/hearts.json") as TranslationModule,
+    sudoku: () => import("./locales/en/sudoku.json") as TranslationModule,
     feedback: () => import("./locales/en/feedback.json") as TranslationModule,
     profile: () => import("./locales/en/profile.json") as TranslationModule,
   },
@@ -183,6 +185,7 @@ i18n
       "twenty48",
       "solitaire",
       "hearts",
+      "sudoku",
       "feedback",
       "profile",
     ],

@@ -98,6 +98,7 @@ import blackjack from "./src/i18n/locales/en/blackjack.json";
 import twenty48 from "./src/i18n/locales/en/twenty48.json";
 import solitaire from "./src/i18n/locales/en/solitaire.json";
 import hearts from "./src/i18n/locales/en/hearts.json";
+import sudoku from "./src/i18n/locales/en/sudoku.json";
 import feedback from "./src/i18n/locales/en/feedback.json";
 import profile from "./src/i18n/locales/en/profile.json";
 
@@ -113,6 +114,7 @@ i18n.use(initReactI18next).init({
     "twenty48",
     "solitaire",
     "hearts",
+    "sudoku",
     "feedback",
     "profile",
   ],
@@ -127,6 +129,7 @@ i18n.use(initReactI18next).init({
       twenty48,
       solitaire,
       hearts,
+      sudoku,
       feedback,
       profile,
     },
