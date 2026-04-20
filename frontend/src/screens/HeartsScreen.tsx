@@ -145,7 +145,12 @@ export default function HeartsScreen() {
         await delay(400);
         if (unmountedRef.current) return;
 
-        const card = selectCardToPlay(s, s.currentPlayerIndex);
+        const card = selectCardToPlay(
+          s.playerHands[s.currentPlayerIndex] as Card[],
+          s.currentTrick as TrickCard[],
+          s,
+          s.currentPlayerIndex
+        );
         const completedTrick: readonly TrickCard[] | null = willComplete
           ? [...s.currentTrick, { card, playerIndex: s.currentPlayerIndex }]
           : null;

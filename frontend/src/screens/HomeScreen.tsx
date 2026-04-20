@@ -35,6 +35,7 @@ export default function HomeScreen() {
     "blackjack",
     "twenty48",
     "solitaire",
+    "hearts",
     "errors",
   ]);
   const { colors } = useTheme();
@@ -92,6 +93,13 @@ export default function HomeScreen() {
       description: t("solitaire:game.description"),
       action: () => navigation.navigate("Solitaire"),
     },
+    {
+      key: "hearts",
+      emoji: "♥",
+      title: t("hearts:game.title"),
+      description: t("hearts:game.description"),
+      action: () => navigation.navigate("Hearts"),
+    },
   ];
 
   const playLabels: Record<string, string> = {
@@ -100,6 +108,7 @@ export default function HomeScreen() {
     [t("blackjack:game.title")]: t("blackjack:game.playLabel"),
     [t("twenty48:game.title")]: t("twenty48:game.playLabel"),
     [t("solitaire:game.title")]: t("solitaire:game.playLabel"),
+    [t("hearts:game.title")]: t("hearts:game.playLabel"),
   };
 
   // Cycle through BC Arcade accent colors for the gradient top border on each card.
