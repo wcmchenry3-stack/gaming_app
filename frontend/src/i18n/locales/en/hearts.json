@@ -1,0 +1,38 @@
+{
+  "game.title": "Hearts",
+  "game.description": "Avoid hearts and the queen of spades.",
+  "game.playLabel": "Play Hearts",
+
+  "card.faceDown": "Face-down card",
+  "card.label": "{{rank}} of {{suit}}",
+  "card.highlighted": "{{rank}} of {{suit}} — valid play",
+  "card.suit.spades": "Spades",
+  "card.suit.hearts": "Hearts",
+  "card.suit.diamonds": "Diamonds",
+  "card.suit.clubs": "Clubs",
+  "card.rank.1": "Ace",
+  "card.rank.11": "Jack",
+  "card.rank.12": "Queen",
+  "card.rank.13": "King",
+
+  "hand.player": "Your hand, {{count}} cards",
+  "hand.opponent": "{{label}}'s hand, {{count}} cards",
+
+  "trick.area": "Current trick",
+  "trick.slot.empty": "Empty slot — {{label}}",
+  "trick.winner": "{{label}} won the trick",
+
+  "score.board": "Scores",
+  "score.player": "Player",
+  "score.total": "Score",
+  "score.hand": "Hand",
+
+  "pass.direction.left": "Pass left",
+  "pass.direction.right": "Pass right",
+  "pass.direction.across": "Pass across",
+  "pass.direction.none": "No passing this round",
+  "pass.instructions": "Choose 3 cards to {{direction}}",
+  "pass.selected": "{{count}} of 3 selected",
+  "pass.confirm": "Confirm",
+  "pass.confirmLabel": "Confirm — pass {{count}} selected cards"
+}
