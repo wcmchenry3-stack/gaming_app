@@ -36,6 +36,7 @@ export default function HomeScreen() {
     "twenty48",
     "solitaire",
     "hearts",
+    "sudoku",
     "errors",
   ]);
   const { colors } = useTheme();
@@ -100,6 +101,15 @@ export default function HomeScreen() {
       description: t("hearts:game.description"),
       action: () => navigation.navigate("Hearts"),
     },
+    {
+      key: "sudoku",
+      // twenty48 already owns 🔢 in the lobby; the puzzle-piece glyph
+      // keeps Sudoku visually distinct while staying puzzle-coded.
+      emoji: "🧩",
+      title: t("sudoku:game.title"),
+      description: t("sudoku:game.description"),
+      action: () => navigation.navigate("Sudoku"),
+    },
   ];
 
   const playLabels: Record<string, string> = {
@@ -109,6 +119,7 @@ export default function HomeScreen() {
     [t("twenty48:game.title")]: t("twenty48:game.playLabel"),
     [t("solitaire:game.title")]: t("solitaire:game.playLabel"),
     [t("hearts:game.title")]: t("hearts:game.playLabel"),
+    [t("sudoku:game.title")]: t("sudoku:game.playLabel"),
   };
 
   // Cycle through BC Arcade accent colors for the gradient top border on each card.
