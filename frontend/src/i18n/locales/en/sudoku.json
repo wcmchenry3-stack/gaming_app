@@ -1,0 +1,13 @@
+{
+  "cell.label": "Cell row {{row}}, column {{col}}, {{value}}",
+  "cell.empty": "empty",
+  "numberPad.digit": "Enter digit {{digit}}",
+  "numberPad.toggleNotes": "Toggle pencil marks",
+  "numberPad.notes": "Notes",
+  "numberPad.erase": "Erase cell",
+  "numberPad.eraseShort": "Erase",
+  "difficulty.groupLabel": "Difficulty",
+  "difficulty.easy": "Easy",
+  "difficulty.medium": "Medium",
+  "difficulty.hard": "Hard"
+}
