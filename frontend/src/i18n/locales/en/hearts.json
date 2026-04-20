@@ -34,5 +34,20 @@
   "pass.instructions": "Choose 3 cards to {{direction}}",
   "pass.selected": "{{count}} of 3 selected",
   "pass.confirm": "Confirm",
-  "pass.confirmLabel": "Confirm — pass {{count}} selected cards"
+  "pass.confirmLabel": "Confirm — pass {{count}} selected cards",
+
+  "player.you": "You",
+  "player.left": "Left",
+  "player.top": "Top",
+  "player.right": "Right",
+
+  "hand_end.title": "Hand Complete",
+  "hand_end.moon": "{{label}} shot the moon! +26 to all others.",
+  "hand_end.next": "Next Hand",
+
+  "game_over.title": "Game Over",
+  "game_over.winner": "{{label}} wins!",
+  "game_over.again": "Play Again",
+
+  "score.close": "Close"
 }
