@@ -56,12 +56,7 @@ function shuffle<T>(arr: readonly T[]): T[] {
 
 function dealHands(): readonly (readonly Card[])[] {
   const deck = shuffle(createDeck());
-  return [
-    deck.slice(0, 13),
-    deck.slice(13, 26),
-    deck.slice(26, 39),
-    deck.slice(39, 52),
-  ];
+  return [deck.slice(0, 13), deck.slice(13, 26), deck.slice(26, 39), deck.slice(39, 52)];
 }
 
 function cardEquals(a: Card, b: Card): boolean {
@@ -150,11 +145,7 @@ export function dealNextHand(state: HeartsState): HeartsState {
  * Does nothing if the card is not in the player's hand or 3 are already selected
  * and the card is not already selected.
  */
-export function selectPassCard(
-  state: HeartsState,
-  playerIndex: number,
-  card: Card
-): HeartsState {
+export function selectPassCard(state: HeartsState, playerIndex: number, card: Card): HeartsState {
   const current = [...(state.passSelections[playerIndex] ?? [])];
   const existingIdx = current.findIndex((c) => cardEquals(c, card));
   if (existingIdx >= 0) {
@@ -162,9 +153,7 @@ export function selectPassCard(
   } else if (current.length < 3) {
     current.push(card);
   }
-  const newSelections = state.passSelections.map((s, i) =>
-    i === playerIndex ? current : [...s]
-  );
+  const newSelections = state.passSelections.map((s, i) => (i === playerIndex ? current : [...s]));
   return { ...state, passSelections: newSelections };
 }
 
@@ -190,18 +179,14 @@ export function commitPass(state: HeartsState): HeartsState {
     }
   }
 
-  const offset =
-    state.passDirection === "left" ? 1 :
-    state.passDirection === "right" ? 3 : 2; // across
+  const offset = state.passDirection === "left" ? 1 : state.passDirection === "right" ? 3 : 2; // across
 
   const newHands: Card[][] = state.playerHands.map((h) => [...h]);
 
   // Remove passed cards from each sender
   for (let i = 0; i < 4; i++) {
     const sel = state.passSelections[i] ?? [];
-    newHands[i] = (newHands[i] ?? []).filter(
-      (c) => !sel.some((s) => cardEquals(c, s))
-    );
+    newHands[i] = (newHands[i] ?? []).filter((c) => !sel.some((s) => cardEquals(c, s)));
   }
 
   // Add passed cards to each recipient
@@ -270,11 +255,7 @@ export function getValidPlays(state: HeartsState, playerIndex: number): Card[] {
  * Play a card for a player. Validates the card is a legal play.
  * Automatically resolves the trick and hand when complete.
  */
-export function playCard(
-  state: HeartsState,
-  playerIndex: number,
-  card: Card
-): HeartsState {
+export function playCard(state: HeartsState, playerIndex: number, card: Card): HeartsState {
   const validPlays = getValidPlays(state, playerIndex);
   if (!validPlays.some((c) => cardEquals(c, card))) {
     throw new Error(`Invalid play: ${card.suit} ${card.rank} for player ${playerIndex}`);
@@ -330,7 +311,7 @@ function resolveTrick(state: HeartsState, trick: readonly TrickCard[]): HeartsSt
   );
 
   const newHandScores = state.handScores.map((s, i) =>
-    i === winnerPlayerIndex ? (s ?? 0) + pointsWon : s ?? 0
+    i === winnerPlayerIndex ? (s ?? 0) + pointsWon : (s ?? 0)
   );
 
   const newTricksPlayed = state.tricksPlayedInHand + 1;

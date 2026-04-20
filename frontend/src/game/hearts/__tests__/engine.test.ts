@@ -38,7 +38,12 @@ function c(suit: Suit, rank: Rank): Card {
 }
 
 /** Build a 4-player hands array, defaulting missing slots to []. */
-function h4(p0: Card[] = [], p1: Card[] = [], p2: Card[] = [], p3: Card[] = []): readonly (readonly Card[])[] {
+function h4(
+  p0: Card[] = [],
+  p1: Card[] = [],
+  p2: Card[] = [],
+  p3: Card[] = []
+): readonly (readonly Card[])[] {
   return [p0, p1, p2, p3];
 }
 
@@ -150,7 +155,14 @@ describe("commitPass — left", () => {
     // Give each player a club 2 so find2ClubsHolder can locate it, and extra cards
     const hands = [
       [...p0Cards, c("clubs", 2), c("clubs", 7), c("clubs", 8), c("clubs", 9), c("clubs", 10)],
-      [...p1Cards, c("clubs", 11), c("clubs", 12), c("clubs", 13), c("diamonds", 4), c("diamonds", 5)],
+      [
+        ...p1Cards,
+        c("clubs", 11),
+        c("clubs", 12),
+        c("clubs", 13),
+        c("diamonds", 4),
+        c("diamonds", 5),
+      ],
       [...p2Cards, c("hearts", 4), c("hearts", 5), c("hearts", 6), c("hearts", 7), c("hearts", 8)],
       [...p3Cards, c("spades", 4), c("spades", 5), c("spades", 6), c("spades", 7), c("spades", 8)],
     ] as Card[][];
@@ -225,7 +237,7 @@ describe("commitPass — none", () => {
   it("skips exchange and transitions to playing", () => {
     const hands = [
       [c("clubs", 3), c("clubs", 4), c("clubs", 5)],
-      [c("clubs", 2), c("clubs", 6), c("clubs", 7)],  // p1 has 2♣
+      [c("clubs", 2), c("clubs", 6), c("clubs", 7)], // p1 has 2♣
       [c("clubs", 8), c("clubs", 9), c("clubs", 10)],
       [c("clubs", 11), c("clubs", 12), c("clubs", 13)],
     ] as Card[][];
@@ -412,7 +424,7 @@ describe("trick resolution", () => {
     // P2 should win
     const hands = [
       [c("spades", 5), c("clubs", 2)],
-      [c("hearts", 1), c("clubs", 3)],      // void in spades
+      [c("hearts", 1), c("clubs", 3)], // void in spades
       [c("spades", 10), c("clubs", 4)],
       [c("spades", 3), c("clubs", 5)],
     ] as Card[][];
@@ -459,8 +471,8 @@ describe("trick resolution", () => {
 
   it("Q♠ awards 13 points to the trick winner", () => {
     const hands = [
-      [c("spades", 13), c("clubs", 2)],     // p0 leads K♠
-      [c("spades", 12), c("clubs", 3)],     // p1 plays Q♠
+      [c("spades", 13), c("clubs", 2)], // p0 leads K♠
+      [c("spades", 12), c("clubs", 3)], // p1 plays Q♠
       [c("spades", 3), c("clubs", 4)],
       [c("spades", 4), c("clubs", 5)],
     ] as Card[][];
@@ -487,32 +499,18 @@ describe("trick resolution", () => {
 
 describe("detectMoon", () => {
   it("returns player index when they took all 13 hearts and Q♠", () => {
-    const allHearts = Array.from({ length: 13 }, (_, i) =>
-      c("hearts", (i + 1) as Rank)
-    );
-    const wonCards = [
-      [...allHearts, c("spades", 12)],
-      [],
-      [],
-      [],
-    ];
+    const allHearts = Array.from({ length: 13 }, (_, i) => c("hearts", (i + 1) as Rank));
+    const wonCards = [[...allHearts, c("spades", 12)], [], [], []];
     expect(detectMoon(wonCards)).toBe(0);
   });
 
   it("returns null when hearts are split", () => {
-    const wonCards = [
-      [c("hearts", 1), c("hearts", 2), c("spades", 12)],
-      [c("hearts", 3)],
-      [],
-      [],
-    ];
+    const wonCards = [[c("hearts", 1), c("hearts", 2), c("spades", 12)], [c("hearts", 3)], [], []];
     expect(detectMoon(wonCards)).toBe(null);
   });
 
   it("returns null when Q♠ is missing", () => {
-    const allHearts = Array.from({ length: 13 }, (_, i) =>
-      c("hearts", (i + 1) as Rank)
-    );
+    const allHearts = Array.from({ length: 13 }, (_, i) => c("hearts", (i + 1) as Rank));
     const wonCards = [allHearts, [], [], []];
     expect(detectMoon(wonCards)).toBe(null);
   });
@@ -528,9 +526,7 @@ describe("detectMoon", () => {
 
 describe("applyHandScoring — normal", () => {
   it("adds handScores to cumulativeScores", () => {
-    const allHearts = Array.from({ length: 13 }, (_, i) =>
-      c("hearts", (i + 1) as Rank)
-    );
+    const allHearts = Array.from({ length: 13 }, (_, i) => c("hearts", (i + 1) as Rank));
     const state = mkState({
       phase: "hand_end",
       handScores: [10, 8, 5, 3],
@@ -550,25 +546,18 @@ describe("applyHandScoring — normal", () => {
 
 describe("applyHandScoring — moon shot", () => {
   it("shooter gets 0 pts added; everyone else gets +26", () => {
-    const allHearts = Array.from({ length: 13 }, (_, i) =>
-      c("hearts", (i + 1) as Rank)
-    );
+    const allHearts = Array.from({ length: 13 }, (_, i) => c("hearts", (i + 1) as Rank));
     const state = mkState({
       phase: "hand_end",
       handScores: [26, 0, 0, 0],
       cumulativeScores: [10, 20, 30, 40],
-      wonCards: [
-        [...allHearts, c("spades", 12)],
-        [],
-        [],
-        [],
-      ],
+      wonCards: [[...allHearts, c("spades", 12)], [], [], []],
     });
     const next = applyHandScoring(state);
-    expect(next.cumulativeScores[0]).toBe(10);  // shooter unchanged
-    expect(next.cumulativeScores[1]).toBe(46);  // +26
-    expect(next.cumulativeScores[2]).toBe(56);  // +26
-    expect(next.cumulativeScores[3]).toBe(66);  // +26
+    expect(next.cumulativeScores[0]).toBe(10); // shooter unchanged
+    expect(next.cumulativeScores[1]).toBe(46); // +26
+    expect(next.cumulativeScores[2]).toBe(56); // +26
+    expect(next.cumulativeScores[3]).toBe(66); // +26
   });
 });
 

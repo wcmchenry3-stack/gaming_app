@@ -26,10 +26,10 @@ export interface TrickCard {
 export type PassDirection = "left" | "right" | "across" | "none";
 
 export type HeartsPhase =
-  | "dealing"    // between hands — UI shows hand scores before next deal
-  | "passing"    // players select 3 cards to pass
-  | "playing"    // trick-taking in progress
-  | "hand_end"   // 13th trick complete, scoring in progress (transient)
+  | "dealing" // between hands — UI shows hand scores before next deal
+  | "passing" // players select 3 cards to pass
+  | "playing" // trick-taking in progress
+  | "hand_end" // 13th trick complete, scoring in progress (transient)
   | "game_over"; // any player reached ≥ 100; lowest score wins
 
 /**
