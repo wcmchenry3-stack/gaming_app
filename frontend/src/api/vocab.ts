@@ -32,4 +32,3 @@ export const GAME_OUTCOMES = [
 ] as const;
 
 export type GameOutcome = (typeof GAME_OUTCOMES)[number];
-
