@@ -16,6 +16,7 @@ export const GAME_TYPES = [
   "cascade",
   "solitaire",
   "hearts",
+  "sudoku",
 ] as const;
 
 export type GameType = (typeof GAME_TYPES)[number];
@@ -31,3 +32,4 @@ export const GAME_OUTCOMES = [
 ] as const;
 
 export type GameOutcome = (typeof GAME_OUTCOMES)[number];
+

@@ -65,7 +65,7 @@ def test_game_outcome_ts_in_sync() -> None:
 
 def test_game_type_enum_values() -> None:
     """Regression guard — no value should be silently removed from GameType."""
-    expected = {"yacht", "twenty48", "blackjack", "cascade", "solitaire", "hearts"}
+    expected = {"yacht", "twenty48", "blackjack", "cascade", "solitaire", "hearts", "sudoku"}
     assert {v.value for v in GameType} == expected
 
 
