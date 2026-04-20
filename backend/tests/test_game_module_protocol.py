@@ -8,6 +8,7 @@ from blackjack.module import module as blackjack_module
 from cascade.module import module as cascade_module
 from games.protocol import GameModule
 from games.registry import get_module
+from hearts.module import module as hearts_module
 from solitaire.module import module as solitaire_module
 from vocab import GameType
 
@@ -18,8 +19,8 @@ from vocab import GameType
 
 @pytest.mark.parametrize(
     "mod",
-    [blackjack_module, cascade_module, solitaire_module],
-    ids=["blackjack", "cascade", "solitaire"],
+    [blackjack_module, cascade_module, hearts_module, solitaire_module],
+    ids=["blackjack", "cascade", "hearts", "solitaire"],
 )
 def test_module_satisfies_protocol(mod) -> None:
     assert isinstance(mod, GameModule), f"{mod!r} does not satisfy the GameModule Protocol"
@@ -37,6 +38,10 @@ def test_solitaire_module_game_type() -> None:
     assert solitaire_module.game_type == GameType.SOLITAIRE
 
 
+def test_hearts_module_game_type() -> None:
+    assert hearts_module.game_type == GameType.HEARTS
+
+
 # ---------------------------------------------------------------------------
 # Registry
 # ---------------------------------------------------------------------------
@@ -45,6 +50,7 @@ def test_solitaire_module_game_type() -> None:
 def test_registry_returns_correct_modules() -> None:
     assert get_module("blackjack") is blackjack_module
     assert get_module("cascade") is cascade_module
+    assert get_module("hearts") is hearts_module
     assert get_module("solitaire") is solitaire_module
 
 
@@ -140,4 +146,29 @@ def test_solitaire_stats_shape_preserves_aggregate_fields() -> None:
 
 def test_solitaire_stats_shape_strips_latest_score() -> None:
     shaped = solitaire_module.stats_shape(_RAW_SOLITAIRE)
+    assert "latest_score" not in shaped
+
+
+# ---------------------------------------------------------------------------
+# HeartsModule.stats_shape — pass-through, strips latest_score
+# ---------------------------------------------------------------------------
+
+_RAW_HEARTS = {
+    "played": 7,
+    "best": 95,
+    "avg": 72.0,
+    "last_played_at": None,
+    "latest_score": 80,
+}
+
+
+def test_hearts_stats_shape_preserves_aggregate_fields() -> None:
+    shaped = hearts_module.stats_shape(_RAW_HEARTS)
+    assert shaped["played"] == 7
+    assert shaped["best"] == 95
+    assert shaped["avg"] == 72.0
+
+
+def test_hearts_stats_shape_strips_latest_score() -> None:
+    shaped = hearts_module.stats_shape(_RAW_HEARTS)
     assert "latest_score" not in shaped
