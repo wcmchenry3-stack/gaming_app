@@ -10,6 +10,7 @@ from games.protocol import GameModule
 from games.registry import get_module
 from hearts.module import module as hearts_module
 from solitaire.module import module as solitaire_module
+from sudoku.module import module as sudoku_module
 from vocab import GameType
 
 # ---------------------------------------------------------------------------
@@ -19,8 +20,8 @@ from vocab import GameType
 
 @pytest.mark.parametrize(
     "mod",
-    [blackjack_module, cascade_module, hearts_module, solitaire_module],
-    ids=["blackjack", "cascade", "hearts", "solitaire"],
+    [blackjack_module, cascade_module, hearts_module, solitaire_module, sudoku_module],
+    ids=["blackjack", "cascade", "hearts", "solitaire", "sudoku"],
 )
 def test_module_satisfies_protocol(mod) -> None:
     assert isinstance(mod, GameModule), f"{mod!r} does not satisfy the GameModule Protocol"
@@ -42,6 +43,10 @@ def test_hearts_module_game_type() -> None:
     assert hearts_module.game_type == GameType.HEARTS
 
 
+def test_sudoku_module_game_type() -> None:
+    assert sudoku_module.game_type == GameType.SUDOKU
+
+
 # ---------------------------------------------------------------------------
 # Registry
 # ---------------------------------------------------------------------------
@@ -52,6 +57,7 @@ def test_registry_returns_correct_modules() -> None:
     assert get_module("cascade") is cascade_module
     assert get_module("hearts") is hearts_module
     assert get_module("solitaire") is solitaire_module
+    assert get_module("sudoku") is sudoku_module
 
 
 def test_registry_returns_none_for_unknown() -> None:
@@ -171,4 +177,29 @@ def test_hearts_stats_shape_preserves_aggregate_fields() -> None:
 
 def test_hearts_stats_shape_strips_latest_score() -> None:
     shaped = hearts_module.stats_shape(_RAW_HEARTS)
+    assert "latest_score" not in shaped
+
+
+# ---------------------------------------------------------------------------
+# SudokuModule.stats_shape — pass-through, strips latest_score
+# ---------------------------------------------------------------------------
+
+_RAW_SUDOKU = {
+    "played": 6,
+    "best": 290,
+    "avg": 180.0,
+    "last_played_at": None,
+    "latest_score": 200,
+}
+
+
+def test_sudoku_stats_shape_preserves_aggregate_fields() -> None:
+    shaped = sudoku_module.stats_shape(_RAW_SUDOKU)
+    assert shaped["played"] == 6
+    assert shaped["best"] == 290
+    assert shaped["avg"] == 180.0
+
+
+def test_sudoku_stats_shape_strips_latest_score() -> None:
+    shaped = sudoku_module.stats_shape(_RAW_SUDOKU)
     assert "latest_score" not in shaped

@@ -14,6 +14,7 @@ from cascade.models import CascadeMetadata
 from games.schemas import CreateGameRequest
 from hearts.models import HeartsMetadata
 from solitaire.models import SolitaireMetadata
+from sudoku.models import SudokuMetadata
 
 # ---------------------------------------------------------------------------
 # BlackjackMetadata unit tests
@@ -102,6 +103,48 @@ def test_hearts_metadata_rejects_unknown_field() -> None:
 
 
 # ---------------------------------------------------------------------------
+# SudokuMetadata unit tests
+# ---------------------------------------------------------------------------
+
+
+def test_sudoku_metadata_valid_easy() -> None:
+    m = SudokuMetadata.model_validate({"difficulty": "easy"})
+    assert m.difficulty == "easy"
+    assert m.player_name == ""
+
+
+def test_sudoku_metadata_valid_with_player_name() -> None:
+    m = SudokuMetadata.model_validate({"player_name": "Alice", "difficulty": "hard"})
+    assert m.player_name == "Alice"
+    assert m.difficulty == "hard"
+
+
+def test_sudoku_metadata_all_difficulty_values_accepted() -> None:
+    for d in ("easy", "medium", "hard"):
+        assert SudokuMetadata.model_validate({"difficulty": d}).difficulty == d
+
+
+def test_sudoku_metadata_missing_difficulty_rejected() -> None:
+    with pytest.raises(ValidationError):
+        SudokuMetadata.model_validate({})
+
+
+def test_sudoku_metadata_invalid_difficulty_rejected() -> None:
+    with pytest.raises(ValidationError):
+        SudokuMetadata.model_validate({"difficulty": "impossible"})
+
+
+def test_sudoku_metadata_player_name_too_long() -> None:
+    with pytest.raises(ValidationError):
+        SudokuMetadata.model_validate({"difficulty": "easy", "player_name": "x" * 65})
+
+
+def test_sudoku_metadata_rejects_unknown_field() -> None:
+    with pytest.raises(ValidationError):
+        SudokuMetadata.model_validate({"difficulty": "easy", "score": 9999})
+
+
+# ---------------------------------------------------------------------------
 # CreateGameRequest metadata validation
 # ---------------------------------------------------------------------------
 
@@ -134,6 +177,18 @@ def test_create_game_request_valid_solitaire_metadata() -> None:
 def test_create_game_request_invalid_solitaire_metadata_raises_422() -> None:
     with pytest.raises(ValidationError):
         CreateGameRequest(game_type="solitaire", metadata={"player_name": "x" * 65})
+
+
+def test_create_game_request_valid_sudoku_metadata() -> None:
+    req = CreateGameRequest(
+        game_type="sudoku", metadata={"player_name": "Bob", "difficulty": "medium"}
+    )
+    assert req.metadata["difficulty"] == "medium"
+
+
+def test_create_game_request_invalid_sudoku_metadata_raises_422() -> None:
+    with pytest.raises(ValidationError):
+        CreateGameRequest(game_type="sudoku", metadata={"difficulty": "impossible"})
 
 
 def test_create_game_request_unregistered_game_type_skips_validation() -> None:

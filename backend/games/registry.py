@@ -12,6 +12,7 @@ from blackjack.module import module as blackjack_module
 from cascade.module import module as cascade_module
 from hearts.module import module as hearts_module
 from solitaire.module import module as solitaire_module
+from sudoku.module import module as sudoku_module
 
 from games.protocol import GameModule
 
@@ -22,6 +23,7 @@ _REGISTRY: dict[str, GameModule] = {
     cascade_module.game_type.value: cascade_module,
     hearts_module.game_type.value: hearts_module,
     solitaire_module.game_type.value: solitaire_module,
+    sudoku_module.game_type.value: sudoku_module,
 }
 
 
