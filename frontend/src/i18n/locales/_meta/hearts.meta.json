@@ -1,0 +1,434 @@
+{
+  "game.title": {
+    "component": "HomeScreen / HeartsScreen header",
+    "description": "Name of the Hearts card game.",
+    "tone": "neutral",
+    "characterLimit": 15,
+    "placeholders": [],
+    "doNotTranslate": [],
+    "notes": "Use the locale's standard name for the Hearts card game."
+  },
+  "game.description": {
+    "component": "HomeScreen game card",
+    "description": "One-line description on the Hearts game card.",
+    "tone": "casual, punchy",
+    "characterLimit": 60,
+    "placeholders": [],
+    "doNotTranslate": [],
+    "notes": null
+  },
+  "game.playLabel": {
+    "component": "HomeScreen game card",
+    "description": "Accessibility label for the Hearts play button.",
+    "tone": "functional",
+    "characterLimit": 25,
+    "placeholders": [],
+    "doNotTranslate": [],
+    "notes": null
+  },
+  "card.faceDown": {
+    "component": "CardView (accessibility)",
+    "description": "Screen-reader label for a face-down card.",
+    "tone": "functional",
+    "characterLimit": 20,
+    "placeholders": [],
+    "doNotTranslate": [],
+    "notes": null
+  },
+  "card.label": {
+    "component": "CardView (accessibility)",
+    "description": "Screen-reader label for a visible card, e.g. 'Queen of Spades'.",
+    "tone": "functional",
+    "characterLimit": 30,
+    "placeholders": ["{{rank}}", "{{suit}}"],
+    "doNotTranslate": [],
+    "notes": "Word order may differ by locale (e.g. Japanese uses suit first)."
+  },
+  "card.highlighted": {
+    "component": "CardView (accessibility)",
+    "description": "Screen-reader label for a card that is a valid play.",
+    "tone": "functional",
+    "characterLimit": 50,
+    "placeholders": ["{{rank}}", "{{suit}}"],
+    "doNotTranslate": [],
+    "notes": null
+  },
+  "card.suit.spades": {
+    "component": "CardView (accessibility)",
+    "description": "Name of the Spades suit.",
+    "tone": "neutral",
+    "characterLimit": 15,
+    "placeholders": [],
+    "doNotTranslate": [],
+    "notes": null
+  },
+  "card.suit.hearts": {
+    "component": "CardView (accessibility)",
+    "description": "Name of the Hearts suit.",
+    "tone": "neutral",
+    "characterLimit": 15,
+    "placeholders": [],
+    "doNotTranslate": [],
+    "notes": null
+  },
+  "card.suit.diamonds": {
+    "component": "CardView (accessibility)",
+    "description": "Name of the Diamonds suit.",
+    "tone": "neutral",
+    "characterLimit": 15,
+    "placeholders": [],
+    "doNotTranslate": [],
+    "notes": null
+  },
+  "card.suit.clubs": {
+    "component": "CardView (accessibility)",
+    "description": "Name of the Clubs suit.",
+    "tone": "neutral",
+    "characterLimit": 15,
+    "placeholders": [],
+    "doNotTranslate": [],
+    "notes": null
+  },
+  "card.rank.1": {
+    "component": "CardView (accessibility)",
+    "description": "Name of the Ace rank.",
+    "tone": "neutral",
+    "characterLimit": 10,
+    "placeholders": [],
+    "doNotTranslate": [],
+    "notes": null
+  },
+  "card.rank.11": {
+    "component": "CardView (accessibility)",
+    "description": "Name of the Jack rank.",
+    "tone": "neutral",
+    "characterLimit": 10,
+    "placeholders": [],
+    "doNotTranslate": [],
+    "notes": null
+  },
+  "card.rank.12": {
+    "component": "CardView (accessibility)",
+    "description": "Name of the Queen rank.",
+    "tone": "neutral",
+    "characterLimit": 10,
+    "placeholders": [],
+    "doNotTranslate": [],
+    "notes": null
+  },
+  "card.rank.13": {
+    "component": "CardView (accessibility)",
+    "description": "Name of the King rank.",
+    "tone": "neutral",
+    "characterLimit": 10,
+    "placeholders": [],
+    "doNotTranslate": [],
+    "notes": null
+  },
+  "hand.player": {
+    "component": "PlayerHand (accessibility)",
+    "description": "Screen-reader label for the human player's hand.",
+    "tone": "functional",
+    "characterLimit": 40,
+    "placeholders": ["{{count}}"],
+    "doNotTranslate": [],
+    "notes": null
+  },
+  "hand.opponent": {
+    "component": "OpponentHand (accessibility)",
+    "description": "Screen-reader label for an AI opponent's hand.",
+    "tone": "functional",
+    "characterLimit": 40,
+    "placeholders": ["{{label}}", "{{count}}"],
+    "doNotTranslate": [],
+    "notes": null
+  },
+  "trick.area": {
+    "component": "TrickArea (accessibility)",
+    "description": "Accessibility label for the trick-play area.",
+    "tone": "functional",
+    "characterLimit": 20,
+    "placeholders": [],
+    "doNotTranslate": [],
+    "notes": null
+  },
+  "trick.slot.empty": {
+    "component": "TrickArea (accessibility)",
+    "description": "Accessibility label for an empty trick slot for a player.",
+    "tone": "functional",
+    "characterLimit": 40,
+    "placeholders": ["{{label}}"],
+    "doNotTranslate": [],
+    "notes": null
+  },
+  "trick.winner": {
+    "component": "TrickArea (accessibility)",
+    "description": "Announced when a player wins the trick.",
+    "tone": "casual",
+    "characterLimit": 40,
+    "placeholders": ["{{label}}"],
+    "doNotTranslate": [],
+    "notes": null
+  },
+  "score.board": {
+    "component": "ScorePanel header",
+    "description": "Label for the scores panel / scoreboard.",
+    "tone": "neutral",
+    "characterLimit": 15,
+    "placeholders": [],
+    "doNotTranslate": [],
+    "notes": null
+  },
+  "score.player": {
+    "component": "ScoreBoard column header",
+    "description": "Column header for the player name column.",
+    "tone": "neutral",
+    "characterLimit": 12,
+    "placeholders": [],
+    "doNotTranslate": [],
+    "notes": null
+  },
+  "score.total": {
+    "component": "ScoreBoard column header",
+    "description": "Column header for the cumulative score column.",
+    "tone": "neutral",
+    "characterLimit": 12,
+    "placeholders": [],
+    "doNotTranslate": [],
+    "notes": null
+  },
+  "score.hand": {
+    "component": "ScoreBoard column header",
+    "description": "Column header for the per-hand score column.",
+    "tone": "neutral",
+    "characterLimit": 12,
+    "placeholders": [],
+    "doNotTranslate": [],
+    "notes": null
+  },
+  "score.close": {
+    "component": "ScorePanel close button",
+    "description": "Accessibility label for the close button on the score panel.",
+    "tone": "functional",
+    "characterLimit": 10,
+    "placeholders": [],
+    "doNotTranslate": [],
+    "notes": null
+  },
+  "pass.direction.left": {
+    "component": "PassingOverlay",
+    "description": "Direction label when passing cards to the left.",
+    "tone": "casual",
+    "characterLimit": 20,
+    "placeholders": [],
+    "doNotTranslate": [],
+    "notes": null
+  },
+  "pass.direction.right": {
+    "component": "PassingOverlay",
+    "description": "Direction label when passing cards to the right.",
+    "tone": "casual",
+    "characterLimit": 20,
+    "placeholders": [],
+    "doNotTranslate": [],
+    "notes": null
+  },
+  "pass.direction.across": {
+    "component": "PassingOverlay",
+    "description": "Direction label when passing cards across.",
+    "tone": "casual",
+    "characterLimit": 20,
+    "placeholders": [],
+    "doNotTranslate": [],
+    "notes": null
+  },
+  "pass.direction.none": {
+    "component": "PassingOverlay",
+    "description": "Shown on the round when no cards are passed.",
+    "tone": "casual",
+    "characterLimit": 30,
+    "placeholders": [],
+    "doNotTranslate": [],
+    "notes": null
+  },
+  "pass.instructions": {
+    "component": "PassingOverlay body",
+    "description": "Instruction telling the player to choose 3 cards to pass in a given direction.",
+    "tone": "casual, instructional",
+    "characterLimit": 50,
+    "placeholders": ["{{direction}}"],
+    "doNotTranslate": [],
+    "notes": "{{direction}} is replaced by one of pass.direction.* values."
+  },
+  "pass.selected": {
+    "component": "PassingOverlay counter",
+    "description": "Shows how many cards are currently selected out of 3.",
+    "tone": "functional",
+    "characterLimit": 20,
+    "placeholders": ["{{count}}"],
+    "doNotTranslate": [],
+    "notes": null
+  },
+  "pass.confirm": {
+    "component": "PassingOverlay button label",
+    "description": "Short label on the confirm/pass button.",
+    "tone": "casual",
+    "characterLimit": 12,
+    "placeholders": [],
+    "doNotTranslate": [],
+    "notes": null
+  },
+  "pass.confirmLabel": {
+    "component": "PassingOverlay button (accessibility)",
+    "description": "Full accessibility label for the confirm button including selected count.",
+    "tone": "functional",
+    "characterLimit": 60,
+    "placeholders": ["{{count}}"],
+    "doNotTranslate": [],
+    "notes": null
+  },
+  "player.you": {
+    "component": "HeartsScreen player labels",
+    "description": "Label for the human player (bottom seat).",
+    "tone": "casual",
+    "characterLimit": 10,
+    "placeholders": [],
+    "doNotTranslate": [],
+    "notes": null
+  },
+  "player.left": {
+    "component": "HeartsScreen player labels",
+    "description": "Label for the left AI opponent.",
+    "tone": "neutral",
+    "characterLimit": 10,
+    "placeholders": [],
+    "doNotTranslate": [],
+    "notes": null
+  },
+  "player.top": {
+    "component": "HeartsScreen player labels",
+    "description": "Label for the top AI opponent.",
+    "tone": "neutral",
+    "characterLimit": 10,
+    "placeholders": [],
+    "doNotTranslate": [],
+    "notes": null
+  },
+  "player.right": {
+    "component": "HeartsScreen player labels",
+    "description": "Label for the right AI opponent.",
+    "tone": "neutral",
+    "characterLimit": 10,
+    "placeholders": [],
+    "doNotTranslate": [],
+    "notes": null
+  },
+  "hand_end.title": {
+    "component": "HandEndOverlay modal",
+    "description": "Title shown at the end of each hand.",
+    "tone": "casual",
+    "characterLimit": 20,
+    "placeholders": [],
+    "doNotTranslate": [],
+    "notes": null
+  },
+  "hand_end.moon": {
+    "component": "HandEndOverlay modal",
+    "description": "Message shown when a player shoots the moon (takes all hearts + Queen of Spades).",
+    "tone": "dramatic, playful",
+    "characterLimit": 60,
+    "placeholders": ["{{label}}"],
+    "doNotTranslate": [],
+    "notes": "'Shooting the moon' is a Hearts strategy term — adapt to what gamers in the locale would recognize."
+  },
+  "hand_end.next": {
+    "component": "HandEndOverlay button",
+    "description": "Button to advance to the next hand.",
+    "tone": "casual",
+    "characterLimit": 15,
+    "placeholders": [],
+    "doNotTranslate": [],
+    "notes": null
+  },
+  "game_over.title": {
+    "component": "GameOverOverlay modal",
+    "description": "Title of the game-over screen.",
+    "tone": "casual",
+    "characterLimit": 15,
+    "placeholders": [],
+    "doNotTranslate": [],
+    "notes": null
+  },
+  "game_over.winner": {
+    "component": "GameOverOverlay modal",
+    "description": "Announces who won the game.",
+    "tone": "celebratory, punchy",
+    "characterLimit": 30,
+    "placeholders": ["{{label}}"],
+    "doNotTranslate": [],
+    "notes": null
+  },
+  "game_over.submit": {
+    "component": "GameOverOverlay score submit button",
+    "description": "Button label to submit score to leaderboard.",
+    "tone": "casual",
+    "characterLimit": 20,
+    "placeholders": [],
+    "doNotTranslate": [],
+    "notes": null
+  },
+  "game_over.name_placeholder": {
+    "component": "GameOverOverlay name input",
+    "description": "Placeholder text in the player name input field.",
+    "tone": "casual, inviting",
+    "characterLimit": 25,
+    "placeholders": [],
+    "doNotTranslate": [],
+    "notes": null
+  },
+  "game_over.submitting": {
+    "component": "GameOverOverlay submit button (loading state)",
+    "description": "Button label while score is being submitted.",
+    "tone": "functional",
+    "characterLimit": 20,
+    "placeholders": [],
+    "doNotTranslate": [],
+    "notes": "Trailing ellipsis (…) is standard in English — adapt to locale convention."
+  },
+  "game_over.submitted": {
+    "component": "GameOverOverlay (success state)",
+    "description": "Confirmation shown after score is successfully submitted.",
+    "tone": "positive, brief",
+    "characterLimit": 25,
+    "placeholders": [],
+    "doNotTranslate": [],
+    "notes": null
+  },
+  "game_over.submit_error": {
+    "component": "GameOverOverlay (error state)",
+    "description": "Error message shown when score submission fails.",
+    "tone": "neutral, brief",
+    "characterLimit": 25,
+    "placeholders": [],
+    "doNotTranslate": [],
+    "notes": null
+  },
+  "game_over.retry": {
+    "component": "GameOverOverlay retry button",
+    "description": "Button to retry a failed score submission.",
+    "tone": "casual",
+    "characterLimit": 12,
+    "placeholders": [],
+    "doNotTranslate": [],
+    "notes": null
+  },
+  "game_over.again": {
+    "component": "GameOverOverlay play-again button",
+    "description": "Button to start a new game after game over.",
+    "tone": "casual, energetic",
+    "characterLimit": 20,
+    "placeholders": [],
+    "doNotTranslate": [],
+    "notes": null
+  }
+}
