@@ -1,7 +1,7 @@
 """add pachisi to game_types lookup table (#538)
 
 Revision ID: 0004_add_pachisi_game_type
-Revises: 0003_relax_games_outcome_constraint
+Revises: 0003_relax_games_outcome_ck
 Create Date: 2026-04-15
 
 Pachisi was shipping as a frontend game type and had its own backend module
@@ -15,7 +15,7 @@ import sqlalchemy as sa
 from alembic import op
 
 revision: str = "0004_add_pachisi_game_type"
-down_revision: Union[str, None] = "0003_relax_games_outcome_constraint"
+down_revision: Union[str, None] = "0003_relax_games_outcome_ck"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
