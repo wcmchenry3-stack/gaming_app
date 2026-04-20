@@ -27,6 +27,7 @@ export interface Colors {
   bonusBg: string;
   totalBg: string;
   modalBg: string;
+  overlay: string;
   error: string;
   bonus: string;
   fruitContainer: string;
@@ -87,6 +88,7 @@ const dark: Colors = {
   bonusBg: TOKENS.darkSurfaceAlt,
   totalBg: TOKENS.darkBg,
   modalBg: TOKENS.darkSurfaceHigh,
+  overlay: "rgba(0,0,0,0.75)",
   error: TOKENS.errorDark,
   bonus: TOKENS.bonusDark,
   fruitContainer: TOKENS.darkSurface,
@@ -117,6 +119,7 @@ const light: Colors = {
   bonusBg: TOKENS.lightSurfaceAlt,
   totalBg: "#25252c",
   modalBg: TOKENS.lightSurface,
+  overlay: "rgba(0,0,0,0.75)",
   error: TOKENS.errorLight,
   bonus: TOKENS.bonusLight,
   fruitContainer: TOKENS.lightSurfaceAlt,

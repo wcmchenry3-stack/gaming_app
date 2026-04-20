@@ -28,7 +28,7 @@ export default function PassingOverlay({
 
   return (
     <Modal visible transparent animationType="fade" accessibilityViewIsModal>
-      <View style={[styles.backdrop, { backgroundColor: "rgba(0,0,0,0.75)" }]}>
+      <View style={[styles.backdrop, { backgroundColor: colors.overlay }]}>
         <View
           style={[styles.panel, { backgroundColor: colors.surface, borderColor: colors.border }]}
         >
