@@ -1,14 +1,23 @@
 /**
- * SudokuScreen (#618) — playable Sudoku inside `GameShell`.
+ * SudokuScreen — playable Sudoku with full lifecycle wiring.
  *
- * Scope is deliberately limited to layout, input, and the win flow.
- * AsyncStorage save/resume, the `POST /sudoku/score` call, and
- * `useGameSync` instrumentation live in #619 and hook in through the
- * `handleSubmitScore` stub below.
+ * Layers:
+ *   1. Pure engine from #616 + components from #617 (screen from #618).
+ *   2. Persistence (#619) — AsyncStorage save after every mutation so a
+ *      backgrounded or force-killed app resumes at the exact puzzle
+ *      state; cleared on New Puzzle / Change Difficulty.
+ *   3. Instrumentation (#619) — `useGameSync("sudoku")` session started
+ *      on the first `enterDigit`, completed on win, abandoned on
+ *      unmount or back-navigation when at least one digit was placed
+ *      and the puzzle is unfinished.
+ *   4. Leaderboard (#619) — `POST /sudoku/score` on win with an
+ *      in-modal retry affordance; POST failures never block the rest
+ *      of the modal.
  */
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
+  ActivityIndicator,
   Animated,
   AppState,
   Modal,
@@ -16,6 +25,7 @@ import {
   Pressable,
   StyleSheet,
   Text,
+  TextInput,
   View,
   ViewStyle,
 } from "react-native";
@@ -42,8 +52,12 @@ import {
   undo,
 } from "../game/sudoku/engine";
 import type { CellValue, Difficulty, SudokuState } from "../game/sudoku/types";
+import { clearGame, loadGame, saveGame } from "../game/sudoku/storage";
+import { sudokuApi, type ScoreEntry } from "../game/sudoku/api";
+import { useGameSync } from "../game/_shared/useGameSync";
 
 const FLASH_MS = 200;
+const MAX_NAME_LENGTH = 32;
 const DIFFICULTY_BASE: Record<Difficulty, number> = {
   easy: 100,
   medium: 200,
@@ -72,28 +86,75 @@ export default function SudokuScreen() {
   const [difficulty, setDifficulty] = useState<Difficulty>("easy");
   const [state, setState] = useState<SudokuState | null>(null);
   const [elapsed, setElapsed] = useState(0);
+  const [loading, setLoading] = useState(true);
 
-  // Timer bookkeeping. `startMs` is the wall-clock at which the current
-  // play session "began", adjusted forward by any time spent in the
-  // background so `elapsed` reads as "time actively spent playing."
-  // null = timer hasn't started yet (no digit placed).
+  // Timer bookkeeping.  `startMs` is the wall-clock at which play began,
+  // shifted forward while the app sits in the background so elapsed
+  // reads as "time actively spent playing." null = no input yet.
   const startMsRef = useRef<number | null>(null);
   const pausedAtRef = useRef<number | null>(null);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  // Invalid-move flash (mirrors the Solitaire pattern — a brief
-  // full-board red tint beats per-cell animations for code complexity).
-  const flashOpacity = useRef(new Animated.Value(0)).current;
+  // Lifecycle refs.  `hasLoadedRef` gates saves so a fresh puzzle can't
+  // clobber a resumable save still being read off disk.
+  const hasLoadedRef = useRef(false);
+  const stateRef = useRef<SudokuState | null>(null);
+  const digitCountRef = useRef(0);
+  const syncStartedRef = useRef(false);
+  const prevCompleteRef = useRef(false);
 
+  const flashOpacity = useRef(new Animated.Value(0)).current;
   const isComplete = state?.isComplete ?? false;
+
+  const { start: syncStart, complete: syncComplete } = useGameSync("sudoku");
+
+  // Mount load — restores a saved game silently; on a clean slot the
+  // pre-game picker shows.
+  useEffect(() => {
+    let alive = true;
+    loadGame()
+      .then((saved) => {
+        if (!alive) return;
+        hasLoadedRef.current = true;
+        if (saved !== null) {
+          setState(saved);
+          setDifficulty(saved.difficulty);
+          // Treat any resumed state that already has moves as "timer
+          // already started" — the player wants to see it ticking
+          // immediately on return.  Elapsed resets to 0 because we
+          // don't persist it; this is intentional per the issue.
+          const anyMoves =
+            saved.errorCount > 0 ||
+            saved.undoStack.length > 0 ||
+            saved.grid.some((row) => row.some((c) => !c.given && c.value !== 0));
+          if (anyMoves) startMsRef.current = Date.now();
+        }
+      })
+      .finally(() => {
+        if (alive) setLoading(false);
+      });
+    return () => {
+      alive = false;
+    };
+  }, []);
+
+  // Persist on every state change after the initial load has resolved.
+  // Suppressed pre-load to protect the disk copy; `state === null`
+  // represents pre-game and is handled by `clearGame` in the callers.
+  useEffect(() => {
+    stateRef.current = state;
+    if (!hasLoadedRef.current) return;
+    if (state === null) return;
+    saveGame(state).catch(() => {});
+  }, [state]);
 
   const tickTimer = useCallback(() => {
     if (startMsRef.current === null) return;
     setElapsed(Math.floor((Date.now() - startMsRef.current) / 1000));
   }, []);
 
-  // Start/stop the once-per-second ticker. The timer only runs while a
-  // game is in progress, not complete, and actually started.
+  // Once-per-second ticker — only runs when a game is in progress, not
+  // complete, and has actually started.
   useEffect(() => {
     if (!state || isComplete || startMsRef.current === null) {
       if (intervalRef.current !== null) {
@@ -111,8 +172,7 @@ export default function SudokuScreen() {
     };
   }, [state, isComplete, tickTimer]);
 
-  // Pause on background, resume on foreground — shift `startMsRef`
-  // forward by the time spent away so elapsed resumes where it left off.
+  // Pause on background, resume on foreground.
   useEffect(() => {
     const handleChange = (next: AppStateStatus) => {
       if (startMsRef.current === null) return;
@@ -127,6 +187,71 @@ export default function SudokuScreen() {
     const sub = AppState.addEventListener("change", handleChange);
     return () => sub.remove();
   }, [isComplete]);
+
+  // Complete the gameSync session exactly once on the completion
+  // transition; clear the saved game so the next mount starts fresh.
+  useEffect(() => {
+    if (state === null) {
+      prevCompleteRef.current = false;
+      return;
+    }
+    if (state.isComplete && !prevCompleteRef.current) {
+      if (syncStartedRef.current) {
+        syncComplete(
+          {
+            finalScore: computeScore(state.difficulty, state.errorCount),
+            outcome: "completed",
+            durationMs: 0,
+          },
+          {
+            final_score: computeScore(state.difficulty, state.errorCount),
+            outcome: "completed",
+            difficulty: state.difficulty,
+            errors: state.errorCount,
+          }
+        );
+        syncStartedRef.current = false;
+      }
+      clearGame().catch(() => {});
+    }
+    prevCompleteRef.current = state.isComplete;
+  }, [state, syncComplete]);
+
+  // Abandon on back-navigation when a digit has been placed and the
+  // puzzle isn't finished.  useGameSync's own unmount handler provides
+  // a second line of defense; calling complete here first makes the
+  // unmount path a no-op for the same session.
+  useEffect(() => {
+    const unsub = navigation.addListener("beforeRemove", () => {
+      const s = stateRef.current;
+      if (!syncStartedRef.current) return;
+      if (s !== null && s.isComplete) return;
+      if (digitCountRef.current < 1) return;
+      syncComplete(
+        {
+          outcome: "abandoned",
+          finalScore: s !== null ? computeScore(s.difficulty, s.errorCount) : 0,
+          durationMs: 0,
+        },
+        {
+          outcome: "abandoned",
+          difficulty: s?.difficulty,
+          errors: s?.errorCount ?? 0,
+        }
+      );
+      syncStartedRef.current = false;
+    });
+    return unsub;
+  }, [navigation, syncComplete]);
+
+  const ensureSyncStarted = useCallback(
+    (next: SudokuState) => {
+      if (syncStartedRef.current) return;
+      syncStartedRef.current = true;
+      syncStart({ difficulty: next.difficulty });
+    },
+    [syncStart]
+  );
 
   const flashError = useCallback(() => {
     Animated.sequence([
@@ -144,6 +269,9 @@ export default function SudokuScreen() {
   }, [flashOpacity]);
 
   const handleStart = useCallback(() => {
+    clearGame().catch(() => {});
+    syncStartedRef.current = false;
+    digitCountRef.current = 0;
     const fresh = loadPuzzle(difficulty);
     setState(fresh);
     setElapsed(0);
@@ -162,13 +290,12 @@ export default function SudokuScreen() {
         const next = enterDigit(s, digit);
         if (next === s) return s;
 
-        // Start the timer on the first input that actually changes state.
+        // Timer + session start on the first input that actually
+        // changes state.
         if (startMsRef.current === null) startMsRef.current = Date.now();
+        digitCountRef.current += 1;
+        ensureSyncStarted(next);
 
-        // Conflict flash — only in normal mode.  `isError` is set on the
-        // newly-placed cell when the digit disagrees with the solution,
-        // which is equivalent to "this value conflicts with a peer the
-        // puzzle intends to occupy."
         if (!s.notesMode && s.selectedRow !== null && s.selectedCol !== null) {
           const cell = next.grid[s.selectedRow]?.[s.selectedCol];
           if (cell?.isError) {
@@ -179,7 +306,7 @@ export default function SudokuScreen() {
         return next;
       });
     },
-    [flashError]
+    [ensureSyncStarted, flashError]
   );
 
   const handleErase = useCallback(() => {
@@ -195,16 +322,13 @@ export default function SudokuScreen() {
   }, []);
 
   const handleChangeDifficulty = useCallback(() => {
+    clearGame().catch(() => {});
+    syncStartedRef.current = false;
+    digitCountRef.current = 0;
     setState(null);
     setElapsed(0);
     startMsRef.current = null;
     pausedAtRef.current = null;
-  }, []);
-
-  // Stubbed for #619 — actual POST /sudoku/score is wired there.  The
-  // button is visible now so the layout and a11y tree are final.
-  const handleSubmitScore = useCallback(() => {
-    // No-op in #618.  #619 will replace this with the leaderboard POST.
   }, []);
 
   const headerRight = useMemo(() => {
@@ -257,6 +381,7 @@ export default function SudokuScreen() {
     <GameShell
       title={t("game.title")}
       requireBack
+      loading={loading}
       onBack={() => navigation.popToTop()}
       rightSlot={headerRight}
       style={{
@@ -326,7 +451,6 @@ export default function SudokuScreen() {
           errors={state.errorCount}
           elapsed={elapsed}
           score={computeScore(state.difficulty, state.errorCount)}
-          onSubmitScore={handleSubmitScore}
           onNewPuzzle={handleStart}
           onChangeDifficulty={handleChangeDifficulty}
         />
@@ -388,7 +512,7 @@ function PreGame({
 }
 
 // ---------------------------------------------------------------------------
-// Win modal
+// Win modal — name entry + score POST with retry
 // ---------------------------------------------------------------------------
 
 function WinModal({
@@ -396,7 +520,6 @@ function WinModal({
   errors,
   elapsed,
   score,
-  onSubmitScore,
   onNewPuzzle,
   onChangeDifficulty,
 }: {
@@ -404,18 +527,44 @@ function WinModal({
   readonly errors: number;
   readonly elapsed: number;
   readonly score: number;
-  readonly onSubmitScore: () => void;
   readonly onNewPuzzle: () => void;
   readonly onChangeDifficulty: () => void;
 }) {
   const { t } = useTranslation("sudoku");
   const { colors } = useTheme();
+
+  const [name, setName] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [submitted, setSubmitted] = useState<ScoreEntry | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
   const gradient: ViewStyle =
     Platform.OS === "web"
       ? ({
           backgroundImage: `linear-gradient(135deg, ${colors.accent}, ${colors.accentBright})`,
         } as ViewStyle)
       : { backgroundColor: colors.accentBright };
+
+  const trimmed = name.trim();
+  const canSubmit = !submitting && trimmed.length > 0;
+
+  async function handleSubmit() {
+    if (!canSubmit) return;
+    setSubmitting(true);
+    setError(null);
+    try {
+      const entry = await sudokuApi.submitScore(trimmed, score, difficulty);
+      setSubmitted(entry);
+    } catch {
+      setError(t("win.submitFailed", { defaultValue: "Couldn't save your score. Tap to retry." }));
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  const submitLabel = error
+    ? t("win.submitRetry", { defaultValue: "Retry submit" })
+    : t("action.submitScore");
 
   return (
     <Modal visible transparent animationType="fade" accessibilityViewIsModal>
@@ -442,16 +591,67 @@ function WinModal({
             {t("win.elapsed", { time: formatElapsed(elapsed) })}
           </Text>
 
-          <Pressable
-            style={[styles.modalPrimary, gradient]}
-            onPress={onSubmitScore}
-            accessibilityRole="button"
-            accessibilityLabel={t("action.submitScore")}
-          >
-            <Text style={[styles.modalPrimaryText, { color: colors.textOnAccent }]}>
-              {t("action.submitScore")}
+          {submitted === null ? (
+            <>
+              <TextInput
+                style={[
+                  styles.nameInput,
+                  {
+                    backgroundColor: colors.surfaceAlt,
+                    borderColor: colors.border,
+                    color: colors.text,
+                  },
+                ]}
+                placeholder={t("win.namePlaceholder", {
+                  defaultValue: "Enter your name",
+                })}
+                placeholderTextColor={colors.textMuted}
+                value={name}
+                onChangeText={setName}
+                maxLength={MAX_NAME_LENGTH}
+                editable={!submitting}
+                accessibilityLabel={t("win.nameLabel", {
+                  defaultValue: "Your name",
+                })}
+              />
+              {error !== null && (
+                <Text
+                  style={[styles.winError, { color: colors.error }]}
+                  accessibilityLiveRegion="assertive"
+                  accessibilityRole="alert"
+                >
+                  {error}
+                </Text>
+              )}
+              <Pressable
+                style={[styles.modalPrimary, gradient, !canSubmit && styles.modalPrimaryDisabled]}
+                onPress={handleSubmit}
+                disabled={!canSubmit}
+                accessibilityRole="button"
+                accessibilityLabel={submitLabel}
+                accessibilityState={{ disabled: !canSubmit, busy: submitting }}
+              >
+                {submitting ? (
+                  <ActivityIndicator color={colors.textOnAccent} />
+                ) : (
+                  <Text style={[styles.modalPrimaryText, { color: colors.textOnAccent }]}>
+                    {submitLabel}
+                  </Text>
+                )}
+              </Pressable>
+            </>
+          ) : (
+            <Text
+              style={[styles.winSaved, { color: colors.bonus }]}
+              accessibilityLiveRegion="polite"
+            >
+              {t("win.rank", {
+                rank: submitted.rank,
+                defaultValue: `Saved! #${submitted.rank}`,
+              })}
             </Text>
-          </Pressable>
+          )}
+
           <Pressable
             style={[styles.modalSecondary, { borderColor: colors.accent }]}
             onPress={onNewPuzzle}
@@ -605,6 +805,9 @@ const styles = StyleSheet.create({
     alignItems: "center",
     minWidth: 180,
   },
+  modalPrimaryDisabled: {
+    opacity: 0.5,
+  },
   modalPrimaryText: {
     fontSize: 14,
     fontWeight: "800",
@@ -625,5 +828,26 @@ const styles = StyleSheet.create({
     fontWeight: "800",
     letterSpacing: 1,
     textTransform: "uppercase",
+  },
+  nameInput: {
+    width: "100%",
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    borderRadius: 10,
+    borderWidth: 1,
+    fontSize: 15,
+    marginTop: 10,
+    marginBottom: 6,
+  },
+  winError: {
+    fontSize: 13,
+    marginBottom: 8,
+    textAlign: "center",
+  },
+  winSaved: {
+    fontSize: 18,
+    fontWeight: "700",
+    marginTop: 12,
+    marginBottom: 6,
   },
 });
