@@ -27,26 +27,6 @@ function trickPoints(trick: readonly TrickCard[]): number {
   return trick.reduce((sum, tc) => sum + cardPoints(tc.card), 0);
 }
 
-/** Index of the current trick winner (highest card of led suit). */
-function trickWinnerIndex(trick: readonly TrickCard[]): number {
-  const first = trick[0];
-  if (!first) return 0;
-  const ledSuit = first.card.suit;
-  let winnerIdx = 0;
-  let winnerRank = first.card.rank;
-  let winnerPlayerIndex = first.playerIndex;
-  for (let i = 1; i < trick.length; i++) {
-    const tc = trick[i]!;
-    if (tc.card.suit === ledSuit && tc.card.rank > winnerRank) {
-      winnerRank = tc.card.rank;
-      winnerPlayerIndex = tc.playerIndex;
-      winnerIdx = i;
-    }
-  }
-  void winnerIdx;
-  return winnerPlayerIndex;
-}
-
 /** Highest card in array, or undefined if empty. */
 function highest(cards: Card[]): Card | undefined {
   return cards.reduce<Card | undefined>((best, c) => {
@@ -86,7 +66,8 @@ function bySuitDescending(cards: Card[]): Array<[string, Card[]]> {
  * 4. High cards of suit being voided (longest suit)
  * 5. Never pass: 2♣ or clubs below 6
  */
-export function selectCardsToPass(hand: Card[], _direction: PassDirection): Card[] {
+export function selectCardsToPass(hand: Card[], direction: PassDirection): Card[] {
+  void direction;
   const selected: Card[] = [];
 
   const has = (suit: string, rank: number) => hand.some((c) => c.suit === suit && c.rank === rank);
@@ -223,13 +204,13 @@ export function selectCardToPlay(
   }
 
   if (isLeading) {
-    return chooseLead(valid, state);
+    return chooseLead(valid);
   }
 
-  return chooseFollow(valid, trick, state);
+  return chooseFollow(valid, trick);
 }
 
-function chooseLead(valid: Card[], state: HeartsState): Card {
+function chooseLead(valid: Card[]): Card {
   // Avoid leading hearts or Q♠ unless forced
   const safe = valid.filter((c) => c.suit !== "hearts" && !isQueenOfSpades(c));
   const pool = safe.length > 0 ? safe : valid;
@@ -245,7 +226,7 @@ function chooseLead(valid: Card[], state: HeartsState): Card {
   return lowest(pool) ?? valid[0]!;
 }
 
-function chooseFollow(valid: Card[], trick: readonly TrickCard[], state: HeartsState): Card {
+function chooseFollow(valid: Card[], trick: readonly TrickCard[]): Card {
   const first = trick[0];
   if (!first) return valid[0]!;
 
@@ -258,7 +239,6 @@ function chooseFollow(valid: Card[], trick: readonly TrickCard[], state: HeartsS
   }
 
   // Following suit
-  const currentWinner = trickWinnerIndex(trick);
   const isLastToPlay = trick.length === 3;
   const pts = trickPoints(trick);
 
@@ -272,8 +252,6 @@ function chooseFollow(valid: Card[], trick: readonly TrickCard[], state: HeartsS
 
   // Cards that would lose (rank < winning rank)
   const losing = inSuit.filter((c) => c.rank < winningRank);
-  // Cards that would win
-  const winning = inSuit.filter((c) => c.rank > winningRank);
 
   if (pts === 0 && isLastToPlay) {
     // Safe trick, last to play — exhaust high cards
