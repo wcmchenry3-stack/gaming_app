@@ -32,6 +32,7 @@ const BlackjackTableScreen = React.lazy(() => import("./src/screens/BlackjackTab
 const Twenty48Screen = React.lazy(() => import("./src/screens/Twenty48Screen"));
 const SolitaireScreen = React.lazy(() => import("./src/screens/SolitaireScreen"));
 const HeartsScreen = React.lazy(() => import("./src/screens/HeartsScreen"));
+const SudokuScreen = React.lazy(() => import("./src/screens/SudokuScreen"));
 const LeaderboardScreen = React.lazy(() => import("./src/screens/LeaderboardScreen"));
 const GameDetailScreen = React.lazy(() => import("./src/screens/GameDetailScreen"));
 const SettingsScreen = React.lazy(() => import("./src/screens/SettingsScreen"));
@@ -67,6 +68,7 @@ export type HomeStackParamList = {
   Twenty48: undefined;
   Solitaire: undefined;
   Hearts: undefined;
+  Sudoku: undefined;
 };
 
 export type ProfileStackParamList = {
@@ -96,6 +98,7 @@ const LazyBlackjackTableScreen = withSuspense(BlackjackTableScreen);
 const LazyTwenty48Screen = withSuspense(Twenty48Screen);
 const LazySolitaireScreen = withSuspense(SolitaireScreen);
 const LazyHeartsScreen = withSuspense(HeartsScreen);
+const LazySudokuScreen = withSuspense(SudokuScreen);
 const LazyLeaderboardScreen = withSuspense(LeaderboardScreen);
 const LazyGameDetailScreen = withSuspense(GameDetailScreen);
 const LazySettingsScreen = withSuspense(SettingsScreen);
@@ -116,6 +119,7 @@ function LobbyStack() {
       <HomeStack.Screen name="Twenty48" component={LazyTwenty48Screen} />
       <HomeStack.Screen name="Solitaire" component={LazySolitaireScreen} />
       <HomeStack.Screen name="Hearts" component={LazyHeartsScreen} />
+      <HomeStack.Screen name="Sudoku" component={LazySudokuScreen} />
     </HomeStack.Navigator>
   );
 }

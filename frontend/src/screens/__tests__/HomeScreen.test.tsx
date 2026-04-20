@@ -84,6 +84,7 @@ describe("HomeScreen — game cards", () => {
     expect(getByLabelText("Play Cascade")).toBeTruthy();
     expect(getByLabelText("Play Blackjack")).toBeTruthy();
     expect(getByLabelText("Play Solitaire")).toBeTruthy();
+    expect(getByLabelText("Play Sudoku")).toBeTruthy();
     // Pachisi is disabled — should not appear
     expect(queryByLabelText("Play Pachisi")).toBeNull();
   });
@@ -104,6 +105,12 @@ describe("HomeScreen — game cards", () => {
     const { getByLabelText } = renderScreen();
     fireEvent.press(getByLabelText("Play Solitaire"));
     expect(mockNavigate).toHaveBeenCalledWith("Solitaire");
+  });
+
+  it("navigates to Sudoku when Sudoku card pressed", () => {
+    const { getByLabelText } = renderScreen();
+    fireEvent.press(getByLabelText("Play Sudoku"));
+    expect(mockNavigate).toHaveBeenCalledWith("Sudoku");
   });
 
   it("navigates to Game with a new state when Yacht card pressed (no saved game)", async () => {

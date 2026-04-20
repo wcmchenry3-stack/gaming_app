@@ -1,5 +1,7 @@
 {
   "game.title": "Sudoku",
+  "game.description": "Classic 9x9 number puzzle across three difficulty tiers.",
+  "game.playLabel": "Play Sudoku",
 
   "cell.label": "Cell row {{row}}, column {{col}}, {{value}}",
   "cell.empty": "empty",
