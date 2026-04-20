@@ -5,8 +5,24 @@ import { ThemeProvider } from "../../theme/ThemeContext";
 import { createSeededRng, setRng } from "../../game/hearts/engine";
 import * as engine from "../../game/hearts/engine";
 
+jest.mock("../../game/hearts/storage", () => ({
+  loadGame: jest.fn().mockResolvedValue(null),
+  saveGame: jest.fn().mockResolvedValue(undefined),
+  clearGame: jest.fn().mockResolvedValue(undefined),
+}));
+
+jest.mock("../../game/hearts/api", () => ({
+  heartsApi: {
+    submitScore: jest.fn().mockResolvedValue({ player_name: "test", score: 0, rank: 1 }),
+  },
+}));
+
+jest.mock("../../game/_shared/useGameSync", () => ({
+  useGameSync: () => ({ start: jest.fn(), complete: jest.fn(), restart: jest.fn() }),
+}));
+
 jest.mock("@react-navigation/native", () => ({
-  useNavigation: () => ({ goBack: jest.fn() }),
+  useNavigation: () => ({ goBack: jest.fn(), addListener: jest.fn(() => jest.fn()) }),
 }));
 
 jest.mock("expo-blur", () => ({
