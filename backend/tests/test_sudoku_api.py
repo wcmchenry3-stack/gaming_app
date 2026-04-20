@@ -5,7 +5,6 @@ difficulty-partitioned model: each of easy / medium / hard is its own
 top-10 list, enforced at the query level via ``game_metadata->>'difficulty'``.
 """
 
-import pytest
 from fastapi.testclient import TestClient
 
 from main import app
@@ -39,9 +38,7 @@ class TestSubmitScore:
         assert res.status_code == 422
 
     def test_missing_score_returns_422(self):
-        res = client.post(
-            "/sudoku/score", json={"player_name": "Bob", "difficulty": "easy"}
-        )
+        res = client.post("/sudoku/score", json={"player_name": "Bob", "difficulty": "easy"})
         assert res.status_code == 422
 
     def test_missing_difficulty_returns_422(self):
