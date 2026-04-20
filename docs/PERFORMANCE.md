@@ -157,39 +157,39 @@ The Android export produces a single Hermes bytecode file. Module sizes below ar
 
 ### Bundle totals
 
-| Component | Size |
-|---|---|
-| JS bundle (Hermes bytecode, shipped) | **4.5 MB** |
-| JS bundle (source content in map, unminified) | 8.3 MB |
-| Bundled assets (images, fonts, JSON) | **74.8 MB** |
-| **Total on-device (JS + assets)** | **~79 MB** |
+| Component                                     | Size        |
+| --------------------------------------------- | ----------- |
+| JS bundle (Hermes bytecode, shipped)          | **4.5 MB**  |
+| JS bundle (source content in map, unminified) | 8.3 MB      |
+| Bundled assets (images, fonts, JSON)          | **74.8 MB** |
+| **Total on-device (JS + assets)**             | **~79 MB**  |
 
 ### JS module breakdown (top packages by source size)
 
-| Package | Source size | % of JS | Notes |
-|---|---|---|---|
-| `react-native` | 2,364 KB | 27.8% | Framework — unavoidable |
-| `react-native-reanimated` | 837 KB | 9.8% | Animation worklets |
-| `@sentry/core` | 765 KB | 9.0% | ⚠️ See Sentry note below |
-| `@sentry/react-native` | 413 KB | 4.8% | ⚠️ |
-| `react-reconciler` | 377 KB | 4.4% | React runtime |
-| `matter-js` | 366 KB | 4.3% | Cascade native physics (Android/iOS) — expected, not removable |
-| `@shopify/react-native-skia` | 307 KB | 3.6% | GPU canvas for Cascade |
-| `@sentry-internal/replay` | 299 KB | 3.5% | ⚠️ Session replay SDK |
-| `react-native-gesture-handler` | 263 KB | 3.1% | Input handling |
-| `@sentry/browser` | 213 KB | 2.5% | ⚠️ |
-| `@react-navigation/core` | 158 KB | 1.9% | Navigation |
-| `@react-native/virtualized-lists` | 152 KB | 1.8% | RN list components |
-| `@sentry-internal/browser-utils` | 135 KB | 1.6% | ⚠️ |
-| `expo` | 123 KB | 1.4% | |
-| `@sentry/react` | 103 KB | 1.2% | ⚠️ |
-| `react-native-screens` | 97 KB | 1.1% | |
-| `react-native-worklets` | 97 KB | 1.1% | Reanimated worklets |
-| `i18next` | 81 KB | 0.9% | Internationalization |
-| `@sentry-internal/feedback` | 76 KB | 0.9% | ⚠️ Feedback widget SDK |
-| `@sentry-internal/replay-canvas` | 32 KB | 0.4% | ⚠️ |
-| `[app code]` | ~260 KB | ~3.1% | All game screens, engines, shared infrastructure |
-| **Total mapped** | **8.3 MB** | 100% | |
+| Package                           | Source size | % of JS | Notes                                                          |
+| --------------------------------- | ----------- | ------- | -------------------------------------------------------------- |
+| `react-native`                    | 2,364 KB    | 27.8%   | Framework — unavoidable                                        |
+| `react-native-reanimated`         | 837 KB      | 9.8%    | Animation worklets                                             |
+| `@sentry/core`                    | 765 KB      | 9.0%    | ⚠️ See Sentry note below                                       |
+| `@sentry/react-native`            | 413 KB      | 4.8%    | ⚠️                                                             |
+| `react-reconciler`                | 377 KB      | 4.4%    | React runtime                                                  |
+| `matter-js`                       | 366 KB      | 4.3%    | Cascade native physics (Android/iOS) — expected, not removable |
+| `@shopify/react-native-skia`      | 307 KB      | 3.6%    | GPU canvas for Cascade                                         |
+| `@sentry-internal/replay`         | 299 KB      | 3.5%    | ⚠️ Session replay SDK                                          |
+| `react-native-gesture-handler`    | 263 KB      | 3.1%    | Input handling                                                 |
+| `@sentry/browser`                 | 213 KB      | 2.5%    | ⚠️                                                             |
+| `@react-navigation/core`          | 158 KB      | 1.9%    | Navigation                                                     |
+| `@react-native/virtualized-lists` | 152 KB      | 1.8%    | RN list components                                             |
+| `@sentry-internal/browser-utils`  | 135 KB      | 1.6%    | ⚠️                                                             |
+| `expo`                            | 123 KB      | 1.4%    |                                                                |
+| `@sentry/react`                   | 103 KB      | 1.2%    | ⚠️                                                             |
+| `react-native-screens`            | 97 KB       | 1.1%    |                                                                |
+| `react-native-worklets`           | 97 KB       | 1.1%    | Reanimated worklets                                            |
+| `i18next`                         | 81 KB       | 0.9%    | Internationalization                                           |
+| `@sentry-internal/feedback`       | 76 KB       | 0.9%    | ⚠️ Feedback widget SDK                                         |
+| `@sentry-internal/replay-canvas`  | 32 KB       | 0.4%    | ⚠️                                                             |
+| `[app code]`                      | ~260 KB     | ~3.1%   | All game screens, engines, shared infrastructure               |
+| **Total mapped**                  | **8.3 MB**  | 100%    |                                                                |
 
 ### Findings
 
@@ -213,19 +213,19 @@ The Android export produces a single Hermes bytecode file. Module sizes below ar
 
 ### Confirmed configuration
 
-| Setting | Current state | Source |
-|---|---|---|
-| **Store format** | **AAB** | Confirmed by user — manually uploaded to Google Play Console internal track |
-| **ABI split** | Active via AAB | Play delivers per-ABI slices automatically from AAB |
-| **ABIs built** | armeabi-v7a, arm64-v8a, x86, x86_64 | `gradle.properties:31` — all four ABIs compiled |
-| **R8 / minify** | **OFF** | `build.gradle:69` — `enableMinifyInReleaseBuilds` defaults to `false`; not set in `gradle.properties` |
-| **Resource shrinking** | **OFF** | `build.gradle:124-125` — `enableShrinkResourcesInReleaseBuilds` defaults to `'false'`; not set |
-| **Legacy packaging** | `false` | `gradle.properties:62` — native libs not compressed in APK/AAB (correct) |
-| **Hermes** | Enabled | `gradle.properties:42` — `hermesEnabled=true` |
-| **New Architecture** | Enabled | `gradle.properties:38` — `newArchEnabled=true` |
-| **PNG crunching** | Enabled in release | `gradle.properties:26` — `android.enablePngCrunchInReleaseBuilds=true` |
-| **WebP support** | Enabled (static) | `gradle.properties:53-54` — `expo.webp.enabled=true`; animated WebP disabled |
-| **GIF support** | Enabled | `gradle.properties:50` — `expo.gif.enabled=true` |
+| Setting                | Current state                       | Source                                                                                                |
+| ---------------------- | ----------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| **Store format**       | **AAB**                             | Confirmed by user — manually uploaded to Google Play Console internal track                           |
+| **ABI split**          | Active via AAB                      | Play delivers per-ABI slices automatically from AAB                                                   |
+| **ABIs built**         | armeabi-v7a, arm64-v8a, x86, x86_64 | `gradle.properties:31` — all four ABIs compiled                                                       |
+| **R8 / minify**        | **OFF**                             | `build.gradle:69` — `enableMinifyInReleaseBuilds` defaults to `false`; not set in `gradle.properties` |
+| **Resource shrinking** | **OFF**                             | `build.gradle:124-125` — `enableShrinkResourcesInReleaseBuilds` defaults to `'false'`; not set        |
+| **Legacy packaging**   | `false`                             | `gradle.properties:62` — native libs not compressed in APK/AAB (correct)                              |
+| **Hermes**             | Enabled                             | `gradle.properties:42` — `hermesEnabled=true`                                                         |
+| **New Architecture**   | Enabled                             | `gradle.properties:38` — `newArchEnabled=true`                                                        |
+| **PNG crunching**      | Enabled in release                  | `gradle.properties:26` — `android.enablePngCrunchInReleaseBuilds=true`                                |
+| **WebP support**       | Enabled (static)                    | `gradle.properties:53-54` — `expo.webp.enabled=true`; animated WebP disabled                          |
+| **GIF support**        | Enabled                             | `gradle.properties:50` — `expo.gif.enabled=true`                                                      |
 
 ### Native library sizes (requires build)
 
@@ -247,23 +247,25 @@ unzip -o /tmp/app.apks -d /tmp/app-apks-extracted
 
 Expected large contributors (approximate arm64-v8a sizes based on published release notes):
 
-| Native library | Approx. arm64-v8a | Source |
-|---|---|---|
-| `react-native` core (Hermes VM + JSI) | ~6–8 MB | Published benchmarks |
-| `@shopify/react-native-skia` | ~8–12 MB | GPU rendering engine |
-| `react-native-reanimated` | ~3–5 MB | Worklets runtime |
-| `@sentry/react-native` | ~1–2 MB | Crash reporting |
-| `react-native-gesture-handler` | ~1 MB | Input handling |
+| Native library                        | Approx. arm64-v8a | Source               |
+| ------------------------------------- | ----------------- | -------------------- |
+| `react-native` core (Hermes VM + JSI) | ~6–8 MB           | Published benchmarks |
+| `@shopify/react-native-skia`          | ~8–12 MB          | GPU rendering engine |
+| `react-native-reanimated`             | ~3–5 MB           | Worklets runtime     |
+| `@sentry/react-native`                | ~1–2 MB           | Crash reporting      |
+| `react-native-gesture-handler`        | ~1 MB             | Input handling       |
 
 > **Action for Epic 2b:** Once measured, populate a replacement table here with actual byte counts. The most impactful configuration change available right now (before measurement) is enabling R8 + resource shrinking — these are confirmed OFF and can be turned on in `gradle.properties`.
 
 ### Key flags for Epic 2b
 
 - **R8 + resource shrinking are the highest-ROI build config change.** Enable by adding to `gradle.properties`:
+
   ```
   android.enableMinifyInReleaseBuilds=true
   android.enableShrinkResourcesInReleaseBuilds=true
   ```
+
   Requires proguard rules review — test against all game flows before shipping.
 
 - **All 4 ABIs are built.** AAB delivery means Play strips unused ABIs per install, so the installed size is already ABI-correct. No action needed here.
@@ -278,23 +280,24 @@ Expected large contributors (approximate arm64-v8a sizes based on published rele
 
 ### Directory map
 
-| Directory | Size | Files | Bundled? | Owner / Purpose |
-|---|---|---|---|---|
-| `assets/source-icons/cosmos/` | 85.6 MB | 12 PNG | No | Pipeline input — master source files for `npm run process-assets`. Not imported by app code. |
-| `assets/source-icons/fruits/` | 76.8 MB | 12 PNG | No | Pipeline input — same as above. |
-| `assets/celestial-icons/` | 36.8 MB | 12 PNG | **Yes** | Cosmos theme UI icons. Imported in `src/theme/fruitSets.ts`. |
-| `assets/fruit-icons/` | 26.1 MB | 12 PNG | **Yes** | Fruits theme UI icons. Imported in `src/theme/fruitSets.ts`. |
-| `assets/logo.png` | 7.1 MB | 1 PNG | **Yes** | App logo. Imported in `src/components/shared/AppHeader.tsx`. |
-| `assets/adaptive-icon.png` | 7.1 MB | 1 PNG | Platform only | Android adaptive icon (`app.json`). Identical file to `logo.png`. |
-| `assets/icon.png` | 7.1 MB | 1 PNG | Platform only | App icon (`app.json`). Identical file to `logo.png`. |
-| `assets/cosmos-baked/` | 1.2 MB | 12 PNG | **Yes** | Cosmos game pieces (Skia pre-composited). Imported in `src/theme/useFruitImages.ts`. |
-| `assets/fruits-baked/` | 1.0 MB | 12 PNG | **Yes** | Fruits game pieces (Skia pre-composited). Imported in `src/theme/useFruitImages.ts`. |
-| `assets/cosmos-vertices.json` | 43 KB | 1 JSON | **Yes** | Cascade physics polygon vertices for Cosmos theme. |
-| `assets/fruit-vertices.json` | 58 KB | 1 JSON | **Yes** | Cascade physics polygon vertices for Fruits theme. |
-| `assets/*.png` (Android icons, splash, favicon) | ~0.2 MB | 4 PNG | Platform only | App store / launcher assets. |
-| **Repo total** | **248.9 MB** | 82 files | | |
-| **Bundled game assets** | **~72 MB** | | | `celestial-icons` + `fruit-icons` + `logo` + `*-baked` + JSON |
-| **Not bundled (pipeline inputs)** | **162.4 MB** | | | `source-icons/` — needed locally, not shipped |
+| Directory                                       | Size         | Files    | Bundled?      | Owner / Purpose                                                                                     |
+| ----------------------------------------------- | ------------ | -------- | ------------- | --------------------------------------------------------------------------------------------------- |
+| `assets/source-icons/cosmos/`                   | 85.6 MB      | 12 PNG   | No            | Pipeline input — master source files for `npm run process-assets`. Not imported by app code.        |
+| `assets/source-icons/fruits/`                   | 76.8 MB      | 12 PNG   | No            | Pipeline input — same as above.                                                                     |
+| `assets/celestial-icons/`                       | 36.8 MB      | 12 PNG   | **Yes**       | Cosmos theme UI icons. Imported in `src/theme/fruitSets.ts`.                                        |
+| `assets/fruit-icons/`                           | 26.1 MB      | 12 PNG   | **Yes**       | Fruits theme UI icons. Imported in `src/theme/fruitSets.ts`.                                        |
+| `assets/logo.png`                               | 7.1 MB       | 1 PNG    | **Yes**       | App logo. Imported in `src/components/shared/AppHeader.tsx`.                                        |
+| `assets/adaptive-icon.png`                      | 7.1 MB       | 1 PNG    | Platform only | Android adaptive icon (`app.json`). Identical file to `logo.png`.                                   |
+| `assets/icon.png`                               | 7.1 MB       | 1 PNG    | Platform only | App icon (`app.json`). Identical file to `logo.png`.                                                |
+| `assets/cosmos-baked/`                          | 1.2 MB       | 12 PNG   | **Yes**       | Cosmos game pieces (Skia pre-composited). Imported in `src/theme/useFruitImages.ts`.                |
+| `assets/fruits-baked/`                          | 1.0 MB       | 12 PNG   | **Yes**       | Fruits game pieces (Skia pre-composited). Imported in `src/theme/useFruitImages.ts`.                |
+| `assets/cosmos-vertices.json`                   | 43 KB        | 1 JSON   | **Yes**       | Cascade physics polygon vertices for Cosmos theme.                                                  |
+| `assets/fruit-vertices.json`                    | 58 KB        | 1 JSON   | **Yes**       | Cascade physics polygon vertices for Fruits theme.                                                  |
+| `assets/*.png` (Android icons, splash, favicon) | ~0.2 MB      | 4 PNG    | Platform only | App store / launcher assets.                                                                        |
+| Hearts                                          | —            | —        | No            | No dedicated asset directory — lobby card uses Unicode ♥ emoji; all card rendering is programmatic. |
+| **Repo total**                                  | **248.9 MB** | 82 files |               |                                                                                                     |
+| **Bundled game assets**                         | **~72 MB**   |          |               | `celestial-icons` + `fruit-icons` + `logo` + `*-baked` + JSON                                       |
+| **Not bundled (pipeline inputs)**               | **162.4 MB** |          |               | `source-icons/` — needed locally, not shipped                                                       |
 
 ### Asset pipeline
 
@@ -311,10 +314,10 @@ The baked outputs are the files actually used for in-game Skia rendering. The `*
 
 Each theme set ships two separate image tiers:
 
-| Tier | Directories | Size | Use |
-|---|---|---|---|
-| **UI icons** (large) | `fruit-icons/`, `celestial-icons/` | 62.9 MB | `fruitSets.ts` — theme selector, previews |
-| **Baked game pieces** (small) | `fruits-baked/`, `cosmos-baked/` | 2.2 MB | `useFruitImages.ts` — in-game Skia canvas |
+| Tier                          | Directories                        | Size    | Use                                       |
+| ----------------------------- | ---------------------------------- | ------- | ----------------------------------------- |
+| **UI icons** (large)          | `fruit-icons/`, `celestial-icons/` | 62.9 MB | `fruitSets.ts` — theme selector, previews |
+| **Baked game pieces** (small) | `fruits-baked/`, `cosmos-baked/`   | 2.2 MB  | `useFruitImages.ts` — in-game Skia canvas |
 
 ### Findings and flags for Epic 2b
 
@@ -331,6 +334,7 @@ Each theme set ships two separate image tiers:
 ### Not orphaned (corrects Epic 2a assumption)
 
 The epic listed `/celestial_images/` as "suspected dead weight." Investigation found:
+
 - The actual paths are `celestial-icons/` and `cosmos-baked/` (not `celestial_images/`).
 - Both are actively imported and in use.
 - A third set (`source-icons/cosmos/`) is the pipeline input — intentional and necessary locally.
@@ -343,15 +347,15 @@ The epic listed `/celestial_images/` as "suspected dead weight." Investigation f
 
 ### Baseline recap (from #527, #528, #529)
 
-| Metric | Measured value |
-|---|---|
-| Total on-device (JS + assets) | ~79 MB |
-| JS bundle (Hermes, shipped) | 4.5 MB |
-| Bundled assets | 74.8 MB |
-| Cascade game assets (images + JSON) | ~65 MB PNG (~15 MB target after WebP, Epic 2b) |
-| Yacht / Blackjack / 2048 game assets | **0 MB** — fully code-rendered |
-| Cascade JS contribution | ~60 KB (source) |
-| Other games JS contribution (each) | ~20–40 KB (source) |
+| Metric                               | Measured value                                 |
+| ------------------------------------ | ---------------------------------------------- |
+| Total on-device (JS + assets)        | ~79 MB                                         |
+| JS bundle (Hermes, shipped)          | 4.5 MB                                         |
+| Bundled assets                       | 74.8 MB                                        |
+| Cascade game assets (images + JSON)  | ~65 MB PNG (~15 MB target after WebP, Epic 2b) |
+| Yacht / Blackjack / 2048 game assets | **0 MB** — fully code-rendered                 |
+| Cascade JS contribution              | ~60 KB (source)                                |
+| Other games JS contribution (each)   | ~20–40 KB (source)                             |
 
 ### Per-game size budget
 
@@ -359,17 +363,18 @@ Three of the four shipped games (Yacht, Blackjack, 2048) contribute **zero game-
 
 Based on this baseline the standard budget for new games is:
 
-| Component | Budget | Notes |
-|---|---|---|
-| **Game-specific JS** | < 100 KB source | Current games: 20–65 KB each — budget is generous |
-| **Game-specific assets** | **≤ 5 MB** | Per game, after optimisation (WebP, appropriate resolution) |
-| **Combined per-game** | **≤ 5.1 MB** | Shared assets (logo, fonts, navigation icons) are excluded from this budget |
+| Component                | Budget          | Notes                                                                       |
+| ------------------------ | --------------- | --------------------------------------------------------------------------- |
+| **Game-specific JS**     | < 100 KB source | Current games: 20–65 KB each — budget is generous                           |
+| **Game-specific assets** | **≤ 5 MB**      | Per game, after optimisation (WebP, appropriate resolution)                 |
+| **Combined per-game**    | **≤ 5.1 MB**    | Shared assets (logo, fonts, navigation icons) are excluded from this budget |
 
 **What "game-specific assets" means:** Images, sounds, fonts, and data files that are only required by a single game and would not exist if that game were removed. Shared infrastructure (app logo, navigation icons, i18n strings) is excluded.
 
 **Why 5 MB:** A single-theme casual game with 12–15 game piece images at appropriate display resolution (WebP, ~200×200 px, ~20–40 KB each) lands at ~0.5–0.6 MB per theme. Even a two-theme game is well under 5 MB. This leaves room for additional assets (backgrounds, overlays, sound effects) while keeping growth bounded.
 
 **What 5 MB enables comfortably:**
+
 - Card games, dice games, puzzle games (code-rendered): trivially under budget
 - A single-theme image game (12 pieces, WebP): ~0.5–1 MB
 - A two-theme image game (24 pieces, WebP): ~1–2 MB
@@ -379,11 +384,11 @@ Based on this baseline the standard budget for new games is:
 
 Cascade is grandfathered above the 5 MB budget. It predates this policy and carries significant asset weight for legitimate design reasons (two full image themes). Its current footprint and Epic 2b reduction target:
 
-| State | Asset size | Notes |
-|---|---|---|
-| Current (PNG) | ~65 MB | fruit-icons/ + celestial-icons/ + baked sets |
-| Target after Epic 2b (WebP) | ~10–15 MB | Estimated 70–80% PNG-to-WebP reduction |
-| Optimisation opportunities | | Remove pumpkin + milkyway reserved imports (~6.7 MB); convert logo.png to purpose-sized WebP (~0.5 MB target) |
+| State                       | Asset size | Notes                                                                                                         |
+| --------------------------- | ---------- | ------------------------------------------------------------------------------------------------------------- |
+| Current (PNG)               | ~65 MB     | fruit-icons/ + celestial-icons/ + baked sets                                                                  |
+| Target after Epic 2b (WebP) | ~10–15 MB  | Estimated 70–80% PNG-to-WebP reduction                                                                        |
+| Optimisation opportunities  |            | Remove pumpkin + milkyway reserved imports (~6.7 MB); convert logo.png to purpose-sized WebP (~0.5 MB target) |
 
 Cascade's larger footprint is tracked separately in Epic 2b and does not set a precedent for future games.
 
@@ -391,11 +396,11 @@ Cascade's larger footprint is tracked separately in Epic 2b and does not set a p
 
 Offline audio is not currently implemented in any game. If added in a future epic, audio budgets would apply to all games under the same per-game ceiling:
 
-| Audio type | Typical size | Notes |
-|---|---|---|
-| Short ambient loop (30s, OGG 128 kbps) | ~0.5 MB | Fits easily within 5 MB budget |
-| Full game track (3 min, OGG 128 kbps) | ~3 MB | Uses majority of budget — weigh carefully |
-| Sound effects set (10 clips) | ~0.5–1 MB | Usually fine |
+| Audio type                             | Typical size | Notes                                     |
+| -------------------------------------- | ------------ | ----------------------------------------- |
+| Short ambient loop (30s, OGG 128 kbps) | ~0.5 MB      | Fits easily within 5 MB budget            |
+| Full game track (3 min, OGG 128 kbps)  | ~3 MB        | Uses majority of budget — weigh carefully |
+| Sound effects set (10 clips)           | ~0.5–1 MB    | Usually fine                              |
 
 **Policy:** If a game requires more than one background track or a large sound effect library (> 2 MB audio alone), evaluate against the standalone game criteria below.
 
@@ -403,14 +408,15 @@ Offline audio is not currently implemented in any game. If added in a future epi
 
 A game must be built as a standalone app if it meets **any** of the following thresholds. A game that approaches but does not meet these thresholds should still be reviewed before development begins.
 
-| Criterion | Threshold | Reason |
-|---|---|---|
-| Game-specific assets after optimisation | **> 20 MB** | Directly drives download size and install growth beyond reasonable suite overhead |
-| Game requires a unique native library | **Any** | Each native `.so` adds 5–15 MB per ABI to the binary; libraries not shared with other suite games are unjustifiable in a shared app |
-| Game-specific audio | **> 3 MB** | Indicates a soundtrack-level audio investment that belongs in a dedicated product |
-| Requires a native rendering engine not already in the suite | **Any** (e.g., 3D via React Native Three Fiber, GPU shaders) | New GPU/rendering native libs dominate binary size |
+| Criterion                                                   | Threshold                                                    | Reason                                                                                                                              |
+| ----------------------------------------------------------- | ------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------- |
+| Game-specific assets after optimisation                     | **> 20 MB**                                                  | Directly drives download size and install growth beyond reasonable suite overhead                                                   |
+| Game requires a unique native library                       | **Any**                                                      | Each native `.so` adds 5–15 MB per ABI to the binary; libraries not shared with other suite games are unjustifiable in a shared app |
+| Game-specific audio                                         | **> 3 MB**                                                   | Indicates a soundtrack-level audio investment that belongs in a dedicated product                                                   |
+| Requires a native rendering engine not already in the suite | **Any** (e.g., 3D via React Native Three Fiber, GPU shaders) | New GPU/rendering native libs dominate binary size                                                                                  |
 
 **Evaluation process for a proposed new game before development begins:**
+
 1. Estimate asset requirements (themes × pieces × resolution × format)
 2. Estimate audio requirements (track count, length, format)
 3. Identify any required native libraries not already in `frontend/package.json`
@@ -422,14 +428,14 @@ A game must be built as a standalone app if it meets **any** of the following th
 
 A Galaga-style arcade shooter is listed as a potential future paid game. Evaluated against the criteria above:
 
-| Requirement | Estimate | Budget impact |
-|---|---|---|
-| Sprite sheet (player, enemies, bullets, explosions) | 5–15 MB | ~5–15 MB |
-| Background parallax layers | 2–5 MB | ~2–5 MB |
-| Audio (theme music + sound effects) | 3–8 MB | ~3–8 MB |
-| Particle systems | Code-rendered, no assets | ~0 MB |
-| Potential native library (GPU particles, 3D elements) | 8–15 MB per ABI | Standalone trigger |
-| **Estimated total** | **10–38 MB** | **Likely exceeds threshold** |
+| Requirement                                           | Estimate                 | Budget impact                |
+| ----------------------------------------------------- | ------------------------ | ---------------------------- |
+| Sprite sheet (player, enemies, bullets, explosions)   | 5–15 MB                  | ~5–15 MB                     |
+| Background parallax layers                            | 2–5 MB                   | ~2–5 MB                      |
+| Audio (theme music + sound effects)                   | 3–8 MB                   | ~3–8 MB                      |
+| Particle systems                                      | Code-rendered, no assets | ~0 MB                        |
+| Potential native library (GPU particles, 3D elements) | 8–15 MB per ABI          | Standalone trigger           |
+| **Estimated total**                                   | **10–38 MB**             | **Likely exceeds threshold** |
 
 **Provisional verdict:** A Galaga-style game almost certainly exceeds the 20 MB asset threshold and may require a unique native rendering library. **Build as a standalone app if pursued.** Confirm this evaluation against the actual design spec before development begins.
 
@@ -484,13 +490,13 @@ Navigation-to-game-screen time (jank check) is measured manually: note the times
 
 Cold-start timing via `performance.now()` instrumentation (`src/utils/appTiming.ts` + `HomeScreen` `useEffect`) was not capturable in the Expo Go dev-server environment: Metro's own `lazy=true` bundle splitting loads `appTiming.ts` as a deferred chunk, so the timestamp is not set before `HomeScreen` mounts. This instrumentation is correct for a production build (where Metro lazy bundling is not active) — see methodology above for how to measure against a release build.
 
-| Metric | Platform | Static imports (baseline) | Lazy imports | Notes |
-|---|---|---|---|---|
-| Cold-start: JS start → HomeScreen ready | Android | not captured | not captured | Expo Go dev server — see above |
-| Cold-start: JS start → HomeScreen ready | iOS | not captured | not captured | Expo Go dev server — see above |
-| Navigation → lazy screen (tab): first visit | iOS simulator | no spinner | brief spinner | Correct — module loads once, cached thereafter |
-| Navigation → lazy screen (tab): repeat visit | iOS simulator | no spinner | no spinner | Correct — cached module renders synchronously |
-| Navigation → `Twenty48Screen` (stack): every visit | iOS simulator | no spinner | **visible spinner** | ⚠️ See stack-screen finding below |
+| Metric                                             | Platform      | Static imports (baseline) | Lazy imports        | Notes                                          |
+| -------------------------------------------------- | ------------- | ------------------------- | ------------------- | ---------------------------------------------- |
+| Cold-start: JS start → HomeScreen ready            | Android       | not captured              | not captured        | Expo Go dev server — see above                 |
+| Cold-start: JS start → HomeScreen ready            | iOS           | not captured              | not captured        | Expo Go dev server — see above                 |
+| Navigation → lazy screen (tab): first visit        | iOS simulator | no spinner                | brief spinner       | Correct — module loads once, cached thereafter |
+| Navigation → lazy screen (tab): repeat visit       | iOS simulator | no spinner                | no spinner          | Correct — cached module renders synchronously  |
+| Navigation → `Twenty48Screen` (stack): every visit | iOS simulator | no spinner                | **visible spinner** | ⚠️ See stack-screen finding below              |
 
 ### Stack-screen spinner finding
 
@@ -507,6 +513,7 @@ Cold-start timing via `performance.now()` instrumentation (`src/utils/appTiming.
 **Rationale:** Even if the Hermes cold-start delta is small (expected, per issue #557 notes: "Hermes bytecode already strips most parse-time cost"), lazy loading provides a structural benefit: module-level side-effects in game screens (Matter.js world setup, Skia canvas initialization, context providers) are deferred until the user navigates to those screens. This reduces work before `HomeScreen` is interactive regardless of parse-time savings.
 
 **Implementation notes:**
+
 - A `withSuspense` HOC wraps each lazy component at the `Screen` registration site, so the spinner is scoped to the navigating screen rather than replacing the entire app.
 - `HomeScreen` and `GameScreen` (Yacht) are kept eager — they are the two most common landing destinations and must never show a spinner.
 - `ProfileScreen` is kept eager as it is the initial screen of `ProfileStack` and is always pre-mounted when the tab bar renders.
@@ -528,6 +535,7 @@ The `android-bundle-check` CI job enforces a **5 MB hard limit** on the uncompre
 ### Updating the limit
 
 When a deliberate size increase is approved (e.g. a new game or major feature), update both:
+
 1. `frontend/package.json` — the `"bundlesize"` array `maxSize` field
 2. The `MAX_BYTES` and baseline comment in the `android-bundle-check` CI step
 
@@ -549,5 +557,6 @@ python frontend/scripts/convert_icons_to_webp.py frontend/assets/celestial-icons
 ```
 
 **Exempt directories** (must stay PNG, never pass to the script):
+
 - `*-baked/` (`fruits-baked/`, `cosmos-baked/`) — Skia pipeline textures
 - `source-icons/` — local pipeline inputs, not bundled

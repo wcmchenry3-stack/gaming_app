@@ -26,7 +26,6 @@ A calm, no-BS arcade of simple games designed for short moments — not long ses
 
 ## Game Roster Strategy
 
-- New games must earn their slot via the "replacement test": is the new game better than an existing one? If no, don't add it.
 - Use the app yourself daily. Notice which game you open most and which feels frictionless.
 - Add one game at a time.
 
