@@ -88,12 +88,7 @@ export default function HeartsScreen() {
     []
   );
 
-  const playerLabels = [
-    t("player.you"),
-    t("player.left"),
-    t("player.top"),
-    t("player.right"),
-  ];
+  const playerLabels = [t("player.you"), t("player.left"), t("player.top"), t("player.right")];
 
   // ─── AI turn loop ─────────────────────────────────────────────────────────
   const runAiTurns = useCallback(async (initial: HeartsState) => {
@@ -248,11 +243,7 @@ export default function HeartsScreen() {
 
         {/* Human hand */}
         <View style={styles.bottomArea}>
-          <PlayerHand
-            hand={humanHand}
-            validCards={validCards}
-            onCardPress={handleCardPress}
-          />
+          <PlayerHand hand={humanHand} validCards={validCards} onCardPress={handleCardPress} />
         </View>
       </View>
 
@@ -277,9 +268,7 @@ export default function HeartsScreen() {
                 { backgroundColor: colors.surface, borderColor: colors.border },
               ]}
             >
-              <Text style={[styles.panelTitle, { color: colors.text }]}>
-                {t("hand_end.title")}
-              </Text>
+              <Text style={[styles.panelTitle, { color: colors.text }]}>{t("hand_end.title")}</Text>
               {moonShooter !== null && (
                 <Text style={[styles.moonText, { color: colors.accent }]}>
                   {t("hand_end.moon", { label: playerLabels[moonShooter] ?? "" })}
@@ -353,10 +342,7 @@ export default function HeartsScreen() {
       >
         <View style={[styles.overlay, { backgroundColor: colors.overlay }]}>
           <View
-            style={[
-              styles.panel,
-              { backgroundColor: colors.surface, borderColor: colors.border },
-            ]}
+            style={[styles.panel, { backgroundColor: colors.surface, borderColor: colors.border }]}
           >
             <Text style={[styles.panelTitle, { color: colors.text }]}>{t("score.board")}</Text>
             <ScoreBoard

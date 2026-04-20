@@ -93,8 +93,7 @@ describe("HeartsScreen — playing phase (no modal)", () => {
     // Cards with onPress are buttons; there should be some (13 cards in hand)
     const cardBtns = queryAllByRole("button").filter(
       (el) =>
-        el.props.accessibilityLabel &&
-        !["Scores", "← Back"].includes(el.props.accessibilityLabel)
+        el.props.accessibilityLabel && !["Scores", "← Back"].includes(el.props.accessibilityLabel)
     );
     expect(cardBtns.length).toBeGreaterThan(0);
   });
