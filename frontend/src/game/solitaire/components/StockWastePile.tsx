@@ -11,6 +11,8 @@
 
 import React from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
+import { useTranslation } from "react-i18next";
+import type { TFunction } from "i18next";
 
 import { useTheme } from "../../../theme/ThemeContext";
 import type { Card, DrawMode } from "../types";
@@ -34,11 +36,18 @@ export default function StockWastePile({
   onWastePress,
 }: StockWastePileProps) {
   const { colors } = useTheme();
+  const { t } = useTranslation("solitaire");
 
   return (
     <View style={styles.row}>
-      <Stock count={stock.length} colors={colors} onPress={onStockPress} drawMode={drawMode} />
-      <Waste waste={waste} selected={wasteSelected} onPress={onWastePress} />
+      <Stock
+        count={stock.length}
+        colors={colors}
+        onPress={onStockPress}
+        drawMode={drawMode}
+        t={t}
+      />
+      <Waste waste={waste} selected={wasteSelected} onPress={onWastePress} t={t} />
     </View>
   );
 }
@@ -48,16 +57,18 @@ function Stock({
   colors,
   onPress,
   drawMode,
+  t,
 }: {
   readonly count: number;
   readonly colors: ReturnType<typeof useTheme>["colors"];
   readonly onPress?: () => void;
   readonly drawMode: DrawMode;
+  readonly t: TFunction<"solitaire">;
 }) {
   const isEmpty = count === 0;
   const label = isEmpty
-    ? `Recycle waste back to stock (draw ${drawMode})`
-    : `Draw ${drawMode} from stock, ${count} cards remaining`;
+    ? t("pile.stock.empty", { count: drawMode })
+    : t("pile.stock.label", { count: drawMode, remaining: count });
 
   const style = [
     styles.slot,
@@ -100,17 +111,19 @@ function Waste({
   waste,
   selected,
   onPress,
+  t,
 }: {
   readonly waste: readonly Card[];
   readonly selected: boolean;
   readonly onPress?: () => void;
+  readonly t: TFunction<"solitaire">;
 }) {
   if (waste.length === 0) {
     return (
       <View
         style={styles.wasteEmpty}
         accessibilityRole="image"
-        accessibilityLabel="Empty waste pile"
+        accessibilityLabel={t("pile.waste.empty")}
       />
     );
   }

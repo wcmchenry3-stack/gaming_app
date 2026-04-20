@@ -8,6 +8,7 @@
 
 import React from "react";
 import { Pressable, StyleSheet, View, ViewStyle } from "react-native";
+import { useTranslation } from "react-i18next";
 
 import { useTheme } from "../../../theme/ThemeContext";
 import type { Card } from "../types";
@@ -39,6 +40,7 @@ export default function TableauPile({
   onEmptyPress,
 }: TableauPileProps) {
   const { colors } = useTheme();
+  const { t } = useTranslation("solitaire");
 
   if (pile.length === 0) {
     return (
@@ -52,7 +54,7 @@ export default function TableauPile({
           },
         ]}
         accessibilityRole="button"
-        accessibilityLabel={`Empty tableau column ${colIndex + 1}`}
+        accessibilityLabel={t("pile.tableau.empty", { col: colIndex + 1 })}
       />
     );
   }
@@ -78,7 +80,7 @@ export default function TableauPile({
   return (
     <View
       style={containerStyle}
-      accessibilityLabel={`Tableau column ${colIndex + 1}, ${pile.length} cards`}
+      accessibilityLabel={t("pile.tableau.label", { col: colIndex + 1, count: pile.length })}
     >
       {pile.map((card, cardIndex) => {
         const isSelected = selectedIndex !== undefined && cardIndex >= selectedIndex;

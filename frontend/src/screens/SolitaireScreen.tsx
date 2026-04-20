@@ -78,7 +78,7 @@ type Selection =
   | { readonly kind: "foundation"; readonly suit: Suit };
 
 export default function SolitaireScreen() {
-  const { t } = useTranslation(["solitaire", "common", "errors"]);
+  const { t } = useTranslation("solitaire");
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<NativeStackNavigationProp<HomeStackParamList>>();
@@ -464,21 +464,21 @@ export default function SolitaireScreen() {
               { borderColor: colors.accent, opacity: undoDisabled ? 0.4 : 1 },
             ]}
             accessibilityRole="button"
-            accessibilityLabel={t("solitaire:buttons.undo")}
+            accessibilityLabel={t("solitaire:action.undo")}
             accessibilityState={{ disabled: undoDisabled }}
           >
             <Text style={[styles.headerBtnText, { color: colors.accent }]}>
-              {t("solitaire:buttons.undo")}
+              {t("solitaire:action.undo")}
             </Text>
           </Pressable>
           <Pressable
             onPress={handleNewGamePress}
             style={[styles.headerBtn, { borderColor: colors.accent }]}
             accessibilityRole="button"
-            accessibilityLabel={t("common:newGame.button")}
+            accessibilityLabel={t("solitaire:action.newGame")}
           >
             <Text style={[styles.headerBtnText, { color: colors.accent }]}>
-              {t("common:newGame.button")}
+              {t("solitaire:action.newGame")}
             </Text>
           </Pressable>
         </View>
@@ -491,15 +491,15 @@ export default function SolitaireScreen() {
           <View style={styles.hudRow} accessibilityRole="summary">
             <Text
               style={[styles.hudText, { color: colors.text }]}
-              accessibilityLabel={t("solitaire:hud.scoreLabel", { score: state.score })}
+              accessibilityLabel={t("solitaire:score.label", { score: state.score })}
             >
-              {t("solitaire:hud.scoreLabel", { score: state.score })}
+              {t("solitaire:score.label", { score: state.score })}
             </Text>
             <Text
               style={[styles.hudText, { color: colors.textMuted }]}
-              accessibilityLabel={t("solitaire:hud.movesLabel", { moves })}
+              accessibilityLabel={t("solitaire:score.moves", { moves })}
             >
-              {t("solitaire:hud.movesLabel", { moves })}
+              {t("solitaire:score.moves", { moves })}
             </Text>
           </View>
 
@@ -559,10 +559,10 @@ export default function SolitaireScreen() {
               onPress={handleAutoComplete}
               style={[styles.autoBtn, { backgroundColor: colors.accent }]}
               accessibilityRole="button"
-              accessibilityLabel={t("solitaire:buttons.autoComplete")}
+              accessibilityLabel={t("solitaire:action.autoComplete")}
             >
               <Text style={[styles.autoBtnText, { color: colors.textOnAccent }]}>
-                {t("solitaire:buttons.autoComplete")}
+                {t("solitaire:action.autoComplete")}
               </Text>
             </Pressable>
           )}
@@ -625,20 +625,20 @@ function PreGameModal({ onChoose }: { readonly onChoose: (mode: DrawMode) => voi
             style={[styles.modalPrimary, gradient]}
             onPress={() => onChoose(1)}
             accessibilityRole="button"
-            accessibilityLabel={t("drawMode.draw1")}
+            accessibilityLabel={t("drawMode.one")}
           >
             <Text style={[styles.modalPrimaryText, { color: colors.textOnAccent }]}>
-              {t("drawMode.draw1")}
+              {t("drawMode.one")}
             </Text>
           </Pressable>
           <Pressable
             style={[styles.modalSecondary, { borderColor: colors.accent }]}
             onPress={() => onChoose(3)}
             accessibilityRole="button"
-            accessibilityLabel={t("drawMode.draw3")}
+            accessibilityLabel={t("drawMode.three")}
           >
             <Text style={[styles.modalSecondaryText, { color: colors.accent }]}>
-              {t("drawMode.draw3")}
+              {t("drawMode.three")}
             </Text>
           </Pressable>
         </View>
@@ -658,7 +658,7 @@ function WinModal({
   readonly score: number;
   readonly onNewGame: () => void;
 }) {
-  const { t } = useTranslation(["solitaire", "common", "errors"]);
+  const { t } = useTranslation("solitaire");
   const { colors } = useTheme();
 
   const [name, setName] = useState("");
@@ -684,15 +684,13 @@ function WinModal({
       const entry = await solitaireApi.submitScore(trimmed, score);
       setSubmitted(entry);
     } catch {
-      setError(t("errors:score.save"));
+      setError(t("solitaire:error.submitFailed"));
     } finally {
       setSubmitting(false);
     }
   }
 
-  const submitLabel = error
-    ? t("solitaire:buttons.retrySubmit")
-    : t("solitaire:buttons.submitScore");
+  const submitLabel = error ? t("solitaire:error.submitRetry") : t("solitaire:action.submitScore");
 
   return (
     <Modal visible transparent animationType="fade" accessibilityViewIsModal>
@@ -707,7 +705,7 @@ function WinModal({
             {t("solitaire:win.title")}
           </Text>
           <Text style={[styles.modalBody, { color: colors.textMuted }]}>
-            {t("solitaire:win.scoreLabel", { score })}
+            {t("solitaire:win.score", { score })}
           </Text>
 
           {submitted === null ? (
@@ -761,7 +759,7 @@ function WinModal({
               style={[styles.winSaved, { color: colors.bonus }]}
               accessibilityLiveRegion="polite"
             >
-              {t("solitaire:win.savedRank", { rank: submitted.rank })}
+              {t("solitaire:win.rank", { rank: submitted.rank })}
             </Text>
           )}
 
@@ -769,10 +767,10 @@ function WinModal({
             style={[styles.modalSecondary, { borderColor: colors.accent }]}
             onPress={onNewGame}
             accessibilityRole="button"
-            accessibilityLabel={t("common:newGame.button")}
+            accessibilityLabel={t("solitaire:action.newGame")}
           >
             <Text style={[styles.modalSecondaryText, { color: colors.accent }]}>
-              {t("common:newGame.button")}
+              {t("solitaire:action.newGame")}
             </Text>
           </Pressable>
         </View>
