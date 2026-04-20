@@ -83,6 +83,7 @@ describe("HomeScreen — game cards", () => {
     expect(getByLabelText("Play Yacht")).toBeTruthy();
     expect(getByLabelText("Play Cascade")).toBeTruthy();
     expect(getByLabelText("Play Blackjack")).toBeTruthy();
+    expect(getByLabelText("Play Solitaire")).toBeTruthy();
     // Pachisi is disabled — should not appear
     expect(queryByLabelText("Play Pachisi")).toBeNull();
   });
@@ -97,6 +98,12 @@ describe("HomeScreen — game cards", () => {
     const { getByLabelText } = renderScreen();
     fireEvent.press(getByLabelText("Play Cascade"));
     expect(mockNavigate).toHaveBeenCalledWith("Cascade");
+  });
+
+  it("navigates to Solitaire when Solitaire card pressed", () => {
+    const { getByLabelText } = renderScreen();
+    fireEvent.press(getByLabelText("Play Solitaire"));
+    expect(mockNavigate).toHaveBeenCalledWith("Solitaire");
   });
 
   it("navigates to Game with a new state when Yacht card pressed (no saved game)", async () => {
@@ -131,6 +138,7 @@ describe("HomeScreen — responsive layout (Galaxy Fold fix, #356)", () => {
     expect(getByLabelText("Play Cascade")).toBeTruthy();
     expect(getByLabelText("Play Blackjack")).toBeTruthy();
     expect(getByLabelText("Play 2048")).toBeTruthy();
+    expect(getByLabelText("Play Solitaire")).toBeTruthy();
   });
 
   it("renders all game cards at 360 px viewport width", () => {
@@ -139,5 +147,6 @@ describe("HomeScreen — responsive layout (Galaxy Fold fix, #356)", () => {
     expect(getByLabelText("Play Cascade")).toBeTruthy();
     expect(getByLabelText("Play Blackjack")).toBeTruthy();
     expect(getByLabelText("Play 2048")).toBeTruthy();
+    expect(getByLabelText("Play Solitaire")).toBeTruthy();
   });
 });

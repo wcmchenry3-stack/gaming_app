@@ -448,7 +448,7 @@ export default function SolitaireScreen() {
       title={t("solitaire:game.title")}
       requireBack
       loading={loading}
-      onBack={() => navigation.goBack()}
+      onBack={() => navigation.popToTop()}
       style={{
         paddingBottom: Math.max(insets.bottom, 16),
         paddingLeft: Math.max(insets.left, 12),

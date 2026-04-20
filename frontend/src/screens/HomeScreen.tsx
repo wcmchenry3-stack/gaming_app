@@ -28,7 +28,15 @@ interface GameCard {
 
 export default function HomeScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<HomeStackParamList, "Home">>();
-  const { t } = useTranslation(["common", "yacht", "cascade", "blackjack", "twenty48", "errors"]);
+  const { t } = useTranslation([
+    "common",
+    "yacht",
+    "cascade",
+    "blackjack",
+    "twenty48",
+    "solitaire",
+    "errors",
+  ]);
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
@@ -77,6 +85,13 @@ export default function HomeScreen() {
       description: t("twenty48:game.description"),
       action: () => navigation.navigate("Twenty48"),
     },
+    {
+      key: "solitaire",
+      emoji: "♠",
+      title: t("solitaire:game.title"),
+      description: t("solitaire:game.description"),
+      action: () => navigation.navigate("Solitaire"),
+    },
   ];
 
   const playLabels: Record<string, string> = {
@@ -84,6 +99,7 @@ export default function HomeScreen() {
     [t("cascade:game.title")]: t("cascade:game.playLabel"),
     [t("blackjack:game.title")]: t("blackjack:game.playLabel"),
     [t("twenty48:game.title")]: t("twenty48:game.playLabel"),
+    [t("solitaire:game.title")]: t("solitaire:game.playLabel"),
   };
 
   // Cycle through BC Arcade accent colors for the gradient top border on each card.
