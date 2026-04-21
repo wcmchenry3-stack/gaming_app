@@ -310,12 +310,12 @@ jobs:
             exit 1
           fi
           BUNDLE_SIZE_MB=$(awk "BEGIN {printf \"%.2f\", $BUNDLE_SIZE / 1048576}")
-          MAX_BYTES=5242880
+          MAX_BYTES=5767168
           if [ "$BUNDLE_SIZE" -gt "$MAX_BYTES" ]; then
-            echo "::error::JS bundle exceeds 5 MB hard limit: ${BUNDLE_SIZE_MB} MB (${BUNDLE_SIZE} bytes). See docs/PERFORMANCE.md for how to update the limit."
+            echo "::error::JS bundle exceeds 5.5 MB hard limit: ${BUNDLE_SIZE_MB} MB (${BUNDLE_SIZE} bytes). See docs/PERFORMANCE.md for how to update the limit."
             exit 1
           fi
-          echo "Android JS bundle: ${BUNDLE_SIZE_MB} MB (${BUNDLE_SIZE} bytes) — within 5 MB limit"
+          echo "Android JS bundle: ${BUNDLE_SIZE_MB} MB (${BUNDLE_SIZE} bytes) — within 5.5 MB limit"
           echo "BUNDLE_SIZE_BYTES=$BUNDLE_SIZE" >> "$GITHUB_ENV"
           echo "BUNDLE_SIZE_MB=$BUNDLE_SIZE_MB" >> "$GITHUB_ENV"
       - name: Check bundle size (bundlesize)

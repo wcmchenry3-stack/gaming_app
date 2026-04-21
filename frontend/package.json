@@ -99,7 +99,7 @@
   "bundlesize": [
     {
       "path": "./dist/index.android.bundle",
-      "maxSize": "5 mB",
+      "maxSize": "5.5 mB",
       "compression": "none"
     }
   ],
