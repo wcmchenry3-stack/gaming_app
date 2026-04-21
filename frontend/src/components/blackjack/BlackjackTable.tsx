@@ -1,5 +1,5 @@
 import React from "react";
-import { View, Text, StyleSheet } from "react-native";
+import { View, Text, StyleSheet, useWindowDimensions } from "react-native";
 import { useTranslation } from "react-i18next";
 import { useTheme } from "../../theme/ThemeContext";
 import { HandResponse } from "../../game/blackjack/types";
@@ -33,8 +33,13 @@ export default function BlackjackTable({
 }: Props) {
   const { t } = useTranslation("blackjack");
   const { colors } = useTheme();
+  const { width: screenWidth } = useWindowDimensions();
   const isPlayerPhase = phase === "player";
   const isSplit = playerHands && playerHands.length > 1;
+
+  // Available inner width per split hand: screen minus HUD sidebar (88), the
+  // gap between hands (8), and splitHand padding (6×2 each side = 24 total).
+  const splitHandMaxWidth = Math.max(80, (screenWidth - 88 - 8) / 2 - 24);
 
   return (
     <View style={[styles.container, compact && styles.containerCompact]}>
@@ -70,7 +75,13 @@ export default function BlackjackTable({
                   },
                 ]}
               >
-                <HandDisplay hand={hand} label={label} variant="player" compact />
+                <HandDisplay
+                  hand={hand}
+                  label={label}
+                  variant="player"
+                  compact
+                  fanMaxWidth={splitHandMaxWidth}
+                />
                 {bet != null && (
                   <Text style={[styles.handBet, { color: colors.textMuted }]}>{bet}</Text>
                 )}
