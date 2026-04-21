@@ -97,7 +97,12 @@ beforeEach(async () => {
   (scoreQueue.enqueue as jest.Mock).mockReset();
   (scoreQueue.enqueue as jest.Mock).mockResolvedValue({ id: "q-1" });
   (scoreQueue.flush as jest.Mock).mockReset();
-  (scoreQueue.flush as jest.Mock).mockResolvedValue({ attempted: 0, succeeded: 0, failed: 0, remaining: 0 });
+  (scoreQueue.flush as jest.Mock).mockResolvedValue({
+    attempted: 0,
+    succeeded: 0,
+    failed: 0,
+    remaining: 0,
+  });
 });
 
 describe("SudokuScreen — pre-game (after load)", () => {

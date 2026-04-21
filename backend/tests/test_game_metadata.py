@@ -261,6 +261,7 @@ from games.service import _validate_client_timestamp
 
 def _now():
     from datetime import datetime
+
     return datetime.now(timezone.utc)
 
 
@@ -292,6 +293,7 @@ def test_validate_timestamp_just_within_future_window():
 
 def test_validate_timestamp_naive_treated_as_utc():
     from datetime import datetime
+
     now = _now()
     naive = datetime(now.year, now.month, now.day, now.hour)
     result = _validate_client_timestamp(naive, now)

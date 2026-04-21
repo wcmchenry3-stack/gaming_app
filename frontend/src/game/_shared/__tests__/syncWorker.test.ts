@@ -147,9 +147,7 @@ describe("SyncWorker", () => {
     client.completeGame(gid, { finalScore: 50, outcome: "completed" });
     await flushMicro();
     await worker.flush();
-    const patchCall = api.calls.find(
-      (c) => c.method === "PATCH" && c.path.endsWith("/complete")
-    );
+    const patchCall = api.calls.find((c) => c.method === "PATCH" && c.path.endsWith("/complete"));
     expect(patchCall).toBeDefined();
     const body = patchCall!.body as Record<string, unknown>;
     expect(typeof body["completed_at"]).toBe("string");
