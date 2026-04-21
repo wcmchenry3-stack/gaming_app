@@ -16,10 +16,24 @@ interface Props {
    *  rendering and by the whole table on short-height viewports. Shrinks
    *  both the "player" and "dealer" variants when set. */
   compact?: boolean;
+  /**
+   * When set, cards with count > 2 switch from wrap to a fan/overlap layout
+   * that constrains the row to this pixel width. Each card after the first
+   * shifts left so the rank+suit pip of earlier cards peeks out on the left.
+   * Pass the available inner width of the containing column.
+   */
+  fanMaxWidth?: number;
 }
 
 // First two player cards get a gentle fan tilt
 const PLAYER_ROTATIONS: Record<number, number> = { 0: -3, 1: 2 };
+
+function computeOverlap(cardCount: number, cardWidth: number, maxWidth: number): number {
+  if (cardCount <= 2 || cardWidth * cardCount <= maxWidth) return 0;
+  // total = cardWidth + (n-1) × (cardWidth - overlap) ≤ maxWidth
+  // → overlap = cardWidth - (maxWidth - cardWidth) / (n - 1)
+  return Math.max(0, Math.ceil(cardWidth - (maxWidth - cardWidth) / (cardCount - 1)));
+}
 
 export default function HandDisplay({
   hand,
@@ -27,9 +41,15 @@ export default function HandDisplay({
   concealed = false,
   variant = "dealer",
   compact = false,
+  fanMaxWidth,
 }: Props) {
   const { colors } = useTheme();
   const showScore = hand.cards.length > 0;
+
+  // Card width matches blackjack PlayingCard cardSize() values.
+  const cardWidth = variant === "player" ? (compact ? 48 : 68) : compact ? 40 : 52;
+  const isFan = fanMaxWidth !== undefined && hand.cards.length > 2;
+  const overlapPx = isFan ? computeOverlap(hand.cards.length, cardWidth, fanMaxWidth!) : 0;
 
   return (
     <View style={[styles.container, compact && styles.containerCompact]}>
@@ -37,15 +57,19 @@ export default function HandDisplay({
         {label}
       </Text>
 
-      <View style={styles.cards}>
+      <View style={isFan ? styles.cardsFan : styles.cards}>
         {hand.cards.map((card, i) => (
-          <PlayingCard
+          <View
             key={i}
-            card={card}
-            variant={variant}
-            compact={compact}
-            rotation={variant === "player" ? (PLAYER_ROTATIONS[i] ?? 0) : 0}
-          />
+            style={isFan ? { marginLeft: i > 0 ? -overlapPx : 0, zIndex: i } : undefined}
+          >
+            <PlayingCard
+              card={card}
+              variant={variant}
+              compact={compact}
+              rotation={variant === "player" ? (PLAYER_ROTATIONS[i] ?? 0) : 0}
+            />
+          </View>
         ))}
       </View>
 
@@ -76,6 +100,11 @@ const styles = StyleSheet.create({
   cards: {
     flexDirection: "row",
     flexWrap: "wrap",
+    justifyContent: "center",
+  },
+  cardsFan: {
+    flexDirection: "row",
+    flexWrap: "nowrap",
     justifyContent: "center",
   },
 });
