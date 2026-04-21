@@ -1,3 +1,10 @@
-// Neon deck — implemented in issue #686.
-// Stub re-exports Classic until the real implementation lands.
-export { default } from "../classic";
+import NeonCardFace from "./NeonCardFace";
+import type { DeckTheme } from "../types";
+
+const NeonDeck: DeckTheme = {
+  id: "neon",
+  name: "Neon",
+  CardFace: NeonCardFace,
+};
+
+export default NeonDeck;
