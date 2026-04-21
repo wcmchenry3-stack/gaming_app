@@ -31,7 +31,7 @@ extensions.configure(com.facebook.react.ReactSettingsExtension) { ex ->
 }
 expoAutolinking.useExpoModules()
 
-rootProject.name = 'Gaming App'
+rootProject.name = 'BC Arcade'
 
 expoAutolinking.useExpoVersionCatalog()
 

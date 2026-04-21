@@ -128,6 +128,9 @@ const styles = StyleSheet.create({
   digitText: {
     fontSize: 22,
     fontWeight: "600",
+    textAlign: "center",
+    textAlignVertical: "center",
+    lineHeight: 22,
   },
   actionRow: {
     flexDirection: "row",
