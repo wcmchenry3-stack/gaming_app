@@ -30,5 +30,8 @@
   "clearLogs.success": "स्थानीय लॉग्स साफ़ हो गए",
   "capacityWarning.title": "कतारबद्ध गेम डेटा भर रहा है",
   "capacityWarning.body": "ऐप को सुचारू रूप से चलाने के लिए इसे सेटिंग्स में साफ़ करें।",
-  "capacityWarning.dismiss": "बंद करें"
+  "capacityWarning.dismiss": "बंद करें",
+  "deck.label": "कार्ड डेक",
+  "deck.select": "{{name}} कार्ड डेक चुनें",
+  "deck.selected": "{{name}} चुना गया"
 }

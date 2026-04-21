@@ -30,5 +30,8 @@
   "clearLogs.success": "Lokaal logboek gewist",
   "capacityWarning.title": "Wachtrij met spelgegevens raakt vol",
   "capacityWarning.body": "Wis het in Instellingen om de app soepel te laten werken.",
-  "capacityWarning.dismiss": "Sluiten"
+  "capacityWarning.dismiss": "Sluiten",
+  "deck.label": "Kaartenspel",
+  "deck.select": "{{name}}-kaartenspel selecteren",
+  "deck.selected": "{{name}} geselecteerd"
 }

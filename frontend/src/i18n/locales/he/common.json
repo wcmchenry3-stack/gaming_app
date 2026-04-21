@@ -30,5 +30,8 @@
   "clearLogs.success": "הלוגים המקומיים נוקו",
   "capacityWarning.title": "נתוני המשחק בתור מתמלאים",
   "capacityWarning.body": "נקה אותם בהגדרות כדי לשמור על פעילות תקינה של האפליקציה.",
-  "capacityWarning.dismiss": "סגור"
+  "capacityWarning.dismiss": "סגור",
+  "deck.label": "חפיסת קלפים",
+  "deck.select": "בחר חפיסת קלפים {{name}}",
+  "deck.selected": "{{name}} נבחר"
 }

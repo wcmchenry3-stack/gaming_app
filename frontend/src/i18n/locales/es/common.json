@@ -30,5 +30,8 @@
   "clearLogs.success": "Registros locales borrados",
   "capacityWarning.title": "Los datos en cola están casi llenos",
   "capacityWarning.body": "Bórralos en Configuración para que la app funcione sin problemas.",
-  "capacityWarning.dismiss": "Cerrar"
+  "capacityWarning.dismiss": "Cerrar",
+  "deck.label": "Baraja de cartas",
+  "deck.select": "Seleccionar baraja {{name}}",
+  "deck.selected": "{{name}} seleccionado"
 }

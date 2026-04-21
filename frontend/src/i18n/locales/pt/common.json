@@ -30,5 +30,8 @@
   "clearLogs.success": "Registros locais limpos",
   "capacityWarning.title": "Dados de jogo pendentes estão quase cheios",
   "capacityWarning.body": "Limpe em Configurações para manter o app funcionando sem problemas.",
-  "capacityWarning.dismiss": "Fechar"
+  "capacityWarning.dismiss": "Fechar",
+  "deck.label": "Baralho de cartas",
+  "deck.select": "Selecionar baralho {{name}}",
+  "deck.selected": "{{name}} selecionado"
 }

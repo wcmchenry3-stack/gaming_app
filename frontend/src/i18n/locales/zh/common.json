@@ -30,5 +30,8 @@
   "clearLogs.success": "本地记录已清除",
   "capacityWarning.title": "游戏数据队列快满了",
   "capacityWarning.body": "请在设置中清除以确保应用顺畅运行。",
-  "capacityWarning.dismiss": "知道了"
+  "capacityWarning.dismiss": "知道了",
+  "deck.label": "牌组",
+  "deck.select": "选择{{name}}牌组",
+  "deck.selected": "已选择{{name}}"
 }

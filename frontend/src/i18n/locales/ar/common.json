@@ -30,5 +30,8 @@
   "clearLogs.success": "تم مسح السجلات المحلية",
   "capacityWarning.title": "بيانات اللعبة المؤقتة ممتلئة",
   "capacityWarning.body": "قم بمسحها من الإعدادات للحفاظ على أداء التطبيق.",
-  "capacityWarning.dismiss": "تجاهل"
+  "capacityWarning.dismiss": "تجاهل",
+  "deck.label": "مجموعة البطاقات",
+  "deck.select": "اختيار مجموعة {{name}}",
+  "deck.selected": "تم اختيار {{name}}"
 }

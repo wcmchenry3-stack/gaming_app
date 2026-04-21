@@ -30,5 +30,8 @@
   "clearLogs.success": "로컬 로그가 삭제되었습니다",
   "capacityWarning.title": "대기 중인 게임 데이터가 가득 찼습니다",
   "capacityWarning.body": "앱이 원활히 작동하도록 설정에서 삭제하세요.",
-  "capacityWarning.dismiss": "닫기"
+  "capacityWarning.dismiss": "닫기",
+  "deck.label": "카드 덱",
+  "deck.select": "{{name}} 카드 덱 선택",
+  "deck.selected": "{{name}} 선택됨"
 }

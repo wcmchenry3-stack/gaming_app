@@ -30,5 +30,8 @@
   "clearLogs.success": "Логи очищены",
   "capacityWarning.title": "Данные игры заполняют память",
   "capacityWarning.body": "Очистите их в настройках, чтобы приложение работало без сбоев.",
-  "capacityWarning.dismiss": "Закрыть"
+  "capacityWarning.dismiss": "Закрыть",
+  "deck.label": "Колода карт",
+  "deck.select": "Выбрать колоду {{name}}",
+  "deck.selected": "{{name}} выбрана"
 }
