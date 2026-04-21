@@ -38,6 +38,12 @@ import type { BugLevel } from "./eventQueueConfig";
 export interface UseGameSyncReturn {
   /** Start a new instrumented session. Call once after the game state is ready. */
   start: (eventData?: Record<string, unknown>, metadata?: Record<string, unknown>) => void;
+  /**
+   * Signal that the player has taken their first meaningful action. Must be
+   * called before the unmount cleanup will fire an abandoned event, preventing
+   * false abandons on games the player never actually started.
+   */
+  markStarted: () => void;
   /** Enqueue a gameplay event. No-ops if no session is open. */
   enqueue: (event: EnqueueEventInput) => void;
   /**
@@ -64,6 +70,7 @@ export interface UseGameSyncReturn {
 export function useGameSync(gameType: GameType): UseGameSyncReturn {
   const gameIdRef = useRef<string | null>(null);
   const completedRef = useRef(false);
+  const startedRef = useRef(false);
   // Keep gameType in a ref so restart() always uses the current value even if
   // the consumer passes a runtime-derived type (shouldn't change, but safe).
   const gameTypeRef = useRef(gameType);
@@ -71,11 +78,11 @@ export function useGameSync(gameType: GameType): UseGameSyncReturn {
     gameTypeRef.current = gameType;
   }, [gameType]);
 
-  // Abandon any open session on unmount.
+  // Abandon any open session on unmount, but only if the player actually started.
   useEffect(() => {
     return () => {
       const gid = gameIdRef.current;
-      if (gid && !completedRef.current) {
+      if (gid && startedRef.current && !completedRef.current) {
         try {
           gameEventClient.completeGame(gid, { outcome: "abandoned" }, { outcome: "abandoned" });
         } catch {
@@ -94,9 +101,14 @@ export function useGameSync(gameType: GameType): UseGameSyncReturn {
         eventData ?? {}
       );
       completedRef.current = false;
+      startedRef.current = false;
     },
     []
   );
+
+  const markStarted = useCallback(() => {
+    startedRef.current = true;
+  }, []);
 
   const enqueue = useCallback((event: EnqueueEventInput) => {
     const gid = gameIdRef.current;
@@ -138,6 +150,7 @@ export function useGameSync(gameType: GameType): UseGameSyncReturn {
         newEventData ?? {}
       );
       completedRef.current = false;
+      startedRef.current = false;
     },
     []
   );
@@ -155,5 +168,5 @@ export function useGameSync(gameType: GameType): UseGameSyncReturn {
 
   const getGameId = useCallback(() => gameIdRef.current, []);
 
-  return { start, enqueue, complete, restart, reportBug, getGameId };
+  return { start, markStarted, enqueue, complete, restart, reportBug, getGameId };
 }

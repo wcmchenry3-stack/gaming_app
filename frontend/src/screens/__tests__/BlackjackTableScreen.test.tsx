@@ -475,7 +475,7 @@ describe("BlackjackGameContext — gameEventClient instrumentation (#370)", () =
 
   it("fires abandoned on unmount mid-game", async () => {
     renderWithConsumer(makePlayerPhaseState());
-    const { unmount } = renderWithConsumer(); // second render for unmount target
+    const { unmount } = renderWithConsumer(makePlayerPhaseState()); // resumed mid-game
     await settle();
     mockCompleteGame.mockClear();
     unmount();

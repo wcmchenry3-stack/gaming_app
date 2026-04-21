@@ -14,6 +14,7 @@ import { ApiError } from "../../game/_shared/httpClient";
 import { useTheme } from "../../theme/ThemeContext";
 import { useNetwork } from "../../game/_shared/NetworkContext";
 import { scoreQueue } from "../../game/_shared/scoreQueue";
+import { OfflineBanner } from "../shared/OfflineBanner";
 
 interface Props {
   score: number;
@@ -143,9 +144,7 @@ export default function GameOverOverlay({ score, gameId, onRestart }: Props) {
               </Pressable>
             </>
           ) : savedLocally ? (
-            <Text style={[styles.saved, { color: colors.bonus }]} accessibilityLiveRegion="polite">
-              {t("gameOver.savedLocally")}
-            </Text>
+            <OfflineBanner />
           ) : (
             <Text style={[styles.saved, { color: colors.bonus }]}>
               {t("gameOver.savedConfirmation", { rank: submitted!.rank })}
