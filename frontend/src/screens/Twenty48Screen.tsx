@@ -175,7 +175,7 @@ export default function Twenty48Screen({ navigation }: Props) {
         }
       }, MOVE_LOCK_MS);
     },
-    [endedPayload, syncComplete, syncEnqueue]
+    [endedPayload, syncComplete, syncEnqueue, syncMarkStarted]
   );
 
   const handleMove = useCallback(
