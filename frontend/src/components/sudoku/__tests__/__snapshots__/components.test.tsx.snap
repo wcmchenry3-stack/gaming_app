@@ -282,6 +282,9 @@ exports[`NumberPad matches snapshot — notes mode active 1`] = `
             {
               "fontSize": 22,
               "fontWeight": "600",
+              "lineHeight": 22,
+              "textAlign": "center",
+              "textAlignVertical": "center",
             },
             {
               "color": "#e8e8f0",
@@ -348,6 +351,9 @@ exports[`NumberPad matches snapshot — notes mode active 1`] = `
             {
               "fontSize": 22,
               "fontWeight": "600",
+              "lineHeight": 22,
+              "textAlign": "center",
+              "textAlignVertical": "center",
             },
             {
               "color": "#e8e8f0",
@@ -414,6 +420,9 @@ exports[`NumberPad matches snapshot — notes mode active 1`] = `
             {
               "fontSize": 22,
               "fontWeight": "600",
+              "lineHeight": 22,
+              "textAlign": "center",
+              "textAlignVertical": "center",
             },
             {
               "color": "#e8e8f0",
@@ -480,6 +489,9 @@ exports[`NumberPad matches snapshot — notes mode active 1`] = `
             {
               "fontSize": 22,
               "fontWeight": "600",
+              "lineHeight": 22,
+              "textAlign": "center",
+              "textAlignVertical": "center",
             },
             {
               "color": "#e8e8f0",
@@ -546,6 +558,9 @@ exports[`NumberPad matches snapshot — notes mode active 1`] = `
             {
               "fontSize": 22,
               "fontWeight": "600",
+              "lineHeight": 22,
+              "textAlign": "center",
+              "textAlignVertical": "center",
             },
             {
               "color": "#e8e8f0",
@@ -612,6 +627,9 @@ exports[`NumberPad matches snapshot — notes mode active 1`] = `
             {
               "fontSize": 22,
               "fontWeight": "600",
+              "lineHeight": 22,
+              "textAlign": "center",
+              "textAlignVertical": "center",
             },
             {
               "color": "#e8e8f0",
@@ -678,6 +696,9 @@ exports[`NumberPad matches snapshot — notes mode active 1`] = `
             {
               "fontSize": 22,
               "fontWeight": "600",
+              "lineHeight": 22,
+              "textAlign": "center",
+              "textAlignVertical": "center",
             },
             {
               "color": "#e8e8f0",
@@ -744,6 +765,9 @@ exports[`NumberPad matches snapshot — notes mode active 1`] = `
             {
               "fontSize": 22,
               "fontWeight": "600",
+              "lineHeight": 22,
+              "textAlign": "center",
+              "textAlignVertical": "center",
             },
             {
               "color": "#e8e8f0",
@@ -810,6 +834,9 @@ exports[`NumberPad matches snapshot — notes mode active 1`] = `
             {
               "fontSize": 22,
               "fontWeight": "600",
+              "lineHeight": 22,
+              "textAlign": "center",
+              "textAlignVertical": "center",
             },
             {
               "color": "#e8e8f0",
