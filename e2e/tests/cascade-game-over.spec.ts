@@ -140,7 +140,7 @@ test.describe("Cascade — game-over overlay", () => {
     await page.getByRole("button", { name: "Save score" }).click();
 
     await expect(
-      page.getByText("Saved locally — will submit when online"),
+      page.getByText("Offline — scores will sync when you reconnect"),
     ).toBeVisible({ timeout: 5_000 });
   });
 

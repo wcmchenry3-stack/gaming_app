@@ -182,7 +182,7 @@ test.describe("Cascade — leaderboard API integration", () => {
     await page.getByPlaceholder("Enter your name").fill("Tester");
     await page.getByRole("button", { name: "Save score" }).click();
 
-    await expect(page.getByText("Saved locally")).toBeVisible({
+    await expect(page.getByText("Offline — scores will sync when you reconnect")).toBeVisible({
       timeout: 5_000,
     });
   });
