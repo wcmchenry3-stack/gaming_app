@@ -164,15 +164,15 @@ function AppInner() {
   return (
     <NetworkProvider>
       <ThemeProvider>
-      <CardDeckProvider>
-        <BlackjackGameProvider>
-          <NavigationContainer>
-            <Stack.Navigator screenOptions={{ headerShown: false }}>
-              <Stack.Screen name="MainTabs" component={MainTabs} />
-            </Stack.Navigator>
-          </NavigationContainer>
-        </BlackjackGameProvider>
-      </CardDeckProvider>
+        <CardDeckProvider>
+          <BlackjackGameProvider>
+            <NavigationContainer>
+              <Stack.Navigator screenOptions={{ headerShown: false }}>
+                <Stack.Screen name="MainTabs" component={MainTabs} />
+              </Stack.Navigator>
+            </NavigationContainer>
+          </BlackjackGameProvider>
+        </CardDeckProvider>
       </ThemeProvider>
     </NetworkProvider>
   );

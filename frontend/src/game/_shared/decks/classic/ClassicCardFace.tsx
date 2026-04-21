@@ -24,7 +24,16 @@ export default function ClassicCardFace({
     return (
       <Svg width={width} height={height}>
         <Rect x={0} y={0} width={width} height={height} rx={r} fill={cardBgBack} />
-        <Rect x={1} y={1} width={width - 2} height={height - 2} rx={r - 1} stroke={border} strokeWidth={1} fill="none" />
+        <Rect
+          x={1}
+          y={1}
+          width={width - 2}
+          height={height - 2}
+          rx={r - 1}
+          stroke={border}
+          strokeWidth={1}
+          fill="none"
+        />
         {/* Diamond-grid back pattern */}
         <G opacity={0.25}>
           {Array.from({ length: 8 }, (_, i) => (
@@ -66,7 +75,16 @@ export default function ClassicCardFace({
     <Svg width={width} height={height}>
       {/* Card face */}
       <Rect x={0} y={0} width={width} height={height} rx={r} fill={cardBg} />
-      <Rect x={1} y={1} width={width - 2} height={height - 2} rx={r - 1} stroke={border} strokeWidth={1} fill="none" />
+      <Rect
+        x={1}
+        y={1}
+        width={width - 2}
+        height={height - 2}
+        rx={r - 1}
+        stroke={border}
+        strokeWidth={1}
+        fill="none"
+      />
 
       {/* Top-left corner: rank */}
       <SvgText
@@ -115,13 +133,7 @@ export default function ClassicCardFace({
           </SvgText>
         </>
       ) : (
-        <Svg
-          x={suitX}
-          y={suitY}
-          width={suitViewSize}
-          height={suitViewSize}
-          viewBox="0 0 500 500"
-        >
+        <Svg x={suitX} y={suitY} width={suitViewSize} height={suitViewSize} viewBox="0 0 500 500">
           <Path d={SUIT_PATHS[suit]} fill={suitColor} />
         </Svg>
       )}

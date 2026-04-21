@@ -11,7 +11,7 @@ function wrap(ui: React.ReactElement) {
   return render(
     <ThemeProvider>
       <CardDeckProvider>{ui}</CardDeckProvider>
-    </ThemeProvider>,
+    </ThemeProvider>
   );
 }
 
@@ -58,7 +58,13 @@ describe("PlayingCard + MinimalDeck (Jest default)", () => {
   it("does not fire onPress when disabled", () => {
     const onPress = jest.fn();
     wrap(
-      <PlayingCard suit="clubs" rank={7} onPress={onPress} disabled accessibilityLabel="7 of Clubs" />,
+      <PlayingCard
+        suit="clubs"
+        rank={7}
+        onPress={onPress}
+        disabled
+        accessibilityLabel="7 of Clubs"
+      />
     );
     fireEvent.press(screen.getByRole("button"));
     expect(onPress).not.toHaveBeenCalled();

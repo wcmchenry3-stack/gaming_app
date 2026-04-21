@@ -17,7 +17,9 @@ export default function MinimalCardFace({
 }: CardFaceProps) {
   if (faceDown) {
     return (
-      <View style={[styles.card, { width, height, backgroundColor: cardBgBack, borderColor: border }]}>
+      <View
+        style={[styles.card, { width, height, backgroundColor: cardBgBack, borderColor: border }]}
+      >
         <View style={[styles.backInner, { borderColor: border }]}>
           <Text style={[styles.backMark, { color: border }]}>?</Text>
         </View>

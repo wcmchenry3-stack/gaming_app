@@ -84,11 +84,7 @@ export default function PlayingCard({
   }
 
   return (
-    <View
-      style={wrapperStyle}
-      accessibilityRole="image"
-      accessibilityLabel={accessibilityLabel}
-    >
+    <View style={wrapperStyle} accessibilityRole="image" accessibilityLabel={accessibilityLabel}>
       {cardFace}
     </View>
   );

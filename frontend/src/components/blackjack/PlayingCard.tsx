@@ -26,7 +26,12 @@ function cardSize(variant: "player" | "dealer", compact: boolean) {
   return compact ? { w: 40, h: 56 } : { w: 52, h: 72 };
 }
 
-export default function PlayingCard({ card, rotation = 0, variant = "dealer", compact = false }: Props) {
+export default function PlayingCard({
+  card,
+  rotation = 0,
+  variant = "dealer",
+  compact = false,
+}: Props) {
   const { t } = useTranslation("blackjack");
   const { w, h } = cardSize(variant, compact);
 

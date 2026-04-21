@@ -53,7 +53,7 @@ export function CardDeckProvider({ children }: { children: React.ReactNode }) {
       loadDeck(id);
       AsyncStorage.setItem(STORAGE_KEY, id).catch(() => undefined);
     },
-    [loadDeck],
+    [loadDeck]
   );
 
   // Load persisted preference on mount.
