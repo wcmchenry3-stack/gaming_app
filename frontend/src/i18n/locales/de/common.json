@@ -30,5 +30,8 @@
   "clearLogs.success": "Lokale Logs gelöscht",
   "capacityWarning.title": "Wartende Spieldaten füllen den Speicher",
   "capacityWarning.body": "Lösche sie in den Einstellungen, um die App reibungslos laufen zu lassen.",
-  "capacityWarning.dismiss": "Schließen"
+  "capacityWarning.dismiss": "Schließen",
+  "deck.label": "Kartenspiel",
+  "deck.select": "{{name}}-Kartenspiel auswählen",
+  "deck.selected": "{{name}} ausgewählt"
 }

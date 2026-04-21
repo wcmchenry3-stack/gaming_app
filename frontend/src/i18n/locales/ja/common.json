@@ -30,5 +30,8 @@
   "clearLogs.success": "ローカルログを削除しました",
   "capacityWarning.title": "未同期データがいっぱいです",
   "capacityWarning.body": "設定から削除してアプリを快適に使いましょう。",
-  "capacityWarning.dismiss": "閉じる"
+  "capacityWarning.dismiss": "閉じる",
+  "deck.label": "カードデッキ",
+  "deck.select": "{{name}}カードデッキを選択",
+  "deck.selected": "{{name}}が選択されました"
 }

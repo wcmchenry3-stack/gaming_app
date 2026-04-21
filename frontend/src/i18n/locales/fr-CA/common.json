@@ -30,5 +30,8 @@
   "clearLogs.success": "Journaux locaux effacés",
   "capacityWarning.title": "Les données de jeu en attente s'accumulent",
   "capacityWarning.body": "Effacez-les dans les paramètres pour que l'application fonctionne bien.",
-  "capacityWarning.dismiss": "Ignorer"
+  "capacityWarning.dismiss": "Ignorer",
+  "deck.label": "Jeu de cartes",
+  "deck.select": "Sélectionner le jeu {{name}}",
+  "deck.selected": "{{name}} sélectionné"
 }

@@ -30,5 +30,8 @@
   "clearLogs.success": "Local logs cleared",
   "capacityWarning.title": "Queued game data is filling up",
   "capacityWarning.body": "Clear it in Settings to keep the app running smoothly.",
-  "capacityWarning.dismiss": "Dismiss"
+  "capacityWarning.dismiss": "Dismiss",
+  "deck.label": "Card deck",
+  "deck.select": "Select {{name}} card deck",
+  "deck.selected": "{{name}} selected"
 }

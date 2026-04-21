@@ -8,9 +8,11 @@ import { MODAL_SCRIM } from "../theme/theme.constants";
 import LanguageSwitcher from "../components/LanguageSwitcher";
 import { AppHeader, APP_HEADER_HEIGHT } from "../components/shared/AppHeader";
 import { gameEventClient } from "../game/_shared/gameEventClient";
+import { useDeck } from "../game/_shared/decks/CardDeckContext";
 
 export default function SettingsScreen() {
   const { colors, theme, toggle } = useTheme();
+  const { activeDeck, setDeck, availableDecks } = useDeck();
   const insets = useSafeAreaInsets();
   const { t } = useTranslation("common");
 
@@ -54,6 +56,37 @@ export default function SettingsScreen() {
             {theme === "dark" ? t("theme.light", "Light") : t("theme.dark", "Dark")}
           </Text>
         </Pressable>
+      </View>
+
+      <View style={[styles.row, { borderColor: colors.border }]}>
+        <Text style={[styles.label, { color: colors.text }]}>{t("deck.label")}</Text>
+        <View style={styles.pillGroup}>
+          {availableDecks.map((id) => {
+            const active = id === activeDeck.id;
+            return (
+              <Pressable
+                key={id}
+                onPress={() => setDeck(id)}
+                style={[
+                  styles.pill,
+                  { backgroundColor: active ? colors.accent : colors.surfaceAlt },
+                ]}
+                accessibilityRole="button"
+                accessibilityLabel={
+                  active ? t("deck.selected", { name: id }) : t("deck.select", { name: id })
+                }
+                accessibilityState={{ selected: active }}
+                testID={`deck-pill-${id}`}
+              >
+                <Text
+                  style={[styles.pillText, { color: active ? colors.textOnAccent : colors.text }]}
+                >
+                  {id.charAt(0).toUpperCase() + id.slice(1)}
+                </Text>
+              </Pressable>
+            );
+          })}
+        </View>
       </View>
 
       <View style={[styles.row, { borderColor: colors.border }]}>
@@ -152,6 +185,9 @@ const styles = StyleSheet.create({
   description: { fontSize: 13, marginTop: 4 },
   toggle: { paddingHorizontal: 16, paddingVertical: 8, borderRadius: 8 },
   destructive: { paddingHorizontal: 16, paddingVertical: 8, borderRadius: 8 },
+  pillGroup: { flexDirection: "row", gap: 8 },
+  pill: { paddingHorizontal: 14, paddingVertical: 7, borderRadius: 20 },
+  pillText: { fontSize: 14, fontWeight: "500" },
   modalBackdrop: {
     flex: 1,
     justifyContent: "center",
