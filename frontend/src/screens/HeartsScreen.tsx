@@ -29,6 +29,8 @@ import {
 } from "../game/hearts/playerNames";
 import { heartsApi } from "../game/hearts/api";
 import { useGameSync } from "../game/_shared/useGameSync";
+import { useNetwork } from "../game/_shared/NetworkContext";
+import { OfflineBanner } from "../components/shared/OfflineBanner";
 import type { Card, HeartsState, TrickCard } from "../game/hearts/types";
 
 const HUMAN = 0;
@@ -88,6 +90,7 @@ export default function HeartsScreen() {
   const { t } = useTranslation("hearts");
   const { colors } = useTheme();
   const navigation = useNavigation();
+  const { isOnline, isInitialized } = useNetwork();
 
   const [gameState, setGameState] = useState<HeartsState>(() => dealGame());
   const [lastTrick, setLastTrick] = useState<LastTrick>(null);
@@ -277,6 +280,7 @@ export default function HeartsScreen() {
   // ─── Game over / play again ───────────────────────────────────────────────
   async function handleSubmitScore() {
     if (!playerName.trim() || submitState === "submitting" || submitState === "done") return;
+    if (isInitialized && !isOnline) return;
     setSubmitState("submitting");
     const humanScore = gameState.cumulativeScores[HUMAN] ?? 0;
     const score = Math.max(0, 100 - humanScore);
@@ -520,10 +524,14 @@ export default function HeartsScreen() {
                           : t("game_over.submit")}
                     </Text>
                   </Pressable>
-                  {submitState === "error" && (
-                    <Text style={[styles.errorText, { color: colors.error }]}>
-                      {t("game_over.submit_error")}
-                    </Text>
+                  {isInitialized && !isOnline ? (
+                    <OfflineBanner />
+                  ) : (
+                    submitState === "error" && (
+                      <Text style={[styles.errorText, { color: colors.error }]}>
+                        {t("game_over.submit_error")}
+                      </Text>
+                    )
                   )}
                 </>
               )}

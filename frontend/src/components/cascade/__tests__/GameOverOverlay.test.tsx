@@ -151,7 +151,7 @@ describe("GameOverOverlay", () => {
       });
     });
     expect(mockSubmitPlayerName).not.toHaveBeenCalled();
-    expect(screen.getByText(/Saved locally/i)).toBeTruthy();
+    expect(screen.getByText(/Offline/i)).toBeTruthy();
   });
 
   it("queues score when online submit fails with a network error (TypeError)", async () => {
@@ -167,7 +167,7 @@ describe("GameOverOverlay", () => {
         player_name: "Bob",
       });
     });
-    expect(screen.getByText(/Saved locally/i)).toBeTruthy();
+    expect(screen.getByText(/Offline/i)).toBeTruthy();
   });
 
   it("shows error (no queue) when online submit fails with an app error", async () => {

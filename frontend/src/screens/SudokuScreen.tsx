@@ -55,6 +55,8 @@ import type { CellValue, Difficulty, SudokuState } from "../game/sudoku/types";
 import { clearGame, loadGame, saveGame } from "../game/sudoku/storage";
 import { scoreQueue } from "../game/_shared/scoreQueue";
 import { useGameSync } from "../game/_shared/useGameSync";
+import { useNetwork } from "../game/_shared/NetworkContext";
+import { OfflineBanner } from "../components/shared/OfflineBanner";
 
 const FLASH_MS = 200;
 const MAX_NAME_LENGTH = 32;
@@ -532,11 +534,14 @@ function WinModal({
 }) {
   const { t } = useTranslation("sudoku");
   const { colors } = useTheme();
+  const { isOnline, isInitialized } = useNetwork();
 
   const [name, setName] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const offline = isInitialized && !isOnline;
 
   const gradient: ViewStyle =
     Platform.OS === "web"
@@ -546,7 +551,7 @@ function WinModal({
       : { backgroundColor: colors.accentBright };
 
   const trimmed = name.trim();
-  const canSubmit = !submitting && trimmed.length > 0;
+  const canSubmit = !submitting && !offline && trimmed.length > 0;
 
   async function handleSubmit() {
     if (!canSubmit) return;
@@ -616,14 +621,18 @@ function WinModal({
                   defaultValue: "Your name",
                 })}
               />
-              {error !== null && (
-                <Text
-                  style={[styles.winError, { color: colors.error }]}
-                  accessibilityLiveRegion="assertive"
-                  accessibilityRole="alert"
-                >
-                  {error}
-                </Text>
+              {offline ? (
+                <OfflineBanner />
+              ) : (
+                error !== null && (
+                  <Text
+                    style={[styles.winError, { color: colors.error }]}
+                    accessibilityLiveRegion="assertive"
+                    accessibilityRole="alert"
+                  >
+                    {error}
+                  </Text>
+                )
               )}
               <Pressable
                 style={[styles.modalPrimary, gradient, !canSubmit && styles.modalPrimaryDisabled]}

@@ -58,6 +58,8 @@ import { SUITS } from "../game/solitaire/types";
 import { clearGame, loadGame, saveGame } from "../game/solitaire/storage";
 import { solitaireApi, type ScoreEntry } from "../game/solitaire/api";
 import { useGameSync } from "../game/_shared/useGameSync";
+import { useNetwork } from "../game/_shared/NetworkContext";
+import { OfflineBanner } from "../components/shared/OfflineBanner";
 
 const TABLEAU_COLS = 7;
 const COL_GAP = 6;
@@ -660,11 +662,14 @@ function WinModal({
 }) {
   const { t } = useTranslation("solitaire");
   const { colors } = useTheme();
+  const { isOnline, isInitialized } = useNetwork();
 
   const [name, setName] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState<ScoreEntry | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  const offline = isInitialized && !isOnline;
 
   const gradient: ViewStyle =
     Platform.OS === "web"
@@ -674,7 +679,7 @@ function WinModal({
       : { backgroundColor: colors.accentBright };
 
   const trimmed = name.trim();
-  const canSubmit = !submitting && trimmed.length > 0;
+  const canSubmit = !submitting && !offline && trimmed.length > 0;
 
   async function handleSubmit() {
     if (!canSubmit) return;
@@ -728,14 +733,18 @@ function WinModal({
                 accessibilityLabel={t("solitaire:win.nameLabel")}
                 accessibilityHint={t("solitaire:win.nameHint")}
               />
-              {error !== null && (
-                <Text
-                  style={[styles.winError, { color: colors.error }]}
-                  accessibilityLiveRegion="assertive"
-                  accessibilityRole="alert"
-                >
-                  {error}
-                </Text>
+              {offline ? (
+                <OfflineBanner />
+              ) : (
+                error !== null && (
+                  <Text
+                    style={[styles.winError, { color: colors.error }]}
+                    accessibilityLiveRegion="assertive"
+                    accessibilityRole="alert"
+                  >
+                    {error}
+                  </Text>
+                )
               )}
               <Pressable
                 style={[styles.modalPrimary, gradient, !canSubmit && styles.modalPrimaryDisabled]}
