@@ -22,7 +22,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from db.base import get_session_factory
 from db.models import Game, GameType
-from limiter import limiter
+from limiter import limiter, session_key
 from vocab import GameType as GameTypeEnum
 
 from .models import Difficulty, LeaderboardResponse, ScoreEntry, ScoreSubmitRequest
@@ -74,7 +74,7 @@ async def _top_scores(db: AsyncSession, difficulty: Difficulty) -> list[ScoreEnt
 
 
 @router.post("/score", response_model=ScoreEntry, status_code=201)
-@limiter.limit("5/minute")
+@limiter.limit("30/minute", key_func=session_key)
 async def submit_score(request: Request, body: ScoreSubmitRequest) -> ScoreEntry:
     factory = get_session_factory()
     async with factory() as db:

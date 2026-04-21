@@ -37,7 +37,7 @@ import type { BugLevel } from "./eventQueueConfig";
 
 export interface UseGameSyncReturn {
   /** Start a new instrumented session. Call once after the game state is ready. */
-  start: (eventData?: Record<string, unknown>) => void;
+  start: (eventData?: Record<string, unknown>, metadata?: Record<string, unknown>) => void;
   /** Enqueue a gameplay event. No-ops if no session is open. */
   enqueue: (event: EnqueueEventInput) => void;
   /**
@@ -49,7 +49,7 @@ export interface UseGameSyncReturn {
    * End the current session (as abandoned if still open) and immediately
    * start a fresh one. Use this for New Game / theme-switch flows.
    */
-  restart: (newEventData?: Record<string, unknown>) => void;
+  restart: (newEventData?: Record<string, unknown>, newMetadata?: Record<string, unknown>) => void;
   /** Delegate to gameEventClient.reportBug with try/catch isolation. */
   reportBug: (
     level: BugLevel,
@@ -86,10 +86,17 @@ export function useGameSync(gameType: GameType): UseGameSyncReturn {
     };
   }, []);
 
-  const start = useCallback((eventData?: Record<string, unknown>) => {
-    gameIdRef.current = gameEventClient.startGame(gameTypeRef.current, {}, eventData ?? {});
-    completedRef.current = false;
-  }, []);
+  const start = useCallback(
+    (eventData?: Record<string, unknown>, metadata?: Record<string, unknown>) => {
+      gameIdRef.current = gameEventClient.startGame(
+        gameTypeRef.current,
+        metadata ?? {},
+        eventData ?? {}
+      );
+      completedRef.current = false;
+    },
+    []
+  );
 
   const enqueue = useCallback((event: EnqueueEventInput) => {
     const gid = gameIdRef.current;
@@ -113,20 +120,27 @@ export function useGameSync(gameType: GameType): UseGameSyncReturn {
     gameIdRef.current = null;
   }, []);
 
-  const restart = useCallback((newEventData?: Record<string, unknown>) => {
-    // Close the current session if still open.
-    const gid = gameIdRef.current;
-    if (gid && !completedRef.current) {
-      try {
-        gameEventClient.completeGame(gid, { outcome: "abandoned" }, { outcome: "abandoned" });
-      } catch {
-        // Isolation.
+  const restart = useCallback(
+    (newEventData?: Record<string, unknown>, newMetadata?: Record<string, unknown>) => {
+      // Close the current session if still open.
+      const gid = gameIdRef.current;
+      if (gid && !completedRef.current) {
+        try {
+          gameEventClient.completeGame(gid, { outcome: "abandoned" }, { outcome: "abandoned" });
+        } catch {
+          // Isolation.
+        }
       }
-    }
-    // Open a fresh session.
-    gameIdRef.current = gameEventClient.startGame(gameTypeRef.current, {}, newEventData ?? {});
-    completedRef.current = false;
-  }, []);
+      // Open a fresh session.
+      gameIdRef.current = gameEventClient.startGame(
+        gameTypeRef.current,
+        newMetadata ?? {},
+        newEventData ?? {}
+      );
+      completedRef.current = false;
+    },
+    []
+  );
 
   const reportBug = useCallback(
     (level: BugLevel, source: string, message: string, context?: Record<string, unknown>) => {

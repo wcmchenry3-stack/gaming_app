@@ -12,6 +12,7 @@ import * as Sentry from "@sentry/react-native";
 import { NetworkStatus, useNetworkStatus } from "./useNetworkStatus";
 import { scoreQueue } from "./scoreQueue";
 import { registerCascadeScoreHandler } from "../cascade/scoreSync";
+import { registerSudokuScoreHandler } from "../sudoku/scoreSync";
 import { gameEventClient } from "./gameEventClient";
 import { syncWorker } from "./syncWorker";
 import { registerLogstoreTestHooks } from "./testHooks";
@@ -24,6 +25,7 @@ const NetworkContext = createContext<NetworkStatus>({
 
 // Register per-game handlers exactly once, module-load time.
 registerCascadeScoreHandler();
+registerSudokuScoreHandler();
 
 export function NetworkProvider({ children }: { children: React.ReactNode }) {
   const status = useNetworkStatus();

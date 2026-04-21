@@ -46,9 +46,17 @@ jest.mock("../../game/sudoku/api", () => ({
     getLeaderboard: jest.fn(),
   },
 }));
-// Import after the mock so the test file gets the jest.fn() flavour.
+
+jest.mock("../../game/_shared/scoreQueue", () => ({
+  scoreQueue: {
+    enqueue: jest.fn().mockResolvedValue({ id: "q-1" }),
+    flush: jest.fn().mockResolvedValue({ attempted: 0, succeeded: 0, failed: 0, remaining: 0 }),
+    registerHandler: jest.fn(),
+  },
+}));
+// Import after mocks so the test file gets the jest.fn() flavour.
 // eslint-disable-next-line import/order
-import { sudokuApi } from "../../game/sudoku/api";
+import { scoreQueue } from "../../game/_shared/scoreQueue";
 
 function fillAllExcept(state: SudokuState, skip: { row: number; col: number }): SudokuState {
   let s = state;
@@ -86,7 +94,15 @@ beforeEach(async () => {
   mockStartGame.mockClear();
   mockStartGame.mockReturnValue("game-123");
   mockCompleteGame.mockClear();
-  (sudokuApi.submitScore as jest.Mock).mockReset();
+  (scoreQueue.enqueue as jest.Mock).mockReset();
+  (scoreQueue.enqueue as jest.Mock).mockResolvedValue({ id: "q-1" });
+  (scoreQueue.flush as jest.Mock).mockReset();
+  (scoreQueue.flush as jest.Mock).mockResolvedValue({
+    attempted: 0,
+    succeeded: 0,
+    failed: 0,
+    remaining: 0,
+  });
 });
 
 describe("SudokuScreen — pre-game (after load)", () => {
@@ -183,12 +199,7 @@ describe("SudokuScreen — win flow", () => {
     return rendered;
   }
 
-  it("POST /sudoku/score succeeds — shows rank after submit", async () => {
-    (sudokuApi.submitScore as jest.Mock).mockResolvedValue({
-      player_name: "Alice",
-      score: 100,
-      rank: 3,
-    });
+  it("enqueues score and shows saved confirmation after submit", async () => {
     const { getByLabelText, findByText } = await renderIntoWinModal();
 
     act(() => {
@@ -197,14 +208,17 @@ describe("SudokuScreen — win flow", () => {
     await act(async () => {
       fireEvent.press(getByLabelText(/submit score/i));
     });
-    await findByText(/#3/);
-    expect(sudokuApi.submitScore).toHaveBeenCalledWith("Alice", 100, "easy");
+    await findByText(/saved/i);
+    expect(scoreQueue.enqueue).toHaveBeenCalledWith(
+      "sudoku",
+      expect.objectContaining({ player_name: "Alice", difficulty: "easy" })
+    );
   });
 
-  it("POST failure shows a retry control; second attempt succeeds", async () => {
-    (sudokuApi.submitScore as jest.Mock)
-      .mockRejectedValueOnce(new Error("network"))
-      .mockResolvedValueOnce({ player_name: "Bob", score: 100, rank: 5 });
+  it("enqueue failure shows retry control; second attempt succeeds", async () => {
+    (scoreQueue.enqueue as jest.Mock)
+      .mockRejectedValueOnce(new Error("storage full"))
+      .mockResolvedValueOnce({ id: "q-2" });
 
     const { getByLabelText, findByLabelText, findByText } = await renderIntoWinModal();
     act(() => fireEvent.changeText(getByLabelText(/your name/i), "Bob"));
@@ -216,7 +230,7 @@ describe("SudokuScreen — win flow", () => {
     await act(async () => {
       fireEvent.press(retry);
     });
-    await findByText(/#5/);
-    expect(sudokuApi.submitScore).toHaveBeenCalledTimes(2);
+    await findByText(/saved/i);
+    expect(scoreQueue.enqueue).toHaveBeenCalledTimes(2);
   });
 });

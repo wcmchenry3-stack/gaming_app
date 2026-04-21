@@ -38,6 +38,7 @@ export interface PendingGame {
   startedSynced: boolean;
   nextEventIndex: number;
   completed: boolean;
+  completedAt: number | null;
   completeSummary: CompleteSummary | null;
   completeSynced: boolean;
 }
@@ -96,6 +97,7 @@ export class PendingGamesStore {
       startedSynced: false,
       nextEventIndex: 0,
       completed: false,
+      completedAt: null,
       completeSummary: null,
       completeSynced: false,
     });
@@ -120,6 +122,7 @@ export class PendingGamesStore {
     if (!game) return Promise.resolve();
     if (game.completed) return Promise.resolve();
     game.completed = true;
+    game.completedAt = Date.now();
     game.completeSummary = summary;
     return this.persist();
   }
