@@ -42,6 +42,18 @@ describe("useGameSync", () => {
     expect(mockStartGame).toHaveBeenCalledWith("twenty48", {}, {});
   });
 
+  it("start() with metadata passes it as the second arg to startGame", () => {
+    const { result } = renderHook(() => useGameSync("sudoku"));
+    act(() => {
+      result.current.start({ difficulty: "hard" }, { difficulty: "hard" });
+    });
+    expect(mockStartGame).toHaveBeenCalledWith(
+      "sudoku",
+      { difficulty: "hard" },
+      { difficulty: "hard" }
+    );
+  });
+
   // ---------------------------------------------------------------------------
   // enqueue
   // ---------------------------------------------------------------------------

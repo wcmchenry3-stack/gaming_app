@@ -53,7 +53,7 @@ import {
 } from "../game/sudoku/engine";
 import type { CellValue, Difficulty, SudokuState } from "../game/sudoku/types";
 import { clearGame, loadGame, saveGame } from "../game/sudoku/storage";
-import { sudokuApi, type ScoreEntry } from "../game/sudoku/api";
+import { scoreQueue } from "../game/_shared/scoreQueue";
 import { useGameSync } from "../game/_shared/useGameSync";
 
 const FLASH_MS = 200;
@@ -248,7 +248,7 @@ export default function SudokuScreen() {
     (next: SudokuState) => {
       if (syncStartedRef.current) return;
       syncStartedRef.current = true;
-      syncStart({ difficulty: next.difficulty });
+      syncStart({ difficulty: next.difficulty }, { difficulty: next.difficulty });
     },
     [syncStart]
   );
@@ -535,7 +535,7 @@ function WinModal({
 
   const [name, setName] = useState("");
   const [submitting, setSubmitting] = useState(false);
-  const [submitted, setSubmitted] = useState<ScoreEntry | null>(null);
+  const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const gradient: ViewStyle =
@@ -553,8 +553,10 @@ function WinModal({
     setSubmitting(true);
     setError(null);
     try {
-      const entry = await sudokuApi.submitScore(trimmed, score, difficulty);
-      setSubmitted(entry);
+      await scoreQueue.enqueue("sudoku", { player_name: trimmed, score, difficulty });
+      setSubmitted(true);
+      // Kick off a background flush; failures are retried on next reconnect.
+      scoreQueue.flush().catch(() => undefined);
     } catch {
       setError(t("win.submitFailed", { defaultValue: "Couldn't save your score. Tap to retry." }));
     } finally {
@@ -591,7 +593,7 @@ function WinModal({
             {t("win.elapsed", { time: formatElapsed(elapsed) })}
           </Text>
 
-          {submitted === null ? (
+          {!submitted ? (
             <>
               <TextInput
                 style={[
@@ -645,10 +647,7 @@ function WinModal({
               style={[styles.winSaved, { color: colors.bonus }]}
               accessibilityLiveRegion="polite"
             >
-              {t("win.rank", {
-                rank: submitted.rank,
-                defaultValue: `Saved! #${submitted.rank}`,
-              })}
+              {t("win.saved", { defaultValue: "Saved! Score submitted." })}
             </Text>
           )}
 

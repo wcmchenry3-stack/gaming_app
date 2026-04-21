@@ -161,10 +161,14 @@ class TestSubmitRank:
 
 
 class TestRateLimit:
-    def test_sixth_submission_returns_429(self):
+    def test_rate_limit_enforced_after_threshold(self):
         from limiter import limiter
 
-        for i in range(5):
-            assert _submit(f"P{i}", i * 10, "easy").status_code == 201
+        # Limit raised to 30/minute (session-keyed) in #662.
+        # In-process tests share a single fixed session-id so we can still
+        # trigger the limit — just need 31 requests instead of 6.
+        for i in range(30):
+            r = _submit(f"P{i}", i, "easy")
+            assert r.status_code == 201, f"request {i} failed: {r.text}"
         assert _submit("Excess", 999, "easy").status_code == 429
         limiter.reset()

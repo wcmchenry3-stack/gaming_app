@@ -249,3 +249,52 @@ def test_post_games_valid_cascade_metadata_accepted(client) -> None:
         json={"game_type": "cascade", "metadata": {"player_name": "Eve"}},
     )
     assert r.status_code == 200
+
+
+# ---------------------------------------------------------------------------
+# _validate_client_timestamp unit tests (#659)
+# ---------------------------------------------------------------------------
+
+from datetime import timezone, timedelta
+from games.service import _validate_client_timestamp
+
+
+def _now():
+    from datetime import datetime
+    return datetime.now(timezone.utc)
+
+
+def test_validate_timestamp_within_window_returns_ts():
+    now = _now()
+    ts = now - timedelta(hours=1)
+    result = _validate_client_timestamp(ts, now)
+    assert result == ts
+
+
+def test_validate_timestamp_too_old_returns_none():
+    now = _now()
+    ts = now - timedelta(days=400)
+    assert _validate_client_timestamp(ts, now) is None
+
+
+def test_validate_timestamp_future_beyond_window_returns_none():
+    now = _now()
+    ts = now + timedelta(hours=25)
+    assert _validate_client_timestamp(ts, now) is None
+
+
+def test_validate_timestamp_just_within_future_window():
+    now = _now()
+    ts = now + timedelta(hours=23, minutes=59)
+    result = _validate_client_timestamp(ts, now)
+    assert result is not None
+
+
+def test_validate_timestamp_naive_treated_as_utc():
+    from datetime import datetime
+    now = _now()
+    naive = datetime(now.year, now.month, now.day, now.hour)
+    result = _validate_client_timestamp(naive, now)
+    # Naive within window should be accepted and returned with UTC tzinfo.
+    assert result is not None
+    assert result.tzinfo is not None

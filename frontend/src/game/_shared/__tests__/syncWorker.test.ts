@@ -125,6 +125,39 @@ describe("SyncWorker", () => {
     expect(result.accepted).toBeGreaterThan(0);
   });
 
+  it("step-1 POST /games body includes started_at ISO string", async () => {
+    const before = Date.now();
+    const gid = client.startGame("yacht", {});
+    await flushMicro();
+    await worker.flush();
+    const createCall = api.calls.find((c) => c.method === "POST" && c.path === "/games");
+    expect(createCall).toBeDefined();
+    const body = createCall!.body as Record<string, unknown>;
+    expect(typeof body["started_at"]).toBe("string");
+    const ts = new Date(body["started_at"] as string).getTime();
+    expect(ts).toBeGreaterThanOrEqual(before);
+    expect(ts).toBeLessThanOrEqual(Date.now());
+    expect(gid).toBeTruthy();
+  });
+
+  it("step-3 PATCH /complete body includes completed_at ISO string", async () => {
+    api.defaultResponse = ok({ accepted: 1, duplicates: 0 });
+    const gid = client.startGame("yacht", {});
+    const before = Date.now();
+    client.completeGame(gid, { finalScore: 50, outcome: "completed" });
+    await flushMicro();
+    await worker.flush();
+    const patchCall = api.calls.find(
+      (c) => c.method === "PATCH" && c.path.endsWith("/complete")
+    );
+    expect(patchCall).toBeDefined();
+    const body = patchCall!.body as Record<string, unknown>;
+    expect(typeof body["completed_at"]).toBe("string");
+    const ts = new Date(body["completed_at"] as string).getTime();
+    expect(ts).toBeGreaterThanOrEqual(before);
+    expect(ts).toBeLessThanOrEqual(Date.now());
+  });
+
   it("batches 150 rapid events into a single POST", async () => {
     logConfig.GAME_EVENT_BATCH_SIZE = 200;
     const gid = client.startGame("yacht");
@@ -357,11 +390,13 @@ describe("SyncWorker", () => {
       (c) => c.method === "PATCH" && c.path === `/games/${gid}/complete`
     );
     expect(patch).toBeDefined();
-    expect(patch!.body).toEqual({
+    expect(patch!.body).toMatchObject({
       final_score: 312,
       outcome: "completed",
       duration_ms: 45_000,
     });
+    // completed_at must be an ISO string (client-captured timestamp).
+    expect(typeof (patch!.body as Record<string, unknown>)["completed_at"]).toBe("string");
     // And the old camelCase keys must NOT be present — otherwise Pydantic
     // would still ignore them, but it would leave us with a confusing
     // double-keyed payload.
