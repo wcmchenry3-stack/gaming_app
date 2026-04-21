@@ -23,6 +23,7 @@ import { GameState } from "./src/game/yacht/types";
 import { ThemeProvider } from "./src/theme/ThemeContext";
 import { useHtmlAttributes } from "./src/i18n/useHtmlAttributes";
 import { NetworkProvider } from "./src/game/_shared/NetworkContext";
+import { CardDeckProvider } from "./src/game/_shared/decks/CardDeckContext";
 import { BlackjackGameProvider } from "./src/game/blackjack/BlackjackGameContext";
 import { SessionLogger } from "./src/components/FeedbackWidget/SessionLogger";
 
@@ -163,13 +164,15 @@ function AppInner() {
   return (
     <NetworkProvider>
       <ThemeProvider>
-        <BlackjackGameProvider>
-          <NavigationContainer>
-            <Stack.Navigator screenOptions={{ headerShown: false }}>
-              <Stack.Screen name="MainTabs" component={MainTabs} />
-            </Stack.Navigator>
-          </NavigationContainer>
-        </BlackjackGameProvider>
+        <CardDeckProvider>
+          <BlackjackGameProvider>
+            <NavigationContainer>
+              <Stack.Navigator screenOptions={{ headerShown: false }}>
+                <Stack.Screen name="MainTabs" component={MainTabs} />
+              </Stack.Navigator>
+            </NavigationContainer>
+          </BlackjackGameProvider>
+        </CardDeckProvider>
       </ThemeProvider>
     </NetworkProvider>
   );

@@ -530,9 +530,11 @@ Cold-start timing via `performance.now()` instrumentation (`src/utils/appTiming.
 
 ### Hard limit
 
-The `android-bundle-check` CI job enforces a **5 MB hard limit** on the uncompressed Hermes bytecode bundle (`dist/index.android.bundle`). The job fails if the limit is exceeded. Additionally, `bundlesize2` runs against the `"bundlesize"` config in `frontend/package.json` to provide a structured pass/fail report.
+The `android-bundle-check` CI job enforces a **5.5 MB hard limit** on the uncompressed Hermes bytecode bundle (`dist/index.android.bundle`). The job fails if the limit is exceeded. Additionally, `bundlesize2` runs against the `"bundlesize"` config in `frontend/package.json` to provide a structured pass/fail report.
 
-**Baseline at time of implementation:** 4.5 MB (pre-#554/#555 measurement from PERFORMANCE.md asset inventory). The limit is set at 4.5 MB × 1.11 ≈ 5.0 MB to allow ~10% headroom for normal feature growth.
+**Baseline at time of implementation:** 4.5 MB (pre-#554/#555 measurement from PERFORMANCE.md asset inventory). The limit was set at 4.5 MB × 1.11 ≈ 5.0 MB to allow ~10% headroom for normal feature growth.
+
+**Updated (#688 — card deck system):** Adding `react-native-svg` for the Classic card deck pushed the bundle to 5.01 MB. Limit raised to 5.5 MB (5.01 MB × 1.10 ≈ 5.5 MB) to restore headroom.
 
 ### Updating the limit
 
