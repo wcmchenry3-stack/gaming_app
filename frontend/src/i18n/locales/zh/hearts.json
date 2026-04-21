@@ -46,5 +46,11 @@
   "game_over.submit_error": "提交失败。",
   "game_over.retry": "重试",
   "game_over.again": "再玩一次",
-  "score.close": "关闭"
+  "score.close": "关闭",
+  "score.round": "Rnd",
+  "settings.rename": "Edit Names",
+  "settings.rename_title": "Player Names",
+  "settings.player_label": "Player {{n}} (default: {{default}})",
+  "settings.save": "Save",
+  "settings.cancel": "Cancel"
 }

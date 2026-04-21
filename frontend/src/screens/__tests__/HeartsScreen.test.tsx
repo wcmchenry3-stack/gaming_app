@@ -11,6 +11,13 @@ jest.mock("../../game/hearts/storage", () => ({
   clearGame: jest.fn().mockResolvedValue(undefined),
 }));
 
+jest.mock("../../game/hearts/playerNames", () => ({
+  DEFAULT_NAMES: ["You", "West", "North", "East"],
+  loadPlayerNames: jest.fn().mockResolvedValue(["You", "West", "North", "East"]),
+  savePlayerNames: jest.fn().mockResolvedValue(undefined),
+  validateName: jest.fn((v: string, def: string) => v.trim() || def),
+}));
+
 jest.mock("../../game/hearts/api", () => ({
   heartsApi: {
     submitScore: jest.fn().mockResolvedValue({ player_name: "test", score: 0, rank: 1 }),
@@ -93,7 +100,7 @@ describe("HeartsScreen — playing phase (no modal)", () => {
   it("score panel opens and shows score board", () => {
     const { getByLabelText, getByText } = renderScreen();
     fireEvent.press(getByLabelText("Scores"));
-    expect(getByText("Player")).toBeTruthy(); // ScoreBoard column header
+    expect(getByText("Total")).toBeTruthy(); // ScoreBoard total row header
   });
 
   it("score panel close button dismisses the panel", () => {

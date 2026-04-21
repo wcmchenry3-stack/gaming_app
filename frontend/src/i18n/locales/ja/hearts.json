@@ -46,5 +46,11 @@
   "game_over.submit_error": "送信に失敗しました。",
   "game_over.retry": "再試行",
   "game_over.again": "もう一度プレイ",
-  "score.close": "閉じる"
+  "score.close": "閉じる",
+  "score.round": "Rnd",
+  "settings.rename": "Edit Names",
+  "settings.rename_title": "Player Names",
+  "settings.player_label": "Player {{n}} (default: {{default}})",
+  "settings.save": "Save",
+  "settings.cancel": "Cancel"
 }

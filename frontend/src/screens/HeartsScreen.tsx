@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import { Modal, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
+import { Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { useTranslation } from "react-i18next";
 import { useTheme } from "../theme/ThemeContext";
@@ -21,6 +21,12 @@ import {
 } from "../game/hearts/engine";
 import { selectCardToPlay, selectCardsToPass } from "../game/hearts/ai";
 import { clearGame, loadGame, saveGame } from "../game/hearts/storage";
+import {
+  DEFAULT_NAMES,
+  loadPlayerNames,
+  savePlayerNames,
+  validateName,
+} from "../game/hearts/playerNames";
 import { heartsApi } from "../game/hearts/api";
 import { useGameSync } from "../game/_shared/useGameSync";
 import type { Card, HeartsState, TrickCard } from "../game/hearts/types";
@@ -39,10 +45,12 @@ type SubmitState = "idle" | "submitting" | "done" | "error";
 function CompactHand({
   cardCount,
   label,
+  score,
   colors,
 }: {
   cardCount: number;
   label: string;
+  score: number;
   colors: Colors;
 }) {
   return (
@@ -56,6 +64,7 @@ function CompactHand({
       >
         <Text style={[compactStyles.count, { color: colors.textMuted }]}>{cardCount}</Text>
       </View>
+      <Text style={[compactStyles.score, { color: colors.text }]}>{score}</Text>
     </View>
   );
 }
@@ -72,6 +81,7 @@ const compactStyles = StyleSheet.create({
     justifyContent: "center",
   },
   count: { fontSize: 13, fontWeight: "700" },
+  score: { fontSize: 13, fontWeight: "700" },
 });
 
 export default function HeartsScreen() {
@@ -82,13 +92,18 @@ export default function HeartsScreen() {
   const [gameState, setGameState] = useState<HeartsState>(() => dealGame());
   const [lastTrick, setLastTrick] = useState<LastTrick>(null);
   const [showScores, setShowScores] = useState(false);
+  const [showRename, setShowRename] = useState(false);
   const [playerName, setPlayerName] = useState("");
   const [submitState, setSubmitState] = useState<SubmitState>("idle");
+  const [playerNames, setPlayerNames] = useState<string[]>([...DEFAULT_NAMES]);
+  const [draftNames, setDraftNames] = useState<string[]>([...DEFAULT_NAMES]);
+  const [scoreHistory, setScoreHistory] = useState<number[][]>([]);
 
   const unmountedRef = useRef(false);
   const loopActiveRef = useRef(false);
   const syncStartedRef = useRef(false);
   const gameStateRef = useRef<HeartsState>(gameState);
+  const lastRecordedHandRef = useRef<number>(0);
 
   const { start: syncStart, complete: syncComplete } = useGameSync("hearts");
 
@@ -104,12 +119,26 @@ export default function HeartsScreen() {
     []
   );
 
-  // ─── Load saved game on mount ──────────────────────────────────────────────
+  // ─── Load saved game and player names on mount ────────────────────────────
   useEffect(() => {
     loadGame().then((saved) => {
       if (saved && !unmountedRef.current) setGameState(saved);
     });
+    loadPlayerNames().then((names) => {
+      if (!unmountedRef.current) {
+        setPlayerNames(names);
+        setDraftNames(names);
+      }
+    });
   }, []);
+
+  // ─── Track per-round score history ────────────────────────────────────────
+  useEffect(() => {
+    if (gameState.phase !== "dealing" && gameState.phase !== "game_over") return;
+    if (gameState.handNumber <= lastRecordedHandRef.current) return;
+    lastRecordedHandRef.current = gameState.handNumber;
+    setScoreHistory((prev) => [...prev, [...gameState.handScores]]);
+  }, [gameState.phase, gameState.handNumber, gameState.handScores]);
 
   // ─── Abandon on back-navigation ───────────────────────────────────────────
   useEffect(() => {
@@ -125,7 +154,7 @@ export default function HeartsScreen() {
     return unsub;
   }, [navigation, syncComplete]);
 
-  const playerLabels = [t("player.you"), t("player.left"), t("player.top"), t("player.right")];
+  const playerLabels = playerNames;
 
   // ─── Start sync on first card play ────────────────────────────────────────
   function ensureSyncStarted() {
@@ -261,11 +290,27 @@ export default function HeartsScreen() {
     setLastTrick(null);
     setSubmitState("idle");
     setPlayerName("");
+    setScoreHistory([]);
+    lastRecordedHandRef.current = 0;
     loopActiveRef.current = false;
     syncStartedRef.current = false;
     clearGame().catch(() => {});
     const fresh = dealGame();
     setGameState(fresh);
+  }
+
+  function handleOpenRename() {
+    setDraftNames([...playerNames]);
+    setShowRename(true);
+  }
+
+  function handleSaveNames() {
+    const validated = playerNames.map((def, i) =>
+      validateName(draftNames[i] ?? "", DEFAULT_NAMES[i] ?? def)
+    );
+    setPlayerNames(validated);
+    savePlayerNames(validated).catch(() => {});
+    setShowRename(false);
   }
 
   // ─── Derived state ────────────────────────────────────────────────────────
@@ -302,6 +347,7 @@ export default function HeartsScreen() {
           <OpponentHand
             cardCount={gameState.playerHands[2]?.length ?? 0}
             label={playerLabels[2] ?? ""}
+            score={gameState.cumulativeScores[2] ?? 0}
           />
         </View>
 
@@ -310,6 +356,7 @@ export default function HeartsScreen() {
           <CompactHand
             cardCount={gameState.playerHands[1]?.length ?? 0}
             label={playerLabels[1] ?? ""}
+            score={gameState.cumulativeScores[1] ?? 0}
             colors={colors}
           />
           <TrickArea
@@ -321,12 +368,21 @@ export default function HeartsScreen() {
           <CompactHand
             cardCount={gameState.playerHands[3]?.length ?? 0}
             label={playerLabels[3] ?? ""}
+            score={gameState.cumulativeScores[3] ?? 0}
             colors={colors}
           />
         </View>
 
         {/* Human hand */}
         <View style={styles.bottomArea}>
+          <View style={styles.humanHeader}>
+            <Text style={[styles.humanLabel, { color: colors.textMuted }]}>
+              {playerLabels[0] ?? ""}
+            </Text>
+            <Text style={[styles.humanScore, { color: colors.text }]}>
+              {gameState.cumulativeScores[HUMAN] ?? 0}
+            </Text>
+          </View>
           <PlayerHand hand={humanHand} validCards={validCards} onCardPress={handleCardPress} />
         </View>
       </View>
@@ -361,7 +417,7 @@ export default function HeartsScreen() {
               <ScoreBoard
                 playerLabels={playerLabels}
                 cumulativeScores={[...gameState.cumulativeScores]}
-                handScores={[...gameState.handScores]}
+                scoreHistory={scoreHistory}
                 dangerIndex={dangerIndex}
               />
               <Pressable
@@ -398,7 +454,7 @@ export default function HeartsScreen() {
               <ScoreBoard
                 playerLabels={playerLabels}
                 cumulativeScores={[...gameState.cumulativeScores]}
-                handScores={[...gameState.handScores]}
+                scoreHistory={scoreHistory}
                 dangerIndex={dangerIndex}
               />
 
@@ -505,9 +561,17 @@ export default function HeartsScreen() {
             <ScoreBoard
               playerLabels={playerLabels}
               cumulativeScores={[...gameState.cumulativeScores]}
-              handScores={[...gameState.handScores]}
+              scoreHistory={scoreHistory}
               dangerIndex={dangerIndex}
             />
+            <Pressable
+              style={[styles.btn, { backgroundColor: colors.surfaceAlt }]}
+              onPress={handleOpenRename}
+              accessibilityRole="button"
+              accessibilityLabel={t("settings.rename")}
+            >
+              <Text style={[styles.btnText, { color: colors.text }]}>{t("settings.rename")}</Text>
+            </Pressable>
             <Pressable
               style={[styles.btn, { backgroundColor: colors.surfaceAlt }]}
               onPress={() => setShowScores(false)}
@@ -515,6 +579,74 @@ export default function HeartsScreen() {
               accessibilityLabel={t("score.close")}
             >
               <Text style={[styles.btnText, { color: colors.text }]}>{t("score.close")}</Text>
+            </Pressable>
+          </View>
+        </View>
+      </Modal>
+
+      {/* ── Rename players modal ───────────────────────────────────── */}
+      <Modal
+        visible={showRename}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setShowRename(false)}
+        accessibilityViewIsModal
+      >
+        <View style={[styles.overlay, { backgroundColor: colors.overlay }]}>
+          <View
+            style={[styles.panel, { backgroundColor: colors.surface, borderColor: colors.border }]}
+          >
+            <Text style={[styles.panelTitle, { color: colors.text }]}>
+              {t("settings.rename_title")}
+            </Text>
+            <ScrollView style={styles.renameScroll} contentContainerStyle={styles.renameContent}>
+              {DEFAULT_NAMES.map((def, i) => (
+                <View key={i} style={styles.renameRow}>
+                  <Text style={[styles.renameLabel, { color: colors.textMuted }]}>
+                    {t("settings.player_label", { n: i + 1, default: def })}
+                  </Text>
+                  <TextInput
+                    style={[
+                      styles.renameInput,
+                      {
+                        color: colors.text,
+                        borderColor: colors.border,
+                        backgroundColor: colors.surfaceAlt,
+                      },
+                    ]}
+                    value={draftNames[i] ?? ""}
+                    onChangeText={(v) =>
+                      setDraftNames((prev) => {
+                        const next = [...prev];
+                        next[i] = v;
+                        return next;
+                      })
+                    }
+                    placeholder={def}
+                    placeholderTextColor={colors.textMuted}
+                    maxLength={32}
+                    accessibilityLabel={t("settings.player_label", { n: i + 1, default: def })}
+                  />
+                </View>
+              ))}
+            </ScrollView>
+            <Pressable
+              style={[styles.btn, { backgroundColor: colors.accent }]}
+              onPress={handleSaveNames}
+              accessibilityRole="button"
+              accessibilityLabel={t("settings.save")}
+            >
+              <Text style={[styles.btnText, { color: colors.textOnAccent }]}>
+                {t("settings.save")}
+              </Text>
+            </Pressable>
+            <Pressable
+              style={[styles.btn, { backgroundColor: colors.surfaceAlt }]}
+              onPress={() => setShowRename(false)}
+              accessibilityRole="button"
+              accessibilityLabel={t("settings.cancel")}
+            >
+              <Text style={[styles.btnText, { color: colors.text }]}>{t("settings.cancel")}</Text>
             </Pressable>
           </View>
         </View>
@@ -605,5 +737,41 @@ const styles = StyleSheet.create({
   headerBtnText: {
     fontSize: 14,
     fontWeight: "600",
+  },
+  humanHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingHorizontal: 12,
+    paddingBottom: 4,
+  },
+  humanLabel: {
+    fontSize: 12,
+    fontWeight: "600",
+  },
+  humanScore: {
+    fontSize: 13,
+    fontWeight: "700",
+  },
+  renameScroll: {
+    width: "100%",
+    maxHeight: 260,
+  },
+  renameContent: {
+    gap: 12,
+  },
+  renameRow: {
+    gap: 4,
+  },
+  renameLabel: {
+    fontSize: 12,
+    fontWeight: "600",
+  },
+  renameInput: {
+    borderWidth: 1,
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    fontSize: 15,
   },
 });
