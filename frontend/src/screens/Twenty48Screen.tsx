@@ -64,6 +64,7 @@ export default function Twenty48Screen({ navigation }: Props) {
   // moves are still playable but aren't tracked — they belong to no session.
   const {
     start: syncStart,
+    markStarted: syncMarkStarted,
     enqueue: syncEnqueue,
     complete: syncComplete,
   } = useGameSync("twenty48");
@@ -106,6 +107,8 @@ export default function Twenty48Screen({ navigation }: Props) {
       if (!next.game_over) {
         moveCountRef.current = 0;
         syncStart({ initial_board: flattenBoard(next.board) });
+        // Resuming a saved mid-game means the player already started — mark it.
+        if (saved) syncMarkStarted();
       }
     });
     return () => {
@@ -141,6 +144,7 @@ export default function Twenty48Screen({ navigation }: Props) {
       setState(next);
       saveGame(next);
       moveCountRef.current += 1;
+      syncMarkStarted();
       syncEnqueue({
         type: "move",
         data: {

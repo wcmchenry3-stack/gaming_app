@@ -48,7 +48,12 @@ export default function GameScreen({ navigation, route }: Props) {
   }, [gameState]);
 
   // Game event instrumentation (#368 / #549).
-  const { start: syncStart, enqueue: syncEnqueue, complete: syncComplete } = useGameSync("yacht");
+  const {
+    start: syncStart,
+    markStarted: syncMarkStarted,
+    enqueue: syncEnqueue,
+    complete: syncComplete,
+  } = useGameSync("yacht");
 
   function endedPayload(s: GameState, outcome: "completed" | "abandoned") {
     return {
@@ -78,6 +83,7 @@ export default function GameScreen({ navigation, route }: Props) {
 
   function handleRoll(held: boolean[]) {
     setError(null);
+    syncMarkStarted();
     try {
       const next = engineRoll(gameState, held);
       setGameState(next);

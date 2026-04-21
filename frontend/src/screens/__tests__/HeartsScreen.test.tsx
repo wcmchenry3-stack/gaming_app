@@ -25,7 +25,13 @@ jest.mock("../../game/hearts/api", () => ({
 }));
 
 jest.mock("../../game/_shared/useGameSync", () => ({
-  useGameSync: () => ({ start: jest.fn(), complete: jest.fn(), restart: jest.fn() }),
+  useGameSync: () => ({
+    start: jest.fn(),
+    markStarted: jest.fn(),
+    complete: jest.fn(),
+    restart: jest.fn(),
+    getGameId: jest.fn().mockReturnValue(null),
+  }),
 }));
 
 jest.mock("@react-navigation/native", () => ({

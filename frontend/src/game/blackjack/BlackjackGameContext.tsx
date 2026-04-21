@@ -32,6 +32,7 @@ export function BlackjackGameProvider({ children }: { children: React.ReactNode 
   // from chip allocation until chips=0 OR the provider unmounts.
   const {
     start: syncStart,
+    markStarted: syncMarkStarted,
     enqueue: syncEnqueue,
     complete: syncComplete,
   } = useGameSync("blackjack");
@@ -78,6 +79,8 @@ export function BlackjackGameProvider({ children }: { children: React.ReactNode 
         // a chips-exhausted game-over state.
         if (!(next.chips === 0 && next.phase === "result")) {
           startSession(next.chips);
+          // Resuming a saved mid-game means the player already started — mark it.
+          if (saved) syncMarkStarted();
         }
       })
       .finally(() => {
@@ -106,6 +109,7 @@ export function BlackjackGameProvider({ children }: { children: React.ReactNode 
       // reflect the post-settlement balance, not the chips the player has
       // after merely locking in the bet. (closes #503)
       if (prev.phase === "betting" && next.phase !== "betting") {
+        syncMarkStarted();
         syncEnqueue({
           type: "bet_placed",
           data: {
@@ -180,7 +184,7 @@ export function BlackjackGameProvider({ children }: { children: React.ReactNode 
         endSession("completed");
       }
     },
-    [endSession, syncEnqueue]
+    [endSession, syncEnqueue, syncMarkStarted]
   );
 
   const apply = useCallback(

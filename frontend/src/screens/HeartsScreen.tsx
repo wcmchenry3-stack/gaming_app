@@ -101,11 +101,15 @@ export default function HeartsScreen() {
 
   const unmountedRef = useRef(false);
   const loopActiveRef = useRef(false);
-  const syncStartedRef = useRef(false);
   const gameStateRef = useRef<HeartsState>(gameState);
   const lastRecordedHandRef = useRef<number>(0);
 
-  const { start: syncStart, complete: syncComplete } = useGameSync("hearts");
+  const {
+    start: syncStart,
+    markStarted: syncMarkStarted,
+    complete: syncComplete,
+    getGameId: syncGetGameId,
+  } = useGameSync("hearts");
 
   // Keep ref in sync for use in event listeners.
   useEffect(() => {
@@ -143,24 +147,23 @@ export default function HeartsScreen() {
   // ─── Abandon on back-navigation ───────────────────────────────────────────
   useEffect(() => {
     const unsub = navigation.addListener("beforeRemove", () => {
-      if (!syncStartedRef.current) return;
+      if (!syncGetGameId()) return;
       if (gameStateRef.current.isComplete) return;
       syncComplete(
         { outcome: "abandoned", finalScore: 0, durationMs: 0 },
         { outcome: "abandoned" }
       );
-      syncStartedRef.current = false;
     });
     return unsub;
-  }, [navigation, syncComplete]);
+  }, [navigation, syncComplete, syncGetGameId]);
 
   const playerLabels = playerNames;
 
   // ─── Start sync on first card play ────────────────────────────────────────
   function ensureSyncStarted() {
-    if (syncStartedRef.current) return;
-    syncStartedRef.current = true;
+    if (syncGetGameId()) return;
     syncStart({ initial_score: 0 });
+    syncMarkStarted();
   }
 
   // ─── AI turn loop ─────────────────────────────────────────────────────────
@@ -215,12 +218,11 @@ export default function HeartsScreen() {
   // Complete sync when game is over.
   useEffect(() => {
     if (gameState.phase !== "game_over") return;
-    if (!syncStartedRef.current) return;
+    if (!syncGetGameId()) return;
     const humanScore = gameState.cumulativeScores[HUMAN] ?? 0;
     const finalScore = Math.max(0, 100 - humanScore);
     syncComplete({ outcome: "completed", finalScore, durationMs: 0 }, { final_score: finalScore });
-    syncStartedRef.current = false;
-  }, [gameState.phase, gameState.cumulativeScores, syncComplete]);
+  }, [gameState.phase, gameState.cumulativeScores, syncComplete, syncGetGameId]);
 
   // ─── Human card play ──────────────────────────────────────────────────────
   function handleCardPress(card: Card) {
@@ -293,7 +295,6 @@ export default function HeartsScreen() {
     setScoreHistory([]);
     lastRecordedHandRef.current = 0;
     loopActiveRef.current = false;
-    syncStartedRef.current = false;
     clearGame().catch(() => {});
     const fresh = dealGame();
     setGameState(fresh);

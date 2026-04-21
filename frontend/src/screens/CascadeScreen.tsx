@@ -60,6 +60,7 @@ function CascadeGame() {
   // until handleGameOver, a fruit-set switch, New Game, or unmount.
   const {
     start: syncStart,
+    markStarted: syncMarkStarted,
     enqueue: syncEnqueue,
     complete: syncComplete,
     getGameId,
@@ -273,6 +274,7 @@ function CascadeGame() {
       droppingRef.current = true;
       lastDropTimeRef.current = now;
       dropCountRef.current += 1;
+      syncMarkStarted();
 
       const tier = queueRef.current.consume();
       setQueueVersion((v) => v + 1);
@@ -304,7 +306,7 @@ function CascadeGame() {
         droppingRef.current = false;
       }, 200);
     },
-    [gameOver, activeFruitSet, saveGameThrottled, syncEnqueue]
+    [gameOver, activeFruitSet, saveGameThrottled, syncEnqueue, syncMarkStarted]
   );
 
   // -------------------------------------------------------------------------

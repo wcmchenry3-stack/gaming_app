@@ -101,10 +101,14 @@ export default function SolitaireScreen() {
   const hasLoadedRef = useRef(false);
   const stateRef = useRef<SolitaireState | null>(null);
   const movesRef = useRef(0);
-  const syncStartedRef = useRef(false);
   const prevCompleteRef = useRef(false);
 
-  const { start: syncStart, complete: syncComplete } = useGameSync("solitaire");
+  const {
+    start: syncStart,
+    markStarted: syncMarkStarted,
+    complete: syncComplete,
+    getGameId: syncGetGameId,
+  } = useGameSync("solitaire");
 
   useEffect(() => {
     return () => {
@@ -158,7 +162,6 @@ export default function SolitaireScreen() {
         { finalScore: state.score, outcome: "completed", durationMs: 0 },
         { final_score: state.score, outcome: "completed", moves: movesRef.current }
       );
-      syncStartedRef.current = false;
       clearGame().catch(() => {});
     }
     prevCompleteRef.current = state.isComplete;
@@ -171,25 +174,24 @@ export default function SolitaireScreen() {
   useEffect(() => {
     const unsub = navigation.addListener("beforeRemove", () => {
       const s = stateRef.current;
-      if (!syncStartedRef.current) return;
+      if (!syncGetGameId()) return;
       if (s !== null && s.isComplete) return;
       if (movesRef.current < 1) return;
       syncComplete(
         { outcome: "abandoned", finalScore: s?.score ?? 0, durationMs: 0 },
         { outcome: "abandoned", moves: movesRef.current }
       );
-      syncStartedRef.current = false;
     });
     return unsub;
-  }, [navigation, syncComplete]);
+  }, [navigation, syncComplete, syncGetGameId]);
 
   const ensureSyncStarted = useCallback(
     (s: SolitaireState) => {
-      if (syncStartedRef.current) return;
-      syncStartedRef.current = true;
+      if (syncGetGameId()) return;
       syncStart({ draw_mode: s.drawMode });
+      syncMarkStarted();
     },
-    [syncStart]
+    [syncGetGameId, syncStart, syncMarkStarted]
   );
 
   const flashInvalid = useCallback(() => {
@@ -204,7 +206,6 @@ export default function SolitaireScreen() {
     setState(dealGame(drawMode));
     setSelection(null);
     setMoves(0);
-    syncStartedRef.current = false;
   }, []);
 
   const tryMove = useCallback(
@@ -409,7 +410,6 @@ export default function SolitaireScreen() {
       autoStepTimeoutRef.current = null;
     }
     clearGame().catch(() => {});
-    syncStartedRef.current = false;
     setAutoCompleting(false);
     setState(null);
     setSelection(null);

@@ -100,13 +100,17 @@ export default function SudokuScreen() {
   const hasLoadedRef = useRef(false);
   const stateRef = useRef<SudokuState | null>(null);
   const digitCountRef = useRef(0);
-  const syncStartedRef = useRef(false);
   const prevCompleteRef = useRef(false);
 
   const flashOpacity = useRef(new Animated.Value(0)).current;
   const isComplete = state?.isComplete ?? false;
 
-  const { start: syncStart, complete: syncComplete } = useGameSync("sudoku");
+  const {
+    start: syncStart,
+    markStarted: syncMarkStarted,
+    complete: syncComplete,
+    getGameId: syncGetGameId,
+  } = useGameSync("sudoku");
 
   // Mount load — restores a saved game silently; on a clean slot the
   // pre-game picker shows.
@@ -196,7 +200,7 @@ export default function SudokuScreen() {
       return;
     }
     if (state.isComplete && !prevCompleteRef.current) {
-      if (syncStartedRef.current) {
+      if (syncGetGameId()) {
         syncComplete(
           {
             finalScore: computeScore(state.difficulty, state.errorCount),
@@ -210,12 +214,11 @@ export default function SudokuScreen() {
             errors: state.errorCount,
           }
         );
-        syncStartedRef.current = false;
       }
       clearGame().catch(() => {});
     }
     prevCompleteRef.current = state.isComplete;
-  }, [state, syncComplete]);
+  }, [state, syncComplete, syncGetGameId]);
 
   // Abandon on back-navigation when a digit has been placed and the
   // puzzle isn't finished.  useGameSync's own unmount handler provides
@@ -224,7 +227,7 @@ export default function SudokuScreen() {
   useEffect(() => {
     const unsub = navigation.addListener("beforeRemove", () => {
       const s = stateRef.current;
-      if (!syncStartedRef.current) return;
+      if (!syncGetGameId()) return;
       if (s !== null && s.isComplete) return;
       if (digitCountRef.current < 1) return;
       syncComplete(
@@ -239,18 +242,17 @@ export default function SudokuScreen() {
           errors: s?.errorCount ?? 0,
         }
       );
-      syncStartedRef.current = false;
     });
     return unsub;
-  }, [navigation, syncComplete]);
+  }, [navigation, syncComplete, syncGetGameId]);
 
   const ensureSyncStarted = useCallback(
     (next: SudokuState) => {
-      if (syncStartedRef.current) return;
-      syncStartedRef.current = true;
+      if (syncGetGameId()) return;
       syncStart({ difficulty: next.difficulty }, { difficulty: next.difficulty });
+      syncMarkStarted();
     },
-    [syncStart]
+    [syncGetGameId, syncStart, syncMarkStarted]
   );
 
   const flashError = useCallback(() => {
@@ -270,7 +272,6 @@ export default function SudokuScreen() {
 
   const handleStart = useCallback(() => {
     clearGame().catch(() => {});
-    syncStartedRef.current = false;
     digitCountRef.current = 0;
     const fresh = loadPuzzle(difficulty);
     setState(fresh);
@@ -323,7 +324,6 @@ export default function SudokuScreen() {
 
   const handleChangeDifficulty = useCallback(() => {
     clearGame().catch(() => {});
-    syncStartedRef.current = false;
     digitCountRef.current = 0;
     setState(null);
     setElapsed(0);
