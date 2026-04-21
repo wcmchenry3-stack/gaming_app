@@ -46,5 +46,11 @@
   "game_over.submit_error": "שליחה נכשלה.",
   "game_over.retry": "נסה שוב",
   "game_over.again": "שחק שוב",
-  "score.close": "סגור"
+  "score.close": "סגור",
+  "score.round": "Rnd",
+  "settings.rename": "Edit Names",
+  "settings.rename_title": "Player Names",
+  "settings.player_label": "Player {{n}} (default: {{default}})",
+  "settings.save": "Save",
+  "settings.cancel": "Cancel"
 }

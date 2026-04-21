@@ -46,5 +46,11 @@
   "game_over.submit_error": "제출 실패",
   "game_over.retry": "재시도",
   "game_over.again": "다시 플레이",
-  "score.close": "닫기"
+  "score.close": "닫기",
+  "score.round": "Rnd",
+  "settings.rename": "Edit Names",
+  "settings.rename_title": "Player Names",
+  "settings.player_label": "Player {{n}} (default: {{default}})",
+  "settings.save": "Save",
+  "settings.cancel": "Cancel"
 }

@@ -46,5 +46,11 @@
   "game_over.submit_error": "فشل الإرسال.",
   "game_over.retry": "أعد المحاولة",
   "game_over.again": "العب مرة أخرى",
-  "score.close": "إغلاق"
+  "score.close": "إغلاق",
+  "score.round": "Rnd",
+  "settings.rename": "Edit Names",
+  "settings.rename_title": "Player Names",
+  "settings.player_label": "Player {{n}} (default: {{default}})",
+  "settings.save": "Save",
+  "settings.cancel": "Cancel"
 }

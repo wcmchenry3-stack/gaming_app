@@ -24,7 +24,8 @@
 
   "score.board": "Scores",
   "score.player": "Player",
-  "score.total": "Score",
+  "score.round": "Rnd",
+  "score.total": "Total",
   "score.hand": "Hand",
 
   "pass.direction.left": "Pass left",
@@ -55,5 +56,11 @@
   "game_over.retry": "Retry",
   "game_over.again": "Play Again",
 
-  "score.close": "Close"
+  "score.close": "Close",
+
+  "settings.rename": "Edit Names",
+  "settings.rename_title": "Player Names",
+  "settings.player_label": "Player {{n}} (default: {{default}})",
+  "settings.save": "Save",
+  "settings.cancel": "Cancel"
 }

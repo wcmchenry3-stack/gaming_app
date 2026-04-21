@@ -46,5 +46,11 @@
   "game_over.submit_error": "भेजने में विफल।",
   "game_over.retry": "पुनः प्रयास",
   "game_over.again": "फिर से खेलें",
-  "score.close": "बंद करें"
+  "score.close": "बंद करें",
+  "score.round": "Rnd",
+  "settings.rename": "Edit Names",
+  "settings.rename_title": "Player Names",
+  "settings.player_label": "Player {{n}} (default: {{default}})",
+  "settings.save": "Save",
+  "settings.cancel": "Cancel"
 }

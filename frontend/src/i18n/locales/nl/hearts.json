@@ -46,5 +46,11 @@
   "game_over.submit_error": "Indienen mislukt.",
   "game_over.retry": "Opnieuw",
   "game_over.again": "Nog een keer!",
-  "score.close": "Sluiten"
+  "score.close": "Sluiten",
+  "score.round": "Rnd",
+  "settings.rename": "Edit Names",
+  "settings.rename_title": "Player Names",
+  "settings.player_label": "Player {{n}} (default: {{default}})",
+  "settings.save": "Save",
+  "settings.cancel": "Cancel"
 }

@@ -46,5 +46,11 @@
   "game_over.submit_error": "Senden fehlgeschlagen.",
   "game_over.retry": "Erneut",
   "game_over.again": "Nochmal spielen",
-  "score.close": "Schließen"
+  "score.close": "Schließen",
+  "score.round": "Rnd",
+  "settings.rename": "Edit Names",
+  "settings.rename_title": "Player Names",
+  "settings.player_label": "Player {{n}} (default: {{default}})",
+  "settings.save": "Save",
+  "settings.cancel": "Cancel"
 }

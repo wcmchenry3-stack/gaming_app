@@ -87,9 +87,29 @@ describe("PlayerHand", () => {
 
   it("fires onCardPress with the correct card", () => {
     const onPress = jest.fn();
+    // Hand is sorted: clubs 9, spades 2, hearts 5 → suit order clubs→spades→hearts
+    // Sorted: clubs-9, spades-2, hearts-5 → buttons[0]=clubs9, [1]=spades2, [2]=hearts5
     const { getAllByRole } = wrap(<PlayerHand hand={hand} onCardPress={onPress} />);
-    fireEvent.press(getAllByRole("button")[1]!);
-    expect(onPress).toHaveBeenCalledWith(hand[1]);
+    fireEvent.press(getAllByRole("button")[0]!);
+    expect(onPress).toHaveBeenCalledWith(c("clubs", 9));
+  });
+
+  it("sorts by suit then rank ascending (clubs→diamonds→spades→hearts, Ace high)", () => {
+    const unsorted: Card[] = [
+      c("hearts", 1),
+      c("clubs", 3),
+      c("spades", 7),
+      c("diamonds", 2),
+      c("clubs", 1),
+    ];
+    const { getAllByRole } = wrap(<PlayerHand hand={unsorted} onCardPress={jest.fn()} />);
+    const buttons = getAllByRole("button");
+    // Expected sort: clubs-3, clubs-A, diamonds-2, spades-7, hearts-A
+    expect(buttons[0]!.props.accessibilityLabel).toMatch(/3.*clubs/i);
+    expect(buttons[1]!.props.accessibilityLabel).toMatch(/A.*clubs/i);
+    expect(buttons[2]!.props.accessibilityLabel).toMatch(/2.*diamonds/i);
+    expect(buttons[3]!.props.accessibilityLabel).toMatch(/7.*spades/i);
+    expect(buttons[4]!.props.accessibilityLabel).toMatch(/A.*hearts/i);
   });
 });
 
@@ -111,6 +131,11 @@ describe("OpponentHand", () => {
   it("renders zero cards without error", () => {
     const { toJSON } = wrap(<OpponentHand cardCount={0} label="Top" />);
     expect(toJSON()).toBeTruthy();
+  });
+
+  it("renders score when provided", () => {
+    const { getByText } = wrap(<OpponentHand cardCount={3} label="Top" score={12} />);
+    expect(getByText("12")).toBeTruthy();
   });
 });
 
@@ -144,27 +169,38 @@ describe("TrickArea", () => {
 describe("ScoreBoard", () => {
   const labels = ["You", "Left", "Top", "Right"];
   const cumulative = [10, 5, 20, 0];
-  const hand = [3, 2, 8, 0];
+  const history = [
+    [3, 2, 8, 0],
+    [7, 3, 12, 0],
+  ];
 
   it("renders all player labels", () => {
     const { getByText } = wrap(
-      <ScoreBoard playerLabels={labels} cumulativeScores={cumulative} handScores={hand} />
+      <ScoreBoard playerLabels={labels} cumulativeScores={cumulative} scoreHistory={history} />
     );
-    labels.forEach((l) => expect(getByText(l)).toBeTruthy());
+    labels.forEach((l) => expect(getByText(l.slice(0, 5))).toBeTruthy());
   });
 
-  it("renders cumulative scores", () => {
+  it("renders cumulative totals row", () => {
     const { getByText } = wrap(
-      <ScoreBoard playerLabels={labels} cumulativeScores={cumulative} handScores={hand} />
+      <ScoreBoard playerLabels={labels} cumulativeScores={cumulative} scoreHistory={history} />
     );
     expect(getByText("20")).toBeTruthy();
   });
 
-  it("renders positive hand delta with + prefix", () => {
-    const { getByText } = wrap(
-      <ScoreBoard playerLabels={labels} cumulativeScores={cumulative} handScores={[5, 0, 0, 0]} />
+  it("renders per-round scores", () => {
+    const { getAllByText } = wrap(
+      <ScoreBoard playerLabels={labels} cumulativeScores={cumulative} scoreHistory={history} />
     );
-    expect(getByText("+5")).toBeTruthy();
+    expect(getAllByText("3").length).toBeGreaterThan(0);
+    expect(getAllByText("12").length).toBeGreaterThan(0);
+  });
+
+  it("renders empty history without error", () => {
+    const { toJSON } = wrap(
+      <ScoreBoard playerLabels={labels} cumulativeScores={[0, 0, 0, 0]} scoreHistory={[]} />
+    );
+    expect(toJSON()).toBeTruthy();
   });
 });
 
