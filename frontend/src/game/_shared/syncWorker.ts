@@ -284,8 +284,18 @@ export class SyncWorker {
       return true;
     }
     // 400, 403, or other 4xx terminal — dead-letter the chunk.
+    // 400 is always "error" level: it means the client sent an unrecognised
+    // event_type (e.g. a new game type whose DB event_types rows are missing).
+    // The response body contains {"error":"unknown_event_type","rejected":[...]}
+    // which is actionable — include it as extra so Sentry surfaces the names.
     Sentry.captureMessage(`syncWorker: ${res.status} on ${gameId} event batch`, {
-      level: res.status === 403 ? "error" : "warning",
+      level: "error",
+      extra: {
+        status: res.status,
+        body: res.body,
+        gameId,
+        eventTypes: chunk.map((r) => r.event_type),
+      },
     });
     await this.markDeadLettered(chunk.map((r) => r.id));
     result.deadLettered += chunk.length;
