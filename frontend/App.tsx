@@ -26,6 +26,7 @@ import { NetworkProvider } from "./src/game/_shared/NetworkContext";
 import { CardDeckProvider } from "./src/game/_shared/decks/CardDeckContext";
 import { BlackjackGameProvider } from "./src/game/blackjack/BlackjackGameContext";
 import { SessionLogger } from "./src/components/FeedbackWidget/SessionLogger";
+import { installSentryConsoleErrorCapture } from "./src/utils/sentryConsoleError";
 
 const CascadeScreen = React.lazy(() => import("./src/screens/CascadeScreen"));
 const BlackjackBettingScreen = React.lazy(() => import("./src/screens/BlackjackBettingScreen"));
@@ -51,6 +52,7 @@ if (!dsn) {
       dsn,
       sendDefaultPii: true,
     });
+    installSentryConsoleErrorCapture();
   } catch (e) {
     console.error("[Sentry] init failed:", e);
   }
