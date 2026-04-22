@@ -10,7 +10,7 @@
  */
 
 import React from "react";
-import { Pressable, StyleSheet, View } from "react-native";
+import { Pressable, View } from "react-native";
 import { useDeck } from "../../game/_shared/decks/CardDeckContext";
 import { useTheme } from "../../theme/ThemeContext";
 import type { CanonicalSuit } from "../../game/_shared/decks/types";
@@ -62,11 +62,7 @@ export default function PlayingCard({
     />
   );
 
-  const wrapperStyle = [
-    styles.wrapper,
-    { width, height, opacity: disabled ? 0.4 : 1 },
-    rotateStyle,
-  ];
+  const wrapperStyle = [{ width, height, opacity: disabled ? 0.4 : 1 }, rotateStyle];
 
   if (onPress) {
     return (
@@ -89,9 +85,3 @@ export default function PlayingCard({
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  wrapper: {
-    margin: 4,
-  },
-});
