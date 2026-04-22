@@ -36,14 +36,44 @@ def upgrade() -> None:
         event_types,
         [
             # solitaire (id=6)
-            {"game_type_id": 6, "name": "game_started", "display_name": "Game Started", "description": None},
-            {"game_type_id": 6, "name": "game_ended", "display_name": "Game Ended", "description": None},
+            {
+                "game_type_id": 6,
+                "name": "game_started",
+                "display_name": "Game Started",
+                "description": None,
+            },
+            {
+                "game_type_id": 6,
+                "name": "game_ended",
+                "display_name": "Game Ended",
+                "description": None,
+            },
             # hearts (id=7)
-            {"game_type_id": 7, "name": "game_started", "display_name": "Game Started", "description": None},
-            {"game_type_id": 7, "name": "game_ended", "display_name": "Game Ended", "description": None},
+            {
+                "game_type_id": 7,
+                "name": "game_started",
+                "display_name": "Game Started",
+                "description": None,
+            },
+            {
+                "game_type_id": 7,
+                "name": "game_ended",
+                "display_name": "Game Ended",
+                "description": None,
+            },
             # sudoku (id=8)
-            {"game_type_id": 8, "name": "game_started", "display_name": "Game Started", "description": None},
-            {"game_type_id": 8, "name": "game_ended", "display_name": "Game Ended", "description": None},
+            {
+                "game_type_id": 8,
+                "name": "game_started",
+                "display_name": "Game Started",
+                "description": None,
+            },
+            {
+                "game_type_id": 8,
+                "name": "game_ended",
+                "display_name": "Game Ended",
+                "description": None,
+            },
         ],
     )
 
