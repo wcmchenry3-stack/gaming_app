@@ -133,9 +133,9 @@ export default function ClassicCardFace({
           </SvgText>
         </>
       ) : (
-        <Svg x={suitX} y={suitY} width={suitViewSize} height={suitViewSize} viewBox="0 0 500 500">
+        <G transform={`translate(${suitX}, ${suitY}) scale(${suitViewSize / 500})`}>
           <Path d={SUIT_PATHS[suit]} fill={suitColor} />
-        </Svg>
+        </G>
       )}
 
       {/* Bottom-right corner (rotated 180°) */}

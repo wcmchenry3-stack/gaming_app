@@ -176,9 +176,9 @@ export default function NeonCardFace({
           </SvgText>
         </>
       ) : (
-        <Svg x={suitX} y={suitY} width={suitViewSize} height={suitViewSize} viewBox="0 0 500 500">
+        <G transform={`translate(${suitX}, ${suitY}) scale(${suitViewSize / 500})`}>
           <Path d={SUIT_PATHS[suit]} fill={color} filter="url(#neon-glow)" />
-        </Svg>
+        </G>
       )}
 
       {/* Bottom-right corner (rotated 180°) */}
