@@ -416,11 +416,6 @@ export default function SolitaireScreen() {
     setMoves(0);
   }, []);
 
-  const handleConfirmNewGame = useCallback(() => {
-    setShowNewGameConfirm(false);
-    resetToPreGame();
-  }, [resetToPreGame]);
-
   const undoDisabled = state === null || state.undoStack.length === 0 || autoCompleting;
   const showAutoComplete = state !== null && !state.isComplete && canAutoComplete(state);
   const scale = outerWidth > 0 ? Math.min(1, outerWidth / BOARD_WIDTH) : 1;
@@ -562,7 +557,7 @@ export default function SolitaireScreen() {
       )}
 
       {state?.isComplete === true && (
-        <WinModal score={state.score} onNewGame={handleConfirmNewGame} />
+        <WinModal score={state.score} onNewGame={resetToPreGame} />
       )}
     </GameShell>
   );

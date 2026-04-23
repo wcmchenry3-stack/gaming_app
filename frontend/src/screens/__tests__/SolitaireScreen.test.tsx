@@ -389,4 +389,16 @@ describe("SolitaireScreen — win-modal score submission", () => {
       expect(api.getByLabelText("Retry")).toBeTruthy();
     });
   });
+
+  // Regression #741: tapping "New Game" in the WinModal used to throw
+  // `Property 'setShowNewGameConfirm' doesn't exist` because a stray setter
+  // call survived the #711 overflow-menu cleanup.
+  it("returns to the pre-game modal when New Game is tapped in the WinModal", async () => {
+    const api = await mountAtWinState();
+    await act(async () => {
+      fireEvent.press(api.getByLabelText("New Game"));
+    });
+    expect(api.getByLabelText("Draw 1")).toBeTruthy();
+    expect(await AsyncStorage.getItem("solitaire_game")).toBeNull();
+  });
 });
