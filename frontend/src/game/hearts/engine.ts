@@ -284,6 +284,9 @@ export function playCard(state: HeartsState, playerIndex: number, card: Card): H
 }
 
 function resolveTrick(state: HeartsState, trick: readonly TrickCard[]): HeartsState {
+  // Ace is high in Hearts; Rank stores it as 1, so treat 1 as 14 when comparing.
+  const aceHigh = (r: Rank): number => (r === 1 ? 14 : r);
+
   const first = trick[0]!;
   const ledSuit = first.card.suit;
 
@@ -292,7 +295,7 @@ function resolveTrick(state: HeartsState, trick: readonly TrickCard[]): HeartsSt
 
   for (let i = 1; i < trick.length; i++) {
     const tc = trick[i]!;
-    if (tc.card.suit === ledSuit && tc.card.rank > winnerRank) {
+    if (tc.card.suit === ledSuit && aceHigh(tc.card.rank) > aceHigh(winnerRank)) {
       winnerRank = tc.card.rank;
       winnerPlayerIndex = tc.playerIndex;
     }
