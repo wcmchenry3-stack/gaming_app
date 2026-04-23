@@ -26,6 +26,18 @@ function nextId(): number {
   return _nextTileId++;
 }
 
+/**
+ * Re-seed the tile ID counter so the next assigned ID is `fromId`.
+ *
+ * Must be called after restoring a persisted game whose tiles already hold
+ * IDs produced by an earlier session — otherwise the counter (reset to 1 on
+ * every JS reload) will re-issue IDs that collide with surviving tiles and
+ * React will warn about duplicate keys in the Grid (#698).
+ */
+export function seedNextTileId(fromId: number): void {
+  _nextTileId = Math.max(1, fromId);
+}
+
 /** Reset the ID counter — for testing only. */
 export function _resetTileIds(): void {
   _nextTileId = 1;
@@ -336,6 +348,9 @@ function applyDown(
 // ---------------------------------------------------------------------------
 
 export function newGame(): Twenty48State {
+  // Fresh game: restart IDs from 1 so a new game doesn't reuse stale IDs
+  // carried over from a previous in-session game.
+  _resetTileIds();
   const board: number[][] = Array.from({ length: SIZE }, () => Array(SIZE).fill(0));
   const idBoard: number[][] = Array.from({ length: SIZE }, () => Array(SIZE).fill(0));
   spawnTile(board, idBoard);
