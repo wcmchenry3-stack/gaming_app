@@ -140,12 +140,7 @@ export default function NeonCardFace({
       >
         {rl}
       </SvgText>
-      <SvgText
-        x={5}
-        y={cornerFontSize + smallSuitSize + 4}
-        fontSize={smallSuitSize}
-        fill={color}
-      >
+      <SvgText x={5} y={cornerFontSize + smallSuitSize + 4} fontSize={smallSuitSize} fill={color}>
         {suitEmoji(suit)}
       </SvgText>
 
@@ -191,12 +186,7 @@ export default function NeonCardFace({
         >
           {rl}
         </SvgText>
-        <SvgText
-          x={5}
-          y={cornerFontSize + smallSuitSize + 4}
-          fontSize={smallSuitSize}
-          fill={color}
-        >
+        <SvgText x={5} y={cornerFontSize + smallSuitSize + 4} fontSize={smallSuitSize} fill={color}>
           {suitEmoji(suit)}
         </SvgText>
       </G>
