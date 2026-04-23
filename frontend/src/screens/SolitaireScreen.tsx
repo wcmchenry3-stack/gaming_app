@@ -564,7 +564,6 @@ export default function SolitaireScreen() {
       {state?.isComplete === true && (
         <WinModal score={state.score} onNewGame={handleConfirmNewGame} />
       )}
-
     </GameShell>
   );
 }

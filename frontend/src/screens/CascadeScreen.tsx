@@ -379,7 +379,6 @@ function CascadeGame() {
     startInstrumentedSession(activeFruitSetRef.current.id);
   }
 
-
   const queue = queueRef.current;
   const currentDef = activeFruitSet.fruits[queue.peek()];
   const nextDef = activeFruitSet.fruits[queue.peekNext()];
@@ -443,7 +442,6 @@ function CascadeGame() {
           onRestart={handleRestart}
         />
       )}
-
     </GameShell>
   );
 }

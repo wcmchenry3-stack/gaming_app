@@ -106,14 +106,14 @@ describe("HeartsScreen — playing phase (no modal)", () => {
   it("score panel opens and shows score board", () => {
     const { getByLabelText, getByText } = renderScreen();
     fireEvent.press(getByLabelText("More options")); // open ⋯ menu
-    fireEvent.press(getByText("Scoreboard"));         // tap Scoreboard item
+    fireEvent.press(getByText("Scoreboard")); // tap Scoreboard item
     expect(getByText("Total")).toBeTruthy(); // ScoreBoard total row header
   });
 
   it("score panel close button dismisses the panel", () => {
     const { getByLabelText, queryByLabelText, getByText } = renderScreen();
     fireEvent.press(getByLabelText("More options")); // open ⋯ menu
-    fireEvent.press(getByText("Scoreboard"));         // tap Scoreboard item
+    fireEvent.press(getByText("Scoreboard")); // tap Scoreboard item
     expect(getByLabelText("Close")).toBeTruthy();
     fireEvent.press(getByLabelText("Close"));
     expect(queryByLabelText("Close")).toBeNull();
