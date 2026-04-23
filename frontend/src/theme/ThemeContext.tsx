@@ -1,7 +1,9 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
+import { useColorScheme } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export type Theme = "dark" | "light";
+export type ThemeMode = "system" | "light" | "dark";
 
 export interface Colors {
   background: string;
@@ -32,6 +34,10 @@ export interface Colors {
   chromeBg: string;
   /** CSS-shorthand shadow spec for the header/tabbar glow (`offsetX offsetY blur rgba`). */
   chromeShadow: string;
+  /** Base colour for React Native's native `shadowColor` on header/tabbar. */
+  chromeShadowColor: string;
+  /** Native `shadowOpacity` value to pair with `chromeShadowColor`. */
+  chromeShadowOpacity: number;
   error: string;
   bonus: string;
   fruitContainer: string;
@@ -97,6 +103,8 @@ const dark: Colors = {
   overlay: "rgba(0,0,0,0.75)",
   chromeBg: "rgba(14,14,19,0.7)",
   chromeShadow: "0 4px 20px rgba(143,245,255,0.08)",
+  chromeShadowColor: TOKENS.accentDark,
+  chromeShadowOpacity: 0.08,
   error: TOKENS.errorDark,
   bonus: TOKENS.bonusDark,
   fruitContainer: TOKENS.darkSurface,
@@ -130,6 +138,8 @@ const light: Colors = {
   overlay: "rgba(0,0,0,0.75)",
   chromeBg: "rgba(245,236,215,0.82)",
   chromeShadow: "0 4px 20px rgba(0,0,0,0.06)",
+  chromeShadowColor: "#000000",
+  chromeShadowOpacity: 0.06,
   error: TOKENS.errorLight,
   bonus: TOKENS.bonusLight,
   fruitContainer: TOKENS.lightSurfaceAlt,
@@ -137,39 +147,64 @@ const light: Colors = {
 };
 
 const PALETTES = { dark, light };
-const STORAGE_KEY = "gaming_app_theme";
+const STORAGE_KEY_MODE = "gaming_app_theme_mode";
+// Legacy key written by pre-#710 builds — stored a resolved Theme ("dark"|"light").
+// On first launch after upgrade we migrate it into the new themeMode slot.
+const STORAGE_KEY_LEGACY = "gaming_app_theme";
 
 interface ThemeContextValue {
+  /** Resolved theme actually applied to the UI. */
   theme: Theme;
+  /** User preference — may be `"system"`, in which case `theme` follows the OS. */
+  themeMode: ThemeMode;
   colors: Colors;
+  /** Back-compat convenience: flips between light and dark (sets explicit mode). */
   toggle: () => void;
+  setThemeMode: (mode: ThemeMode) => void;
 }
 
 const ThemeContext = createContext<ThemeContextValue>({
   theme: "dark",
+  themeMode: "dark",
   colors: dark,
   toggle: () => {},
+  setThemeMode: () => {},
 });
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [theme, setTheme] = useState<Theme>("dark");
+  const systemScheme = useColorScheme();
+  const [themeMode, setThemeModeState] = useState<ThemeMode>("dark");
 
   useEffect(() => {
-    AsyncStorage.getItem(STORAGE_KEY).then((stored) => {
-      if (stored === "dark" || stored === "light") setTheme(stored);
-    });
+    (async () => {
+      const storedMode = await AsyncStorage.getItem(STORAGE_KEY_MODE);
+      if (storedMode === "system" || storedMode === "light" || storedMode === "dark") {
+        setThemeModeState(storedMode);
+        return;
+      }
+      const legacy = await AsyncStorage.getItem(STORAGE_KEY_LEGACY);
+      if (legacy === "dark" || legacy === "light") {
+        setThemeModeState(legacy);
+        AsyncStorage.setItem(STORAGE_KEY_MODE, legacy);
+      }
+    })();
   }, []);
 
+  const theme: Theme = themeMode === "system" ? (systemScheme === "light" ? "light" : "dark") : themeMode;
+
+  function setThemeMode(mode: ThemeMode) {
+    setThemeModeState(mode);
+    AsyncStorage.setItem(STORAGE_KEY_MODE, mode);
+  }
+
   function toggle() {
-    setTheme((t) => {
-      const next = t === "dark" ? "light" : "dark";
-      AsyncStorage.setItem(STORAGE_KEY, next);
-      return next;
-    });
+    setThemeMode(theme === "dark" ? "light" : "dark");
   }
 
   return (
-    <ThemeContext.Provider value={{ theme, colors: PALETTES[theme], toggle }}>
+    <ThemeContext.Provider
+      value={{ theme, themeMode, colors: PALETTES[theme], toggle, setThemeMode }}
+    >
       {children}
     </ThemeContext.Provider>
   );

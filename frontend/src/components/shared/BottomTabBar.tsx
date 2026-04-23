@@ -23,24 +23,22 @@ const TAB_CONFIG: Record<string, TabConfig> = {
   Settings: { icon: "settings", labelKey: "nav.settings" },
 };
 
-function hexToRgba(hex: string, alpha: number): string {
-  const r = parseInt(hex.slice(1, 3), 16);
-  const g = parseInt(hex.slice(3, 5), 16);
-  const b = parseInt(hex.slice(5, 7), 16);
-  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
-}
-
 export default function BottomTabBar({ state, navigation }: BottomTabBarProps) {
   const insets = useSafeAreaInsets();
   const { colors, theme } = useTheme();
   const { t } = useTranslation("common");
 
-  const bgColor = hexToRgba(colors.background, 0.7);
-
   return (
     <View
       accessibilityRole="tablist"
-      style={[styles.wrapper, { paddingBottom: insets.bottom || 8 }]}
+      style={[
+        styles.wrapper,
+        {
+          paddingBottom: insets.bottom || 8,
+          shadowColor: colors.chromeShadowColor,
+          shadowOpacity: colors.chromeShadowOpacity,
+        },
+      ]}
     >
       {/* Blur background */}
       {Platform.OS === "web" ? (
@@ -49,7 +47,7 @@ export default function BottomTabBar({ state, navigation }: BottomTabBarProps) {
             StyleSheet.absoluteFill,
             styles.blurFallback,
             {
-              backgroundColor: bgColor,
+              backgroundColor: colors.chromeBg,
               ...Platform.select({
                 web: {
                   backdropFilter: "blur(20px)",
@@ -115,9 +113,7 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: 32,
     borderTopRightRadius: 32,
     overflow: "hidden",
-    shadowColor: "#8ff5ff",
     shadowOffset: { width: 0, height: -4 },
-    shadowOpacity: 0.08,
     shadowRadius: 20,
     elevation: 8,
   },

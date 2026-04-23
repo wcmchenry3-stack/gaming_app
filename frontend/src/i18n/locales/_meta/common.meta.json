@@ -35,6 +35,15 @@
     "doNotTranslate": [],
     "notes": null
   },
+  "theme.label": {
+    "component": "SettingsScreen",
+    "description": "Row label next to the theme mode selector.",
+    "tone": "functional",
+    "characterLimit": 15,
+    "placeholders": [],
+    "doNotTranslate": [],
+    "notes": null
+  },
   "theme.light": {
     "component": "HomeScreen",
     "description": "Theme toggle button text for switching to light mode.",
@@ -43,6 +52,15 @@
     "placeholders": [],
     "doNotTranslate": [],
     "notes": null
+  },
+  "theme.system": {
+    "component": "SettingsScreen",
+    "description": "Segmented-control option that follows the OS light/dark preference.",
+    "tone": "functional",
+    "characterLimit": 8,
+    "placeholders": [],
+    "doNotTranslate": [],
+    "notes": "Short — fits a compact 3-way segmented control alongside 'Light' and 'Dark'."
   },
   "theme.dark": {
     "component": "HomeScreen",
