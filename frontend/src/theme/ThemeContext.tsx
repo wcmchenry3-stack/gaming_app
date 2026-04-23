@@ -28,38 +28,44 @@ export interface Colors {
   totalBg: string;
   modalBg: string;
   overlay: string;
+  /** Translucent panel colour for blurred header + tabbar chrome. */
+  chromeBg: string;
+  /** CSS-shorthand shadow spec for the header/tabbar glow (`offsetX offsetY blur rgba`). */
+  chromeShadow: string;
   error: string;
   bonus: string;
   fruitContainer: string;
   fruitBackground: string;
 }
 
-// --- BC Arcade design tokens (see docs/BRANDING.md) ---
+// --- BC Arcade design tokens (see docs/BRANDING.md, issue #709) ---
+// Dark values mirror colors_and_type.css; light values mirror the cream
+// SharedComponents.jsx palette (cream supersedes the gray light variant).
 const TOKENS = {
   // Dark backgrounds
   darkBg: "#0e0e13",
   darkSurface: "#19191f",
   darkSurfaceAlt: "#1f1f26",
   darkSurfaceHigh: "#25252c",
-  // Light backgrounds
-  lightBg: "#f5f5fa",
-  lightSurface: "#ffffff",
-  lightSurfaceAlt: "#ededf5",
-  lightSurfaceHigh: "#e0e0ec",
-  // Accents
+  // Light backgrounds (cream)
+  lightBg: "#f5ecd7",
+  lightSurface: "#fbf4e2",
+  lightSurfaceAlt: "#eddfbf",
+  lightSurfaceHigh: "#fff8e8",
+  // Accents — light variants desaturated so they don't vibrate on cream
   accentDark: "#8ff5ff",
-  accentLight: "#0099aa",
+  accentLight: "#1bc5d4",
   accentBrightDark: "#00eefc",
-  accentBrightLight: "#00b8cc",
+  accentBrightLight: "#00a8b8",
   secondaryDark: "#d674ff",
-  secondaryLight: "#9900cf",
+  secondaryLight: "#a34fc4",
   tertiaryDark: "#cafd00",
-  tertiaryLight: "#5c7a00",
+  tertiaryLight: "#8fa800",
   // Semantic
   errorDark: "#ff716c",
-  errorLight: "#c0392b",
+  errorLight: "#d94a42",
   bonusDark: "#4ade80",
-  bonusLight: "#16a34a",
+  bonusLight: "#2da557",
   white: "#ffffff",
 } as const;
 
@@ -89,6 +95,8 @@ const dark: Colors = {
   totalBg: TOKENS.darkBg,
   modalBg: TOKENS.darkSurfaceHigh,
   overlay: "rgba(0,0,0,0.75)",
+  chromeBg: "rgba(14,14,19,0.7)",
+  chromeShadow: "0 4px 20px rgba(143,245,255,0.08)",
   error: TOKENS.errorDark,
   bonus: TOKENS.bonusDark,
   fruitContainer: TOKENS.darkSurface,
@@ -100,26 +108,28 @@ const light: Colors = {
   surface: TOKENS.lightSurface,
   surfaceAlt: TOKENS.lightSurfaceAlt,
   surfaceHigh: TOKENS.lightSurfaceHigh,
-  border: "#d4d4e0",
-  text: "#1a1a24",
-  textMuted: "#6e6e7a",
-  textFilled: "#9a9aa6",
-  textOnAccent: TOKENS.white,
+  border: "#d8c9a6",
+  text: "#1a1412",
+  textMuted: "#6b5e4a",
+  textFilled: "#b5a684",
+  textOnAccent: "#0e0e13", // dark text on teal accent (readable on cream variant)
   accent: TOKENS.accentLight,
   accentBright: TOKENS.accentBrightLight,
   secondary: TOKENS.secondaryLight,
   tertiary: TOKENS.tertiaryLight,
-  potential: TOKENS.accentLight, // teal on white — 4.6:1 AA
-  heldBg: "#d6f5f8",
+  potential: TOKENS.accentLight, // desaturated teal on cream
+  heldBg: "#d7eff2", // cream-compatible light teal tint for highlighted dice
   heldBorder: TOKENS.accentLight,
   dieBg: TOKENS.lightSurface,
-  dieBorder: "#c8c8d4",
-  headerBg: "#1a1a24",
+  dieBorder: "#d8c9a6",
+  headerBg: "#1a1412", // dark header over cream body — existing screen contract
   sectionHeaderBg: "#25252c",
   bonusBg: TOKENS.lightSurfaceAlt,
   totalBg: "#25252c",
   modalBg: TOKENS.lightSurface,
   overlay: "rgba(0,0,0,0.75)",
+  chromeBg: "rgba(245,236,215,0.82)",
+  chromeShadow: "0 4px 20px rgba(0,0,0,0.06)",
   error: TOKENS.errorLight,
   bonus: TOKENS.bonusLight,
   fruitContainer: TOKENS.lightSurfaceAlt,
