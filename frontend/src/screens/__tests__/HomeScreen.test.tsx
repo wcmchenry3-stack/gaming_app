@@ -13,6 +13,11 @@ jest.mock("expo-linear-gradient", () => ({
   LinearGradient: ({ children }: { children?: React.ReactNode }) => <>{children}</>,
 }));
 
+const mockPrefetch = jest.fn();
+jest.mock("../../utils/lazyScreens", () => ({
+  prefetchLobbyGameScreens: () => mockPrefetch(),
+}));
+
 // ---------------------------------------------------------------------------
 // Mock yacht storage — no saved game by default
 // ---------------------------------------------------------------------------
@@ -135,6 +140,13 @@ describe("HomeScreen — AppHeader", () => {
   it("renders AppHeader with app title", () => {
     const { getByRole } = renderScreen();
     expect(getByRole("header")).toBeTruthy();
+  });
+});
+
+describe("HomeScreen — lobby prefetch (issue #706)", () => {
+  it("warms lobby game chunks after interactions settle", async () => {
+    renderScreen();
+    await waitFor(() => expect(mockPrefetch).toHaveBeenCalledTimes(1));
   });
 });
 
