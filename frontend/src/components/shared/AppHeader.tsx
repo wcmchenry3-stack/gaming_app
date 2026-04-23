@@ -24,13 +24,6 @@ export interface AppHeaderProps {
   requireBack?: boolean;
 }
 
-function hexWithAlpha(hex: string, alpha: number): string {
-  const alphaHex = Math.round(alpha * 255)
-    .toString(16)
-    .padStart(2, "0");
-  return `${hex}${alphaHex}`;
-}
-
 export function AppHeader({ title, rightSlot, onBack, requireBack = false }: AppHeaderProps) {
   const { colors, theme } = useTheme();
   const insets = useSafeAreaInsets();
@@ -38,7 +31,6 @@ export function AppHeader({ title, rightSlot, onBack, requireBack = false }: App
   const [helpOpen, setHelpOpen] = useState(false);
 
   const totalHeight = APP_HEADER_HEIGHT + insets.top;
-  const bgColor = hexWithAlpha(colors.background, 0.7);
 
   // #498 — mount-time telemetry: record whether the back affordance is wired
   // up so we can detect regressions where a screen silently drops onBack.
@@ -77,13 +69,23 @@ export function AppHeader({ title, rightSlot, onBack, requireBack = false }: App
     : undefined;
 
   return (
-    <View accessibilityRole="header" style={[styles.wrapper, { height: totalHeight }]}>
+    <View
+      accessibilityRole="header"
+      style={[
+        styles.wrapper,
+        {
+          height: totalHeight,
+          shadowColor: colors.chromeShadowColor,
+          shadowOpacity: colors.chromeShadowOpacity,
+        },
+      ]}
+    >
       {Platform.OS === "web" ? (
         <View
           style={[
             StyleSheet.absoluteFill,
             {
-              backgroundColor: bgColor,
+              backgroundColor: colors.chromeBg,
               // React Native Web passes unknown style props through to CSS
               ...Platform.select({
                 web: {
@@ -160,9 +162,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     zIndex: 50,
-    shadowColor: "#8ff5ff",
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.08,
     shadowRadius: 20,
     elevation: 4,
   },

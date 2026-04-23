@@ -37,18 +37,23 @@ describe("SettingsScreen", () => {
     expect(screen.getByRole("header")).toBeTruthy();
   });
 
-  it("renders the theme toggle button", () => {
+  it("renders the 3-way theme mode segmented control", () => {
     renderScreen();
-    expect(screen.getByTestId("theme-toggle-button")).toBeTruthy();
+    expect(screen.getByTestId("theme-mode-segmented")).toBeTruthy();
+    expect(screen.getByTestId("theme-mode-system")).toBeTruthy();
+    expect(screen.getByTestId("theme-mode-light")).toBeTruthy();
+    expect(screen.getByTestId("theme-mode-dark")).toBeTruthy();
   });
 
-  it("theme toggle button responds to press", () => {
+  it("selecting a different theme mode flips the selected state", () => {
     renderScreen();
-    const toggle = screen.getByTestId("theme-toggle-button");
-    const labelBefore = toggle.props.accessibilityLabel;
-    fireEvent.press(toggle);
-    const labelAfter = screen.getByTestId("theme-toggle-button").props.accessibilityLabel;
-    expect(labelAfter).not.toBe(labelBefore);
+    // Default mode is "dark" (initial state before AsyncStorage resolves).
+    const darkBefore = screen.getByTestId("theme-mode-dark");
+    expect(darkBefore.props.accessibilityState?.selected).toBe(true);
+
+    fireEvent.press(screen.getByTestId("theme-mode-light"));
+    expect(screen.getByTestId("theme-mode-light").props.accessibilityState?.selected).toBe(true);
+    expect(screen.getByTestId("theme-mode-dark").props.accessibilityState?.selected).toBe(false);
   });
 
   describe("Clear local logs", () => {
