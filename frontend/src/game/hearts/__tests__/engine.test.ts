@@ -491,6 +491,80 @@ describe("trick resolution", () => {
     // P0 led K♠ and won (K > Q)
     expect(state.handScores[0]).toBe(13);
   });
+
+  // Ace is high in Hearts — guards against rank-1 being treated as lowest (#739).
+  it("Ace of led suit wins when led", () => {
+    // P0 leads A♠; P1 K♠; P2 10♠; P3 5♠ — P0 should win
+    const hands = [
+      [c("spades", 1), c("clubs", 2)],
+      [c("spades", 13), c("clubs", 3)],
+      [c("spades", 10), c("clubs", 4)],
+      [c("spades", 5), c("clubs", 5)],
+    ] as Card[][];
+    let state = mkState({
+      playerHands: hands,
+      tricksPlayedInHand: 1,
+      heartsBroken: true,
+      currentLeaderIndex: 0,
+      currentPlayerIndex: 0,
+    });
+    state = playCard(state, 0, c("spades", 1));
+    state = playCard(state, 1, c("spades", 13));
+    state = playCard(state, 2, c("spades", 10));
+    state = playCard(state, 3, c("spades", 5));
+
+    expect(state.currentLeaderIndex).toBe(0);
+    expect(state.wonCards[0]).toContainEqual(c("spades", 1));
+  });
+
+  it("Ace of led suit wins when following suit", () => {
+    // P0 leads 5♠; P1 follows A♠; P2 K♠; P3 3♠ — P1 should win
+    const hands = [
+      [c("spades", 5), c("clubs", 2)],
+      [c("spades", 1), c("clubs", 3)],
+      [c("spades", 13), c("clubs", 4)],
+      [c("spades", 3), c("clubs", 5)],
+    ] as Card[][];
+    let state = mkState({
+      playerHands: hands,
+      tricksPlayedInHand: 1,
+      heartsBroken: true,
+      currentLeaderIndex: 0,
+      currentPlayerIndex: 0,
+    });
+    state = playCard(state, 0, c("spades", 5));
+    state = playCard(state, 1, c("spades", 1));
+    state = playCard(state, 2, c("spades", 13));
+    state = playCard(state, 3, c("spades", 3));
+
+    expect(state.currentLeaderIndex).toBe(1);
+    expect(state.wonCards[1]).toContainEqual(c("spades", 1));
+  });
+
+  it("Ace of led suit collects Q♠ penalty points", () => {
+    // P0 leads 3♠; P1 A♠; P2 Q♠; P3 5♠ — P1 wins A♠ and the 13-point Q♠
+    const hands = [
+      [c("spades", 3), c("clubs", 2)],
+      [c("spades", 1), c("clubs", 3)],
+      [c("spades", 12), c("clubs", 4)],
+      [c("spades", 5), c("clubs", 5)],
+    ] as Card[][];
+    let state = mkState({
+      playerHands: hands,
+      tricksPlayedInHand: 1,
+      heartsBroken: true,
+      currentLeaderIndex: 0,
+      currentPlayerIndex: 0,
+    });
+    state = playCard(state, 0, c("spades", 3));
+    state = playCard(state, 1, c("spades", 1));
+    state = playCard(state, 2, c("spades", 12));
+    state = playCard(state, 3, c("spades", 5));
+
+    expect(state.currentLeaderIndex).toBe(1);
+    expect(state.handScores[1]).toBe(13);
+    expect(state.handScores[2]).toBe(0);
+  });
 });
 
 // ---------------------------------------------------------------------------
