@@ -556,9 +556,7 @@ export default function SolitaireScreen() {
         </View>
       )}
 
-      {state?.isComplete === true && (
-        <WinModal score={state.score} onNewGame={resetToPreGame} />
-      )}
+      {state?.isComplete === true && <WinModal score={state.score} onNewGame={resetToPreGame} />}
     </GameShell>
   );
 }
