@@ -1,5 +1,5 @@
 import React from "react";
-import { View, Text, StyleSheet, useWindowDimensions } from "react-native";
+import { View, Text, StyleSheet } from "react-native";
 import { useTranslation } from "react-i18next";
 import { useTheme } from "../../theme/ThemeContext";
 import { HandResponse } from "../../game/blackjack/types";
@@ -33,23 +33,21 @@ export default function BlackjackTable({
 }: Props) {
   const { t } = useTranslation("blackjack");
   const { colors } = useTheme();
-  const { width: screenWidth } = useWindowDimensions();
   const isPlayerPhase = phase === "player";
   const isSplit = playerHands && playerHands.length > 1;
 
-  // Available inner width per split hand: screen minus HUD sidebar (88), the
-  // gap between hands (8), and splitHand padding (6×2 each side = 24 total).
-  const splitHandMaxWidth = Math.max(80, (screenWidth - 88 - 8) / 2 - 24);
-
   return (
     <View style={[styles.container, compact && styles.containerCompact]}>
-      <HandDisplay
-        hand={dealerHand}
-        label={t("hand.dealer")}
-        concealed={isPlayerPhase}
-        variant="dealer"
-        compact={compact}
-      />
+      <View style={styles.dealerArea}>
+        <HandDisplay
+          hand={dealerHand}
+          label={t("hand.dealer")}
+          concealed={isPlayerPhase}
+          variant="dealer"
+          compact={compact}
+          maxPerRow={5}
+        />
+      </View>
       <View style={[styles.divider, { backgroundColor: colors.border }]} />
 
       {isSplit ? (
@@ -75,13 +73,7 @@ export default function BlackjackTable({
                   },
                 ]}
               >
-                <HandDisplay
-                  hand={hand}
-                  label={label}
-                  variant="player"
-                  compact
-                  fanMaxWidth={splitHandMaxWidth}
-                />
+                <HandDisplay hand={hand} label={label} variant="player" compact maxPerRow={3} />
                 {bet != null && (
                   <Text style={[styles.handBet, { color: colors.textMuted }]}>{bet}</Text>
                 )}
@@ -112,12 +104,15 @@ export default function BlackjackTable({
           })}
         </View>
       ) : (
-        <HandDisplay
-          hand={playerHand}
-          label={t("hand.player")}
-          variant="player"
-          compact={compact}
-        />
+        <View style={styles.playerArea}>
+          <HandDisplay
+            hand={playerHand}
+            label={t("hand.player")}
+            variant="player"
+            compact={compact}
+            maxPerRow={5}
+          />
+        </View>
       )}
     </View>
   );
@@ -125,12 +120,22 @@ export default function BlackjackTable({
 
 const styles = StyleSheet.create({
   container: {
+    flex: 1,
     alignItems: "center",
-    gap: 20,
+    justifyContent: "space-between",
+    gap: 8,
     width: "100%",
+    paddingVertical: 8,
   },
   containerCompact: {
-    gap: 8,
+    gap: 4,
+    paddingVertical: 4,
+  },
+  dealerArea: {
+    alignItems: "center",
+  },
+  playerArea: {
+    alignItems: "center",
   },
   divider: {
     width: "60%",
