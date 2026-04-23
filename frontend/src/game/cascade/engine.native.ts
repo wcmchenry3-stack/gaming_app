@@ -215,11 +215,12 @@ export async function createEngine(
       processMerges();
 
       // Safety net: hard-clamp any body that drifted slightly outside the
-      // left/right walls and zero inward velocity so it can't re-tunnel next
-      // frame. This catches the rare case where Matter.js corrective impulses
-      // from polygon vertex decomposition push a body through a thin wall.
-      // Only applies within the escape margin — bodies farther outside are
-      // left for the escape-detection pass below to remove.
+      // left/right walls or below the floor and zero outward velocity so it
+      // can't re-tunnel next frame. This catches the rare case where Matter.js
+      // corrective impulses from polygon vertex decomposition push a body
+      // through a thin static collider. Only applies within the escape margin
+      // — bodies farther outside are left for the escape-detection pass below
+      // to remove. See #699 for the floor case (19 events / 5 users).
       {
         const allBodiesAfterMerge = Matter.Composite.allBodies(world);
         fruitMap.forEach((fb, bodyId) => {
@@ -227,9 +228,12 @@ export async function createEngine(
           if (!body) return;
           const innerLeft = WALL_THICKNESS + fb.fruitRadius;
           const innerRight = W - WALL_THICKNESS - fb.fruitRadius;
+          const innerBottom = H - WALL_THICKNESS - fb.fruitRadius;
           const escapeMargin = fb.fruitRadius * 2;
           let px = body.position.x;
+          let py = body.position.y;
           let vx = body.velocity.x;
+          let vy = body.velocity.y;
           let clamped = false;
           if (px < innerLeft && px >= -escapeMargin) {
             px = innerLeft;
@@ -240,9 +244,14 @@ export async function createEngine(
             vx = Math.min(0, vx);
             clamped = true;
           }
+          if (py > innerBottom && py <= H + escapeMargin) {
+            py = innerBottom;
+            vy = Math.min(0, vy);
+            clamped = true;
+          }
           if (clamped) {
-            Matter.Body.setPosition(body, { x: px, y: body.position.y });
-            Matter.Body.setVelocity(body, { x: vx, y: body.velocity.y });
+            Matter.Body.setPosition(body, { x: px, y: py });
+            Matter.Body.setVelocity(body, { x: vx, y: vy });
           }
         });
       }
