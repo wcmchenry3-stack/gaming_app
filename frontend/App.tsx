@@ -1,6 +1,6 @@
 import "./src/utils/appTiming"; // must be first — captures JS-side cold-start timestamp
 import "./src/i18n/i18n";
-import React, { Suspense } from "react";
+import React, { Suspense, useEffect, useRef } from "react";
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from "react-native";
 import { useFonts } from "expo-font";
 import { SpaceGrotesk_400Regular, SpaceGrotesk_700Bold } from "@expo-google-fonts/space-grotesk";
@@ -27,17 +27,7 @@ import { CardDeckProvider } from "./src/game/_shared/decks/CardDeckContext";
 import { BlackjackGameProvider } from "./src/game/blackjack/BlackjackGameContext";
 import { SessionLogger } from "./src/components/FeedbackWidget/SessionLogger";
 import { installSentryConsoleErrorCapture } from "./src/utils/sentryConsoleError";
-
-const CascadeScreen = React.lazy(() => import("./src/screens/CascadeScreen"));
-const BlackjackBettingScreen = React.lazy(() => import("./src/screens/BlackjackBettingScreen"));
-const BlackjackTableScreen = React.lazy(() => import("./src/screens/BlackjackTableScreen"));
-const Twenty48Screen = React.lazy(() => import("./src/screens/Twenty48Screen"));
-const SolitaireScreen = React.lazy(() => import("./src/screens/SolitaireScreen"));
-const HeartsScreen = React.lazy(() => import("./src/screens/HeartsScreen"));
-const SudokuScreen = React.lazy(() => import("./src/screens/SudokuScreen"));
-const LeaderboardScreen = React.lazy(() => import("./src/screens/LeaderboardScreen"));
-const GameDetailScreen = React.lazy(() => import("./src/screens/GameDetailScreen"));
-const SettingsScreen = React.lazy(() => import("./src/screens/SettingsScreen"));
+import { LazyScreens } from "./src/utils/lazyScreens";
 
 // Start capturing console.warn / console.error for feedback submissions
 SessionLogger.init();
@@ -79,32 +69,71 @@ export type ProfileStackParamList = {
   GameDetail: { gameId: string };
 };
 
-function withSuspense<P extends object>(Component: React.ComponentType<P>): React.FC<P> {
-  const Wrapped = (props: P) => (
-    <Suspense
-      fallback={
-        <View style={{ flex: 1 }}>
-          <ActivityIndicator style={{ flex: 1 }} />
-        </View>
-      }
-    >
-      <Component {...props} />
-    </Suspense>
-  );
-  Wrapped.displayName = `WithSuspense(${Component.displayName ?? Component.name ?? "Component"})`;
+// Must live inside the Suspense boundary. The outer Wrapped commits immediately
+// (Suspense never suspends its own parent), so only an inner child mounts after
+// the lazy chunk resolves — that's where we stop the timer.
+function SuspenseMountTimer({
+  startMs,
+  screenName,
+  children,
+}: {
+  startMs: number;
+  screenName: string;
+  children: React.ReactNode;
+}) {
+  useEffect(() => {
+    const elapsedMs = performance.now() - startMs;
+    try {
+      Sentry.metrics.distribution("screen_mount_ms", elapsedMs, {
+        unit: "millisecond",
+        attributes: { screen: screenName },
+      });
+    } catch {
+      // Instrumentation must never break the screen it's measuring.
+    }
+    // startMs/screenName are stable for this component instance.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  return <>{children}</>;
+}
+
+function withSuspense<P extends object>(
+  Component: React.ComponentType<P>,
+  screenName: string
+): React.FC<P> {
+  const Wrapped = (props: P) => {
+    // Captured at parent render — close enough to "user tapped Play".
+    // Stopped by SuspenseMountTimer's useEffect, which only fires after the
+    // lazy chunk resolves and the screen commits.
+    const startRef = useRef(performance.now());
+    return (
+      <Suspense
+        fallback={
+          <View style={{ flex: 1 }}>
+            <ActivityIndicator style={{ flex: 1 }} />
+          </View>
+        }
+      >
+        <SuspenseMountTimer startMs={startRef.current} screenName={screenName}>
+          <Component {...props} />
+        </SuspenseMountTimer>
+      </Suspense>
+    );
+  };
+  Wrapped.displayName = `WithSuspense(${screenName})`;
   return Wrapped;
 }
 
-const LazyCascadeScreen = withSuspense(CascadeScreen);
-const LazyBlackjackBettingScreen = withSuspense(BlackjackBettingScreen);
-const LazyBlackjackTableScreen = withSuspense(BlackjackTableScreen);
-const LazyTwenty48Screen = withSuspense(Twenty48Screen);
-const LazySolitaireScreen = withSuspense(SolitaireScreen);
-const LazyHeartsScreen = withSuspense(HeartsScreen);
-const LazySudokuScreen = withSuspense(SudokuScreen);
-const LazyLeaderboardScreen = withSuspense(LeaderboardScreen);
-const LazyGameDetailScreen = withSuspense(GameDetailScreen);
-const LazySettingsScreen = withSuspense(SettingsScreen);
+const LazyCascadeScreen = withSuspense(LazyScreens.Cascade, "cascade");
+const LazyBlackjackBettingScreen = withSuspense(LazyScreens.BlackjackBetting, "blackjack_betting");
+const LazyBlackjackTableScreen = withSuspense(LazyScreens.BlackjackTable, "blackjack_table");
+const LazyTwenty48Screen = withSuspense(LazyScreens.Twenty48, "twenty48");
+const LazySolitaireScreen = withSuspense(LazyScreens.Solitaire, "solitaire");
+const LazyHeartsScreen = withSuspense(LazyScreens.Hearts, "hearts");
+const LazySudokuScreen = withSuspense(LazyScreens.Sudoku, "sudoku");
+const LazyLeaderboardScreen = withSuspense(LazyScreens.Leaderboard, "leaderboard");
+const LazyGameDetailScreen = withSuspense(LazyScreens.GameDetail, "game_detail");
+const LazySettingsScreen = withSuspense(LazyScreens.Settings, "settings");
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 const HomeStack = createNativeStackNavigator<HomeStackParamList>();

@@ -14,6 +14,7 @@ import { typography } from "../theme/typography";
 import { AppHeader, APP_HEADER_HEIGHT } from "../components/shared/AppHeader";
 import OfflineBanner from "../components/OfflineBanner";
 import { APP_START_MS } from "../utils/appTiming";
+import { prefetchLobbyGameScreens } from "../utils/lazyScreens";
 
 /** Below this viewport width the grid collapses to a single column. */
 const SINGLE_COL_BREAKPOINT = 360;
@@ -50,6 +51,14 @@ export default function HomeScreen() {
       const coldStartMs = performance.now() - APP_START_MS;
       Sentry.metrics.distribution("cold_start_ms", coldStartMs, { unit: "millisecond" });
     }
+  }, []);
+
+  // Warm lobby game chunks once Home has painted so nav doesn't show a
+  // Suspense fallback on tap (issue #706). setTimeout(0) defers past the
+  // current frame without the InteractionManager deprecation in RN 0.83.
+  useEffect(() => {
+    const id = setTimeout(prefetchLobbyGameScreens, 0);
+    return () => clearTimeout(id);
   }, []);
 
   async function startYacht() {
