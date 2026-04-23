@@ -73,13 +73,7 @@ export default function BlackjackTable({
                   },
                 ]}
               >
-                <HandDisplay
-                  hand={hand}
-                  label={label}
-                  variant="player"
-                  compact
-                  maxPerRow={3}
-                />
+                <HandDisplay hand={hand} label={label} variant="player" compact maxPerRow={3} />
                 {bet != null && (
                   <Text style={[styles.handBet, { color: colors.textMuted }]}>{bet}</Text>
                 )}
