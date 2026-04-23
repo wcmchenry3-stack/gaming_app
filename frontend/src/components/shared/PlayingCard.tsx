@@ -62,7 +62,25 @@ export default function PlayingCard({
     />
   );
 
-  const wrapperStyle = [{ width, height, opacity: disabled ? 0.4 : 1 }, rotateStyle];
+  // Disabled dimming is rendered as a dark overlay on top of the card rather
+  // than by lowering the wrapper's opacity. In overlapping hand layouts (e.g.
+  // Hearts) translucent cards let the card underneath bleed through — the
+  // overlay keeps the card itself opaque. Radius matches CardFace.
+  const wrapperStyle = [{ width, height }, rotateStyle];
+  const disabledOverlay = disabled ? (
+    <View
+      pointerEvents="none"
+      style={{
+        position: "absolute",
+        top: 0,
+        left: 0,
+        width,
+        height,
+        borderRadius: 8,
+        backgroundColor: "rgba(0,0,0,0.5)",
+      }}
+    />
+  ) : null;
 
   if (onPress) {
     return (
@@ -75,6 +93,7 @@ export default function PlayingCard({
         accessibilityState={{ disabled }}
       >
         {cardFace}
+        {disabledOverlay}
       </Pressable>
     );
   }
@@ -82,6 +101,7 @@ export default function PlayingCard({
   return (
     <View style={wrapperStyle} accessibilityRole="image" accessibilityLabel={accessibilityLabel}>
       {cardFace}
+      {disabledOverlay}
     </View>
   );
 }

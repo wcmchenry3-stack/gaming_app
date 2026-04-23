@@ -64,6 +64,15 @@ describe("PlayingCard", () => {
     fireEvent.press(getByRole("button"));
     expect(onPress).not.toHaveBeenCalled();
   });
+
+  it("disabled card wrapper is fully opaque (no opacity < 1)", () => {
+    // Regression guard for #704: wrapper opacity makes the SVG translucent
+    // and overlapping cards bleed through. Dimming must use an overlay.
+    const { getByRole } = wrap(<PlayingCard card={c("clubs", 7)} onPress={() => {}} disabled />);
+    const style = getByRole("button").props.style;
+    const flat = Array.isArray(style) ? Object.assign({}, ...style.filter(Boolean)) : style;
+    expect(flat.opacity).toBeUndefined();
+  });
 });
 
 // ---------------------------------------------------------------------------
