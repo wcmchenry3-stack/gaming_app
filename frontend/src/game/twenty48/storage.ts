@@ -11,6 +11,7 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as Sentry from "@sentry/react-native";
 import { Twenty48State } from "./types";
+import { seedNextTileId } from "./engine";
 
 const GAME_KEY = "twenty48_game_v2";
 const BEST_SCORE_KEY = "twenty48_best_score_v1";
@@ -38,7 +39,8 @@ export async function loadGame(): Promise<Twenty48State | null> {
     }
     // Backfill tiles array for saves created before v2 tile animation data (#570).
     if (!Array.isArray(parsed.tiles)) {
-      let nextId = 0;
+      // Start at 1: id 0 is the engine's "empty cell" sentinel in idBoard.
+      let nextId = 1;
       parsed.tiles = parsed.board.flatMap((row, r) =>
         row
           .map((val, c) =>
@@ -70,6 +72,10 @@ export async function loadGame(): Promise<Twenty48State | null> {
     // Normalize timer fields — absent in states saved before timer was added.
     parsed.startedAt = parsed.startedAt ?? null;
     parsed.accumulatedMs = parsed.accumulatedMs ?? 0;
+    // Re-seed the engine's tile-ID counter above every restored ID so
+    // subsequent spawns/merges don't collide with surviving tiles (#698).
+    const maxId = parsed.tiles.reduce((m, t) => (t.id > m ? t.id : m), 0);
+    seedNextTileId(maxId + 1);
     return parsed;
   } catch (e) {
     // Corrupt payload: recovery is complete (we remove the bad entry and
