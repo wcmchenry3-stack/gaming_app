@@ -21,7 +21,7 @@ const BG_BACK = "#070d1a";
 const BORDER = "#334155";
 const SPADES_CLUBS = "#e2e8f0";
 const HEARTS = "#f43f5e";
-const DIAMONDS = "#06b6d4";
+const DIAMONDS = HEARTS;
 const RANK_TEXT = "#f1f5f9";
 const BACK_GRID = "#06b6d4";
 
@@ -45,7 +45,7 @@ function GlowDefs() {
   return (
     <Defs>
       <Filter id="neon-glow" x="-30%" y="-30%" width="160%" height="160%">
-        <FeGaussianBlur in="SourceGraphic" stdDeviation="3" result="blur" />
+        <FeGaussianBlur in="SourceGraphic" stdDeviation="1.5" result="blur" />
         <FeMerge>
           <FeMergeNode in="blur" />
           <FeMergeNode in="SourceGraphic" />
@@ -140,13 +140,7 @@ export default function NeonCardFace({
       >
         {rl}
       </SvgText>
-      <SvgText
-        x={5}
-        y={cornerFontSize + smallSuitSize + 4}
-        fontSize={smallSuitSize}
-        fill={color}
-        filter="url(#neon-glow)"
-      >
+      <SvgText x={5} y={cornerFontSize + smallSuitSize + 4} fontSize={smallSuitSize} fill={color}>
         {suitEmoji(suit)}
       </SvgText>
 
@@ -192,13 +186,7 @@ export default function NeonCardFace({
         >
           {rl}
         </SvgText>
-        <SvgText
-          x={5}
-          y={cornerFontSize + smallSuitSize + 4}
-          fontSize={smallSuitSize}
-          fill={color}
-          filter="url(#neon-glow)"
-        >
+        <SvgText x={5} y={cornerFontSize + smallSuitSize + 4} fontSize={smallSuitSize} fill={color}>
           {suitEmoji(suit)}
         </SvgText>
       </G>
