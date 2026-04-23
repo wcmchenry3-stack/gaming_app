@@ -362,6 +362,27 @@ describe("boundary escape", () => {
     expect(onGameOver).not.toHaveBeenCalled();
     handle.cleanup();
   });
+
+  // #699 — a body that ends a step below the floor but within the escape
+  // margin must be snapped back to innerBottom by the floor safety net,
+  // not left to drift past H + margin on subsequent frames and fire a
+  // Sentry warning.
+  it("clamps a body below the floor (within escape margin) back to innerBottom", async () => {
+    const { handle, onBoundaryEscape } = await buildEscape();
+    const tier0 = fruit(0);
+    const innerBottom = H - 16 - tier0.radius; // WALL_THICKNESS = 16
+    // y = H + radius is below the floor but well inside the escape margin
+    // (margin = radius * 2). The floor rectangle sits at y ∈ [H-16, H], so
+    // the body is clear of it and Matter.js will not push it out — only our
+    // safety net will.
+    handle.drop(tier0, "fruits", W / 2, H + tier0.radius);
+
+    const snapshots = handle.step(1 / 60);
+
+    expect(onBoundaryEscape).not.toHaveBeenCalled();
+    expect(snapshots).toHaveLength(1);
+    expect(snapshots[0]?.y).toBeLessThanOrEqual(innerBottom + 0.5);
+  });
 });
 
 // ---------------------------------------------------------------------------
