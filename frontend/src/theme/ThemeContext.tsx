@@ -190,7 +190,8 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     })();
   }, []);
 
-  const theme: Theme = themeMode === "system" ? (systemScheme === "light" ? "light" : "dark") : themeMode;
+  const theme: Theme =
+    themeMode === "system" ? (systemScheme === "light" ? "light" : "dark") : themeMode;
 
   function setThemeMode(mode: ThemeMode) {
     setThemeModeState(mode);
