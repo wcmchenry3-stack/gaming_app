@@ -17,23 +17,15 @@ interface Props {
    *  both the "player" and "dealer" variants when set. */
   compact?: boolean;
   /**
-   * When set, cards with count > 2 switch from wrap to a fan/overlap layout
-   * that constrains the row to this pixel width. Each card after the first
-   * shifts left so the rank+suit pip of earlier cards peeks out on the left.
-   * Pass the available inner width of the containing column.
+   * Maximum cards per row. Additional cards wrap to a new row so the hand
+   * grows downward into reserved table space rather than overflowing into
+   * the action bar. Defaults to 5 (single-hand). Split hands pass 3.
    */
-  fanMaxWidth?: number;
+  maxPerRow?: number;
 }
 
 // First two player cards get a gentle fan tilt
 const PLAYER_ROTATIONS: Record<number, number> = { 0: -3, 1: 2 };
-
-function computeOverlap(cardCount: number, cardWidth: number, maxWidth: number): number {
-  if (cardCount <= 2 || cardWidth * cardCount <= maxWidth) return 0;
-  // total = cardWidth + (n-1) × (cardWidth - overlap) ≤ maxWidth
-  // → overlap = cardWidth - (maxWidth - cardWidth) / (n - 1)
-  return Math.max(0, Math.ceil(cardWidth - (maxWidth - cardWidth) / (cardCount - 1)));
-}
 
 export default function HandDisplay({
   hand,
@@ -41,15 +33,15 @@ export default function HandDisplay({
   concealed = false,
   variant = "dealer",
   compact = false,
-  fanMaxWidth,
+  maxPerRow = 5,
 }: Props) {
   const { colors } = useTheme();
   const showScore = hand.cards.length > 0;
 
-  // Card width matches blackjack PlayingCard cardSize() values.
-  const cardWidth = variant === "player" ? (compact ? 48 : 68) : compact ? 40 : 52;
-  const isFan = fanMaxWidth !== undefined && hand.cards.length > 2;
-  const overlapPx = isFan ? computeOverlap(hand.cards.length, cardWidth, fanMaxWidth!) : 0;
+  const rows: (typeof hand.cards)[] = [];
+  for (let i = 0; i < hand.cards.length; i += maxPerRow) {
+    rows.push(hand.cards.slice(i, i + maxPerRow));
+  }
 
   return (
     <View style={[styles.container, compact && styles.containerCompact]}>
@@ -57,18 +49,21 @@ export default function HandDisplay({
         {label}
       </Text>
 
-      <View style={isFan ? styles.cardsFan : styles.cards}>
-        {hand.cards.map((card, i) => (
-          <View
-            key={i}
-            style={isFan ? { marginLeft: i > 0 ? -overlapPx : 0, zIndex: i } : undefined}
-          >
-            <PlayingCard
-              card={card}
-              variant={variant}
-              compact={compact}
-              rotation={variant === "player" ? (PLAYER_ROTATIONS[i] ?? 0) : 0}
-            />
+      <View style={styles.rows}>
+        {rows.map((rowCards, rowIndex) => (
+          <View key={rowIndex} style={styles.row}>
+            {rowCards.map((card, cardIndex) => {
+              const absoluteIndex = rowIndex * maxPerRow + cardIndex;
+              return (
+                <PlayingCard
+                  key={absoluteIndex}
+                  card={card}
+                  variant={variant}
+                  compact={compact}
+                  rotation={variant === "player" ? (PLAYER_ROTATIONS[absoluteIndex] ?? 0) : 0}
+                />
+              );
+            })}
           </View>
         ))}
       </View>
@@ -97,14 +92,12 @@ const styles = StyleSheet.create({
   labelCompact: {
     fontSize: 11,
   },
-  cards: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    justifyContent: "center",
+  rows: {
+    alignItems: "center",
+    gap: 4,
   },
-  cardsFan: {
+  row: {
     flexDirection: "row",
-    flexWrap: "nowrap",
     justifyContent: "center",
   },
 });
