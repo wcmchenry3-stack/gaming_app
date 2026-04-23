@@ -113,10 +113,10 @@ test.describe("#216 — Cascade reload persistence", () => {
     expect(state.score).toBeGreaterThan(0);
     expect(state.fruits.length).toBeGreaterThan(0);
 
-    // Press the New Game pill — since score > 0 and game isn't over,
-    // the confirm modal appears. Accept it.
-    await page.getByRole("button", { name: "New Game" }).click();
-    await page.getByRole("button", { name: /start new game/i }).click();
+    // Open the ⋯ overflow menu, tap New Game, then confirm in the abandon dialog.
+    await page.getByRole("button", { name: "More options" }).click();
+    await page.getByText("New Game").click();
+    await page.getByRole("button", { name: "Start New" }).click();
 
     await page.waitForTimeout(300);
     state = await getState(page);

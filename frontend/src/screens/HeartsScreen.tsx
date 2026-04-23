@@ -332,19 +332,13 @@ export default function HeartsScreen() {
     0
   );
 
-  const rightSlot = (
-    <Pressable
-      onPress={() => setShowScores(true)}
-      accessibilityRole="button"
-      accessibilityLabel={t("score.board")}
-      style={styles.headerBtn}
-    >
-      <Text style={[styles.headerBtnText, { color: colors.accent }]}>{t("score.board")}</Text>
-    </Pressable>
-  );
-
   return (
-    <GameShell title={t("game.title")} onBack={() => navigation.goBack()} rightSlot={rightSlot}>
+    <GameShell
+      title={t("game.title")}
+      onBack={() => navigation.goBack()}
+      onNewGame={handlePlayAgain}
+      onOpenScoreboard={() => setShowScores(true)}
+    >
       {/* ── Table ──────────────────────────────────────────────────── */}
       <View style={[styles.table, { backgroundColor: colors.background }]}>
         {/* Top AI (seat 2) */}

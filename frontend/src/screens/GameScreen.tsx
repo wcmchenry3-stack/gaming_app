@@ -191,6 +191,7 @@ export default function GameScreen({ navigation, route }: Props) {
       rightSlot={roundPill}
       requireBack
       onBack={() => navigation.popToTop()}
+      onNewGame={startNewGame}
       error={error}
       style={{
         paddingBottom: Math.max(insets.bottom, 16),

@@ -105,13 +105,15 @@ describe("HeartsScreen — playing phase (no modal)", () => {
 
   it("score panel opens and shows score board", () => {
     const { getByLabelText, getByText } = renderScreen();
-    fireEvent.press(getByLabelText("Scores"));
+    fireEvent.press(getByLabelText("More options")); // open ⋯ menu
+    fireEvent.press(getByText("Scoreboard")); // tap Scoreboard item
     expect(getByText("Total")).toBeTruthy(); // ScoreBoard total row header
   });
 
   it("score panel close button dismisses the panel", () => {
-    const { getByLabelText, queryByLabelText } = renderScreen();
-    fireEvent.press(getByLabelText("Scores"));
+    const { getByLabelText, queryByLabelText, getByText } = renderScreen();
+    fireEvent.press(getByLabelText("More options")); // open ⋯ menu
+    fireEvent.press(getByText("Scoreboard")); // tap Scoreboard item
     expect(getByLabelText("Close")).toBeTruthy();
     fireEvent.press(getByLabelText("Close"));
     expect(queryByLabelText("Close")).toBeNull();
@@ -122,7 +124,8 @@ describe("HeartsScreen — playing phase (no modal)", () => {
     // Cards with onPress are buttons; there should be some (13 cards in hand)
     const cardBtns = queryAllByRole("button").filter(
       (el) =>
-        el.props.accessibilityLabel && !["Scores", "← Back"].includes(el.props.accessibilityLabel)
+        el.props.accessibilityLabel &&
+        !["More options", "Go back to home screen"].includes(el.props.accessibilityLabel)
     );
     expect(cardBtns.length).toBeGreaterThan(0);
   });

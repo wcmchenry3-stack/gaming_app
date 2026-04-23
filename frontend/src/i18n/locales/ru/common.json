@@ -35,5 +35,12 @@
   "capacityWarning.dismiss": "Закрыть",
   "deck.label": "Колода карт",
   "deck.select": "Выбрать колоду {{name}}",
-  "deck.selected": "{{name}} выбрана"
+  "deck.selected": "{{name}} выбрана",
+  "overflow.menu.label": "Ещё опции",
+  "overflow.menu.scoreboard": "Таблица очков",
+  "overflow.menu.newGame": "Новая игра",
+  "overflow.abandon.title": "Завершить текущую игру?",
+  "overflow.abandon.body": "Начав новую игру, вы потеряете прогресс в этом раунде. Общая статистика останется без изменений.",
+  "overflow.abandon.keepPlaying": "Продолжить",
+  "overflow.abandon.startNew": "Начать заново"
 }

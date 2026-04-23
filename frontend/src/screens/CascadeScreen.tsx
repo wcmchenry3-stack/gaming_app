@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import { View, Text, Pressable, StyleSheet, LayoutChangeEvent } from "react-native";
+import { View, StyleSheet, LayoutChangeEvent } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTranslation } from "react-i18next";
 import { useNavigation } from "@react-navigation/native";
@@ -18,7 +18,6 @@ import NextFruitPreview from "../components/cascade/NextFruitPreview";
 import ScoreDisplay from "../components/cascade/ScoreDisplay";
 import ThemeSelector from "../components/cascade/ThemeSelector";
 import GameOverOverlay from "../components/cascade/GameOverOverlay";
-import NewGameConfirmModal from "../components/shared/NewGameConfirmModal";
 import { useGameSync } from "../game/_shared/useGameSync";
 import {
   saveGame as saveCascadeGame,
@@ -39,7 +38,6 @@ function CascadeGame() {
 
   const [score, setScore] = useState(0);
   const [gameOver, setGameOver] = useState(false);
-  const [confirmNewGameVisible, setConfirmNewGameVisible] = useState(false);
   const [containerWidth, setContainerWidth] = useState(0);
   const [containerHeight, setContainerHeight] = useState(0);
   const [, setQueueVersion] = useState(0);
@@ -381,22 +379,6 @@ function CascadeGame() {
     startInstrumentedSession(activeFruitSetRef.current.id);
   }
 
-  const handleNewGamePress = useCallback(() => {
-    if (scoreRef.current > 0 && !gameOverRef.current) {
-      setConfirmNewGameVisible(true);
-    } else {
-      handleRestart();
-    }
-    // handleRestart reads refs only, safe to exclude from deps
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  const handleConfirmNewGame = useCallback(() => {
-    setConfirmNewGameVisible(false);
-    handleRestart();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
   const queue = queueRef.current;
   const currentDef = activeFruitSet.fruits[queue.peek()];
   const nextDef = activeFruitSet.fruits[queue.peekNext()];
@@ -413,23 +395,12 @@ function CascadeGame() {
       title={t("game.title")}
       requireBack
       onBack={() => navigation.popToTop()}
+      onNewGame={handleRestart}
       style={{
         paddingBottom: Math.max(insets.bottom, 16),
         paddingLeft: Math.max(insets.left, 16),
         paddingRight: Math.max(insets.right, 16),
       }}
-      rightSlot={
-        <Pressable
-          onPress={handleNewGamePress}
-          style={[styles.newGameBtn, { borderColor: colors.accent }]}
-          accessibilityRole="button"
-          accessibilityLabel={t("common:newGame.button")}
-        >
-          <Text style={[styles.newGameText, { color: colors.accent }]}>
-            {t("common:newGame.button")}
-          </Text>
-        </Pressable>
-      }
     >
       {/* Combined HUD: score + drop/next previews + high, all one row */}
       <ScoreDisplay score={score}>
@@ -471,12 +442,6 @@ function CascadeGame() {
           onRestart={handleRestart}
         />
       )}
-
-      <NewGameConfirmModal
-        visible={confirmNewGameVisible}
-        onConfirm={handleConfirmNewGame}
-        onCancel={() => setConfirmNewGameVisible(false)}
-      />
     </GameShell>
   );
 }
@@ -490,20 +455,6 @@ export default function CascadeScreen() {
 }
 
 const styles = StyleSheet.create({
-  newGameBtn: {
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 999,
-    borderWidth: 1,
-    minHeight: 32,
-    justifyContent: "center",
-  },
-  newGameText: {
-    fontSize: 11,
-    fontWeight: "800",
-    letterSpacing: 0.8,
-    textTransform: "uppercase",
-  },
   canvasOuter: {
     flex: 1,
     alignItems: "center",

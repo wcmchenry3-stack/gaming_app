@@ -385,6 +385,7 @@ export default function SudokuScreen() {
       requireBack
       loading={loading}
       onBack={() => navigation.popToTop()}
+      onNewGame={handleStart}
       rightSlot={headerRight}
       style={{
         paddingBottom: Math.max(insets.bottom, 16),

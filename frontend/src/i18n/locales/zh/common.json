@@ -35,5 +35,12 @@
   "capacityWarning.dismiss": "知道了",
   "deck.label": "牌组",
   "deck.select": "选择{{name}}牌组",
-  "deck.selected": "已选择{{name}}"
+  "deck.selected": "已选择{{name}}",
+  "overflow.menu.label": "更多选项",
+  "overflow.menu.scoreboard": "排行榜",
+  "overflow.menu.newGame": "新游戏",
+  "overflow.abandon.title": "放弃当前游戏？",
+  "overflow.abandon.body": "开始新游戏会丢失本轮的进度，但不会影响你的总统计数据。",
+  "overflow.abandon.keepPlaying": "继续游戏",
+  "overflow.abandon.startNew": "开始新游戏"
 }

@@ -39,7 +39,6 @@ import { HomeStackParamList } from "../../App";
 import { useTheme } from "../theme/ThemeContext";
 import { typography } from "../theme/typography";
 import { GameShell } from "../components/shared/GameShell";
-import NewGameConfirmModal from "../components/shared/NewGameConfirmModal";
 import TableauPile from "../game/solitaire/components/TableauPile";
 import FoundationPile from "../game/solitaire/components/FoundationPile";
 import StockWastePile from "../game/solitaire/components/StockWastePile";
@@ -88,7 +87,6 @@ export default function SolitaireScreen() {
   const [state, setState] = useState<SolitaireState | null>(null);
   const [selection, setSelection] = useState<Selection | null>(null);
   const [moves, setMoves] = useState(0);
-  const [showNewGameConfirm, setShowNewGameConfirm] = useState(false);
   const [autoCompleting, setAutoCompleting] = useState(false);
   const [outerWidth, setOuterWidth] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -418,14 +416,6 @@ export default function SolitaireScreen() {
     setMoves(0);
   }, []);
 
-  const handleNewGamePress = useCallback(() => {
-    if (state !== null && state.score > 0 && !state.isComplete) {
-      setShowNewGameConfirm(true);
-      return;
-    }
-    resetToPreGame();
-  }, [state, resetToPreGame]);
-
   const handleConfirmNewGame = useCallback(() => {
     setShowNewGameConfirm(false);
     resetToPreGame();
@@ -456,34 +446,23 @@ export default function SolitaireScreen() {
         paddingLeft: Math.max(insets.left, 12),
         paddingRight: Math.max(insets.right, 12),
       }}
+      onNewGame={resetToPreGame}
       rightSlot={
-        <View style={styles.headerRow}>
-          <Pressable
-            onPress={handleUndo}
-            disabled={undoDisabled}
-            style={[
-              styles.headerBtn,
-              { borderColor: colors.accent, opacity: undoDisabled ? 0.4 : 1 },
-            ]}
-            accessibilityRole="button"
-            accessibilityLabel={t("solitaire:action.undo")}
-            accessibilityState={{ disabled: undoDisabled }}
-          >
-            <Text style={[styles.headerBtnText, { color: colors.accent }]}>
-              {t("solitaire:action.undo")}
-            </Text>
-          </Pressable>
-          <Pressable
-            onPress={handleNewGamePress}
-            style={[styles.headerBtn, { borderColor: colors.accent }]}
-            accessibilityRole="button"
-            accessibilityLabel={t("solitaire:action.newGame")}
-          >
-            <Text style={[styles.headerBtnText, { color: colors.accent }]}>
-              {t("solitaire:action.newGame")}
-            </Text>
-          </Pressable>
-        </View>
+        <Pressable
+          onPress={handleUndo}
+          disabled={undoDisabled}
+          style={[
+            styles.headerBtn,
+            { borderColor: colors.accent, opacity: undoDisabled ? 0.4 : 1 },
+          ]}
+          accessibilityRole="button"
+          accessibilityLabel={t("solitaire:action.undo")}
+          accessibilityState={{ disabled: undoDisabled }}
+        >
+          <Text style={[styles.headerBtnText, { color: colors.accent }]}>
+            {t("solitaire:action.undo")}
+          </Text>
+        </Pressable>
       }
     >
       {state === null ? (
@@ -585,12 +564,6 @@ export default function SolitaireScreen() {
       {state?.isComplete === true && (
         <WinModal score={state.score} onNewGame={handleConfirmNewGame} />
       )}
-
-      <NewGameConfirmModal
-        visible={showNewGameConfirm}
-        onConfirm={handleConfirmNewGame}
-        onCancel={() => setShowNewGameConfirm(false)}
-      />
     </GameShell>
   );
 }
@@ -795,10 +768,6 @@ function WinModal({
 const styles = StyleSheet.create({
   body: {
     flex: 1,
-  },
-  headerRow: {
-    flexDirection: "row",
-    gap: 8,
   },
   headerBtn: {
     paddingHorizontal: 10,

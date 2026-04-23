@@ -35,5 +35,12 @@
   "capacityWarning.dismiss": "Sluiten",
   "deck.label": "Kaartenspel",
   "deck.select": "{{name}}-kaartenspel selecteren",
-  "deck.selected": "{{name}} geselecteerd"
+  "deck.selected": "{{name}} geselecteerd",
+  "overflow.menu.label": "Meer opties",
+  "overflow.menu.scoreboard": "Scorebord",
+  "overflow.menu.newGame": "Nieuw spel",
+  "overflow.abandon.title": "Huidig spel verlaten?",
+  "overflow.abandon.body": "Een nieuw spel starten verwijdert je voortgang in deze ronde. Je statistieken blijven behouden.",
+  "overflow.abandon.keepPlaying": "Doorgaan",
+  "overflow.abandon.startNew": "Nieuw starten"
 }

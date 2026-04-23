@@ -65,6 +65,11 @@ export default function BlackjackTableScreen({ navigation }: Props) {
     navigation.replace("BlackjackBetting");
   }, [handlePlayAgain, navigation]);
 
+  const handleNewGame = useCallback(() => {
+    handlePlayAgain();
+    navigation.replace("BlackjackBetting");
+  }, [handlePlayAgain, navigation]);
+
   const state = engine ? toViewState(engine) : null;
   const isSplit = (state?.player_hands?.length ?? 0) > 1;
 
@@ -79,6 +84,7 @@ export default function BlackjackTableScreen({ navigation }: Props) {
       title={t("game.title")}
       requireBack
       onBack={() => navigation.popToTop()}
+      onNewGame={handleNewGame}
       loading={!engine && loading}
       style={{ paddingBottom: Math.max(insets.bottom, 16) }}
       rightSlot={

@@ -3,13 +3,25 @@ import { Text } from "react-native";
 import { fireEvent, render, screen } from "@testing-library/react-native";
 import { AppHeader, APP_HEADER_HEIGHT } from "../AppHeader";
 
+jest.mock("@expo/vector-icons/MaterialIcons", () => "MockMaterialIcons");
+
 jest.mock("react-i18next", () => ({
   useTranslation: () => ({
     t: (key: string) => {
-      if (key === "common:nav.back") return "← Back";
-      if (key === "common:nav.backLabel") return "Go back to home screen";
-      if (key === "fab_label") return "Send feedback";
-      return key;
+      const map: Record<string, string> = {
+        "common:nav.back": "← Back",
+        "common:nav.backLabel": "Go back to home screen",
+        fab_label: "Send feedback",
+        "common:overflow.menu.label": "More options",
+        "common:overflow.menu.scoreboard": "Scoreboard",
+        "common:overflow.menu.newGame": "New Game",
+        "common:overflow.abandon.title": "Abandon current game?",
+        "common:overflow.abandon.body":
+          "Starting a new game will discard your progress in this round. Your lifetime stats won't be affected.",
+        "common:overflow.abandon.keepPlaying": "Keep Playing",
+        "common:overflow.abandon.startNew": "Start New",
+      };
+      return map[key] ?? key;
     },
   }),
 }));
@@ -27,8 +39,13 @@ jest.mock("../../../theme/ThemeContext", () => ({
     colors: {
       background: "#0e0e13",
       accent: "#8ff5ff",
+      secondary: "#d674ff",
       text: "#e8e8f0",
+      textMuted: "#9090a8",
       textOnAccent: "#0e0e13",
+      surfaceHigh: "#1a1a22",
+      surfaceAlt: "#1c1c24",
+      border: "#2e2e38",
       chromeBg: "rgba(14,14,19,0.7)",
       chromeShadowColor: "#8ff5ff",
       chromeShadowOpacity: 0.08,
@@ -147,6 +164,85 @@ describe("AppHeader", () => {
         })
       );
       expect(onBack).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  // #711 — overflow menu
+  describe("overflow menu", () => {
+    it("shows the ? help button when no menu props are provided", () => {
+      render(<AppHeader title="Lobby" />);
+      expect(screen.getByRole("button", { name: "Send feedback" })).toBeTruthy();
+      expect(screen.queryByRole("button", { name: "More options" })).toBeNull();
+    });
+
+    it("shows the ⋯ button and hides ? when onNewGame is provided", () => {
+      render(<AppHeader title="Cascade" onNewGame={jest.fn()} />);
+      expect(screen.getByRole("button", { name: "More options" })).toBeTruthy();
+      expect(screen.queryByRole("button", { name: "Send feedback" })).toBeNull();
+    });
+
+    it("shows the ⋯ button when onOpenScoreboard is provided", () => {
+      render(<AppHeader title="Hearts" onOpenScoreboard={jest.fn()} />);
+      expect(screen.getByRole("button", { name: "More options" })).toBeTruthy();
+    });
+
+    it("opens the dropdown when ⋯ is pressed", () => {
+      render(<AppHeader title="2048" onNewGame={jest.fn()} />);
+      expect(screen.queryByText("New Game")).toBeNull();
+      fireEvent.press(screen.getByRole("button", { name: "More options" }));
+      expect(screen.getByText("New Game")).toBeTruthy();
+    });
+
+    it("shows Scoreboard item only when onOpenScoreboard is provided", () => {
+      render(<AppHeader title="Hearts" onNewGame={jest.fn()} onOpenScoreboard={jest.fn()} />);
+      fireEvent.press(screen.getByRole("button", { name: "More options" }));
+      expect(screen.getByText("Scoreboard")).toBeTruthy();
+      expect(screen.getByText("New Game")).toBeTruthy();
+    });
+
+    it("does not show Scoreboard item when onOpenScoreboard is absent", () => {
+      render(<AppHeader title="2048" onNewGame={jest.fn()} />);
+      fireEvent.press(screen.getByRole("button", { name: "More options" }));
+      expect(screen.queryByText("Scoreboard")).toBeNull();
+    });
+
+    it("calls onOpenScoreboard and closes the menu when Scoreboard is tapped", () => {
+      const onOpenScoreboard = jest.fn();
+      render(
+        <AppHeader title="Hearts" onOpenScoreboard={onOpenScoreboard} onNewGame={jest.fn()} />
+      );
+      fireEvent.press(screen.getByRole("button", { name: "More options" }));
+      fireEvent.press(screen.getByText("Scoreboard"));
+      expect(onOpenScoreboard).toHaveBeenCalledTimes(1);
+      // Menu should be closed after tap
+      expect(screen.queryByText("Scoreboard")).toBeNull();
+    });
+
+    it("opens the abandon dialog when New Game is tapped", () => {
+      render(<AppHeader title="2048" onNewGame={jest.fn()} />);
+      fireEvent.press(screen.getByRole("button", { name: "More options" }));
+      fireEvent.press(screen.getByText("New Game"));
+      expect(screen.getByText("Abandon current game?")).toBeTruthy();
+    });
+
+    it("does not call onNewGame when Keep Playing is tapped", () => {
+      const onNewGame = jest.fn();
+      render(<AppHeader title="2048" onNewGame={onNewGame} />);
+      fireEvent.press(screen.getByRole("button", { name: "More options" }));
+      fireEvent.press(screen.getByText("New Game"));
+      fireEvent.press(screen.getByRole("button", { name: "Keep Playing" }));
+      expect(onNewGame).not.toHaveBeenCalled();
+      expect(screen.queryByText("Abandon current game?")).toBeNull();
+    });
+
+    it("calls onNewGame when Start New is tapped", () => {
+      const onNewGame = jest.fn();
+      render(<AppHeader title="2048" onNewGame={onNewGame} />);
+      fireEvent.press(screen.getByRole("button", { name: "More options" }));
+      fireEvent.press(screen.getByText("New Game"));
+      fireEvent.press(screen.getByRole("button", { name: "Start New" }));
+      expect(onNewGame).toHaveBeenCalledTimes(1);
+      expect(screen.queryByText("Abandon current game?")).toBeNull();
     });
   });
 });

@@ -35,5 +35,12 @@
   "capacityWarning.dismiss": "Ignorer",
   "deck.label": "Jeu de cartes",
   "deck.select": "Sélectionner le jeu {{name}}",
-  "deck.selected": "{{name}} sélectionné"
+  "deck.selected": "{{name}} sélectionné",
+  "overflow.menu.label": "Plus d'options",
+  "overflow.menu.scoreboard": "Tableau des scores",
+  "overflow.menu.newGame": "Nouvelle partie",
+  "overflow.abandon.title": "Abandonner la partie en cours?",
+  "overflow.abandon.body": "Commencer une nouvelle partie effacera vos progrès dans ce tour. Vos statistiques globales ne seront pas affectées.",
+  "overflow.abandon.keepPlaying": "Continuer",
+  "overflow.abandon.startNew": "Commencer"
 }

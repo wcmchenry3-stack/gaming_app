@@ -290,6 +290,7 @@ export default function Twenty48Screen({ navigation }: Props) {
       title={t("game.title")}
       requireBack
       onBack={() => navigation.popToTop()}
+      onNewGame={resetGame}
       loading={!state && loading}
       style={{
         paddingBottom: Math.max(insets.bottom, 16),
