@@ -35,5 +35,12 @@
   "capacityWarning.dismiss": "Schließen",
   "deck.label": "Kartenspiel",
   "deck.select": "{{name}}-Kartenspiel auswählen",
-  "deck.selected": "{{name}} ausgewählt"
+  "deck.selected": "{{name}} ausgewählt",
+  "overflow.menu.label": "Mehr Optionen",
+  "overflow.menu.scoreboard": "Punktetafel",
+  "overflow.menu.newGame": "Neues Spiel",
+  "overflow.abandon.title": "Aktuelles Spiel beenden?",
+  "overflow.abandon.body": "Ein neues Spiel zu starten, löscht deinen Fortschritt in dieser Runde. Deine Gesamtstatistiken bleiben erhalten.",
+  "overflow.abandon.keepPlaying": "Weiter spielen",
+  "overflow.abandon.startNew": "Neu starten"
 }

@@ -203,11 +203,17 @@ describe("SolitaireScreen — auto-complete", () => {
 });
 
 describe("SolitaireScreen — new game confirmation", () => {
-  it("returns to the pre-game modal without confirmation when score is 0", async () => {
+  it("returns to the pre-game modal after confirming via ⋯ menu", async () => {
     const api = await mount();
     await chooseDraw1(api);
     await act(async () => {
-      fireEvent.press(api.getByLabelText("New Game"));
+      fireEvent.press(api.getByLabelText("More options"));
+    });
+    await act(async () => {
+      fireEvent.press(api.getByText("New Game"));
+    });
+    await act(async () => {
+      fireEvent.press(api.getByLabelText("Start New"));
     });
     expect(api.getByLabelText("Draw 1")).toBeTruthy();
   });
@@ -242,7 +248,7 @@ describe("SolitaireScreen — save/resume lifecycle", () => {
     });
   });
 
-  it("clears AsyncStorage when the user starts a New Game", async () => {
+  it("clears AsyncStorage when the user starts a New Game via ⋯ menu", async () => {
     const api = await mount();
     await chooseDraw1(api);
     await act(async () => {
@@ -252,9 +258,14 @@ describe("SolitaireScreen — save/resume lifecycle", () => {
       expect(await AsyncStorage.getItem("solitaire_game")).not.toBeNull();
     });
     await act(async () => {
-      fireEvent.press(api.getByLabelText("New Game"));
+      fireEvent.press(api.getByLabelText("More options"));
     });
-    // The confirm modal may or may not appear — score 0, no confirm required.
+    await act(async () => {
+      fireEvent.press(api.getByText("New Game"));
+    });
+    await act(async () => {
+      fireEvent.press(api.getByLabelText("Start New"));
+    });
     expect(await AsyncStorage.getItem("solitaire_game")).toBeNull();
   });
 });

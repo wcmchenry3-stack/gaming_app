@@ -35,5 +35,12 @@
   "capacityWarning.dismiss": "סגור",
   "deck.label": "חפיסת קלפים",
   "deck.select": "בחר חפיסת קלפים {{name}}",
-  "deck.selected": "{{name}} נבחר"
+  "deck.selected": "{{name}} נבחר",
+  "overflow.menu.label": "עוד אפשרויות",
+  "overflow.menu.scoreboard": "לוח תוצאות",
+  "overflow.menu.newGame": "משחק חדש",
+  "overflow.abandon.title": "לנטוש את המשחק הנוכחי?",
+  "overflow.abandon.body": "התחלת משחק חדש תמחק את ההתקדמות שלך בסיבוב הזה. הסטטיסטיקות הכלליות שלך לא יושפעו.",
+  "overflow.abandon.keepPlaying": "להמשיך לשחק",
+  "overflow.abandon.startNew": "להתחיל חדש"
 }

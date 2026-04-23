@@ -35,5 +35,12 @@
   "capacityWarning.dismiss": "閉じる",
   "deck.label": "カードデッキ",
   "deck.select": "{{name}}カードデッキを選択",
-  "deck.selected": "{{name}}が選択されました"
+  "deck.selected": "{{name}}が選択されました",
+  "overflow.menu.label": "その他のオプション",
+  "overflow.menu.scoreboard": "スコアボード",
+  "overflow.menu.newGame": "新しいゲーム",
+  "overflow.abandon.title": "現在のゲームを終了しますか？",
+  "overflow.abandon.body": "新しいゲームを始めると、このラウンドの進行状況が失われます。累計の成績には影響しません。",
+  "overflow.abandon.keepPlaying": "続ける",
+  "overflow.abandon.startNew": "新しく始める"
 }

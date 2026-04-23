@@ -35,5 +35,12 @@
   "capacityWarning.dismiss": "Fechar",
   "deck.label": "Baralho de cartas",
   "deck.select": "Selecionar baralho {{name}}",
-  "deck.selected": "{{name}} selecionado"
+  "deck.selected": "{{name}} selecionado",
+  "overflow.menu.label": "Mais opções",
+  "overflow.menu.scoreboard": "Placar",
+  "overflow.menu.newGame": "Novo Jogo",
+  "overflow.abandon.title": "Abandonar o jogo atual?",
+  "overflow.abandon.body": "Começar um novo jogo vai apagar seu progresso nesta rodada. Suas estatísticas gerais não serão afetadas.",
+  "overflow.abandon.keepPlaying": "Continuar Jogando",
+  "overflow.abandon.startNew": "Começar Novo"
 }
