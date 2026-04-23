@@ -1,14 +1,18 @@
 /**
  * ui-preferences.spec.ts
  *
- * E2E tests for the theme toggle and language switcher, both of which live
- * on the Settings tab (the lobby redesign in #309/#326 moved them off Home).
+ * E2E tests for the theme mode segmented control and language switcher, both
+ * of which live on the Settings tab (the lobby redesign in #309/#326 moved
+ * them off Home).
  *
- * Theme: toggles between dark/light mode — verifies the toggle button label changes.
- * Language: switching to a non-English locale changes visible UI copy in the lobby.
+ * Theme: a System / Light / Dark segmented control (#710) — verifies the
+ * clicked segment becomes the selected one and persists across tab navigation.
+ * Selection is read from aria-checked because RN Web 0.21 does not render
+ * accessibilityState to ARIA attributes.
  *
- * On web, LanguageSwitcher.web.tsx renders a native <select>, so tests use
- * .selectOption() directly. The testID is used instead of the aria-label
+ * Language: switching to a non-English locale changes visible UI copy in the
+ * lobby. On web, LanguageSwitcher.web.tsx renders a native <select>, so tests
+ * use .selectOption() directly. The testID is used instead of the aria-label
  * because the label localizes, which broke the round-trip test historically.
  */
 
@@ -19,40 +23,57 @@ async function gotoSettings(page: Page) {
   // BottomTabBar exposes each tab with role=tab; initial load is English so
   // "Settings" is valid here — only mid-test locale switches change the label.
   await page.getByRole("tab", { name: "Settings" }).click();
-  await expect(page.getByTestId("theme-toggle-button")).toBeVisible();
+  await expect(page.getByTestId("theme-mode-segmented")).toBeVisible();
 }
 
-test.describe("Theme toggle", () => {
+test.describe("Theme mode segmented control", () => {
   test.beforeEach(async ({ page }) => {
     await gotoSettings(page);
   });
 
-  test("theme toggle button is visible in Settings", async ({ page }) => {
-    await expect(page.getByTestId("theme-toggle-button")).toBeVisible();
+  test("all three theme modes are visible in Settings", async ({ page }) => {
+    await expect(page.getByTestId("theme-mode-segmented")).toBeVisible();
+    await expect(page.getByTestId("theme-mode-system")).toBeVisible();
+    await expect(page.getByTestId("theme-mode-light")).toBeVisible();
+    await expect(page.getByTestId("theme-mode-dark")).toBeVisible();
   });
 
-  test("clicking theme toggle changes the button label", async ({ page }) => {
-    const toggle = page.getByTestId("theme-toggle-button");
-    const initialLabel = await toggle.textContent();
+  test("clicking a theme mode marks it selected", async ({ page }) => {
+    await page.getByTestId("theme-mode-light").click();
+    await expect(page.getByTestId("theme-mode-light")).toHaveAttribute(
+      "aria-checked",
+      "true",
+    );
+    await expect(page.getByTestId("theme-mode-dark")).toHaveAttribute(
+      "aria-checked",
+      "false",
+    );
 
-    await toggle.click();
-
-    const newLabel = await toggle.textContent();
-    expect(newLabel).not.toBe(initialLabel);
+    await page.getByTestId("theme-mode-dark").click();
+    await expect(page.getByTestId("theme-mode-dark")).toHaveAttribute(
+      "aria-checked",
+      "true",
+    );
+    await expect(page.getByTestId("theme-mode-light")).toHaveAttribute(
+      "aria-checked",
+      "false",
+    );
   });
 
-  test("theme toggle persists across tab navigation", async ({ page }) => {
-    const toggle = page.getByTestId("theme-toggle-button");
-    await toggle.click();
-    const labelAfterToggle = await toggle.textContent();
+  test("theme mode persists across tab navigation", async ({ page }) => {
+    await page.getByTestId("theme-mode-light").click();
+    await expect(page.getByTestId("theme-mode-light")).toHaveAttribute(
+      "aria-checked",
+      "true",
+    );
 
     await page.getByRole("tab", { name: "Lobby" }).click();
     await page.getByRole("tab", { name: "Settings" }).click();
 
-    const labelAfterNav = await page
-      .getByTestId("theme-toggle-button")
-      .textContent();
-    expect(labelAfterNav).toBe(labelAfterToggle);
+    await expect(page.getByTestId("theme-mode-light")).toHaveAttribute(
+      "aria-checked",
+      "true",
+    );
   });
 });
 

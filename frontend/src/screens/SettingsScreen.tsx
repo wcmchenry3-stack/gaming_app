@@ -69,6 +69,9 @@ export default function SettingsScreen() {
                 ]}
                 accessibilityRole="radio"
                 accessibilityState={{ selected: active }}
+                // RN Web 0.21 drops accessibilityState; set aria-checked so web
+                // screen readers and the Playwright suite can observe selection.
+                aria-checked={active}
                 accessibilityLabel={themeLabel[mode]}
                 testID={`theme-mode-${mode}`}
               >
