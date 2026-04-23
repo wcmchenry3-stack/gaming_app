@@ -14,6 +14,11 @@ interface Props {
 }
 
 const DIGITS: readonly CellValue[] = [1, 2, 3, 4, 5, 6, 7, 8, 9];
+const DIGIT_ROWS: readonly (readonly CellValue[])[] = [
+  [1, 2, 3],
+  [4, 5, 6],
+  [7, 8, 9],
+];
 
 function countValue(grid: Grid, digit: CellValue): number {
   let n = 0;
@@ -37,32 +42,36 @@ export default function NumberPad({ grid, notesMode, onDigit, onErase, onToggleN
   return (
     <View style={styles.pad}>
       <View style={styles.digitGrid}>
-        {DIGITS.map((d) => {
-          const disabled = completed.has(d);
-          return (
-            <Pressable
-              key={d}
-              onPress={() => onDigit(d)}
-              disabled={disabled}
-              accessibilityRole="button"
-              accessibilityLabel={t("numberPad.digit", {
-                digit: d,
-                defaultValue: `Enter digit ${d}`,
-              })}
-              accessibilityState={{ disabled }}
-              style={[
-                styles.digitBtn,
-                {
-                  backgroundColor: colors.surface,
-                  borderColor: colors.border,
-                  opacity: disabled ? 0.35 : 1,
-                },
-              ]}
-            >
-              <Text style={[styles.digitText, { color: colors.text }]}>{d}</Text>
-            </Pressable>
-          );
-        })}
+        {DIGIT_ROWS.map((row, ri) => (
+          <View key={ri} style={styles.digitRow}>
+            {row.map((d) => {
+              const disabled = completed.has(d);
+              return (
+                <Pressable
+                  key={d}
+                  onPress={() => onDigit(d)}
+                  disabled={disabled}
+                  accessibilityRole="button"
+                  accessibilityLabel={t("numberPad.digit", {
+                    digit: d,
+                    defaultValue: `Enter digit ${d}`,
+                  })}
+                  accessibilityState={{ disabled }}
+                  style={[
+                    styles.digitBtn,
+                    {
+                      backgroundColor: colors.surface,
+                      borderColor: colors.border,
+                      opacity: disabled ? 0.35 : 1,
+                    },
+                  ]}
+                >
+                  <Text style={[styles.digitText, { color: colors.text }]}>{d}</Text>
+                </Pressable>
+              );
+            })}
+          </View>
+        ))}
       </View>
       <View style={styles.actionRow}>
         <Pressable
@@ -108,18 +117,20 @@ export default function NumberPad({ grid, notesMode, onDigit, onErase, onToggleN
 
 const styles = StyleSheet.create({
   pad: {
-    width: "100%",
-    gap: 8,
+    alignItems: "center",
+    gap: 12,
   },
   digitGrid: {
+    gap: 8,
+  },
+  digitRow: {
     flexDirection: "row",
-    flexWrap: "wrap",
-    justifyContent: "space-between",
+    justifyContent: "center",
     gap: 8,
   },
   digitBtn: {
-    width: "31%",
-    aspectRatio: 2,
+    width: 64,
+    height: 56,
     borderRadius: 8,
     borderWidth: 1,
     alignItems: "center",
@@ -135,6 +146,8 @@ const styles = StyleSheet.create({
   actionRow: {
     flexDirection: "row",
     gap: 8,
+    alignSelf: "stretch",
+    maxWidth: 280,
   },
   actionBtn: {
     flex: 1,

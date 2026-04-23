@@ -424,6 +424,12 @@ export default function SudokuScreen() {
             />
           </View>
 
+          <View
+            style={[styles.gridPadDivider, { backgroundColor: colors.border }]}
+            accessibilityElementsHidden
+            importantForAccessibility="no-hide-descendants"
+          />
+
           <View style={styles.padWrap}>
             <NumberPad
               grid={state.grid}
@@ -728,9 +734,16 @@ const styles = StyleSheet.create({
   gridWrap: {
     alignSelf: "stretch",
   },
-  padWrap: {
+  gridPadDivider: {
     alignSelf: "stretch",
-    marginTop: "auto",
+    height: StyleSheet.hairlineWidth,
+    marginHorizontal: 4,
+  },
+  padWrap: {
+    flex: 1,
+    alignSelf: "stretch",
+    alignItems: "center",
+    justifyContent: "center",
   },
   preGameWrap: {
     flex: 1,
