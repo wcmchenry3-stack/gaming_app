@@ -12,6 +12,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 
 import SolitaireScreen from "../SolitaireScreen";
 import { ThemeProvider } from "../../theme/ThemeContext";
+import { SolitaireScoreboardProvider } from "../../game/solitaire/SolitaireScoreboardContext";
 import { createSeededRng, dealGame, setRng } from "../../game/solitaire/engine";
 import { solitaireApi } from "../../game/solitaire/api";
 
@@ -79,7 +80,9 @@ jest.mock("../../game/solitaire/api", () => ({
 function renderScreen() {
   return render(
     <ThemeProvider>
-      <SolitaireScreen />
+      <SolitaireScoreboardProvider>
+        <SolitaireScreen />
+      </SolitaireScoreboardProvider>
     </ThemeProvider>
   );
 }

@@ -39,5 +39,12 @@
   "error.saveFailed": "Could not save your game.",
   "error.loadFailed": "Could not resume the saved game.",
   "error.submitFailed": "Could not save score. Check your connection.",
-  "error.submitRetry": "Retry"
+  "error.submitRetry": "Retry",
+  "scoreboard.heroLabel": "MOVES",
+  "scoreboard.heroSub": "{{moves}} moves · {{foundations}} of 4 complete",
+  "scoreboard.heroSubEmpty": "No games played yet",
+  "scoreboard.bestTime": "Best Time",
+  "scoreboard.bestMoves": "Best Moves",
+  "scoreboard.gamesPlayed": "Games Played",
+  "scoreboard.gamesWon": "Games Won"
 }

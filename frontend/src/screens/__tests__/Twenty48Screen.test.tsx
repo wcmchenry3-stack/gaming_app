@@ -6,6 +6,7 @@ import React from "react";
 import { render, act, waitFor, fireEvent } from "@testing-library/react-native";
 import Twenty48Screen from "../Twenty48Screen";
 import { ThemeProvider } from "../../theme/ThemeContext";
+import { Twenty48ScoreboardProvider } from "../../game/twenty48/Twenty48ScoreboardContext";
 import { saveGame, clearGame, loadGame } from "../../game/twenty48/storage";
 import { Twenty48State } from "../../game/twenty48/types";
 
@@ -74,7 +75,9 @@ function mockNav() {
 function renderScreen(nav = mockNav()) {
   return render(
     <ThemeProvider>
-      <Twenty48Screen navigation={nav} />
+      <Twenty48ScoreboardProvider>
+        <Twenty48Screen navigation={nav} />
+      </Twenty48ScoreboardProvider>
     </ThemeProvider>
   );
 }

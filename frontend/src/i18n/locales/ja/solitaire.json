@@ -39,5 +39,12 @@
   "error.saveFailed": "ゲームの保存に失敗しました。",
   "error.loadFailed": "保存したゲームを再開できませんでした。",
   "error.submitFailed": "スコアの送信に失敗しました。接続を確認してください。",
-  "error.submitRetry": "再試行"
+  "error.submitRetry": "再試行",
+  "scoreboard.heroLabel": "MOVES",
+  "scoreboard.heroSub": "{{moves}} moves · {{foundations}} of 4 complete",
+  "scoreboard.heroSubEmpty": "No games played yet",
+  "scoreboard.bestTime": "Best Time",
+  "scoreboard.bestMoves": "Best Moves",
+  "scoreboard.gamesPlayed": "Games Played",
+  "scoreboard.gamesWon": "Games Won"
 }

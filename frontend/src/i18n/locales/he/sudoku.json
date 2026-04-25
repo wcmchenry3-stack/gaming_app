@@ -26,5 +26,12 @@
   "win.title": "פתרתם את זה!",
   "win.score": "נקודות: {{score}}",
   "win.errors": "טעויות: {{count}}",
-  "win.elapsed": "זמן: {{time}}"
+  "win.elapsed": "זמן: {{time}}",
+  "scoreboard.heroLabel": "ELAPSED",
+  "scoreboard.heroSub": "{{difficulty}} · {{errors}} errors",
+  "scoreboard.heroSubEmpty": "No games played yet",
+  "scoreboard.easyBestTime": "Easy Best",
+  "scoreboard.mediumBestTime": "Medium Best",
+  "scoreboard.hardBestTime": "Hard Best",
+  "scoreboard.gamesSolved": "Games Solved"
 }

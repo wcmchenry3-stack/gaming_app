@@ -39,5 +39,12 @@
   "error.saveFailed": "Impossible de sauvegarder votre partie.",
   "error.loadFailed": "Impossible de reprendre la partie sauvegardée.",
   "error.submitFailed": "Impossible d'enregistrer le score. Vérifiez votre connexion.",
-  "error.submitRetry": "Réessayer"
+  "error.submitRetry": "Réessayer",
+  "scoreboard.heroLabel": "MOVES",
+  "scoreboard.heroSub": "{{moves}} moves · {{foundations}} of 4 complete",
+  "scoreboard.heroSubEmpty": "No games played yet",
+  "scoreboard.bestTime": "Best Time",
+  "scoreboard.bestMoves": "Best Moves",
+  "scoreboard.gamesPlayed": "Games Played",
+  "scoreboard.gamesWon": "Games Won"
 }

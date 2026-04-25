@@ -55,6 +55,7 @@ import {
 import type { DrawMode, Move, SolitaireState, Suit } from "../game/solitaire/types";
 import { SUITS } from "../game/solitaire/types";
 import { clearGame, loadGame, saveGame } from "../game/solitaire/storage";
+import { useSolitaireScoreboard } from "../game/solitaire/SolitaireScoreboardContext";
 import { solitaireApi, type ScoreEntry } from "../game/solitaire/api";
 import { useGameSync } from "../game/_shared/useGameSync";
 import { useNetwork } from "../game/_shared/NetworkContext";
@@ -110,11 +111,21 @@ export default function SolitaireScreen() {
     getGameId: syncGetGameId,
   } = useGameSync("solitaire");
 
+  const { setSnapshot: setScoreboardSnapshot } = useSolitaireScoreboard();
+
   useEffect(() => {
     return () => {
       if (autoStepTimeoutRef.current !== null) clearTimeout(autoStepTimeoutRef.current);
     };
   }, []);
+
+  useEffect(() => {
+    if (!state) return;
+    const foundationsComplete = Object.values(state.foundations).filter(
+      (cards) => cards.length === 13
+    ).length;
+    setScoreboardSnapshot({ moves, foundationsComplete, hasGame: true });
+  }, [state, moves, setScoreboardSnapshot]);
 
   // #597 — mount load. Restores a saved game silently; on a clean slot the
   // pre-game draw-mode modal is shown so the player picks their mode.
@@ -442,6 +453,7 @@ export default function SolitaireScreen() {
         paddingRight: Math.max(insets.right, 12),
       }}
       onNewGame={resetToPreGame}
+      onOpenScoreboard={() => navigation.navigate("Scoreboard", { gameKey: "solitaire" })}
       rightSlot={
         <Pressable
           onPress={handleUndo}

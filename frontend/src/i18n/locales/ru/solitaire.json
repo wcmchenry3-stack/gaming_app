@@ -39,5 +39,12 @@
   "error.saveFailed": "Не удалось сохранить игру.",
   "error.loadFailed": "Не удалось загрузить сохранение.",
   "error.submitFailed": "Не удалось сохранить счет. Проверьте соединение.",
-  "error.submitRetry": "Повторить"
+  "error.submitRetry": "Повторить",
+  "scoreboard.heroLabel": "MOVES",
+  "scoreboard.heroSub": "{{moves}} moves · {{foundations}} of 4 complete",
+  "scoreboard.heroSubEmpty": "No games played yet",
+  "scoreboard.bestTime": "Best Time",
+  "scoreboard.bestMoves": "Best Moves",
+  "scoreboard.gamesPlayed": "Games Played",
+  "scoreboard.gamesWon": "Games Won"
 }

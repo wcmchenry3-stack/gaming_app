@@ -8,9 +8,15 @@ import { useTheme } from "../theme/ThemeContext";
 import HeartsScoreboard from "../components/scoreboard/HeartsScoreboard";
 import YachtScoreboard from "../components/scoreboard/YachtScoreboard";
 import BlackjackScoreboard from "../components/scoreboard/BlackjackScoreboard";
+import Twenty48Scoreboard from "../components/scoreboard/Twenty48Scoreboard";
+import SolitaireScoreboard from "../components/scoreboard/SolitaireScoreboard";
+import SudokuScoreboard from "../components/scoreboard/SudokuScoreboard";
 import { useHeartsRounds } from "../game/hearts/RoundsContext";
 import { useYachtScorecard } from "../game/yacht/ScorecardContext";
 import { useBlackjackSessionStats } from "../game/blackjack/BlackjackGameContext";
+import { useTwenty48Scoreboard } from "../game/twenty48/Twenty48ScoreboardContext";
+import { useSolitaireScoreboard } from "../game/solitaire/SolitaireScoreboardContext";
+import { useSudokuScoreboard } from "../game/sudoku/SudokuScoreboardContext";
 import type { HomeStackParamList } from "../../App";
 
 type GameKey = HomeStackParamList["Scoreboard"]["gameKey"];
@@ -36,6 +42,21 @@ function YachtScoreboardSection() {
 function BlackjackScoreboardSection() {
   const stats = useBlackjackSessionStats();
   return <BlackjackScoreboard stats={stats} />;
+}
+
+function Twenty48ScoreboardSection() {
+  const { snapshot } = useTwenty48Scoreboard();
+  return <Twenty48Scoreboard snapshot={snapshot} />;
+}
+
+function SolitaireScoreboardSection() {
+  const { snapshot } = useSolitaireScoreboard();
+  return <SolitaireScoreboard snapshot={snapshot} />;
+}
+
+function SudokuScoreboardSection() {
+  const { snapshot } = useSudokuScoreboard();
+  return <SudokuScoreboard snapshot={snapshot} />;
 }
 
 function UnknownScoreboardFallback({ gameKey }: { gameKey: string }) {
@@ -65,6 +86,15 @@ export default function ScoreboardScreen() {
       break;
     case "blackjack":
       body = <BlackjackScoreboardSection />;
+      break;
+    case "twenty48":
+      body = <Twenty48ScoreboardSection />;
+      break;
+    case "solitaire":
+      body = <SolitaireScoreboardSection />;
+      break;
+    case "sudoku":
+      body = <SudokuScoreboardSection />;
       break;
     default:
       body = <UnknownScoreboardFallback gameKey={gameKey} />;
