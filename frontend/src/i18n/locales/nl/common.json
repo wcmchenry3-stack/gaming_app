@@ -39,6 +39,7 @@
   "overflow.menu.label": "Meer opties",
   "overflow.menu.scoreboard": "Scorebord",
   "overflow.menu.newGame": "Nieuw spel",
+  "overflow.menu.editNames": "Namen bewerken",
   "overflow.abandon.title": "Huidig spel verlaten?",
   "overflow.abandon.body": "Een nieuw spel starten verwijdert je voortgang in deze ronde. Je statistieken blijven behouden.",
   "overflow.abandon.keepPlaying": "Doorgaan",
