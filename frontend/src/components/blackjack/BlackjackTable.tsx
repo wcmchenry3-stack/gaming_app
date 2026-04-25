@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 import { useTheme } from "../../theme/ThemeContext";
 import { HandResponse } from "../../game/blackjack/types";
 import HandDisplay from "./HandDisplay";
+import ResultBanner from "./ResultBanner";
 
 interface Props {
   playerHand: HandResponse;
@@ -17,6 +18,8 @@ interface Props {
   handBets?: number[];
   /** Per-hand outcomes (when split, in result phase). */
   handOutcomes?: (string | null)[];
+  /** Per-hand payouts (when split, in result phase). */
+  handPayouts?: number[];
   /** Shrink card sizes and table padding on short-height viewports. */
   compact?: boolean;
 }
@@ -29,6 +32,7 @@ export default function BlackjackTable({
   activeHandIndex = 0,
   handBets,
   handOutcomes,
+  handPayouts,
   compact = false,
 }: Props) {
   const { t } = useTranslation("blackjack");
@@ -74,25 +78,11 @@ export default function BlackjackTable({
                 ]}
               >
                 <HandDisplay hand={hand} label={label} variant="player" compact maxPerRow={3} />
-                {bet != null && (
+                {bet != null && phase !== "result" && (
                   <Text style={[styles.handBet, { color: colors.textMuted }]}>{bet}</Text>
                 )}
-                {outcome && phase === "result" && (
-                  <Text
-                    style={[
-                      styles.handOutcome,
-                      {
-                        color:
-                          outcome === "win"
-                            ? colors.bonus
-                            : outcome === "lose"
-                              ? colors.error
-                              : colors.textMuted,
-                      },
-                    ]}
-                  >
-                    {t(`outcome.${outcome}` as Parameters<typeof t>[0])}
-                  </Text>
+                {outcome != null && phase === "result" && (
+                  <ResultBanner outcome={outcome} payout={handPayouts?.[i] ?? 0} compact />
                 )}
                 {isActive && (
                   <Text style={[styles.activeLabel, { color: colors.accent }]}>
@@ -161,10 +151,6 @@ const styles = StyleSheet.create({
   handBet: {
     fontSize: 12,
     fontWeight: "600",
-  },
-  handOutcome: {
-    fontSize: 13,
-    fontWeight: "700",
   },
   activeLabel: {
     fontSize: 11,

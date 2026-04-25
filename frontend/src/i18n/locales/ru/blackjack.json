@@ -27,7 +27,7 @@
   "hand.player": "Ваши карты",
   "hand.dealer": "Карты дилера",
   "hand.playerHand": "Рука {{number}}",
-  "hand.activeIndicator": "(Активная)",
+  "hand.activeIndicator": "● Playing",
   "hand.value": "Сумма: {{value}}",
   "hand.softValue": "Мягкий {{value}}",
   "hand.valueHidden": "Сумма: ?",

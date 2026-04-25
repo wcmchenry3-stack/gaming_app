@@ -27,7 +27,7 @@
   "hand.player": "あなたの手札",
   "hand.dealer": "ディーラーの手札",
   "hand.playerHand": "ハンド {{number}}",
-  "hand.activeIndicator": "(アクティブ)",
+  "hand.activeIndicator": "● Playing",
   "hand.value": "合計: {{value}}",
   "hand.softValue": "ソフト {{value}}",
   "hand.valueHidden": "合計: ?",

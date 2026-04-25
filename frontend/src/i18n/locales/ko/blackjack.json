@@ -27,7 +27,7 @@
   "hand.player": "내 패",
   "hand.dealer": "딜러 패",
   "hand.playerHand": "핸드 {{number}}",
-  "hand.activeIndicator": "(활성)",
+  "hand.activeIndicator": "● Playing",
   "hand.value": "점수: {{value}}",
   "hand.softValue": "소프트 {{value}}",
   "hand.valueHidden": "점수: ?",

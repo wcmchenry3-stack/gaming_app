@@ -144,6 +144,7 @@ export default function BlackjackTableScreen({ navigation }: Props) {
               activeHandIndex={state.active_hand_index}
               handBets={state.hand_bets}
               handOutcomes={state.hand_outcomes}
+              handPayouts={state.hand_payouts}
               compact={isCompact}
             />
           </View>
@@ -157,7 +158,7 @@ export default function BlackjackTableScreen({ navigation }: Props) {
       <View style={[styles.controls, isCompact && styles.controlsCompact]}>
         {state?.phase === "result" && (
           <>
-            <ResultBanner outcome={state.outcome!} payout={state.payout} />
+            {!isSplit && <ResultBanner outcome={state.outcome!} payout={state.payout} />}
 
             <View style={styles.resultActions}>
               <Pressable

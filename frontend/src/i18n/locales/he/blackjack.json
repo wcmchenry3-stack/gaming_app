@@ -27,7 +27,7 @@
   "hand.player": "היד שלך",
   "hand.dealer": "היד של הדילר",
   "hand.playerHand": "יד {{number}}",
-  "hand.activeIndicator": "(פעילה)",
+  "hand.activeIndicator": "● Playing",
   "hand.value": "ערך: {{value}}",
   "hand.softValue": "רך {{value}}",
   "hand.valueHidden": "ערך: ?",

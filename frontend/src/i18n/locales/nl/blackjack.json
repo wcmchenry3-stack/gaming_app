@@ -27,7 +27,7 @@
   "hand.player": "Jouw Hand",
   "hand.dealer": "Hand Dealer",
   "hand.playerHand": "Hand {{number}}",
-  "hand.activeIndicator": "(Actief)",
+  "hand.activeIndicator": "● Playing",
   "hand.value": "Waarde: {{value}}",
   "hand.softValue": "Zacht {{value}}",
   "hand.valueHidden": "Waarde: ?",

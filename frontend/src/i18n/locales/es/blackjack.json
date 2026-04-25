@@ -27,7 +27,7 @@
   "hand.player": "Tu mano",
   "hand.dealer": "Mano del crupier",
   "hand.playerHand": "Mano {{number}}",
-  "hand.activeIndicator": "(Activa)",
+  "hand.activeIndicator": "● Playing",
   "hand.value": "Valor: {{value}}",
   "hand.softValue": "Suave {{value}}",
   "hand.valueHidden": "Valor: ?",
