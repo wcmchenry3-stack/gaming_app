@@ -26,8 +26,24 @@ describe("hearts storage", () => {
     (AsyncStorage.getItem as jest.Mock).mockResolvedValue(JSON.stringify(state));
     const loaded = await loadGame();
     expect(loaded).not.toBeNull();
-    expect(loaded?._v).toBe(1);
+    expect(loaded?._v).toBe(2);
     expect(loaded?.phase).toBe(state.phase);
+  });
+
+  it("loadGame round-trips scoreHistory (#745)", async () => {
+    const state: HeartsState = {
+      ...dealGame(),
+      scoreHistory: [
+        [5, 5, 5, 5],
+        [10, 8, 4, 4],
+      ],
+    };
+    (AsyncStorage.getItem as jest.Mock).mockResolvedValue(JSON.stringify(state));
+    const loaded = await loadGame();
+    expect(loaded?.scoreHistory).toEqual([
+      [5, 5, 5, 5],
+      [10, 8, 4, 4],
+    ]);
   });
 
   it("loadGame returns null and removes key for corrupt JSON", async () => {
@@ -43,8 +59,23 @@ describe("hearts storage", () => {
     expect(AsyncStorage.removeItem).toHaveBeenCalledWith("hearts_game");
   });
 
+  it("loadGame discards v1 saves (#745 schema bump)", async () => {
+    const v1Save = { ...dealGame(), _v: 1 } as unknown;
+    // Strip scoreHistory to mimic an actual v1 payload
+    delete (v1Save as { scoreHistory?: unknown }).scoreHistory;
+    (AsyncStorage.getItem as jest.Mock).mockResolvedValue(JSON.stringify(v1Save));
+    expect(await loadGame()).toBeNull();
+    expect(AsyncStorage.removeItem).toHaveBeenCalledWith("hearts_game");
+  });
+
+  it("loadGame rejects payloads with malformed scoreHistory rows", async () => {
+    const bad = { ...dealGame(), scoreHistory: [[5, 5, 5]] }; // 3 entries, not 4
+    (AsyncStorage.getItem as jest.Mock).mockResolvedValue(JSON.stringify(bad));
+    expect(await loadGame()).toBeNull();
+  });
+
   it("loadGame returns null for missing required arrays", async () => {
-    const bad: Partial<HeartsState> = { _v: 1 };
+    const bad: Partial<HeartsState> = { _v: 2 };
     (AsyncStorage.getItem as jest.Mock).mockResolvedValue(JSON.stringify(bad));
     expect(await loadGame()).toBeNull();
   });

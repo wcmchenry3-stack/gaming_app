@@ -1,6 +1,6 @@
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
-import { useNavigation } from "@react-navigation/native";
+import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type { HomeStackParamList } from "../../App";
 import { useTranslation } from "react-i18next";
@@ -32,6 +32,7 @@ import {
 } from "../game/hearts/playerNames";
 import { heartsApi } from "../game/hearts/api";
 import { useHeartsRounds } from "../game/hearts/RoundsContext";
+import { createIntegrityReporter } from "../game/hearts/integrity";
 import { useGameSync } from "../game/_shared/useGameSync";
 import { useNetwork } from "../game/_shared/NetworkContext";
 import { OfflineBanner } from "../components/shared/OfflineBanner";
@@ -70,13 +71,15 @@ export default function HeartsScreen() {
   const [submitState, setSubmitState] = useState<SubmitState>("idle");
   const [playerNames, setPlayerNames] = useState<string[]>([...DEFAULT_NAMES]);
   const [draftNames, setDraftNames] = useState<string[]>([...DEFAULT_NAMES]);
-  const [scoreHistory, setScoreHistory] = useState<number[][]>([]);
+
+  // scoreHistory now lives on HeartsState (engine-authoritative, persisted).
+  const scoreHistory = gameState.scoreHistory;
 
   const unmountedRef = useRef(false);
   const loopActiveRef = useRef(false);
   const gameStateRef = useRef<HeartsState>(gameState);
-  const lastRecordedHandRef = useRef<number>(0);
   const trickAnimResolverRef = useRef<(() => void) | null>(null);
+  const reportIntegrity = useMemo(() => createIntegrityReporter(), []);
 
   const {
     start: syncStart,
@@ -113,23 +116,6 @@ export default function HeartsScreen() {
     });
   }, []);
 
-  // ─── Track per-round score history ────────────────────────────────────────
-  // Push the *applied* per-round delta (post-moon: shooter 0, others 26) by
-  // diffing post-hand cumulativeScores against the running sum of prior rows.
-  // Storing raw handScores here would invert the moon row vs. the totals row
-  // (#743). Deriving from cumulative deltas keeps the scoreboard a pure view
-  // of engine-authoritative totals.
-  useEffect(() => {
-    if (gameState.phase !== "dealing" && gameState.phase !== "game_over") return;
-    if (gameState.handNumber <= lastRecordedHandRef.current) return;
-    lastRecordedHandRef.current = gameState.handNumber;
-    setScoreHistory((prev) => {
-      const sums = prev.reduce((acc, row) => acc.map((v, i) => v + (row[i] ?? 0)), [0, 0, 0, 0]);
-      const delta = gameState.cumulativeScores.map((c, i) => c - (sums[i] ?? 0));
-      return [...prev, delta];
-    });
-  }, [gameState.phase, gameState.handNumber, gameState.cumulativeScores]);
-
   // ─── Sync snapshot to shared rounds context (read by ScoreboardScreen) ────
   const { setSnapshot: setRoundsSnapshot } = useHeartsRounds();
   useEffect(() => {
@@ -139,6 +125,24 @@ export default function HeartsScreen() {
       playerLabels: playerNames,
     });
   }, [gameState.cumulativeScores, scoreHistory, playerNames, setRoundsSnapshot]);
+
+  // ─── Run integrity validators (Sentry-warns on impossible state) ──────────
+  useEffect(() => {
+    reportIntegrity(gameState);
+  }, [gameState, reportIntegrity]);
+
+  // ─── Save on blur ─────────────────────────────────────────────────────────
+  // Tab switches unmount the Lobby HomeStack; without this, mid-trick or
+  // pass-phase state is lost (saveGame elsewhere only fires on trick complete
+  // and hand transitions). Persisting on blur keeps full game continuity.
+  useFocusEffect(
+    useCallback(() => {
+      return () => {
+        if (gameStateRef.current.isComplete) return;
+        void saveGame(gameStateRef.current);
+      };
+    }, [])
+  );
 
   // ─── Abandon on back-navigation ───────────────────────────────────────────
   useEffect(() => {
@@ -302,8 +306,6 @@ export default function HeartsScreen() {
     setLastTrick(null);
     setSubmitState("idle");
     setPlayerName("");
-    setScoreHistory([]);
-    lastRecordedHandRef.current = 0;
     loopActiveRef.current = false;
     clearGame().catch(() => {});
     const fresh = dealGame();
