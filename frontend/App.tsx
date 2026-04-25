@@ -68,7 +68,9 @@ export type HomeStackParamList = {
   Solitaire: undefined;
   Hearts: undefined;
   Sudoku: undefined;
-  Scoreboard: { gameKey: "hearts" | "yacht" | "blackjack" | "twenty48" | "solitaire" | "sudoku" | "cascade" };
+  Scoreboard: {
+    gameKey: "hearts" | "yacht" | "blackjack" | "twenty48" | "solitaire" | "sudoku" | "cascade";
+  };
 };
 
 export type ProfileStackParamList = {
@@ -212,11 +214,11 @@ function AppInner() {
                   <SolitaireScoreboardProvider>
                     <SudokuScoreboardProvider>
                       <CascadeScoreboardProvider>
-                      <NavigationContainer>
-                        <Stack.Navigator screenOptions={{ headerShown: false }}>
-                          <Stack.Screen name="MainTabs" component={MainTabs} />
-                        </Stack.Navigator>
-                      </NavigationContainer>
+                        <NavigationContainer>
+                          <Stack.Navigator screenOptions={{ headerShown: false }}>
+                            <Stack.Screen name="MainTabs" component={MainTabs} />
+                          </Stack.Navigator>
+                        </NavigationContainer>
                       </CascadeScoreboardProvider>
                     </SudokuScoreboardProvider>
                   </SolitaireScoreboardProvider>
