@@ -20,22 +20,14 @@ export default function PassBanner({ passDirection, selectedCount, onConfirm }: 
 
   return (
     <View
-      style={[
-        styles.banner,
-        { backgroundColor: colors.surfaceAlt, borderColor: colors.border },
-      ]}
+      style={[styles.banner, { backgroundColor: colors.surfaceAlt, borderColor: colors.border }]}
       accessibilityLiveRegion="polite"
     >
       <View style={styles.text}>
         <Text style={[styles.prompt, { color: colors.text }]} numberOfLines={1}>
           {t("pass.instructions", { direction })}
         </Text>
-        <Text
-          style={[
-            styles.counter,
-            { color: canConfirm ? colors.accent : colors.textMuted },
-          ]}
-        >
+        <Text style={[styles.counter, { color: canConfirm ? colors.accent : colors.textMuted }]}>
           {t("pass.selected", { count: selectedCount })}
         </Text>
       </View>

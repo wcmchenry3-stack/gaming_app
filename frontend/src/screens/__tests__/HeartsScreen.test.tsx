@@ -76,7 +76,9 @@ describe("HeartsScreen — passing phase (inline banner)", () => {
     // eslint-disable-next-line @typescript-eslint/no-require-imports
     const { Modal } = require("react-native");
     const { UNSAFE_queryAllByType } = renderScreen();
-    const visibleModals = UNSAFE_queryAllByType(Modal).filter((m: { props: { visible?: boolean } }) => m.props.visible !== false);
+    const visibleModals = UNSAFE_queryAllByType(Modal).filter(
+      (m: { props: { visible?: boolean } }) => m.props.visible !== false
+    );
     expect(visibleModals).toHaveLength(0);
   });
 

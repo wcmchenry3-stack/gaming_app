@@ -1,10 +1,6 @@
 import React, { useEffect } from "react";
 import { View, StyleSheet, useWindowDimensions } from "react-native";
-import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  withSpring,
-} from "react-native-reanimated";
+import Animated, { useSharedValue, useAnimatedStyle, withSpring } from "react-native-reanimated";
 import { useTranslation } from "react-i18next";
 import PlayingCard from "./PlayingCard";
 import type { Card } from "../../game/hearts/types";
