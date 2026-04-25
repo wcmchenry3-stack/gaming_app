@@ -10,6 +10,8 @@ export interface Colors {
   surface: string;
   surfaceAlt: string;
   surfaceHigh: string;
+  /** Subtle peer highlight — same row, column, or 3×3 box as the selected Sudoku cell. */
+  surfacePeer: string;
   border: string;
   text: string;
   textMuted: string;
@@ -51,11 +53,13 @@ const TOKENS = {
   // Dark backgrounds
   darkBg: "#0e0e13",
   darkSurface: "#19191f",
+  darkSurfacePeer: "#1c1c23",
   darkSurfaceAlt: "#1f1f26",
   darkSurfaceHigh: "#25252c",
   // Light backgrounds (cream)
   lightBg: "#f5ecd7",
   lightSurface: "#fbf4e2",
+  lightSurfacePeer: "#f4ebd0",
   lightSurfaceAlt: "#eddfbf",
   lightSurfaceHigh: "#fff8e8",
   // Accents — light variants desaturated so they don't vibrate on cream
@@ -78,6 +82,7 @@ const TOKENS = {
 const dark: Colors = {
   background: TOKENS.darkBg,
   surface: TOKENS.darkSurface,
+  surfacePeer: TOKENS.darkSurfacePeer,
   surfaceAlt: TOKENS.darkSurfaceAlt,
   surfaceHigh: TOKENS.darkSurfaceHigh,
   border: "#2e2e38",
@@ -114,6 +119,7 @@ const dark: Colors = {
 const light: Colors = {
   background: TOKENS.lightBg,
   surface: TOKENS.lightSurface,
+  surfacePeer: TOKENS.lightSurfacePeer,
   surfaceAlt: TOKENS.lightSurfaceAlt,
   surfaceHigh: TOKENS.lightSurfaceHigh,
   border: "#d8c9a6",
