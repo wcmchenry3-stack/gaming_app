@@ -107,6 +107,7 @@ export default function HeartsScreen() {
   const loopActiveRef = useRef(false);
   const gameStateRef = useRef<HeartsState>(gameState);
   const lastRecordedHandRef = useRef<number>(0);
+  const trickAnimResolverRef = useRef<(() => void) | null>(null);
 
   const {
     start: syncStart,
@@ -123,6 +124,9 @@ export default function HeartsScreen() {
   useEffect(
     () => () => {
       unmountedRef.current = true;
+      const resolve = trickAnimResolverRef.current;
+      trickAnimResolverRef.current = null;
+      if (resolve) resolve();
     },
     []
   );
@@ -200,7 +204,9 @@ export default function HeartsScreen() {
         setGameState(s);
 
         if (completedTrick && s.phase === "playing") {
-          await delay(1500);
+          await new Promise<void>((resolve) => {
+            trickAnimResolverRef.current = resolve;
+          });
           if (unmountedRef.current) return;
           setLastTrick(null);
         }
@@ -244,14 +250,25 @@ export default function HeartsScreen() {
       if (newState.phase === "playing") {
         setLastTrick({ trick: completedTrick, winnerIndex: newState.currentLeaderIndex });
         setGameState(newState);
-        setTimeout(() => {
-          if (!unmountedRef.current) setLastTrick(null);
-        }, 1500);
         return;
       }
     }
     setLastTrick(null);
     setGameState(newState);
+  }
+
+  // Called by TrickArea when the trick-take animation completes. Resolves the
+  // AI loop's pending await; for human-led tricks (no pending resolver),
+  // clears lastTrick directly.
+  function handleTrickAnimationComplete() {
+    if (unmountedRef.current) return;
+    const resolve = trickAnimResolverRef.current;
+    if (resolve) {
+      trickAnimResolverRef.current = null;
+      resolve();
+    } else if (lastTrick !== null) {
+      setLastTrick(null);
+    }
   }
 
   // ─── Passing ──────────────────────────────────────────────────────────────
@@ -376,6 +393,7 @@ export default function HeartsScreen() {
             playerIndex={HUMAN}
             playerLabels={playerLabels}
             winnerIndex={trickWinnerIndex}
+            onAnimationComplete={handleTrickAnimationComplete}
           />
           <View style={styles.sideColumn}>
             <CompactHand

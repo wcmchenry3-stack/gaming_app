@@ -1,5 +1,5 @@
 import React from "react";
-import { render, fireEvent } from "@testing-library/react-native";
+import { render, fireEvent, act } from "@testing-library/react-native";
 import { ThemeProvider } from "../../../theme/ThemeContext";
 import PlayingCard from "../PlayingCard";
 import PlayerHand from "../PlayerHand";
@@ -173,6 +173,97 @@ describe("TrickArea", () => {
     );
     expect(getByText("10")).toBeTruthy();
     expect(getByText("3")).toBeTruthy();
+  });
+
+  describe("animation", () => {
+    const fullTrick: TrickCard[] = [
+      { card: c("spades", 10), playerIndex: 0 },
+      { card: c("hearts", 3), playerIndex: 1 },
+      { card: c("clubs", 8), playerIndex: 2 },
+      { card: c("diamonds", 5), playerIndex: 3 },
+    ];
+
+    beforeEach(() => {
+      jest.useFakeTimers();
+    });
+
+    afterEach(() => {
+      jest.useRealTimers();
+    });
+
+    it("does not fire onAnimationComplete when winnerIndex is null", () => {
+      const onComplete = jest.fn();
+      wrap(
+        <TrickArea
+          trick={fullTrick}
+          playerIndex={0}
+          winnerIndex={null}
+          onAnimationComplete={onComplete}
+        />
+      );
+      act(() => {
+        jest.advanceTimersByTime(1000);
+      });
+      expect(onComplete).not.toHaveBeenCalled();
+    });
+
+    it("does not fire onAnimationComplete for an incomplete trick", () => {
+      const onComplete = jest.fn();
+      const partial: TrickCard[] = [
+        { card: c("spades", 10), playerIndex: 0 },
+        { card: c("hearts", 3), playerIndex: 1 },
+      ];
+      wrap(
+        <TrickArea
+          trick={partial}
+          playerIndex={0}
+          winnerIndex={1}
+          onAnimationComplete={onComplete}
+        />
+      );
+      act(() => {
+        jest.advanceTimersByTime(1000);
+      });
+      expect(onComplete).not.toHaveBeenCalled();
+    });
+
+    it("fires onAnimationComplete when a complete trick has a winner", () => {
+      const onComplete = jest.fn();
+      wrap(
+        <TrickArea
+          trick={fullTrick}
+          playerIndex={0}
+          winnerIndex={2}
+          onAnimationComplete={onComplete}
+        />
+      );
+      act(() => {
+        jest.advanceTimersByTime(700);
+      });
+      expect(onComplete).toHaveBeenCalledTimes(1);
+    });
+
+    it("fires onAnimationComplete within the 600ms budget plus a small margin", () => {
+      const onComplete = jest.fn();
+      wrap(
+        <TrickArea
+          trick={fullTrick}
+          playerIndex={0}
+          winnerIndex={0}
+          onAnimationComplete={onComplete}
+        />
+      );
+      // Not yet complete at mid-animation.
+      act(() => {
+        jest.advanceTimersByTime(300);
+      });
+      expect(onComplete).not.toHaveBeenCalled();
+      // Finishes after the full duration.
+      act(() => {
+        jest.advanceTimersByTime(400);
+      });
+      expect(onComplete).toHaveBeenCalledTimes(1);
+    });
   });
 });
 
