@@ -1,6 +1,8 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import { useNavigation } from "@react-navigation/native";
+import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import type { HomeStackParamList } from "../../App";
 import { useTranslation } from "react-i18next";
 import { useTheme } from "../theme/ThemeContext";
 import type { Colors } from "../theme/ThemeContext";
@@ -9,7 +11,7 @@ import { OpponentCapturedPile, SelfCapturedPile } from "../components/hearts/Cap
 import OpponentHand from "../components/hearts/OpponentHand";
 import PassBanner from "../components/hearts/PassBanner";
 import PlayerHand from "../components/hearts/PlayerHand";
-import ScoreBoard from "../components/hearts/ScoreBoard";
+import HeartsScoreboard from "../components/scoreboard/HeartsScoreboard";
 import TrickArea from "../components/hearts/TrickArea";
 import {
   commitPass,
@@ -58,12 +60,11 @@ const sideSeatStyles = StyleSheet.create({
 export default function HeartsScreen() {
   const { t } = useTranslation("hearts");
   const { colors } = useTheme();
-  const navigation = useNavigation();
+  const navigation = useNavigation<NativeStackNavigationProp<HomeStackParamList>>();
   const { isOnline, isInitialized } = useNetwork();
 
   const [gameState, setGameState] = useState<HeartsState>(() => dealGame());
   const [lastTrick, setLastTrick] = useState<LastTrick>(null);
-  const [showScores, setShowScores] = useState(false);
   const [showRename, setShowRename] = useState(false);
   const [playerName, setPlayerName] = useState("");
   const [submitState, setSubmitState] = useState<SubmitState>("idle");
@@ -334,17 +335,14 @@ export default function HeartsScreen() {
   const displayTrick = lastTrick !== null ? lastTrick.trick : gameState.currentTrick;
   const trickWinnerIndex = lastTrick !== null ? lastTrick.winnerIndex : null;
   const moonShooter = detectMoon(gameState.wonCards);
-  const dangerIndex = gameState.cumulativeScores.reduce(
-    (maxIdx, s, i, arr) => ((s ?? 0) > (arr[maxIdx] ?? 0) ? i : maxIdx),
-    0
-  );
 
   return (
     <GameShell
       title={t("game.title")}
       onBack={() => navigation.goBack()}
       onNewGame={handlePlayAgain}
-      onOpenScoreboard={() => setShowScores(true)}
+      onOpenScoreboard={() => navigation.navigate("Scoreboard", { gameKey: "hearts" })}
+      onEditPlayerNames={handleOpenRename}
     >
       {/* ── Table ──────────────────────────────────────────────────── */}
       <View style={[styles.table, { backgroundColor: colors.background }]}>
@@ -423,11 +421,11 @@ export default function HeartsScreen() {
                   {t("hand_end.moon", { label: playerLabels[moonShooter] ?? "" })}
                 </Text>
               )}
-              <ScoreBoard
+              <HeartsScoreboard
                 playerLabels={playerLabels}
                 cumulativeScores={[...gameState.cumulativeScores]}
                 scoreHistory={scoreHistory}
-                dangerIndex={dangerIndex}
+                compact
               />
               <Pressable
                 style={[styles.btn, { backgroundColor: colors.accent }]}
@@ -460,11 +458,11 @@ export default function HeartsScreen() {
               <Text style={[styles.winnerText, { color: colors.accent }]}>
                 {t("game_over.winner", { label: playerLabels[gameState.winnerIndex ?? 0] ?? "" })}
               </Text>
-              <ScoreBoard
+              <HeartsScoreboard
                 playerLabels={playerLabels}
                 cumulativeScores={[...gameState.cumulativeScores]}
                 scoreHistory={scoreHistory}
-                dangerIndex={dangerIndex}
+                compact
               />
 
               {submitState !== "done" && (
@@ -557,45 +555,6 @@ export default function HeartsScreen() {
           </View>
         </Modal>
       )}
-
-      {/* ── Score panel modal ──────────────────────────────────────── */}
-      <Modal
-        visible={showScores}
-        transparent
-        animationType="slide"
-        onRequestClose={() => setShowScores(false)}
-        accessibilityViewIsModal
-      >
-        <View style={[styles.overlay, { backgroundColor: colors.overlay }]}>
-          <View
-            style={[styles.panel, { backgroundColor: colors.surface, borderColor: colors.border }]}
-          >
-            <Text style={[styles.panelTitle, { color: colors.text }]}>{t("score.board")}</Text>
-            <ScoreBoard
-              playerLabels={playerLabels}
-              cumulativeScores={[...gameState.cumulativeScores]}
-              scoreHistory={scoreHistory}
-              dangerIndex={dangerIndex}
-            />
-            <Pressable
-              style={[styles.btn, { backgroundColor: colors.surfaceAlt }]}
-              onPress={handleOpenRename}
-              accessibilityRole="button"
-              accessibilityLabel={t("settings.rename")}
-            >
-              <Text style={[styles.btnText, { color: colors.text }]}>{t("settings.rename")}</Text>
-            </Pressable>
-            <Pressable
-              style={[styles.btn, { backgroundColor: colors.surfaceAlt }]}
-              onPress={() => setShowScores(false)}
-              accessibilityRole="button"
-              accessibilityLabel={t("score.close")}
-            >
-              <Text style={[styles.btnText, { color: colors.text }]}>{t("score.close")}</Text>
-            </Pressable>
-          </View>
-        </View>
-      </Modal>
 
       {/* ── Rename players modal ───────────────────────────────────── */}
       <Modal
