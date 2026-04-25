@@ -18,6 +18,11 @@
   "hand.player": "Your hand, {{count}} cards",
   "hand.opponent": "{{label}}'s hand, {{count}} cards",
 
+  "captured.taken": "TAKEN",
+  "captured.empty": "Nothing yet",
+  "captured.opponentLabel": "{{label}} has taken {{count}} cards, {{points}} penalty points",
+  "captured.selfLabel": "You have taken {{count}} cards, {{points}} penalty points",
+
   "trick.area": "Current trick",
   "trick.slot.empty": "Empty slot — {{label}}",
   "trick.winner": "{{label}} won the trick",
