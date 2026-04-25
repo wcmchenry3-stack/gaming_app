@@ -54,7 +54,10 @@ export function checkHeartsIntegrity(state: HeartsState): readonly Finding[] {
     const row = scoreHistory[r] ?? [];
     if (row.length !== 4) continue;
     const sum = row.reduce<number>((s, v) => s + v, 0);
-    const isMoon = sum === 78 && row.filter((v) => v === 0).length === 1 && row.filter((v) => v === 26).length === 3;
+    const isMoon =
+      sum === 78 &&
+      row.filter((v) => v === 0).length === 1 &&
+      row.filter((v) => v === 26).length === 3;
     if (!isMoon) {
       if (sum !== HAND_TOTAL_POINTS) {
         findings.push({
