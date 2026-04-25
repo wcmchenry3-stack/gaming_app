@@ -22,6 +22,7 @@
   "newGame.confirm.body": "आपका वर्तमान गेम खो जाएगा। स्कोर और राउंड रीसेट हो जाएगा।",
   "newGame.confirm.confirm": "नया गेम शुरू करें",
   "newGame.confirm.cancel": "रद्द करें",
+  "settings.soundEffects": "ध्वनि प्रभाव",
   "clearLogs.label": "स्थानीय लॉग्स साफ़ करें",
   "clearLogs.description": "सभी कतारबद्ध इवेंट्स और बग लॉग्स हटाएं जो अभी तक सिंक नहीं हुए हैं।",
   "clearLogs.button": "साफ़ करें",

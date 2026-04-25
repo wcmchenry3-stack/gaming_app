@@ -5,7 +5,9 @@
     "tone": "neutral",
     "characterLimit": 20,
     "placeholders": [],
-    "doNotTranslate": ["Gaming App"],
+    "doNotTranslate": [
+      "Gaming App"
+    ],
     "notes": "Do not translate the app name."
   },
   "app.subtitle": {
@@ -76,7 +78,9 @@
     "description": "Accessibility label for the theme toggle. {{mode}} is 'light' or 'dark'.",
     "tone": "functional",
     "characterLimit": 40,
-    "placeholders": ["{{mode}}"],
+    "placeholders": [
+      "{{mode}}"
+    ],
     "doNotTranslate": [],
     "notes": "{{mode}} will already be translated by the time it is interpolated."
   },
@@ -103,6 +107,15 @@
     "description": "Accessibility label for the language selector control.",
     "tone": "functional",
     "characterLimit": 25,
+    "placeholders": [],
+    "doNotTranslate": [],
+    "notes": null
+  },
+  "settings.soundEffects": {
+    "component": "SettingsScreen",
+    "description": "Label for the global sound effects toggle in Settings.",
+    "tone": "functional",
+    "characterLimit": 20,
     "placeholders": [],
     "doNotTranslate": [],
     "notes": null

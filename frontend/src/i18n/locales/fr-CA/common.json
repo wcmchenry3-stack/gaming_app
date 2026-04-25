@@ -22,6 +22,7 @@
   "newGame.confirm.body": "Votre partie actuelle sera perdue. Le score et le tour seront réinitialisés.",
   "newGame.confirm.confirm": "Commencer",
   "newGame.confirm.cancel": "Annuler",
+  "settings.soundEffects": "Effets sonores",
   "clearLogs.label": "Effacer les journaux locaux",
   "clearLogs.description": "Supprime tous les événements en attente et les journaux d'erreurs non synchronisés.",
   "clearLogs.button": "Effacer",

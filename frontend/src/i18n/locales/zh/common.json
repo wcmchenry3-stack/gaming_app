@@ -22,6 +22,7 @@
   "newGame.confirm.body": "当前游戏将丢失。分数和回合将重置。",
   "newGame.confirm.confirm": "开始新游戏",
   "newGame.confirm.cancel": "取消",
+  "settings.soundEffects": "音效",
   "clearLogs.label": "清除本地记录",
   "clearLogs.description": "删除所有未同步的事件和错误记录。",
   "clearLogs.button": "清除",

@@ -22,6 +22,7 @@
   "newGame.confirm.body": "現在のゲームは失われます。スコアとラウンドがリセットされます。",
   "newGame.confirm.confirm": "新しいゲームを開始",
   "newGame.confirm.cancel": "キャンセル",
+  "settings.soundEffects": "サウンドエフェクト",
   "clearLogs.label": "ローカルログを削除",
   "clearLogs.description": "未同期のイベントやバグログをすべて削除します。",
   "clearLogs.button": "削除",

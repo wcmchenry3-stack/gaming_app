@@ -19,7 +19,9 @@
         "NSPrivacyAccessedAPITypes": [
           {
             "NSPrivacyAccessedAPIType": "NSPrivacyAccessedAPICategoryUserDefaults",
-            "NSPrivacyAccessedAPITypeReasons": ["CA92.1"]
+            "NSPrivacyAccessedAPITypeReasons": [
+              "CA92.1"
+            ]
           }
         ],
         "NSPrivacyCollectedDataTypes": [],
@@ -47,7 +49,8 @@
           "organization": "buffing-chi"
         }
       ],
-      "expo-localization"
+      "expo-localization",
+      "expo-audio"
     ]
   }
 }

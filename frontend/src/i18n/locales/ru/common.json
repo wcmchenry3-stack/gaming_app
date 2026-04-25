@@ -22,6 +22,7 @@
   "newGame.confirm.body": "Текущая игра будет потеряна. Очки и раунд сбросятся.",
   "newGame.confirm.confirm": "Начать игру",
   "newGame.confirm.cancel": "Отмена",
+  "settings.soundEffects": "Звуковые эффекты",
   "clearLogs.label": "Очистить логи",
   "clearLogs.description": "Удалить все несинхронизированные события и отчёты об ошибках.",
   "clearLogs.button": "Очистить",
