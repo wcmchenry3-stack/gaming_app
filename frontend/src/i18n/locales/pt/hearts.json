@@ -54,5 +54,6 @@
   "settings.save": "Save",
   "settings.cancel": "Cancel",
 
-  "events.heartsBroken": "Copas abertas"
+  "events.heartsBroken": "Copas abertas",
+  "events.moonShot": "{{name}} fez a limpa!"
 }

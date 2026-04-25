@@ -379,6 +379,9 @@ export function applyHandScoring(state: HeartsState): HeartsState {
   const appliedDelta = newCumulative.map((c, i) => c - (state.cumulativeScores[i] ?? 0));
   const newScoreHistory = [...state.scoreHistory, appliedDelta];
 
+  const moonEvent =
+    moonShooter !== null ? ([{ type: "moonShot", shooter: moonShooter }] as const) : ([] as const);
+
   if (isGameOver(newCumulative)) {
     return {
       ...state,
@@ -387,6 +390,7 @@ export function applyHandScoring(state: HeartsState): HeartsState {
       phase: "game_over",
       isComplete: true,
       winnerIndex: getWinner(newCumulative),
+      events: [...(state.events ?? []), ...moonEvent],
     };
   }
 
@@ -395,6 +399,7 @@ export function applyHandScoring(state: HeartsState): HeartsState {
     cumulativeScores: newCumulative,
     scoreHistory: newScoreHistory,
     phase: "dealing",
+    events: [...(state.events ?? []), ...moonEvent],
   };
 }
 

@@ -54,5 +54,6 @@
   "settings.save": "Save",
   "settings.cancel": "Cancel",
 
-  "events.heartsBroken": "Cœurs brisés"
+  "events.heartsBroken": "Cœurs brisés",
+  "events.moonShot": "{{name}} a raflé la mise!"
 }

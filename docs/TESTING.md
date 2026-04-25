@@ -168,6 +168,21 @@ Verifies the crack sound and burst animation fire exactly once when hearts break
 5. **Reduced-motion fallback:** Enable Reduce Motion in device accessibility settings, repeat steps 2–3.
    Confirm only an instant red tint flash (~0.3 s) occurs, no spring or crack-line motion.
 
+### Hearts: shoot-the-moon sound + animation (#773)
+
+Verifies the fanfare sound and full-screen moon overlay fire exactly once when someone shoots the moon.
+
+1. Start a Hearts game and engineer a moon shot (one player takes all 13 hearts and Q♠). The easiest way in a local dev build is to seed the engine state via the console so that one AI player holds all 26 point cards after trick 13.
+2. Once all 13 tricks resolve, confirm:
+   - A triumphant fanfare (hearts-moon-shot.mp3) plays once.
+   - A dark semi-transparent full-screen overlay appears with a 🌙 moon icon spring-scaling from 0 → 1.
+   - Six ★ stars stagger in around the moon (each 120 ms apart).
+   - The shooter label appears below the moon (e.g. "You shot the moon!" or "{Name} shot the moon!").
+   - The overlay auto-dismisses after ~2.2 s. Play is **not blocked** — the hand-end modal (or game-over modal) appears after the animation.
+3. Re-mount the Hearts screen mid-game (e.g. navigate away and back). Confirm the moon shot animation does **not** replay on re-render.
+4. **Mute toggle:** Enable the global mute, trigger a moon shot. Confirm the animation still shows but the sound is suppressed.
+5. **Reduced-motion fallback:** Enable Reduce Motion in device accessibility settings, trigger a moon shot. Confirm the moon icon and stars appear instantly (no spring motion) and the label is visible immediately; overlay still auto-dismisses after 2.2 s.
+
 ---
 
 ## E2E Test Conventions

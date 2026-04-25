@@ -39,6 +39,7 @@ import { useGameEvents } from "../game/_shared/useGameEvents";
 import { useSound } from "../game/_shared/useSound";
 import { OfflineBanner } from "../components/shared/OfflineBanner";
 import { HeartsBrokenAnimation } from "../components/hearts/HeartsBrokenAnimation";
+import { HeartsMoonShotAnimation } from "../components/hearts/HeartsMoonShotAnimation";
 import type { Card, HeartsState, TrickCard } from "../game/hearts/types";
 
 const HUMAN = 0;
@@ -70,6 +71,8 @@ export default function HeartsScreen() {
   const [gameState, setGameState] = useState<HeartsState>(() => dealGame());
   const [lastTrick, setLastTrick] = useState<LastTrick>(null);
   const [showHeartsBroken, setShowHeartsBroken] = useState(false);
+  const [showMoonShot, setShowMoonShot] = useState(false);
+  const [moonShotLabel, setMoonShotLabel] = useState("");
   const [showRename, setShowRename] = useState(false);
   const [playerName, setPlayerName] = useState("");
   const [submitState, setSubmitState] = useState<SubmitState>("idle");
@@ -162,6 +165,7 @@ export default function HeartsScreen() {
   }, [navigation, syncComplete, syncGetGameId]);
 
   const { play: playHeartsBroken } = useSound("hearts.heartsBroken");
+  const { play: playMoonShot } = useSound("hearts.moonShot");
 
   useGameEvents(
     gameState.events,
@@ -169,6 +173,11 @@ export default function HeartsScreen() {
       heartsBroken: () => {
         playHeartsBroken();
         setShowHeartsBroken(true);
+      },
+      moonShot: (event) => {
+        playMoonShot();
+        setMoonShotLabel(playerNames[event.shooter] ?? "");
+        setShowMoonShot(true);
       },
     },
     () => setGameState((prev) => ({ ...prev, events: [] }))
@@ -364,7 +373,7 @@ export default function HeartsScreen() {
       onEditPlayerNames={handleOpenRename}
     >
       {/* ── Table ──────────────────────────────────────────────────── */}
-      <View style={[styles.table, { backgroundColor: colors.background }]}>
+      <View style={[styles.table, styles.tablePositioned, { backgroundColor: colors.background }]}>
         {/* Top AI (seat 2) */}
         <View style={styles.topArea}>
           <OpponentHand
@@ -428,6 +437,11 @@ export default function HeartsScreen() {
             onCardPress={isPassing ? handlePassCardPress : handleCardPress}
           />
         </View>
+        <HeartsMoonShotAnimation
+          visible={showMoonShot}
+          shooterLabel={moonShotLabel}
+          onAnimationEnd={() => setShowMoonShot(false)}
+        />
       </View>
 
       {/* ── Hand-end overlay (dealing phase = hand just finished) ──── */}
@@ -657,6 +671,9 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "space-between",
     paddingVertical: 12,
+  },
+  tablePositioned: {
+    position: "relative",
   },
   topArea: {
     alignItems: "center",

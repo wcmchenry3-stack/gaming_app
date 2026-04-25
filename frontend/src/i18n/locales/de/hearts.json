@@ -54,5 +54,6 @@
   "settings.save": "Save",
   "settings.cancel": "Cancel",
 
-  "events.heartsBroken": "Herz gebrochen"
+  "events.heartsBroken": "Herz gebrochen",
+  "events.moonShot": "{{name}} hat den Mond geschossen!"
 }

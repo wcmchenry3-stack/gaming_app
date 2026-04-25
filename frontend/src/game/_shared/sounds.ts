@@ -10,4 +10,6 @@ export type SoundKey = string;
 export const SOUND_REGISTRY: Partial<Record<SoundKey, number>> = {
   // eslint-disable-next-line @typescript-eslint/no-require-imports
   "hearts.heartsBroken": require("../../../assets/sounds/hearts-broken.mp3"),
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  "hearts.moonShot": require("../../../assets/sounds/hearts-moon-shot.mp3"),
 };

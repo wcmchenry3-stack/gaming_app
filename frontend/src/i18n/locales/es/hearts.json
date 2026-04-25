@@ -54,5 +54,6 @@
   "settings.save": "Save",
   "settings.cancel": "Cancel",
 
-  "events.heartsBroken": "Corazones descubiertos"
+  "events.heartsBroken": "Corazones descubiertos",
+  "events.moonShot": "¡{{name}} hizo luna!"
 }
