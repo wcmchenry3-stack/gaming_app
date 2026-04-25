@@ -207,29 +207,29 @@ function AppInner() {
   return (
     <NetworkProvider>
       <SoundProvider>
-      <ThemeProvider>
-        <CardDeckProvider>
-          <BlackjackGameProvider>
-            <HeartsRoundsProvider>
-              <YachtScorecardProvider>
-                <Twenty48ScoreboardProvider>
-                  <SolitaireScoreboardProvider>
-                    <SudokuScoreboardProvider>
-                      <CascadeScoreboardProvider>
-                        <NavigationContainer>
-                          <Stack.Navigator screenOptions={{ headerShown: false }}>
-                            <Stack.Screen name="MainTabs" component={MainTabs} />
-                          </Stack.Navigator>
-                        </NavigationContainer>
-                      </CascadeScoreboardProvider>
-                    </SudokuScoreboardProvider>
-                  </SolitaireScoreboardProvider>
-                </Twenty48ScoreboardProvider>
-              </YachtScorecardProvider>
-            </HeartsRoundsProvider>
-          </BlackjackGameProvider>
-        </CardDeckProvider>
-      </ThemeProvider>
+        <ThemeProvider>
+          <CardDeckProvider>
+            <BlackjackGameProvider>
+              <HeartsRoundsProvider>
+                <YachtScorecardProvider>
+                  <Twenty48ScoreboardProvider>
+                    <SolitaireScoreboardProvider>
+                      <SudokuScoreboardProvider>
+                        <CascadeScoreboardProvider>
+                          <NavigationContainer>
+                            <Stack.Navigator screenOptions={{ headerShown: false }}>
+                              <Stack.Screen name="MainTabs" component={MainTabs} />
+                            </Stack.Navigator>
+                          </NavigationContainer>
+                        </CascadeScoreboardProvider>
+                      </SudokuScoreboardProvider>
+                    </SolitaireScoreboardProvider>
+                  </Twenty48ScoreboardProvider>
+                </YachtScorecardProvider>
+              </HeartsRoundsProvider>
+            </BlackjackGameProvider>
+          </CardDeckProvider>
+        </ThemeProvider>
       </SoundProvider>
     </NetworkProvider>
   );

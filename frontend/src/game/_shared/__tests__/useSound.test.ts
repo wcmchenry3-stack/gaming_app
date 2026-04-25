@@ -1,5 +1,6 @@
 import { renderHook, act } from "@testing-library/react-native";
 import React from "react";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { SoundProvider } from "../SoundContext";
 import { useSound } from "../useSound";
 import { SOUND_REGISTRY } from "../sounds";
@@ -34,7 +35,9 @@ beforeEach(() => {
 describe("useSound — unregistered key", () => {
   it("play() is a no-op when key has no entry in SOUND_REGISTRY", () => {
     const { result } = renderHook(() => useSound("unknown.key"), { wrapper });
-    act(() => { result.current.play(); });
+    act(() => {
+      result.current.play();
+    });
     expect(mockPlay).not.toHaveBeenCalled();
   });
 });
@@ -47,19 +50,22 @@ describe("useSound — registered key", () => {
 
   it("play() calls seekTo(0) then play() on the audio player", () => {
     const { result } = renderHook(() => useSound("test.beep"), { wrapper });
-    act(() => { result.current.play(); });
+    act(() => {
+      result.current.play();
+    });
     expect(mockSeekTo).toHaveBeenCalledWith(0);
     expect(mockPlay).toHaveBeenCalledTimes(1);
   });
 
   it("play() is a no-op when muted", async () => {
-    const AsyncStorage = require("@react-native-async-storage/async-storage");
-    AsyncStorage.getItem.mockResolvedValueOnce("true");
+    (AsyncStorage.getItem as jest.Mock).mockResolvedValueOnce("true");
 
     const { result } = renderHook(() => useSound("test.beep"), { wrapper });
     // Wait for AsyncStorage to resolve
     await act(async () => {});
-    act(() => { result.current.play(); });
+    act(() => {
+      result.current.play();
+    });
     expect(mockPlay).not.toHaveBeenCalled();
   });
 

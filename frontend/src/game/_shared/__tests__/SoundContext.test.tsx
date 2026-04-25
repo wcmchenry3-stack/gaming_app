@@ -47,14 +47,18 @@ describe("SoundContext — setMuted", () => {
   it("updates muted state immediately", async () => {
     const { result } = renderHook(() => useSoundSettings(), { wrapper });
     await act(async () => {});
-    act(() => { result.current.setMuted(true); });
+    act(() => {
+      result.current.setMuted(true);
+    });
     expect(result.current.muted).toBe(true);
   });
 
   it("persists muted=true to AsyncStorage", async () => {
     const { result } = renderHook(() => useSoundSettings(), { wrapper });
     await act(async () => {});
-    act(() => { result.current.setMuted(true); });
+    act(() => {
+      result.current.setMuted(true);
+    });
     expect(mockSetItem).toHaveBeenCalledWith("settings.soundMuted", "true");
   });
 
@@ -62,7 +66,9 @@ describe("SoundContext — setMuted", () => {
     mockGetItem.mockResolvedValueOnce("true");
     const { result } = renderHook(() => useSoundSettings(), { wrapper });
     await act(async () => {});
-    act(() => { result.current.setMuted(false); });
+    act(() => {
+      result.current.setMuted(false);
+    });
     expect(mockSetItem).toHaveBeenCalledWith("settings.soundMuted", "false");
   });
 });

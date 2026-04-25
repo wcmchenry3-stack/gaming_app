@@ -27,11 +27,7 @@ export function SoundProvider({ children }: { children: React.ReactNode }) {
     AsyncStorage.setItem(STORAGE_KEY, String(value));
   }, []);
 
-  return (
-    <SoundContext.Provider value={{ muted, setMuted }}>
-      {children}
-    </SoundContext.Provider>
-  );
+  return <SoundContext.Provider value={{ muted, setMuted }}>{children}</SoundContext.Provider>;
 }
 
 export function useSoundSettings(): SoundContextValue {
