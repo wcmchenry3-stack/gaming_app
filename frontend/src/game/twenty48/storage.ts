@@ -15,6 +15,13 @@ import { seedNextTileId } from "./engine";
 
 const GAME_KEY = "twenty48_game_v2";
 const BEST_SCORE_KEY = "twenty48_best_score_v1";
+const STATS_KEY = "twenty48_stats_v1";
+
+export interface Twenty48Stats {
+  bestTile: number;
+  gamesPlayed: number;
+  gamesWon: number;
+}
 
 export async function saveGame(state: Twenty48State): Promise<void> {
   try {
@@ -118,5 +125,29 @@ export async function loadBestScore(): Promise<number> {
   } catch (e) {
     Sentry.captureException(e, { tags: { subsystem: "twenty48.storage", op: "loadBest" } });
     return 0;
+  }
+}
+
+export async function loadStats(): Promise<Twenty48Stats> {
+  try {
+    const raw = await AsyncStorage.getItem(STATS_KEY);
+    if (!raw) return { bestTile: 0, gamesPlayed: 0, gamesWon: 0 };
+    const parsed = JSON.parse(raw);
+    return {
+      bestTile: typeof parsed.bestTile === "number" ? parsed.bestTile : 0,
+      gamesPlayed: typeof parsed.gamesPlayed === "number" ? parsed.gamesPlayed : 0,
+      gamesWon: typeof parsed.gamesWon === "number" ? parsed.gamesWon : 0,
+    };
+  } catch (e) {
+    Sentry.captureException(e, { tags: { subsystem: "twenty48.storage", op: "loadStats" } });
+    return { bestTile: 0, gamesPlayed: 0, gamesWon: 0 };
+  }
+}
+
+export async function saveStats(stats: Twenty48Stats): Promise<void> {
+  try {
+    await AsyncStorage.setItem(STATS_KEY, JSON.stringify(stats));
+  } catch (e) {
+    Sentry.captureException(e, { tags: { subsystem: "twenty48.storage", op: "saveStats" } });
   }
 }

@@ -15,6 +15,9 @@ import {
   clearGame,
   saveBestScore,
   loadBestScore,
+  loadStats,
+  saveStats,
+  type Twenty48Stats,
 } from "../game/twenty48/storage";
 import Grid from "../components/twenty48/Grid";
 import ScoreBoard from "../components/twenty48/ScoreBoard";
@@ -53,12 +56,15 @@ export default function Twenty48Screen({ navigation }: Props) {
   const [loading, setLoading] = useState(true);
   const [winDismissed, setWinDismissed] = useState(false);
   const [bestScore, setBestScore] = useState(0);
+  const [stats, setStats] = useState<Twenty48Stats>({ bestTile: 0, gamesPlayed: 0, gamesWon: 0 });
   const [confirmNewGameVisible, setConfirmNewGameVisible] = useState(false);
 
   /** Blocks new moves while the slide animation plays. */
   const movingRef = useRef(false);
   /** One queued move — fires immediately after the current animation ends. */
   const pendingMove = useRef<Direction | null>(null);
+  /** Guards against double-counting a win within a single game session. */
+  const winRecordedRef = useRef(false);
 
   // Game event instrumentation (#369 / #549). One session per game from load /
   // reset until game_over OR keep-playing. After a keep-playing end, further
@@ -92,10 +98,10 @@ export default function Twenty48Screen({ navigation }: Props) {
     navigation.setOptions({ gestureEnabled: false });
   }, [navigation]);
 
-  // Load saved game and best score on mount.
+  // Load saved game, best score, and stats on mount.
   useEffect(() => {
     let active = true;
-    Promise.all([loadGame(), loadBestScore()]).then(([saved, best]) => {
+    Promise.all([loadGame(), loadBestScore(), loadStats()]).then(([saved, best, savedStats]) => {
       if (!active) return;
       let next = saved ?? newGame();
       // Resume timer when reloading a mid-game state.
@@ -112,6 +118,23 @@ export default function Twenty48Screen({ navigation }: Props) {
         // Resuming a saved mid-game means the player already started — mark it.
         if (saved) syncMarkStarted();
       }
+      // Count a fresh start; also catch any best-tile improvement from the
+      // loaded board (e.g. user had a 1024 before stats were tracked).
+      const currentBestTile = highestTile(next.board);
+      const initialStats: Twenty48Stats = {
+        bestTile: Math.max(savedStats.bestTile, currentBestTile),
+        gamesPlayed: saved ? savedStats.gamesPlayed : savedStats.gamesPlayed + 1,
+        gamesWon: savedStats.gamesWon,
+      };
+      if (
+        initialStats.bestTile !== savedStats.bestTile ||
+        initialStats.gamesPlayed !== savedStats.gamesPlayed
+      ) {
+        saveStats(initialStats);
+      }
+      setStats(initialStats);
+      // Suppress re-counting a win when resuming an already-won game.
+      if (next.has_won) winRecordedRef.current = true;
     });
     return () => {
       active = false;
@@ -139,8 +162,11 @@ export default function Twenty48Screen({ navigation }: Props) {
       moveCount: moveCountRef.current,
       bestScore,
       hasGame: true,
+      allTimeBestTile: stats.bestTile,
+      gamesPlayed: stats.gamesPlayed,
+      gamesWon: stats.gamesWon,
     });
-  }, [state, bestScore, setScoreboardSnapshot]);
+  }, [state, bestScore, stats, setScoreboardSnapshot]);
 
   const executeMove = useCallback(
     (direction: Direction, currentState: Twenty48State) => {
@@ -158,6 +184,19 @@ export default function Twenty48Screen({ navigation }: Props) {
       saveGame(next);
       moveCountRef.current += 1;
       syncMarkStarted();
+      // Track all-time best tile and first win per session.
+      const tile = highestTile(next.board);
+      const justWon = next.has_won && !winRecordedRef.current;
+      if (justWon) winRecordedRef.current = true;
+      if (tile > 0 || justWon) {
+        setStats((prev) => {
+          let updated = prev;
+          if (tile > prev.bestTile) updated = { ...updated, bestTile: tile };
+          if (justWon) updated = { ...updated, gamesWon: updated.gamesWon + 1 };
+          if (updated !== prev) saveStats(updated);
+          return updated;
+        });
+      }
       syncEnqueue({
         type: "move",
         data: {
@@ -206,6 +245,7 @@ export default function Twenty48Screen({ navigation }: Props) {
   const resetGame = useCallback(() => {
     movingRef.current = false;
     pendingMove.current = null;
+    winRecordedRef.current = false;
     setWinDismissed(false);
     // Close out the previous session with proper payload (if still open).
     const prev = stateRef.current;
@@ -221,6 +261,11 @@ export default function Twenty48Screen({ navigation }: Props) {
     saveGame(next);
     moveCountRef.current = 0;
     syncStart({ initial_board: flattenBoard(next.board) });
+    setStats((prev) => {
+      const updated = { ...prev, gamesPlayed: prev.gamesPlayed + 1 };
+      saveStats(updated);
+      return updated;
+    });
   }, [endedPayload, syncComplete, syncStart]);
 
   const handleNewGamePress = useCallback(() => {
