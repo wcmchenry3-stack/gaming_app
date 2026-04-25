@@ -6,6 +6,9 @@ export interface Twenty48ScoreboardSnapshot {
   moveCount: number;
   bestScore: number;
   hasGame: boolean;
+  allTimeBestTile: number;
+  gamesPlayed: number;
+  gamesWon: number;
 }
 
 const initial: Twenty48ScoreboardSnapshot = {
@@ -14,6 +17,9 @@ const initial: Twenty48ScoreboardSnapshot = {
   moveCount: 0,
   bestScore: 0,
   hasGame: false,
+  allTimeBestTile: 0,
+  gamesPlayed: 0,
+  gamesWon: 0,
 };
 
 interface ContextValue {

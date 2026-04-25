@@ -25,6 +25,8 @@ jest.mock("../../game/twenty48/storage", () => ({
   loadGame: jest.fn().mockResolvedValue(null),
   saveBestScore: jest.fn(),
   loadBestScore: jest.fn().mockResolvedValue(0),
+  loadStats: jest.fn().mockResolvedValue({ bestTile: 0, gamesPlayed: 0, gamesWon: 0 }),
+  saveStats: jest.fn(),
 }));
 
 // Mock the engine so individual tests can force a game_over transition.

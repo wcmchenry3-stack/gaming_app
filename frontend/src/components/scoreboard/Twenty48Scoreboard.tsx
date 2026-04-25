@@ -22,9 +22,21 @@ export default function Twenty48Scoreboard({ snapshot }: Props) {
       value: snapshot.bestScore > 0 ? snapshot.bestScore.toLocaleString("en-US") : "—",
       accent: true,
     },
-    { key: "bestTile", label: t("scoreboard.bestTile"), value: "—" },
-    { key: "gamesPlayed", label: t("scoreboard.gamesPlayed"), value: "—" },
-    { key: "gamesWon", label: t("scoreboard.gamesWon"), value: "—" },
+    {
+      key: "bestTile",
+      label: t("scoreboard.bestTile"),
+      value: snapshot.allTimeBestTile > 0 ? snapshot.allTimeBestTile.toLocaleString("en-US") : "—",
+    },
+    {
+      key: "gamesPlayed",
+      label: t("scoreboard.gamesPlayed"),
+      value: snapshot.gamesPlayed > 0 ? snapshot.gamesPlayed.toLocaleString("en-US") : "—",
+    },
+    {
+      key: "gamesWon",
+      label: t("scoreboard.gamesWon"),
+      value: snapshot.gamesWon > 0 ? snapshot.gamesWon.toLocaleString("en-US") : "—",
+    },
   ] as const;
 
   return (
