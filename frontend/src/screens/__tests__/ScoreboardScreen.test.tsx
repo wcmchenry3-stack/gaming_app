@@ -3,20 +3,33 @@ import { render, act } from "@testing-library/react-native";
 import ScoreboardScreen from "../ScoreboardScreen";
 import { ThemeProvider } from "../../theme/ThemeContext";
 import { HeartsRoundsProvider, useHeartsRounds } from "../../game/hearts/RoundsContext";
+import { YachtScorecardProvider, useYachtScorecard } from "../../game/yacht/ScorecardContext";
+import { initialSessionStats } from "../../game/blackjack/sessionStats";
 
 jest.mock("@react-navigation/native", () => ({
   useNavigation: () => ({ goBack: jest.fn() }),
   useRoute: jest.fn(),
 }));
 
+// Mock the blackjack session-stats hook so the test doesn't need to mount
+// BlackjackGameProvider (which would trigger loadGame + useGameSync side
+// effects). The variant only reads sessionStats; this is the minimum.
+jest.mock("../../game/blackjack/BlackjackGameContext", () => ({
+  useBlackjackSessionStats: jest.fn(),
+}));
+
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const { useRoute } = require("@react-navigation/native");
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const { useBlackjackSessionStats } = require("../../game/blackjack/BlackjackGameContext");
 
 function renderScreen() {
   return render(
     <ThemeProvider>
       <HeartsRoundsProvider>
-        <ScoreboardScreen />
+        <YachtScorecardProvider>
+          <ScoreboardScreen />
+        </YachtScorecardProvider>
       </HeartsRoundsProvider>
     </ThemeProvider>
   );
@@ -48,8 +61,43 @@ function renderWithSeed(seedProps: {
   return render(
     <ThemeProvider>
       <HeartsRoundsProvider>
-        <Seed {...seedProps} />
-        <ScoreboardScreen />
+        <YachtScorecardProvider>
+          <Seed {...seedProps} />
+          <ScoreboardScreen />
+        </YachtScorecardProvider>
+      </HeartsRoundsProvider>
+    </ThemeProvider>
+  );
+}
+
+function YachtSeed({
+  scores,
+  totalScore,
+}: {
+  scores: Record<string, number | null>;
+  totalScore: number;
+}) {
+  const { setSnapshot } = useYachtScorecard();
+  React.useEffect(() => {
+    setSnapshot({
+      scores,
+      upperSubtotal: 0,
+      upperBonus: 0,
+      yachtBonusCount: 0,
+      totalScore,
+    });
+  }, [scores, totalScore, setSnapshot]);
+  return null;
+}
+
+function renderYachtWithSeed(scores: Record<string, number | null>, totalScore: number) {
+  return render(
+    <ThemeProvider>
+      <HeartsRoundsProvider>
+        <YachtScorecardProvider>
+          <YachtSeed scores={scores} totalScore={totalScore} />
+          <ScoreboardScreen />
+        </YachtScorecardProvider>
       </HeartsRoundsProvider>
     </ThemeProvider>
   );
@@ -75,8 +123,45 @@ describe("ScoreboardScreen", () => {
     expect(utils.getByText(/shooter zeroes/)).toBeTruthy();
   });
 
-  it("renders a fallback for unknown gameKey instead of throwing", () => {
+  it("renders the Yacht variant when gameKey is yacht", () => {
     useRoute.mockReturnValue({ params: { gameKey: "yacht" } });
+    const { getByText } = renderYachtWithSeed(
+      { ones: 3, twos: null, full_house: null, yacht: 50 },
+      53
+    );
+    act(() => {
+      // flush the seed effect
+    });
+    // Yacht variant renders the scored values plus the upper-bonus countdown.
+    expect(getByText("3")).toBeTruthy();
+    expect(getByText("50")).toBeTruthy();
+    expect(getByText(/more for \+35/)).toBeTruthy();
+  });
+
+  it("renders the Blackjack variant when gameKey is blackjack", () => {
+    useRoute.mockReturnValue({ params: { gameKey: "blackjack" } });
+    useBlackjackSessionStats.mockReturnValue({
+      ...initialSessionStats(1000),
+      chips: 2240,
+      plChips: 1240,
+      handsPlayed: 13,
+      handsWon: 8,
+      handsLost: 4,
+      handsPushed: 1,
+      blackjacks: 2,
+      busts: 1,
+      biggestWin: 75,
+    });
+    const { getByText } = renderScreen();
+    // Hero P/L line in i18n template "+1,240 chips".
+    expect(getByText(/\+1,240/)).toBeTruthy();
+    // Stat-card values present.
+    expect(getByText("2,240")).toBeTruthy();
+    expect(getByText("8")).toBeTruthy();
+  });
+
+  it("renders a fallback for an entirely unknown gameKey", () => {
+    useRoute.mockReturnValue({ params: { gameKey: "no-such-game" } });
     const { getByText } = renderScreen();
     expect(getByText(/No scoreboard available for/)).toBeTruthy();
   });

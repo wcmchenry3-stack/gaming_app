@@ -85,5 +85,15 @@
   "rules.increaseDeckLabel": "डेक संख्या बढ़ाएं",
   "rules.penetration": "पेनेट्रेशन",
   "rules.decreasePenetrationLabel": "पेनेट्रेशन घटाएं",
-  "rules.increasePenetrationLabel": "पेनेट्रेशन बढ़ाएं"
+  "rules.increasePenetrationLabel": "पेनेट्रेशन बढ़ाएं",
+  "score.heroLabel": "सत्र",
+  "score.plLine": "{{amount}} चिप्स",
+  "score.subLine": "{{handsPlayed}} हाथ · {{winRate}}% जीत दर",
+  "score.subLineEmpty": "अभी तक कोई हाथ नहीं",
+  "score.chipBalance": "चिप्स बैलेंस",
+  "score.biggestWin": "सबसे बड़ी जीत",
+  "score.handsWon": "जीते हाथ",
+  "score.handsLost": "हारे हाथ",
+  "score.blackjacks": "ब्लैकजैक",
+  "score.busts": "बस्ट"
 }

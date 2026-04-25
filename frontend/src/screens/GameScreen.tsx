@@ -15,6 +15,7 @@ import {
   Category,
 } from "../game/yacht/engine";
 import { saveGame, clearGame } from "../game/yacht/storage";
+import { useYachtScorecard } from "../game/yacht/ScorecardContext";
 import { useGameSync } from "../game/_shared/useGameSync";
 import * as Sentry from "@sentry/react-native";
 import DiceRow from "../components/DiceRow";
@@ -75,6 +76,18 @@ export default function GameScreen({ navigation, route }: Props) {
   useEffect(() => {
     saveGame(gameState);
   }, [gameState]);
+
+  // Sync snapshot to shared scorecard context (read by ScoreboardScreen).
+  const { setSnapshot: setScorecardSnapshot } = useYachtScorecard();
+  useEffect(() => {
+    setScorecardSnapshot({
+      scores: gameState.scores,
+      upperSubtotal: gameState.upper_subtotal,
+      upperBonus: gameState.upper_bonus,
+      yachtBonusCount: gameState.yacht_bonus_count,
+      totalScore: gameState.total_score,
+    });
+  }, [gameState, setScorecardSnapshot]);
 
   // Recompute possibleScores locally from state
   useEffect(() => {
@@ -192,6 +205,7 @@ export default function GameScreen({ navigation, route }: Props) {
       requireBack
       onBack={() => navigation.popToTop()}
       onNewGame={startNewGame}
+      onOpenScoreboard={() => navigation.navigate("Scoreboard", { gameKey: "yacht" })}
       error={error}
       style={{
         paddingBottom: Math.max(insets.bottom, 16),

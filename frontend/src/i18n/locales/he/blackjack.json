@@ -85,5 +85,15 @@
   "rules.increaseDeckLabel": "הגדל מספר חפיסות",
   "rules.penetration": "חדירה",
   "rules.decreasePenetrationLabel": "הפחת חדירה",
-  "rules.increasePenetrationLabel": "הגדל חדירה"
+  "rules.increasePenetrationLabel": "הגדל חדירה",
+  "score.heroLabel": "מושב",
+  "score.plLine": "{{amount}} ז׳יטונים",
+  "score.subLine": "{{handsPlayed}} ידיים · אחוז ניצחון {{winRate}}%",
+  "score.subLineEmpty": "אין ידיים עדיין",
+  "score.chipBalance": "יתרת ז׳יטונים",
+  "score.biggestWin": "הזכייה הגדולה",
+  "score.handsWon": "ידיים שזכו",
+  "score.handsLost": "ידיים שהפסידו",
+  "score.blackjacks": "בלאקג׳ק",
+  "score.busts": "פיצוצים"
 }

@@ -99,5 +99,15 @@
   "rules.increaseDeckLabel": "Increase deck count",
   "rules.penetration": "Penetration",
   "rules.decreasePenetrationLabel": "Decrease penetration",
-  "rules.increasePenetrationLabel": "Increase penetration"
+  "rules.increasePenetrationLabel": "Increase penetration",
+  "score.heroLabel": "Session",
+  "score.plLine": "{{amount}} chips",
+  "score.subLine": "{{handsPlayed}} hands · {{winRate}}% win rate",
+  "score.subLineEmpty": "No hands yet",
+  "score.chipBalance": "Chip Balance",
+  "score.biggestWin": "Biggest Win",
+  "score.handsWon": "Hands Won",
+  "score.handsLost": "Hands Lost",
+  "score.blackjacks": "Blackjacks",
+  "score.busts": "Busts"
 }

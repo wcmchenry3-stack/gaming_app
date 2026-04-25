@@ -85,5 +85,15 @@
   "rules.increaseDeckLabel": "Aumentar número de baralhos",
   "rules.penetration": "Penetração",
   "rules.decreasePenetrationLabel": "Diminuir penetração",
-  "rules.increasePenetrationLabel": "Aumentar penetração"
+  "rules.increasePenetrationLabel": "Aumentar penetração",
+  "score.heroLabel": "Sessão",
+  "score.plLine": "{{amount}} fichas",
+  "score.subLine": "{{handsPlayed}} mãos · {{winRate}}% de vitórias",
+  "score.subLineEmpty": "Nenhuma mão ainda",
+  "score.chipBalance": "Saldo de fichas",
+  "score.biggestWin": "Maior vitória",
+  "score.handsWon": "Mãos ganhas",
+  "score.handsLost": "Mãos perdidas",
+  "score.blackjacks": "Blackjacks",
+  "score.busts": "Estouros"
 }

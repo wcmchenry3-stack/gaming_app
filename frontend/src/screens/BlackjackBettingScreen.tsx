@@ -54,6 +54,7 @@ export default function BlackjackBettingScreen({ navigation }: Props) {
         title={t("game.title")}
         requireBack
         onBack={() => navigation.popToTop()}
+        onOpenScoreboard={() => navigation.navigate("Scoreboard", { gameKey: "blackjack" })}
         rightSlot={
           state ? (
             <View style={styles.bankroll}>

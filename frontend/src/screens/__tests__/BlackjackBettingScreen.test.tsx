@@ -62,6 +62,19 @@ describe("BlackjackBettingScreen — header / navigation", () => {
     renderScreen();
     await waitFor(() => expect(screen.getByText("Blackjack")).toBeTruthy());
   });
+
+  it("⋯ menu Scoreboard item navigates to ScoreboardScreen with blackjack gameKey", async () => {
+    const nav = mockNav();
+    renderScreen(nav);
+    await screen.findByText("Deal");
+    await act(async () => {
+      fireEvent.press(screen.getByLabelText("More options"));
+    });
+    await act(async () => {
+      fireEvent.press(screen.getByText("Scoreboard"));
+    });
+    expect(nav.navigate).toHaveBeenCalledWith("Scoreboard", { gameKey: "blackjack" });
+  });
 });
 
 // ---------------------------------------------------------------------------

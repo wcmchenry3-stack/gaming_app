@@ -85,5 +85,15 @@
   "rules.increaseDeckLabel": "زيادة عدد الرزم",
   "rules.penetration": "الاختراق",
   "rules.decreasePenetrationLabel": "تقليل الاختراق",
-  "rules.increasePenetrationLabel": "زيادة الاختراق"
+  "rules.increasePenetrationLabel": "زيادة الاختراق",
+  "score.heroLabel": "الجلسة",
+  "score.plLine": "{{amount}} شريحة",
+  "score.subLine": "{{handsPlayed}} أيدي · نسبة الفوز {{winRate}}%",
+  "score.subLineEmpty": "لا توجد أيدي بعد",
+  "score.chipBalance": "رصيد الشرائح",
+  "score.biggestWin": "أكبر فوز",
+  "score.handsWon": "الأيدي الفائزة",
+  "score.handsLost": "الأيدي الخاسرة",
+  "score.blackjacks": "البلاك جاك",
+  "score.busts": "الإفلاس"
 }
