@@ -85,5 +85,15 @@
   "rules.increaseDeckLabel": "덱 수 늘리기",
   "rules.penetration": "페네트레이션",
   "rules.decreasePenetrationLabel": "페네트레이션 줄이기",
-  "rules.increasePenetrationLabel": "페네트레이션 늘리기"
+  "rules.increasePenetrationLabel": "페네트레이션 늘리기",
+  "score.heroLabel": "세션",
+  "score.plLine": "{{amount}} 칩",
+  "score.subLine": "{{handsPlayed}} 핸드 · 승률 {{winRate}}%",
+  "score.subLineEmpty": "아직 플레이 없음",
+  "score.chipBalance": "칩 잔액",
+  "score.biggestWin": "최대 승리",
+  "score.handsWon": "이긴 핸드",
+  "score.handsLost": "진 핸드",
+  "score.blackjacks": "블랙잭",
+  "score.busts": "버스트"
 }

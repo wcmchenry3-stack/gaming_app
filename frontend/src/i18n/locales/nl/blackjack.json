@@ -85,5 +85,15 @@
   "rules.increaseDeckLabel": "Aantal decks verhogen",
   "rules.penetration": "Penetratie",
   "rules.decreasePenetrationLabel": "Penetratie verlagen",
-  "rules.increasePenetrationLabel": "Penetratie verhogen"
+  "rules.increasePenetrationLabel": "Penetratie verhogen",
+  "score.heroLabel": "Sessie",
+  "score.plLine": "{{amount}} fiches",
+  "score.subLine": "{{handsPlayed}} handen · {{winRate}}% winrate",
+  "score.subLineEmpty": "Nog geen handen",
+  "score.chipBalance": "Fichesaldo",
+  "score.biggestWin": "Grootste winst",
+  "score.handsWon": "Gewonnen handen",
+  "score.handsLost": "Verloren handen",
+  "score.blackjacks": "Blackjacks",
+  "score.busts": "Gebust"
 }

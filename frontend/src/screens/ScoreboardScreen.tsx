@@ -7,8 +7,10 @@ import { GameShell } from "../components/shared/GameShell";
 import { useTheme } from "../theme/ThemeContext";
 import HeartsScoreboard from "../components/scoreboard/HeartsScoreboard";
 import YachtScoreboard from "../components/scoreboard/YachtScoreboard";
+import BlackjackScoreboard from "../components/scoreboard/BlackjackScoreboard";
 import { useHeartsRounds } from "../game/hearts/RoundsContext";
 import { useYachtScorecard } from "../game/yacht/ScorecardContext";
+import { useBlackjackSessionStats } from "../game/blackjack/BlackjackGameContext";
 import type { HomeStackParamList } from "../../App";
 
 type GameKey = HomeStackParamList["Scoreboard"]["gameKey"];
@@ -29,6 +31,11 @@ function YachtScoreboardSection() {
   return (
     <YachtScoreboard you={{ scores, upperSubtotal, upperBonus, yachtBonusCount, totalScore }} />
   );
+}
+
+function BlackjackScoreboardSection() {
+  const stats = useBlackjackSessionStats();
+  return <BlackjackScoreboard stats={stats} />;
 }
 
 function UnknownScoreboardFallback({ gameKey }: { gameKey: string }) {
@@ -57,7 +64,7 @@ export default function ScoreboardScreen() {
       body = <YachtScoreboardSection />;
       break;
     case "blackjack":
-      body = <UnknownScoreboardFallback gameKey={gameKey} />;
+      body = <BlackjackScoreboardSection />;
       break;
     default:
       body = <UnknownScoreboardFallback gameKey={gameKey} />;

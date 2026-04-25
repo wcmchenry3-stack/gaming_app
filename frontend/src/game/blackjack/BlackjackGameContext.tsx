@@ -189,9 +189,12 @@ export function BlackjackGameProvider({ children }: { children: React.ReactNode 
             },
           });
           const splitHand = next.player_hands[i] ?? [];
+          // engine.hand_outcomes is typed (string | null)[] but only ever
+          // populated with "win" | "lose" | "push" values via settleHand —
+          // narrow at the call site for the reducer's HandOutcome union.
           setSessionStats((s) =>
             reduceHandResolved(s, {
-              outcome: nOut,
+              outcome: nOut as "win" | "lose" | "push",
               payoutDelta: next.hand_payouts[i] ?? 0,
               chipsAfter: next.chips,
               isBust: handValue(splitHand) > 21,

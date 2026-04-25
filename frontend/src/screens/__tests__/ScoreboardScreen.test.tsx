@@ -4,14 +4,24 @@ import ScoreboardScreen from "../ScoreboardScreen";
 import { ThemeProvider } from "../../theme/ThemeContext";
 import { HeartsRoundsProvider, useHeartsRounds } from "../../game/hearts/RoundsContext";
 import { YachtScorecardProvider, useYachtScorecard } from "../../game/yacht/ScorecardContext";
+import { initialSessionStats } from "../../game/blackjack/sessionStats";
 
 jest.mock("@react-navigation/native", () => ({
   useNavigation: () => ({ goBack: jest.fn() }),
   useRoute: jest.fn(),
 }));
 
+// Mock the blackjack session-stats hook so the test doesn't need to mount
+// BlackjackGameProvider (which would trigger loadGame + useGameSync side
+// effects). The variant only reads sessionStats; this is the minimum.
+jest.mock("../../game/blackjack/BlackjackGameContext", () => ({
+  useBlackjackSessionStats: jest.fn(),
+}));
+
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const { useRoute } = require("@react-navigation/native");
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const { useBlackjackSessionStats } = require("../../game/blackjack/BlackjackGameContext");
 
 function renderScreen() {
   return render(
@@ -128,10 +138,26 @@ describe("ScoreboardScreen", () => {
     expect(getByText(/more for \+35/)).toBeTruthy();
   });
 
-  it("renders the blackjack fallback while the variant is unbuilt", () => {
+  it("renders the Blackjack variant when gameKey is blackjack", () => {
     useRoute.mockReturnValue({ params: { gameKey: "blackjack" } });
+    useBlackjackSessionStats.mockReturnValue({
+      ...initialSessionStats(1000),
+      chips: 2240,
+      plChips: 1240,
+      handsPlayed: 13,
+      handsWon: 8,
+      handsLost: 4,
+      handsPushed: 1,
+      blackjacks: 2,
+      busts: 1,
+      biggestWin: 75,
+    });
     const { getByText } = renderScreen();
-    expect(getByText(/No scoreboard available for/)).toBeTruthy();
+    // Hero P/L line in i18n template "+1,240 chips".
+    expect(getByText(/\+1,240/)).toBeTruthy();
+    // Stat-card values present.
+    expect(getByText("2,240")).toBeTruthy();
+    expect(getByText("8")).toBeTruthy();
   });
 
   it("renders a fallback for an entirely unknown gameKey", () => {
