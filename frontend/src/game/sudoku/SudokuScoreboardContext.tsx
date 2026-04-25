@@ -1,11 +1,14 @@
 import React, { createContext, useContext, useState } from "react";
 import type { Difficulty } from "./types";
+import { EMPTY_SUDOKU_STATS } from "./storage";
+import type { SudokuStats } from "./storage";
 
 export interface SudokuScoreboardSnapshot {
   elapsed: number;
   difficulty: Difficulty;
   errorCount: number;
   hasGame: boolean;
+  stats: SudokuStats;
 }
 
 const initial: SudokuScoreboardSnapshot = {
@@ -13,6 +16,7 @@ const initial: SudokuScoreboardSnapshot = {
   difficulty: "easy",
   errorCount: 0,
   hasGame: false,
+  stats: EMPTY_SUDOKU_STATS,
 };
 
 interface ContextValue {
