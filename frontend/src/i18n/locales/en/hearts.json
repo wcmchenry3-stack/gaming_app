@@ -71,5 +71,6 @@
   "settings.cancel": "Cancel",
 
   "events.heartsBroken": "Hearts broken",
-  "events.moonShot": "{{name}} shot the moon!"
+  "events.moonShot": "{{name}} shot the moon!",
+  "events.queenOfSpades": "{{name}} takes the Queen of Spades!"
 }

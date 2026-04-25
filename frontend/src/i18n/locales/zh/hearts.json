@@ -55,5 +55,6 @@
   "settings.cancel": "Cancel",
 
   "events.heartsBroken": "红心已开",
-  "events.moonShot": "{{name}}收全红心！"
+  "events.moonShot": "{{name}}收全红心！",
+  "events.queenOfSpades": "{{name}}拿走了黑桃Q！"
 }

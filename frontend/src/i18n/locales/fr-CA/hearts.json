@@ -55,5 +55,6 @@
   "settings.cancel": "Cancel",
 
   "events.heartsBroken": "Cœurs brisés",
-  "events.moonShot": "{{name}} a raflé la mise!"
+  "events.moonShot": "{{name}} a raflé la mise!",
+  "events.queenOfSpades": "{{name}} prend la Dame de pique!"
 }

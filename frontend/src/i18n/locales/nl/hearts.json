@@ -55,5 +55,6 @@
   "settings.cancel": "Cancel",
 
   "events.heartsBroken": "Harten gebroken",
-  "events.moonShot": "{{name}} ging voor de volle maan!"
+  "events.moonShot": "{{name}} ging voor de volle maan!",
+  "events.queenOfSpades": "{{name}} pakt de Schoppenvrauw!"
 }

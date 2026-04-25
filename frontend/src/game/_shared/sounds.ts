@@ -12,4 +12,6 @@ export const SOUND_REGISTRY: Partial<Record<SoundKey, number>> = {
   "hearts.heartsBroken": require("../../../assets/sounds/hearts-broken.mp3"),
   // eslint-disable-next-line @typescript-eslint/no-require-imports
   "hearts.moonShot": require("../../../assets/sounds/hearts-moon-shot.mp3"),
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  "hearts.queenOfSpades": require("../../../assets/sounds/hearts-queen-of-spades.mp3"),
 };
