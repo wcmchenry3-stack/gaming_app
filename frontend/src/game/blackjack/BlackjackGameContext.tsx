@@ -2,6 +2,7 @@ import React, { createContext, useCallback, useContext, useEffect, useRef, useSt
 import { newGame, EngineState, DEFAULT_RULES, handValue, isNaturalBlackjack, Card } from "./engine";
 import { GameRules } from "./types";
 import { saveGame, loadGame, clearGame } from "./storage";
+import { SessionStats, initialSessionStats, reduceHandResolved } from "./sessionStats";
 import { useGameSync } from "../_shared/useGameSync";
 
 /** Hint passed to apply() so the context can emit a typed player_action. */
@@ -11,6 +12,7 @@ interface BlackjackGameContextValue {
   engine: EngineState | null;
   loading: boolean;
   error: string | null;
+  sessionStats: SessionStats;
   apply: (fn: (s: EngineState) => EngineState, action?: PlayerActionHint) => void;
   handleRulesChange: (rules: GameRules) => void;
   handlePlayAgain: () => void;
@@ -27,6 +29,7 @@ export function BlackjackGameProvider({ children }: { children: React.ReactNode 
   const [engine, setEngine] = useState<EngineState | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [sessionStats, setSessionStats] = useState<SessionStats>(() => initialSessionStats(0));
 
   // Instrumentation session state (#370 / #549). Session = one blackjack game
   // from chip allocation until chips=0 OR the provider unmounts.
@@ -47,6 +50,7 @@ export function BlackjackGameProvider({ children }: { children: React.ReactNode 
     (startingChips: number) => {
       sessionStartedAtRef.current = Date.now();
       totalHandsRef.current = 0;
+      setSessionStats(initialSessionStats(startingChips));
       syncStart({ starting_chips: startingChips });
     },
     [syncStart]
@@ -158,6 +162,14 @@ export function BlackjackGameProvider({ children }: { children: React.ReactNode 
             chips_after: next.chips,
           },
         });
+        setSessionStats((s) =>
+          reduceHandResolved(s, {
+            outcome: next.outcome!,
+            payoutDelta: next.payout,
+            chipsAfter: next.chips,
+            isBust: handValue(next.player_hand) > 21,
+          })
+        );
       }
 
       // hand_resolved (split): scan for newly-filled hand_outcomes slots
@@ -176,6 +188,15 @@ export function BlackjackGameProvider({ children }: { children: React.ReactNode 
               chips_after: next.chips,
             },
           });
+          const splitHand = next.player_hands[i] ?? [];
+          setSessionStats((s) =>
+            reduceHandResolved(s, {
+              outcome: nOut,
+              payoutDelta: next.hand_payouts[i] ?? 0,
+              chipsAfter: next.chips,
+              isBust: handValue(splitHand) > 21,
+            })
+          );
         }
       }
 
@@ -232,7 +253,15 @@ export function BlackjackGameProvider({ children }: { children: React.ReactNode 
 
   return (
     <BlackjackGameContext.Provider
-      value={{ engine, loading, error, apply, handleRulesChange, handlePlayAgain }}
+      value={{
+        engine,
+        loading,
+        error,
+        sessionStats,
+        apply,
+        handleRulesChange,
+        handlePlayAgain,
+      }}
     >
       {children}
     </BlackjackGameContext.Provider>
@@ -243,4 +272,8 @@ export function useBlackjackGame(): BlackjackGameContextValue {
   const ctx = useContext(BlackjackGameContext);
   if (!ctx) throw new Error("useBlackjackGame must be used within BlackjackGameProvider");
   return ctx;
+}
+
+export function useBlackjackSessionStats(): SessionStats {
+  return useBlackjackGame().sessionStats;
 }
