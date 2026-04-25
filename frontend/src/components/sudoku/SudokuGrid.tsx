@@ -20,6 +20,17 @@ export default function SudokuGrid({ grid, selectedRow, selectedCol, onCellPress
       ? (grid[selectedRow]?.[selectedCol]?.value ?? 0)
       : 0;
 
+  const isPeer = (r: number, c: number): boolean => {
+    if (selectedRow === null || selectedCol === null) return false;
+    if (r === selectedRow && c === selectedCol) return false;
+    return (
+      r === selectedRow ||
+      c === selectedCol ||
+      (Math.floor(r / 3) === Math.floor(selectedRow / 3) &&
+        Math.floor(c / 3) === Math.floor(selectedCol / 3))
+    );
+  };
+
   return (
     <View
       accessibilityLabel="Sudoku board"
@@ -53,6 +64,7 @@ export default function SudokuGrid({ grid, selectedRow, selectedCol, onCellPress
                     cell.value === selectedValue &&
                     !(r === selectedRow && c === selectedCol)
                   }
+                  peer={isPeer(r, c)}
                   onPress={() => onCellPress(r, c)}
                 />
               </View>

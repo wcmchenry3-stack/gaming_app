@@ -11,12 +11,14 @@ interface Props {
   selected: boolean;
   /** Non-selected cell that holds the same digit as the selected cell. */
   highlighted: boolean;
+  /** Cell in the same row, column, or 3×3 box as the selected cell. */
+  peer: boolean;
   onPress: () => void;
 }
 
 const NOTE_DIGITS: readonly NoteDigit[] = [1, 2, 3, 4, 5, 6, 7, 8, 9];
 
-export default function SudokuCell({ cell, row, col, selected, highlighted, onPress }: Props) {
+export default function SudokuCell({ cell, row, col, selected, highlighted, peer, onPress }: Props) {
   const { t } = useTranslation("sudoku");
   const { colors } = useTheme();
 
@@ -27,7 +29,9 @@ export default function SudokuCell({ cell, row, col, selected, highlighted, onPr
       colors.surfaceHigh
     : highlighted
       ? colors.surfaceAlt
-      : colors.surface;
+      : peer
+        ? colors.surfacePeer
+        : colors.surface;
 
   const borderColor = selected ? colors.accent : colors.border;
 

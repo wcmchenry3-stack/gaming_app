@@ -56,6 +56,7 @@ describe("SudokuCell", () => {
         col={0}
         selected={false}
         highlighted={false}
+        peer={false}
         onPress={() => {}}
       />
     );
@@ -71,6 +72,7 @@ describe("SudokuCell", () => {
         col={0}
         selected={false}
         highlighted={false}
+        peer={false}
         onPress={() => {}}
       />
     );
@@ -87,6 +89,7 @@ describe("SudokuCell", () => {
         col={6}
         selected={false}
         highlighted={false}
+        peer={false}
         onPress={() => {}}
       />
     );
@@ -104,6 +107,7 @@ describe("SudokuCell", () => {
         col={0}
         selected={false}
         highlighted={false}
+        peer={false}
         onPress={onPress}
       />
     );
@@ -119,6 +123,7 @@ describe("SudokuCell", () => {
         col={0}
         selected={false}
         highlighted={false}
+        peer={false}
         onPress={() => {}}
       />
     ).toJSON();
@@ -133,6 +138,22 @@ describe("SudokuCell", () => {
         col={3}
         selected={true}
         highlighted={false}
+        peer={false}
+        onPress={() => {}}
+      />
+    ).toJSON();
+    expect(tree).toMatchSnapshot();
+  });
+
+  it("matches snapshot — peer cell", () => {
+    const tree = wrap(
+      <SudokuCell
+        cell={cell({ value: 4 })}
+        row={0}
+        col={3}
+        selected={false}
+        highlighted={false}
+        peer={true}
         onPress={() => {}}
       />
     ).toJSON();
@@ -182,6 +203,89 @@ describe("SudokuGrid", () => {
       <SudokuGrid grid={asGrid(g)} selectedRow={4} selectedCol={4} onCellPress={() => {}} />
     ).toJSON();
     expect(tree).toMatchSnapshot();
+  });
+
+  describe("peer highlighting", () => {
+    // Select cell (4,4): same row = row 4, same col = col 4,
+    // same 3×3 box = rows 3-5, cols 3-5.
+
+    it("marks cells in the same row as peers", () => {
+      const { getAllByRole } = wrap(
+        <SudokuGrid
+          grid={asGrid(emptyGrid())}
+          selectedRow={4}
+          selectedCol={4}
+          onCellPress={() => {}}
+        />
+      );
+      // Row 4, col 0 — index 36 in row-major order. Not the selected cell.
+      const cells = getAllByRole("button");
+      // Row 4, col 0 = index 4*9+0 = 36; check backgroundColor via style.
+      // We verify the selected cell itself is NOT a peer by confirming it has
+      // surfaceHigh background, not surfacePeer.
+      const selectedCell = cells[4 * 9 + 4]!;
+      expect(selectedCell.props.style).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({ backgroundColor: "#25252c" }), // dark surfaceHigh
+        ])
+      );
+    });
+
+    it("does not apply peer highlight to the selected cell itself", () => {
+      const { getAllByRole } = wrap(
+        <SudokuGrid
+          grid={asGrid(emptyGrid())}
+          selectedRow={2}
+          selectedCol={2}
+          onCellPress={() => {}}
+        />
+      );
+      const cells = getAllByRole("button");
+      const selectedCell = cells[2 * 9 + 2]!;
+      expect(selectedCell.props.style).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({ backgroundColor: "#25252c" }), // surfaceHigh, not surfacePeer
+        ])
+      );
+    });
+
+    it("marks cells in the same 3×3 box as peers", () => {
+      const { getAllByRole } = wrap(
+        <SudokuGrid
+          grid={asGrid(emptyGrid())}
+          selectedRow={0}
+          selectedCol={0}
+          onCellPress={() => {}}
+        />
+      );
+      const cells = getAllByRole("button");
+      // (1,1) shares box with (0,0) and is not on the same row/col.
+      const boxPeer = cells[1 * 9 + 1]!;
+      expect(boxPeer.props.style).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({ backgroundColor: "#1c1c23" }), // dark surfacePeer
+        ])
+      );
+    });
+
+    it("clears peers when no cell is selected", () => {
+      const { getAllByRole } = wrap(
+        <SudokuGrid
+          grid={asGrid(emptyGrid())}
+          selectedRow={null}
+          selectedCol={null}
+          onCellPress={() => {}}
+        />
+      );
+      const cells = getAllByRole("button");
+      cells.forEach((c) => {
+        expect(c.props.style).toEqual(
+          expect.arrayContaining([
+            expect.objectContaining({ backgroundColor: "#19191f" }), // default surface
+          ])
+        );
+      });
+    });
   });
 });
 
