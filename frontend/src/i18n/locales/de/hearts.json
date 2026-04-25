@@ -55,5 +55,6 @@
   "settings.cancel": "Cancel",
 
   "events.heartsBroken": "Herz gebrochen",
-  "events.moonShot": "{{name}} hat den Mond geschossen!"
+  "events.moonShot": "{{name}} hat den Mond geschossen!",
+  "events.queenOfSpades": "{{name}} nimmt die Pik-Dame!"
 }

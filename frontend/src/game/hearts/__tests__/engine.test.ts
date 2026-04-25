@@ -621,6 +621,129 @@ describe("trick resolution", () => {
 });
 
 // ---------------------------------------------------------------------------
+// queenOfSpades event
+// ---------------------------------------------------------------------------
+
+describe("resolveTrick — queenOfSpades event", () => {
+  it("appends queenOfSpades event with correct takerSeat when Q♠ is in the trick", () => {
+    // P0 leads K♠; P1 plays Q♠; P2,P3 play low spades — P0 wins (K > Q)
+    const hands = [
+      [c("spades", 13), c("clubs", 2)],
+      [c("spades", 12), c("clubs", 3)],
+      [c("spades", 3), c("clubs", 4)],
+      [c("spades", 4), c("clubs", 5)],
+    ] as Card[][];
+    let state = mkState({
+      playerHands: hands,
+      tricksPlayedInHand: 1,
+      heartsBroken: true,
+      currentLeaderIndex: 0,
+      currentPlayerIndex: 0,
+    });
+    state = playCard(state, 0, c("spades", 13));
+    state = playCard(state, 1, c("spades", 12));
+    state = playCard(state, 2, c("spades", 3));
+    state = playCard(state, 3, c("spades", 4));
+
+    expect(state.events).toContainEqual({ type: "queenOfSpades", takerSeat: 0 });
+  });
+
+  it("sets takerSeat to the actual trick winner, not always player 0", () => {
+    // P0 leads 3♠; P1 plays A♠ (wins); P2 plays Q♠; P3 plays 5♠
+    const hands = [
+      [c("spades", 3), c("clubs", 2)],
+      [c("spades", 1), c("clubs", 3)],
+      [c("spades", 12), c("clubs", 4)],
+      [c("spades", 5), c("clubs", 5)],
+    ] as Card[][];
+    let state = mkState({
+      playerHands: hands,
+      tricksPlayedInHand: 1,
+      heartsBroken: true,
+      currentLeaderIndex: 0,
+      currentPlayerIndex: 0,
+    });
+    state = playCard(state, 0, c("spades", 3));
+    state = playCard(state, 1, c("spades", 1));
+    state = playCard(state, 2, c("spades", 12));
+    state = playCard(state, 3, c("spades", 5));
+
+    expect(state.events).toContainEqual({ type: "queenOfSpades", takerSeat: 1 });
+  });
+
+  it("does NOT append queenOfSpades event when Q♠ is not in the trick", () => {
+    const hands = [
+      [c("spades", 5), c("clubs", 2)],
+      [c("hearts", 1), c("clubs", 3)],
+      [c("spades", 10), c("clubs", 4)],
+      [c("spades", 3), c("clubs", 5)],
+    ] as Card[][];
+    let state = mkState({
+      playerHands: hands,
+      tricksPlayedInHand: 1,
+      heartsBroken: true,
+      currentLeaderIndex: 0,
+      currentPlayerIndex: 0,
+    });
+    state = playCard(state, 0, c("spades", 5));
+    state = playCard(state, 1, c("hearts", 1));
+    state = playCard(state, 2, c("spades", 10));
+    state = playCard(state, 3, c("spades", 3));
+
+    expect(state.events ?? []).not.toContainEqual(
+      expect.objectContaining({ type: "queenOfSpades" })
+    );
+  });
+
+  it("still awards 13 points to the correct player when Q♠ is in the trick", () => {
+    // P0 leads 3♠; P1 plays A♠ (wins); P2 plays Q♠
+    const hands = [
+      [c("spades", 3), c("clubs", 2)],
+      [c("spades", 1), c("clubs", 3)],
+      [c("spades", 12), c("clubs", 4)],
+      [c("spades", 5), c("clubs", 5)],
+    ] as Card[][];
+    let state = mkState({
+      playerHands: hands,
+      tricksPlayedInHand: 1,
+      heartsBroken: true,
+      currentLeaderIndex: 0,
+      currentPlayerIndex: 0,
+    });
+    state = playCard(state, 0, c("spades", 3));
+    state = playCard(state, 1, c("spades", 1));
+    state = playCard(state, 2, c("spades", 12));
+    state = playCard(state, 3, c("spades", 5));
+
+    expect(state.handScores[1]).toBe(13);
+    expect(state.handScores[0]).toBe(0);
+  });
+
+  it("awards both heart points and Q♠ points when they appear in the same trick", () => {
+    // P0 leads 3♠; P1 A♠ (wins); P2 Q♠; P3 discards 2♥ — P1 takes 13+1=14 pts
+    const hands = [
+      [c("spades", 3), c("clubs", 2)],
+      [c("spades", 1), c("clubs", 3)],
+      [c("spades", 12), c("clubs", 4)],
+      [c("hearts", 2), c("clubs", 5)],
+    ] as Card[][];
+    let state = mkState({
+      playerHands: hands,
+      tricksPlayedInHand: 1,
+      heartsBroken: true,
+      currentLeaderIndex: 0,
+      currentPlayerIndex: 0,
+    });
+    state = playCard(state, 0, c("spades", 3));
+    state = playCard(state, 1, c("spades", 1));
+    state = playCard(state, 2, c("spades", 12));
+    state = playCard(state, 3, c("hearts", 2));
+
+    expect(state.handScores[1]).toBe(14);
+  });
+});
+
+// ---------------------------------------------------------------------------
 // detectMoon
 // ---------------------------------------------------------------------------
 

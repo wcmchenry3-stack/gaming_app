@@ -55,5 +55,6 @@
   "settings.cancel": "Cancel",
 
   "events.heartsBroken": "הלבבות נשברו",
-  "events.moonShot": "{{name}} לקח את הכל!"
+  "events.moonShot": "{{name}} לקח את הכל!",
+  "events.queenOfSpades": "{{name}} לקח את מלכת הספייד!"
 }

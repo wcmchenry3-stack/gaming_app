@@ -63,7 +63,7 @@ function cardEquals(a: Card, b: Card): boolean {
   return a.suit === b.suit && a.rank === b.rank;
 }
 
-function isQueenOfSpades(c: Card): boolean {
+export function isQueenOfSpades(c: Card): boolean {
   return c.suit === "spades" && c.rank === 12;
 }
 
@@ -325,6 +325,10 @@ function resolveTrick(state: HeartsState, trick: readonly TrickCard[]): HeartsSt
 
   const newTricksPlayed = state.tricksPlayedInHand + 1;
 
+  const queenEvent = trickCards.some(isQueenOfSpades)
+    ? ([{ type: "queenOfSpades", takerSeat: winnerPlayerIndex }] as const)
+    : ([] as const);
+
   let next: HeartsState = {
     ...state,
     currentTrick: [],
@@ -333,6 +337,7 @@ function resolveTrick(state: HeartsState, trick: readonly TrickCard[]): HeartsSt
     wonCards: newWonCards,
     handScores: newHandScores,
     tricksPlayedInHand: newTricksPlayed,
+    events: [...(state.events ?? []), ...queenEvent],
   };
 
   if (newTricksPlayed === 13) {

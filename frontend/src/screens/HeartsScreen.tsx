@@ -40,6 +40,7 @@ import { useSound } from "../game/_shared/useSound";
 import { OfflineBanner } from "../components/shared/OfflineBanner";
 import { HeartsBrokenAnimation } from "../components/hearts/HeartsBrokenAnimation";
 import { HeartsMoonShotAnimation } from "../components/hearts/HeartsMoonShotAnimation";
+import { HeartsQueenOfSpadesAnimation } from "../components/hearts/HeartsQueenOfSpadesAnimation";
 import type { Card, HeartsState, TrickCard } from "../game/hearts/types";
 
 const HUMAN = 0;
@@ -73,6 +74,8 @@ export default function HeartsScreen() {
   const [showHeartsBroken, setShowHeartsBroken] = useState(false);
   const [showMoonShot, setShowMoonShot] = useState(false);
   const [moonShotLabel, setMoonShotLabel] = useState("");
+  const [showQueenOfSpades, setShowQueenOfSpades] = useState(false);
+  const [queenOfSpadesLabel, setQueenOfSpadesLabel] = useState("");
   const [showRename, setShowRename] = useState(false);
   const [playerName, setPlayerName] = useState("");
   const [submitState, setSubmitState] = useState<SubmitState>("idle");
@@ -166,6 +169,7 @@ export default function HeartsScreen() {
 
   const { play: playHeartsBroken } = useSound("hearts.heartsBroken");
   const { play: playMoonShot } = useSound("hearts.moonShot");
+  const { play: playQueenOfSpades } = useSound("hearts.queenOfSpades");
 
   useGameEvents(
     gameState.events,
@@ -178,6 +182,11 @@ export default function HeartsScreen() {
         playMoonShot();
         setMoonShotLabel(playerNames[event.shooter] ?? "");
         setShowMoonShot(true);
+      },
+      queenOfSpades: (event) => {
+        playQueenOfSpades();
+        setQueenOfSpadesLabel(playerNames[event.takerSeat] ?? "");
+        setShowQueenOfSpades(true);
       },
     },
     () => setGameState((prev) => ({ ...prev, events: [] }))
@@ -441,6 +450,11 @@ export default function HeartsScreen() {
           visible={showMoonShot}
           shooterLabel={moonShotLabel}
           onAnimationEnd={() => setShowMoonShot(false)}
+        />
+        <HeartsQueenOfSpadesAnimation
+          visible={showQueenOfSpades}
+          takerLabel={queenOfSpadesLabel}
+          onAnimationEnd={() => setShowQueenOfSpades(false)}
         />
       </View>
 

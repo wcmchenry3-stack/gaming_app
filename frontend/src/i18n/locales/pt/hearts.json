@@ -55,5 +55,6 @@
   "settings.cancel": "Cancel",
 
   "events.heartsBroken": "Copas abertas",
-  "events.moonShot": "{{name}} fez a limpa!"
+  "events.moonShot": "{{name}} fez a limpa!",
+  "events.queenOfSpades": "{{name}} pega a Dama de Espadas!"
 }

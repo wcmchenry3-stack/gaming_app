@@ -55,5 +55,6 @@
   "settings.cancel": "Cancel",
 
   "events.heartsBroken": "Corazones descubiertos",
-  "events.moonShot": "¡{{name}} hizo luna!"
+  "events.moonShot": "¡{{name}} hizo luna!",
+  "events.queenOfSpades": "¡{{name}} toma la Reina de Espadas!"
 }

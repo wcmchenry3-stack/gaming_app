@@ -183,6 +183,21 @@ Verifies the fanfare sound and full-screen moon overlay fire exactly once when s
 4. **Mute toggle:** Enable the global mute, trigger a moon shot. Confirm the animation still shows but the sound is suppressed.
 5. **Reduced-motion fallback:** Enable Reduce Motion in device accessibility settings, trigger a moon shot. Confirm the moon icon and stars appear instantly (no spring motion) and the label is visible immediately; overlay still auto-dismisses after 2.2 s.
 
+### Hearts: Queen of Spades sound + animation (#775)
+
+Verifies the dark sting sound and card animation fire exactly once when the Queen of Spades is taken.
+
+1. Start a Hearts game and play until a trick containing Q♠ is resolved.
+2. The moment the trick resolves (four cards played):
+   - Confirm a dark ominous sting (hearts-queen-of-spades.mp3) plays once.
+   - Confirm a Q♠ card (white card face with "Q" and "♠") springs up at scale 0 → 1.4×.
+   - Confirm the card executes 4 left-right shake iterations (translateX ±8 px).
+   - Confirm the card fades to opacity 0 after the shakes.
+   - Confirm a full-screen red flash overlay (rgba(220,38,38,0.25)) fades in and out over the ~1.0 s duration.
+   - Confirm the taker's label is correctly identified (check the player who took the trick).
+3. Confirm play is **not blocked** — the animation runs in parallel with normal game flow.
+4. **Reduced-motion fallback:** Enable Reduce Motion in device accessibility settings, trigger a Q♠ trick. Confirm only a red flash (~0.8 s) occurs, no zoom or shake.
+
 ---
 
 ## E2E Test Conventions
