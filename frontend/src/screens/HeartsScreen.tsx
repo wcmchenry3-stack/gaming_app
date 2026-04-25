@@ -44,30 +44,14 @@ function delay(ms: number): Promise<void> {
 type LastTrick = { readonly trick: readonly TrickCard[]; readonly winnerIndex: number } | null;
 type SubmitState = "idle" | "submitting" | "done" | "error";
 
-// Compact face-down card stack for narrow side slots.
-function CompactHand({ label, colors }: { label: string; colors: Colors }) {
-  return (
-    <View style={compactStyles.container}>
-      <Text style={[compactStyles.label, { color: colors.textMuted }]}>{label}</Text>
-      <View
-        style={[
-          compactStyles.cardBack,
-          { backgroundColor: colors.surface, borderColor: colors.border },
-        ]}
-      />
-    </View>
-  );
+// Side-seat label for narrow slots (West/East). Just the player name; the
+// captured pile beneath provides the only seat-level visual weight.
+function SideSeatLabel({ label, colors }: { label: string; colors: Colors }) {
+  return <Text style={[sideSeatStyles.label, { color: colors.textMuted }]}>{label}</Text>;
 }
 
-const compactStyles = StyleSheet.create({
-  container: { alignItems: "center", gap: 4 },
+const sideSeatStyles = StyleSheet.create({
   label: { fontSize: 11, fontWeight: "600" },
-  cardBack: {
-    width: 36,
-    height: 52,
-    borderRadius: 6,
-    borderWidth: 1,
-  },
 });
 
 export default function HeartsScreen() {
@@ -359,7 +343,7 @@ export default function HeartsScreen() {
         {/* Middle: Left AI | TrickArea | Right AI */}
         <View style={styles.middleRow}>
           <View style={styles.sideColumn}>
-            <CompactHand label={playerLabels[1] ?? ""} colors={colors} />
+            <SideSeatLabel label={playerLabels[1] ?? ""} colors={colors} />
             <OpponentCapturedPile
               cards={gameState.wonCards[1] ?? []}
               seatLabel={playerLabels[1] ?? ""}
@@ -373,7 +357,7 @@ export default function HeartsScreen() {
             onAnimationComplete={handleTrickAnimationComplete}
           />
           <View style={styles.sideColumn}>
-            <CompactHand label={playerLabels[3] ?? ""} colors={colors} />
+            <SideSeatLabel label={playerLabels[3] ?? ""} colors={colors} />
             <OpponentCapturedPile
               cards={gameState.wonCards[3] ?? []}
               seatLabel={playerLabels[3] ?? ""}
