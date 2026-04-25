@@ -343,11 +343,11 @@ describe("OpponentCapturedPile", () => {
     expect(queryByText("+0")).toBeNull();
   });
 
-  it("renders count and penalty points for a mixed pile (4 cards, +16)", () => {
+  it("renders card fan without numeric badges for a mixed pile (4 cards, +16)", () => {
     const cards: Card[] = [c("hearts", 4), c("hearts", 10), c("hearts", 11), c("spades", 12)];
-    const { getByText } = wrap(<OpponentCapturedPile cards={cards} seatLabel="Top" />);
-    expect(getByText("4")).toBeTruthy();
-    expect(getByText("+16")).toBeTruthy();
+    const { queryByText } = wrap(<OpponentCapturedPile cards={cards} seatLabel="Top" />);
+    expect(queryByText("4")).toBeNull();
+    expect(queryByText("+16")).toBeNull();
   });
 
   it("exposes count and points in its accessibility label", () => {
@@ -381,10 +381,10 @@ describe("SelfCapturedPile", () => {
     expect(getAllByText("♠").length).toBeGreaterThan(0);
   });
 
-  it("renders running points pill matching the penalty calculation", () => {
+  it("does not render a numeric points badge (score badges removed per #716)", () => {
     const cards: Card[] = [c("hearts", 2), c("hearts", 5), c("hearts", 9), c("spades", 12)];
-    const { getByText } = wrap(<SelfCapturedPile cards={cards} />);
-    expect(getByText("+16")).toBeTruthy();
+    const { queryByText } = wrap(<SelfCapturedPile cards={cards} />);
+    expect(queryByText("+16")).toBeNull();
   });
 
   it("sorts captured cards by suit then rank, matching PlayerHand order", () => {
