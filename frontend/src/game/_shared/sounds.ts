@@ -9,5 +9,5 @@ export type SoundKey = string;
 // Each game-specific issue adds its entries here.
 export const SOUND_REGISTRY: Partial<Record<SoundKey, number>> = {
   // eslint-disable-next-line @typescript-eslint/no-require-imports
-  "hearts.heartsBroken": require("../../assets/sounds/hearts-broken.mp3"),
+  "hearts.heartsBroken": require("../../../assets/sounds/hearts-broken.mp3"),
 };
