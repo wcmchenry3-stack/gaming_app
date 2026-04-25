@@ -6,9 +6,10 @@ This protects against provenance loss if a source URL becomes unavailable.
 ## License snapshot policy
 
 When adding a sound:
+
 1. Record the source URL, license name, and the full license text or a permalink
    to an archived copy (e.g. web.archive.org snapshot).
-2. Record the download date — licenses can change for *new* assets; your copy
+2. Record the download date — licenses can change for _new_ assets; your copy
    is protected under the terms in effect on the download date.
 3. Use a semantic filename (`<game>-<event>.mp3`) — never commit the raw
    download filename. Keep the original filename here for traceability.
@@ -20,6 +21,7 @@ When adding a sound:
 ## Hearts
 
 ### hearts-moon-shot.mp3
+
 - **Event:** Shooting the moon (player takes all 13 hearts + Queen of Spades)
 - **Original filename:** u_it78ck90s3-orchestral-win-331233.mp3
 - **Source URL:** https://pixabay.com/sound-effects/orchestral-win-331233/
@@ -33,6 +35,7 @@ When adding a sound:
 - **Replaced:** kaykay12-wow-171498.mp3 (https://pixabay.com/sound-effects/wow-171498/) — swapped 2026-04-25
 
 ### hearts-broken.mp3
+
 - **Event:** Hearts broken (first heart played into a trick)
 - **Original filename:** lordsonny-rock-break-hard-184891.mp3
 - **Source URL:** https://pixabay.com/sound-effects/rock-break-hard-184891/
@@ -45,6 +48,7 @@ When adding a sound:
 - **Notes:** Hard rock-break crack (~0.5s). Represents the moment hearts shatter open.
 
 ### hearts-queen-of-spades.mp3
+
 - **Event:** Queen of Spades played into a trick
 - **Original filename:** phoenix_connection_brazil-surprise-sound-effect-99300.mp3
 - **Source URL:** https://pixabay.com/sound-effects/surprise-sound-effect-99300/
