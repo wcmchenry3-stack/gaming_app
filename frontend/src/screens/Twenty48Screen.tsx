@@ -22,6 +22,7 @@ import GameOverlay from "../components/twenty48/GameOverlay";
 import StatsBento from "../components/twenty48/StatsBento";
 import NewGameConfirmModal from "../components/shared/NewGameConfirmModal";
 import { useGameSync } from "../game/_shared/useGameSync";
+import { useTwenty48Scoreboard } from "../game/twenty48/Twenty48ScoreboardContext";
 
 function flattenBoard(board: number[][]): number[] {
   return board.flat();
@@ -70,6 +71,7 @@ export default function Twenty48Screen({ navigation }: Props) {
   } = useGameSync("twenty48");
   const moveCountRef = useRef(0);
   const stateRef = useRef<Twenty48State | null>(null);
+  const { setSnapshot: setScoreboardSnapshot } = useTwenty48Scoreboard();
   useEffect(() => {
     stateRef.current = state;
   }, [state]);
@@ -128,6 +130,17 @@ export default function Twenty48Screen({ navigation }: Props) {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state?.score]); // intentional: only re-run when score changes, not on every state update
+
+  useEffect(() => {
+    if (!state) return;
+    setScoreboardSnapshot({
+      score: state.score,
+      bestTile: highestTile(state.board),
+      moveCount: moveCountRef.current,
+      bestScore,
+      hasGame: true,
+    });
+  }, [state, bestScore, setScoreboardSnapshot]);
 
   const executeMove = useCallback(
     (direction: Direction, currentState: Twenty48State) => {
@@ -291,6 +304,7 @@ export default function Twenty48Screen({ navigation }: Props) {
       requireBack
       onBack={() => navigation.popToTop()}
       onNewGame={resetGame}
+      onOpenScoreboard={() => navigation.navigate("Scoreboard", { gameKey: "twenty48" })}
       loading={!state && loading}
       style={{
         paddingBottom: Math.max(insets.bottom, 16),

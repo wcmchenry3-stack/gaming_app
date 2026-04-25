@@ -53,6 +53,7 @@ import {
 } from "../game/sudoku/engine";
 import type { CellValue, Difficulty, SudokuState } from "../game/sudoku/types";
 import { clearGame, loadGame, saveGame } from "../game/sudoku/storage";
+import { useSudokuScoreboard } from "../game/sudoku/SudokuScoreboardContext";
 import { scoreQueue } from "../game/_shared/scoreQueue";
 import { useGameSync } from "../game/_shared/useGameSync";
 import { useNetwork } from "../game/_shared/NetworkContext";
@@ -113,6 +114,18 @@ export default function SudokuScreen() {
     complete: syncComplete,
     getGameId: syncGetGameId,
   } = useGameSync("sudoku");
+
+  const { setSnapshot: setScoreboardSnapshot } = useSudokuScoreboard();
+
+  useEffect(() => {
+    if (!state) return;
+    setScoreboardSnapshot({
+      elapsed,
+      difficulty: state.difficulty,
+      errorCount: state.errorCount,
+      hasGame: true,
+    });
+  }, [state, elapsed, setScoreboardSnapshot]);
 
   // Mount load — restores a saved game silently; on a clean slot the
   // pre-game picker shows.
@@ -386,6 +399,7 @@ export default function SudokuScreen() {
       loading={loading}
       onBack={() => navigation.popToTop()}
       onNewGame={handleStart}
+      onOpenScoreboard={() => navigation.navigate("Scoreboard", { gameKey: "sudoku" })}
       rightSlot={headerRight}
       style={{
         paddingBottom: Math.max(insets.bottom, 16),

@@ -33,5 +33,12 @@
   "win.title": "You Solved It!",
   "win.score": "Score: {{score}}",
   "win.errors": "Errors: {{count}}",
-  "win.elapsed": "Time: {{time}}"
+  "win.elapsed": "Time: {{time}}",
+  "scoreboard.heroLabel": "ELAPSED",
+  "scoreboard.heroSub": "{{difficulty}} · {{errors}} errors",
+  "scoreboard.heroSubEmpty": "No games played yet",
+  "scoreboard.easyBestTime": "Easy Best",
+  "scoreboard.mediumBestTime": "Medium Best",
+  "scoreboard.hardBestTime": "Hard Best",
+  "scoreboard.gamesSolved": "Games Solved"
 }
