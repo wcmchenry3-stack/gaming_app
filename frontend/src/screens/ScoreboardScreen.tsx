@@ -6,7 +6,9 @@ import { useTranslation } from "react-i18next";
 import { GameShell } from "../components/shared/GameShell";
 import { useTheme } from "../theme/ThemeContext";
 import HeartsScoreboard from "../components/scoreboard/HeartsScoreboard";
+import YachtScoreboard from "../components/scoreboard/YachtScoreboard";
 import { useHeartsRounds } from "../game/hearts/RoundsContext";
+import { useYachtScorecard } from "../game/yacht/ScorecardContext";
 import type { HomeStackParamList } from "../../App";
 
 type GameKey = HomeStackParamList["Scoreboard"]["gameKey"];
@@ -19,6 +21,13 @@ function HeartsScoreboardSection() {
       cumulativeScores={cumulativeScores}
       scoreHistory={scoreHistory}
     />
+  );
+}
+
+function YachtScoreboardSection() {
+  const { scores, upperSubtotal, upperBonus, yachtBonusCount, totalScore } = useYachtScorecard();
+  return (
+    <YachtScoreboard you={{ scores, upperSubtotal, upperBonus, yachtBonusCount, totalScore }} />
   );
 }
 
@@ -45,7 +54,7 @@ export default function ScoreboardScreen() {
       body = <HeartsScoreboardSection />;
       break;
     case "yacht":
-      body = <UnknownScoreboardFallback gameKey={gameKey} />;
+      body = <YachtScoreboardSection />;
       break;
     case "blackjack":
       body = <UnknownScoreboardFallback gameKey={gameKey} />;
