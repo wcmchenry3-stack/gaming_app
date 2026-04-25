@@ -25,11 +25,31 @@ export default function SudokuScoreboard({ snapshot }: Props) {
       })
     : t("scoreboard.heroSubEmpty");
 
+  const { easy, medium, hard } = snapshot.stats;
+  const totalSolved = easy.gamesSolved + medium.gamesSolved + hard.gamesSolved;
+
   const cards = [
-    { key: "easyBestTime", label: t("scoreboard.easyBestTime"), value: "—", accent: true },
-    { key: "mediumBestTime", label: t("scoreboard.mediumBestTime"), value: "—" },
-    { key: "hardBestTime", label: t("scoreboard.hardBestTime"), value: "—" },
-    { key: "gamesSolved", label: t("scoreboard.gamesSolved"), value: "—" },
+    {
+      key: "easyBestTime",
+      label: t("scoreboard.easyBestTime"),
+      value: easy.bestTimeS > 0 ? formatElapsed(easy.bestTimeS) : "—",
+      accent: true,
+    },
+    {
+      key: "mediumBestTime",
+      label: t("scoreboard.mediumBestTime"),
+      value: medium.bestTimeS > 0 ? formatElapsed(medium.bestTimeS) : "—",
+    },
+    {
+      key: "hardBestTime",
+      label: t("scoreboard.hardBestTime"),
+      value: hard.bestTimeS > 0 ? formatElapsed(hard.bestTimeS) : "—",
+    },
+    {
+      key: "gamesSolved",
+      label: t("scoreboard.gamesSolved"),
+      value: totalSolved > 0 ? totalSolved.toLocaleString("en-US") : "—",
+    },
   ] as const;
 
   return (

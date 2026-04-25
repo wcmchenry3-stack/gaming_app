@@ -52,7 +52,15 @@ import {
   undo,
 } from "../game/sudoku/engine";
 import type { CellValue, Difficulty, SudokuState } from "../game/sudoku/types";
-import { clearGame, loadGame, saveGame } from "../game/sudoku/storage";
+import {
+  clearGame,
+  loadGame,
+  saveGame,
+  loadStats,
+  saveStats,
+  EMPTY_SUDOKU_STATS,
+  type SudokuStats,
+} from "../game/sudoku/storage";
 import { useSudokuScoreboard } from "../game/sudoku/SudokuScoreboardContext";
 import { scoreQueue } from "../game/_shared/scoreQueue";
 import { useGameSync } from "../game/_shared/useGameSync";
@@ -105,6 +113,8 @@ export default function SudokuScreen() {
   const digitCountRef = useRef(0);
   const prevCompleteRef = useRef(false);
 
+  const statsRef = useRef<SudokuStats>(EMPTY_SUDOKU_STATS);
+
   const flashOpacity = useRef(new Animated.Value(0)).current;
   const isComplete = state?.isComplete ?? false;
 
@@ -124,6 +134,7 @@ export default function SudokuScreen() {
       difficulty: state.difficulty,
       errorCount: state.errorCount,
       hasGame: true,
+      stats: statsRef.current,
     });
   }, [state, elapsed, setScoreboardSnapshot]);
 
@@ -131,9 +142,10 @@ export default function SudokuScreen() {
   // pre-game picker shows.
   useEffect(() => {
     let alive = true;
-    loadGame()
-      .then((saved) => {
+    Promise.all([loadGame(), loadStats()])
+      .then(([saved, savedStats]) => {
         if (!alive) return;
+        statsRef.current = savedStats;
         hasLoadedRef.current = true;
         if (saved !== null) {
           setState(saved);
@@ -231,9 +243,31 @@ export default function SudokuScreen() {
         );
       }
       clearGame().catch(() => {});
+
+      const finalElapsed =
+        startMsRef.current !== null ? Math.floor((Date.now() - startMsRef.current) / 1000) : 0;
+      const diff = state.difficulty;
+      const prev = statsRef.current[diff];
+      const updatedStats: SudokuStats = {
+        ...statsRef.current,
+        [diff]: {
+          bestTimeS:
+            prev.bestTimeS === 0 || finalElapsed < prev.bestTimeS ? finalElapsed : prev.bestTimeS,
+          gamesSolved: prev.gamesSolved + 1,
+        },
+      };
+      statsRef.current = updatedStats;
+      saveStats(updatedStats).catch(() => {});
+      setScoreboardSnapshot({
+        elapsed: finalElapsed,
+        difficulty: state.difficulty,
+        errorCount: state.errorCount,
+        hasGame: true,
+        stats: updatedStats,
+      });
     }
     prevCompleteRef.current = state.isComplete;
-  }, [state, syncComplete, syncGetGameId]);
+  }, [state, syncComplete, syncGetGameId, setScoreboardSnapshot]);
 
   // Abandon on back-navigation when a digit has been placed and the
   // puzzle isn't finished.  useGameSync's own unmount handler provides

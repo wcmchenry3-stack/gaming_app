@@ -200,3 +200,59 @@ export async function clearGame(): Promise<void> {
     });
   }
 }
+
+// ---------------------------------------------------------------------------
+// Stats persistence (#762)
+// ---------------------------------------------------------------------------
+
+const STATS_KEY = "sudoku_stats_v1";
+
+export interface DifficultyStats {
+  bestTimeS: number;
+  gamesSolved: number;
+}
+
+export interface SudokuStats {
+  easy: DifficultyStats;
+  medium: DifficultyStats;
+  hard: DifficultyStats;
+}
+
+export const EMPTY_SUDOKU_STATS: SudokuStats = {
+  easy: { bestTimeS: 0, gamesSolved: 0 },
+  medium: { bestTimeS: 0, gamesSolved: 0 },
+  hard: { bestTimeS: 0, gamesSolved: 0 },
+};
+
+function parseDiffStats(d: unknown): DifficultyStats {
+  if (d === null || typeof d !== "object") return { bestTimeS: 0, gamesSolved: 0 };
+  const o = d as Partial<DifficultyStats>;
+  return {
+    bestTimeS: typeof o.bestTimeS === "number" ? o.bestTimeS : 0,
+    gamesSolved: typeof o.gamesSolved === "number" ? o.gamesSolved : 0,
+  };
+}
+
+export async function loadStats(): Promise<SudokuStats> {
+  try {
+    const raw = await AsyncStorage.getItem(STATS_KEY);
+    if (!raw) return { ...EMPTY_SUDOKU_STATS };
+    const parsed = JSON.parse(raw) as Record<string, unknown>;
+    return {
+      easy: parseDiffStats(parsed?.easy),
+      medium: parseDiffStats(parsed?.medium),
+      hard: parseDiffStats(parsed?.hard),
+    };
+  } catch (e) {
+    Sentry.captureException(e, { tags: { subsystem: "sudoku.storage", op: "loadStats" } });
+    return { ...EMPTY_SUDOKU_STATS };
+  }
+}
+
+export async function saveStats(stats: SudokuStats): Promise<void> {
+  try {
+    await AsyncStorage.setItem(STATS_KEY, JSON.stringify(stats));
+  } catch (e) {
+    Sentry.captureException(e, { tags: { subsystem: "sudoku.storage", op: "saveStats" } });
+  }
+}
