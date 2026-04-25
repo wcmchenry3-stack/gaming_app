@@ -45,15 +45,7 @@ type LastTrick = { readonly trick: readonly TrickCard[]; readonly winnerIndex: n
 type SubmitState = "idle" | "submitting" | "done" | "error";
 
 // Compact face-down card stack for narrow side slots.
-function CompactHand({
-  cardCount,
-  label,
-  colors,
-}: {
-  cardCount: number;
-  label: string;
-  colors: Colors;
-}) {
+function CompactHand({ label, colors }: { label: string; colors: Colors }) {
   return (
     <View style={compactStyles.container}>
       <Text style={[compactStyles.label, { color: colors.textMuted }]}>{label}</Text>
@@ -62,9 +54,7 @@ function CompactHand({
           compactStyles.cardBack,
           { backgroundColor: colors.surface, borderColor: colors.border },
         ]}
-      >
-        <Text style={[compactStyles.count, { color: colors.textMuted }]}>{cardCount}</Text>
-      </View>
+      />
     </View>
   );
 }
@@ -77,10 +67,7 @@ const compactStyles = StyleSheet.create({
     height: 52,
     borderRadius: 6,
     borderWidth: 1,
-    alignItems: "center",
-    justifyContent: "center",
   },
-  count: { fontSize: 13, fontWeight: "700" },
 });
 
 export default function HeartsScreen() {
@@ -372,11 +359,7 @@ export default function HeartsScreen() {
         {/* Middle: Left AI | TrickArea | Right AI */}
         <View style={styles.middleRow}>
           <View style={styles.sideColumn}>
-            <CompactHand
-              cardCount={gameState.playerHands[1]?.length ?? 0}
-              label={playerLabels[1] ?? ""}
-              colors={colors}
-            />
+            <CompactHand label={playerLabels[1] ?? ""} colors={colors} />
             <OpponentCapturedPile
               cards={gameState.wonCards[1] ?? []}
               seatLabel={playerLabels[1] ?? ""}
@@ -390,11 +373,7 @@ export default function HeartsScreen() {
             onAnimationComplete={handleTrickAnimationComplete}
           />
           <View style={styles.sideColumn}>
-            <CompactHand
-              cardCount={gameState.playerHands[3]?.length ?? 0}
-              label={playerLabels[3] ?? ""}
-              colors={colors}
-            />
+            <CompactHand label={playerLabels[3] ?? ""} colors={colors} />
             <OpponentCapturedPile
               cards={gameState.wonCards[3] ?? []}
               seatLabel={playerLabels[3] ?? ""}
