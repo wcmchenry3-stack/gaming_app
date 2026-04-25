@@ -1,5 +1,5 @@
-import React from "react";
-import { View, Text, StyleSheet } from "react-native";
+import React, { useEffect, useRef } from "react";
+import { View, Text, StyleSheet, Animated, Easing } from "react-native";
 import { useTranslation } from "react-i18next";
 import { useTheme } from "../../theme/ThemeContext";
 import PlayingCard from "./PlayingCard";
@@ -10,19 +10,85 @@ interface Props {
   playerIndex: number;
   playerLabels?: string[];
   winnerIndex?: number | null;
+  onAnimationComplete?: () => void;
 }
 
 const POSITIONS = ["bottom", "left", "top", "right"] as const;
+const ANIMATION_DURATION_MS = 600;
 
-export default function TrickArea({ trick, playerIndex, playerLabels, winnerIndex }: Props) {
+// Direction vector per winner screen-position (relative to human). Cards slide
+// from the trick area toward the winning seat, matching the design spec.
+const DIRECTION_OFFSET: Record<(typeof POSITIONS)[number], { x: number; y: number }> = {
+  bottom: { x: 0, y: 120 },
+  left: { x: -140, y: 0 },
+  top: { x: 0, y: -120 },
+  right: { x: 140, y: 0 },
+};
+
+export default function TrickArea({
+  trick,
+  playerIndex,
+  playerLabels,
+  winnerIndex,
+  onAnimationComplete,
+}: Props) {
   const { t } = useTranslation("hearts");
   const { colors } = useTheme();
+  const progress = useRef(new Animated.Value(0)).current;
+  const onCompleteRef = useRef(onAnimationComplete);
+  onCompleteRef.current = onAnimationComplete;
 
   // Map seat index (0-3) to compass position relative to human player
   function positionForSeat(seat: number): (typeof POSITIONS)[number] {
     const offset = (seat - playerIndex + 4) % 4;
     return POSITIONS[offset] ?? "bottom";
   }
+
+  const hasWinner = winnerIndex !== null && winnerIndex !== undefined;
+  const shouldAnimate = hasWinner && trick.length === 4;
+  const winnerDirection = shouldAnimate
+    ? DIRECTION_OFFSET[positionForSeat(winnerIndex as number)]
+    : null;
+
+  useEffect(() => {
+    if (!shouldAnimate) {
+      progress.setValue(0);
+      return;
+    }
+    progress.setValue(0);
+    const anim = Animated.timing(progress, {
+      toValue: 1,
+      duration: ANIMATION_DURATION_MS,
+      easing: Easing.in(Easing.ease),
+      useNativeDriver: false,
+    });
+    anim.start(({ finished }) => {
+      if (finished) onCompleteRef.current?.();
+    });
+    return () => {
+      anim.stop();
+    };
+  }, [shouldAnimate, winnerIndex, progress]);
+
+  const animatedStyle = winnerDirection
+    ? {
+        transform: [
+          {
+            translateX: progress.interpolate({
+              inputRange: [0, 1],
+              outputRange: [0, winnerDirection.x],
+            }),
+          },
+          {
+            translateY: progress.interpolate({
+              inputRange: [0, 1],
+              outputRange: [0, winnerDirection.y],
+            }),
+          },
+        ],
+        opacity: progress.interpolate({ inputRange: [0, 1], outputRange: [1, 0] }),
+      }
+    : null;
 
   const slots: Record<string, TrickCard | undefined> = {};
   for (const tc of trick) {
@@ -32,12 +98,12 @@ export default function TrickArea({ trick, playerIndex, playerLabels, winnerInde
   function renderSlot(pos: (typeof POSITIONS)[number], seatIndex: number) {
     const tc = slots[pos];
     const label = playerLabels?.[seatIndex] ?? String(seatIndex);
-    const isWinner = winnerIndex !== null && winnerIndex !== undefined && winnerIndex === seatIndex;
+    const isWinner = hasWinner && winnerIndex === seatIndex;
 
     return (
-      <View
+      <Animated.View
         key={pos}
-        style={[styles.slot, styles[pos]]}
+        style={[styles.slot, styles[pos], animatedStyle]}
         accessibilityLabel={
           tc
             ? isWinner
@@ -56,7 +122,7 @@ export default function TrickArea({ trick, playerIndex, playerLabels, winnerInde
             ]}
           />
         )}
-      </View>
+      </Animated.View>
     );
   }
 
