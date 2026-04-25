@@ -162,13 +162,15 @@ export function AppHeader({
             <Text style={[styles.backText, { color: colors.text }]}>{t("common:nav.back")}</Text>
           </Pressable>
         ) : (
-          <Image
-            source={logoSource}
-            style={styles.logo}
-            resizeMode="contain"
-            accessibilityLabel="BC Arcade"
-            accessibilityRole="image"
-          />
+          <View style={styles.logoSlot}>
+            <Image
+              source={logoSource}
+              style={styles.logo}
+              resizeMode="contain"
+              accessibilityLabel="BC Arcade"
+              accessibilityRole="image"
+            />
+          </View>
         )}
 
         <Text
@@ -386,9 +388,13 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     paddingHorizontal: 24,
   },
-  logo: {
+  logoSlot: {
     width: 80,
-    height: 32,
+    alignItems: "flex-start",
+  },
+  logo: {
+    width: 40,
+    height: 40,
   },
   backButton: {
     width: 80,
