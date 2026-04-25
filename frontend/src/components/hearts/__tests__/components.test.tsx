@@ -7,6 +7,7 @@ import OpponentHand from "../OpponentHand";
 import TrickArea from "../TrickArea";
 import ScoreBoard from "../ScoreBoard";
 import PassBanner from "../PassBanner";
+import { OpponentCapturedPile, SelfCapturedPile, penaltyPoints } from "../CapturedPile";
 import type { Card, TrickCard } from "../../../game/hearts/types";
 
 jest.mock("expo-linear-gradient", () => ({
@@ -261,5 +262,85 @@ describe("PassBanner", () => {
     // eslint-disable-next-line @typescript-eslint/no-require-imports
     const { Modal } = require("react-native");
     expect(UNSAFE_queryAllByType(Modal)).toHaveLength(0);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// CapturedPile — penalty points helper
+// ---------------------------------------------------------------------------
+
+describe("penaltyPoints", () => {
+  it("returns 0 for empty and non-penalty cards", () => {
+    expect(penaltyPoints([])).toBe(0);
+    expect(penaltyPoints([c("clubs", 7), c("diamonds", 3), c("spades", 1)])).toBe(0);
+  });
+
+  it("counts hearts as +1 each", () => {
+    expect(penaltyPoints([c("hearts", 2), c("hearts", 8), c("hearts", 13)])).toBe(3);
+  });
+
+  it("counts Q♠ as +13", () => {
+    expect(penaltyPoints([c("spades", 12)])).toBe(13);
+  });
+
+  it("combines hearts + Q♠: 3 hearts + Q♠ = 16", () => {
+    expect(penaltyPoints([c("hearts", 4), c("hearts", 10), c("hearts", 11), c("spades", 12)])).toBe(
+      16
+    );
+  });
+});
+
+// ---------------------------------------------------------------------------
+// OpponentCapturedPile (face-down)
+// ---------------------------------------------------------------------------
+
+describe("OpponentCapturedPile", () => {
+  it("renders no summary pill when pile is empty", () => {
+    const { queryByText } = wrap(<OpponentCapturedPile cards={[]} seatLabel="Left" />);
+    expect(queryByText("+0")).toBeNull();
+  });
+
+  it("renders count and penalty points for a mixed pile (4 cards, +16)", () => {
+    const cards: Card[] = [c("hearts", 4), c("hearts", 10), c("hearts", 11), c("spades", 12)];
+    const { getByText } = wrap(<OpponentCapturedPile cards={cards} seatLabel="Top" />);
+    expect(getByText("4")).toBeTruthy();
+    expect(getByText("+16")).toBeTruthy();
+  });
+
+  it("exposes count and points in its accessibility label", () => {
+    const cards: Card[] = [c("hearts", 2), c("spades", 12)];
+    const { getByLabelText } = wrap(<OpponentCapturedPile cards={cards} seatLabel="Right" />);
+    expect(getByLabelText(/Right.*2.*14/)).toBeTruthy();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// SelfCapturedPile (face-up)
+// ---------------------------------------------------------------------------
+
+describe("SelfCapturedPile", () => {
+  it("shows the empty-state placeholder when no cards captured", () => {
+    const { getByText } = wrap(<SelfCapturedPile cards={[]} />);
+    expect(getByText(/nothing yet/i)).toBeTruthy();
+  });
+
+  it("does not render a points pill when empty", () => {
+    const { queryByText } = wrap(<SelfCapturedPile cards={[]} />);
+    expect(queryByText("+0")).toBeNull();
+  });
+
+  it("renders face-up rank + suit for each captured card", () => {
+    const cards: Card[] = [c("hearts", 13), c("spades", 12)];
+    const { getAllByText, getByText } = wrap(<SelfCapturedPile cards={cards} />);
+    expect(getByText("K")).toBeTruthy();
+    expect(getByText("Q")).toBeTruthy();
+    expect(getAllByText("♥").length).toBeGreaterThan(0);
+    expect(getAllByText("♠").length).toBeGreaterThan(0);
+  });
+
+  it("renders running points pill matching the penalty calculation", () => {
+    const cards: Card[] = [c("hearts", 2), c("hearts", 5), c("hearts", 9), c("spades", 12)];
+    const { getByText } = wrap(<SelfCapturedPile cards={cards} />);
+    expect(getByText("+16")).toBeTruthy();
   });
 });

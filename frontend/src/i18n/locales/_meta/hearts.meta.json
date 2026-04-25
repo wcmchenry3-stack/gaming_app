@@ -143,6 +143,42 @@
     "doNotTranslate": [],
     "notes": null
   },
+  "captured.taken": {
+    "component": "SelfCapturedPile label",
+    "description": "Label above the row showing penalty cards the human has taken this hand. Styled uppercase.",
+    "tone": "functional, label",
+    "characterLimit": 12,
+    "placeholders": [],
+    "doNotTranslate": [],
+    "notes": "Rendered as uppercase tracking label. If the locale doesn't support uppercase styling, a short all-caps equivalent is fine."
+  },
+  "captured.empty": {
+    "component": "SelfCapturedPile placeholder",
+    "description": "Italic placeholder shown in the 'Taken' row when the human has not yet captured any penalty cards this hand.",
+    "tone": "casual, understated",
+    "characterLimit": 20,
+    "placeholders": [],
+    "doNotTranslate": [],
+    "notes": null
+  },
+  "captured.opponentLabel": {
+    "component": "OpponentCapturedPile (accessibility)",
+    "description": "Screen-reader label describing how many penalty cards and points an AI opponent has captured this hand.",
+    "tone": "functional",
+    "characterLimit": 80,
+    "placeholders": ["{{label}}", "{{count}}", "{{points}}"],
+    "doNotTranslate": [],
+    "notes": null
+  },
+  "captured.selfLabel": {
+    "component": "SelfCapturedPile (accessibility)",
+    "description": "Screen-reader label describing how many penalty cards and points the human has captured this hand.",
+    "tone": "functional",
+    "characterLimit": 80,
+    "placeholders": ["{{count}}", "{{points}}"],
+    "doNotTranslate": [],
+    "notes": null
+  },
   "trick.area": {
     "component": "TrickArea (accessibility)",
     "description": "Accessibility label for the trick-play area.",

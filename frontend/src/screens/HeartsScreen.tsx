@@ -5,6 +5,7 @@ import { useTranslation } from "react-i18next";
 import { useTheme } from "../theme/ThemeContext";
 import type { Colors } from "../theme/ThemeContext";
 import { GameShell } from "../components/shared/GameShell";
+import { OpponentCapturedPile, SelfCapturedPile } from "../components/hearts/CapturedPile";
 import OpponentHand from "../components/hearts/OpponentHand";
 import PassBanner from "../components/hearts/PassBanner";
 import PlayerHand from "../components/hearts/PlayerHand";
@@ -350,28 +351,44 @@ export default function HeartsScreen() {
             label={playerLabels[2] ?? ""}
             score={gameState.cumulativeScores[2] ?? 0}
           />
+          <OpponentCapturedPile
+            cards={gameState.wonCards[2] ?? []}
+            seatLabel={playerLabels[2] ?? ""}
+          />
         </View>
 
         {/* Middle: Left AI | TrickArea | Right AI */}
         <View style={styles.middleRow}>
-          <CompactHand
-            cardCount={gameState.playerHands[1]?.length ?? 0}
-            label={playerLabels[1] ?? ""}
-            score={gameState.cumulativeScores[1] ?? 0}
-            colors={colors}
-          />
+          <View style={styles.sideColumn}>
+            <CompactHand
+              cardCount={gameState.playerHands[1]?.length ?? 0}
+              label={playerLabels[1] ?? ""}
+              score={gameState.cumulativeScores[1] ?? 0}
+              colors={colors}
+            />
+            <OpponentCapturedPile
+              cards={gameState.wonCards[1] ?? []}
+              seatLabel={playerLabels[1] ?? ""}
+            />
+          </View>
           <TrickArea
             trick={[...displayTrick]}
             playerIndex={HUMAN}
             playerLabels={playerLabels}
             winnerIndex={trickWinnerIndex}
           />
-          <CompactHand
-            cardCount={gameState.playerHands[3]?.length ?? 0}
-            label={playerLabels[3] ?? ""}
-            score={gameState.cumulativeScores[3] ?? 0}
-            colors={colors}
-          />
+          <View style={styles.sideColumn}>
+            <CompactHand
+              cardCount={gameState.playerHands[3]?.length ?? 0}
+              label={playerLabels[3] ?? ""}
+              score={gameState.cumulativeScores[3] ?? 0}
+              colors={colors}
+            />
+            <OpponentCapturedPile
+              cards={gameState.wonCards[3] ?? []}
+              seatLabel={playerLabels[3] ?? ""}
+            />
+          </View>
         </View>
 
         {/* Human hand */}
@@ -391,6 +408,7 @@ export default function HeartsScreen() {
               onConfirm={handlePassConfirm}
             />
           )}
+          <SelfCapturedPile cards={gameState.wonCards[HUMAN] ?? []} />
           <PlayerHand
             hand={humanHand}
             selectedCards={isPassing ? humanPassSelections : undefined}
@@ -676,6 +694,10 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
     paddingHorizontal: 8,
+  },
+  sideColumn: {
+    alignItems: "center",
+    gap: 6,
   },
   bottomArea: {
     paddingBottom: 8,
