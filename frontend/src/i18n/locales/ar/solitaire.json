@@ -40,7 +40,7 @@
   "error.loadFailed": "تعذر استئناف اللعبة المحفوظة.",
   "error.submitFailed": "تعذر حفظ النتيجة. تحقق من الاتصال.",
   "error.submitRetry": "أعد المحاولة",
-  "scoreboard.heroLabel": "MOVES",
+  "scoreboard.heroLabel": "TIME",
   "scoreboard.heroSub": "{{moves}} moves · {{foundations}} of 4 complete",
   "scoreboard.heroSubEmpty": "No games played yet",
   "scoreboard.bestTime": "Best Time",

@@ -14,6 +14,7 @@ import SolitaireScreen from "../SolitaireScreen";
 import { ThemeProvider } from "../../theme/ThemeContext";
 import { SolitaireScoreboardProvider } from "../../game/solitaire/SolitaireScoreboardContext";
 import { createSeededRng, dealGame, setRng } from "../../game/solitaire/engine";
+import { saveStats } from "../../game/solitaire/storage";
 import { solitaireApi } from "../../game/solitaire/api";
 
 jest.mock("expo-blur", () => ({
@@ -403,5 +404,67 @@ describe("SolitaireScreen — win-modal score submission", () => {
     });
     expect(api.getByLabelText("Draw 1")).toBeTruthy();
     expect(await AsyncStorage.getItem("solitaire_game")).toBeNull();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// #761 — stats tracking
+// ---------------------------------------------------------------------------
+
+describe("SolitaireScreen — stats tracking", () => {
+  it("increments gamesPlayed when the player chooses a draw mode", async () => {
+    const api = await mount();
+    await chooseDraw1(api);
+    await waitFor(async () => {
+      const raw = await AsyncStorage.getItem("solitaire_stats_v1");
+      expect(raw).not.toBeNull();
+      expect(JSON.parse(raw!).gamesPlayed).toBe(1);
+    });
+  });
+
+  it("does not double-count gamesPlayed when resuming a saved game", async () => {
+    const saved = dealGame(1, 12345);
+    await AsyncStorage.setItem("solitaire_game", JSON.stringify(saved));
+    await mount();
+    const raw = await AsyncStorage.getItem("solitaire_stats_v1");
+    // No new deal was started — stats not yet written or gamesPlayed is still 0.
+    const gamesPlayed = raw ? JSON.parse(raw).gamesPlayed : 0;
+    expect(gamesPlayed).toBe(0);
+  });
+
+  it("does not double-count gamesWon when resuming an already-complete game", async () => {
+    // Pre-seed stats as if a win was already counted in a prior session.
+    await saveStats({ bestTimeMs: 95000, bestMoves: 42, gamesPlayed: 1, gamesWon: 1 });
+    // Seed a complete game (edge case: game wasn't cleared before app killed).
+    const suits = ["spades", "hearts", "diamonds", "clubs"] as const;
+    const rankSeq = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13] as const;
+    const full = suits.flatMap((suit) => rankSeq.map((rank) => ({ suit, rank, faceUp: true })));
+    const winState = {
+      _v: 1,
+      drawMode: 1,
+      tableau: [[], [], [], [], [], [], []],
+      foundations: {
+        spades: full.filter((c) => c.suit === "spades"),
+        hearts: full.filter((c) => c.suit === "hearts"),
+        diamonds: full.filter((c) => c.suit === "diamonds"),
+        clubs: full.filter((c) => c.suit === "clubs"),
+      },
+      stock: [],
+      waste: [],
+      score: 820,
+      recycleCount: 0,
+      undoStack: [],
+      isComplete: true,
+      startedAt: null,
+      accumulatedMs: 95000,
+    };
+    await AsyncStorage.setItem("solitaire_game", JSON.stringify(winState));
+    await mount();
+    // gamesWon must remain 1, not 2.
+    await waitFor(async () => {
+      const raw = await AsyncStorage.getItem("solitaire_stats_v1");
+      const stats = raw ? JSON.parse(raw) : { gamesWon: 1 };
+      expect(stats.gamesWon).toBe(1);
+    });
   });
 });

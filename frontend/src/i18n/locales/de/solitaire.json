@@ -40,7 +40,7 @@
   "error.loadFailed": "Gespeichertes Spiel konnte nicht geladen werden.",
   "error.submitFailed": "Punkte konnten nicht gespeichert werden. Verbindung prüfen.",
   "error.submitRetry": "Erneut",
-  "scoreboard.heroLabel": "MOVES",
+  "scoreboard.heroLabel": "TIME",
   "scoreboard.heroSub": "{{moves}} moves · {{foundations}} of 4 complete",
   "scoreboard.heroSubEmpty": "No games played yet",
   "scoreboard.bestTime": "Best Time",
