@@ -285,7 +285,12 @@ function withUndo(
   const snapshot: SolitaireState = { ...prev, undoStack: [] };
   const stack = [...prev.undoStack, snapshot];
   const capped = stack.length > UNDO_CAP ? stack.slice(stack.length - UNDO_CAP) : stack;
-  return { ...next, undoStack: capped, startedAt: prev.startedAt, accumulatedMs: prev.accumulatedMs };
+  return {
+    ...next,
+    undoStack: capped,
+    startedAt: prev.startedAt,
+    accumulatedMs: prev.accumulatedMs,
+  };
 }
 
 /** Start, advance, or freeze the timer. Called after every state mutation. */
@@ -534,7 +539,12 @@ export function undo(state: SolitaireState): SolitaireState {
   if (last === undefined) return state;
   const remaining = state.undoStack.slice(0, -1);
   // Preserve the live timer — don't restore the older timer snapshot from the undo entry.
-  return { ...last, undoStack: remaining, startedAt: state.startedAt, accumulatedMs: state.accumulatedMs };
+  return {
+    ...last,
+    undoStack: remaining,
+    startedAt: state.startedAt,
+    accumulatedMs: state.accumulatedMs,
+  };
 }
 
 // ---------------------------------------------------------------------------
