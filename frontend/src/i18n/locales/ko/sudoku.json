@@ -26,5 +26,12 @@
   "win.title": "성공했어요!",
   "win.score": "점수: {{score}}",
   "win.errors": "오류: {{count}}개",
-  "win.elapsed": "시간: {{time}}"
+  "win.elapsed": "시간: {{time}}",
+  "scoreboard.heroLabel": "ELAPSED",
+  "scoreboard.heroSub": "{{difficulty}} · {{errors}} errors",
+  "scoreboard.heroSubEmpty": "No games played yet",
+  "scoreboard.easyBestTime": "Easy Best",
+  "scoreboard.mediumBestTime": "Medium Best",
+  "scoreboard.hardBestTime": "Hard Best",
+  "scoreboard.gamesSolved": "Games Solved"
 }

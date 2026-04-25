@@ -26,5 +26,12 @@
   "win.title": "Você Conseguiu!",
   "win.score": "Pontuação: {{score}}",
   "win.errors": "Erros: {{count}}",
-  "win.elapsed": "Tempo: {{time}}"
+  "win.elapsed": "Tempo: {{time}}",
+  "scoreboard.heroLabel": "ELAPSED",
+  "scoreboard.heroSub": "{{difficulty}} · {{errors}} errors",
+  "scoreboard.heroSubEmpty": "No games played yet",
+  "scoreboard.easyBestTime": "Easy Best",
+  "scoreboard.mediumBestTime": "Medium Best",
+  "scoreboard.hardBestTime": "Hard Best",
+  "scoreboard.gamesSolved": "Games Solved"
 }

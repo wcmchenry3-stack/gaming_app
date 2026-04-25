@@ -39,5 +39,12 @@
   "error.saveFailed": "Não foi possível salvar o jogo.",
   "error.loadFailed": "Não foi possível retomar o jogo salvo.",
   "error.submitFailed": "Não foi possível salvar a pontuação. Verifique sua conexão.",
-  "error.submitRetry": "Tentar"
+  "error.submitRetry": "Tentar",
+  "scoreboard.heroLabel": "MOVES",
+  "scoreboard.heroSub": "{{moves}} moves · {{foundations}} of 4 complete",
+  "scoreboard.heroSubEmpty": "No games played yet",
+  "scoreboard.bestTime": "Best Time",
+  "scoreboard.bestMoves": "Best Moves",
+  "scoreboard.gamesPlayed": "Games Played",
+  "scoreboard.gamesWon": "Games Won"
 }

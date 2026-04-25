@@ -39,5 +39,12 @@
   "error.saveFailed": "Opslaan van je spel is mislukt.",
   "error.loadFailed": "Het opgeslagen spel kon niet worden hervat.",
   "error.submitFailed": "Score opslaan mislukt. Controleer je verbinding.",
-  "error.submitRetry": "Opnieuw"
+  "error.submitRetry": "Opnieuw",
+  "scoreboard.heroLabel": "MOVES",
+  "scoreboard.heroSub": "{{moves}} moves · {{foundations}} of 4 complete",
+  "scoreboard.heroSubEmpty": "No games played yet",
+  "scoreboard.bestTime": "Best Time",
+  "scoreboard.bestMoves": "Best Moves",
+  "scoreboard.gamesPlayed": "Games Played",
+  "scoreboard.gamesWon": "Games Won"
 }

@@ -12,6 +12,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 
 import SudokuScreen from "../SudokuScreen";
 import { ThemeProvider } from "../../theme/ThemeContext";
+import { SudokuScoreboardProvider } from "../../game/sudoku/SudokuScoreboardContext";
 import { enterDigit, loadPuzzle, selectCell } from "../../game/sudoku/engine";
 import { saveGame } from "../../game/sudoku/storage";
 import type { CellValue, SudokuState } from "../../game/sudoku/types";
@@ -76,7 +77,9 @@ function fillAllExcept(state: SudokuState, skip: { row: number; col: number }): 
 function renderScreen() {
   return render(
     <ThemeProvider>
-      <SudokuScreen />
+      <SudokuScoreboardProvider>
+        <SudokuScreen />
+      </SudokuScoreboardProvider>
     </ThemeProvider>
   );
 }

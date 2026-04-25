@@ -26,5 +26,12 @@
   "win.title": "クリアおめでとう！",
   "win.score": "スコア: {{score}}",
   "win.errors": "ミス: {{count}} 回",
-  "win.elapsed": "時間: {{time}}"
+  "win.elapsed": "時間: {{time}}",
+  "scoreboard.heroLabel": "ELAPSED",
+  "scoreboard.heroSub": "{{difficulty}} · {{errors}} errors",
+  "scoreboard.heroSubEmpty": "No games played yet",
+  "scoreboard.easyBestTime": "Easy Best",
+  "scoreboard.mediumBestTime": "Medium Best",
+  "scoreboard.hardBestTime": "Hard Best",
+  "scoreboard.gamesSolved": "Games Solved"
 }

@@ -21,5 +21,12 @@
   "win.body": "你达到了2048！你可以继续游戏以获得更高分数。",
   "controls.keyboardHint": "或使用方向键",
   "stats.highestTile": "Highest Tile",
-  "stats.timePlayed": "Time Played"
+  "stats.timePlayed": "Time Played",
+  "scoreboard.heroLabel": "SCORE",
+  "scoreboard.heroSub": "Best tile: {{bestTile}} · {{moves}} moves",
+  "scoreboard.heroSubEmpty": "No games played yet",
+  "scoreboard.bestScore": "Best Score",
+  "scoreboard.bestTile": "Best Tile",
+  "scoreboard.gamesPlayed": "Games Played",
+  "scoreboard.gamesWon": "Games Won"
 }

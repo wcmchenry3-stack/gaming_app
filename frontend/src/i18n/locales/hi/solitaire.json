@@ -39,5 +39,12 @@
   "error.saveFailed": "आपका गेम सेव नहीं हो सका।",
   "error.loadFailed": "सेव किया हुआ गेम लोड नहीं हो सका।",
   "error.submitFailed": "स्कोर सेव नहीं हो सका। कनेक्शन जांचें।",
-  "error.submitRetry": "पुनः प्रयास"
+  "error.submitRetry": "पुनः प्रयास",
+  "scoreboard.heroLabel": "MOVES",
+  "scoreboard.heroSub": "{{moves}} moves · {{foundations}} of 4 complete",
+  "scoreboard.heroSubEmpty": "No games played yet",
+  "scoreboard.bestTime": "Best Time",
+  "scoreboard.bestMoves": "Best Moves",
+  "scoreboard.gamesPlayed": "Games Played",
+  "scoreboard.gamesWon": "Games Won"
 }

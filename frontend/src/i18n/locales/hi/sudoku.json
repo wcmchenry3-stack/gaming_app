@@ -26,5 +26,12 @@
   "win.title": "आपने हल कर लिया!",
   "win.score": "स्कोर: {{score}}",
   "win.errors": "गलतियाँ: {{count}}",
-  "win.elapsed": "समय: {{time}}"
+  "win.elapsed": "समय: {{time}}",
+  "scoreboard.heroLabel": "ELAPSED",
+  "scoreboard.heroSub": "{{difficulty}} · {{errors}} errors",
+  "scoreboard.heroSubEmpty": "No games played yet",
+  "scoreboard.easyBestTime": "Easy Best",
+  "scoreboard.mediumBestTime": "Medium Best",
+  "scoreboard.hardBestTime": "Hard Best",
+  "scoreboard.gamesSolved": "Games Solved"
 }
