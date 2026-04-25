@@ -55,4 +55,6 @@
   "settings.cancel": "Cancel",
 
   "events.heartsBroken": "Черви раскрыты"
+,
+  "events.moonShot": "{{name}} собрал всё!"
 }

@@ -717,6 +717,74 @@ describe("applyHandScoring — moon shot", () => {
   });
 });
 
+describe("applyHandScoring — moonShot event", () => {
+  it("appends moonShot event when detectMoon returns non-null", () => {
+    const allHearts = Array.from({ length: 13 }, (_, i) => c("hearts", (i + 1) as Rank));
+    const state = mkState({
+      phase: "hand_end",
+      handScores: [26, 0, 0, 0],
+      cumulativeScores: [0, 0, 0, 0],
+      wonCards: [[...allHearts, c("spades", 12)], [], [], []],
+    });
+    const next = applyHandScoring(state);
+    expect(next.events).toContainEqual({ type: "moonShot", shooter: 0 });
+  });
+
+  it("emits correct shooter index when player 2 shoots the moon", () => {
+    const allHearts = Array.from({ length: 13 }, (_, i) => c("hearts", (i + 1) as Rank));
+    const state = mkState({
+      phase: "hand_end",
+      handScores: [0, 0, 26, 0],
+      cumulativeScores: [0, 0, 0, 0],
+      wonCards: [[], [], [...allHearts, c("spades", 12)], []],
+    });
+    const next = applyHandScoring(state);
+    expect(next.events).toContainEqual({ type: "moonShot", shooter: 2 });
+  });
+
+  it("does not append moonShot event when no moon was shot", () => {
+    const state = mkState({
+      phase: "hand_end",
+      handScores: [10, 8, 5, 3],
+      cumulativeScores: [0, 0, 0, 0],
+      wonCards: [[c("hearts", 1)], [c("hearts", 2)], [c("hearts", 3)], [c("hearts", 4)]],
+    });
+    const next = applyHandScoring(state);
+    const moonEvents = (next.events ?? []).filter((e) => e.type === "moonShot");
+    expect(moonEvents).toHaveLength(0);
+  });
+
+  it("does not mutate pre-existing events entries", () => {
+    const allHearts = Array.from({ length: 13 }, (_, i) => c("hearts", (i + 1) as Rank));
+    const existing = [{ type: "heartsBroken" as const }];
+    const state = mkState({
+      phase: "hand_end",
+      handScores: [26, 0, 0, 0],
+      cumulativeScores: [0, 0, 0, 0],
+      wonCards: [[...allHearts, c("spades", 12)], [], [], []],
+      events: existing,
+    });
+    const next = applyHandScoring(state);
+    expect(next.events).toContainEqual({ type: "heartsBroken" });
+    expect(next.events).toContainEqual({ type: "moonShot", shooter: 0 });
+    expect(state.events).toHaveLength(1); // original not mutated
+  });
+
+  it("emits moonShot even when the hand also triggers game_over", () => {
+    const allHearts = Array.from({ length: 13 }, (_, i) => c("hearts", (i + 1) as Rank));
+    // Player 1 shoots the moon; player 0 is at 80, so +26 pushes them to 106 → game_over
+    const state = mkState({
+      phase: "hand_end",
+      handScores: [0, 26, 0, 0],
+      cumulativeScores: [80, 0, 0, 0],
+      wonCards: [[], [...allHearts, c("spades", 12)], [], []],
+    });
+    const next = applyHandScoring(state);
+    expect(next.phase).toBe("game_over");
+    expect(next.events).toContainEqual({ type: "moonShot", shooter: 1 });
+  });
+});
+
 describe("applyHandScoring — game over", () => {
   it("transitions to game_over when any score reaches 100", () => {
     const state = mkState({

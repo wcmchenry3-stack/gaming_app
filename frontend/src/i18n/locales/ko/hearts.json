@@ -55,4 +55,6 @@
   "settings.cancel": "Cancel",
 
   "events.heartsBroken": "하트 해제"
+,
+  "events.moonShot": "{{name}}이(가) 올킬 성공!"
 }
