@@ -26,13 +26,14 @@ function c(suit: Suit, rank: Rank): Card {
 
 function mkState(overrides: Partial<HeartsState> = {}): HeartsState {
   return {
-    _v: 1,
+    _v: 2,
     phase: "playing",
     handNumber: 1,
     passDirection: "left",
     playerHands: [[], [], [], []],
     cumulativeScores: [0, 0, 0, 0],
     handScores: [0, 0, 0, 0],
+    scoreHistory: [],
     passSelections: [[], [], [], []],
     passingComplete: true,
     currentTrick: [],

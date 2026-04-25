@@ -121,6 +121,39 @@ frontend/src/
 
 ---
 
+## Manual repros
+
+### Hearts: tab-switch state preservation (#745)
+
+Verifies that `scoreHistory` and full game state survive a top-tab switch
+(which unmounts the Lobby HomeStack).
+
+1. Start a Hearts game; play through at least 2 hands so `cumulativeScores`
+   are non-zero and the round table has 2+ rows.
+2. Mid-game, tap the **Ranks**, **Profile**, or **Settings** bottom-tab.
+3. Tap **Lobby** to return; resume Hearts.
+4. Open the ⋯ menu → **Scoreboard**. Expected:
+   - Round table shows the same number of rows as before the switch.
+   - Each row sums to 26 (or `[0,26,26,26]` for moon shots).
+   - Totals row equals the sum of every round row, per player.
+5. Continue play. **Game Over must not fire spuriously** on re-entry —
+   it should only trigger when a player legitimately reaches ≥ 100.
+
+### Hearts: Sentry integrity validators (#745)
+
+Verifies the validators emit warnings when state is impossible. Run with
+the Sentry dashboard open and filtered to `subsystem:hearts.integrity`.
+
+1. From a dev build, manually corrupt `AsyncStorage["hearts_game"]` so
+   `cumulativeScores[1]` exceeds the sum of `scoreHistory[*][1]` (e.g. via
+   React Native Debugger). Re-mount the Hearts screen.
+2. Confirm a warning event appears in Sentry tagged
+   `subsystem=hearts.integrity, check=totals_vs_rounds_mismatch`.
+3. Repeat-mount the screen with the same payload. Confirm Sentry receives
+   **at most one** event per check per mount (per-mount dedupe).
+
+---
+
 ## E2E Test Conventions
 
 Guidelines for writing Playwright specs in `e2e/tests/`. These rules exist because each item below caused a real flaky-run incident.

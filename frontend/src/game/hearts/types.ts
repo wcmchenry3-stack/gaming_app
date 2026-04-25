@@ -36,9 +36,10 @@ export type HeartsPhase =
  * Immutable snapshot of the full Hearts game.
  * Players: index 0 = human, 1 = left AI, 2 = top AI, 3 = right AI.
  * `_v` is a schema version so persisted saves can be migrated or rejected.
+ * v2 adds `scoreHistory` so per-round deltas survive screen unmount (#745).
  */
 export interface HeartsState {
-  readonly _v: 1;
+  readonly _v: 2;
   readonly phase: HeartsPhase;
   /** 1-based. Pass direction = getPassDirection(handNumber). */
   readonly handNumber: number;
@@ -49,6 +50,12 @@ export interface HeartsState {
   readonly cumulativeScores: readonly number[];
   /** Points taken this hand per player (hearts + Q♠). Reset each hand. */
   readonly handScores: readonly number[];
+  /**
+   * Per-resolved-hand applied deltas (post-moon). scoreHistory[round][playerIndex]
+   * is the score the player took for that round, after moon-shot inversion.
+   * Length === completed hands === handNumber - 1 once we've started the next deal.
+   */
+  readonly scoreHistory: readonly (readonly number[])[];
   /** Cards each player has chosen to pass (up to 3). Empty until selection made. */
   readonly passSelections: readonly (readonly Card[])[];
   readonly passingComplete: boolean;

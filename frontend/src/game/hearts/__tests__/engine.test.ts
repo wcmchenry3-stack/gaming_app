@@ -49,13 +49,14 @@ function h4(
 
 function mkState(overrides: Partial<HeartsState> = {}): HeartsState {
   return {
-    _v: 1,
+    _v: 2,
     phase: "playing",
     handNumber: 1,
     passDirection: "left",
     playerHands: [[], [], [], []],
     cumulativeScores: [0, 0, 0, 0],
     handScores: [0, 0, 0, 0],
+    scoreHistory: [],
     passSelections: [[], [], [], []],
     passingComplete: true,
     currentTrick: [],
@@ -98,6 +99,15 @@ describe("dealGame", () => {
   it("initialises cumulative scores to zero", () => {
     const state = dealGame();
     expect(state.cumulativeScores).toEqual([0, 0, 0, 0]);
+  });
+
+  it("initialises scoreHistory empty", () => {
+    const state = dealGame();
+    expect(state.scoreHistory).toEqual([]);
+  });
+
+  it("uses storage schema v2", () => {
+    expect(dealGame()._v).toBe(2);
   });
 });
 
@@ -616,6 +626,22 @@ describe("applyHandScoring — normal", () => {
     expect(next.cumulativeScores).toEqual([30, 23, 15, 8]);
     expect(next.phase).toBe("dealing");
   });
+
+  it("appends the applied delta to scoreHistory (#745)", () => {
+    const state = mkState({
+      phase: "hand_end",
+      handScores: [10, 8, 5, 3],
+      cumulativeScores: [20, 15, 10, 5],
+      wonCards: [[c("hearts", 1)], [c("hearts", 2)], [c("hearts", 3)], [c("hearts", 4)]],
+      scoreHistory: [
+        [5, 5, 5, 5],
+        [15, 10, 5, 0],
+      ],
+    });
+    const next = applyHandScoring(state);
+    expect(next.scoreHistory).toHaveLength(3);
+    expect(next.scoreHistory[2]).toEqual([10, 8, 5, 3]);
+  });
 });
 
 describe("applyHandScoring — moon shot", () => {
@@ -632,6 +658,19 @@ describe("applyHandScoring — moon shot", () => {
     expect(next.cumulativeScores[1]).toBe(46); // +26
     expect(next.cumulativeScores[2]).toBe(56); // +26
     expect(next.cumulativeScores[3]).toBe(66); // +26
+  });
+
+  it("scoreHistory row reflects post-moon delta, not raw handScores (#743/#745)", () => {
+    const allHearts = Array.from({ length: 13 }, (_, i) => c("hearts", (i + 1) as Rank));
+    const state = mkState({
+      phase: "hand_end",
+      handScores: [26, 0, 0, 0],
+      cumulativeScores: [10, 20, 30, 40],
+      wonCards: [[...allHearts, c("spades", 12)], [], [], []],
+    });
+    const next = applyHandScoring(state);
+    expect(next.scoreHistory).toHaveLength(1);
+    expect(next.scoreHistory[0]).toEqual([0, 26, 26, 26]);
   });
 });
 
@@ -723,5 +762,15 @@ describe("dealNextHand", () => {
     expect(allCards).toHaveLength(52);
     const ids = new Set(allCards.map((c) => `${c.suit}-${c.rank}`));
     expect(ids.size).toBe(52);
+  });
+
+  it("preserves scoreHistory across the new deal (#745)", () => {
+    const history = [
+      [5, 5, 5, 5],
+      [10, 8, 4, 4],
+    ];
+    const state = mkState({ phase: "dealing", handNumber: 2, scoreHistory: history });
+    const next = dealNextHand(state);
+    expect(next.scoreHistory).toEqual(history);
   });
 });

@@ -18,13 +18,17 @@ export async function loadGame(): Promise<HeartsState | null> {
     if (!raw) return null;
     const parsed = JSON.parse(raw) as Partial<HeartsState>;
     if (
-      parsed._v !== 1 ||
+      parsed._v !== 2 ||
       !Array.isArray(parsed.playerHands) ||
       parsed.playerHands.length !== 4 ||
       !Array.isArray(parsed.cumulativeScores) ||
       parsed.cumulativeScores.length !== 4 ||
       !Array.isArray(parsed.handScores) ||
       parsed.handScores.length !== 4 ||
+      !Array.isArray(parsed.scoreHistory) ||
+      !parsed.scoreHistory.every(
+        (row) => Array.isArray(row) && row.length === 4 && row.every((v) => typeof v === "number")
+      ) ||
       !Array.isArray(parsed.currentTrick) ||
       !Array.isArray(parsed.wonCards) ||
       typeof parsed.tricksPlayedInHand !== "number" ||

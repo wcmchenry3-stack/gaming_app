@@ -42,6 +42,8 @@ jest.mock("@react-navigation/native", () => ({
     navigate: mockNavigate,
     addListener: jest.fn(() => jest.fn()),
   }),
+  // No-op stub: blur-time save behavior is verified via manual TESTING.md repro.
+  useFocusEffect: jest.fn(),
 }));
 
 jest.mock("expo-blur", () => ({

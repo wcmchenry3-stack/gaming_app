@@ -93,13 +93,14 @@ export function dealGame(): HeartsState {
   const passDirection = getPassDirection(1);
   const leaderIndex = passDirection === "none" ? find2ClubsHolder(hands) : 0;
   return {
-    _v: 1,
+    _v: 2,
     phase: passDirection === "none" ? "playing" : "passing",
     handNumber: 1,
     passDirection,
     playerHands: hands,
     cumulativeScores: [0, 0, 0, 0],
     handScores: [0, 0, 0, 0],
+    scoreHistory: [],
     passSelections: [[], [], [], []],
     passingComplete: false,
     currentTrick: [],
@@ -355,6 +356,9 @@ export function detectMoon(wonCards: readonly (readonly Card[])[]): number | nul
  * Apply hand scores to cumulative totals, detect moon, check game over.
  * Transitions phase to "dealing" (show score screen) or "game_over".
  * Call dealNextHand() after this to start the next hand.
+ *
+ * Appends the post-moon applied delta to scoreHistory so the per-round table
+ * stays consistent with cumulativeScores across remounts (#745).
  */
 export function applyHandScoring(state: HeartsState): HeartsState {
   const moonShooter = detectMoon(state.wonCards);
@@ -367,10 +371,14 @@ export function applyHandScoring(state: HeartsState): HeartsState {
     return base + (state.handScores[i] ?? 0);
   });
 
+  const appliedDelta = newCumulative.map((c, i) => c - (state.cumulativeScores[i] ?? 0));
+  const newScoreHistory = [...state.scoreHistory, appliedDelta];
+
   if (isGameOver(newCumulative)) {
     return {
       ...state,
       cumulativeScores: newCumulative,
+      scoreHistory: newScoreHistory,
       phase: "game_over",
       isComplete: true,
       winnerIndex: getWinner(newCumulative),
@@ -380,6 +388,7 @@ export function applyHandScoring(state: HeartsState): HeartsState {
   return {
     ...state,
     cumulativeScores: newCumulative,
+    scoreHistory: newScoreHistory,
     phase: "dealing",
   };
 }

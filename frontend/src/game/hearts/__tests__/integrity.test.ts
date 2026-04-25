@@ -1,0 +1,162 @@
+/**
+ * Hearts integrity validators (#745).
+ */
+
+import * as Sentry from "@sentry/react-native";
+import { dealGame } from "../engine";
+import { checkHeartsIntegrity, createIntegrityReporter } from "../integrity";
+import type { HeartsState } from "../types";
+
+jest.mock("@sentry/react-native", () => ({
+  captureMessage: jest.fn(),
+}));
+
+const captureMessage = Sentry.captureMessage as jest.Mock;
+
+function mkState(overrides: Partial<HeartsState> = {}): HeartsState {
+  return { ...dealGame(), phase: "playing", ...overrides };
+}
+
+beforeEach(() => {
+  captureMessage.mockClear();
+});
+
+describe("checkHeartsIntegrity — clean state", () => {
+  it("returns no findings on a fresh deal", () => {
+    expect(checkHeartsIntegrity(dealGame())).toEqual([]);
+  });
+
+  it("accepts a real two-round history that reconciles to totals", () => {
+    // Two valid hands that sum to 26 each, totals match running sum.
+    const state = mkState({
+      phase: "playing",
+      handNumber: 3,
+      cumulativeScores: [13, 14, 13, 12],
+      scoreHistory: [
+        [3, 9, 8, 6],
+        [10, 5, 5, 6],
+      ],
+    });
+    expect(checkHeartsIntegrity(state)).toEqual([]);
+  });
+
+  it("accepts a moon-shot row ([0,26,26,26]) without flagging sum != 26", () => {
+    const state = mkState({
+      handNumber: 2,
+      cumulativeScores: [0, 26, 26, 26],
+      scoreHistory: [[0, 26, 26, 26]],
+    });
+    expect(checkHeartsIntegrity(state)).toEqual([]);
+  });
+});
+
+describe("checkHeartsIntegrity — bug repro from issue body", () => {
+  it("flags totals-vs-rounds mismatch when scoreHistory was lost", () => {
+    // The exact #745 scenario: scoreHistory shows only round 1, but cumulativeScores
+    // reflect 13 hands of accumulated points. Round 1 row = [0,18,0,8] sums to 26
+    // (valid hand), but totals = [48,105,87,98] don't reconcile.
+    const state = mkState({
+      handNumber: 14,
+      cumulativeScores: [48, 105, 87, 98],
+      scoreHistory: [[0, 18, 0, 8]],
+    });
+    const findings = checkHeartsIntegrity(state);
+    expect(findings.some((f) => f.key === "totals_vs_rounds_mismatch")).toBe(true);
+  });
+});
+
+describe("checkHeartsIntegrity — per-round invariants", () => {
+  it("flags a row that sums to something other than 26 (and isn't a moon)", () => {
+    const state = mkState({
+      handNumber: 2,
+      cumulativeScores: [10, 5, 3, 2],
+      scoreHistory: [[10, 5, 3, 2]], // sums to 20
+    });
+    const findings = checkHeartsIntegrity(state);
+    expect(findings.some((f) => f.key === "round_sum_ne_26")).toBe(true);
+  });
+
+  it("flags a per-player round score > 26", () => {
+    const state = mkState({
+      handNumber: 2,
+      cumulativeScores: [27, 0, 0, 0],
+      scoreHistory: [[27, 0, 0, 0]], // sum is 27, but the > 26 check fires too
+    });
+    const findings = checkHeartsIntegrity(state);
+    expect(findings.some((f) => f.key === "round_player_over_26")).toBe(true);
+  });
+});
+
+describe("checkHeartsIntegrity — handNumber alignment", () => {
+  it("flags scoreHistory.length mismatch with handNumber during play", () => {
+    // handNumber 3, phase 'playing' → expects 2 completed rounds. 0 rows = bad.
+    const state = mkState({
+      phase: "playing",
+      handNumber: 3,
+      cumulativeScores: [0, 0, 0, 0],
+      scoreHistory: [],
+    });
+    const findings = checkHeartsIntegrity(state);
+    expect(findings.some((f) => f.key === "rounds_vs_handnumber_mismatch")).toBe(true);
+  });
+});
+
+describe("checkHeartsIntegrity — spurious game over", () => {
+  it("flags game_over on hand 1 with empty scoreHistory but a >100 total", () => {
+    const state = mkState({
+      phase: "game_over",
+      handNumber: 1,
+      cumulativeScores: [120, 50, 30, 10],
+      scoreHistory: [],
+      isComplete: true,
+      winnerIndex: 3,
+    });
+    const findings = checkHeartsIntegrity(state);
+    expect(findings.some((f) => f.key === "spurious_game_over")).toBe(true);
+  });
+});
+
+describe("createIntegrityReporter — Sentry wiring + dedupe", () => {
+  it("captures a Sentry warning per-finding on first sighting", () => {
+    const report = createIntegrityReporter();
+    const state = mkState({
+      handNumber: 14,
+      cumulativeScores: [48, 105, 87, 98],
+      scoreHistory: [[0, 18, 0, 8]],
+    });
+    report(state);
+    expect(captureMessage).toHaveBeenCalled();
+    const call = captureMessage.mock.calls[0]!;
+    expect(call[1]).toMatchObject({
+      level: "warning",
+      tags: { subsystem: "hearts.integrity", check: "totals_vs_rounds_mismatch" },
+    });
+  });
+
+  it("does not re-fire the same check across repeated calls (dedupe)", () => {
+    const report = createIntegrityReporter();
+    const state = mkState({
+      handNumber: 14,
+      cumulativeScores: [48, 105, 87, 98],
+      scoreHistory: [[0, 18, 0, 8]],
+    });
+    report(state);
+    const firstCount = captureMessage.mock.calls.length;
+    report(state);
+    expect(captureMessage.mock.calls.length).toBe(firstCount);
+  });
+
+  it("omits player names from extra payload", () => {
+    const report = createIntegrityReporter();
+    report(
+      mkState({
+        handNumber: 14,
+        cumulativeScores: [48, 105, 87, 98],
+        scoreHistory: [[0, 18, 0, 8]],
+      })
+    );
+    const extras = captureMessage.mock.calls.flatMap((c) => Object.values(c[1].extra ?? {}));
+    const stringified = JSON.stringify(extras);
+    expect(stringified).not.toMatch(/playerNames|playerLabels/);
+  });
+});
