@@ -18,7 +18,15 @@ interface Props {
 
 const NOTE_DIGITS: readonly NoteDigit[] = [1, 2, 3, 4, 5, 6, 7, 8, 9];
 
-export default function SudokuCell({ cell, row, col, selected, highlighted, peer, onPress }: Props) {
+export default function SudokuCell({
+  cell,
+  row,
+  col,
+  selected,
+  highlighted,
+  peer,
+  onPress,
+}: Props) {
   const { t } = useTranslation("sudoku");
   const { colors } = useTheme();
 
