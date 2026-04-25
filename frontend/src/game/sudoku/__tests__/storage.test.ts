@@ -1,7 +1,7 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as Sentry from "@sentry/react-native";
 
-import { clearGame, loadGame, saveGame } from "../storage";
+import { clearGame, loadGame, saveGame, loadStats, saveStats, EMPTY_SUDOKU_STATS } from "../storage";
 import { enterDigit, loadPuzzle, selectCell, toggleNotesMode } from "../engine";
 import type { CellValue, NoteDigit, SudokuState } from "../types";
 
@@ -162,6 +162,111 @@ describe("sudoku storage", () => {
       expect(Sentry.captureException).toHaveBeenCalled();
     } finally {
       (AsyncStorage as unknown as { getItem: typeof orig }).getItem = orig;
+    }
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Stats storage (#762)
+// ---------------------------------------------------------------------------
+
+const STATS_KEY = "sudoku_stats_v1";
+
+describe("sudoku stats storage", () => {
+  beforeEach(async () => {
+    await AsyncStorage.clear();
+    (Sentry.captureException as jest.Mock).mockClear();
+  });
+
+  it("returns EMPTY_SUDOKU_STATS when nothing is stored", async () => {
+    const stats = await loadStats();
+    expect(stats).toEqual(EMPTY_SUDOKU_STATS);
+  });
+
+  it("EMPTY_SUDOKU_STATS has zero values for all three difficulties", () => {
+    for (const diff of ["easy", "medium", "hard"] as const) {
+      expect(EMPTY_SUDOKU_STATS[diff].bestTimeS).toBe(0);
+      expect(EMPTY_SUDOKU_STATS[diff].gamesSolved).toBe(0);
+    }
+  });
+
+  it("round-trips stats via saveStats → loadStats", async () => {
+    const stats = {
+      easy: { bestTimeS: 120, gamesSolved: 5 },
+      medium: { bestTimeS: 300, gamesSolved: 3 },
+      hard: { bestTimeS: 600, gamesSolved: 1 },
+    };
+    await saveStats(stats);
+    const loaded = await loadStats();
+    expect(loaded).toEqual(stats);
+  });
+
+  it("persists to STATS_KEY in AsyncStorage", async () => {
+    const stats = {
+      easy: { bestTimeS: 90, gamesSolved: 2 },
+      medium: { bestTimeS: 0, gamesSolved: 0 },
+      hard: { bestTimeS: 0, gamesSolved: 0 },
+    };
+    await saveStats(stats);
+    const raw = await AsyncStorage.getItem(STATS_KEY);
+    expect(raw).not.toBeNull();
+    expect(JSON.parse(raw!)).toEqual(stats);
+  });
+
+  it("recovers missing difficulty fields as zeros", async () => {
+    // Simulate a payload that's missing the 'hard' key (e.g. old format).
+    await AsyncStorage.setItem(
+      STATS_KEY,
+      JSON.stringify({ easy: { bestTimeS: 60, gamesSolved: 1 } })
+    );
+    const loaded = await loadStats();
+    expect(loaded.easy).toEqual({ bestTimeS: 60, gamesSolved: 1 });
+    expect(loaded.medium).toEqual({ bestTimeS: 0, gamesSolved: 0 });
+    expect(loaded.hard).toEqual({ bestTimeS: 0, gamesSolved: 0 });
+  });
+
+  it("recovers partial DifficultyStats fields as zeros", async () => {
+    await AsyncStorage.setItem(
+      STATS_KEY,
+      JSON.stringify({ easy: { gamesSolved: 4 }, medium: {}, hard: null })
+    );
+    const loaded = await loadStats();
+    expect(loaded.easy).toEqual({ bestTimeS: 0, gamesSolved: 4 });
+    expect(loaded.medium).toEqual({ bestTimeS: 0, gamesSolved: 0 });
+    expect(loaded.hard).toEqual({ bestTimeS: 0, gamesSolved: 0 });
+  });
+
+  it("returns empty stats and captures exception on AsyncStorage failure", async () => {
+    const orig = AsyncStorage.getItem;
+    (AsyncStorage as unknown as { getItem: jest.Mock }).getItem = jest
+      .fn()
+      .mockRejectedValueOnce(new Error("disk full"));
+    try {
+      const loaded = await loadStats();
+      expect(loaded).toEqual(EMPTY_SUDOKU_STATS);
+      expect(Sentry.captureException).toHaveBeenCalled();
+    } finally {
+      (AsyncStorage as unknown as { getItem: typeof orig }).getItem = orig;
+    }
+  });
+
+  it("returns empty stats on unparseable JSON", async () => {
+    await AsyncStorage.setItem(STATS_KEY, "{{bad json");
+    const loaded = await loadStats();
+    expect(loaded).toEqual(EMPTY_SUDOKU_STATS);
+    expect(Sentry.captureException).toHaveBeenCalled();
+  });
+
+  it("saveStats handles AsyncStorage.setItem rejection silently", async () => {
+    const orig = AsyncStorage.setItem;
+    (AsyncStorage as unknown as { setItem: jest.Mock }).setItem = jest
+      .fn()
+      .mockRejectedValueOnce(new Error("quota exceeded"));
+    try {
+      await expect(saveStats(EMPTY_SUDOKU_STATS)).resolves.toBeUndefined();
+      expect(Sentry.captureException).toHaveBeenCalled();
+    } finally {
+      (AsyncStorage as unknown as { setItem: typeof orig }).setItem = orig;
     }
   });
 });
