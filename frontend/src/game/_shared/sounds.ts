@@ -8,5 +8,6 @@ export type SoundKey = string;
 // Metro resolves require() at bundle time so assets must be static literals.
 // Each game-specific issue adds its entries here.
 export const SOUND_REGISTRY: Partial<Record<SoundKey, number>> = {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
   "hearts.heartsBroken": require("../../assets/sounds/hearts-broken.mp3"),
 };
