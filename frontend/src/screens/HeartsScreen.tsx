@@ -44,47 +44,14 @@ function delay(ms: number): Promise<void> {
 type LastTrick = { readonly trick: readonly TrickCard[]; readonly winnerIndex: number } | null;
 type SubmitState = "idle" | "submitting" | "done" | "error";
 
-// Compact face-down card stack for narrow side slots.
-function CompactHand({
-  cardCount,
-  label,
-  score,
-  colors,
-}: {
-  cardCount: number;
-  label: string;
-  score: number;
-  colors: Colors;
-}) {
-  return (
-    <View style={compactStyles.container}>
-      <Text style={[compactStyles.label, { color: colors.textMuted }]}>{label}</Text>
-      <View
-        style={[
-          compactStyles.cardBack,
-          { backgroundColor: colors.surface, borderColor: colors.border },
-        ]}
-      >
-        <Text style={[compactStyles.count, { color: colors.textMuted }]}>{cardCount}</Text>
-      </View>
-      <Text style={[compactStyles.score, { color: colors.text }]}>{score}</Text>
-    </View>
-  );
+// Side-seat label for narrow slots (West/East). Just the player name; the
+// captured pile beneath provides the only seat-level visual weight.
+function SideSeatLabel({ label, colors }: { label: string; colors: Colors }) {
+  return <Text style={[sideSeatStyles.label, { color: colors.textMuted }]}>{label}</Text>;
 }
 
-const compactStyles = StyleSheet.create({
-  container: { alignItems: "center", gap: 4 },
+const sideSeatStyles = StyleSheet.create({
   label: { fontSize: 11, fontWeight: "600" },
-  cardBack: {
-    width: 36,
-    height: 52,
-    borderRadius: 6,
-    borderWidth: 1,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  count: { fontSize: 13, fontWeight: "700" },
-  score: { fontSize: 13, fontWeight: "700" },
 });
 
 export default function HeartsScreen() {
@@ -366,7 +333,6 @@ export default function HeartsScreen() {
           <OpponentHand
             cardCount={gameState.playerHands[2]?.length ?? 0}
             label={playerLabels[2] ?? ""}
-            score={gameState.cumulativeScores[2] ?? 0}
           />
           <OpponentCapturedPile
             cards={gameState.wonCards[2] ?? []}
@@ -377,12 +343,7 @@ export default function HeartsScreen() {
         {/* Middle: Left AI | TrickArea | Right AI */}
         <View style={styles.middleRow}>
           <View style={styles.sideColumn}>
-            <CompactHand
-              cardCount={gameState.playerHands[1]?.length ?? 0}
-              label={playerLabels[1] ?? ""}
-              score={gameState.cumulativeScores[1] ?? 0}
-              colors={colors}
-            />
+            <SideSeatLabel label={playerLabels[1] ?? ""} colors={colors} />
             <OpponentCapturedPile
               cards={gameState.wonCards[1] ?? []}
               seatLabel={playerLabels[1] ?? ""}
@@ -396,12 +357,7 @@ export default function HeartsScreen() {
             onAnimationComplete={handleTrickAnimationComplete}
           />
           <View style={styles.sideColumn}>
-            <CompactHand
-              cardCount={gameState.playerHands[3]?.length ?? 0}
-              label={playerLabels[3] ?? ""}
-              score={gameState.cumulativeScores[3] ?? 0}
-              colors={colors}
-            />
+            <SideSeatLabel label={playerLabels[3] ?? ""} colors={colors} />
             <OpponentCapturedPile
               cards={gameState.wonCards[3] ?? []}
               seatLabel={playerLabels[3] ?? ""}
@@ -411,14 +367,9 @@ export default function HeartsScreen() {
 
         {/* Human hand */}
         <View style={styles.bottomArea}>
-          <View style={styles.humanHeader}>
-            <Text style={[styles.humanLabel, { color: colors.textMuted }]}>
-              {playerLabels[0] ?? ""}
-            </Text>
-            <Text style={[styles.humanScore, { color: colors.text }]}>
-              {gameState.cumulativeScores[HUMAN] ?? 0}
-            </Text>
-          </View>
+          <Text style={[styles.humanLabel, { color: colors.textMuted }]}>
+            {playerLabels[0] ?? ""}
+          </Text>
           {isPassing && (
             <PassBanner
               passDirection={gameState.passDirection}
@@ -784,20 +735,11 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: "600",
   },
-  humanHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    paddingHorizontal: 12,
-    paddingBottom: 4,
-  },
   humanLabel: {
     fontSize: 12,
     fontWeight: "600",
-  },
-  humanScore: {
-    fontSize: 13,
-    fontWeight: "700",
+    paddingHorizontal: 12,
+    paddingBottom: 4,
   },
   renameScroll: {
     width: "100%",

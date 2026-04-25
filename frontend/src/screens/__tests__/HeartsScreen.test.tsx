@@ -156,4 +156,27 @@ describe("HeartsScreen — playing phase (no modal)", () => {
     );
     expect(cardBtns.length).toBeGreaterThan(0);
   });
+
+  it("does not render numeric score badges next to seat labels during play", () => {
+    // Override cumulativeScores with distinct non-trivial values so any score
+    // rendered next to a seat label would be clearly visible — and clearly
+    // not a card rank (1–13).
+    dealGameSpy.mockRestore();
+    const realState = engine.dealGame();
+    const playingState = {
+      ...realState,
+      phase: "playing" as const,
+      passDirection: "none" as const,
+      passingComplete: true,
+      currentPlayerIndex: 0,
+      cumulativeScores: [59, 25, 41, 17],
+    };
+    dealGameSpy = jest.spyOn(engine, "dealGame").mockReturnValue(playingState);
+
+    const { queryByText } = renderScreen();
+    expect(queryByText("59")).toBeNull();
+    expect(queryByText("25")).toBeNull();
+    expect(queryByText("41")).toBeNull();
+    expect(queryByText("17")).toBeNull();
+  });
 });

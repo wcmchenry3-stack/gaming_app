@@ -3,6 +3,7 @@ import { View, Text, StyleSheet } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { useTranslation } from "react-i18next";
 import { useTheme } from "../../theme/ThemeContext";
+import { sortHand } from "./cardSort";
 import type { Card } from "../../game/hearts/types";
 
 const SUIT_SYMBOL: Record<Card["suit"], string> = {
@@ -112,7 +113,8 @@ interface SelfProps {
 export function SelfCapturedPile({ cards }: SelfProps) {
   const { t } = useTranslation("hearts");
   const { colors } = useTheme();
-  const count = cards.length;
+  const sorted = sortHand(cards);
+  const count = sorted.length;
   const points = penaltyPoints(cards);
   const rowWidth = count > 0 ? (count - 1) * SELF_OFFSET + SELF_CARD_W : 0;
 
@@ -128,7 +130,7 @@ export function SelfCapturedPile({ cards }: SelfProps) {
           <Text style={[styles.selfEmpty, { color: colors.textMuted }]}>{t("captured.empty")}</Text>
         ) : (
           <View style={{ width: rowWidth, height: SELF_CARD_H }}>
-            {cards.map((card, i) => (
+            {sorted.map((card, i) => (
               <View
                 key={`${card.suit}-${card.rank}-${i}`}
                 style={[

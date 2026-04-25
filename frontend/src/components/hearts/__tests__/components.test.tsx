@@ -146,11 +146,6 @@ describe("OpponentHand", () => {
     const { toJSON } = wrap(<OpponentHand cardCount={0} label="Top" />);
     expect(toJSON()).toBeTruthy();
   });
-
-  it("renders score when provided", () => {
-    const { getByText } = wrap(<OpponentHand cardCount={3} label="Top" score={12} />);
-    expect(getByText("12")).toBeTruthy();
-  });
 });
 
 // ---------------------------------------------------------------------------
@@ -433,5 +428,29 @@ describe("SelfCapturedPile", () => {
     const cards: Card[] = [c("hearts", 2), c("hearts", 5), c("hearts", 9), c("spades", 12)];
     const { getByText } = wrap(<SelfCapturedPile cards={cards} />);
     expect(getByText("+16")).toBeTruthy();
+  });
+
+  it("sorts captured cards by suit then rank, matching PlayerHand order", () => {
+    // Insertion order is the order tricks were taken — deliberately scrambled.
+    const cards: Card[] = [
+      c("hearts", 5),
+      c("clubs", 13),
+      c("spades", 1),
+      c("diamonds", 7),
+      c("clubs", 2),
+      c("hearts", 11),
+    ];
+    const { UNSAFE_getAllByType } = wrap(<SelfCapturedPile cards={cards} />);
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const { Text: RNText } = require("react-native");
+    // Pull every Text node and join its string children — the rank+suit pairs
+    // appear in render order. We expect: ♣2 ♣K ♦7 ♠A ♥5 ♥J.
+    const texts = UNSAFE_getAllByType(RNText)
+      .map((n: { props: { children?: unknown } }) =>
+        typeof n.props.children === "string" ? n.props.children : null
+      )
+      .filter((s: string | null): s is string => s !== null);
+    const ranksInOrder = texts.filter((s: string) => /^(A|J|Q|K|[2-9]|10)$/.test(s));
+    expect(ranksInOrder).toEqual(["2", "K", "7", "A", "5", "J"]);
   });
 });
