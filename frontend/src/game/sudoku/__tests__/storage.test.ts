@@ -1,7 +1,14 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as Sentry from "@sentry/react-native";
 
-import { clearGame, loadGame, saveGame, loadStats, saveStats, EMPTY_SUDOKU_STATS } from "../storage";
+import {
+  clearGame,
+  loadGame,
+  saveGame,
+  loadStats,
+  saveStats,
+  EMPTY_SUDOKU_STATS,
+} from "../storage";
 import { enterDigit, loadPuzzle, selectCell, toggleNotesMode } from "../engine";
 import type { CellValue, NoteDigit, SudokuState } from "../types";
 
