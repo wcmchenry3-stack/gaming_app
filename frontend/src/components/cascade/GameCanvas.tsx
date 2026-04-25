@@ -277,8 +277,10 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
 
     if (engineError) {
       return (
-        <View style={[styles.errorContainer, { width, height }]}>
-          <Text style={styles.errorText}>{t("game.engineUnsupported")}</Text>
+        <View style={[styles.errorContainer, { width, height, backgroundColor: colors.surface }]}>
+          <Text style={[styles.errorText, { color: colors.textMuted }]}>
+            {t("game.engineUnsupported")}
+          </Text>
         </View>
       );
     }
@@ -391,10 +393,8 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     borderRadius: 12,
-    backgroundColor: "#1a1a2e",
   },
   errorText: {
-    color: "#aaa",
     fontSize: 14,
     textAlign: "center",
     paddingHorizontal: 24,

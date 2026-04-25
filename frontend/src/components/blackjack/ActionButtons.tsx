@@ -51,8 +51,14 @@ export default function ActionButtons({
         style={[
           styles.btn,
           compact && styles.btnCompact,
-          styles.btnHit,
-          { backgroundColor: colors.accent },
+          {
+            backgroundColor: colors.accent,
+            shadowColor: colors.accent,
+            shadowOffset: { width: 0, height: 0 },
+            shadowOpacity: 0.4,
+            shadowRadius: 12,
+            elevation: 6,
+          },
         ]}
         onPress={onHit}
         disabled={loading}
@@ -160,14 +166,6 @@ const styles = StyleSheet.create({
     width: 62,
     height: 62,
     borderRadius: 31,
-  },
-  btnHit: {
-    // Shadow for the primary CTA glow effect
-    shadowColor: "#8ff5ff",
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.4,
-    shadowRadius: 12,
-    elevation: 6,
   },
   btnLabel: {
     fontSize: 9,
