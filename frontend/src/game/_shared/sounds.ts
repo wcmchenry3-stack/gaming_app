@@ -7,4 +7,6 @@ export type SoundKey = string;
 
 // Metro resolves require() at bundle time so assets must be static literals.
 // Each game-specific issue adds its entries here.
-export const SOUND_REGISTRY: Partial<Record<SoundKey, number>> = {};
+export const SOUND_REGISTRY: Partial<Record<SoundKey, number>> = {
+  "hearts.heartsBroken": require("../../assets/sounds/hearts-broken.mp3"),
+};

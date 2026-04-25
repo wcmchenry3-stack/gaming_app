@@ -268,6 +268,12 @@ export function playCard(state: HeartsState, playerIndex: number, card: Card): H
 
   const newTrick: TrickCard[] = [...state.currentTrick, { card, playerIndex }];
   const newHeartsBroken = state.heartsBroken || card.suit === "hearts";
+  const newEvents = [
+    ...(state.events ?? []),
+    ...(!state.heartsBroken && card.suit === "hearts"
+      ? ([{ type: "heartsBroken" }] as const)
+      : []),
+  ];
 
   let next: HeartsState = {
     ...state,
@@ -275,6 +281,7 @@ export function playCard(state: HeartsState, playerIndex: number, card: Card): H
     currentTrick: newTrick,
     heartsBroken: newHeartsBroken,
     currentPlayerIndex: (playerIndex + 1) % 4,
+    events: newEvents,
   };
 
   if (newTrick.length === 4) {

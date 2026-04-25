@@ -59,6 +59,16 @@ jest.mock("react-native-reanimated", () => {
   };
 });
 
+// expo-audio mock — native audio APIs are unavailable in Jest
+jest.mock("expo-audio", () => ({
+  createAudioPlayer: jest.fn(() => ({
+    play: jest.fn(),
+    seekTo: jest.fn(),
+    remove: jest.fn(),
+  })),
+  AudioPlayer: jest.fn(),
+}));
+
 // Safe area context mock — returns zero insets in tests
 jest.mock("react-native-safe-area-context", () => ({
   useSafeAreaInsets: () => ({ top: 0, bottom: 0, left: 0, right: 0 }),
