@@ -14,6 +14,7 @@ const factories = {
   Leaderboard: () => import("../screens/LeaderboardScreen"),
   GameDetail: () => import("../screens/GameDetailScreen"),
   Settings: () => import("../screens/SettingsScreen"),
+  Scoreboard: () => import("../screens/ScoreboardScreen"),
 } as const;
 
 export const LazyScreens = {
@@ -27,6 +28,7 @@ export const LazyScreens = {
   Leaderboard: React.lazy(factories.Leaderboard),
   GameDetail: React.lazy(factories.GameDetail),
   Settings: React.lazy(factories.Settings),
+  Scoreboard: React.lazy(factories.Scoreboard),
 } as const;
 
 /**

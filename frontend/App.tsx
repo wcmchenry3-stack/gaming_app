@@ -63,6 +63,7 @@ export type HomeStackParamList = {
   Solitaire: undefined;
   Hearts: undefined;
   Sudoku: undefined;
+  Scoreboard: { gameKey: "hearts" };
 };
 
 export type ProfileStackParamList = {
@@ -135,6 +136,7 @@ const LazySudokuScreen = withSuspense(LazyScreens.Sudoku, "sudoku");
 const LazyLeaderboardScreen = withSuspense(LazyScreens.Leaderboard, "leaderboard");
 const LazyGameDetailScreen = withSuspense(LazyScreens.GameDetail, "game_detail");
 const LazySettingsScreen = withSuspense(LazyScreens.Settings, "settings");
+const LazyScoreboardScreen = withSuspense(LazyScreens.Scoreboard, "scoreboard");
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 const HomeStack = createNativeStackNavigator<HomeStackParamList>();
@@ -153,6 +155,7 @@ function LobbyStack() {
       <HomeStack.Screen name="Solitaire" component={LazySolitaireScreen} />
       <HomeStack.Screen name="Hearts" component={LazyHeartsScreen} />
       <HomeStack.Screen name="Sudoku" component={LazySudokuScreen} />
+      <HomeStack.Screen name="Scoreboard" component={LazyScoreboardScreen} />
     </HomeStack.Navigator>
   );
 }
