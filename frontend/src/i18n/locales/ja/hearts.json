@@ -54,7 +54,6 @@
   "settings.save": "Save",
   "settings.cancel": "Cancel",
 
-  "events.heartsBroken": "ハートが解禁"
-,
+  "events.heartsBroken": "ハートが解禁",
   "events.moonShot": "{{name}}が月を射抜いた！"
 }

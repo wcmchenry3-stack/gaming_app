@@ -54,7 +54,6 @@
   "settings.save": "Save",
   "settings.cancel": "Cancel",
 
-  "events.heartsBroken": "दिल टूटे"
-,
+  "events.heartsBroken": "दिल टूटे",
   "events.moonShot": "{{name}} ने चांद मारा!"
 }

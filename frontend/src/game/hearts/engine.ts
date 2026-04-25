@@ -380,9 +380,7 @@ export function applyHandScoring(state: HeartsState): HeartsState {
   const newScoreHistory = [...state.scoreHistory, appliedDelta];
 
   const moonEvent =
-    moonShooter !== null
-      ? ([{ type: "moonShot", shooter: moonShooter }] as const)
-      : ([] as const);
+    moonShooter !== null ? ([{ type: "moonShot", shooter: moonShooter }] as const) : ([] as const);
 
   if (isGameOver(newCumulative)) {
     return {

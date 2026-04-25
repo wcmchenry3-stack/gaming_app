@@ -54,7 +54,6 @@
   "settings.save": "Save",
   "settings.cancel": "Cancel",
 
-  "events.heartsBroken": "Harten gebroken"
-,
+  "events.heartsBroken": "Harten gebroken",
   "events.moonShot": "{{name}} ging voor de volle maan!"
 }
