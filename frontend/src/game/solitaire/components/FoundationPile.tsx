@@ -1,0 +1,100 @@
+/**
+ * FoundationPile (#595) — one of four suit-specific foundation slots.
+ *
+ * Stateless. Shows the top card if the pile is non-empty; otherwise a
+ * placeholder with the expected suit symbol in `colors.textMuted` — this
+ * is how the player identifies which foundation is for which suit.
+ */
+
+import React from "react";
+import { Pressable, StyleSheet, Text, View } from "react-native";
+import { useTranslation } from "react-i18next";
+
+import { useTheme } from "../../../theme/ThemeContext";
+import type { Card, Suit } from "../types";
+import CardView, { CARD_HEIGHT, CARD_WIDTH } from "./CardView";
+
+const SUIT_SYMBOL: Record<Suit, string> = {
+  spades: "♠",
+  hearts: "♥",
+  diamonds: "♦",
+  clubs: "♣",
+};
+
+export interface FoundationPileProps {
+  readonly pile: readonly Card[];
+  readonly suit: Suit;
+  readonly selected?: boolean;
+  readonly onPress?: (suit: Suit) => void;
+}
+
+export default function FoundationPile({
+  pile,
+  suit,
+  selected = false,
+  onPress,
+}: FoundationPileProps) {
+  const { colors } = useTheme();
+  const { t } = useTranslation("solitaire");
+
+  // Non-empty: show the top card (always face-up on foundations).
+  if (pile.length > 0) {
+    const top = pile[pile.length - 1];
+    if (top !== undefined) {
+      return (
+        <CardView
+          card={top}
+          selected={selected}
+          onPress={onPress ? () => onPress(suit) : undefined}
+        />
+      );
+    }
+  }
+
+  // Empty: suit-symbol placeholder.
+  const label = t("pile.foundation.empty", { suit: t(`suit.${suit}` as const) });
+  const style = [
+    styles.empty,
+    {
+      borderColor: selected ? colors.accent : colors.border,
+      borderWidth: selected ? 2 : 1,
+      backgroundColor: colors.background,
+    },
+  ];
+
+  const content = (
+    <Text style={[styles.suit, { color: colors.textMuted }]}>{SUIT_SYMBOL[suit]}</Text>
+  );
+
+  if (onPress) {
+    return (
+      <Pressable
+        onPress={() => onPress(suit)}
+        style={style}
+        accessibilityRole="button"
+        accessibilityLabel={label}
+      >
+        {content}
+      </Pressable>
+    );
+  }
+  return (
+    <View style={style} accessibilityRole="image" accessibilityLabel={label}>
+      {content}
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  empty: {
+    width: CARD_WIDTH,
+    height: CARD_HEIGHT,
+    borderRadius: 8,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  suit: {
+    fontSize: 32,
+    lineHeight: 36,
+  },
+});

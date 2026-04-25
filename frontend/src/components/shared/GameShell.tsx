@@ -6,7 +6,13 @@ import { AppHeader, APP_HEADER_HEIGHT, AppHeaderProps } from "./AppHeader";
 
 export interface GameShellProps extends Pick<
   AppHeaderProps,
-  "title" | "onBack" | "requireBack" | "rightSlot"
+  | "title"
+  | "onBack"
+  | "requireBack"
+  | "rightSlot"
+  | "onOpenScoreboard"
+  | "onNewGame"
+  | "onEditPlayerNames"
 > {
   /** When true renders a full-screen loading spinner instead of children. */
   loading?: boolean;
@@ -28,6 +34,9 @@ export function GameShell({
   onBack,
   requireBack,
   rightSlot,
+  onOpenScoreboard,
+  onNewGame,
+  onEditPlayerNames,
   loading = false,
   error,
   style,
@@ -55,7 +64,15 @@ export function GameShell({
         style,
       ]}
     >
-      <AppHeader title={title} onBack={onBack} requireBack={requireBack} rightSlot={rightSlot} />
+      <AppHeader
+        title={title}
+        onBack={onBack}
+        requireBack={requireBack}
+        rightSlot={rightSlot}
+        onOpenScoreboard={onOpenScoreboard}
+        onNewGame={onNewGame}
+        onEditPlayerNames={onEditPlayerNames}
+      />
       {!!error && (
         <Text
           style={[styles.errorBanner, { color: colors.error }]}

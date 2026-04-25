@@ -27,7 +27,7 @@
   "hand.player": "Jouw Hand",
   "hand.dealer": "Hand Dealer",
   "hand.playerHand": "Hand {{number}}",
-  "hand.activeIndicator": "(Actief)",
+  "hand.activeIndicator": "● Playing",
   "hand.value": "Waarde: {{value}}",
   "hand.softValue": "Zacht {{value}}",
   "hand.valueHidden": "Waarde: ?",
@@ -85,5 +85,15 @@
   "rules.increaseDeckLabel": "Aantal decks verhogen",
   "rules.penetration": "Penetratie",
   "rules.decreasePenetrationLabel": "Penetratie verlagen",
-  "rules.increasePenetrationLabel": "Penetratie verhogen"
+  "rules.increasePenetrationLabel": "Penetratie verhogen",
+  "score.heroLabel": "Sessie",
+  "score.plLine": "{{amount}} fiches",
+  "score.subLine": "{{handsPlayed}} handen · {{winRate}}% winrate",
+  "score.subLineEmpty": "Nog geen handen",
+  "score.chipBalance": "Fichesaldo",
+  "score.biggestWin": "Grootste winst",
+  "score.handsWon": "Gewonnen handen",
+  "score.handsLost": "Verloren handen",
+  "score.blackjacks": "Blackjacks",
+  "score.busts": "Gebust"
 }

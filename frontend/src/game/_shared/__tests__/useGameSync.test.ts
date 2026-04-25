@@ -42,6 +42,18 @@ describe("useGameSync", () => {
     expect(mockStartGame).toHaveBeenCalledWith("twenty48", {}, {});
   });
 
+  it("start() with metadata passes it as the second arg to startGame", () => {
+    const { result } = renderHook(() => useGameSync("sudoku"));
+    act(() => {
+      result.current.start({ difficulty: "hard" }, { difficulty: "hard" });
+    });
+    expect(mockStartGame).toHaveBeenCalledWith(
+      "sudoku",
+      { difficulty: "hard" },
+      { difficulty: "hard" }
+    );
+  });
+
   // ---------------------------------------------------------------------------
   // enqueue
   // ---------------------------------------------------------------------------
@@ -116,10 +128,21 @@ describe("useGameSync", () => {
   // unmount cleanup
   // ---------------------------------------------------------------------------
 
-  it("unmount without complete abandons the open session", () => {
+  it("unmount without markStarted does not abandon the session", () => {
     const { result, unmount } = renderHook(() => useGameSync("twenty48"));
     act(() => {
       result.current.start();
+      // player never took an action — no markStarted()
+    });
+    unmount();
+    expect(mockCompleteGame).not.toHaveBeenCalled();
+  });
+
+  it("unmount after markStarted but without complete abandons the open session", () => {
+    const { result, unmount } = renderHook(() => useGameSync("twenty48"));
+    act(() => {
+      result.current.start();
+      result.current.markStarted();
     });
     unmount();
     expect(mockCompleteGame).toHaveBeenCalledWith(
@@ -133,6 +156,7 @@ describe("useGameSync", () => {
     const { result, unmount } = renderHook(() => useGameSync("twenty48"));
     act(() => {
       result.current.start();
+      result.current.markStarted();
       result.current.complete({ finalScore: 512, outcome: "completed" });
     });
     unmount();
@@ -183,6 +207,24 @@ describe("useGameSync", () => {
     expect(mockCompleteGame).toHaveBeenCalledWith("session-1", { outcome: "completed" }, {});
     // New session started
     expect(mockStartGame).toHaveBeenCalledTimes(2);
+  });
+
+  it("restart() resets markStarted so unmount of new session without action does not abandon", () => {
+    mockStartGame.mockReturnValueOnce("session-1").mockReturnValueOnce("session-2");
+    const { result, unmount } = renderHook(() => useGameSync("cascade"));
+    act(() => {
+      result.current.start();
+      result.current.markStarted();
+      result.current.restart(); // resets startedRef
+    });
+    unmount();
+    // session-1 was abandoned by restart(); session-2 was never markStarted so no extra abandon
+    expect(mockCompleteGame).toHaveBeenCalledTimes(1);
+    expect(mockCompleteGame).toHaveBeenCalledWith(
+      "session-1",
+      { outcome: "abandoned" },
+      { outcome: "abandoned" }
+    );
   });
 
   it("enqueue() after restart() sends to the new session id", () => {

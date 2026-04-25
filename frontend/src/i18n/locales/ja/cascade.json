@@ -24,5 +24,12 @@
   "gameOver.savedConfirmation": "保存完了！#{{rank}}",
   "gameOver.playAgain": "もう一度プレイ",
   "gameOver.playAgainButton": "再挑戦",
-  "gameOver.savedLocally": "ローカルに保存しました — オンライン時に送信されます"
+  "gameOver.savedLocally": "ローカルに保存しました — オンライン時に送信されます",
+  "scoreboard.heroLabel": "SCORE",
+  "scoreboard.heroSub": "Best fruit: {{bestFruit}} · {{merges}} merges",
+  "scoreboard.heroSubEmpty": "No games played yet",
+  "scoreboard.bestScore": "All-Time Best",
+  "scoreboard.bestFruit": "Best Fruit",
+  "scoreboard.gamesPlayed": "Games Played",
+  "scoreboard.totalMerges": "Total Merges"
 }

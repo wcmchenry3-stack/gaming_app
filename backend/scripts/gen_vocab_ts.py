@@ -40,5 +40,4 @@ export const GAME_OUTCOMES = [
 {_OUTCOMES}
 ] as const;
 
-export type GameOutcome = (typeof GAME_OUTCOMES)[number];
-""")
+export type GameOutcome = (typeof GAME_OUTCOMES)[number];""")

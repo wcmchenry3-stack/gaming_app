@@ -1,8 +1,8 @@
 {
   "expo": {
-    "name": "Gaming App",
+    "name": "BC Arcade",
     "slug": "gaming-app",
-    "version": "1.0.8",
+    "version": "1.0.9",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
@@ -14,7 +14,7 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.buffingchi.games",
-      "buildNumber": "10008",
+      "buildNumber": "10009",
       "privacyManifests": {
         "NSPrivacyAccessedAPITypes": [
           {
@@ -47,7 +47,8 @@
           "organization": "buffing-chi"
         }
       ],
-      "expo-localization"
+      "expo-localization",
+      "expo-audio"
     ]
   }
 }

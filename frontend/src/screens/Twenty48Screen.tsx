@@ -22,6 +22,7 @@ import GameOverlay from "../components/twenty48/GameOverlay";
 import StatsBento from "../components/twenty48/StatsBento";
 import NewGameConfirmModal from "../components/shared/NewGameConfirmModal";
 import { useGameSync } from "../game/_shared/useGameSync";
+import { useTwenty48Scoreboard } from "../game/twenty48/Twenty48ScoreboardContext";
 
 function flattenBoard(board: number[][]): number[] {
   return board.flat();
@@ -64,11 +65,13 @@ export default function Twenty48Screen({ navigation }: Props) {
   // moves are still playable but aren't tracked — they belong to no session.
   const {
     start: syncStart,
+    markStarted: syncMarkStarted,
     enqueue: syncEnqueue,
     complete: syncComplete,
   } = useGameSync("twenty48");
   const moveCountRef = useRef(0);
   const stateRef = useRef<Twenty48State | null>(null);
+  const { setSnapshot: setScoreboardSnapshot } = useTwenty48Scoreboard();
   useEffect(() => {
     stateRef.current = state;
   }, [state]);
@@ -106,6 +109,8 @@ export default function Twenty48Screen({ navigation }: Props) {
       if (!next.game_over) {
         moveCountRef.current = 0;
         syncStart({ initial_board: flattenBoard(next.board) });
+        // Resuming a saved mid-game means the player already started — mark it.
+        if (saved) syncMarkStarted();
       }
     });
     return () => {
@@ -126,6 +131,17 @@ export default function Twenty48Screen({ navigation }: Props) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state?.score]); // intentional: only re-run when score changes, not on every state update
 
+  useEffect(() => {
+    if (!state) return;
+    setScoreboardSnapshot({
+      score: state.score,
+      bestTile: highestTile(state.board),
+      moveCount: moveCountRef.current,
+      bestScore,
+      hasGame: true,
+    });
+  }, [state, bestScore, setScoreboardSnapshot]);
+
   const executeMove = useCallback(
     (direction: Direction, currentState: Twenty48State) => {
       movingRef.current = true;
@@ -141,6 +157,7 @@ export default function Twenty48Screen({ navigation }: Props) {
       setState(next);
       saveGame(next);
       moveCountRef.current += 1;
+      syncMarkStarted();
       syncEnqueue({
         type: "move",
         data: {
@@ -171,7 +188,7 @@ export default function Twenty48Screen({ navigation }: Props) {
         }
       }, MOVE_LOCK_MS);
     },
-    [endedPayload, syncComplete, syncEnqueue]
+    [endedPayload, syncComplete, syncEnqueue, syncMarkStarted]
   );
 
   const handleMove = useCallback(
@@ -286,6 +303,8 @@ export default function Twenty48Screen({ navigation }: Props) {
       title={t("game.title")}
       requireBack
       onBack={() => navigation.popToTop()}
+      onNewGame={resetGame}
+      onOpenScoreboard={() => navigation.navigate("Scoreboard", { gameKey: "twenty48" })}
       loading={!state && loading}
       style={{
         paddingBottom: Math.max(insets.bottom, 16),

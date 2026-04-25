@@ -1,7 +1,7 @@
 """Schema smoke tests for #363.
 
 Skipped unless DATABASE_URL is set. Verifies:
-  1. Seed data present (4 game_types, 17 baseline event_types).
+  1. Seed data present (5 game_types, 17 baseline event_types).
   2. A game + events + bug_log round-trip via SQLAlchemy ORM.
   3. Unknown event_type_id fails the FK constraint.
   4. Invalid games.outcome fails the CHECK constraint.
@@ -33,7 +33,15 @@ async def test_seed_data_present() -> None:
     factory = get_session_factory()
     async with factory() as s:
         gt_names = (await s.execute(select(GameType.name).order_by(GameType.id))).scalars().all()
-        assert gt_names == ["yacht", "twenty48", "blackjack", "cascade"]
+        assert gt_names == [
+            "yacht",
+            "twenty48",
+            "blackjack",
+            "cascade",
+            "solitaire",
+            "hearts",
+            "sudoku",
+        ]
 
         total = (await s.execute(select(func.count()).select_from(EventType))).scalar_one()
         assert total >= 17
@@ -51,6 +59,24 @@ async def test_seed_data_present() -> None:
             .all()
         )
         assert set(yacht_events) >= {"game_started", "roll", "score", "game_ended"}
+
+        # Every game_type must have at least the two lifecycle events (#746).
+        for gt_name in gt_names:
+            gt_events = (
+                (
+                    await s.execute(
+                        select(EventType.name)
+                        .join(GameType)
+                        .where(GameType.name == gt_name)
+                        .order_by(EventType.name)
+                    )
+                )
+                .scalars()
+                .all()
+            )
+            assert {"game_started", "game_ended"} <= set(
+                gt_events
+            ), f"{gt_name!r} is missing lifecycle event_types; found: {sorted(gt_events)}"
 
 
 @pytest.mark.asyncio

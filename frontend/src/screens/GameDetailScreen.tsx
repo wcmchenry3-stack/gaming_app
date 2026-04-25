@@ -9,6 +9,7 @@ import { AppHeader, APP_HEADER_HEIGHT } from "../components/shared/AppHeader";
 import { statsApi } from "../api/stats";
 import type { GameDetailResponse } from "../api/types";
 import type { ProfileStackParamList } from "../../App";
+import { formatTimestamp } from "../utils/formatTimestamp";
 
 type Props = {
   navigation: NativeStackNavigationProp<ProfileStackParamList, "GameDetail">;
@@ -37,13 +38,6 @@ function formatDuration(ms: number | null): string {
   const m = Math.floor(s / 60);
   const rs = s % 60;
   return `${m}m ${rs}s`;
-}
-
-function formatTimestamp(iso: string | null): string {
-  if (!iso) return "—";
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return "—";
-  return d.toLocaleString();
 }
 
 export default function GameDetailScreen({ navigation, route }: Props) {

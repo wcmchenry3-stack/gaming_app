@@ -18,7 +18,7 @@ import {
 } from "./helpers/cascade";
 
 const API_BASE = "http://localhost:8000";
-const SCORE_ENDPOINT = `${API_BASE}/cascade/score`;
+const SCORE_ENDPOINT_GLOB = `${API_BASE}/cascade/score/**`;
 
 test.describe("Cascade — game-over overlay", () => {
   test.beforeEach(async ({ page }) => {
@@ -70,9 +70,8 @@ test.describe("Cascade — game-over overlay", () => {
   test("Save Score with valid name → shows 'Saved! #1' confirmation", async ({
     page,
   }) => {
-    // Override leaderboard mock for the score POST to return rank 1
-    await page.route(SCORE_ENDPOINT, async (route) => {
-      if (route.request().method() === "POST") {
+    await page.route(SCORE_ENDPOINT_GLOB, async (route) => {
+      if (route.request().method() === "PATCH") {
         await route.fulfill({
           status: 200,
           contentType: "application/json",
@@ -98,7 +97,7 @@ test.describe("Cascade — game-over overlay", () => {
     page,
   }) => {
     // Delay the response so we can observe the busy state
-    await page.route(SCORE_ENDPOINT, async (route) => {
+    await page.route(SCORE_ENDPOINT_GLOB, async (route) => {
       await new Promise((r) => setTimeout(r, 800));
       await route.fulfill({
         status: 200,
@@ -128,7 +127,7 @@ test.describe("Cascade — game-over overlay", () => {
   test("fetch TypeError (network down) queues score locally → shows savedLocally text", async ({
     page,
   }) => {
-    await page.route(SCORE_ENDPOINT, async (route) => {
+    await page.route(SCORE_ENDPOINT_GLOB, async (route) => {
       await route.abort("failed");
     });
 
@@ -141,7 +140,7 @@ test.describe("Cascade — game-over overlay", () => {
     await page.getByRole("button", { name: "Save score" }).click();
 
     await expect(
-      page.getByText("Saved locally — will submit when online"),
+      page.getByText("Offline — scores will sync when you reconnect"),
     ).toBeVisible({ timeout: 5_000 });
   });
 
@@ -150,7 +149,7 @@ test.describe("Cascade — game-over overlay", () => {
   // ---------------------------------------------------------------------------
 
   test("non-2xx response → shows error message", async ({ page }) => {
-    await page.route(SCORE_ENDPOINT, async (route) => {
+    await page.route(SCORE_ENDPOINT_GLOB, async (route) => {
       await route.fulfill({
         status: 500,
         contentType: "application/json",

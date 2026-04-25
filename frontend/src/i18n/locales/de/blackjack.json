@@ -27,7 +27,7 @@
   "hand.player": "Deine Hand",
   "hand.dealer": "Geber Hand",
   "hand.playerHand": "Hand {{number}}",
-  "hand.activeIndicator": "(Aktiv)",
+  "hand.activeIndicator": "● Playing",
   "hand.value": "Wert: {{value}}",
   "hand.softValue": "Soft {{value}}",
   "hand.valueHidden": "Wert: ?",
@@ -85,5 +85,15 @@
   "rules.increaseDeckLabel": "Deckanzahl erhöhen",
   "rules.penetration": "Penetration",
   "rules.decreasePenetrationLabel": "Penetration verringern",
-  "rules.increasePenetrationLabel": "Penetration erhöhen"
+  "rules.increasePenetrationLabel": "Penetration erhöhen",
+  "score.heroLabel": "Sitzung",
+  "score.plLine": "{{amount}} Chips",
+  "score.subLine": "{{handsPlayed}} Hände · {{winRate}} % Gewinnrate",
+  "score.subLineEmpty": "Noch keine Hände",
+  "score.chipBalance": "Chip-Stand",
+  "score.biggestWin": "Größter Gewinn",
+  "score.handsWon": "Gewonnene Hände",
+  "score.handsLost": "Verlorene Hände",
+  "score.blackjacks": "Blackjacks",
+  "score.busts": "Überkauft"
 }

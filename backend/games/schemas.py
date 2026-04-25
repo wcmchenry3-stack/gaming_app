@@ -36,6 +36,7 @@ class CreateGameRequest(BaseModel):
     game_type: str = Field(..., min_length=1, max_length=64)
     metadata: dict[str, Any] = Field(default_factory=dict)
     players: list[PlayerRef] = Field(default_factory=list)
+    started_at: datetime | None = None
 
     @model_validator(mode="after")
     def validate_game_metadata(self) -> "CreateGameRequest":
@@ -65,6 +66,7 @@ class CompleteGameRequest(BaseModel):
     final_score: int | None = None
     outcome: str | None = None
     duration_ms: int | None = Field(default=None, ge=0)
+    completed_at: datetime | None = None
 
 
 # ---------------------------------------------------------------------------

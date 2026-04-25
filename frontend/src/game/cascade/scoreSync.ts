@@ -11,13 +11,11 @@ import { PendingSubmission } from "../_shared/types";
 
 export function registerCascadeScoreHandler(): void {
   scoreQueue.registerHandler("cascade", async (item: PendingSubmission) => {
-    const { player_name, score } = item.payload as { player_name: string; score: number };
-    if (typeof player_name !== "string" || typeof score !== "number") {
+    const { game_id, player_name } = item.payload as { game_id: string; player_name: string };
+    if (typeof game_id !== "string" || typeof player_name !== "string") {
       // Malformed payload — drop by "succeeding" (throwing would keep retrying forever).
       return;
     }
-    // Backend idempotency (passing item.id as game_id) is tracked in #155.
-    // For now we submit using the existing contract.
-    await cascadeApi.submitScore(player_name, score);
+    await cascadeApi.submitPlayerName(game_id, player_name);
   });
 }

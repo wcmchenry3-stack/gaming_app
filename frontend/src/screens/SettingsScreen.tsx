@@ -1,18 +1,30 @@
 import React, { useState } from "react";
-import { View, Text, Pressable, StyleSheet, Modal } from "react-native";
+import { View, Text, Pressable, StyleSheet, Modal, Switch } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTranslation } from "react-i18next";
 import * as Sentry from "@sentry/react-native";
-import { useTheme } from "../theme/ThemeContext";
+import { useTheme, type ThemeMode } from "../theme/ThemeContext";
 import { MODAL_SCRIM } from "../theme/theme.constants";
 import LanguageSwitcher from "../components/LanguageSwitcher";
 import { AppHeader, APP_HEADER_HEIGHT } from "../components/shared/AppHeader";
 import { gameEventClient } from "../game/_shared/gameEventClient";
+import { useDeck } from "../game/_shared/decks/CardDeckContext";
+import { useSoundSettings } from "../game/_shared/SoundContext";
+
+const THEME_MODES: ThemeMode[] = ["system", "light", "dark"];
 
 export default function SettingsScreen() {
-  const { colors, theme, toggle } = useTheme();
+  const { colors, themeMode, setThemeMode } = useTheme();
+  const { activeDeck, setDeck, availableDecks } = useDeck();
+  const { muted, setMuted } = useSoundSettings();
   const insets = useSafeAreaInsets();
   const { t } = useTranslation("common");
+
+  const themeLabel: Record<ThemeMode, string> = {
+    system: t("theme.system", "System"),
+    light: t("theme.lightShort", "Light"),
+    dark: t("theme.darkShort", "Dark"),
+  };
 
   const [confirmVisible, setConfirmVisible] = useState(false);
   const [successVisible, setSuccessVisible] = useState(false);
@@ -41,19 +53,73 @@ export default function SettingsScreen() {
 
       <View style={[styles.row, { borderColor: colors.border }]}>
         <Text style={[styles.label, { color: colors.text }]}>{t("theme.label", "Theme")}</Text>
-        <Pressable
-          onPress={toggle}
-          style={[styles.toggle, { backgroundColor: colors.surfaceAlt }]}
-          testID="theme-toggle-button"
-          accessibilityRole="button"
-          accessibilityLabel={t("theme.switchTo", {
-            mode: theme === "dark" ? t("theme.light") : t("theme.dark"),
-          })}
+        <View
+          style={[styles.segmented, { backgroundColor: colors.surfaceAlt }]}
+          accessibilityRole="radiogroup"
+          accessibilityLabel={t("theme.label", "Theme")}
+          testID="theme-mode-segmented"
         >
-          <Text style={{ color: colors.text }}>
-            {theme === "dark" ? t("theme.light", "Light") : t("theme.dark", "Dark")}
-          </Text>
-        </Pressable>
+          {THEME_MODES.map((mode) => {
+            const active = mode === themeMode;
+            return (
+              <Pressable
+                key={mode}
+                onPress={() => setThemeMode(mode)}
+                style={[
+                  styles.segment,
+                  { backgroundColor: active ? colors.accent : "transparent" },
+                ]}
+                accessibilityRole="radio"
+                accessibilityState={{ selected: active }}
+                // RN Web 0.21 drops accessibilityState; set aria-checked so web
+                // screen readers and the Playwright suite can observe selection.
+                aria-checked={active}
+                accessibilityLabel={themeLabel[mode]}
+                testID={`theme-mode-${mode}`}
+              >
+                <Text
+                  style={[
+                    styles.segmentText,
+                    { color: active ? colors.textOnAccent : colors.text },
+                  ]}
+                >
+                  {themeLabel[mode]}
+                </Text>
+              </Pressable>
+            );
+          })}
+        </View>
+      </View>
+
+      <View style={[styles.row, { borderColor: colors.border }]}>
+        <Text style={[styles.label, { color: colors.text }]}>{t("deck.label")}</Text>
+        <View style={styles.pillGroup}>
+          {availableDecks.map((id) => {
+            const active = id === activeDeck.id;
+            return (
+              <Pressable
+                key={id}
+                onPress={() => setDeck(id)}
+                style={[
+                  styles.pill,
+                  { backgroundColor: active ? colors.accent : colors.surfaceAlt },
+                ]}
+                accessibilityRole="button"
+                accessibilityLabel={
+                  active ? t("deck.selected", { name: id }) : t("deck.select", { name: id })
+                }
+                accessibilityState={{ selected: active }}
+                testID={`deck-pill-${id}`}
+              >
+                <Text
+                  style={[styles.pillText, { color: active ? colors.textOnAccent : colors.text }]}
+                >
+                  {id.charAt(0).toUpperCase() + id.slice(1)}
+                </Text>
+              </Pressable>
+            );
+          })}
+        </View>
       </View>
 
       <View style={[styles.row, { borderColor: colors.border }]}>
@@ -61,6 +127,22 @@ export default function SettingsScreen() {
           {t("settings.language", "Language")}
         </Text>
         <LanguageSwitcher />
+      </View>
+
+      <View style={[styles.row, { borderColor: colors.border }]}>
+        <Text style={[styles.label, { color: colors.text }]}>
+          {t("settings.soundEffects", "Sound effects")}
+        </Text>
+        <Switch
+          value={!muted}
+          onValueChange={(enabled) => setMuted(!enabled)}
+          trackColor={{ false: colors.surfaceAlt, true: colors.accent }}
+          thumbColor={colors.textOnAccent}
+          accessibilityRole="switch"
+          accessibilityLabel={t("settings.soundEffects", "Sound effects")}
+          accessibilityState={{ checked: !muted }}
+          testID="sound-effects-toggle"
+        />
       </View>
 
       <View style={[styles.rowStacked, { borderColor: colors.border }]}>
@@ -150,8 +232,19 @@ const styles = StyleSheet.create({
   rowStackedText: { flex: 1 },
   label: { fontSize: 16 },
   description: { fontSize: 13, marginTop: 4 },
-  toggle: { paddingHorizontal: 16, paddingVertical: 8, borderRadius: 8 },
   destructive: { paddingHorizontal: 16, paddingVertical: 8, borderRadius: 8 },
+  segmented: { flexDirection: "row", borderRadius: 8, padding: 2 },
+  segment: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 6,
+    minWidth: 60,
+    alignItems: "center",
+  },
+  segmentText: { fontSize: 14, fontWeight: "500" },
+  pillGroup: { flexDirection: "row", gap: 8 },
+  pill: { paddingHorizontal: 14, paddingVertical: 7, borderRadius: 20 },
+  pillText: { fontSize: 14, fontWeight: "500" },
   modalBackdrop: {
     flex: 1,
     justifyContent: "center",

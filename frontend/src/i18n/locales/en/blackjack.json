@@ -2,15 +2,12 @@
   "game.title": "Blackjack",
   "game.description": "Beat the dealer. Don't bust.",
   "game.playLabel": "Play Blackjack",
-
   "chips.display": "{{chips}} chips",
   "chips.accessibilityLabel": "You have {{chips}} chips",
-
   "bet.label": "Bet",
   "bet.decreaseLabel": "Decrease bet by 10",
   "bet.increaseLabel": "Increase bet by 10",
   "bet.accessibilityLabel": "Current bet: {{amount}} chips",
-
   "actions.deal": "Deal",
   "actions.dealLabel": "Deal cards with {{amount}}-chip bet",
   "actions.hit": "Hit",
@@ -27,47 +24,39 @@
   "actions.nextHandLabel": "Start the next hand",
   "actions.quit": "Quit",
   "actions.quitLabel": "Quit and return to home screen",
-
   "hand.player": "Your Hand",
   "hand.dealer": "Dealer's Hand",
   "hand.playerHand": "Hand {{number}}",
-  "hand.activeIndicator": "(Active)",
+  "hand.activeIndicator": "● Playing",
   "hand.value": "Value: {{value}}",
   "hand.softValue": "Soft {{value}}",
   "hand.valueHidden": "Value: ?",
-
   "card.accessibilityLabel": "{{rank}} of {{suit}}",
   "card.faceDown": "Face-down card",
   "card.suit.spades": "Spades",
   "card.suit.hearts": "Hearts",
   "card.suit.diamonds": "Diamonds",
   "card.suit.clubs": "Clubs",
-
   "outcome.blackjack": "Blackjack!",
   "outcome.win": "You Win!",
   "outcome.push": "Push",
   "outcome.lose": "You Lose",
-
   "payout.positive": "+{{amount}} chips",
   "payout.negative": "{{amount}} chips",
   "payout.zero": "No change",
   "payout.accessibilityLabel": "Payout: {{amount}} chips",
-
   "phase.betting": "Place your bet",
   "phase.player": "Your turn",
   "phase.result": "Round over",
-
   "gameOver.title": "Out of Chips",
   "gameOver.body": "You've run out of chips. Better luck next time!",
   "gameOver.playAgain": "Play Again",
   "gameOver.playAgainLabel": "Start a new session with 1000 chips",
   "gameOver.home": "Home",
   "gameOver.homeLabel": "Return to home screen",
-
   "header.brandName": "BC Arcade",
   "header.bankrollLabel": "Bankroll",
   "header.bankrollAccessibilityLabel": "Bankroll: {{chips}} chips",
-
   "hud.currentPot": "Pot",
   "hud.currentPotAccessibilityLabel": "Current pot: {{amount}} chips",
   "hud.lastWin": "Last",
@@ -76,17 +65,14 @@
   "hud.lastWinZero": "Push",
   "hud.lastWinNull": "—",
   "hud.lastWinAccessibilityLabel": "Last win: {{result}}",
-
   "betting.clearBet": "Clear",
   "betting.clearBetLabel": "Clear bet — reset to zero",
   "betting.tableLimits": "Table Limits",
   "betting.tableLimitsRange": "{{min}}–{{max}} chips",
   "betting.tapToAdd": "Tap chips to bet",
-
   "chip.addLabel": "Add {{amount}} to bet",
   "chip.disabledLabel": "{{amount}}-chip not available",
   "chip.vipCredits": "VIP",
-
   "rules.title": "Table Rules",
   "rules.toggleLabel": "Toggle table rules",
   "rules.dealerSoft17": "Dealer soft 17",
@@ -99,5 +85,15 @@
   "rules.increaseDeckLabel": "Increase deck count",
   "rules.penetration": "Penetration",
   "rules.decreasePenetrationLabel": "Decrease penetration",
-  "rules.increasePenetrationLabel": "Increase penetration"
+  "rules.increasePenetrationLabel": "Increase penetration",
+  "score.heroLabel": "Session",
+  "score.plLine": "{{amount}} chips",
+  "score.subLine": "{{handsPlayed}} hands · {{winRate}}% win rate",
+  "score.subLineEmpty": "No hands yet",
+  "score.chipBalance": "Chip Balance",
+  "score.biggestWin": "Biggest Win",
+  "score.handsWon": "Hands Won",
+  "score.handsLost": "Hands Lost",
+  "score.blackjacks": "Blackjacks",
+  "score.busts": "Busts"
 }

@@ -16,6 +16,12 @@ interface Props {
    *  rendering and by the whole table on short-height viewports. Shrinks
    *  both the "player" and "dealer" variants when set. */
   compact?: boolean;
+  /**
+   * Maximum cards per row. Additional cards wrap to a new row so the hand
+   * grows downward into reserved table space rather than overflowing into
+   * the action bar. Defaults to 5 (single-hand). Split hands pass 3.
+   */
+  maxPerRow?: number;
 }
 
 // First two player cards get a gentle fan tilt
@@ -27,9 +33,15 @@ export default function HandDisplay({
   concealed = false,
   variant = "dealer",
   compact = false,
+  maxPerRow = 5,
 }: Props) {
   const { colors } = useTheme();
   const showScore = hand.cards.length > 0;
+
+  const rows: (typeof hand.cards)[] = [];
+  for (let i = 0; i < hand.cards.length; i += maxPerRow) {
+    rows.push(hand.cards.slice(i, i + maxPerRow));
+  }
 
   return (
     <View style={[styles.container, compact && styles.containerCompact]}>
@@ -37,15 +49,22 @@ export default function HandDisplay({
         {label}
       </Text>
 
-      <View style={styles.cards}>
-        {hand.cards.map((card, i) => (
-          <PlayingCard
-            key={i}
-            card={card}
-            variant={variant}
-            compact={compact}
-            rotation={variant === "player" ? (PLAYER_ROTATIONS[i] ?? 0) : 0}
-          />
+      <View style={styles.rows}>
+        {rows.map((rowCards, rowIndex) => (
+          <View key={rowIndex} style={styles.row}>
+            {rowCards.map((card, cardIndex) => {
+              const absoluteIndex = rowIndex * maxPerRow + cardIndex;
+              return (
+                <PlayingCard
+                  key={absoluteIndex}
+                  card={card}
+                  variant={variant}
+                  compact={compact}
+                  rotation={variant === "player" ? (PLAYER_ROTATIONS[absoluteIndex] ?? 0) : 0}
+                />
+              );
+            })}
+          </View>
         ))}
       </View>
 
@@ -73,9 +92,12 @@ const styles = StyleSheet.create({
   labelCompact: {
     fontSize: 11,
   },
-  cards: {
+  rows: {
+    alignItems: "center",
+    gap: 4,
+  },
+  row: {
     flexDirection: "row",
-    flexWrap: "wrap",
     justifyContent: "center",
   },
 });

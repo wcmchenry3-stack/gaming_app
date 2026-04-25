@@ -37,7 +37,13 @@ import type { BugLevel } from "./eventQueueConfig";
 
 export interface UseGameSyncReturn {
   /** Start a new instrumented session. Call once after the game state is ready. */
-  start: (eventData?: Record<string, unknown>) => void;
+  start: (eventData?: Record<string, unknown>, metadata?: Record<string, unknown>) => void;
+  /**
+   * Signal that the player has taken their first meaningful action. Must be
+   * called before the unmount cleanup will fire an abandoned event, preventing
+   * false abandons on games the player never actually started.
+   */
+  markStarted: () => void;
   /** Enqueue a gameplay event. No-ops if no session is open. */
   enqueue: (event: EnqueueEventInput) => void;
   /**
@@ -49,7 +55,7 @@ export interface UseGameSyncReturn {
    * End the current session (as abandoned if still open) and immediately
    * start a fresh one. Use this for New Game / theme-switch flows.
    */
-  restart: (newEventData?: Record<string, unknown>) => void;
+  restart: (newEventData?: Record<string, unknown>, newMetadata?: Record<string, unknown>) => void;
   /** Delegate to gameEventClient.reportBug with try/catch isolation. */
   reportBug: (
     level: BugLevel,
@@ -57,11 +63,14 @@ export interface UseGameSyncReturn {
     message: string,
     context?: Record<string, unknown>
   ) => void;
+  /** Return the current game ID, or null if no session is open. */
+  getGameId: () => string | null;
 }
 
 export function useGameSync(gameType: GameType): UseGameSyncReturn {
   const gameIdRef = useRef<string | null>(null);
   const completedRef = useRef(false);
+  const startedRef = useRef(false);
   // Keep gameType in a ref so restart() always uses the current value even if
   // the consumer passes a runtime-derived type (shouldn't change, but safe).
   const gameTypeRef = useRef(gameType);
@@ -69,11 +78,11 @@ export function useGameSync(gameType: GameType): UseGameSyncReturn {
     gameTypeRef.current = gameType;
   }, [gameType]);
 
-  // Abandon any open session on unmount.
+  // Abandon any open session on unmount, but only if the player actually started.
   useEffect(() => {
     return () => {
       const gid = gameIdRef.current;
-      if (gid && !completedRef.current) {
+      if (gid && startedRef.current && !completedRef.current) {
         try {
           gameEventClient.completeGame(gid, { outcome: "abandoned" }, { outcome: "abandoned" });
         } catch {
@@ -84,9 +93,21 @@ export function useGameSync(gameType: GameType): UseGameSyncReturn {
     };
   }, []);
 
-  const start = useCallback((eventData?: Record<string, unknown>) => {
-    gameIdRef.current = gameEventClient.startGame(gameTypeRef.current, {}, eventData ?? {});
-    completedRef.current = false;
+  const start = useCallback(
+    (eventData?: Record<string, unknown>, metadata?: Record<string, unknown>) => {
+      gameIdRef.current = gameEventClient.startGame(
+        gameTypeRef.current,
+        metadata ?? {},
+        eventData ?? {}
+      );
+      completedRef.current = false;
+      startedRef.current = false;
+    },
+    []
+  );
+
+  const markStarted = useCallback(() => {
+    startedRef.current = true;
   }, []);
 
   const enqueue = useCallback((event: EnqueueEventInput) => {
@@ -111,20 +132,28 @@ export function useGameSync(gameType: GameType): UseGameSyncReturn {
     gameIdRef.current = null;
   }, []);
 
-  const restart = useCallback((newEventData?: Record<string, unknown>) => {
-    // Close the current session if still open.
-    const gid = gameIdRef.current;
-    if (gid && !completedRef.current) {
-      try {
-        gameEventClient.completeGame(gid, { outcome: "abandoned" }, { outcome: "abandoned" });
-      } catch {
-        // Isolation.
+  const restart = useCallback(
+    (newEventData?: Record<string, unknown>, newMetadata?: Record<string, unknown>) => {
+      // Close the current session if still open.
+      const gid = gameIdRef.current;
+      if (gid && !completedRef.current) {
+        try {
+          gameEventClient.completeGame(gid, { outcome: "abandoned" }, { outcome: "abandoned" });
+        } catch {
+          // Isolation.
+        }
       }
-    }
-    // Open a fresh session.
-    gameIdRef.current = gameEventClient.startGame(gameTypeRef.current, {}, newEventData ?? {});
-    completedRef.current = false;
-  }, []);
+      // Open a fresh session.
+      gameIdRef.current = gameEventClient.startGame(
+        gameTypeRef.current,
+        newMetadata ?? {},
+        newEventData ?? {}
+      );
+      completedRef.current = false;
+      startedRef.current = false;
+    },
+    []
+  );
 
   const reportBug = useCallback(
     (level: BugLevel, source: string, message: string, context?: Record<string, unknown>) => {
@@ -137,5 +166,7 @@ export function useGameSync(gameType: GameType): UseGameSyncReturn {
     []
   );
 
-  return { start, enqueue, complete, restart, reportBug };
+  const getGameId = useCallback(() => gameIdRef.current, []);
+
+  return { start, markStarted, enqueue, complete, restart, reportBug, getGameId };
 }

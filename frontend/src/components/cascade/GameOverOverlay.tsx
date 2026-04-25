@@ -14,13 +14,15 @@ import { ApiError } from "../../game/_shared/httpClient";
 import { useTheme } from "../../theme/ThemeContext";
 import { useNetwork } from "../../game/_shared/NetworkContext";
 import { scoreQueue } from "../../game/_shared/scoreQueue";
+import { OfflineBanner } from "../shared/OfflineBanner";
 
 interface Props {
   score: number;
+  gameId: string | null;
   onRestart: () => void;
 }
 
-export default function GameOverOverlay({ score, onRestart }: Props) {
+export default function GameOverOverlay({ score, gameId, onRestart }: Props) {
   const { t } = useTranslation("cascade");
   const { colors } = useTheme();
   const { isOnline, isInitialized } = useNetwork();
@@ -32,13 +34,17 @@ export default function GameOverOverlay({ score, onRestart }: Props) {
 
   async function handleSubmit() {
     if (!name.trim()) return;
+    if (!gameId) {
+      setError(t("errors:score.save"));
+      return;
+    }
     setSubmitting(true);
     setError(null);
     const playerName = name.trim();
     // If we know we're offline, skip the fetch and queue immediately.
     if (isInitialized && !isOnline) {
       try {
-        await scoreQueue.enqueue("cascade", { player_name: playerName, score });
+        await scoreQueue.enqueue("cascade", { game_id: gameId, player_name: playerName });
         setSavedLocally(true);
       } catch {
         setError(t("errors:score.save"));
@@ -48,7 +54,7 @@ export default function GameOverOverlay({ score, onRestart }: Props) {
       return;
     }
     try {
-      const entry = await cascadeApi.submitScore(playerName, score);
+      const entry = await cascadeApi.submitPlayerName(gameId, playerName);
       setSubmitted(entry);
     } catch (e) {
       // Network/fetch failures (TypeError) and transient server errors (429)
@@ -57,7 +63,7 @@ export default function GameOverOverlay({ score, onRestart }: Props) {
       const isTransient = e instanceof TypeError || (e instanceof ApiError && e.status === 429);
       if (isTransient) {
         try {
-          await scoreQueue.enqueue("cascade", { player_name: playerName, score });
+          await scoreQueue.enqueue("cascade", { game_id: gameId, player_name: playerName });
           setSavedLocally(true);
         } catch {
           setError(t("errors:score.save"));
@@ -138,9 +144,7 @@ export default function GameOverOverlay({ score, onRestart }: Props) {
               </Pressable>
             </>
           ) : savedLocally ? (
-            <Text style={[styles.saved, { color: colors.bonus }]} accessibilityLiveRegion="polite">
-              {t("gameOver.savedLocally")}
-            </Text>
+            <OfflineBanner />
           ) : (
             <Text style={[styles.saved, { color: colors.bonus }]}>
               {t("gameOver.savedConfirmation", { rank: submitted!.rank })}

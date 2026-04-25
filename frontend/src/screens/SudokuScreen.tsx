@@ -1,0 +1,889 @@
+/**
+ * SudokuScreen — playable Sudoku with full lifecycle wiring.
+ *
+ * Layers:
+ *   1. Pure engine from #616 + components from #617 (screen from #618).
+ *   2. Persistence (#619) — AsyncStorage save after every mutation so a
+ *      backgrounded or force-killed app resumes at the exact puzzle
+ *      state; cleared on New Puzzle / Change Difficulty.
+ *   3. Instrumentation (#619) — `useGameSync("sudoku")` session started
+ *      on the first `enterDigit`, completed on win, abandoned on
+ *      unmount or back-navigation when at least one digit was placed
+ *      and the puzzle is unfinished.
+ *   4. Leaderboard (#619) — `POST /sudoku/score` on win with an
+ *      in-modal retry affordance; POST failures never block the rest
+ *      of the modal.
+ */
+
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  ActivityIndicator,
+  Animated,
+  AppState,
+  Modal,
+  Platform,
+  Pressable,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+  ViewStyle,
+} from "react-native";
+import type { AppStateStatus } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useTranslation } from "react-i18next";
+import { useNavigation } from "@react-navigation/native";
+import { NativeStackNavigationProp } from "@react-navigation/native-stack";
+
+import { HomeStackParamList } from "../../App";
+import { useTheme } from "../theme/ThemeContext";
+import { typography } from "../theme/typography";
+import { GameShell } from "../components/shared/GameShell";
+import SudokuGrid from "../components/sudoku/SudokuGrid";
+import NumberPad from "../components/sudoku/NumberPad";
+import DifficultySelector from "../components/sudoku/DifficultySelector";
+import {
+  enterDigit,
+  eraseCell,
+  getConflicts,
+  loadPuzzle,
+  selectCell,
+  toggleNotesMode,
+  undo,
+} from "../game/sudoku/engine";
+import type { CellValue, Difficulty, SudokuState } from "../game/sudoku/types";
+import { clearGame, loadGame, saveGame } from "../game/sudoku/storage";
+import { useSudokuScoreboard } from "../game/sudoku/SudokuScoreboardContext";
+import { scoreQueue } from "../game/_shared/scoreQueue";
+import { useGameSync } from "../game/_shared/useGameSync";
+import { useNetwork } from "../game/_shared/NetworkContext";
+import { OfflineBanner } from "../components/shared/OfflineBanner";
+
+const FLASH_MS = 200;
+const MAX_NAME_LENGTH = 32;
+const DIFFICULTY_BASE: Record<Difficulty, number> = {
+  easy: 100,
+  medium: 200,
+  hard: 300,
+};
+
+function computeScore(difficulty: Difficulty, errors: number): number {
+  return Math.max(0, DIFFICULTY_BASE[difficulty] - errors * 10);
+}
+
+function formatElapsed(seconds: number): string {
+  const s = Math.max(0, Math.floor(seconds));
+  const h = Math.floor(s / 3600);
+  const m = Math.floor((s % 3600) / 60);
+  const sec = s % 60;
+  const pad = (n: number) => n.toString().padStart(2, "0");
+  return h > 0 ? `${h}:${pad(m)}:${pad(sec)}` : `${pad(m)}:${pad(sec)}`;
+}
+
+export default function SudokuScreen() {
+  const { t } = useTranslation("sudoku");
+  const { colors } = useTheme();
+  const insets = useSafeAreaInsets();
+  const navigation = useNavigation<NativeStackNavigationProp<HomeStackParamList>>();
+
+  const [difficulty, setDifficulty] = useState<Difficulty>("easy");
+  const [state, setState] = useState<SudokuState | null>(null);
+  const [elapsed, setElapsed] = useState(0);
+  const [loading, setLoading] = useState(true);
+
+  // Timer bookkeeping.  `startMs` is the wall-clock at which play began,
+  // shifted forward while the app sits in the background so elapsed
+  // reads as "time actively spent playing." null = no input yet.
+  const startMsRef = useRef<number | null>(null);
+  const pausedAtRef = useRef<number | null>(null);
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  // Lifecycle refs.  `hasLoadedRef` gates saves so a fresh puzzle can't
+  // clobber a resumable save still being read off disk.
+  const hasLoadedRef = useRef(false);
+  const stateRef = useRef<SudokuState | null>(null);
+  const digitCountRef = useRef(0);
+  const prevCompleteRef = useRef(false);
+
+  const flashOpacity = useRef(new Animated.Value(0)).current;
+  const isComplete = state?.isComplete ?? false;
+
+  const {
+    start: syncStart,
+    markStarted: syncMarkStarted,
+    complete: syncComplete,
+    getGameId: syncGetGameId,
+  } = useGameSync("sudoku");
+
+  const { setSnapshot: setScoreboardSnapshot } = useSudokuScoreboard();
+
+  useEffect(() => {
+    if (!state) return;
+    setScoreboardSnapshot({
+      elapsed,
+      difficulty: state.difficulty,
+      errorCount: state.errorCount,
+      hasGame: true,
+    });
+  }, [state, elapsed, setScoreboardSnapshot]);
+
+  // Mount load — restores a saved game silently; on a clean slot the
+  // pre-game picker shows.
+  useEffect(() => {
+    let alive = true;
+    loadGame()
+      .then((saved) => {
+        if (!alive) return;
+        hasLoadedRef.current = true;
+        if (saved !== null) {
+          setState(saved);
+          setDifficulty(saved.difficulty);
+          // Treat any resumed state that already has moves as "timer
+          // already started" — the player wants to see it ticking
+          // immediately on return.  Elapsed resets to 0 because we
+          // don't persist it; this is intentional per the issue.
+          const anyMoves =
+            saved.errorCount > 0 ||
+            saved.undoStack.length > 0 ||
+            saved.grid.some((row) => row.some((c) => !c.given && c.value !== 0));
+          if (anyMoves) startMsRef.current = Date.now();
+        }
+      })
+      .finally(() => {
+        if (alive) setLoading(false);
+      });
+    return () => {
+      alive = false;
+    };
+  }, []);
+
+  // Persist on every state change after the initial load has resolved.
+  // Suppressed pre-load to protect the disk copy; `state === null`
+  // represents pre-game and is handled by `clearGame` in the callers.
+  useEffect(() => {
+    stateRef.current = state;
+    if (!hasLoadedRef.current) return;
+    if (state === null) return;
+    saveGame(state).catch(() => {});
+  }, [state]);
+
+  const tickTimer = useCallback(() => {
+    if (startMsRef.current === null) return;
+    setElapsed(Math.floor((Date.now() - startMsRef.current) / 1000));
+  }, []);
+
+  // Once-per-second ticker — only runs when a game is in progress, not
+  // complete, and has actually started.
+  useEffect(() => {
+    if (!state || isComplete || startMsRef.current === null) {
+      if (intervalRef.current !== null) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
+      return;
+    }
+    intervalRef.current = setInterval(tickTimer, 1000);
+    return () => {
+      if (intervalRef.current !== null) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
+    };
+  }, [state, isComplete, tickTimer]);
+
+  // Pause on background, resume on foreground.
+  useEffect(() => {
+    const handleChange = (next: AppStateStatus) => {
+      if (startMsRef.current === null) return;
+      if (isComplete) return;
+      if (next !== "active") {
+        pausedAtRef.current = Date.now();
+      } else if (pausedAtRef.current !== null && startMsRef.current !== null) {
+        startMsRef.current += Date.now() - pausedAtRef.current;
+        pausedAtRef.current = null;
+      }
+    };
+    const sub = AppState.addEventListener("change", handleChange);
+    return () => sub.remove();
+  }, [isComplete]);
+
+  // Complete the gameSync session exactly once on the completion
+  // transition; clear the saved game so the next mount starts fresh.
+  useEffect(() => {
+    if (state === null) {
+      prevCompleteRef.current = false;
+      return;
+    }
+    if (state.isComplete && !prevCompleteRef.current) {
+      if (syncGetGameId()) {
+        syncComplete(
+          {
+            finalScore: computeScore(state.difficulty, state.errorCount),
+            outcome: "completed",
+            durationMs: 0,
+          },
+          {
+            final_score: computeScore(state.difficulty, state.errorCount),
+            outcome: "completed",
+            difficulty: state.difficulty,
+            errors: state.errorCount,
+          }
+        );
+      }
+      clearGame().catch(() => {});
+    }
+    prevCompleteRef.current = state.isComplete;
+  }, [state, syncComplete, syncGetGameId]);
+
+  // Abandon on back-navigation when a digit has been placed and the
+  // puzzle isn't finished.  useGameSync's own unmount handler provides
+  // a second line of defense; calling complete here first makes the
+  // unmount path a no-op for the same session.
+  useEffect(() => {
+    const unsub = navigation.addListener("beforeRemove", () => {
+      const s = stateRef.current;
+      if (!syncGetGameId()) return;
+      if (s !== null && s.isComplete) return;
+      if (digitCountRef.current < 1) return;
+      syncComplete(
+        {
+          outcome: "abandoned",
+          finalScore: s !== null ? computeScore(s.difficulty, s.errorCount) : 0,
+          durationMs: 0,
+        },
+        {
+          outcome: "abandoned",
+          difficulty: s?.difficulty,
+          errors: s?.errorCount ?? 0,
+        }
+      );
+    });
+    return unsub;
+  }, [navigation, syncComplete, syncGetGameId]);
+
+  const ensureSyncStarted = useCallback(
+    (next: SudokuState) => {
+      if (syncGetGameId()) return;
+      syncStart({ difficulty: next.difficulty }, { difficulty: next.difficulty });
+      syncMarkStarted();
+    },
+    [syncGetGameId, syncStart, syncMarkStarted]
+  );
+
+  const flashError = useCallback(() => {
+    Animated.sequence([
+      Animated.timing(flashOpacity, {
+        toValue: 0.3,
+        duration: 80,
+        useNativeDriver: true,
+      }),
+      Animated.timing(flashOpacity, {
+        toValue: 0,
+        duration: FLASH_MS - 80,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  }, [flashOpacity]);
+
+  const handleStart = useCallback(() => {
+    clearGame().catch(() => {});
+    digitCountRef.current = 0;
+    const fresh = loadPuzzle(difficulty);
+    setState(fresh);
+    setElapsed(0);
+    startMsRef.current = null;
+    pausedAtRef.current = null;
+  }, [difficulty]);
+
+  const handleCellPress = useCallback((row: number, col: number) => {
+    setState((s) => (s ? selectCell(s, row, col) : s));
+  }, []);
+
+  const handleDigit = useCallback(
+    (digit: CellValue) => {
+      setState((s) => {
+        if (!s) return s;
+        const next = enterDigit(s, digit);
+        if (next === s) return s;
+
+        // Timer + session start on the first input that actually
+        // changes state.
+        if (startMsRef.current === null) startMsRef.current = Date.now();
+        digitCountRef.current += 1;
+        ensureSyncStarted(next);
+
+        if (!s.notesMode && s.selectedRow !== null && s.selectedCol !== null) {
+          const cell = next.grid[s.selectedRow]?.[s.selectedCol];
+          if (cell?.isError) {
+            const conflicts = getConflicts(next.grid, s.selectedRow, s.selectedCol, digit);
+            if (conflicts.length > 0) flashError();
+          }
+        }
+        return next;
+      });
+    },
+    [ensureSyncStarted, flashError]
+  );
+
+  const handleErase = useCallback(() => {
+    setState((s) => (s ? eraseCell(s) : s));
+  }, []);
+
+  const handleToggleNotes = useCallback(() => {
+    setState((s) => (s ? toggleNotesMode(s) : s));
+  }, []);
+
+  const handleUndo = useCallback(() => {
+    setState((s) => (s ? undo(s) : s));
+  }, []);
+
+  const handleChangeDifficulty = useCallback(() => {
+    clearGame().catch(() => {});
+    digitCountRef.current = 0;
+    setState(null);
+    setElapsed(0);
+    startMsRef.current = null;
+    pausedAtRef.current = null;
+  }, []);
+
+  const headerRight = useMemo(() => {
+    if (!state) return null;
+    const undoDisabled = state.undoStack.length === 0;
+    return (
+      <View style={styles.headerRow}>
+        <Pressable
+          onPress={handleUndo}
+          disabled={undoDisabled}
+          style={[
+            styles.headerBtn,
+            { borderColor: colors.accent, opacity: undoDisabled ? 0.4 : 1 },
+          ]}
+          accessibilityRole="button"
+          accessibilityLabel={t("action.undo")}
+          accessibilityState={{ disabled: undoDisabled }}
+        >
+          <Text style={[styles.headerBtnText, { color: colors.accent }]}>{t("action.undo")}</Text>
+        </Pressable>
+        <Pressable
+          onPress={handleToggleNotes}
+          style={[
+            styles.headerBtn,
+            {
+              borderColor: colors.accent,
+              backgroundColor: state.notesMode ? colors.accent : "transparent",
+            },
+          ]}
+          accessibilityRole="button"
+          accessibilityLabel={t("numberPad.toggleNotes")}
+          accessibilityState={{ selected: state.notesMode }}
+        >
+          <Text
+            style={[
+              styles.headerBtnText,
+              {
+                color: state.notesMode ? colors.textOnAccent : colors.accent,
+              },
+            ]}
+          >
+            {t("numberPad.notes")}
+          </Text>
+        </Pressable>
+      </View>
+    );
+  }, [state, colors, handleUndo, handleToggleNotes, t]);
+
+  return (
+    <GameShell
+      title={t("game.title")}
+      requireBack
+      loading={loading}
+      onBack={() => navigation.popToTop()}
+      onNewGame={handleStart}
+      onOpenScoreboard={() => navigation.navigate("Scoreboard", { gameKey: "sudoku" })}
+      rightSlot={headerRight}
+      style={{
+        paddingBottom: Math.max(insets.bottom, 16),
+        paddingLeft: Math.max(insets.left, 12),
+        paddingRight: Math.max(insets.right, 12),
+      }}
+    >
+      {state === null ? (
+        <PreGame difficulty={difficulty} onChange={setDifficulty} onStart={handleStart} />
+      ) : (
+        <View style={styles.body}>
+          <View style={styles.hudRow} accessibilityRole="summary">
+            <Text style={[styles.hudText, { color: colors.text }]}>
+              {t(`difficulty.${state.difficulty}`)}
+            </Text>
+            <Text style={[styles.hudText, { color: colors.textMuted }]}>
+              {state.errorCount === 1
+                ? t("hud.errorsOne")
+                : t("hud.errors", { count: state.errorCount })}
+            </Text>
+            <Text
+              style={[styles.hudText, { color: colors.textMuted }]}
+              accessibilityLabel={t("hud.elapsed", {
+                time: formatElapsed(elapsed),
+              })}
+            >
+              {formatElapsed(elapsed)}
+            </Text>
+          </View>
+
+          <View style={styles.gridWrap}>
+            <SudokuGrid
+              grid={state.grid}
+              selectedRow={state.selectedRow}
+              selectedCol={state.selectedCol}
+              onCellPress={handleCellPress}
+            />
+          </View>
+
+          <View
+            style={[styles.gridPadDivider, { backgroundColor: colors.border }]}
+            accessibilityElementsHidden
+            importantForAccessibility="no-hide-descendants"
+          />
+
+          <View style={styles.padWrap}>
+            <NumberPad
+              grid={state.grid}
+              notesMode={state.notesMode}
+              onDigit={handleDigit}
+              onErase={handleErase}
+              onToggleNotes={handleToggleNotes}
+            />
+          </View>
+
+          <Animated.View
+            pointerEvents="none"
+            accessibilityElementsHidden
+            importantForAccessibility="no-hide-descendants"
+            style={[
+              StyleSheet.absoluteFill,
+              { backgroundColor: colors.error, opacity: flashOpacity },
+            ]}
+            testID="sudoku-invalid-flash"
+          />
+        </View>
+      )}
+
+      {state !== null && isComplete ? (
+        <WinModal
+          difficulty={state.difficulty}
+          errors={state.errorCount}
+          elapsed={elapsed}
+          score={computeScore(state.difficulty, state.errorCount)}
+          onNewPuzzle={handleStart}
+          onChangeDifficulty={handleChangeDifficulty}
+        />
+      ) : null}
+    </GameShell>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Pre-game — difficulty picker + start button
+// ---------------------------------------------------------------------------
+
+function PreGame({
+  difficulty,
+  onChange,
+  onStart,
+}: {
+  readonly difficulty: Difficulty;
+  readonly onChange: (d: Difficulty) => void;
+  readonly onStart: () => void;
+}) {
+  const { t } = useTranslation("sudoku");
+  const { colors } = useTheme();
+  const gradient: ViewStyle =
+    Platform.OS === "web"
+      ? ({
+          backgroundImage: `linear-gradient(135deg, ${colors.accent}, ${colors.accentBright})`,
+        } as ViewStyle)
+      : { backgroundColor: colors.accentBright };
+
+  return (
+    <View style={styles.preGameWrap}>
+      <View
+        style={[
+          styles.preGameCard,
+          { backgroundColor: colors.surfaceHigh, borderColor: colors.border },
+        ]}
+      >
+        <Text style={[styles.preGameTitle, { color: colors.text }]} accessibilityRole="header">
+          {t("preGame.title")}
+        </Text>
+        <Text style={[styles.preGameBody, { color: colors.textMuted }]}>{t("preGame.body")}</Text>
+        <View style={styles.preGameSelector}>
+          <DifficultySelector value={difficulty} onChange={onChange} />
+        </View>
+        <Pressable
+          onPress={onStart}
+          style={[styles.preGameStart, gradient]}
+          accessibilityRole="button"
+          accessibilityLabel={t("action.start")}
+        >
+          <Text style={[styles.preGameStartText, { color: colors.textOnAccent }]}>
+            {t("action.start")}
+          </Text>
+        </Pressable>
+      </View>
+    </View>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Win modal — name entry + score POST with retry
+// ---------------------------------------------------------------------------
+
+function WinModal({
+  difficulty,
+  errors,
+  elapsed,
+  score,
+  onNewPuzzle,
+  onChangeDifficulty,
+}: {
+  readonly difficulty: Difficulty;
+  readonly errors: number;
+  readonly elapsed: number;
+  readonly score: number;
+  readonly onNewPuzzle: () => void;
+  readonly onChangeDifficulty: () => void;
+}) {
+  const { t } = useTranslation("sudoku");
+  const { colors } = useTheme();
+  const { isOnline, isInitialized } = useNetwork();
+
+  const [name, setName] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const offline = isInitialized && !isOnline;
+
+  const gradient: ViewStyle =
+    Platform.OS === "web"
+      ? ({
+          backgroundImage: `linear-gradient(135deg, ${colors.accent}, ${colors.accentBright})`,
+        } as ViewStyle)
+      : { backgroundColor: colors.accentBright };
+
+  const trimmed = name.trim();
+  const canSubmit = !submitting && !offline && trimmed.length > 0;
+
+  async function handleSubmit() {
+    if (!canSubmit) return;
+    setSubmitting(true);
+    setError(null);
+    try {
+      await scoreQueue.enqueue("sudoku", { player_name: trimmed, score, difficulty });
+      setSubmitted(true);
+      // Kick off a background flush; failures are retried on next reconnect.
+      scoreQueue.flush().catch(() => undefined);
+    } catch {
+      setError(t("win.submitFailed", { defaultValue: "Couldn't save your score. Tap to retry." }));
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  const submitLabel = error
+    ? t("win.submitRetry", { defaultValue: "Retry submit" })
+    : t("action.submitScore");
+
+  return (
+    <Modal visible transparent animationType="fade" accessibilityViewIsModal>
+      <View style={styles.modalOverlay}>
+        <View
+          style={[
+            styles.modalCard,
+            { backgroundColor: colors.surfaceHigh, borderColor: colors.border },
+          ]}
+        >
+          <Text style={[styles.modalTitle, { color: colors.text }]} accessibilityRole="header">
+            {t("win.title")}
+          </Text>
+          <Text style={[styles.modalBody, { color: colors.textMuted }]}>
+            {t(`difficulty.${difficulty}`)}
+          </Text>
+          <Text style={[styles.modalBody, { color: colors.text }]}>
+            {t("win.score", { score })}
+          </Text>
+          <Text style={[styles.modalBody, { color: colors.textMuted }]}>
+            {t("win.errors", { count: errors })}
+          </Text>
+          <Text style={[styles.modalBody, { color: colors.textMuted }]}>
+            {t("win.elapsed", { time: formatElapsed(elapsed) })}
+          </Text>
+
+          {!submitted ? (
+            <>
+              <TextInput
+                style={[
+                  styles.nameInput,
+                  {
+                    backgroundColor: colors.surfaceAlt,
+                    borderColor: colors.border,
+                    color: colors.text,
+                  },
+                ]}
+                placeholder={t("win.namePlaceholder", {
+                  defaultValue: "Enter your name",
+                })}
+                placeholderTextColor={colors.textMuted}
+                value={name}
+                onChangeText={setName}
+                maxLength={MAX_NAME_LENGTH}
+                editable={!submitting}
+                accessibilityLabel={t("win.nameLabel", {
+                  defaultValue: "Your name",
+                })}
+              />
+              {offline ? (
+                <OfflineBanner />
+              ) : (
+                error !== null && (
+                  <Text
+                    style={[styles.winError, { color: colors.error }]}
+                    accessibilityLiveRegion="assertive"
+                    accessibilityRole="alert"
+                  >
+                    {error}
+                  </Text>
+                )
+              )}
+              <Pressable
+                style={[styles.modalPrimary, gradient, !canSubmit && styles.modalPrimaryDisabled]}
+                onPress={handleSubmit}
+                disabled={!canSubmit}
+                accessibilityRole="button"
+                accessibilityLabel={submitLabel}
+                accessibilityState={{ disabled: !canSubmit, busy: submitting }}
+              >
+                {submitting ? (
+                  <ActivityIndicator color={colors.textOnAccent} />
+                ) : (
+                  <Text style={[styles.modalPrimaryText, { color: colors.textOnAccent }]}>
+                    {submitLabel}
+                  </Text>
+                )}
+              </Pressable>
+            </>
+          ) : (
+            <Text
+              style={[styles.winSaved, { color: colors.bonus }]}
+              accessibilityLiveRegion="polite"
+            >
+              {t("win.saved", { defaultValue: "Saved! Score submitted." })}
+            </Text>
+          )}
+
+          <Pressable
+            style={[styles.modalSecondary, { borderColor: colors.accent }]}
+            onPress={onNewPuzzle}
+            accessibilityRole="button"
+            accessibilityLabel={t("action.newGame")}
+          >
+            <Text style={[styles.modalSecondaryText, { color: colors.accent }]}>
+              {t("action.newGame")}
+            </Text>
+          </Pressable>
+          <Pressable
+            style={[styles.modalSecondary, { borderColor: colors.accent }]}
+            onPress={onChangeDifficulty}
+            accessibilityRole="button"
+            accessibilityLabel={t("action.changeDifficulty")}
+          >
+            <Text style={[styles.modalSecondaryText, { color: colors.accent }]}>
+              {t("action.changeDifficulty")}
+            </Text>
+          </Pressable>
+        </View>
+      </View>
+    </Modal>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Styles
+// ---------------------------------------------------------------------------
+
+const styles = StyleSheet.create({
+  body: {
+    flex: 1,
+    gap: 12,
+  },
+  headerRow: {
+    flexDirection: "row",
+    gap: 8,
+  },
+  headerBtn: {
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 999,
+    borderWidth: 1,
+    minHeight: 32,
+    justifyContent: "center",
+  },
+  headerBtnText: {
+    fontSize: 11,
+    fontWeight: "800",
+    letterSpacing: 0.8,
+    textTransform: "uppercase",
+  },
+  hudRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingHorizontal: 4,
+    paddingVertical: 4,
+  },
+  hudText: {
+    fontFamily: typography.heading,
+    fontSize: 14,
+    letterSpacing: 0.5,
+  },
+  gridWrap: {
+    alignSelf: "stretch",
+  },
+  gridPadDivider: {
+    alignSelf: "stretch",
+    height: StyleSheet.hairlineWidth,
+    marginHorizontal: 4,
+  },
+  padWrap: {
+    flex: 1,
+    alignSelf: "stretch",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  preGameWrap: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  preGameCard: {
+    borderRadius: 20,
+    borderWidth: 1,
+    padding: 24,
+    width: "90%",
+    maxWidth: 360,
+    alignItems: "center",
+  },
+  preGameTitle: {
+    fontFamily: typography.heading,
+    fontSize: 20,
+    fontWeight: "900",
+    letterSpacing: 0.5,
+    marginBottom: 8,
+    textAlign: "center",
+  },
+  preGameBody: {
+    fontSize: 14,
+    lineHeight: 20,
+    marginBottom: 20,
+    textAlign: "center",
+  },
+  preGameSelector: {
+    alignSelf: "stretch",
+    marginBottom: 20,
+  },
+  preGameStart: {
+    paddingHorizontal: 32,
+    paddingVertical: 12,
+    borderRadius: 999,
+    minWidth: 180,
+    alignItems: "center",
+  },
+  preGameStartText: {
+    fontSize: 14,
+    fontWeight: "800",
+    letterSpacing: 1.2,
+    textTransform: "uppercase",
+  },
+  modalOverlay: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#000000bf",
+  },
+  modalCard: {
+    borderRadius: 20,
+    borderWidth: 1,
+    padding: 24,
+    alignItems: "center",
+    width: "86%",
+    maxWidth: 360,
+  },
+  modalTitle: {
+    fontFamily: typography.heading,
+    fontSize: 20,
+    fontWeight: "900",
+    letterSpacing: 0.5,
+    marginBottom: 10,
+    textAlign: "center",
+  },
+  modalBody: {
+    fontSize: 14,
+    lineHeight: 20,
+    marginBottom: 6,
+    textAlign: "center",
+  },
+  modalPrimary: {
+    paddingHorizontal: 32,
+    paddingVertical: 12,
+    borderRadius: 999,
+    marginTop: 14,
+    marginBottom: 8,
+    alignItems: "center",
+    minWidth: 180,
+  },
+  modalPrimaryDisabled: {
+    opacity: 0.5,
+  },
+  modalPrimaryText: {
+    fontSize: 14,
+    fontWeight: "800",
+    letterSpacing: 1.2,
+    textTransform: "uppercase",
+  },
+  modalSecondary: {
+    paddingHorizontal: 24,
+    paddingVertical: 10,
+    borderRadius: 999,
+    borderWidth: 1,
+    marginTop: 8,
+    minWidth: 180,
+    alignItems: "center",
+  },
+  modalSecondaryText: {
+    fontSize: 13,
+    fontWeight: "800",
+    letterSpacing: 1,
+    textTransform: "uppercase",
+  },
+  nameInput: {
+    width: "100%",
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    borderRadius: 10,
+    borderWidth: 1,
+    fontSize: 15,
+    marginTop: 10,
+    marginBottom: 6,
+  },
+  winError: {
+    fontSize: 13,
+    marginBottom: 8,
+    textAlign: "center",
+  },
+  winSaved: {
+    fontSize: 18,
+    fontWeight: "700",
+    marginTop: 12,
+    marginBottom: 6,
+  },
+});

@@ -12,7 +12,7 @@ from __future__ import annotations
 
 import uuid
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from typing import Any
 
 from sqlalchemy import func, select
@@ -24,6 +24,22 @@ from games.registry import get_module
 from vocab import GameOutcome
 
 _VALID_OUTCOMES = frozenset(v.value for v in GameOutcome)
+
+_TS_WINDOW_LOW = timedelta(days=365)
+_TS_WINDOW_HIGH = timedelta(hours=24)
+
+
+def _validate_client_timestamp(ts: datetime, now: datetime) -> datetime | None:
+    """Return ts if it falls within [now − 1 year, now + 24 h]; else None.
+
+    Normalises naive datetimes to UTC. A skewed or bogus client clock falls
+    back to server-side stamping rather than poisoning the history table.
+    """
+    if ts.tzinfo is None:
+        ts = ts.replace(tzinfo=timezone.utc)
+    if ts < now - _TS_WINDOW_LOW or ts > now + _TS_WINDOW_HIGH:
+        return None
+    return ts
 
 
 class GameServiceError(Exception):
@@ -73,6 +89,7 @@ async def create_game(
     game_type_name: str,
     metadata: dict[str, Any],
     players: list[dict[str, Any]],
+    started_at: datetime | None = None,
 ) -> Game:
     gt = await _resolve_game_type(session, game_type_name)
 
@@ -85,6 +102,7 @@ async def create_game(
                 raise GameServiceError(403, "Game belongs to a different session.")
             return existing
 
+    now = datetime.now(timezone.utc)
     game = Game(
         id=client_id or uuid.uuid4(),
         session_id=session_id,
@@ -92,6 +110,9 @@ async def create_game(
         game_metadata=metadata or {},
         players=players,
     )
+    valid_started_at = _validate_client_timestamp(started_at, now) if started_at else None
+    if valid_started_at is not None:
+        game.started_at = valid_started_at
     session.add(game)
     await session.commit()
     await session.refresh(game)
@@ -429,6 +450,7 @@ async def complete_game(
     final_score: int | None,
     outcome: str | None,
     duration_ms: int | None,
+    completed_at: datetime | None = None,
 ) -> Game:
     game = await _get_owned_game(session, game_id, session_id)
     if game.completed_at is not None:
@@ -437,7 +459,9 @@ async def complete_game(
     if outcome is not None and outcome not in _VALID_OUTCOMES:
         raise GameServiceError(400, f"Invalid outcome: {outcome!r}")
 
-    game.completed_at = datetime.now(timezone.utc)
+    now = datetime.now(timezone.utc)
+    valid_completed_at = _validate_client_timestamp(completed_at, now) if completed_at else None
+    game.completed_at = valid_completed_at if valid_completed_at is not None else now
     game.final_score = final_score
     game.outcome = outcome
     game.duration_ms = duration_ms

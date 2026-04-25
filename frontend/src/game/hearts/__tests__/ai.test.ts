@@ -1,0 +1,410 @@
+/**
+ * Hearts AI unit tests (#606).
+ *
+ * Covers all acceptance criteria from the issue:
+ *   - Pass: Q♠ passed when unprotected; kept when holding A♠ + K♠
+ *   - Pass: high hearts prioritized
+ *   - Play: Q♠ discarded when void in led suit
+ *   - Play: highest losing card played when following and trick has points
+ *   - Play: valid card always returned (never an illegal move)
+ *   - Moon block: AI dumps heart when potential moon detected
+ *   - Edge: only one valid card → that card returned
+ *   - Edge: no hearts/Q♠ → discards highest card of longest suit
+ */
+
+import { detectPotentialMoon, selectCardToPlay, selectCardsToPass } from "../ai";
+import { getValidPlays } from "../engine";
+import type { Card, HeartsState, Rank, Suit, TrickCard } from "../types";
+
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+
+function c(suit: Suit, rank: Rank): Card {
+  return { suit, rank };
+}
+
+function mkState(overrides: Partial<HeartsState> = {}): HeartsState {
+  return {
+    _v: 2,
+    phase: "playing",
+    handNumber: 1,
+    passDirection: "left",
+    playerHands: [[], [], [], []],
+    cumulativeScores: [0, 0, 0, 0],
+    handScores: [0, 0, 0, 0],
+    scoreHistory: [],
+    passSelections: [[], [], [], []],
+    passingComplete: true,
+    currentTrick: [],
+    currentLeaderIndex: 0,
+    currentPlayerIndex: 0,
+    wonCards: [[], [], [], []],
+    heartsBroken: true,
+    tricksPlayedInHand: 1,
+    isComplete: false,
+    winnerIndex: null,
+    ...overrides,
+  };
+}
+
+// ---------------------------------------------------------------------------
+// selectCardsToPass
+// ---------------------------------------------------------------------------
+
+describe("selectCardsToPass", () => {
+  it("always returns exactly 3 cards", () => {
+    const hand = [
+      c("spades", 1),
+      c("spades", 12),
+      c("spades", 13),
+      c("hearts", 1),
+      c("hearts", 13),
+      c("clubs", 7),
+      c("diamonds", 5),
+      c("diamonds", 9),
+      c("clubs", 8),
+      c("clubs", 9),
+      c("clubs", 10),
+      c("diamonds", 3),
+      c("hearts", 5),
+    ];
+    expect(selectCardsToPass(hand, "left")).toHaveLength(3);
+  });
+
+  it("passes Q♠ when unprotected (no A♠ + K♠)", () => {
+    const hand = [
+      c("spades", 12),
+      c("spades", 3),
+      c("spades", 4),
+      c("hearts", 2),
+      c("clubs", 7),
+      c("clubs", 8),
+      c("clubs", 9),
+      c("diamonds", 5),
+      c("diamonds", 6),
+      c("diamonds", 7),
+      c("hearts", 3),
+      c("hearts", 4),
+      c("hearts", 6),
+    ];
+    const passed = selectCardsToPass(hand, "left");
+    expect(passed).toContainEqual(c("spades", 12));
+  });
+
+  it("keeps Q♠ when holding both A♠ and K♠", () => {
+    const hand = [
+      c("spades", 12),
+      c("spades", 1),
+      c("spades", 13),
+      c("hearts", 1),
+      c("hearts", 13),
+      c("clubs", 7),
+      c("diamonds", 5),
+      c("diamonds", 9),
+      c("clubs", 8),
+      c("clubs", 9),
+      c("clubs", 10),
+      c("diamonds", 3),
+      c("hearts", 5),
+    ];
+    const passed = selectCardsToPass(hand, "left");
+    expect(passed).not.toContainEqual(c("spades", 12));
+  });
+
+  it("passes A♥ and K♥ as high-priority danger cards", () => {
+    const hand = [
+      c("hearts", 1),
+      c("hearts", 13),
+      c("hearts", 2),
+      c("spades", 3),
+      c("spades", 4),
+      c("spades", 5),
+      c("clubs", 7),
+      c("clubs", 8),
+      c("clubs", 9),
+      c("diamonds", 6),
+      c("diamonds", 7),
+      c("diamonds", 8),
+      c("diamonds", 9),
+    ];
+    const passed = selectCardsToPass(hand, "left");
+    expect(passed).toContainEqual(c("hearts", 1));
+    expect(passed).toContainEqual(c("hearts", 13));
+  });
+
+  it("never passes 2♣", () => {
+    const hand = [
+      c("clubs", 2),
+      c("hearts", 1),
+      c("hearts", 13),
+      c("spades", 3),
+      c("spades", 4),
+      c("spades", 5),
+      c("clubs", 7),
+      c("clubs", 8),
+      c("clubs", 9),
+      c("diamonds", 6),
+      c("diamonds", 7),
+      c("diamonds", 8),
+      c("diamonds", 9),
+    ];
+    const passed = selectCardsToPass(hand, "left");
+    expect(passed).not.toContainEqual(c("clubs", 2));
+  });
+
+  it("never passes clubs below 6", () => {
+    const hand = [
+      c("clubs", 3),
+      c("clubs", 4),
+      c("clubs", 5),
+      c("hearts", 1),
+      c("hearts", 13),
+      c("spades", 8),
+      c("spades", 9),
+      c("spades", 10),
+      c("diamonds", 6),
+      c("diamonds", 7),
+      c("diamonds", 8),
+      c("diamonds", 9),
+      c("diamonds", 10),
+    ];
+    const passed = selectCardsToPass(hand, "left");
+    passed.forEach((card) => {
+      if (card.suit === "clubs") expect(card.rank).toBeGreaterThanOrEqual(6);
+    });
+  });
+
+  it("returned cards are all from the hand", () => {
+    const hand = [
+      c("spades", 1),
+      c("spades", 12),
+      c("spades", 13),
+      c("hearts", 1),
+      c("hearts", 13),
+      c("clubs", 7),
+      c("diamonds", 5),
+      c("diamonds", 9),
+      c("clubs", 8),
+      c("clubs", 9),
+      c("clubs", 10),
+      c("diamonds", 3),
+      c("hearts", 5),
+    ];
+    const passed = selectCardsToPass(hand, "right");
+    passed.forEach((p) => expect(hand).toContainEqual(p));
+  });
+});
+
+// ---------------------------------------------------------------------------
+// selectCardToPlay — void (discarding)
+// ---------------------------------------------------------------------------
+
+describe("selectCardToPlay — void in led suit", () => {
+  it("discards Q♠ when void and Q♠ is a valid play", () => {
+    const hand = [c("spades", 12), c("hearts", 5), c("diamonds", 7)];
+    const trick: TrickCard[] = [
+      { card: c("clubs", 3), playerIndex: 0 },
+      { card: c("clubs", 7), playerIndex: 1 },
+      { card: c("clubs", 9), playerIndex: 2 },
+    ];
+    const state = mkState({
+      playerHands: [[], [], [], hand],
+      currentTrick: trick,
+      tricksPlayedInHand: 3,
+      currentPlayerIndex: 3,
+    });
+    const pick = selectCardToPlay(hand, trick, state, 3);
+    expect(pick).toEqual(c("spades", 12));
+  });
+
+  it("discards highest heart when void and no Q♠", () => {
+    const hand = [c("hearts", 5), c("hearts", 11), c("diamonds", 7)];
+    const trick: TrickCard[] = [
+      { card: c("clubs", 3), playerIndex: 0 },
+      { card: c("clubs", 7), playerIndex: 1 },
+      { card: c("clubs", 9), playerIndex: 2 },
+    ];
+    const state = mkState({
+      playerHands: [[], [], [], hand],
+      currentTrick: trick,
+      tricksPlayedInHand: 3,
+      currentPlayerIndex: 3,
+    });
+    const pick = selectCardToPlay(hand, trick, state, 3);
+    expect(pick).toEqual(c("hearts", 11));
+  });
+
+  it("discards highest card of longest suit when no hearts or Q♠", () => {
+    const hand = [c("diamonds", 5), c("diamonds", 10), c("spades", 3)];
+    const trick: TrickCard[] = [
+      { card: c("clubs", 3), playerIndex: 0 },
+      { card: c("clubs", 7), playerIndex: 1 },
+      { card: c("clubs", 9), playerIndex: 2 },
+    ];
+    const state = mkState({
+      playerHands: [[], [], [], hand],
+      currentTrick: trick,
+      tricksPlayedInHand: 3,
+      currentPlayerIndex: 3,
+    });
+    const pick = selectCardToPlay(hand, trick, state, 3);
+    // Longest suit is diamonds (2 cards); highest diamond is 10
+    expect(pick).toEqual(c("diamonds", 10));
+  });
+});
+
+// ---------------------------------------------------------------------------
+// selectCardToPlay — following suit
+// ---------------------------------------------------------------------------
+
+describe("selectCardToPlay — following suit with points in trick", () => {
+  it("plays highest card that still loses when trick has points", () => {
+    // Trick: p0 leads spades 8, p1 plays hearts (void → discard, already there)
+    // Actually let's make a simpler scenario: p0 leads spades 10 with a heart discard in it
+    const hand = [c("spades", 5), c("spades", 7), c("spades", 9)];
+    const trick: TrickCard[] = [
+      { card: c("spades", 10), playerIndex: 0 },
+      { card: c("hearts", 1), playerIndex: 1 }, // discard — has points
+      { card: c("spades", 3), playerIndex: 2 },
+    ];
+    const state = mkState({
+      playerHands: [[], [], [], hand],
+      currentTrick: trick,
+      tricksPlayedInHand: 3,
+      currentPlayerIndex: 3,
+    });
+    const pick = selectCardToPlay(hand, trick, state, 3);
+    // Winning rank is 10; losing cards: 5, 7, 9 → play highest losing = 9
+    expect(pick).toEqual(c("spades", 9));
+  });
+
+  it("plays lowest when forced to win a trick with points", () => {
+    const hand = [c("spades", 11), c("spades", 13)];
+    const trick: TrickCard[] = [
+      { card: c("spades", 10), playerIndex: 0 },
+      { card: c("hearts", 2), playerIndex: 1 },
+    ];
+    const state = mkState({
+      playerHands: [[], [], [hand[0]!, hand[1]!], []],
+      currentTrick: trick,
+      tricksPlayedInHand: 3,
+      currentPlayerIndex: 2,
+    });
+    const pick = selectCardToPlay(hand, trick, state, 2);
+    // Both 11 and 13 beat 10; play lowest = 11
+    expect(pick).toEqual(c("spades", 11));
+  });
+});
+
+// ---------------------------------------------------------------------------
+// selectCardToPlay — moon blocking
+// ---------------------------------------------------------------------------
+
+describe("selectCardToPlay — moon blocking", () => {
+  it("dumps a heart when potential moon detected", () => {
+    // Player 0 has taken all 5 points so far — potential moon
+    // Player 3 is void in the led suit (spades) so can discard freely
+    const allHearts5 = Array.from({ length: 5 }, (_, i) => c("hearts", (i + 1) as Rank));
+    const hand = [c("hearts", 9), c("diamonds", 3), c("diamonds", 4)];
+    const trick: TrickCard[] = [
+      { card: c("spades", 4), playerIndex: 0 },
+      { card: c("spades", 5), playerIndex: 1 },
+      { card: c("spades", 6), playerIndex: 2 },
+    ];
+    const state = mkState({
+      playerHands: [[], [], [], hand],
+      currentTrick: trick,
+      tricksPlayedInHand: 5,
+      handScores: [5, 0, 0, 0],
+      wonCards: [allHearts5, [], [], []],
+      currentPlayerIndex: 3,
+    });
+
+    const pick = selectCardToPlay(hand, trick, state, 3);
+    // Should dump hearts 9 to block potential moon
+    expect(pick).toEqual(c("hearts", 9));
+  });
+});
+
+// ---------------------------------------------------------------------------
+// selectCardToPlay — always returns a valid card
+// ---------------------------------------------------------------------------
+
+describe("selectCardToPlay — always valid", () => {
+  it("returns a card that passes getValidPlays (first trick lead)", () => {
+    const hand = [c("clubs", 2), c("hearts", 5), c("spades", 7)];
+    const state = mkState({
+      playerHands: [hand, [], [], []],
+      tricksPlayedInHand: 0,
+      heartsBroken: false,
+      currentTrick: [],
+      currentPlayerIndex: 0,
+    });
+    const pick = selectCardToPlay(hand, [], state, 0);
+    const valid = getValidPlays(state, 0);
+    expect(valid).toContainEqual(pick);
+  });
+
+  it("returns a card that passes getValidPlays (following, must follow suit)", () => {
+    const hand = [c("hearts", 3), c("hearts", 7), c("clubs", 9)];
+    const trick: TrickCard[] = [{ card: c("hearts", 2), playerIndex: 0 }];
+    const state = mkState({
+      playerHands: [[], [hand[0]!, hand[1]!, hand[2]!], [], []],
+      currentTrick: trick,
+      tricksPlayedInHand: 3,
+      currentPlayerIndex: 1,
+    });
+    const pick = selectCardToPlay(hand, trick, state, 1);
+    const valid = getValidPlays(state, 1);
+    expect(valid).toContainEqual(pick);
+  });
+
+  it("returns the only valid card when just one option", () => {
+    const hand = [c("clubs", 2)];
+    const state = mkState({
+      playerHands: [hand, [], [], []],
+      tricksPlayedInHand: 0,
+      currentTrick: [],
+      currentPlayerIndex: 0,
+    });
+    const pick = selectCardToPlay(hand, [], state, 0);
+    expect(pick).toEqual(c("clubs", 2));
+  });
+});
+
+// ---------------------------------------------------------------------------
+// detectPotentialMoon
+// ---------------------------------------------------------------------------
+
+describe("detectPotentialMoon", () => {
+  it("returns null when no points taken", () => {
+    const state = mkState({ handScores: [0, 0, 0, 0], wonCards: [[], [], [], []] });
+    expect(detectPotentialMoon(state)).toBeNull();
+  });
+
+  it("returns player index when they have all points and ≥ 4 hearts", () => {
+    const hearts4 = Array.from({ length: 4 }, (_, i) => c("hearts", (i + 1) as Rank));
+    const state = mkState({
+      handScores: [4, 0, 0, 0],
+      wonCards: [hearts4, [], [], []],
+    });
+    expect(detectPotentialMoon(state)).toBe(0);
+  });
+
+  it("returns null when points are split between players", () => {
+    const state = mkState({
+      handScores: [2, 2, 0, 0],
+      wonCards: [[c("hearts", 1), c("hearts", 2)], [c("hearts", 3), c("hearts", 4)], [], []],
+    });
+    expect(detectPotentialMoon(state)).toBeNull();
+  });
+
+  it("returns null when dominant player has fewer than 4 point cards", () => {
+    const state = mkState({
+      handScores: [3, 0, 0, 0],
+      wonCards: [[c("hearts", 1), c("hearts", 2), c("hearts", 3)], [], [], []],
+    });
+    expect(detectPotentialMoon(state)).toBeNull();
+  });
+});

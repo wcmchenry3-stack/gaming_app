@@ -1,0 +1,916 @@
+/**
+ * SolitaireScreen — playable Klondike with full lifecycle wiring.
+ *
+ * Composed of three concerns:
+ *   1. Selection state machine + tap-to-select / tap-target dispatching
+ *      (layered on top of the pure engine from #593 and the card views
+ *      from #595; introduced in #596).
+ *   2. Persistence — AsyncStorage save/resume on every mutation so a
+ *      backgrounded or force-killed app resumes at the exact board.
+ *   3. Instrumentation + leaderboard — `useGameSync` session (started on
+ *      the first real move, completed on win, abandoned on unmount for
+ *      anything else) and `POST /solitaire/score` on win with an in-modal
+ *      retry affordance.
+ *
+ * Route wiring into HomeStack and the lobby card live in #599; this file
+ * is intentionally route-agnostic and reads its navigation via the hook.
+ */
+
+import React, { useCallback, useEffect, useRef, useState } from "react";
+import {
+  ActivityIndicator,
+  Animated,
+  LayoutChangeEvent,
+  Modal,
+  Platform,
+  Pressable,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+  ViewStyle,
+} from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useTranslation } from "react-i18next";
+import { useNavigation } from "@react-navigation/native";
+import { NativeStackNavigationProp } from "@react-navigation/native-stack";
+
+import { HomeStackParamList } from "../../App";
+import { useTheme } from "../theme/ThemeContext";
+import { typography } from "../theme/typography";
+import { GameShell } from "../components/shared/GameShell";
+import TableauPile from "../game/solitaire/components/TableauPile";
+import FoundationPile from "../game/solitaire/components/FoundationPile";
+import StockWastePile from "../game/solitaire/components/StockWastePile";
+import { CARD_HEIGHT, CARD_WIDTH } from "../game/solitaire/components/CardView";
+import {
+  applyMove,
+  autoComplete,
+  canAutoComplete,
+  dealGame,
+  drawFromStock,
+  recycleWaste,
+  undo,
+} from "../game/solitaire/engine";
+import type { DrawMode, Move, SolitaireState, Suit } from "../game/solitaire/types";
+import { SUITS } from "../game/solitaire/types";
+import { clearGame, loadGame, saveGame } from "../game/solitaire/storage";
+import { useSolitaireScoreboard } from "../game/solitaire/SolitaireScoreboardContext";
+import { solitaireApi, type ScoreEntry } from "../game/solitaire/api";
+import { useGameSync } from "../game/_shared/useGameSync";
+import { useNetwork } from "../game/_shared/NetworkContext";
+import { OfflineBanner } from "../components/shared/OfflineBanner";
+
+const TABLEAU_COLS = 7;
+const COL_GAP = 6;
+/** Full-size width of the 7-column board — target scale baseline. */
+const BOARD_WIDTH = TABLEAU_COLS * CARD_WIDTH + (TABLEAU_COLS - 1) * COL_GAP;
+/** Upper-bound intrinsic board height for layout reservation. Foundations
+ * (CARD_HEIGHT) + tableau worst-case (~12 cards × 24px offset + CARD_HEIGHT)
+ * + stock+waste (CARD_HEIGHT) + inter-row margins. Scaled by `scale` so the
+ * outer wrapper reserves exactly the visible pixel height. */
+const BOARD_HEIGHT = CARD_HEIGHT * 3 + 12 * 24 + 12 * 2;
+const DOUBLE_TAP_MS = 300;
+const AUTO_STEP_MS = 120;
+const MAX_NAME_LENGTH = 32;
+
+type Selection =
+  | { readonly kind: "waste" }
+  | { readonly kind: "tableau"; readonly col: number; readonly index: number }
+  | { readonly kind: "foundation"; readonly suit: Suit };
+
+export default function SolitaireScreen() {
+  const { t } = useTranslation("solitaire");
+  const { colors } = useTheme();
+  const insets = useSafeAreaInsets();
+  const navigation = useNavigation<NativeStackNavigationProp<HomeStackParamList>>();
+
+  const [state, setState] = useState<SolitaireState | null>(null);
+  const [selection, setSelection] = useState<Selection | null>(null);
+  const [moves, setMoves] = useState(0);
+  const [autoCompleting, setAutoCompleting] = useState(false);
+  const [outerWidth, setOuterWidth] = useState(0);
+  const [loading, setLoading] = useState(true);
+
+  // Invalid-move flash — red overlay pulse instead of positional shake so we
+  // don't fight React Navigation / safe-area layout math.
+  const flashOpacity = useRef(new Animated.Value(0)).current;
+  const lastTapRef = useRef<{ key: string; time: number } | null>(null);
+  const autoStepTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Lifecycle refs.
+  const hasLoadedRef = useRef(false);
+  const stateRef = useRef<SolitaireState | null>(null);
+  const movesRef = useRef(0);
+  const prevCompleteRef = useRef(false);
+
+  const {
+    start: syncStart,
+    markStarted: syncMarkStarted,
+    complete: syncComplete,
+    getGameId: syncGetGameId,
+  } = useGameSync("solitaire");
+
+  const { setSnapshot: setScoreboardSnapshot } = useSolitaireScoreboard();
+
+  useEffect(() => {
+    return () => {
+      if (autoStepTimeoutRef.current !== null) clearTimeout(autoStepTimeoutRef.current);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!state) return;
+    const foundationsComplete = Object.values(state.foundations).filter(
+      (cards) => cards.length === 13
+    ).length;
+    setScoreboardSnapshot({ moves, foundationsComplete, hasGame: true });
+  }, [state, moves, setScoreboardSnapshot]);
+
+  // #597 — mount load. Restores a saved game silently; on a clean slot the
+  // pre-game draw-mode modal is shown so the player picks their mode.
+  useEffect(() => {
+    let alive = true;
+    loadGame()
+      .then((saved) => {
+        if (!alive) return;
+        hasLoadedRef.current = true;
+        if (saved !== null) setState(saved);
+      })
+      .finally(() => {
+        if (alive) setLoading(false);
+      });
+    return () => {
+      alive = false;
+    };
+  }, []);
+
+  // #597 — persist on every state change once the mount load has resolved.
+  // Saves before the load are suppressed so a fresh deal cannot clobber a
+  // resumable save still being read from disk.
+  useEffect(() => {
+    stateRef.current = state;
+    if (!hasLoadedRef.current) return;
+    if (state === null) return;
+    saveGame(state).catch(() => {});
+  }, [state]);
+
+  // #597 — mirror moves into a ref so the navigation listener can read the
+  // latest value without re-subscribing every tick.
+  useEffect(() => {
+    movesRef.current = moves;
+  }, [moves]);
+
+  // #597 — end sync sessions exactly once on the completion transition and
+  // clear the saved game so the next mount starts fresh.
+  useEffect(() => {
+    if (state === null) {
+      prevCompleteRef.current = false;
+      return;
+    }
+    if (state.isComplete && !prevCompleteRef.current) {
+      syncComplete(
+        { finalScore: state.score, outcome: "completed", durationMs: 0 },
+        { final_score: state.score, outcome: "completed", moves: movesRef.current }
+      );
+      clearGame().catch(() => {});
+    }
+    prevCompleteRef.current = state.isComplete;
+  }, [state, syncComplete]);
+
+  // #597 — abandon on back-navigation when a move has been made and the
+  // game isn't already complete. `useGameSync`'s unmount handler provides a
+  // second line of defense; calling complete here first is idempotent
+  // (it flips `completedRef` so the unmount handler becomes a no-op).
+  useEffect(() => {
+    const unsub = navigation.addListener("beforeRemove", () => {
+      const s = stateRef.current;
+      if (!syncGetGameId()) return;
+      if (s !== null && s.isComplete) return;
+      if (movesRef.current < 1) return;
+      syncComplete(
+        { outcome: "abandoned", finalScore: s?.score ?? 0, durationMs: 0 },
+        { outcome: "abandoned", moves: movesRef.current }
+      );
+    });
+    return unsub;
+  }, [navigation, syncComplete, syncGetGameId]);
+
+  const ensureSyncStarted = useCallback(
+    (s: SolitaireState) => {
+      if (syncGetGameId()) return;
+      syncStart({ draw_mode: s.drawMode });
+      syncMarkStarted();
+    },
+    [syncGetGameId, syncStart, syncMarkStarted]
+  );
+
+  const flashInvalid = useCallback(() => {
+    setSelection(null);
+    Animated.sequence([
+      Animated.timing(flashOpacity, { toValue: 0.4, duration: 80, useNativeDriver: true }),
+      Animated.timing(flashOpacity, { toValue: 0, duration: 180, useNativeDriver: true }),
+    ]).start();
+  }, [flashOpacity]);
+
+  const deal = useCallback((drawMode: DrawMode) => {
+    setState(dealGame(drawMode));
+    setSelection(null);
+    setMoves(0);
+  }, []);
+
+  const tryMove = useCallback(
+    (move: Move): boolean => {
+      if (state === null) return false;
+      const next = applyMove(state, move);
+      if (next === state) return false;
+      ensureSyncStarted(next);
+      setState(next);
+      setMoves((m) => m + 1);
+      setSelection(null);
+      return true;
+    },
+    [state, ensureSyncStarted]
+  );
+
+  const handleWastePress = useCallback(() => {
+    if (state === null || autoCompleting) return;
+    const now = Date.now();
+    const last = lastTapRef.current;
+    const isDouble = last !== null && last.key === "waste" && now - last.time < DOUBLE_TAP_MS;
+    lastTapRef.current = { key: "waste", time: now };
+
+    if (isDouble) {
+      if (!tryMove({ type: "waste-to-foundation" })) flashInvalid();
+      return;
+    }
+    if (state.waste.length === 0) return;
+    if (selection?.kind === "waste") {
+      setSelection(null);
+      return;
+    }
+    setSelection({ kind: "waste" });
+  }, [state, selection, autoCompleting, tryMove, flashInvalid]);
+
+  const handleStockPress = useCallback(() => {
+    if (state === null || autoCompleting) return;
+    lastTapRef.current = null;
+    const next = state.stock.length > 0 ? drawFromStock(state) : recycleWaste(state);
+    if (next === state) return;
+    ensureSyncStarted(next);
+    setState(next);
+    setMoves((m) => m + 1);
+    setSelection(null);
+  }, [state, autoCompleting, ensureSyncStarted]);
+
+  const handleFoundationPress = useCallback(
+    (suit: Suit) => {
+      if (state === null || autoCompleting) return;
+      lastTapRef.current = null;
+
+      if (selection !== null) {
+        if (selection.kind === "waste") {
+          if (tryMove({ type: "waste-to-foundation" })) return;
+          flashInvalid();
+          return;
+        }
+        if (selection.kind === "tableau") {
+          const col = state.tableau[selection.col];
+          if (col !== undefined && selection.index === col.length - 1) {
+            if (tryMove({ type: "tableau-to-foundation", fromCol: selection.col })) return;
+          }
+          flashInvalid();
+          return;
+        }
+        if (selection.kind === "foundation") {
+          if (selection.suit === suit) setSelection(null);
+          else flashInvalid();
+          return;
+        }
+      }
+      if (state.foundations[suit].length > 0) {
+        setSelection({ kind: "foundation", suit });
+      }
+    },
+    [state, selection, autoCompleting, tryMove, flashInvalid]
+  );
+
+  const handleTableauCardPress = useCallback(
+    (col: number, index: number) => {
+      if (state === null || autoCompleting) return;
+      const pile = state.tableau[col];
+      if (pile === undefined) return;
+      const card = pile[index];
+      if (card === undefined) return;
+
+      const key = `tableau:${col}:${index}`;
+      const now = Date.now();
+      const last = lastTapRef.current;
+      const isDouble = last !== null && last.key === key && now - last.time < DOUBLE_TAP_MS;
+      lastTapRef.current = { key, time: now };
+
+      if (isDouble && index === pile.length - 1 && card.faceUp) {
+        if (!tryMove({ type: "tableau-to-foundation", fromCol: col })) flashInvalid();
+        return;
+      }
+
+      if (selection !== null) {
+        if (selection.kind === "waste") {
+          if (tryMove({ type: "waste-to-tableau", toCol: col })) return;
+          flashInvalid();
+          return;
+        }
+        if (selection.kind === "foundation") {
+          if (tryMove({ type: "foundation-to-tableau", fromSuit: selection.suit, toCol: col }))
+            return;
+          flashInvalid();
+          return;
+        }
+        if (selection.kind === "tableau") {
+          if (selection.col === col) {
+            if (selection.index === index) {
+              setSelection(null);
+              return;
+            }
+            if (card.faceUp) setSelection({ kind: "tableau", col, index });
+            return;
+          }
+          if (
+            tryMove({
+              type: "tableau-to-tableau",
+              fromCol: selection.col,
+              fromIndex: selection.index,
+              toCol: col,
+            })
+          )
+            return;
+          flashInvalid();
+          return;
+        }
+      }
+
+      if (card.faceUp) setSelection({ kind: "tableau", col, index });
+    },
+    [state, selection, autoCompleting, tryMove, flashInvalid]
+  );
+
+  const handleEmptyTableauPress = useCallback(
+    (col: number) => {
+      if (state === null || autoCompleting) return;
+      lastTapRef.current = null;
+      if (selection === null) return;
+      if (selection.kind === "waste") {
+        if (!tryMove({ type: "waste-to-tableau", toCol: col })) flashInvalid();
+        return;
+      }
+      if (selection.kind === "foundation") {
+        if (!tryMove({ type: "foundation-to-tableau", fromSuit: selection.suit, toCol: col }))
+          flashInvalid();
+        return;
+      }
+      if (selection.kind === "tableau") {
+        if (
+          !tryMove({
+            type: "tableau-to-tableau",
+            fromCol: selection.col,
+            fromIndex: selection.index,
+            toCol: col,
+          })
+        )
+          flashInvalid();
+      }
+    },
+    [state, selection, autoCompleting, tryMove, flashInvalid]
+  );
+
+  const handleUndo = useCallback(() => {
+    if (state === null || autoCompleting) return;
+    if (state.undoStack.length === 0) return;
+    setState(undo(state));
+    setSelection(null);
+    setMoves((m) => Math.max(0, m - 1));
+  }, [state, autoCompleting]);
+
+  const handleAutoComplete = useCallback(() => {
+    if (state === null || autoCompleting) return;
+    setAutoCompleting(true);
+    setSelection(null);
+    let current = state;
+    const step = () => {
+      const next = autoComplete(current);
+      if (next === current) {
+        setAutoCompleting(false);
+        return;
+      }
+      ensureSyncStarted(next);
+      current = next;
+      setState(next);
+      setMoves((m) => m + 1);
+      if (next.isComplete) {
+        setAutoCompleting(false);
+        return;
+      }
+      autoStepTimeoutRef.current = setTimeout(step, AUTO_STEP_MS);
+    };
+    step();
+  }, [state, autoCompleting, ensureSyncStarted]);
+
+  const resetToPreGame = useCallback(() => {
+    if (autoStepTimeoutRef.current !== null) {
+      clearTimeout(autoStepTimeoutRef.current);
+      autoStepTimeoutRef.current = null;
+    }
+    clearGame().catch(() => {});
+    setAutoCompleting(false);
+    setState(null);
+    setSelection(null);
+    setMoves(0);
+  }, []);
+
+  const undoDisabled = state === null || state.undoStack.length === 0 || autoCompleting;
+  const showAutoComplete = state !== null && !state.isComplete && canAutoComplete(state);
+  const scale = outerWidth > 0 ? Math.min(1, outerWidth / BOARD_WIDTH) : 1;
+
+  const onOuterLayout = useCallback((e: LayoutChangeEvent) => {
+    setOuterWidth(Math.floor(e.nativeEvent.layout.width));
+  }, []);
+
+  const tableauSelection = (col: number): number | undefined => {
+    if (selection === null || selection.kind !== "tableau") return undefined;
+    if (selection.col !== col) return undefined;
+    return selection.index;
+  };
+
+  return (
+    <GameShell
+      title={t("solitaire:game.title")}
+      requireBack
+      loading={loading}
+      onBack={() => navigation.popToTop()}
+      style={{
+        paddingBottom: Math.max(insets.bottom, 16),
+        paddingLeft: Math.max(insets.left, 12),
+        paddingRight: Math.max(insets.right, 12),
+      }}
+      onNewGame={resetToPreGame}
+      onOpenScoreboard={() => navigation.navigate("Scoreboard", { gameKey: "solitaire" })}
+      rightSlot={
+        <Pressable
+          onPress={handleUndo}
+          disabled={undoDisabled}
+          style={[
+            styles.headerBtn,
+            { borderColor: colors.accent, opacity: undoDisabled ? 0.4 : 1 },
+          ]}
+          accessibilityRole="button"
+          accessibilityLabel={t("solitaire:action.undo")}
+          accessibilityState={{ disabled: undoDisabled }}
+        >
+          <Text style={[styles.headerBtnText, { color: colors.accent }]}>
+            {t("solitaire:action.undo")}
+          </Text>
+        </Pressable>
+      }
+    >
+      {state === null ? (
+        <PreGameModal onChoose={deal} />
+      ) : (
+        <View style={styles.body} onLayout={onOuterLayout}>
+          <View style={styles.hudRow} accessibilityRole="summary">
+            <Text
+              style={[styles.hudText, { color: colors.text }]}
+              accessibilityLabel={t("solitaire:score.label", { score: state.score })}
+            >
+              {t("solitaire:score.label", { score: state.score })}
+            </Text>
+            <Text
+              style={[styles.hudText, { color: colors.textMuted }]}
+              accessibilityLabel={t("solitaire:score.moves", { moves })}
+            >
+              {t("solitaire:score.moves", { moves })}
+            </Text>
+          </View>
+
+          <View
+            style={[styles.boardWrap, outerWidth > 0 ? { height: BOARD_HEIGHT * scale } : null]}
+            accessibilityLabel={t("solitaire:a11y.boardRegion")}
+          >
+            <View
+              style={[
+                styles.board,
+                {
+                  width: BOARD_WIDTH,
+                  transform: [{ scale }],
+                } as ViewStyle,
+              ]}
+            >
+              <View style={styles.foundationsRow}>
+                {SUITS.map((suit) => (
+                  <FoundationPile
+                    key={suit}
+                    pile={state.foundations[suit]}
+                    suit={suit}
+                    selected={selection?.kind === "foundation" && selection.suit === suit}
+                    onPress={handleFoundationPress}
+                  />
+                ))}
+              </View>
+
+              <View style={styles.tableauRow}>
+                {state.tableau.map((pile, col) => (
+                  <TableauPile
+                    key={col}
+                    pile={pile}
+                    colIndex={col}
+                    selectedIndex={tableauSelection(col)}
+                    onCardPress={handleTableauCardPress}
+                    onEmptyPress={handleEmptyTableauPress}
+                  />
+                ))}
+              </View>
+
+              <View style={styles.stockWasteRow}>
+                <StockWastePile
+                  stock={state.stock}
+                  waste={state.waste}
+                  drawMode={state.drawMode}
+                  wasteSelected={selection?.kind === "waste"}
+                  onStockPress={handleStockPress}
+                  onWastePress={handleWastePress}
+                />
+              </View>
+            </View>
+          </View>
+
+          {showAutoComplete && (
+            <Pressable
+              onPress={handleAutoComplete}
+              style={[styles.autoBtn, { backgroundColor: colors.accent }]}
+              accessibilityRole="button"
+              accessibilityLabel={t("solitaire:action.autoComplete")}
+            >
+              <Text style={[styles.autoBtnText, { color: colors.textOnAccent }]}>
+                {t("solitaire:action.autoComplete")}
+              </Text>
+            </Pressable>
+          )}
+
+          <Animated.View
+            pointerEvents="none"
+            accessibilityElementsHidden
+            importantForAccessibility="no-hide-descendants"
+            style={[
+              StyleSheet.absoluteFill,
+              { backgroundColor: colors.error, opacity: flashOpacity },
+            ]}
+            testID="solitaire-invalid-flash"
+          />
+        </View>
+      )}
+
+      {state?.isComplete === true && <WinModal score={state.score} onNewGame={resetToPreGame} />}
+    </GameShell>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Pre-game draw-mode modal
+// ---------------------------------------------------------------------------
+
+function PreGameModal({ onChoose }: { readonly onChoose: (mode: DrawMode) => void }) {
+  const { t } = useTranslation("solitaire");
+  const { colors } = useTheme();
+
+  const gradient: ViewStyle =
+    Platform.OS === "web"
+      ? ({
+          backgroundImage: `linear-gradient(135deg, ${colors.accent}, ${colors.accentBright})`,
+        } as ViewStyle)
+      : { backgroundColor: colors.accentBright };
+
+  return (
+    <Modal visible transparent animationType="fade" accessibilityViewIsModal>
+      <View style={styles.modalOverlay}>
+        <View
+          style={[
+            styles.modalCard,
+            { backgroundColor: colors.surfaceHigh, borderColor: colors.border },
+          ]}
+        >
+          <Text style={[styles.modalTitle, { color: colors.text }]} accessibilityRole="header">
+            {t("drawMode.title")}
+          </Text>
+          <Text style={[styles.modalBody, { color: colors.textMuted }]}>{t("drawMode.body")}</Text>
+          <Pressable
+            style={[styles.modalPrimary, gradient]}
+            onPress={() => onChoose(1)}
+            accessibilityRole="button"
+            accessibilityLabel={t("drawMode.one")}
+          >
+            <Text style={[styles.modalPrimaryText, { color: colors.textOnAccent }]}>
+              {t("drawMode.one")}
+            </Text>
+          </Pressable>
+          <Pressable
+            style={[styles.modalSecondary, { borderColor: colors.accent }]}
+            onPress={() => onChoose(3)}
+            accessibilityRole="button"
+            accessibilityLabel={t("drawMode.three")}
+          >
+            <Text style={[styles.modalSecondaryText, { color: colors.accent }]}>
+              {t("drawMode.three")}
+            </Text>
+          </Pressable>
+        </View>
+      </View>
+    </Modal>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Win modal — name entry + score POST with retry
+// ---------------------------------------------------------------------------
+
+function WinModal({
+  score,
+  onNewGame,
+}: {
+  readonly score: number;
+  readonly onNewGame: () => void;
+}) {
+  const { t } = useTranslation("solitaire");
+  const { colors } = useTheme();
+  const { isOnline, isInitialized } = useNetwork();
+
+  const [name, setName] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [submitted, setSubmitted] = useState<ScoreEntry | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  const offline = isInitialized && !isOnline;
+
+  const gradient: ViewStyle =
+    Platform.OS === "web"
+      ? ({
+          backgroundImage: `linear-gradient(135deg, ${colors.accent}, ${colors.accentBright})`,
+        } as ViewStyle)
+      : { backgroundColor: colors.accentBright };
+
+  const trimmed = name.trim();
+  const canSubmit = !submitting && !offline && trimmed.length > 0;
+
+  async function handleSubmit() {
+    if (!canSubmit) return;
+    setSubmitting(true);
+    setError(null);
+    try {
+      const entry = await solitaireApi.submitScore(trimmed, score);
+      setSubmitted(entry);
+    } catch {
+      setError(t("solitaire:error.submitFailed"));
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  const submitLabel = error ? t("solitaire:error.submitRetry") : t("solitaire:action.submitScore");
+
+  return (
+    <Modal visible transparent animationType="fade" accessibilityViewIsModal>
+      <View style={styles.modalOverlay}>
+        <View
+          style={[
+            styles.modalCard,
+            { backgroundColor: colors.surfaceHigh, borderColor: colors.border },
+          ]}
+        >
+          <Text style={[styles.modalTitle, { color: colors.text }]} accessibilityRole="header">
+            {t("solitaire:win.title")}
+          </Text>
+          <Text style={[styles.modalBody, { color: colors.textMuted }]}>
+            {t("solitaire:win.score", { score })}
+          </Text>
+
+          {submitted === null ? (
+            <>
+              <TextInput
+                style={[
+                  styles.nameInput,
+                  {
+                    backgroundColor: colors.surfaceAlt,
+                    borderColor: colors.border,
+                    color: colors.text,
+                  },
+                ]}
+                placeholder={t("solitaire:win.namePlaceholder")}
+                placeholderTextColor={colors.textMuted}
+                value={name}
+                onChangeText={setName}
+                maxLength={MAX_NAME_LENGTH}
+                editable={!submitting}
+                accessibilityLabel={t("solitaire:win.nameLabel")}
+                accessibilityHint={t("solitaire:win.nameHint")}
+              />
+              {offline ? (
+                <OfflineBanner />
+              ) : (
+                error !== null && (
+                  <Text
+                    style={[styles.winError, { color: colors.error }]}
+                    accessibilityLiveRegion="assertive"
+                    accessibilityRole="alert"
+                  >
+                    {error}
+                  </Text>
+                )
+              )}
+              <Pressable
+                style={[styles.modalPrimary, gradient, !canSubmit && styles.modalPrimaryDisabled]}
+                onPress={handleSubmit}
+                disabled={!canSubmit}
+                accessibilityRole="button"
+                accessibilityLabel={submitLabel}
+                accessibilityState={{ disabled: !canSubmit, busy: submitting }}
+              >
+                {submitting ? (
+                  <ActivityIndicator color={colors.textOnAccent} />
+                ) : (
+                  <Text style={[styles.modalPrimaryText, { color: colors.textOnAccent }]}>
+                    {submitLabel}
+                  </Text>
+                )}
+              </Pressable>
+            </>
+          ) : (
+            <Text
+              style={[styles.winSaved, { color: colors.bonus }]}
+              accessibilityLiveRegion="polite"
+            >
+              {t("solitaire:win.rank", { rank: submitted.rank })}
+            </Text>
+          )}
+
+          <Pressable
+            style={[styles.modalSecondary, { borderColor: colors.accent }]}
+            onPress={onNewGame}
+            accessibilityRole="button"
+            accessibilityLabel={t("solitaire:action.newGame")}
+          >
+            <Text style={[styles.modalSecondaryText, { color: colors.accent }]}>
+              {t("solitaire:action.newGame")}
+            </Text>
+          </Pressable>
+        </View>
+      </View>
+    </Modal>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Styles
+// ---------------------------------------------------------------------------
+
+const styles = StyleSheet.create({
+  body: {
+    flex: 1,
+  },
+  headerBtn: {
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 999,
+    borderWidth: 1,
+    minHeight: 32,
+    justifyContent: "center",
+  },
+  headerBtnText: {
+    fontSize: 11,
+    fontWeight: "800",
+    letterSpacing: 0.8,
+    textTransform: "uppercase",
+  },
+  hudRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    paddingHorizontal: 4,
+    paddingVertical: 8,
+  },
+  hudText: {
+    fontFamily: typography.heading,
+    fontSize: 16,
+    letterSpacing: 0.5,
+  },
+  boardWrap: {
+    alignSelf: "stretch",
+    alignItems: "flex-start",
+    overflow: "hidden",
+  },
+  board: {
+    alignSelf: "flex-start",
+    transformOrigin: "top left",
+  } as ViewStyle,
+  foundationsRow: {
+    flexDirection: "row",
+    gap: COL_GAP,
+    marginBottom: 12,
+  },
+  tableauRow: {
+    flexDirection: "row",
+    gap: COL_GAP,
+    alignItems: "flex-start",
+    minHeight: CARD_HEIGHT * 3,
+  },
+  stockWasteRow: {
+    flexDirection: "row",
+    justifyContent: "flex-end",
+    marginTop: 12,
+  },
+  autoBtn: {
+    alignSelf: "center",
+    paddingHorizontal: 24,
+    paddingVertical: 10,
+    borderRadius: 999,
+    marginTop: 12,
+  },
+  autoBtnText: {
+    fontSize: 13,
+    fontWeight: "800",
+    letterSpacing: 1,
+    textTransform: "uppercase",
+  },
+  modalOverlay: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#000000bf",
+  },
+  modalCard: {
+    borderRadius: 20,
+    borderWidth: 1,
+    padding: 24,
+    alignItems: "center",
+    width: "86%",
+    maxWidth: 360,
+  },
+  modalTitle: {
+    fontFamily: typography.heading,
+    fontSize: 20,
+    fontWeight: "900",
+    letterSpacing: 0.5,
+    marginBottom: 10,
+    textAlign: "center",
+  },
+  modalBody: {
+    fontSize: 14,
+    lineHeight: 20,
+    marginBottom: 20,
+    textAlign: "center",
+  },
+  modalPrimary: {
+    paddingHorizontal: 32,
+    paddingVertical: 12,
+    borderRadius: 999,
+    marginBottom: 10,
+    alignItems: "center",
+    minWidth: 180,
+  },
+  modalPrimaryDisabled: {
+    opacity: 0.5,
+  },
+  modalPrimaryText: {
+    fontSize: 14,
+    fontWeight: "800",
+    letterSpacing: 1.2,
+    textTransform: "uppercase",
+  },
+  modalSecondary: {
+    paddingHorizontal: 24,
+    paddingVertical: 10,
+    borderRadius: 999,
+    borderWidth: 1,
+  },
+  modalSecondaryText: {
+    fontSize: 13,
+    fontWeight: "800",
+    letterSpacing: 1,
+    textTransform: "uppercase",
+  },
+  nameInput: {
+    width: "100%",
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    borderRadius: 10,
+    borderWidth: 1,
+    fontSize: 15,
+    marginBottom: 12,
+  },
+  winError: {
+    fontSize: 13,
+    marginBottom: 10,
+    textAlign: "center",
+  },
+  winSaved: {
+    fontSize: 18,
+    fontWeight: "700",
+    marginBottom: 12,
+  },
+});

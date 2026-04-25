@@ -102,6 +102,19 @@ describe("BlackjackTableScreen — player phase", () => {
     (loadGame as jest.Mock).mockResolvedValue(makePlayerPhaseState());
   });
 
+  it("⋯ menu Scoreboard item navigates to ScoreboardScreen with blackjack gameKey", async () => {
+    const nav = mockNav();
+    renderScreen(nav);
+    await screen.findByText("Hit");
+    await act(async () => {
+      fireEvent.press(screen.getByLabelText("More options"));
+    });
+    await act(async () => {
+      fireEvent.press(screen.getByText("Scoreboard"));
+    });
+    expect(nav.navigate).toHaveBeenCalledWith("Scoreboard", { gameKey: "blackjack" });
+  });
+
   it("shows Hit and Stand buttons", async () => {
     renderScreen();
     await screen.findByText("Hit");
@@ -475,7 +488,7 @@ describe("BlackjackGameContext — gameEventClient instrumentation (#370)", () =
 
   it("fires abandoned on unmount mid-game", async () => {
     renderWithConsumer(makePlayerPhaseState());
-    const { unmount } = renderWithConsumer(); // second render for unmount target
+    const { unmount } = renderWithConsumer(makePlayerPhaseState()); // resumed mid-game
     await settle();
     mockCompleteGame.mockClear();
     unmount();

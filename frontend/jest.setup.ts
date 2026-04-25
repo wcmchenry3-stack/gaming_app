@@ -35,6 +35,7 @@ jest.mock("react-native-reanimated", () => {
     useSharedValue: sharedValue,
     useAnimatedStyle: (fn: () => object) => fn(),
     withTiming: noopAnim,
+    withSpring: noopAnim,
     withSequence: (...args: unknown[]) => args[args.length - 1],
     withDelay: (_ms: number, v: unknown) => v,
     Easing: {
@@ -96,13 +97,28 @@ import cascade from "./src/i18n/locales/en/cascade.json";
 import errors from "./src/i18n/locales/en/errors.json";
 import blackjack from "./src/i18n/locales/en/blackjack.json";
 import twenty48 from "./src/i18n/locales/en/twenty48.json";
+import solitaire from "./src/i18n/locales/en/solitaire.json";
+import hearts from "./src/i18n/locales/en/hearts.json";
+import sudoku from "./src/i18n/locales/en/sudoku.json";
 import feedback from "./src/i18n/locales/en/feedback.json";
 import profile from "./src/i18n/locales/en/profile.json";
 
 i18n.use(initReactI18next).init({
   lng: "en",
   fallbackLng: "en",
-  ns: ["common", "yacht", "cascade", "errors", "blackjack", "twenty48", "feedback", "profile"],
+  ns: [
+    "common",
+    "yacht",
+    "cascade",
+    "errors",
+    "blackjack",
+    "twenty48",
+    "solitaire",
+    "hearts",
+    "sudoku",
+    "feedback",
+    "profile",
+  ],
   defaultNS: "common",
   resources: {
     en: {
@@ -112,6 +128,9 @@ i18n.use(initReactI18next).init({
       errors,
       blackjack,
       twenty48,
+      solitaire,
+      hearts,
+      sudoku,
       feedback,
       profile,
     },

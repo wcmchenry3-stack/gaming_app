@@ -65,6 +65,11 @@ export default function BlackjackTableScreen({ navigation }: Props) {
     navigation.replace("BlackjackBetting");
   }, [handlePlayAgain, navigation]);
 
+  const handleNewGame = useCallback(() => {
+    handlePlayAgain();
+    navigation.replace("BlackjackBetting");
+  }, [handlePlayAgain, navigation]);
+
   const state = engine ? toViewState(engine) : null;
   const isSplit = (state?.player_hands?.length ?? 0) > 1;
 
@@ -79,6 +84,8 @@ export default function BlackjackTableScreen({ navigation }: Props) {
       title={t("game.title")}
       requireBack
       onBack={() => navigation.popToTop()}
+      onNewGame={handleNewGame}
+      onOpenScoreboard={() => navigation.navigate("Scoreboard", { gameKey: "blackjack" })}
       loading={!engine && loading}
       style={{ paddingBottom: Math.max(insets.bottom, 16) }}
       rightSlot={
@@ -137,6 +144,7 @@ export default function BlackjackTableScreen({ navigation }: Props) {
               activeHandIndex={state.active_hand_index}
               handBets={state.hand_bets}
               handOutcomes={state.hand_outcomes}
+              handPayouts={state.hand_payouts}
               compact={isCompact}
             />
           </View>
@@ -150,7 +158,7 @@ export default function BlackjackTableScreen({ navigation }: Props) {
       <View style={[styles.controls, isCompact && styles.controlsCompact]}>
         {state?.phase === "result" && (
           <>
-            <ResultBanner outcome={state.outcome!} payout={state.payout} />
+            {!isSplit && <ResultBanner outcome={state.outcome!} payout={state.payout} />}
 
             <View style={styles.resultActions}>
               <Pressable

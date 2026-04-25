@@ -12,6 +12,7 @@
 import React from "react";
 import { act, create } from "react-test-renderer";
 import CascadeScreen from "../CascadeScreen";
+import { CascadeScoreboardProvider } from "../../game/cascade/CascadeScoreboardContext";
 
 jest.mock("expo-blur", () => ({
   BlurView: ({ children }: { children?: React.ReactNode }) => <>{children}</>,
@@ -103,7 +104,11 @@ const mockNavigation = { goBack: jest.fn() } as unknown as Parameters<
 function renderScreen() {
   let renderer!: ReturnType<typeof create>;
   act(() => {
-    renderer = create(<CascadeScreen navigation={mockNavigation} />);
+    renderer = create(
+      <CascadeScoreboardProvider>
+        <CascadeScreen navigation={mockNavigation} />
+      </CascadeScoreboardProvider>
+    );
   });
 
   // Trigger onLayout so the canvas renders (containerWidth/canvasHeight default to 0)

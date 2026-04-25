@@ -27,7 +27,7 @@
   "hand.player": "Tu mano",
   "hand.dealer": "Mano del crupier",
   "hand.playerHand": "Mano {{number}}",
-  "hand.activeIndicator": "(Activa)",
+  "hand.activeIndicator": "● Playing",
   "hand.value": "Valor: {{value}}",
   "hand.softValue": "Suave {{value}}",
   "hand.valueHidden": "Valor: ?",
@@ -85,5 +85,15 @@
   "rules.increaseDeckLabel": "Aumentar barajas",
   "rules.penetration": "Penetración",
   "rules.decreasePenetrationLabel": "Reducir penetración",
-  "rules.increasePenetrationLabel": "Aumentar penetración"
+  "rules.increasePenetrationLabel": "Aumentar penetración",
+  "score.heroLabel": "Sesión",
+  "score.plLine": "{{amount}} fichas",
+  "score.subLine": "{{handsPlayed}} manos · {{winRate}}% de victorias",
+  "score.subLineEmpty": "Aún no hay manos",
+  "score.chipBalance": "Saldo de fichas",
+  "score.biggestWin": "Mejor ganancia",
+  "score.handsWon": "Manos ganadas",
+  "score.handsLost": "Manos perdidas",
+  "score.blackjacks": "Blackjacks",
+  "score.busts": "Pasadas"
 }

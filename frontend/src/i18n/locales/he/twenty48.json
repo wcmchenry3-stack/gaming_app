@@ -21,5 +21,12 @@
   "win.body": "הגעת ל-2048! אתה יכול להמשיך לשחק לניקוד גבוה יותר.",
   "controls.keyboardHint": "או השתמש במקשי החיצים",
   "stats.highestTile": "Highest Tile",
-  "stats.timePlayed": "Time Played"
+  "stats.timePlayed": "Time Played",
+  "scoreboard.heroLabel": "SCORE",
+  "scoreboard.heroSub": "Best tile: {{bestTile}} · {{moves}} moves",
+  "scoreboard.heroSubEmpty": "No games played yet",
+  "scoreboard.bestScore": "Best Score",
+  "scoreboard.bestTile": "Best Tile",
+  "scoreboard.gamesPlayed": "Games Played",
+  "scoreboard.gamesWon": "Games Won"
 }

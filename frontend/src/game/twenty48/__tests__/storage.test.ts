@@ -1,6 +1,7 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as Sentry from "@sentry/react-native";
 import { saveGame, loadGame, clearGame, saveBestScore, loadBestScore } from "../storage";
+import { _resetTileIds, move, setRng, createSeededRng } from "../engine";
 import { Twenty48State } from "../types";
 
 const GAME_KEY = "twenty48_game_v2";
@@ -97,5 +98,50 @@ describe("twenty48 storage", () => {
 
   it("loadBestScore returns 0 when nothing is saved", async () => {
     expect(await loadBestScore()).toBe(0);
+  });
+
+  // #698: on app reload, the engine's module-level tile-ID counter restarts
+  // at 1. Without re-seeding on load, subsequent spawns/merges issue IDs
+  // that collide with surviving tiles and React warns about duplicate keys
+  // in Grid.
+  it("re-seeds the engine tile-ID counter above max(tile.id) on load (#698)", async () => {
+    const highIdState: Twenty48State = {
+      board: [
+        [2, 0, 0, 0],
+        [0, 0, 0, 0],
+        [0, 0, 0, 0],
+        [0, 0, 0, 0],
+      ],
+      tiles: [
+        { id: 100, value: 2, row: 0, col: 0, prevRow: 0, prevCol: 0, isNew: false, isMerge: false },
+      ],
+      score: 0,
+      scoreDelta: 0,
+      game_over: false,
+      has_won: false,
+      startedAt: null,
+      accumulatedMs: 0,
+    };
+    await saveGame(highIdState);
+
+    // Simulate a JS reload: the module counter snaps back to 1.
+    _resetTileIds();
+    setRng(createSeededRng(42));
+
+    const loaded = await loadGame();
+    expect(loaded).not.toBeNull();
+
+    // A successful move spawns a new tile. Without the re-seed fix the
+    // spawned tile would get id=1, but the surviving slid tile's id is
+    // 100 — no collision here, yet subsequent spawns would march up to
+    // 100 and collide. Assert the spawned id is already above max.
+    const afterMove = move(loaded!, "right");
+    const spawned = afterMove.tiles.find((t) => t.isNew);
+    expect(spawned).toBeDefined();
+    expect(spawned!.id).toBeGreaterThan(100);
+
+    // And the surviving tile keeps its original id.
+    const survivor = afterMove.tiles.find((t) => !t.isNew && t.value === 2);
+    expect(survivor?.id).toBe(100);
   });
 });

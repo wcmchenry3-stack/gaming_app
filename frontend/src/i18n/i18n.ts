@@ -11,6 +11,9 @@ type Namespace =
   | "errors"
   | "blackjack"
   | "twenty48"
+  | "solitaire"
+  | "hearts"
+  | "sudoku"
   | "feedback"
   | "profile";
 type TranslationModule = Promise<{ default: Record<string, string> }>;
@@ -37,6 +40,9 @@ const localeLoaders: Record<string, Partial<Record<Namespace, () => TranslationM
     errors: () => import("./locales/en/errors.json") as TranslationModule,
     blackjack: () => import("./locales/en/blackjack.json") as TranslationModule,
     twenty48: () => import("./locales/en/twenty48.json") as TranslationModule,
+    solitaire: () => import("./locales/en/solitaire.json") as TranslationModule,
+    hearts: () => import("./locales/en/hearts.json") as TranslationModule,
+    sudoku: () => import("./locales/en/sudoku.json") as TranslationModule,
     feedback: () => import("./locales/en/feedback.json") as TranslationModule,
     profile: () => import("./locales/en/profile.json") as TranslationModule,
   },
@@ -47,6 +53,7 @@ const localeLoaders: Record<string, Partial<Record<Namespace, () => TranslationM
     errors: () => import("./locales/fr-CA/errors.json") as TranslationModule,
     blackjack: () => import("./locales/fr-CA/blackjack.json") as TranslationModule,
     twenty48: () => import("./locales/fr-CA/twenty48.json") as TranslationModule,
+    sudoku: () => import("./locales/fr-CA/sudoku.json") as TranslationModule,
     feedback: () => import("./locales/fr-CA/feedback.json") as TranslationModule,
   },
   es: {
@@ -56,6 +63,7 @@ const localeLoaders: Record<string, Partial<Record<Namespace, () => TranslationM
     errors: () => import("./locales/es/errors.json") as TranslationModule,
     blackjack: () => import("./locales/es/blackjack.json") as TranslationModule,
     twenty48: () => import("./locales/es/twenty48.json") as TranslationModule,
+    sudoku: () => import("./locales/es/sudoku.json") as TranslationModule,
     feedback: () => import("./locales/es/feedback.json") as TranslationModule,
   },
   hi: {
@@ -65,6 +73,7 @@ const localeLoaders: Record<string, Partial<Record<Namespace, () => TranslationM
     errors: () => import("./locales/hi/errors.json") as TranslationModule,
     blackjack: () => import("./locales/hi/blackjack.json") as TranslationModule,
     twenty48: () => import("./locales/hi/twenty48.json") as TranslationModule,
+    sudoku: () => import("./locales/hi/sudoku.json") as TranslationModule,
     feedback: () => import("./locales/hi/feedback.json") as TranslationModule,
   },
   ar: {
@@ -74,6 +83,7 @@ const localeLoaders: Record<string, Partial<Record<Namespace, () => TranslationM
     errors: () => import("./locales/ar/errors.json") as TranslationModule,
     blackjack: () => import("./locales/ar/blackjack.json") as TranslationModule,
     twenty48: () => import("./locales/ar/twenty48.json") as TranslationModule,
+    sudoku: () => import("./locales/ar/sudoku.json") as TranslationModule,
     feedback: () => import("./locales/ar/feedback.json") as TranslationModule,
   },
   zh: {
@@ -83,6 +93,7 @@ const localeLoaders: Record<string, Partial<Record<Namespace, () => TranslationM
     errors: () => import("./locales/zh/errors.json") as TranslationModule,
     blackjack: () => import("./locales/zh/blackjack.json") as TranslationModule,
     twenty48: () => import("./locales/zh/twenty48.json") as TranslationModule,
+    sudoku: () => import("./locales/zh/sudoku.json") as TranslationModule,
     feedback: () => import("./locales/zh/feedback.json") as TranslationModule,
   },
   ja: {
@@ -92,6 +103,7 @@ const localeLoaders: Record<string, Partial<Record<Namespace, () => TranslationM
     errors: () => import("./locales/ja/errors.json") as TranslationModule,
     blackjack: () => import("./locales/ja/blackjack.json") as TranslationModule,
     twenty48: () => import("./locales/ja/twenty48.json") as TranslationModule,
+    sudoku: () => import("./locales/ja/sudoku.json") as TranslationModule,
     feedback: () => import("./locales/ja/feedback.json") as TranslationModule,
   },
   ko: {
@@ -101,6 +113,7 @@ const localeLoaders: Record<string, Partial<Record<Namespace, () => TranslationM
     errors: () => import("./locales/ko/errors.json") as TranslationModule,
     blackjack: () => import("./locales/ko/blackjack.json") as TranslationModule,
     twenty48: () => import("./locales/ko/twenty48.json") as TranslationModule,
+    sudoku: () => import("./locales/ko/sudoku.json") as TranslationModule,
     feedback: () => import("./locales/ko/feedback.json") as TranslationModule,
   },
   pt: {
@@ -110,6 +123,7 @@ const localeLoaders: Record<string, Partial<Record<Namespace, () => TranslationM
     errors: () => import("./locales/pt/errors.json") as TranslationModule,
     blackjack: () => import("./locales/pt/blackjack.json") as TranslationModule,
     twenty48: () => import("./locales/pt/twenty48.json") as TranslationModule,
+    sudoku: () => import("./locales/pt/sudoku.json") as TranslationModule,
     feedback: () => import("./locales/pt/feedback.json") as TranslationModule,
   },
   he: {
@@ -119,6 +133,7 @@ const localeLoaders: Record<string, Partial<Record<Namespace, () => TranslationM
     errors: () => import("./locales/he/errors.json") as TranslationModule,
     blackjack: () => import("./locales/he/blackjack.json") as TranslationModule,
     twenty48: () => import("./locales/he/twenty48.json") as TranslationModule,
+    sudoku: () => import("./locales/he/sudoku.json") as TranslationModule,
     feedback: () => import("./locales/he/feedback.json") as TranslationModule,
   },
   de: {
@@ -128,6 +143,7 @@ const localeLoaders: Record<string, Partial<Record<Namespace, () => TranslationM
     errors: () => import("./locales/de/errors.json") as TranslationModule,
     blackjack: () => import("./locales/de/blackjack.json") as TranslationModule,
     twenty48: () => import("./locales/de/twenty48.json") as TranslationModule,
+    sudoku: () => import("./locales/de/sudoku.json") as TranslationModule,
     feedback: () => import("./locales/de/feedback.json") as TranslationModule,
   },
   nl: {
@@ -137,6 +153,7 @@ const localeLoaders: Record<string, Partial<Record<Namespace, () => TranslationM
     errors: () => import("./locales/nl/errors.json") as TranslationModule,
     blackjack: () => import("./locales/nl/blackjack.json") as TranslationModule,
     twenty48: () => import("./locales/nl/twenty48.json") as TranslationModule,
+    sudoku: () => import("./locales/nl/sudoku.json") as TranslationModule,
     feedback: () => import("./locales/nl/feedback.json") as TranslationModule,
   },
   ru: {
@@ -146,6 +163,7 @@ const localeLoaders: Record<string, Partial<Record<Namespace, () => TranslationM
     errors: () => import("./locales/ru/errors.json") as TranslationModule,
     blackjack: () => import("./locales/ru/blackjack.json") as TranslationModule,
     twenty48: () => import("./locales/ru/twenty48.json") as TranslationModule,
+    sudoku: () => import("./locales/ru/sudoku.json") as TranslationModule,
     feedback: () => import("./locales/ru/feedback.json") as TranslationModule,
   },
 };
@@ -170,7 +188,19 @@ i18n
     lng: resolveLocale(),
     fallbackLng: "en",
     supportedLngs: LOCALES.map((l) => l.code),
-    ns: ["common", "yacht", "cascade", "errors", "blackjack", "twenty48", "feedback", "profile"],
+    ns: [
+      "common",
+      "yacht",
+      "cascade",
+      "errors",
+      "blackjack",
+      "twenty48",
+      "solitaire",
+      "hearts",
+      "sudoku",
+      "feedback",
+      "profile",
+    ],
     defaultNS: "common",
     interpolation: { escapeValue: false },
     react: { useSuspense: true },

@@ -1,31 +1,29 @@
-"""Cascade leaderboard — now backed by the games table (#366).
+"""Cascade leaderboard — backed by the games table (#366, #477).
 
-POST /cascade/score creates and immediately completes a Game row tagged
-with `cascade` and the player name in `game_metadata`. GET /cascade/scores
-queries the top 10 by final_score, joined against the cached `game_types`
-row so we only pay one lookup per query.
-
-The response shape (`ScoreEntry`, `LeaderboardResponse`) is unchanged so the
-frontend scoreSync client needs no updates.
+PATCH /cascade/score/{game_id} sets the player_name on an existing game row
+(created by the SyncWorker via POST /games) and returns the player's rank.
+GET /cascade/scores returns the top 10 scores for the leaderboard display.
 """
 
 from __future__ import annotations
 
+import uuid
+
 from fastapi import APIRouter, HTTPException, Request
-from sqlalchemy import desc, select
+from sqlalchemy import and_, desc, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from db.base import get_session_factory
 from db.models import Game, GameType
-from limiter import limiter
+from limiter import limiter, session_key
+from session import get_session_id
 from vocab import GameType as GameTypeEnum
 
-from .models import LeaderboardResponse, ScoreEntry, ScoreSubmitRequest
+from .models import LeaderboardResponse, ScoreEntry, SetPlayerNameRequest
 
 router = APIRouter()
 
 LEADERBOARD_LIMIT = 10
-_CASCADE_SESSION = "cascade-anon"  # placeholder until SSO; rows still rank
 
 
 async def _cascade_game_type_id(db: AsyncSession) -> int:
@@ -65,34 +63,59 @@ async def _top_scores(db: AsyncSession) -> list[ScoreEntry]:
     return entries
 
 
-@router.post("/score", response_model=ScoreEntry, status_code=201)
-@limiter.limit("5/minute")
-async def submit_score(request: Request, body: ScoreSubmitRequest) -> ScoreEntry:
+@router.patch("/score/{game_id}", response_model=ScoreEntry, status_code=200)
+@limiter.limit("10/minute", key_func=session_key)
+async def set_player_name(
+    request: Request, game_id: uuid.UUID, body: SetPlayerNameRequest
+) -> ScoreEntry:
+    sid = get_session_id(request)
     factory = get_session_factory()
     async with factory() as db:
         gt_id = await _cascade_game_type_id(db)
-        # Create + complete in a single commit. We still store the row even if
-        # it won't make the top 10 — matches the previous in-memory behavior
-        # where .rank > LEADERBOARD_LIMIT meant "dropped".
-        from datetime import datetime, timezone
+        game = (
+            await db.execute(
+                select(Game).where(
+                    Game.id == game_id,
+                    Game.session_id == sid,
+                    Game.game_type_id == gt_id,
+                )
+            )
+        ).scalar_one_or_none()
 
-        game = Game(
-            session_id=_CASCADE_SESSION,
-            game_type_id=gt_id,
-            final_score=body.score,
-            completed_at=datetime.now(timezone.utc),
-            game_metadata={"player_name": body.player_name},
-        )
-        db.add(game)
+        if game is None:
+            raise HTTPException(status_code=404, detail="Game not found.")
+
+        metadata = dict(game.game_metadata or {})
+        metadata["player_name"] = body.player_name
+        game.game_metadata = metadata
         await db.commit()
 
-        top = await _top_scores(db)
+        # Rank = 1 + count of games that outrank this one.
+        # Tie-break: equal scores rank older completed_at first (same order as
+        # the leaderboard GET), so a game ranks below existing tied entries.
+        score_val = game.final_score or 0
+        count = (
+            await db.execute(
+                select(func.count()).where(
+                    Game.game_type_id == gt_id,
+                    Game.final_score.is_not(None),
+                    or_(
+                        Game.final_score > score_val,
+                        and_(
+                            Game.final_score == score_val,
+                            Game.completed_at < game.completed_at,
+                        ),
+                    ),
+                )
+            )
+        ).scalar()
 
-    for entry in top:
-        if entry.player_name == body.player_name and entry.score == body.score:
-            return entry
-    # Not in top 10 — report the truncated-off rank.
-    return ScoreEntry(player_name=body.player_name, score=body.score, rank=LEADERBOARD_LIMIT + 1)
+    rank = int(count or 0) + 1
+    return ScoreEntry(
+        player_name=body.player_name,
+        score=int(game.final_score or 0),
+        rank=rank,
+    )
 
 
 @router.get("/scores", response_model=LeaderboardResponse)
@@ -105,10 +128,9 @@ async def get_scores(request: Request) -> LeaderboardResponse:
 
 
 def reset_leaderboard() -> None:
-    """Test helper — no-op now that the leaderboard lives in the DB.
+    """Test helper — no-op; leaderboard lives in the DB.
 
-    Kept for backward compatibility with the existing
-    `test_cascade_api.py` autouse fixture, which calls it on setup/teardown.
-    The conftest clean_db_tables fixture handles the actual cleanup.
+    Kept for backward compatibility with the autouse fixture in
+    test_cascade_api.py. The conftest clean_db_tables fixture handles cleanup.
     """
     return None

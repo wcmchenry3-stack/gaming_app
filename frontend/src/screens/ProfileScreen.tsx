@@ -17,6 +17,7 @@ import { AppHeader, APP_HEADER_HEIGHT } from "../components/shared/AppHeader";
 import { statsApi } from "../api/stats";
 import type { StatsResponse, GameRow } from "../api/types";
 import type { ProfileStackParamList } from "../../App";
+import { formatDate } from "../utils/formatTimestamp";
 
 type ProfileNav = NativeStackNavigationProp<ProfileStackParamList, "ProfileHome">;
 
@@ -77,13 +78,6 @@ function formatGameType(raw: string): string {
     default:
       return raw;
   }
-}
-
-function formatDate(iso: string | null): string {
-  if (!iso) return "";
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return "";
-  return d.toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
 }
 
 function outcomeGlyph(outcome: string | null): string {

@@ -1,0 +1,44 @@
+{
+  "game.title": "Sudoku",
+  "game.description": "Classic 9x9 number puzzle across three difficulty tiers.",
+  "game.playLabel": "Play Sudoku",
+
+  "cell.label": "Cell row {{row}}, column {{col}}, {{value}}",
+  "cell.empty": "empty",
+
+  "numberPad.digit": "Enter digit {{digit}}",
+  "numberPad.toggleNotes": "Toggle pencil marks",
+  "numberPad.notes": "Notes",
+  "numberPad.erase": "Erase cell",
+  "numberPad.eraseShort": "Erase",
+
+  "difficulty.groupLabel": "Difficulty",
+  "difficulty.easy": "Easy",
+  "difficulty.medium": "Medium",
+  "difficulty.hard": "Hard",
+
+  "action.undo": "Undo",
+  "action.newGame": "New Puzzle",
+  "action.changeDifficulty": "Change Difficulty",
+  "action.start": "Start",
+  "action.submitScore": "Submit Score",
+
+  "preGame.title": "Choose Difficulty",
+  "preGame.body": "Pick a difficulty to begin.",
+
+  "hud.errors": "{{count}} errors",
+  "hud.errorsOne": "1 error",
+  "hud.elapsed": "Elapsed time {{time}}",
+
+  "win.title": "You Solved It!",
+  "win.score": "Score: {{score}}",
+  "win.errors": "Errors: {{count}}",
+  "win.elapsed": "Time: {{time}}",
+  "scoreboard.heroLabel": "ELAPSED",
+  "scoreboard.heroSub": "{{difficulty}} · {{errors}} errors",
+  "scoreboard.heroSubEmpty": "No games played yet",
+  "scoreboard.easyBestTime": "Easy Best",
+  "scoreboard.mediumBestTime": "Medium Best",
+  "scoreboard.hardBestTime": "Hard Best",
+  "scoreboard.gamesSolved": "Games Solved"
+}

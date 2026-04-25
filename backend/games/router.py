@@ -140,6 +140,7 @@ async def create_game(request: Request, body: CreateGameRequest) -> CreateGameRe
                 game_type_name=body.game_type,
                 metadata=body.metadata,
                 players=players,
+                started_at=body.started_at,
             )
         except service.GameServiceError as e:
             raise HTTPException(status_code=e.status_code, detail=e.detail)
@@ -186,6 +187,7 @@ async def complete_game(
                 final_score=body.final_score,
                 outcome=body.outcome,
                 duration_ms=body.duration_ms,
+                completed_at=body.completed_at,
             )
         except service.GameServiceError as e:
             raise HTTPException(status_code=e.status_code, detail=e.detail)

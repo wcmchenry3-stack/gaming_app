@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import { View, Text, Pressable, StyleSheet, LayoutChangeEvent } from "react-native";
+import { View, StyleSheet, LayoutChangeEvent } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTranslation } from "react-i18next";
 import { useNavigation } from "@react-navigation/native";
@@ -18,7 +18,6 @@ import NextFruitPreview from "../components/cascade/NextFruitPreview";
 import ScoreDisplay from "../components/cascade/ScoreDisplay";
 import ThemeSelector from "../components/cascade/ThemeSelector";
 import GameOverOverlay from "../components/cascade/GameOverOverlay";
-import NewGameConfirmModal from "../components/shared/NewGameConfirmModal";
 import { useGameSync } from "../game/_shared/useGameSync";
 import {
   saveGame as saveCascadeGame,
@@ -26,6 +25,7 @@ import {
   clearGame as clearCascadeGame,
   CascadeGameSnapshot,
 } from "../game/cascade/storage";
+import { useCascadeScoreboard } from "../game/cascade/CascadeScoreboardContext";
 
 /** Throttle for save-during-play — saves at most this often. */
 const SAVE_THROTTLE_MS = 2000;
@@ -39,7 +39,6 @@ function CascadeGame() {
 
   const [score, setScore] = useState(0);
   const [gameOver, setGameOver] = useState(false);
-  const [confirmNewGameVisible, setConfirmNewGameVisible] = useState(false);
   const [containerWidth, setContainerWidth] = useState(0);
   const [containerHeight, setContainerHeight] = useState(0);
   const [, setQueueVersion] = useState(0);
@@ -58,7 +57,21 @@ function CascadeGame() {
 
   // Instrumentation session state (#371 / #549). One session spans from mount
   // until handleGameOver, a fruit-set switch, New Game, or unmount.
-  const { start: syncStart, enqueue: syncEnqueue, complete: syncComplete } = useGameSync("cascade");
+  const {
+    start: syncStart,
+    markStarted: syncMarkStarted,
+    enqueue: syncEnqueue,
+    complete: syncComplete,
+    getGameId,
+  } = useGameSync("cascade");
+  const { setSnapshot: setScoreboardSnapshot } = useCascadeScoreboard();
+  const bestScoreRef = useRef(0);
+  const bestFruitTierRef = useRef(-1);
+  const bestFruitNameRef = useRef("—");
+  const gamesPlayedRef = useRef(0);
+
+  // Holds the game ID captured at game-over so GameOverOverlay can PATCH /cascade/score/{id}.
+  const completedGameIdRef = useRef<string | null>(null);
   const gameStartTimeRef = useRef<number>(Date.now());
   const mergeCountRef = useRef(0);
 
@@ -97,6 +110,17 @@ function CascadeGame() {
     },
     [syncComplete]
   );
+
+  const pushScoreboardSnapshot = useCallback(() => {
+    setScoreboardSnapshot({
+      score: scoreRef.current,
+      bestScore: bestScoreRef.current,
+      bestFruitName: bestFruitNameRef.current,
+      mergeCount: mergeCountRef.current,
+      gamesPlayed: gamesPlayedRef.current,
+      hasGame: true,
+    });
+  }, [setScoreboardSnapshot]);
 
   // Start session on mount. Unmount cleanup is handled by useGameSync.
   useEffect(() => {
@@ -231,24 +255,36 @@ function CascadeGame() {
       const merged = activeFruitSet.fruits[event.tier];
       if (merged) {
         canvasRef.current?.announceEvent(t("cascade:event.merged", { fruit: merged.name }));
+        if (event.tier > bestFruitTierRef.current) {
+          bestFruitTierRef.current = event.tier;
+          bestFruitNameRef.current = merged.name;
+        }
       }
+      pushScoreboardSnapshot();
       // #216 — merges are the highest-value save trigger. A player who
       // just merged up a tier definitely wants that progress preserved
       // across an accidental reload.
       saveGameThrottled();
     },
-    [activeFruitSet, t, saveGameThrottled, syncEnqueue]
+    [activeFruitSet, t, saveGameThrottled, syncEnqueue, pushScoreboardSnapshot]
   );
 
   const handleGameOver = useCallback(() => {
     canvasRef.current?.announceEvent(t("cascade:event.gameOver"));
     gameOverRef.current = true;
     setGameOver(true);
+    // Capture game ID before complete() nulls it out — overlay needs it for PATCH /cascade/score/:id.
+    completedGameIdRef.current = getGameId();
     endInstrumentedSession("completed");
     // #216 — game over: clear the saved snapshot so the next mount
     // starts with a fresh board instead of resuming a lost game.
     clearCascadeGame().catch(() => {});
-  }, [t, endInstrumentedSession]);
+    gamesPlayedRef.current += 1;
+    if (scoreRef.current > bestScoreRef.current) {
+      bestScoreRef.current = scoreRef.current;
+    }
+    pushScoreboardSnapshot();
+  }, [t, endInstrumentedSession, getGameId, pushScoreboardSnapshot]);
 
   const handleTap = useCallback(
     (x: number) => {
@@ -264,6 +300,7 @@ function CascadeGame() {
       droppingRef.current = true;
       lastDropTimeRef.current = now;
       dropCountRef.current += 1;
+      syncMarkStarted();
 
       const tier = queueRef.current.consume();
       setQueueVersion((v) => v + 1);
@@ -295,7 +332,7 @@ function CascadeGame() {
         droppingRef.current = false;
       }, 200);
     },
-    [gameOver, activeFruitSet, saveGameThrottled, syncEnqueue]
+    [gameOver, activeFruitSet, saveGameThrottled, syncEnqueue, syncMarkStarted]
   );
 
   // -------------------------------------------------------------------------
@@ -326,6 +363,7 @@ function CascadeGame() {
       canvasRef.current?.fastForward?.(ms);
     };
     g.__cascade_triggerGameOver = () => {
+      completedGameIdRef.current = getGameId();
       gameOverRef.current = true;
       setGameOver(true);
     };
@@ -367,23 +405,8 @@ function CascadeGame() {
     hasLoadedRef.current = true; // prevent onReady from re-applying any stale pending load
     pendingLoadRef.current = null;
     startInstrumentedSession(activeFruitSetRef.current.id);
+    pushScoreboardSnapshot();
   }
-
-  const handleNewGamePress = useCallback(() => {
-    if (scoreRef.current > 0 && !gameOverRef.current) {
-      setConfirmNewGameVisible(true);
-    } else {
-      handleRestart();
-    }
-    // handleRestart reads refs only, safe to exclude from deps
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  const handleConfirmNewGame = useCallback(() => {
-    setConfirmNewGameVisible(false);
-    handleRestart();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   const queue = queueRef.current;
   const currentDef = activeFruitSet.fruits[queue.peek()];
@@ -401,23 +424,13 @@ function CascadeGame() {
       title={t("game.title")}
       requireBack
       onBack={() => navigation.popToTop()}
+      onNewGame={handleRestart}
+      onOpenScoreboard={() => navigation.navigate("Scoreboard", { gameKey: "cascade" })}
       style={{
         paddingBottom: Math.max(insets.bottom, 16),
         paddingLeft: Math.max(insets.left, 16),
         paddingRight: Math.max(insets.right, 16),
       }}
-      rightSlot={
-        <Pressable
-          onPress={handleNewGamePress}
-          style={[styles.newGameBtn, { borderColor: colors.accent }]}
-          accessibilityRole="button"
-          accessibilityLabel={t("common:newGame.button")}
-        >
-          <Text style={[styles.newGameText, { color: colors.accent }]}>
-            {t("common:newGame.button")}
-          </Text>
-        </Pressable>
-      }
     >
       {/* Combined HUD: score + drop/next previews + high, all one row */}
       <ScoreDisplay score={score}>
@@ -452,13 +465,13 @@ function CascadeGame() {
         )}
       </View>
 
-      {gameOver && <GameOverOverlay score={score} onRestart={handleRestart} />}
-
-      <NewGameConfirmModal
-        visible={confirmNewGameVisible}
-        onConfirm={handleConfirmNewGame}
-        onCancel={() => setConfirmNewGameVisible(false)}
-      />
+      {gameOver && (
+        <GameOverOverlay
+          score={score}
+          gameId={completedGameIdRef.current}
+          onRestart={handleRestart}
+        />
+      )}
     </GameShell>
   );
 }
@@ -472,20 +485,6 @@ export default function CascadeScreen() {
 }
 
 const styles = StyleSheet.create({
-  newGameBtn: {
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 999,
-    borderWidth: 1,
-    minHeight: 32,
-    justifyContent: "center",
-  },
-  newGameText: {
-    fontSize: 11,
-    fontWeight: "800",
-    letterSpacing: 0.8,
-    textTransform: "uppercase",
-  },
   canvasOuter: {
     flex: 1,
     alignItems: "center",

@@ -14,6 +14,7 @@ import { typography } from "../theme/typography";
 import { AppHeader, APP_HEADER_HEIGHT } from "../components/shared/AppHeader";
 import OfflineBanner from "../components/OfflineBanner";
 import { APP_START_MS } from "../utils/appTiming";
+import { prefetchLobbyGameScreens } from "../utils/lazyScreens";
 
 /** Below this viewport width the grid collapses to a single column. */
 const SINGLE_COL_BREAKPOINT = 360;
@@ -28,7 +29,17 @@ interface GameCard {
 
 export default function HomeScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<HomeStackParamList, "Home">>();
-  const { t } = useTranslation(["common", "yacht", "cascade", "blackjack", "twenty48", "errors"]);
+  const { t } = useTranslation([
+    "common",
+    "yacht",
+    "cascade",
+    "blackjack",
+    "twenty48",
+    "solitaire",
+    "hearts",
+    "sudoku",
+    "errors",
+  ]);
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
@@ -40,6 +51,14 @@ export default function HomeScreen() {
       const coldStartMs = performance.now() - APP_START_MS;
       Sentry.metrics.distribution("cold_start_ms", coldStartMs, { unit: "millisecond" });
     }
+  }, []);
+
+  // Warm lobby game chunks once Home has painted so nav doesn't show a
+  // Suspense fallback on tap (issue #706). setTimeout(0) defers past the
+  // current frame without the InteractionManager deprecation in RN 0.83.
+  useEffect(() => {
+    const id = setTimeout(prefetchLobbyGameScreens, 0);
+    return () => clearTimeout(id);
   }, []);
 
   async function startYacht() {
@@ -77,6 +96,29 @@ export default function HomeScreen() {
       description: t("twenty48:game.description"),
       action: () => navigation.navigate("Twenty48"),
     },
+    {
+      key: "solitaire",
+      emoji: "♠",
+      title: t("solitaire:game.title"),
+      description: t("solitaire:game.description"),
+      action: () => navigation.navigate("Solitaire"),
+    },
+    {
+      key: "hearts",
+      emoji: "♥",
+      title: t("hearts:game.title"),
+      description: t("hearts:game.description"),
+      action: () => navigation.navigate("Hearts"),
+    },
+    {
+      key: "sudoku",
+      // twenty48 already owns 🔢 in the lobby; the puzzle-piece glyph
+      // keeps Sudoku visually distinct while staying puzzle-coded.
+      emoji: "🧩",
+      title: t("sudoku:game.title"),
+      description: t("sudoku:game.description"),
+      action: () => navigation.navigate("Sudoku"),
+    },
   ];
 
   const playLabels: Record<string, string> = {
@@ -84,6 +126,9 @@ export default function HomeScreen() {
     [t("cascade:game.title")]: t("cascade:game.playLabel"),
     [t("blackjack:game.title")]: t("blackjack:game.playLabel"),
     [t("twenty48:game.title")]: t("twenty48:game.playLabel"),
+    [t("solitaire:game.title")]: t("solitaire:game.playLabel"),
+    [t("hearts:game.title")]: t("hearts:game.playLabel"),
+    [t("sudoku:game.title")]: t("sudoku:game.playLabel"),
   };
 
   // Cycle through BC Arcade accent colors for the gradient top border on each card.

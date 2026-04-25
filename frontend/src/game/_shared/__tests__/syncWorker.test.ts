@@ -125,6 +125,37 @@ describe("SyncWorker", () => {
     expect(result.accepted).toBeGreaterThan(0);
   });
 
+  it("step-1 POST /games body includes started_at ISO string", async () => {
+    const before = Date.now();
+    const gid = client.startGame("yacht", {});
+    await flushMicro();
+    await worker.flush();
+    const createCall = api.calls.find((c) => c.method === "POST" && c.path === "/games");
+    expect(createCall).toBeDefined();
+    const body = createCall!.body as Record<string, unknown>;
+    expect(typeof body["started_at"]).toBe("string");
+    const ts = new Date(body["started_at"] as string).getTime();
+    expect(ts).toBeGreaterThanOrEqual(before);
+    expect(ts).toBeLessThanOrEqual(Date.now());
+    expect(gid).toBeTruthy();
+  });
+
+  it("step-3 PATCH /complete body includes completed_at ISO string", async () => {
+    api.defaultResponse = ok({ accepted: 1, duplicates: 0 });
+    const gid = client.startGame("yacht", {});
+    const before = Date.now();
+    client.completeGame(gid, { finalScore: 50, outcome: "completed" });
+    await flushMicro();
+    await worker.flush();
+    const patchCall = api.calls.find((c) => c.method === "PATCH" && c.path.endsWith("/complete"));
+    expect(patchCall).toBeDefined();
+    const body = patchCall!.body as Record<string, unknown>;
+    expect(typeof body["completed_at"]).toBe("string");
+    const ts = new Date(body["completed_at"] as string).getTime();
+    expect(ts).toBeGreaterThanOrEqual(before);
+    expect(ts).toBeLessThanOrEqual(Date.now());
+  });
+
   it("batches 150 rapid events into a single POST", async () => {
     logConfig.GAME_EVENT_BATCH_SIZE = 200;
     const gid = client.startGame("yacht");
@@ -227,6 +258,92 @@ describe("SyncWorker", () => {
       (r) => r.log_type === "game_event"
     );
     expect(rows.length).toBe(2); // game_started + roll
+  });
+
+  // -------------------------------------------------------------------------
+  // 400 unknown_event_type → park for retry (#746)
+  // -------------------------------------------------------------------------
+
+  it("unknown_event_type 400 parks rows for retry, does not dead-letter", async () => {
+    api.onNext((p) => p === "/games", ok());
+    api.onNext((p) => p.endsWith("/events"), {
+      status: 400,
+      ok: false,
+      retryAfterMs: null,
+      body: { detail: { error: "unknown_event_type", rejected: ["game_ended"] } },
+    });
+
+    const gid = client.startGame("hearts");
+    client.enqueueEvent(gid, { type: "game_ended" });
+    await flushMicro();
+    const result = await worker.flush();
+
+    // Rows must NOT be dead-lettered.
+    const rows = await store.peek(100, { includeDeadLettered: true });
+    const dead = rows.filter((r) => r.dead_lettered && r.log_type === "game_event");
+    expect(dead.length).toBe(0);
+
+    // They must be parked (next_retry_at in the future, not visible in live peek).
+    const live = (await store.peek(100)).filter((r) => r.log_type === "game_event");
+    expect(live.length).toBe(0);
+
+    expect(result.parked).toBeGreaterThan(0);
+    expect(result.deadLettered).toBe(0);
+  });
+
+  it("unknown_event_type 400 logs Sentry at warning, not error", async () => {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const Sentry = require("@sentry/react-native");
+    Sentry.captureMessage.mockClear();
+
+    api.onNext((p) => p === "/games", ok());
+    api.onNext((p) => p.endsWith("/events"), {
+      status: 400,
+      ok: false,
+      retryAfterMs: null,
+      body: { detail: { error: "unknown_event_type", rejected: ["game_ended"] } },
+    });
+
+    const gid = client.startGame("hearts");
+    client.enqueueEvent(gid, { type: "game_ended" });
+    await flushMicro();
+    await worker.flush();
+
+    const calls = (Sentry.captureMessage as jest.Mock).mock.calls;
+    const eventCall = calls.find(
+      (c: unknown[]) => typeof c[0] === "string" && c[0].includes("unknown_event_type")
+    );
+    expect(eventCall).toBeDefined();
+    expect(eventCall[1]).toMatchObject({ level: "warning" });
+    // Must NOT fire at "error" level for this specific error.
+    const errorCall = calls.find(
+      (c: unknown[]) =>
+        typeof c[0] === "string" &&
+        c[0].includes("event batch") &&
+        (c[1] as { level?: string })?.level === "error"
+    );
+    expect(errorCall).toBeUndefined();
+  });
+
+  it("plain 400 (non-unknown-event-type) still dead-letters immediately", async () => {
+    api.onNext((p) => p === "/games", ok());
+    api.onNext((p) => p.endsWith("/events"), {
+      status: 400,
+      ok: false,
+      retryAfterMs: null,
+      body: { detail: { error: "malformed_payload" } },
+    });
+
+    const gid = client.startGame("yacht");
+    client.enqueueEvent(gid, { type: "roll" });
+    await flushMicro();
+    const result = await worker.flush();
+
+    const rows = await store.peek(100, { includeDeadLettered: true });
+    const dead = rows.filter((r) => r.dead_lettered && r.log_type === "game_event");
+    expect(dead.length).toBeGreaterThan(0);
+    expect(result.deadLettered).toBeGreaterThan(0);
+    expect(result.parked).toBe(0);
   });
 
   // -------------------------------------------------------------------------
@@ -357,11 +474,13 @@ describe("SyncWorker", () => {
       (c) => c.method === "PATCH" && c.path === `/games/${gid}/complete`
     );
     expect(patch).toBeDefined();
-    expect(patch!.body).toEqual({
+    expect(patch!.body).toMatchObject({
       final_score: 312,
       outcome: "completed",
       duration_ms: 45_000,
     });
+    // completed_at must be an ISO string (client-captured timestamp).
+    expect(typeof (patch!.body as Record<string, unknown>)["completed_at"]).toBe("string");
     // And the old camelCase keys must NOT be present — otherwise Pydantic
     // would still ignore them, but it would leave us with a confusing
     // double-keyed payload.

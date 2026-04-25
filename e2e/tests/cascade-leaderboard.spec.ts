@@ -3,7 +3,7 @@
  *
  * Leaderboard integration: verifies that
  *   1. GET /cascade/scores is fetched when the game screen loads.
- *   2. POST /cascade/score is called with the correct payload when a score is
+ *   2. PATCH /cascade/score/:id is called with the correct payload when a score is
  *      submitted from the game-over overlay.
  *   3. The rank returned by the server is surfaced in the overlay.
  *   4. Rank 1 vs. mid-table ranks both render correctly.
@@ -17,7 +17,7 @@ import { gotoCascade, triggerGameOver } from "./helpers/cascade";
 
 const API_BASE = "http://localhost:8000";
 const SCORES_ENDPOINT = `${API_BASE}/cascade/scores`;
-const SCORE_ENDPOINT = `${API_BASE}/cascade/score`;
+const SCORE_ENDPOINT_GLOB = `${API_BASE}/cascade/score/**`;
 
 test.describe("Cascade — leaderboard API integration", () => {
   // ---------------------------------------------------------------------------
@@ -50,16 +50,16 @@ test.describe("Cascade — leaderboard API integration", () => {
   });
 
   // ---------------------------------------------------------------------------
-  // POST /cascade/score payload and rank display
+  // PATCH /cascade/score/:id payload and rank display
   // ---------------------------------------------------------------------------
 
-  test("submitting a score POSTs the correct payload to /cascade/score", async ({
+  test("submitting a score PATCHes the correct payload to /cascade/score/:id", async ({
     page,
   }) => {
     let capturedBody: Record<string, unknown> | null = null;
 
     await page.route(`${API_BASE}/cascade/**`, async (route) => {
-      if (route.request().method() === "POST") {
+      if (route.request().method() === "PATCH") {
         capturedBody = JSON.parse(route.request().postData() ?? "{}");
         await route.fulfill({
           status: 200,
@@ -89,7 +89,6 @@ test.describe("Cascade — leaderboard API integration", () => {
 
     expect(capturedBody).not.toBeNull();
     expect(capturedBody!.player_name).toBe("Alice");
-    expect(typeof capturedBody!.score).toBe("number");
   });
 
   // ---------------------------------------------------------------------------
@@ -97,7 +96,7 @@ test.describe("Cascade — leaderboard API integration", () => {
   // ---------------------------------------------------------------------------
 
   test("rank 1 response renders 'Saved! #1'", async ({ page }) => {
-    await page.route(SCORE_ENDPOINT, async (route) => {
+    await page.route(SCORE_ENDPOINT_GLOB, async (route) => {
       await route.fulfill({
         status: 200,
         contentType: "application/json",
@@ -125,7 +124,7 @@ test.describe("Cascade — leaderboard API integration", () => {
   });
 
   test("rank 42 response renders 'Saved! #42'", async ({ page }) => {
-    await page.route(SCORE_ENDPOINT, async (route) => {
+    await page.route(SCORE_ENDPOINT_GLOB, async (route) => {
       await route.fulfill({
         status: 200,
         contentType: "application/json",
@@ -159,7 +158,7 @@ test.describe("Cascade — leaderboard API integration", () => {
   test("429 response from server → queues score locally for retry", async ({
     page,
   }) => {
-    await page.route(SCORE_ENDPOINT, async (route) => {
+    await page.route(SCORE_ENDPOINT_GLOB, async (route) => {
       await route.fulfill({
         status: 429,
         contentType: "application/json",
@@ -183,7 +182,7 @@ test.describe("Cascade — leaderboard API integration", () => {
     await page.getByPlaceholder("Enter your name").fill("Tester");
     await page.getByRole("button", { name: "Save score" }).click();
 
-    await expect(page.getByText("Saved locally")).toBeVisible({
+    await expect(page.getByText("Offline — scores will sync when you reconnect")).toBeVisible({
       timeout: 5_000,
     });
   });
@@ -193,11 +192,11 @@ test.describe("Cascade — leaderboard API integration", () => {
   // ---------------------------------------------------------------------------
 
   test("Save Score button is disabled when name is empty", async ({ page }) => {
-    let postCalled = false;
+    let patchCalled = false;
 
     await page.route(`${API_BASE}/cascade/**`, async (route) => {
-      if (route.request().method() === "POST") {
-        postCalled = true;
+      if (route.request().method() === "PATCH") {
+        patchCalled = true;
       }
       await route.fulfill({
         status: 200,
@@ -216,9 +215,9 @@ test.describe("Cascade — leaderboard API integration", () => {
     const saveBtn = page.getByRole("button", { name: "Save score" });
     await expect(saveBtn).toBeDisabled();
 
-    // Attempt a click anyway — no POST should fire
+    // Attempt a click anyway — no PATCH should fire
     await saveBtn.click({ force: true });
     await expect(saveBtn).toBeDisabled();
-    expect(postCalled).toBe(false);
+    expect(patchCalled).toBe(false);
   });
 });

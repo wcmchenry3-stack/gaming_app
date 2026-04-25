@@ -27,7 +27,7 @@
   "hand.player": "Votre main",
   "hand.dealer": "Main du croupier",
   "hand.playerHand": "Main {{number}}",
-  "hand.activeIndicator": "(Active)",
+  "hand.activeIndicator": "● Playing",
   "hand.value": "Valeur : {{value}}",
   "hand.softValue": "Souple {{value}}",
   "hand.valueHidden": "Valeur : ?",
@@ -85,5 +85,15 @@
   "rules.increaseDeckLabel": "Augmenter le nombre de jeux",
   "rules.penetration": "Pénétration",
   "rules.decreasePenetrationLabel": "Réduire la pénétration",
-  "rules.increasePenetrationLabel": "Augmenter la pénétration"
+  "rules.increasePenetrationLabel": "Augmenter la pénétration",
+  "score.heroLabel": "Session",
+  "score.plLine": "{{amount}} jetons",
+  "score.subLine": "{{handsPlayed}} mains · {{winRate}} % de victoires",
+  "score.subLineEmpty": "Aucune main jouée",
+  "score.chipBalance": "Solde de jetons",
+  "score.biggestWin": "Plus gros gain",
+  "score.handsWon": "Mains gagnées",
+  "score.handsLost": "Mains perdues",
+  "score.blackjacks": "Blackjacks",
+  "score.busts": "Sautes"
 }

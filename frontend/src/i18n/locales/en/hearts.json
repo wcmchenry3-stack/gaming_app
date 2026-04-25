@@ -1,0 +1,72 @@
+{
+  "game.title": "Hearts",
+  "game.description": "Avoid hearts and the queen of spades.",
+  "game.playLabel": "Play Hearts",
+
+  "card.faceDown": "Face-down card",
+  "card.label": "{{rank}} of {{suit}}",
+  "card.highlighted": "{{rank}} of {{suit}} — valid play",
+  "card.suit.spades": "Spades",
+  "card.suit.hearts": "Hearts",
+  "card.suit.diamonds": "Diamonds",
+  "card.suit.clubs": "Clubs",
+  "card.rank.1": "Ace",
+  "card.rank.11": "Jack",
+  "card.rank.12": "Queen",
+  "card.rank.13": "King",
+
+  "hand.player": "Your hand, {{count}} cards",
+  "hand.opponent": "{{label}}'s hand, {{count}} cards",
+
+  "captured.taken": "TAKEN",
+  "captured.empty": "Nothing yet",
+  "captured.opponentLabel": "{{label}} has taken {{count}} cards, {{points}} penalty points",
+  "captured.selfLabel": "You have taken {{count}} cards, {{points}} penalty points",
+
+  "trick.area": "Current trick",
+  "trick.slot.empty": "Empty slot — {{label}}",
+  "trick.winner": "{{label}} won the trick",
+
+  "score.board": "Scores",
+  "score.player": "Player",
+  "score.round": "Rnd",
+  "score.total": "Total",
+  "score.hand": "Hand",
+  "score.footnote": "★ shooter zeroes · 26 to others · lowest total wins",
+
+  "pass.direction.left": "Pass left",
+  "pass.direction.right": "Pass right",
+  "pass.direction.across": "Pass across",
+  "pass.direction.none": "No passing this round",
+  "pass.instructions": "Choose 3 cards to {{direction}}",
+  "pass.selected": "{{count}} of 3 selected",
+  "pass.confirm": "Confirm",
+  "pass.confirmLabel": "Confirm — pass {{count}} selected cards",
+
+  "player.you": "You",
+  "player.left": "Left",
+  "player.top": "Top",
+  "player.right": "Right",
+
+  "hand_end.title": "Hand Complete",
+  "hand_end.moon": "{{label}} shot the moon! +26 to all others.",
+  "hand_end.next": "Next Hand",
+
+  "game_over.title": "Game Over",
+  "game_over.winner": "{{label}} wins!",
+  "game_over.submit": "Submit Score",
+  "game_over.name_placeholder": "Enter your name",
+  "game_over.submitting": "Submitting…",
+  "game_over.submitted": "Score submitted!",
+  "game_over.submit_error": "Submission failed.",
+  "game_over.retry": "Retry",
+  "game_over.again": "Play Again",
+
+  "score.close": "Close",
+
+  "settings.rename": "Edit Names",
+  "settings.rename_title": "Player Names",
+  "settings.player_label": "Player {{n}} (default: {{default}})",
+  "settings.save": "Save",
+  "settings.cancel": "Cancel"
+}

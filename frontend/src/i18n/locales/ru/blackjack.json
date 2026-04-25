@@ -27,7 +27,7 @@
   "hand.player": "Ваши карты",
   "hand.dealer": "Карты дилера",
   "hand.playerHand": "Рука {{number}}",
-  "hand.activeIndicator": "(Активная)",
+  "hand.activeIndicator": "● Playing",
   "hand.value": "Сумма: {{value}}",
   "hand.softValue": "Мягкий {{value}}",
   "hand.valueHidden": "Сумма: ?",
@@ -85,5 +85,15 @@
   "rules.increaseDeckLabel": "Увеличить количество колод",
   "rules.penetration": "Пенетрация",
   "rules.decreasePenetrationLabel": "Уменьшить пенетрацию",
-  "rules.increasePenetrationLabel": "Увеличить пенетрацию"
+  "rules.increasePenetrationLabel": "Увеличить пенетрацию",
+  "score.heroLabel": "Сессия",
+  "score.plLine": "{{amount}} фишек",
+  "score.subLine": "{{handsPlayed}} рук · процент побед {{winRate}}%",
+  "score.subLineEmpty": "Раздач пока нет",
+  "score.chipBalance": "Баланс фишек",
+  "score.biggestWin": "Наибольший выигрыш",
+  "score.handsWon": "Выигранные руки",
+  "score.handsLost": "Проигранные руки",
+  "score.blackjacks": "Блэкджеки",
+  "score.busts": "Перебор"
 }
