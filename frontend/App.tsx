@@ -26,6 +26,7 @@ import { NetworkProvider } from "./src/game/_shared/NetworkContext";
 import { CardDeckProvider } from "./src/game/_shared/decks/CardDeckContext";
 import { BlackjackGameProvider } from "./src/game/blackjack/BlackjackGameContext";
 import { HeartsRoundsProvider } from "./src/game/hearts/RoundsContext";
+import { YachtScorecardProvider } from "./src/game/yacht/ScorecardContext";
 import { SessionLogger } from "./src/components/FeedbackWidget/SessionLogger";
 import { installSentryConsoleErrorCapture } from "./src/utils/sentryConsoleError";
 import { LazyScreens } from "./src/utils/lazyScreens";
@@ -202,11 +203,13 @@ function AppInner() {
         <CardDeckProvider>
           <BlackjackGameProvider>
             <HeartsRoundsProvider>
-              <NavigationContainer>
-                <Stack.Navigator screenOptions={{ headerShown: false }}>
-                  <Stack.Screen name="MainTabs" component={MainTabs} />
-                </Stack.Navigator>
-              </NavigationContainer>
+              <YachtScorecardProvider>
+                <NavigationContainer>
+                  <Stack.Navigator screenOptions={{ headerShown: false }}>
+                    <Stack.Screen name="MainTabs" component={MainTabs} />
+                  </Stack.Navigator>
+                </NavigationContainer>
+              </YachtScorecardProvider>
             </HeartsRoundsProvider>
           </BlackjackGameProvider>
         </CardDeckProvider>

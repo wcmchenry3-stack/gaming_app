@@ -2,6 +2,7 @@ import React from "react";
 import { render, fireEvent, act, waitFor } from "@testing-library/react-native";
 import GameScreen from "../GameScreen";
 import { ThemeProvider } from "../../theme/ThemeContext";
+import { YachtScorecardProvider } from "../../game/yacht/ScorecardContext";
 import { saveGame, clearGame } from "../../game/yacht/storage";
 
 jest.mock("expo-blur", () => ({
@@ -80,10 +81,14 @@ function renderScreen(stateOverrides: Record<string, unknown> = {}) {
   const initialState = makeState(stateOverrides);
   return render(
     <ThemeProvider>
-      <GameScreen
-        navigation={mockNavigation}
-        route={{ params: { initialState } } as unknown as Parameters<typeof GameScreen>[0]["route"]}
-      />
+      <YachtScorecardProvider>
+        <GameScreen
+          navigation={mockNavigation}
+          route={
+            { params: { initialState } } as unknown as Parameters<typeof GameScreen>[0]["route"]
+          }
+        />
+      </YachtScorecardProvider>
     </ThemeProvider>
   );
 }
@@ -148,6 +153,18 @@ describe("GameScreen", () => {
       fireEvent.press(getByRole("button", { name: /dismiss/i }));
     });
     expect(mockNavigation.goBack).toHaveBeenCalledTimes(1);
+  });
+
+  it("⋯ menu Scoreboard item navigates to ScoreboardScreen with yacht gameKey", async () => {
+    (mockNavigation.navigate as jest.Mock).mockClear();
+    const { getByLabelText, getByText } = renderScreen();
+    await act(async () => {
+      fireEvent.press(getByLabelText("More options")); // open ⋯ menu
+    });
+    await act(async () => {
+      fireEvent.press(getByText("Scoreboard")); // tap Scoreboard item
+    });
+    expect(mockNavigation.navigate).toHaveBeenCalledWith("Scoreboard", { gameKey: "yacht" });
   });
 });
 
