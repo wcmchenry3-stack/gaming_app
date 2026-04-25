@@ -1,10 +1,17 @@
-"""Static invariant test: every game_type migration must include lifecycle events (#746).
+"""Static invariant tests: migration + frontend/backend event-type contract (#746).
 
-Loads each alembic migration file, executes its upgrade() function against a
-recording op stub, and asserts that every game_type_id (net of any later deletes)
-has game_started and game_ended seeded in event_types.
+Does NOT require DATABASE_URL — runs offline against migration source files and
+the frontend TypeScript config.
 
-Does NOT require DATABASE_URL — runs offline against the migration source files.
+Tests:
+  test_every_game_type_has_lifecycle_events — each active game_type_id must
+    have game_started + game_ended seeded in event_types across all migrations.
+
+  test_event_queue_config_names_are_seeded_in_backend — every event type name
+    declared in frontend/src/game/_shared/eventQueueConfig.ts (LIFECYCLE_EVENTS
+    + MID_EVENTS) must exist in at least one game's event_types rows across all
+    migrations, so frontend-declared event names can never drift silently from
+    the backend schema.
 """
 
 from __future__ import annotations
@@ -15,7 +22,17 @@ import re
 import sys
 from unittest.mock import MagicMock, patch
 
+import pytest
+
 VERSIONS_DIR = pathlib.Path(__file__).parent.parent / "alembic" / "versions"
+EVENT_CONFIG_TS = (
+    pathlib.Path(__file__).parent.parent.parent
+    / "frontend"
+    / "src"
+    / "game"
+    / "_shared"
+    / "eventQueueConfig.ts"
+)
 LIFECYCLE_EVENTS = frozenset({"game_started", "game_ended"})
 
 
@@ -103,4 +120,44 @@ def test_every_game_type_has_lifecycle_events() -> None:
         + "\n".join(missing)
         + "\n\nFix: add a migration that inserts 'game_started' and 'game_ended' "
         "into event_types for each affected game_type_id."
+    )
+
+
+def _parse_frontend_event_names() -> set[str]:
+    """Extract all string literals from LIFECYCLE_EVENTS and MID_EVENTS in eventQueueConfig.ts."""
+    if not EVENT_CONFIG_TS.exists():
+        return set()
+    text = EVENT_CONFIG_TS.read_text(encoding="utf-8")
+    names: set[str] = set()
+    for match in re.finditer(
+        r"(?:LIFECYCLE_EVENTS|MID_EVENTS)\s*=\s*new Set\(\[([^\]]+)\]\)", text
+    ):
+        names.update(re.findall(r'"([^"]+)"', match.group(1)))
+    return names
+
+
+def test_event_queue_config_names_are_seeded_in_backend() -> None:
+    """Every event type declared in frontend/eventQueueConfig.ts must exist in at
+    least one game's event_types rows across all migrations (#746 PR-B).
+
+    This catches frontend/backend drift: if a developer adds a new event name to
+    LIFECYCLE_EVENTS or MID_EVENTS without a matching backend migration, CI fails
+    immediately rather than silently dead-lettering events in production.
+    """
+    if not EVENT_CONFIG_TS.exists():
+        pytest.skip(f"eventQueueConfig.ts not found at {EVENT_CONFIG_TS}")
+
+    frontend_names = _parse_frontend_event_names()
+    assert frontend_names, "Could not parse any event names from eventQueueConfig.ts"
+
+    recorder = _run_all_upgrades()
+    all_seeded_names = {name for _, name in recorder.event_pairs}
+
+    unmatched = sorted(frontend_names - all_seeded_names)
+    assert not unmatched, (
+        "These event types are declared in eventQueueConfig.ts but not seeded in any "
+        "backend event_types migration:\n"
+        + "\n".join(f"  • {n}" for n in unmatched)
+        + "\n\nFix: add the missing event_types rows to the relevant migration(s) "
+        "so the backend can accept these event names."
     )
