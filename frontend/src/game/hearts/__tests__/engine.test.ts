@@ -422,6 +422,49 @@ describe("playCard", () => {
     const next = playCard(state, 0, c("clubs", 2));
     expect(next.heartsBroken).toBe(false);
   });
+
+  it("emits heartsBroken event when first heart is played", () => {
+    const hand = [c("hearts", 5), c("clubs", 3)];
+    const state = mkState({
+      playerHands: h4(hand),
+      tricksPlayedInHand: 1,
+      heartsBroken: false,
+      currentTrick: [
+        { card: c("hearts", 2), playerIndex: 3 },
+        { card: c("hearts", 3), playerIndex: 1 },
+        { card: c("hearts", 4), playerIndex: 2 },
+      ],
+    });
+    const next = playCard(state, 0, c("hearts", 5));
+    expect(next.events).toContainEqual({ type: "heartsBroken" });
+  });
+
+  it("does not emit heartsBroken when hearts already broken", () => {
+    const hand = [c("hearts", 7), c("clubs", 3)];
+    const state = mkState({
+      playerHands: h4(hand),
+      tricksPlayedInHand: 2,
+      heartsBroken: true,
+      currentTrick: [
+        { card: c("hearts", 2), playerIndex: 3 },
+        { card: c("hearts", 3), playerIndex: 1 },
+        { card: c("hearts", 4), playerIndex: 2 },
+      ],
+    });
+    const next = playCard(state, 0, c("hearts", 7));
+    expect(next.events ?? []).not.toContainEqual({ type: "heartsBroken" });
+  });
+
+  it("does not emit heartsBroken for non-heart cards", () => {
+    const hand = [c("clubs", 2), c("clubs", 5)];
+    const state = mkState({
+      playerHands: h4(hand),
+      tricksPlayedInHand: 0,
+      heartsBroken: false,
+    });
+    const next = playCard(state, 0, c("clubs", 2));
+    expect(next.events ?? []).not.toContainEqual({ type: "heartsBroken" });
+  });
 });
 
 // ---------------------------------------------------------------------------

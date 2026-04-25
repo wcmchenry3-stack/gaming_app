@@ -35,7 +35,10 @@ import { useHeartsRounds } from "../game/hearts/RoundsContext";
 import { createIntegrityReporter } from "../game/hearts/integrity";
 import { useGameSync } from "../game/_shared/useGameSync";
 import { useNetwork } from "../game/_shared/NetworkContext";
+import { useGameEvents } from "../game/_shared/useGameEvents";
+import { useSound } from "../game/_shared/useSound";
 import { OfflineBanner } from "../components/shared/OfflineBanner";
+import { HeartsBrokenAnimation } from "../components/hearts/HeartsBrokenAnimation";
 import type { Card, HeartsState, TrickCard } from "../game/hearts/types";
 
 const HUMAN = 0;
@@ -66,6 +69,7 @@ export default function HeartsScreen() {
 
   const [gameState, setGameState] = useState<HeartsState>(() => dealGame());
   const [lastTrick, setLastTrick] = useState<LastTrick>(null);
+  const [showHeartsBroken, setShowHeartsBroken] = useState(false);
   const [showRename, setShowRename] = useState(false);
   const [playerName, setPlayerName] = useState("");
   const [submitState, setSubmitState] = useState<SubmitState>("idle");
@@ -156,6 +160,19 @@ export default function HeartsScreen() {
     });
     return unsub;
   }, [navigation, syncComplete, syncGetGameId]);
+
+  const { play: playHeartsBroken } = useSound("hearts.heartsBroken");
+
+  useGameEvents(
+    gameState.events,
+    {
+      heartsBroken: () => {
+        playHeartsBroken();
+        setShowHeartsBroken(true);
+      },
+    },
+    () => setGameState((prev) => ({ ...prev, events: [] }))
+  );
 
   const playerLabels = playerNames;
 
@@ -369,13 +386,19 @@ export default function HeartsScreen() {
               seatLabel={playerLabels[1] ?? ""}
             />
           </View>
-          <TrickArea
-            trick={[...displayTrick]}
-            playerIndex={HUMAN}
-            playerLabels={playerLabels}
-            winnerIndex={trickWinnerIndex}
-            onAnimationComplete={handleTrickAnimationComplete}
-          />
+          <View style={styles.trickWrapper}>
+            <TrickArea
+              trick={[...displayTrick]}
+              playerIndex={HUMAN}
+              playerLabels={playerLabels}
+              winnerIndex={trickWinnerIndex}
+              onAnimationComplete={handleTrickAnimationComplete}
+            />
+            <HeartsBrokenAnimation
+              visible={showHeartsBroken}
+              onAnimationEnd={() => setShowHeartsBroken(false)}
+            />
+          </View>
           <View style={styles.sideColumn}>
             <SideSeatLabel label={playerLabels[3] ?? ""} colors={colors} />
             <OpponentCapturedPile
@@ -648,6 +671,9 @@ const styles = StyleSheet.create({
   sideColumn: {
     alignItems: "center",
     gap: 6,
+  },
+  trickWrapper: {
+    position: "relative",
   },
   bottomArea: {
     paddingBottom: 8,

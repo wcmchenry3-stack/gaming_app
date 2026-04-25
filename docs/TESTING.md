@@ -152,6 +152,22 @@ the Sentry dashboard open and filtered to `subsystem:hearts.integrity`.
 3. Repeat-mount the screen with the same payload. Confirm Sentry receives
    **at most one** event per check per mount (per-mount dedupe).
 
+### Hearts: hearts-broken sound + animation (#774)
+
+Verifies the crack sound and burst animation fire exactly once when hearts break.
+
+1. Start a Hearts game. Pass phase may occur first — complete it.
+2. Play non-heart cards until someone is void in the led suit and must discard a heart.
+   (Alternatively: reach trick 2+ where hearts can be led if broken, then lead a heart.)
+3. The moment the **first** heart is played into any trick:
+   - Confirm the crack sound plays once (audible pop/crack).
+   - Confirm a red ♥ icon springs up at the trick center, cracks radiate outward, and a red tint flashes on the trick area.
+   - Confirm the icon lingers at reduced opacity (~3 s total), then fades out over 0.5 s.
+   - Confirm play is **not blocked** — other cards remain tappable while the animation runs.
+4. Play a second heart into a subsequent trick. Confirm the animation and sound do **not** fire again.
+5. **Reduced-motion fallback:** Enable Reduce Motion in device accessibility settings, repeat steps 2–3.
+   Confirm only an instant red tint flash (~0.3 s) occurs, no spring or crack-line motion.
+
 ---
 
 ## E2E Test Conventions

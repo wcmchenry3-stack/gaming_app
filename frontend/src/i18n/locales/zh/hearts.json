@@ -52,5 +52,7 @@
   "settings.rename_title": "Player Names",
   "settings.player_label": "Player {{n}} (default: {{default}})",
   "settings.save": "Save",
-  "settings.cancel": "Cancel"
+  "settings.cancel": "Cancel",
+
+  "events.heartsBroken": "红心已开"
 }
