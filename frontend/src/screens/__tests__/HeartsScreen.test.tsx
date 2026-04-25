@@ -2,6 +2,7 @@ import React from "react";
 import { render, fireEvent, act } from "@testing-library/react-native";
 import HeartsScreen from "../HeartsScreen";
 import { ThemeProvider } from "../../theme/ThemeContext";
+import { HeartsRoundsProvider } from "../../game/hearts/RoundsContext";
 import { createSeededRng, setRng } from "../../game/hearts/engine";
 import * as engine from "../../game/hearts/engine";
 
@@ -34,8 +35,13 @@ jest.mock("../../game/_shared/useGameSync", () => ({
   }),
 }));
 
+const mockNavigate = jest.fn();
 jest.mock("@react-navigation/native", () => ({
-  useNavigation: () => ({ goBack: jest.fn(), addListener: jest.fn(() => jest.fn()) }),
+  useNavigation: () => ({
+    goBack: jest.fn(),
+    navigate: mockNavigate,
+    addListener: jest.fn(() => jest.fn()),
+  }),
 }));
 
 jest.mock("expo-blur", () => ({
@@ -51,7 +57,9 @@ jest.useFakeTimers();
 function renderScreen() {
   return render(
     <ThemeProvider>
-      <HeartsScreen />
+      <HeartsRoundsProvider>
+        <HeartsScreen />
+      </HeartsRoundsProvider>
     </ThemeProvider>
   );
 }
@@ -130,20 +138,20 @@ describe("HeartsScreen — playing phase (no modal)", () => {
     expect(getAllByText("Hearts").length).toBeGreaterThan(0);
   });
 
-  it("score panel opens and shows score board", () => {
+  it("⋯ menu Scoreboard item navigates to ScoreboardScreen with hearts gameKey", () => {
+    mockNavigate.mockClear();
     const { getByLabelText, getByText } = renderScreen();
     fireEvent.press(getByLabelText("More options")); // open ⋯ menu
     fireEvent.press(getByText("Scoreboard")); // tap Scoreboard item
-    expect(getByText("Total")).toBeTruthy(); // ScoreBoard total row header
+    expect(mockNavigate).toHaveBeenCalledWith("Scoreboard", { gameKey: "hearts" });
   });
 
-  it("score panel close button dismisses the panel", () => {
-    const { getByLabelText, queryByLabelText, getByText } = renderScreen();
+  it("⋯ menu Edit Names item opens the rename modal", () => {
+    const { getByLabelText, getByText } = renderScreen();
     fireEvent.press(getByLabelText("More options")); // open ⋯ menu
-    fireEvent.press(getByText("Scoreboard")); // tap Scoreboard item
-    expect(getByLabelText("Close")).toBeTruthy();
-    fireEvent.press(getByLabelText("Close"));
-    expect(queryByLabelText("Close")).toBeNull();
+    fireEvent.press(getByText("Edit Names")); // tap Edit Names item
+    // Rename modal title is in hearts.json under settings.rename_title
+    expect(getByText("Player Names")).toBeTruthy();
   });
 
   it("human hand cards are rendered", () => {

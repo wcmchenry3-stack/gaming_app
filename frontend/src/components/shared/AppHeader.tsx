@@ -27,6 +27,8 @@ export interface AppHeaderProps {
   onOpenScoreboard?: () => void;
   /** When provided, shows the ⋯ menu with a New Game item (with abandon confirmation). See GH #711. */
   onNewGame?: () => void;
+  /** When provided, shows the ⋯ menu with an Edit Names item. */
+  onEditPlayerNames?: () => void;
 }
 
 export function AppHeader({
@@ -36,6 +38,7 @@ export function AppHeader({
   requireBack = false,
   onOpenScoreboard,
   onNewGame,
+  onEditPlayerNames,
 }: AppHeaderProps) {
   const { colors, theme } = useTheme();
   const insets = useSafeAreaInsets();
@@ -45,7 +48,7 @@ export function AppHeader({
   const [abandonVisible, setAbandonVisible] = useState(false);
 
   const totalHeight = APP_HEADER_HEIGHT + insets.top;
-  const showMenu = !!onOpenScoreboard || !!onNewGame;
+  const showMenu = !!onOpenScoreboard || !!onNewGame || !!onEditPlayerNames;
 
   // #498 — mount-time telemetry: record whether the back affordance is wired
   // up so we can detect regressions where a screen silently drops onBack.
@@ -91,6 +94,11 @@ export function AppHeader({
   const handleMenuNewGame = () => {
     setMenuOpen(false);
     setAbandonVisible(true);
+  };
+
+  const handleMenuEditNames = () => {
+    setMenuOpen(false);
+    onEditPlayerNames?.();
   };
 
   const handleAbandonConfirm = () => {
@@ -272,6 +280,22 @@ export function AppHeader({
               />
               <Text style={[styles.itemLabel, { color: colors.text }]}>
                 {t("common:overflow.menu.newGame")}
+              </Text>
+            </Pressable>
+          )}
+
+          {!!onEditPlayerNames && (
+            <Pressable
+              onPress={handleMenuEditNames}
+              accessibilityRole="menuitem"
+              style={(state) => [
+                styles.dropdownItem,
+                state.pressed && { backgroundColor: colors.surfaceAlt },
+              ]}
+            >
+              <MaterialIcons name="edit" size={18} color={colors.accent} style={styles.itemIcon} />
+              <Text style={[styles.itemLabel, { color: colors.text }]}>
+                {t("common:overflow.menu.editNames")}
               </Text>
             </Pressable>
           )}

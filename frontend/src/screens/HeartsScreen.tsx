@@ -1,6 +1,8 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import { useNavigation } from "@react-navigation/native";
+import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import type { HomeStackParamList } from "../../App";
 import { useTranslation } from "react-i18next";
 import { useTheme } from "../theme/ThemeContext";
 import type { Colors } from "../theme/ThemeContext";
@@ -9,7 +11,7 @@ import { OpponentCapturedPile, SelfCapturedPile } from "../components/hearts/Cap
 import OpponentHand from "../components/hearts/OpponentHand";
 import PassBanner from "../components/hearts/PassBanner";
 import PlayerHand from "../components/hearts/PlayerHand";
-import ScoreBoard from "../components/hearts/ScoreBoard";
+import HeartsScoreboard from "../components/scoreboard/HeartsScoreboard";
 import TrickArea from "../components/hearts/TrickArea";
 import {
   commitPass,
@@ -29,6 +31,7 @@ import {
   validateName,
 } from "../game/hearts/playerNames";
 import { heartsApi } from "../game/hearts/api";
+import { useHeartsRounds } from "../game/hearts/RoundsContext";
 import { useGameSync } from "../game/_shared/useGameSync";
 import { useNetwork } from "../game/_shared/NetworkContext";
 import { OfflineBanner } from "../components/shared/OfflineBanner";
@@ -57,12 +60,11 @@ const sideSeatStyles = StyleSheet.create({
 export default function HeartsScreen() {
   const { t } = useTranslation("hearts");
   const { colors } = useTheme();
-  const navigation = useNavigation();
+  const navigation = useNavigation<NativeStackNavigationProp<HomeStackParamList>>();
   const { isOnline, isInitialized } = useNetwork();
 
   const [gameState, setGameState] = useState<HeartsState>(() => dealGame());
   const [lastTrick, setLastTrick] = useState<LastTrick>(null);
-  const [showScores, setShowScores] = useState(false);
   const [showRename, setShowRename] = useState(false);
   const [playerName, setPlayerName] = useState("");
   const [submitState, setSubmitState] = useState<SubmitState>("idle");
@@ -112,12 +114,31 @@ export default function HeartsScreen() {
   }, []);
 
   // ─── Track per-round score history ────────────────────────────────────────
+  // Push the *applied* per-round delta (post-moon: shooter 0, others 26) by
+  // diffing post-hand cumulativeScores against the running sum of prior rows.
+  // Storing raw handScores here would invert the moon row vs. the totals row
+  // (#743). Deriving from cumulative deltas keeps the scoreboard a pure view
+  // of engine-authoritative totals.
   useEffect(() => {
     if (gameState.phase !== "dealing" && gameState.phase !== "game_over") return;
     if (gameState.handNumber <= lastRecordedHandRef.current) return;
     lastRecordedHandRef.current = gameState.handNumber;
-    setScoreHistory((prev) => [...prev, [...gameState.handScores]]);
-  }, [gameState.phase, gameState.handNumber, gameState.handScores]);
+    setScoreHistory((prev) => {
+      const sums = prev.reduce((acc, row) => acc.map((v, i) => v + (row[i] ?? 0)), [0, 0, 0, 0]);
+      const delta = gameState.cumulativeScores.map((c, i) => c - (sums[i] ?? 0));
+      return [...prev, delta];
+    });
+  }, [gameState.phase, gameState.handNumber, gameState.cumulativeScores]);
+
+  // ─── Sync snapshot to shared rounds context (read by ScoreboardScreen) ────
+  const { setSnapshot: setRoundsSnapshot } = useHeartsRounds();
+  useEffect(() => {
+    setRoundsSnapshot({
+      cumulativeScores: gameState.cumulativeScores,
+      scoreHistory,
+      playerLabels: playerNames,
+    });
+  }, [gameState.cumulativeScores, scoreHistory, playerNames, setRoundsSnapshot]);
 
   // ─── Abandon on back-navigation ───────────────────────────────────────────
   useEffect(() => {
@@ -314,17 +335,14 @@ export default function HeartsScreen() {
   const displayTrick = lastTrick !== null ? lastTrick.trick : gameState.currentTrick;
   const trickWinnerIndex = lastTrick !== null ? lastTrick.winnerIndex : null;
   const moonShooter = detectMoon(gameState.wonCards);
-  const dangerIndex = gameState.cumulativeScores.reduce(
-    (maxIdx, s, i, arr) => ((s ?? 0) > (arr[maxIdx] ?? 0) ? i : maxIdx),
-    0
-  );
 
   return (
     <GameShell
       title={t("game.title")}
       onBack={() => navigation.goBack()}
       onNewGame={handlePlayAgain}
-      onOpenScoreboard={() => setShowScores(true)}
+      onOpenScoreboard={() => navigation.navigate("Scoreboard", { gameKey: "hearts" })}
+      onEditPlayerNames={handleOpenRename}
     >
       {/* ── Table ──────────────────────────────────────────────────── */}
       <View style={[styles.table, { backgroundColor: colors.background }]}>
@@ -403,11 +421,11 @@ export default function HeartsScreen() {
                   {t("hand_end.moon", { label: playerLabels[moonShooter] ?? "" })}
                 </Text>
               )}
-              <ScoreBoard
+              <HeartsScoreboard
                 playerLabels={playerLabels}
                 cumulativeScores={[...gameState.cumulativeScores]}
                 scoreHistory={scoreHistory}
-                dangerIndex={dangerIndex}
+                compact
               />
               <Pressable
                 style={[styles.btn, { backgroundColor: colors.accent }]}
@@ -440,11 +458,11 @@ export default function HeartsScreen() {
               <Text style={[styles.winnerText, { color: colors.accent }]}>
                 {t("game_over.winner", { label: playerLabels[gameState.winnerIndex ?? 0] ?? "" })}
               </Text>
-              <ScoreBoard
+              <HeartsScoreboard
                 playerLabels={playerLabels}
                 cumulativeScores={[...gameState.cumulativeScores]}
                 scoreHistory={scoreHistory}
-                dangerIndex={dangerIndex}
+                compact
               />
 
               {submitState !== "done" && (
@@ -537,45 +555,6 @@ export default function HeartsScreen() {
           </View>
         </Modal>
       )}
-
-      {/* ── Score panel modal ──────────────────────────────────────── */}
-      <Modal
-        visible={showScores}
-        transparent
-        animationType="slide"
-        onRequestClose={() => setShowScores(false)}
-        accessibilityViewIsModal
-      >
-        <View style={[styles.overlay, { backgroundColor: colors.overlay }]}>
-          <View
-            style={[styles.panel, { backgroundColor: colors.surface, borderColor: colors.border }]}
-          >
-            <Text style={[styles.panelTitle, { color: colors.text }]}>{t("score.board")}</Text>
-            <ScoreBoard
-              playerLabels={playerLabels}
-              cumulativeScores={[...gameState.cumulativeScores]}
-              scoreHistory={scoreHistory}
-              dangerIndex={dangerIndex}
-            />
-            <Pressable
-              style={[styles.btn, { backgroundColor: colors.surfaceAlt }]}
-              onPress={handleOpenRename}
-              accessibilityRole="button"
-              accessibilityLabel={t("settings.rename")}
-            >
-              <Text style={[styles.btnText, { color: colors.text }]}>{t("settings.rename")}</Text>
-            </Pressable>
-            <Pressable
-              style={[styles.btn, { backgroundColor: colors.surfaceAlt }]}
-              onPress={() => setShowScores(false)}
-              accessibilityRole="button"
-              accessibilityLabel={t("score.close")}
-            >
-              <Text style={[styles.btnText, { color: colors.text }]}>{t("score.close")}</Text>
-            </Pressable>
-          </View>
-        </View>
-      </Modal>
 
       {/* ── Rename players modal ───────────────────────────────────── */}
       <Modal

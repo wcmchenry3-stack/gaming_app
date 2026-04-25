@@ -5,7 +5,6 @@ import PlayingCard from "../PlayingCard";
 import PlayerHand from "../PlayerHand";
 import OpponentHand from "../OpponentHand";
 import TrickArea from "../TrickArea";
-import ScoreBoard from "../ScoreBoard";
 import PassBanner from "../PassBanner";
 import { OpponentCapturedPile, SelfCapturedPile, penaltyPoints } from "../CapturedPile";
 import type { Card, TrickCard } from "../../../game/hearts/types";
@@ -259,48 +258,6 @@ describe("TrickArea", () => {
       });
       expect(onComplete).toHaveBeenCalledTimes(1);
     });
-  });
-});
-
-// ---------------------------------------------------------------------------
-// ScoreBoard
-// ---------------------------------------------------------------------------
-
-describe("ScoreBoard", () => {
-  const labels = ["You", "Left", "Top", "Right"];
-  const cumulative = [10, 5, 20, 0];
-  const history = [
-    [3, 2, 8, 0],
-    [7, 3, 12, 0],
-  ];
-
-  it("renders all player labels", () => {
-    const { getByText } = wrap(
-      <ScoreBoard playerLabels={labels} cumulativeScores={cumulative} scoreHistory={history} />
-    );
-    labels.forEach((l) => expect(getByText(l.slice(0, 5))).toBeTruthy());
-  });
-
-  it("renders cumulative totals row", () => {
-    const { getByText } = wrap(
-      <ScoreBoard playerLabels={labels} cumulativeScores={cumulative} scoreHistory={history} />
-    );
-    expect(getByText("20")).toBeTruthy();
-  });
-
-  it("renders per-round scores", () => {
-    const { getAllByText } = wrap(
-      <ScoreBoard playerLabels={labels} cumulativeScores={cumulative} scoreHistory={history} />
-    );
-    expect(getAllByText("3").length).toBeGreaterThan(0);
-    expect(getAllByText("12").length).toBeGreaterThan(0);
-  });
-
-  it("renders empty history without error", () => {
-    const { toJSON } = wrap(
-      <ScoreBoard playerLabels={labels} cumulativeScores={[0, 0, 0, 0]} scoreHistory={[]} />
-    );
-    expect(toJSON()).toBeTruthy();
   });
 });
 

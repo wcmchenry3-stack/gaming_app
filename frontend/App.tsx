@@ -25,6 +25,7 @@ import { useHtmlAttributes } from "./src/i18n/useHtmlAttributes";
 import { NetworkProvider } from "./src/game/_shared/NetworkContext";
 import { CardDeckProvider } from "./src/game/_shared/decks/CardDeckContext";
 import { BlackjackGameProvider } from "./src/game/blackjack/BlackjackGameContext";
+import { HeartsRoundsProvider } from "./src/game/hearts/RoundsContext";
 import { SessionLogger } from "./src/components/FeedbackWidget/SessionLogger";
 import { installSentryConsoleErrorCapture } from "./src/utils/sentryConsoleError";
 import { LazyScreens } from "./src/utils/lazyScreens";
@@ -62,6 +63,7 @@ export type HomeStackParamList = {
   Solitaire: undefined;
   Hearts: undefined;
   Sudoku: undefined;
+  Scoreboard: { gameKey: "hearts" };
 };
 
 export type ProfileStackParamList = {
@@ -134,6 +136,7 @@ const LazySudokuScreen = withSuspense(LazyScreens.Sudoku, "sudoku");
 const LazyLeaderboardScreen = withSuspense(LazyScreens.Leaderboard, "leaderboard");
 const LazyGameDetailScreen = withSuspense(LazyScreens.GameDetail, "game_detail");
 const LazySettingsScreen = withSuspense(LazyScreens.Settings, "settings");
+const LazyScoreboardScreen = withSuspense(LazyScreens.Scoreboard, "scoreboard");
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 const HomeStack = createNativeStackNavigator<HomeStackParamList>();
@@ -152,6 +155,7 @@ function LobbyStack() {
       <HomeStack.Screen name="Solitaire" component={LazySolitaireScreen} />
       <HomeStack.Screen name="Hearts" component={LazyHeartsScreen} />
       <HomeStack.Screen name="Sudoku" component={LazySudokuScreen} />
+      <HomeStack.Screen name="Scoreboard" component={LazyScoreboardScreen} />
     </HomeStack.Navigator>
   );
 }
@@ -197,11 +201,13 @@ function AppInner() {
       <ThemeProvider>
         <CardDeckProvider>
           <BlackjackGameProvider>
-            <NavigationContainer>
-              <Stack.Navigator screenOptions={{ headerShown: false }}>
-                <Stack.Screen name="MainTabs" component={MainTabs} />
-              </Stack.Navigator>
-            </NavigationContainer>
+            <HeartsRoundsProvider>
+              <NavigationContainer>
+                <Stack.Navigator screenOptions={{ headerShown: false }}>
+                  <Stack.Screen name="MainTabs" component={MainTabs} />
+                </Stack.Navigator>
+              </NavigationContainer>
+            </HeartsRoundsProvider>
           </BlackjackGameProvider>
         </CardDeckProvider>
       </ThemeProvider>
