@@ -140,7 +140,14 @@ export function HeartsBrokenAnimation({ visible, onAnimationEnd }: Props) {
     transform: [{ rotate: `${CRACK_ANGLES[5]}deg` }, { scaleX: crack5.value }],
     opacity: crack5.value,
   }));
-  const crackStyles = [crack0Style, crack1Style, crack2Style, crack3Style, crack4Style, crack5Style];
+  const crackStyles = [
+    crack0Style,
+    crack1Style,
+    crack2Style,
+    crack3Style,
+    crack4Style,
+    crack5Style,
+  ];
 
   return (
     // Non-interactive wrapper — never blocks touches
