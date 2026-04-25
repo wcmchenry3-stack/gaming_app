@@ -14,7 +14,11 @@ interface Props {
 }
 
 const POSITIONS = ["bottom", "left", "top", "right"] as const;
-const ANIMATION_DURATION_MS = 600;
+
+// Each card slides out in 500 ms; cards stagger 60 ms apart (bottom→left→top→right).
+// Total window: 3 × 60 + 500 = 680 ms — within the 700 ms test budget.
+const STAGGER_MS = 60;
+const CARD_DURATION_MS = 500;
 
 // Direction vector per winner screen-position (relative to human). Cards slide
 // from the trick area toward the winning seat, matching the design spec.
@@ -34,7 +38,17 @@ export default function TrickArea({
 }: Props) {
   const { t } = useTranslation("hearts");
   const { colors } = useTheme();
-  const progress = useRef(new Animated.Value(0)).current;
+
+  // One Animated.Value per position slot (bottom=0, left=1, top=2, right=3).
+  const cardProgress = useRef(
+    POSITIONS.map(() => new Animated.Value(0)) as [
+      Animated.Value,
+      Animated.Value,
+      Animated.Value,
+      Animated.Value,
+    ]
+  ).current;
+
   const onCompleteRef = useRef(onAnimationComplete);
   onCompleteRef.current = onAnimationComplete;
 
@@ -52,43 +66,31 @@ export default function TrickArea({
 
   useEffect(() => {
     if (!shouldAnimate) {
-      progress.setValue(0);
+      cardProgress.forEach((p) => p.setValue(0));
       return;
     }
-    progress.setValue(0);
-    const anim = Animated.timing(progress, {
-      toValue: 1,
-      duration: ANIMATION_DURATION_MS,
-      easing: Easing.in(Easing.ease),
-      useNativeDriver: false,
-    });
-    anim.start(({ finished }) => {
+    cardProgress.forEach((p) => p.setValue(0));
+
+    const animations = cardProgress.map((p, i) =>
+      Animated.sequence([
+        Animated.delay(i * STAGGER_MS),
+        Animated.timing(p, {
+          toValue: 1,
+          duration: CARD_DURATION_MS,
+          easing: Easing.in(Easing.ease),
+          useNativeDriver: false,
+        }),
+      ])
+    );
+    const group = Animated.parallel(animations);
+    group.start(({ finished }) => {
       if (finished) onCompleteRef.current?.();
     });
     return () => {
-      anim.stop();
+      group.stop();
     };
-  }, [shouldAnimate, winnerIndex, progress]);
-
-  const animatedStyle = winnerDirection
-    ? {
-        transform: [
-          {
-            translateX: progress.interpolate({
-              inputRange: [0, 1],
-              outputRange: [0, winnerDirection.x],
-            }),
-          },
-          {
-            translateY: progress.interpolate({
-              inputRange: [0, 1],
-              outputRange: [0, winnerDirection.y],
-            }),
-          },
-        ],
-        opacity: progress.interpolate({ inputRange: [0, 1], outputRange: [1, 0] }),
-      }
-    : null;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [shouldAnimate, winnerIndex]);
 
   const slots: Record<string, TrickCard | undefined> = {};
   for (const tc of trick) {
@@ -99,6 +101,28 @@ export default function TrickArea({
     const tc = slots[pos];
     const label = playerLabels?.[seatIndex] ?? String(seatIndex);
     const isWinner = hasWinner && winnerIndex === seatIndex;
+    const p = cardProgress[POSITIONS.indexOf(pos)];
+
+    const animatedStyle =
+      winnerDirection && p
+        ? {
+            transform: [
+              {
+                translateX: p.interpolate({
+                  inputRange: [0, 1],
+                  outputRange: [0, winnerDirection.x],
+                }),
+              },
+              {
+                translateY: p.interpolate({
+                  inputRange: [0, 1],
+                  outputRange: [0, winnerDirection.y],
+                }),
+              },
+            ],
+            opacity: p.interpolate({ inputRange: [0, 1], outputRange: [1, 0] }),
+          }
+        : null;
 
     return (
       <Animated.View

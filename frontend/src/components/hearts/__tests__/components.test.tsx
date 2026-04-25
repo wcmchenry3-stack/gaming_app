@@ -237,7 +237,7 @@ describe("TrickArea", () => {
       expect(onComplete).toHaveBeenCalledTimes(1);
     });
 
-    it("fires onAnimationComplete within the 600ms budget plus a small margin", () => {
+    it("fires onAnimationComplete within the 700ms budget (staggered: 3×60ms + 500ms = 680ms)", () => {
       const onComplete = jest.fn();
       wrap(
         <TrickArea
