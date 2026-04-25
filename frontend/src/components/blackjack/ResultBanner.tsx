@@ -6,9 +6,10 @@ import { useTheme } from "../../theme/ThemeContext";
 interface Props {
   outcome: string;
   payout: number;
+  compact?: boolean;
 }
 
-export default function ResultBanner({ outcome, payout }: Props) {
+export default function ResultBanner({ outcome, payout, compact = false }: Props) {
   const { t } = useTranslation("blackjack");
   const { colors } = useTheme();
 
@@ -49,6 +50,7 @@ export default function ResultBanner({ outcome, payout }: Props) {
     <View
       style={[
         styles.container,
+        compact && styles.containerCompact,
         {
           backgroundColor: colors.surfaceHigh,
           borderColor: colors.border,
@@ -56,9 +58,11 @@ export default function ResultBanner({ outcome, payout }: Props) {
         },
       ]}
     >
-      <Text style={[styles.outcome, { color: accentColor }]}>{outcomeText}</Text>
+      <Text style={[styles.outcome, compact && styles.outcomeCompact, { color: accentColor }]}>
+        {outcomeText}
+      </Text>
       <Text
-        style={[styles.payout, { color: payoutColor }]}
+        style={[styles.payout, compact && styles.payoutCompact, { color: payoutColor }]}
         accessibilityLabel={t("payout.accessibilityLabel", { amount: payout })}
       >
         {payoutText}
@@ -79,15 +83,26 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
     gap: 6,
   },
+  containerCompact: {
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    gap: 4,
+  },
   outcome: {
-    fontSize: 30,
-    fontWeight: "800",
+    fontSize: 26,
+    fontWeight: "700",
     textAlign: "center",
     letterSpacing: -0.5,
   },
+  outcomeCompact: {
+    fontSize: 18,
+  },
   payout: {
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: "700",
     textAlign: "center",
+  },
+  payoutCompact: {
+    fontSize: 13,
   },
 });

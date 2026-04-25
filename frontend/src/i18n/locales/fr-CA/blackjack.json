@@ -27,7 +27,7 @@
   "hand.player": "Votre main",
   "hand.dealer": "Main du croupier",
   "hand.playerHand": "Main {{number}}",
-  "hand.activeIndicator": "(Active)",
+  "hand.activeIndicator": "● Playing",
   "hand.value": "Valeur : {{value}}",
   "hand.softValue": "Souple {{value}}",
   "hand.valueHidden": "Valeur : ?",

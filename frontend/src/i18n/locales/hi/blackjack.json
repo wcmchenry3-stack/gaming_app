@@ -27,7 +27,7 @@
   "hand.player": "आपके पत्ते",
   "hand.dealer": "डीलर के पत्ते",
   "hand.playerHand": "हाथ {{number}}",
-  "hand.activeIndicator": "(सक्रिय)",
+  "hand.activeIndicator": "● Playing",
   "hand.value": "मूल्य: {{value}}",
   "hand.softValue": "सॉफ्ट {{value}}",
   "hand.valueHidden": "मूल्य: ?",

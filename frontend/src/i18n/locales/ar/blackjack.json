@@ -27,7 +27,7 @@
   "hand.player": "يدك",
   "hand.dealer": "يد الموزع",
   "hand.playerHand": "اليد {{number}}",
-  "hand.activeIndicator": "(نشطة)",
+  "hand.activeIndicator": "● Playing",
   "hand.value": "القيمة: {{value}}",
   "hand.softValue": "ناعم {{value}}",
   "hand.valueHidden": "القيمة: ؟",

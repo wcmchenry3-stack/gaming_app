@@ -27,7 +27,7 @@
   "hand.player": "Deine Hand",
   "hand.dealer": "Geber Hand",
   "hand.playerHand": "Hand {{number}}",
-  "hand.activeIndicator": "(Aktiv)",
+  "hand.activeIndicator": "● Playing",
   "hand.value": "Wert: {{value}}",
   "hand.softValue": "Soft {{value}}",
   "hand.valueHidden": "Wert: ?",
