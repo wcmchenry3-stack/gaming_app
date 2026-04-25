@@ -1,6 +1,14 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as Sentry from "@sentry/react-native";
-import { saveGame, loadGame, clearGame, saveBestScore, loadBestScore, loadStats, saveStats } from "../storage";
+import {
+  saveGame,
+  loadGame,
+  clearGame,
+  saveBestScore,
+  loadBestScore,
+  loadStats,
+  saveStats,
+} from "../storage";
 import { _resetTileIds, move, setRng, createSeededRng } from "../engine";
 import { Twenty48State } from "../types";
 
