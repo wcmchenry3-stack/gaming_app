@@ -5,6 +5,12 @@
  * engine, AI, UI components, and persistence layer alike.
  */
 
+/** UI events emitted by the engine and consumed by the animation layer. */
+export type GameEvent =
+  | { readonly type: "moonShot"; readonly shooter: number }
+  | { readonly type: "heartsBroken" }
+  | { readonly type: "queenOfSpades"; readonly takerSeat: number };
+
 export type Suit = "spades" | "hearts" | "diamonds" | "clubs";
 export type Rank = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13;
 
@@ -72,4 +78,9 @@ export interface HeartsState {
   readonly tricksPlayedInHand: number;
   readonly isComplete: boolean;
   readonly winnerIndex: number | null;
+  /**
+   * One-shot UI events set by the engine and cleared by the animation layer.
+   * Optional so legacy serialized states (no `events` field) deserialize cleanly.
+   */
+  readonly events?: readonly GameEvent[];
 }
