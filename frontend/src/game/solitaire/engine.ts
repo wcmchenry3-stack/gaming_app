@@ -167,6 +167,8 @@ export function dealGame(drawMode: DrawMode, explicitSeed?: number): SolitaireSt
     recycleCount: 0,
     undoStack: [],
     isComplete: false,
+    startedAt: null,
+    accumulatedMs: 0,
   };
 }
 
@@ -276,11 +278,24 @@ function clampScore(score: number): number {
 
 /** Take a snapshot of `prev` (with its own undoStack cleared to []), append
  * it to `prev.undoStack`, cap at UNDO_CAP, and attach to `next`. */
-function withUndo(prev: SolitaireState, next: Omit<SolitaireState, "undoStack">): SolitaireState {
+function withUndo(
+  prev: SolitaireState,
+  next: Omit<SolitaireState, "undoStack" | "startedAt" | "accumulatedMs">
+): SolitaireState {
   const snapshot: SolitaireState = { ...prev, undoStack: [] };
   const stack = [...prev.undoStack, snapshot];
   const capped = stack.length > UNDO_CAP ? stack.slice(stack.length - UNDO_CAP) : stack;
-  return { ...next, undoStack: capped };
+  return { ...next, undoStack: capped, startedAt: prev.startedAt, accumulatedMs: prev.accumulatedMs };
+}
+
+/** Start, advance, or freeze the timer. Called after every state mutation. */
+function applyTimer(prev: SolitaireState, next: SolitaireState): SolitaireState {
+  const now = Date.now();
+  if (next.isComplete && !prev.isComplete) {
+    const activeStart = prev.startedAt ?? now;
+    return { ...next, accumulatedMs: prev.accumulatedMs + (now - activeStart), startedAt: null };
+  }
+  return { ...next, startedAt: prev.startedAt ?? now, accumulatedMs: prev.accumulatedMs };
 }
 
 /** If the top card of `col` exists and is face-down, flip it and return
@@ -308,17 +323,13 @@ function isWin(foundations: Foundations): boolean {
 
 function finalizeAfterMove(
   prev: SolitaireState,
-  next: Omit<SolitaireState, "undoStack" | "isComplete">
+  next: Omit<SolitaireState, "undoStack" | "isComplete" | "startedAt" | "accumulatedMs">
 ): SolitaireState {
   const wasComplete = prev.isComplete;
   const nowComplete = isWin(next.foundations);
   const bonus = !wasComplete && nowComplete ? SCORE_WIN_BONUS : 0;
   const finalScore = clampScore(next.score + bonus);
-  return withUndo(prev, {
-    ...next,
-    score: finalScore,
-    isComplete: nowComplete,
-  });
+  return applyTimer(prev, withUndo(prev, { ...next, score: finalScore, isComplete: nowComplete }));
 }
 
 // ---------------------------------------------------------------------------
@@ -463,17 +474,20 @@ export function drawFromStock(state: SolitaireState): SolitaireState {
   }
   const newStock = state.stock.slice(0, state.stock.length - n);
   const newWaste = [...state.waste, ...drawn];
-  return withUndo(state, {
-    _v: 1,
-    drawMode: state.drawMode,
-    tableau: state.tableau,
-    foundations: state.foundations,
-    stock: newStock,
-    waste: newWaste,
-    score: state.score,
-    recycleCount: state.recycleCount,
-    isComplete: state.isComplete,
-  });
+  return applyTimer(
+    state,
+    withUndo(state, {
+      _v: 1,
+      drawMode: state.drawMode,
+      tableau: state.tableau,
+      foundations: state.foundations,
+      stock: newStock,
+      waste: newWaste,
+      score: state.score,
+      recycleCount: state.recycleCount,
+      isComplete: state.isComplete,
+    })
+  );
 }
 
 /**
@@ -489,17 +503,20 @@ export function recycleWaste(state: SolitaireState): SolitaireState {
     newStock.push({ ...card, faceUp: false });
   }
   const penalty = state.recycleCount >= 1 ? SCORE_RECYCLE_PENALTY : 0;
-  return withUndo(state, {
-    _v: 1,
-    drawMode: state.drawMode,
-    tableau: state.tableau,
-    foundations: state.foundations,
-    stock: newStock,
-    waste: [],
-    score: clampScore(state.score + penalty),
-    recycleCount: state.recycleCount + 1,
-    isComplete: state.isComplete,
-  });
+  return applyTimer(
+    state,
+    withUndo(state, {
+      _v: 1,
+      drawMode: state.drawMode,
+      tableau: state.tableau,
+      foundations: state.foundations,
+      stock: newStock,
+      waste: [],
+      score: clampScore(state.score + penalty),
+      recycleCount: state.recycleCount + 1,
+      isComplete: state.isComplete,
+    })
+  );
 }
 
 // ---------------------------------------------------------------------------
@@ -516,7 +533,8 @@ export function undo(state: SolitaireState): SolitaireState {
   const last = state.undoStack[state.undoStack.length - 1];
   if (last === undefined) return state;
   const remaining = state.undoStack.slice(0, -1);
-  return { ...last, undoStack: remaining };
+  // Preserve the live timer — don't restore the older timer snapshot from the undo entry.
+  return { ...last, undoStack: remaining, startedAt: state.startedAt, accumulatedMs: state.accumulatedMs };
 }
 
 // ---------------------------------------------------------------------------

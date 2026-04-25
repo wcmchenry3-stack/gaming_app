@@ -40,7 +40,7 @@
   "error.loadFailed": "无法恢复存档。",
   "error.submitFailed": "无法提交分数，请检查网络连接。",
   "error.submitRetry": "重试",
-  "scoreboard.heroLabel": "MOVES",
+  "scoreboard.heroLabel": "TIME",
   "scoreboard.heroSub": "{{moves}} moves · {{foundations}} of 4 complete",
   "scoreboard.heroSubEmpty": "No games played yet",
   "scoreboard.bestTime": "Best Time",

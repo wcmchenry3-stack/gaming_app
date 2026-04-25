@@ -1,7 +1,7 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as Sentry from "@sentry/react-native";
 
-import { clearGame, loadGame, saveGame } from "../storage";
+import { clearGame, loadGame, saveGame, loadStats, saveStats } from "../storage";
 import { dealGame, applyMove } from "../engine";
 import type { SolitaireState } from "../types";
 
@@ -88,5 +88,46 @@ describe("solitaire storage", () => {
     await saveGame(seedState());
     await clearGame();
     expect(await loadGame()).toBeNull();
+  });
+
+  it("normalizes missing timer fields for saves created before timer was added", async () => {
+    const stateWithoutTimer = { ...seedState() } as Partial<SolitaireState>;
+    delete (stateWithoutTimer as Record<string, unknown>).startedAt;
+    delete (stateWithoutTimer as Record<string, unknown>).accumulatedMs;
+    await AsyncStorage.setItem(GAME_KEY, JSON.stringify(stateWithoutTimer));
+    const loaded = await loadGame();
+    expect(loaded).not.toBeNull();
+    expect(loaded!.startedAt).toBeNull();
+    expect(loaded!.accumulatedMs).toBe(0);
+  });
+});
+
+describe("solitaire stats storage", () => {
+  beforeEach(async () => {
+    await AsyncStorage.clear();
+    (Sentry.captureException as jest.Mock).mockClear();
+  });
+
+  it("returns zero defaults when no stats saved", async () => {
+    const stats = await loadStats();
+    expect(stats).toEqual({ bestTimeMs: 0, bestMoves: 0, gamesPlayed: 0, gamesWon: 0 });
+  });
+
+  it("saves and loads stats round-trip", async () => {
+    await saveStats({ bestTimeMs: 95000, bestMoves: 42, gamesPlayed: 7, gamesWon: 3 });
+    const loaded = await loadStats();
+    expect(loaded).toEqual({ bestTimeMs: 95000, bestMoves: 42, gamesPlayed: 7, gamesWon: 3 });
+  });
+
+  it("returns zero defaults on corrupt stats payload", async () => {
+    await AsyncStorage.setItem("solitaire_stats_v1", "not-json{");
+    const stats = await loadStats();
+    expect(stats).toEqual({ bestTimeMs: 0, bestMoves: 0, gamesPlayed: 0, gamesWon: 0 });
+  });
+
+  it("coerces missing numeric fields to 0 on partial payload", async () => {
+    await AsyncStorage.setItem("solitaire_stats_v1", JSON.stringify({ gamesPlayed: 5 }));
+    const stats = await loadStats();
+    expect(stats).toEqual({ bestTimeMs: 0, bestMoves: 0, gamesPlayed: 5, gamesWon: 0 });
   });
 });

@@ -40,7 +40,7 @@
   "error.loadFailed": "No se pudo reanudar la partida guardada.",
   "error.submitFailed": "No se pudo guardar la puntuación. Revisa tu conexión.",
   "error.submitRetry": "Reintentar",
-  "scoreboard.heroLabel": "MOVES",
+  "scoreboard.heroLabel": "TIME",
   "scoreboard.heroSub": "{{moves}} moves · {{foundations}} of 4 complete",
   "scoreboard.heroSubEmpty": "No games played yet",
   "scoreboard.bestTime": "Best Time",

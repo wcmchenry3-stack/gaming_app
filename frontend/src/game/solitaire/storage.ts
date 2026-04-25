@@ -21,6 +21,14 @@ import * as Sentry from "@sentry/react-native";
 import type { SolitaireState } from "./types";
 
 const GAME_KEY = "solitaire_game";
+const STATS_KEY = "solitaire_stats_v1";
+
+export interface SolitaireStats {
+  bestTimeMs: number;
+  bestMoves: number;
+  gamesPlayed: number;
+  gamesWon: number;
+}
 
 function stripNestedUndo(state: SolitaireState): SolitaireState {
   return {
@@ -59,6 +67,9 @@ export async function loadGame(): Promise<SolitaireState | null> {
       await AsyncStorage.removeItem(GAME_KEY).catch(() => {});
       return null;
     }
+    // Normalize timer fields — absent in saves created before timer tracking was added.
+    parsed.startedAt = parsed.startedAt ?? null;
+    parsed.accumulatedMs = parsed.accumulatedMs ?? 0;
     return parsed as SolitaireState;
   } catch (e) {
     Sentry.captureMessage("solitaire.storage: corrupt game payload, discarding", {
@@ -76,5 +87,32 @@ export async function clearGame(): Promise<void> {
     await AsyncStorage.removeItem(GAME_KEY);
   } catch (e) {
     Sentry.captureException(e, { tags: { subsystem: "solitaire.storage", op: "clear" } });
+  }
+}
+
+const EMPTY_STATS: SolitaireStats = { bestTimeMs: 0, bestMoves: 0, gamesPlayed: 0, gamesWon: 0 };
+
+export async function loadStats(): Promise<SolitaireStats> {
+  try {
+    const raw = await AsyncStorage.getItem(STATS_KEY);
+    if (!raw) return { ...EMPTY_STATS };
+    const parsed = JSON.parse(raw);
+    return {
+      bestTimeMs: typeof parsed.bestTimeMs === "number" ? parsed.bestTimeMs : 0,
+      bestMoves: typeof parsed.bestMoves === "number" ? parsed.bestMoves : 0,
+      gamesPlayed: typeof parsed.gamesPlayed === "number" ? parsed.gamesPlayed : 0,
+      gamesWon: typeof parsed.gamesWon === "number" ? parsed.gamesWon : 0,
+    };
+  } catch (e) {
+    Sentry.captureException(e, { tags: { subsystem: "solitaire.storage", op: "loadStats" } });
+    return { ...EMPTY_STATS };
+  }
+}
+
+export async function saveStats(stats: SolitaireStats): Promise<void> {
+  try {
+    await AsyncStorage.setItem(STATS_KEY, JSON.stringify(stats));
+  } catch (e) {
+    Sentry.captureException(e, { tags: { subsystem: "solitaire.storage", op: "saveStats" } });
   }
 }

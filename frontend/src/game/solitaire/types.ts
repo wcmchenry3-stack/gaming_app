@@ -46,6 +46,10 @@ export interface SolitaireState {
    * Nested `undoStack` is always `[]` to prevent exponential nesting. */
   readonly undoStack: readonly SolitaireState[];
   readonly isComplete: boolean;
+  /** Timestamp (Date.now()) when the current play session started; null if not yet started or game is over. */
+  readonly startedAt: number | null;
+  /** Total elapsed milliseconds accumulated across all sessions before the current one. */
+  readonly accumulatedMs: number;
 }
 
 /** Card moves are the 5 player actions that shuffle cards between piles.

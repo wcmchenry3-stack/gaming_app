@@ -40,7 +40,7 @@
   "error.loadFailed": "לא ניתן לטעון את המשחק השמור.",
   "error.submitFailed": "לא ניתן לשמור את הניקוד. בדוק את החיבור.",
   "error.submitRetry": "נסה שוב",
-  "scoreboard.heroLabel": "MOVES",
+  "scoreboard.heroLabel": "TIME",
   "scoreboard.heroSub": "{{moves}} moves · {{foundations}} of 4 complete",
   "scoreboard.heroSubEmpty": "No games played yet",
   "scoreboard.bestTime": "Best Time",

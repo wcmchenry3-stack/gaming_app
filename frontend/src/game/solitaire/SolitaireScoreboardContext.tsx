@@ -2,14 +2,24 @@ import React, { createContext, useContext, useState } from "react";
 
 export interface SolitaireScoreboardSnapshot {
   moves: number;
+  elapsedMs: number;
   foundationsComplete: number;
   hasGame: boolean;
+  bestTimeMs: number;
+  bestMoves: number;
+  gamesPlayed: number;
+  gamesWon: number;
 }
 
 const initial: SolitaireScoreboardSnapshot = {
   moves: 0,
+  elapsedMs: 0,
   foundationsComplete: 0,
   hasGame: false,
+  bestTimeMs: 0,
+  bestMoves: 0,
+  gamesPlayed: 0,
+  gamesWon: 0,
 };
 
 interface ContextValue {

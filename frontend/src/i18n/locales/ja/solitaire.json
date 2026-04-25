@@ -40,7 +40,7 @@
   "error.loadFailed": "保存したゲームを再開できませんでした。",
   "error.submitFailed": "スコアの送信に失敗しました。接続を確認してください。",
   "error.submitRetry": "再試行",
-  "scoreboard.heroLabel": "MOVES",
+  "scoreboard.heroLabel": "TIME",
   "scoreboard.heroSub": "{{moves}} moves · {{foundations}} of 4 complete",
   "scoreboard.heroSubEmpty": "No games played yet",
   "scoreboard.bestTime": "Best Time",

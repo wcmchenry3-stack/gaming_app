@@ -54,7 +54,14 @@ import {
 } from "../game/solitaire/engine";
 import type { DrawMode, Move, SolitaireState, Suit } from "../game/solitaire/types";
 import { SUITS } from "../game/solitaire/types";
-import { clearGame, loadGame, saveGame } from "../game/solitaire/storage";
+import {
+  clearGame,
+  loadGame,
+  loadStats,
+  saveGame,
+  saveStats,
+  type SolitaireStats,
+} from "../game/solitaire/storage";
 import { useSolitaireScoreboard } from "../game/solitaire/SolitaireScoreboardContext";
 import { solitaireApi, type ScoreEntry } from "../game/solitaire/api";
 import { useGameSync } from "../game/_shared/useGameSync";
@@ -91,6 +98,12 @@ export default function SolitaireScreen() {
   const [autoCompleting, setAutoCompleting] = useState(false);
   const [outerWidth, setOuterWidth] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [stats, setStats] = useState<SolitaireStats>({
+    bestTimeMs: 0,
+    bestMoves: 0,
+    gamesPlayed: 0,
+    gamesWon: 0,
+  });
 
   // Invalid-move flash — red overlay pulse instead of positional shake so we
   // don't fight React Navigation / safe-area layout math.
@@ -103,6 +116,8 @@ export default function SolitaireScreen() {
   const stateRef = useRef<SolitaireState | null>(null);
   const movesRef = useRef(0);
   const prevCompleteRef = useRef(false);
+  /** Guards against double-counting a win within a single game session. */
+  const winRecordedRef = useRef(false);
 
   const {
     start: syncStart,
@@ -124,22 +139,35 @@ export default function SolitaireScreen() {
     const foundationsComplete = Object.values(state.foundations).filter(
       (cards) => cards.length === 13
     ).length;
-    setScoreboardSnapshot({ moves, foundationsComplete, hasGame: true });
-  }, [state, moves, setScoreboardSnapshot]);
+    const elapsedMs =
+      state.accumulatedMs + (state.startedAt !== null ? Date.now() - state.startedAt : 0);
+    setScoreboardSnapshot({
+      moves,
+      elapsedMs,
+      foundationsComplete,
+      hasGame: true,
+      bestTimeMs: stats.bestTimeMs,
+      bestMoves: stats.bestMoves,
+      gamesPlayed: stats.gamesPlayed,
+      gamesWon: stats.gamesWon,
+    });
+  }, [state, moves, stats, setScoreboardSnapshot]);
 
   // #597 — mount load. Restores a saved game silently; on a clean slot the
   // pre-game draw-mode modal is shown so the player picks their mode.
   useEffect(() => {
     let alive = true;
-    loadGame()
-      .then((saved) => {
-        if (!alive) return;
-        hasLoadedRef.current = true;
-        if (saved !== null) setState(saved);
-      })
-      .finally(() => {
-        if (alive) setLoading(false);
-      });
+    Promise.all([loadGame(), loadStats()]).then(([saved, savedStats]) => {
+      if (!alive) return;
+      hasLoadedRef.current = true;
+      if (saved !== null) {
+        setState(saved);
+        // Suppress re-counting a win when resuming an already-won game.
+        if (saved.isComplete) winRecordedRef.current = true;
+      }
+      setStats(savedStats);
+      setLoading(false);
+    });
     return () => {
       alive = false;
     };
@@ -170,10 +198,27 @@ export default function SolitaireScreen() {
     }
     if (state.isComplete && !prevCompleteRef.current) {
       syncComplete(
-        { finalScore: state.score, outcome: "completed", durationMs: 0 },
+        { finalScore: state.score, outcome: "completed", durationMs: state.accumulatedMs },
         { final_score: state.score, outcome: "completed", moves: movesRef.current }
       );
       clearGame().catch(() => {});
+      if (!winRecordedRef.current) {
+        winRecordedRef.current = true;
+        const finalMs = state.accumulatedMs;
+        const finalMoves = movesRef.current;
+        setStats((prev) => {
+          const updated: SolitaireStats = {
+            ...prev,
+            gamesWon: prev.gamesWon + 1,
+            bestTimeMs:
+              prev.bestTimeMs === 0 || finalMs < prev.bestTimeMs ? finalMs : prev.bestTimeMs,
+            bestMoves:
+              prev.bestMoves === 0 || finalMoves < prev.bestMoves ? finalMoves : prev.bestMoves,
+          };
+          saveStats(updated);
+          return updated;
+        });
+      }
     }
     prevCompleteRef.current = state.isComplete;
   }, [state, syncComplete]);
@@ -217,6 +262,11 @@ export default function SolitaireScreen() {
     setState(dealGame(drawMode));
     setSelection(null);
     setMoves(0);
+    setStats((prev) => {
+      const updated = { ...prev, gamesPlayed: prev.gamesPlayed + 1 };
+      saveStats(updated);
+      return updated;
+    });
   }, []);
 
   const tryMove = useCallback(
@@ -425,6 +475,7 @@ export default function SolitaireScreen() {
     setState(null);
     setSelection(null);
     setMoves(0);
+    winRecordedRef.current = false;
   }, []);
 
   const undoDisabled = state === null || state.undoStack.length === 0 || autoCompleting;
