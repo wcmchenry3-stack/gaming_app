@@ -310,8 +310,8 @@ describe("SyncWorker", () => {
     await worker.flush();
 
     const calls = (Sentry.captureMessage as jest.Mock).mock.calls;
-    const eventCall = calls.find((c: unknown[]) =>
-      typeof c[0] === "string" && c[0].includes("unknown_event_type")
+    const eventCall = calls.find(
+      (c: unknown[]) => typeof c[0] === "string" && c[0].includes("unknown_event_type")
     );
     expect(eventCall).toBeDefined();
     expect(eventCall[1]).toMatchObject({ level: "warning" });

@@ -291,8 +291,7 @@ export class SyncWorker {
     // until the migration lands rather than being silently dropped.
     if (
       res.status === 400 &&
-      (res.body as { detail?: { error?: string } } | null)?.detail?.error ===
-        "unknown_event_type"
+      (res.body as { detail?: { error?: string } } | null)?.detail?.error === "unknown_event_type"
     ) {
       Sentry.captureMessage(`syncWorker: unknown_event_type on ${gameId} event batch`, {
         level: "warning",
