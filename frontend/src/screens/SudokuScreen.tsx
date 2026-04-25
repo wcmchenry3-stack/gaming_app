@@ -245,18 +245,14 @@ export default function SudokuScreen() {
       clearGame().catch(() => {});
 
       const finalElapsed =
-        startMsRef.current !== null
-          ? Math.floor((Date.now() - startMsRef.current) / 1000)
-          : 0;
+        startMsRef.current !== null ? Math.floor((Date.now() - startMsRef.current) / 1000) : 0;
       const diff = state.difficulty;
       const prev = statsRef.current[diff];
       const updatedStats: SudokuStats = {
         ...statsRef.current,
         [diff]: {
           bestTimeS:
-            prev.bestTimeS === 0 || finalElapsed < prev.bestTimeS
-              ? finalElapsed
-              : prev.bestTimeS,
+            prev.bestTimeS === 0 || finalElapsed < prev.bestTimeS ? finalElapsed : prev.bestTimeS,
           gamesSolved: prev.gamesSolved + 1,
         },
       };
