@@ -8,12 +8,11 @@ import type { Card, Rank, Suit } from "../../game/hearts/types";
 interface Props {
   cardCount: number;
   label: string;
-  score?: number;
 }
 
 const PLACEHOLDER_CARD: Card = { suit: "spades" as Suit, rank: 2 as Rank };
 
-export default function OpponentHand({ cardCount, label, score }: Props) {
+export default function OpponentHand({ cardCount, label }: Props) {
   const { t } = useTranslation("hearts");
   const { colors } = useTheme();
 
@@ -24,7 +23,6 @@ export default function OpponentHand({ cardCount, label, score }: Props) {
       accessibilityRole="none"
     >
       <Text style={[styles.label, { color: colors.textMuted }]}>{label}</Text>
-      {score !== undefined && <Text style={[styles.score, { color: colors.text }]}>{score}</Text>}
       <View style={styles.cards}>
         {Array.from({ length: cardCount }).map((_, i) => (
           <PlayingCard key={i} card={PLACEHOLDER_CARD} faceDown />
@@ -42,10 +40,6 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 12,
     fontWeight: "600",
-  },
-  score: {
-    fontSize: 13,
-    fontWeight: "700",
   },
   cards: {
     flexDirection: "row",

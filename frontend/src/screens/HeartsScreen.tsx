@@ -48,12 +48,10 @@ type SubmitState = "idle" | "submitting" | "done" | "error";
 function CompactHand({
   cardCount,
   label,
-  score,
   colors,
 }: {
   cardCount: number;
   label: string;
-  score: number;
   colors: Colors;
 }) {
   return (
@@ -67,7 +65,6 @@ function CompactHand({
       >
         <Text style={[compactStyles.count, { color: colors.textMuted }]}>{cardCount}</Text>
       </View>
-      <Text style={[compactStyles.score, { color: colors.text }]}>{score}</Text>
     </View>
   );
 }
@@ -84,7 +81,6 @@ const compactStyles = StyleSheet.create({
     justifyContent: "center",
   },
   count: { fontSize: 13, fontWeight: "700" },
-  score: { fontSize: 13, fontWeight: "700" },
 });
 
 export default function HeartsScreen() {
@@ -366,7 +362,6 @@ export default function HeartsScreen() {
           <OpponentHand
             cardCount={gameState.playerHands[2]?.length ?? 0}
             label={playerLabels[2] ?? ""}
-            score={gameState.cumulativeScores[2] ?? 0}
           />
           <OpponentCapturedPile
             cards={gameState.wonCards[2] ?? []}
@@ -380,7 +375,6 @@ export default function HeartsScreen() {
             <CompactHand
               cardCount={gameState.playerHands[1]?.length ?? 0}
               label={playerLabels[1] ?? ""}
-              score={gameState.cumulativeScores[1] ?? 0}
               colors={colors}
             />
             <OpponentCapturedPile
@@ -399,7 +393,6 @@ export default function HeartsScreen() {
             <CompactHand
               cardCount={gameState.playerHands[3]?.length ?? 0}
               label={playerLabels[3] ?? ""}
-              score={gameState.cumulativeScores[3] ?? 0}
               colors={colors}
             />
             <OpponentCapturedPile
@@ -411,14 +404,9 @@ export default function HeartsScreen() {
 
         {/* Human hand */}
         <View style={styles.bottomArea}>
-          <View style={styles.humanHeader}>
-            <Text style={[styles.humanLabel, { color: colors.textMuted }]}>
-              {playerLabels[0] ?? ""}
-            </Text>
-            <Text style={[styles.humanScore, { color: colors.text }]}>
-              {gameState.cumulativeScores[HUMAN] ?? 0}
-            </Text>
-          </View>
+          <Text style={[styles.humanLabel, { color: colors.textMuted }]}>
+            {playerLabels[0] ?? ""}
+          </Text>
           {isPassing && (
             <PassBanner
               passDirection={gameState.passDirection}
@@ -784,20 +772,11 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: "600",
   },
-  humanHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    paddingHorizontal: 12,
-    paddingBottom: 4,
-  },
   humanLabel: {
     fontSize: 12,
     fontWeight: "600",
-  },
-  humanScore: {
-    fontSize: 13,
-    fontWeight: "700",
+    paddingHorizontal: 12,
+    paddingBottom: 4,
   },
   renameScroll: {
     width: "100%",

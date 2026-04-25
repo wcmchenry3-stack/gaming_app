@@ -146,11 +146,6 @@ describe("OpponentHand", () => {
     const { toJSON } = wrap(<OpponentHand cardCount={0} label="Top" />);
     expect(toJSON()).toBeTruthy();
   });
-
-  it("renders score when provided", () => {
-    const { getByText } = wrap(<OpponentHand cardCount={3} label="Top" score={12} />);
-    expect(getByText("12")).toBeTruthy();
-  });
 });
 
 // ---------------------------------------------------------------------------
