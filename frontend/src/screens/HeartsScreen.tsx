@@ -6,7 +6,7 @@ import { useTheme } from "../theme/ThemeContext";
 import type { Colors } from "../theme/ThemeContext";
 import { GameShell } from "../components/shared/GameShell";
 import OpponentHand from "../components/hearts/OpponentHand";
-import PassingOverlay from "../components/hearts/PassingOverlay";
+import PassBanner from "../components/hearts/PassBanner";
 import PlayerHand from "../components/hearts/PlayerHand";
 import ScoreBoard from "../components/hearts/ScoreBoard";
 import TrickArea from "../components/hearts/TrickArea";
@@ -320,6 +320,8 @@ export default function HeartsScreen() {
 
   // ─── Derived state ────────────────────────────────────────────────────────
   const humanHand = [...(gameState.playerHands[HUMAN] ?? [])];
+  const isPassing = gameState.phase === "passing";
+  const humanPassSelections = [...(gameState.passSelections[HUMAN] ?? [])];
   const validCards =
     gameState.phase === "playing" && gameState.currentPlayerIndex === HUMAN
       ? getValidPlays(gameState, HUMAN)
@@ -382,20 +384,21 @@ export default function HeartsScreen() {
               {gameState.cumulativeScores[HUMAN] ?? 0}
             </Text>
           </View>
-          <PlayerHand hand={humanHand} validCards={validCards} onCardPress={handleCardPress} />
+          {isPassing && (
+            <PassBanner
+              passDirection={gameState.passDirection}
+              selectedCount={humanPassSelections.length}
+              onConfirm={handlePassConfirm}
+            />
+          )}
+          <PlayerHand
+            hand={humanHand}
+            selectedCards={isPassing ? humanPassSelections : undefined}
+            validCards={isPassing ? undefined : validCards}
+            onCardPress={isPassing ? handlePassCardPress : handleCardPress}
+          />
         </View>
       </View>
-
-      {/* ── Passing overlay ────────────────────────────────────────── */}
-      {gameState.phase === "passing" && (
-        <PassingOverlay
-          hand={humanHand}
-          passDirection={gameState.passDirection}
-          selectedCards={[...(gameState.passSelections[HUMAN] ?? [])]}
-          onCardPress={handlePassCardPress}
-          onConfirm={handlePassConfirm}
-        />
-      )}
 
       {/* ── Hand-end overlay (dealing phase = hand just finished) ──── */}
       {gameState.phase === "dealing" && (
