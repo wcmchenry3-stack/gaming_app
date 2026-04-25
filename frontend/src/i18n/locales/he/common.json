@@ -22,6 +22,7 @@
   "newGame.confirm.body": "המשחק הנוכחי יאבד. הניקוד והסיבוב יאופסו.",
   "newGame.confirm.confirm": "התחל משחק חדש",
   "newGame.confirm.cancel": "ביטול",
+  "settings.soundEffects": "אפקטים קוליים",
   "clearLogs.label": "ניקוי לוגים מקומיים",
   "clearLogs.description": "מוחק את כל האירועים והלוגים שלא סונכרנו עדיין.",
   "clearLogs.button": "נקה",

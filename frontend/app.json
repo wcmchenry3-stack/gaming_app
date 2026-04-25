@@ -47,7 +47,8 @@
           "organization": "buffing-chi"
         }
       ],
-      "expo-localization"
+      "expo-localization",
+      "expo-audio"
     ]
   }
 }

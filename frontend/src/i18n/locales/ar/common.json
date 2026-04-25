@@ -22,6 +22,7 @@
   "newGame.confirm.body": "ستفقد اللعبة الحالية. سيتم إعادة تعيين النقاط والجولة.",
   "newGame.confirm.confirm": "ابدأ لعبة جديدة",
   "newGame.confirm.cancel": "إلغاء",
+  "settings.soundEffects": "المؤثرات الصوتية",
   "clearLogs.label": "مسح السجلات المحلية",
   "clearLogs.description": "حذف جميع الأحداث والتقارير التي لم تتم مزامنتها بعد.",
   "clearLogs.button": "مسح",

@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { View, Text, Pressable, StyleSheet, Modal } from "react-native";
+import { View, Text, Pressable, StyleSheet, Modal, Switch } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTranslation } from "react-i18next";
 import * as Sentry from "@sentry/react-native";
@@ -9,12 +9,14 @@ import LanguageSwitcher from "../components/LanguageSwitcher";
 import { AppHeader, APP_HEADER_HEIGHT } from "../components/shared/AppHeader";
 import { gameEventClient } from "../game/_shared/gameEventClient";
 import { useDeck } from "../game/_shared/decks/CardDeckContext";
+import { useSoundSettings } from "../game/_shared/SoundContext";
 
 const THEME_MODES: ThemeMode[] = ["system", "light", "dark"];
 
 export default function SettingsScreen() {
   const { colors, themeMode, setThemeMode } = useTheme();
   const { activeDeck, setDeck, availableDecks } = useDeck();
+  const { muted, setMuted } = useSoundSettings();
   const insets = useSafeAreaInsets();
   const { t } = useTranslation("common");
 
@@ -125,6 +127,22 @@ export default function SettingsScreen() {
           {t("settings.language", "Language")}
         </Text>
         <LanguageSwitcher />
+      </View>
+
+      <View style={[styles.row, { borderColor: colors.border }]}>
+        <Text style={[styles.label, { color: colors.text }]}>
+          {t("settings.soundEffects", "Sound effects")}
+        </Text>
+        <Switch
+          value={!muted}
+          onValueChange={(enabled) => setMuted(!enabled)}
+          trackColor={{ false: colors.surfaceAlt, true: colors.accent }}
+          thumbColor={colors.textOnAccent}
+          accessibilityRole="switch"
+          accessibilityLabel={t("settings.soundEffects", "Sound effects")}
+          accessibilityState={{ checked: !muted }}
+          testID="sound-effects-toggle"
+        />
       </View>
 
       <View style={[styles.rowStacked, { borderColor: colors.border }]}>

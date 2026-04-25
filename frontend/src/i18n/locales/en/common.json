@@ -22,6 +22,7 @@
   "newGame.confirm.body": "Your current game will be lost. Score and round will reset.",
   "newGame.confirm.confirm": "Start new game",
   "newGame.confirm.cancel": "Cancel",
+  "settings.soundEffects": "Sound effects",
   "clearLogs.label": "Clear local logs",
   "clearLogs.description": "Delete all queued events and bug logs that haven't synced yet.",
   "clearLogs.button": "Clear",

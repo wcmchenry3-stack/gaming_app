@@ -106,5 +106,14 @@
     "placeholders": [],
     "doNotTranslate": [],
     "notes": null
+  },
+  "settings.soundEffects": {
+    "component": "SettingsScreen",
+    "description": "Label for the global sound effects toggle in Settings.",
+    "tone": "functional",
+    "characterLimit": 20,
+    "placeholders": [],
+    "doNotTranslate": [],
+    "notes": null
   }
 }

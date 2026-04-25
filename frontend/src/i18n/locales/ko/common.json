@@ -22,6 +22,7 @@
   "newGame.confirm.body": "현재 게임이 사라집니다. 점수와 라운드가 초기화됩니다.",
   "newGame.confirm.confirm": "새 게임 시작",
   "newGame.confirm.cancel": "취소",
+  "settings.soundEffects": "음향 효과",
   "clearLogs.label": "로컬 로그 삭제",
   "clearLogs.description": "동기화되지 않은 대기 중인 이벤트와 버그 로그를 삭제합니다.",
   "clearLogs.button": "삭제",

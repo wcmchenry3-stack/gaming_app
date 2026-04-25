@@ -22,6 +22,7 @@
   "newGame.confirm.body": "Dein aktuelles Spiel geht verloren. Punkte und Runde werden zurückgesetzt.",
   "newGame.confirm.confirm": "Spiel starten",
   "newGame.confirm.cancel": "Abbrechen",
+  "settings.soundEffects": "Soundeffekte",
   "clearLogs.label": "Lokale Logs löschen",
   "clearLogs.description": "Alle wartenden Ereignisse und Fehlerprotokolle löschen, die noch nicht synchronisiert wurden.",
   "clearLogs.button": "Löschen",
