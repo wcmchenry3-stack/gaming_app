@@ -2,6 +2,7 @@ import React from "react";
 import { render, fireEvent, act } from "@testing-library/react-native";
 import HeartsScreen from "../HeartsScreen";
 import { ThemeProvider } from "../../theme/ThemeContext";
+import { HeartsRoundsProvider } from "../../game/hearts/RoundsContext";
 import { createSeededRng, setRng } from "../../game/hearts/engine";
 import * as engine from "../../game/hearts/engine";
 
@@ -51,7 +52,9 @@ jest.useFakeTimers();
 function renderScreen() {
   return render(
     <ThemeProvider>
-      <HeartsScreen />
+      <HeartsRoundsProvider>
+        <HeartsScreen />
+      </HeartsRoundsProvider>
     </ThemeProvider>
   );
 }

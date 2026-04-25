@@ -29,6 +29,7 @@ import {
   validateName,
 } from "../game/hearts/playerNames";
 import { heartsApi } from "../game/hearts/api";
+import { useHeartsRounds } from "../game/hearts/RoundsContext";
 import { useGameSync } from "../game/_shared/useGameSync";
 import { useNetwork } from "../game/_shared/NetworkContext";
 import { OfflineBanner } from "../components/shared/OfflineBanner";
@@ -112,12 +113,31 @@ export default function HeartsScreen() {
   }, []);
 
   // ─── Track per-round score history ────────────────────────────────────────
+  // Push the *applied* per-round delta (post-moon: shooter 0, others 26) by
+  // diffing post-hand cumulativeScores against the running sum of prior rows.
+  // Storing raw handScores here would invert the moon row vs. the totals row
+  // (#743). Deriving from cumulative deltas keeps the scoreboard a pure view
+  // of engine-authoritative totals.
   useEffect(() => {
     if (gameState.phase !== "dealing" && gameState.phase !== "game_over") return;
     if (gameState.handNumber <= lastRecordedHandRef.current) return;
     lastRecordedHandRef.current = gameState.handNumber;
-    setScoreHistory((prev) => [...prev, [...gameState.handScores]]);
-  }, [gameState.phase, gameState.handNumber, gameState.handScores]);
+    setScoreHistory((prev) => {
+      const sums = prev.reduce((acc, row) => acc.map((v, i) => v + (row[i] ?? 0)), [0, 0, 0, 0]);
+      const delta = gameState.cumulativeScores.map((c, i) => c - (sums[i] ?? 0));
+      return [...prev, delta];
+    });
+  }, [gameState.phase, gameState.handNumber, gameState.cumulativeScores]);
+
+  // ─── Sync snapshot to shared rounds context (read by ScoreboardScreen) ────
+  const { setSnapshot: setRoundsSnapshot } = useHeartsRounds();
+  useEffect(() => {
+    setRoundsSnapshot({
+      cumulativeScores: gameState.cumulativeScores,
+      scoreHistory,
+      playerLabels: playerNames,
+    });
+  }, [gameState.cumulativeScores, scoreHistory, playerNames, setRoundsSnapshot]);
 
   // ─── Abandon on back-navigation ───────────────────────────────────────────
   useEffect(() => {
