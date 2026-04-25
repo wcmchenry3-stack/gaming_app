@@ -30,6 +30,7 @@ import { YachtScorecardProvider } from "./src/game/yacht/ScorecardContext";
 import { Twenty48ScoreboardProvider } from "./src/game/twenty48/Twenty48ScoreboardContext";
 import { SolitaireScoreboardProvider } from "./src/game/solitaire/SolitaireScoreboardContext";
 import { SudokuScoreboardProvider } from "./src/game/sudoku/SudokuScoreboardContext";
+import { CascadeScoreboardProvider } from "./src/game/cascade/CascadeScoreboardContext";
 import { SessionLogger } from "./src/components/FeedbackWidget/SessionLogger";
 import { installSentryConsoleErrorCapture } from "./src/utils/sentryConsoleError";
 import { LazyScreens } from "./src/utils/lazyScreens";
@@ -67,7 +68,7 @@ export type HomeStackParamList = {
   Solitaire: undefined;
   Hearts: undefined;
   Sudoku: undefined;
-  Scoreboard: { gameKey: "hearts" | "yacht" | "blackjack" | "twenty48" | "solitaire" | "sudoku" };
+  Scoreboard: { gameKey: "hearts" | "yacht" | "blackjack" | "twenty48" | "solitaire" | "sudoku" | "cascade" };
 };
 
 export type ProfileStackParamList = {
@@ -210,11 +211,13 @@ function AppInner() {
                 <Twenty48ScoreboardProvider>
                   <SolitaireScoreboardProvider>
                     <SudokuScoreboardProvider>
+                      <CascadeScoreboardProvider>
                       <NavigationContainer>
                         <Stack.Navigator screenOptions={{ headerShown: false }}>
                           <Stack.Screen name="MainTabs" component={MainTabs} />
                         </Stack.Navigator>
                       </NavigationContainer>
+                      </CascadeScoreboardProvider>
                     </SudokuScoreboardProvider>
                   </SolitaireScoreboardProvider>
                 </Twenty48ScoreboardProvider>

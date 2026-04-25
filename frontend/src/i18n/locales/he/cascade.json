@@ -24,5 +24,12 @@
   "gameOver.savedConfirmation": "נשמר! #{{rank}}",
   "gameOver.playAgain": "שחק שוב",
   "gameOver.playAgainButton": "שחק שוב",
-  "gameOver.savedLocally": "נשמר מקומית — יישלח כשמחובר"
+  "gameOver.savedLocally": "נשמר מקומית — יישלח כשמחובר",
+  "scoreboard.heroLabel": "SCORE",
+  "scoreboard.heroSub": "Best fruit: {{bestFruit}} · {{merges}} merges",
+  "scoreboard.heroSubEmpty": "No games played yet",
+  "scoreboard.bestScore": "All-Time Best",
+  "scoreboard.bestFruit": "Best Fruit",
+  "scoreboard.gamesPlayed": "Games Played",
+  "scoreboard.totalMerges": "Total Merges"
 }

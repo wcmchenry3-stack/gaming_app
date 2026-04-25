@@ -25,6 +25,7 @@ import {
   clearGame as clearCascadeGame,
   CascadeGameSnapshot,
 } from "../game/cascade/storage";
+import { useCascadeScoreboard } from "../game/cascade/CascadeScoreboardContext";
 
 /** Throttle for save-during-play — saves at most this often. */
 const SAVE_THROTTLE_MS = 2000;
@@ -63,6 +64,12 @@ function CascadeGame() {
     complete: syncComplete,
     getGameId,
   } = useGameSync("cascade");
+  const { setSnapshot: setScoreboardSnapshot } = useCascadeScoreboard();
+  const bestScoreRef = useRef(0);
+  const bestFruitTierRef = useRef(-1);
+  const bestFruitNameRef = useRef("—");
+  const gamesPlayedRef = useRef(0);
+
   // Holds the game ID captured at game-over so GameOverOverlay can PATCH /cascade/score/{id}.
   const completedGameIdRef = useRef<string | null>(null);
   const gameStartTimeRef = useRef<number>(Date.now());
@@ -103,6 +110,17 @@ function CascadeGame() {
     },
     [syncComplete]
   );
+
+  const pushScoreboardSnapshot = useCallback(() => {
+    setScoreboardSnapshot({
+      score: scoreRef.current,
+      bestScore: bestScoreRef.current,
+      bestFruitName: bestFruitNameRef.current,
+      mergeCount: mergeCountRef.current,
+      gamesPlayed: gamesPlayedRef.current,
+      hasGame: true,
+    });
+  }, [setScoreboardSnapshot]);
 
   // Start session on mount. Unmount cleanup is handled by useGameSync.
   useEffect(() => {
@@ -237,13 +255,18 @@ function CascadeGame() {
       const merged = activeFruitSet.fruits[event.tier];
       if (merged) {
         canvasRef.current?.announceEvent(t("cascade:event.merged", { fruit: merged.name }));
+        if (event.tier > bestFruitTierRef.current) {
+          bestFruitTierRef.current = event.tier;
+          bestFruitNameRef.current = merged.name;
+        }
       }
+      pushScoreboardSnapshot();
       // #216 — merges are the highest-value save trigger. A player who
       // just merged up a tier definitely wants that progress preserved
       // across an accidental reload.
       saveGameThrottled();
     },
-    [activeFruitSet, t, saveGameThrottled, syncEnqueue]
+    [activeFruitSet, t, saveGameThrottled, syncEnqueue, pushScoreboardSnapshot]
   );
 
   const handleGameOver = useCallback(() => {
@@ -256,7 +279,12 @@ function CascadeGame() {
     // #216 — game over: clear the saved snapshot so the next mount
     // starts with a fresh board instead of resuming a lost game.
     clearCascadeGame().catch(() => {});
-  }, [t, endInstrumentedSession, getGameId]);
+    gamesPlayedRef.current += 1;
+    if (scoreRef.current > bestScoreRef.current) {
+      bestScoreRef.current = scoreRef.current;
+    }
+    pushScoreboardSnapshot();
+  }, [t, endInstrumentedSession, getGameId, pushScoreboardSnapshot]);
 
   const handleTap = useCallback(
     (x: number) => {
@@ -377,6 +405,7 @@ function CascadeGame() {
     hasLoadedRef.current = true; // prevent onReady from re-applying any stale pending load
     pendingLoadRef.current = null;
     startInstrumentedSession(activeFruitSetRef.current.id);
+    pushScoreboardSnapshot();
   }
 
   const queue = queueRef.current;
@@ -396,6 +425,7 @@ function CascadeGame() {
       requireBack
       onBack={() => navigation.popToTop()}
       onNewGame={handleRestart}
+      onOpenScoreboard={() => navigation.navigate("Scoreboard", { gameKey: "cascade" })}
       style={{
         paddingBottom: Math.max(insets.bottom, 16),
         paddingLeft: Math.max(insets.left, 16),
