@@ -3,6 +3,7 @@ import { View, StyleSheet, useWindowDimensions } from "react-native";
 import Animated, { useSharedValue, useAnimatedStyle, withSpring } from "react-native-reanimated";
 import { useTranslation } from "react-i18next";
 import PlayingCard from "./PlayingCard";
+import { sortHand } from "./cardSort";
 import type { Card } from "../../game/hearts/types";
 
 interface Props {
@@ -10,22 +11,6 @@ interface Props {
   selectedCards?: Card[];
   validCards?: Card[];
   onCardPress?: (card: Card) => void;
-}
-
-// Canonical suit order: ♣ ♦ ♠ ♥ (clubs first, hearts last)
-const SUIT_ORDER: Record<string, number> = { clubs: 0, diamonds: 1, spades: 2, hearts: 3 };
-
-// Ace sorts high (as 14)
-function sortRank(rank: number): number {
-  return rank === 1 ? 14 : rank;
-}
-
-function sortHand(cards: Card[]): Card[] {
-  return [...cards].sort((a, b) => {
-    const suitDiff = (SUIT_ORDER[a.suit] ?? 0) - (SUIT_ORDER[b.suit] ?? 0);
-    if (suitDiff !== 0) return suitDiff;
-    return sortRank(a.rank) - sortRank(b.rank);
-  });
 }
 
 function inSet(cards: Card[] | undefined, card: Card): boolean {
