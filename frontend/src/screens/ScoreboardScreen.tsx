@@ -11,12 +11,14 @@ import BlackjackScoreboard from "../components/scoreboard/BlackjackScoreboard";
 import Twenty48Scoreboard from "../components/scoreboard/Twenty48Scoreboard";
 import SolitaireScoreboard from "../components/scoreboard/SolitaireScoreboard";
 import SudokuScoreboard from "../components/scoreboard/SudokuScoreboard";
+import CascadeScoreboard from "../components/scoreboard/CascadeScoreboard";
 import { useHeartsRounds } from "../game/hearts/RoundsContext";
 import { useYachtScorecard } from "../game/yacht/ScorecardContext";
 import { useBlackjackSessionStats } from "../game/blackjack/BlackjackGameContext";
 import { useTwenty48Scoreboard } from "../game/twenty48/Twenty48ScoreboardContext";
 import { useSolitaireScoreboard } from "../game/solitaire/SolitaireScoreboardContext";
 import { useSudokuScoreboard } from "../game/sudoku/SudokuScoreboardContext";
+import { useCascadeScoreboard } from "../game/cascade/CascadeScoreboardContext";
 import type { HomeStackParamList } from "../../App";
 
 type GameKey = HomeStackParamList["Scoreboard"]["gameKey"];
@@ -59,6 +61,11 @@ function SudokuScoreboardSection() {
   return <SudokuScoreboard snapshot={snapshot} />;
 }
 
+function CascadeScoreboardSection() {
+  const { snapshot } = useCascadeScoreboard();
+  return <CascadeScoreboard snapshot={snapshot} />;
+}
+
 function UnknownScoreboardFallback({ gameKey }: { gameKey: string }) {
   const { colors } = useTheme();
   return (
@@ -95,6 +102,9 @@ export default function ScoreboardScreen() {
       break;
     case "sudoku":
       body = <SudokuScoreboardSection />;
+      break;
+    case "cascade":
+      body = <CascadeScoreboardSection />;
       break;
     default:
       body = <UnknownScoreboardFallback gameKey={gameKey} />;

@@ -24,5 +24,12 @@
   "gameOver.savedConfirmation": "Enregistré! #{{rank}}",
   "gameOver.playAgain": "Rejouer",
   "gameOver.playAgainButton": "Rejouer",
-  "gameOver.savedLocally": "Enregistré localement — sera envoyé une fois en ligne"
+  "gameOver.savedLocally": "Enregistré localement — sera envoyé une fois en ligne",
+  "scoreboard.heroLabel": "SCORE",
+  "scoreboard.heroSub": "Best fruit: {{bestFruit}} · {{merges}} merges",
+  "scoreboard.heroSubEmpty": "No games played yet",
+  "scoreboard.bestScore": "All-Time Best",
+  "scoreboard.bestFruit": "Best Fruit",
+  "scoreboard.gamesPlayed": "Games Played",
+  "scoreboard.totalMerges": "Total Merges"
 }
