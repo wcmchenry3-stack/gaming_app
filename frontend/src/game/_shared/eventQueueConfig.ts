@@ -62,6 +62,13 @@ export interface LogConfig {
   /** Rows exceeding this retry count are dead-lettered. */
   MAX_RETRY_COUNT: number;
 
+  /**
+   * Fixed retry delay applied when the backend returns 400 unknown_event_type.
+   * This is a server-side schema gap (missing event_types row), not a bad
+   * client payload — the row should be retried after the migration lands.
+   */
+  UNKNOWN_EVENT_TYPE_BACKOFF_MS: number;
+
   /** Per-row payload caps — oversized payloads are truncated on enqueue. */
   MAX_EVENT_PAYLOAD_BYTES: number;
   MAX_BUG_CONTEXT_BYTES: number;
@@ -89,6 +96,7 @@ export const logConfig: LogConfig = {
   BACKOFF_BASE_MS: 1000,
   BACKOFF_MAX_MS: 30 * 60 * 1000, // 30 min
   MAX_RETRY_COUNT: 10,
+  UNKNOWN_EVENT_TYPE_BACKOFF_MS: 24 * 60 * 60 * 1000, // 24 h
   MAX_EVENT_PAYLOAD_BYTES: 8 * 1024, // 8 KB
   MAX_BUG_CONTEXT_BYTES: 16 * 1024, // 16 KB
   REPORT_BUG_MAX_PER_MINUTE_PER_SOURCE: 10,
@@ -117,6 +125,7 @@ export function resetLogConfig(): void {
     BACKOFF_BASE_MS: 1000,
     BACKOFF_MAX_MS: 30 * 60 * 1000,
     MAX_RETRY_COUNT: 10,
+    UNKNOWN_EVENT_TYPE_BACKOFF_MS: 24 * 60 * 60 * 1000,
     MAX_EVENT_PAYLOAD_BYTES: 8 * 1024,
     MAX_BUG_CONTEXT_BYTES: 16 * 1024,
     REPORT_BUG_MAX_PER_MINUTE_PER_SOURCE: 10,

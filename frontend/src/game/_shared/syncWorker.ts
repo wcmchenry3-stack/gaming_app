@@ -55,6 +55,8 @@ export interface FlushResult {
   accepted: number;
   duplicates: number;
   deadLettered: number;
+  /** Rows parked for long-backoff retry (e.g. unknown_event_type). */
+  parked: number;
   backoffMs: number;
 }
 
@@ -63,6 +65,7 @@ const EMPTY: FlushResult = {
   accepted: 0,
   duplicates: 0,
   deadLettered: 0,
+  parked: 0,
   backoffMs: 0,
 };
 
@@ -283,11 +286,27 @@ export class SyncWorker {
       if (g) g.startedSynced = false;
       return true;
     }
-    // 400, 403, or other 4xx terminal — dead-letter the chunk.
-    // 400 is always "error" level: it means the client sent an unrecognised
-    // event_type (e.g. a new game type whose DB event_types rows are missing).
-    // The response body contains {"error":"unknown_event_type","rejected":[...]}
-    // which is actionable — include it as extra so Sentry surfaces the names.
+    // 400 unknown_event_type — server-side schema gap (missing event_types row),
+    // not a bad client payload. Park with a long backoff so the rows survive
+    // until the migration lands rather than being silently dropped.
+    if (
+      res.status === 400 &&
+      (res.body as { detail?: { error?: string } } | null)?.detail?.error ===
+        "unknown_event_type"
+    ) {
+      Sentry.captureMessage(`syncWorker: unknown_event_type on ${gameId} event batch`, {
+        level: "warning",
+        extra: {
+          gameId,
+          eventTypes: chunk.map((r) => r.event_type),
+          body: res.body,
+        },
+      });
+      await this.applyPerRowBackoff(chunk, logConfig.UNKNOWN_EVENT_TYPE_BACKOFF_MS, now);
+      result.parked += chunk.length;
+      return true;
+    }
+    // 400 (other), 403, or other 4xx terminal — dead-letter the chunk.
     Sentry.captureMessage(`syncWorker: ${res.status} on ${gameId} event batch`, {
       level: "error",
       extra: {
