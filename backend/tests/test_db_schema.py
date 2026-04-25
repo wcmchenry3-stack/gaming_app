@@ -60,6 +60,24 @@ async def test_seed_data_present() -> None:
         )
         assert set(yacht_events) >= {"game_started", "roll", "score", "game_ended"}
 
+        # Every game_type must have at least the two lifecycle events (#746).
+        for gt_name in gt_names:
+            gt_events = (
+                (
+                    await s.execute(
+                        select(EventType.name)
+                        .join(GameType)
+                        .where(GameType.name == gt_name)
+                        .order_by(EventType.name)
+                    )
+                )
+                .scalars()
+                .all()
+            )
+            assert {"game_started", "game_ended"} <= set(
+                gt_events
+            ), f"{gt_name!r} is missing lifecycle event_types; found: {sorted(gt_events)}"
+
 
 @pytest.mark.asyncio
 async def test_game_events_and_buglog_roundtrip() -> None:
