@@ -44,6 +44,12 @@ export default function ScoreboardScreen() {
     case "hearts":
       body = <HeartsScoreboardSection />;
       break;
+    case "yacht":
+      body = <UnknownScoreboardFallback gameKey={gameKey} />;
+      break;
+    case "blackjack":
+      body = <UnknownScoreboardFallback gameKey={gameKey} />;
+      break;
     default:
       body = <UnknownScoreboardFallback gameKey={gameKey} />;
   }

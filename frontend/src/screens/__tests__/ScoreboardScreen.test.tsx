@@ -75,8 +75,20 @@ describe("ScoreboardScreen", () => {
     expect(utils.getByText(/shooter zeroes/)).toBeTruthy();
   });
 
-  it("renders a fallback for unknown gameKey instead of throwing", () => {
+  it("renders the yacht fallback while the variant is unbuilt", () => {
     useRoute.mockReturnValue({ params: { gameKey: "yacht" } });
+    const { getByText } = renderScreen();
+    expect(getByText(/No scoreboard available for/)).toBeTruthy();
+  });
+
+  it("renders the blackjack fallback while the variant is unbuilt", () => {
+    useRoute.mockReturnValue({ params: { gameKey: "blackjack" } });
+    const { getByText } = renderScreen();
+    expect(getByText(/No scoreboard available for/)).toBeTruthy();
+  });
+
+  it("renders a fallback for an entirely unknown gameKey", () => {
+    useRoute.mockReturnValue({ params: { gameKey: "no-such-game" } });
     const { getByText } = renderScreen();
     expect(getByText(/No scoreboard available for/)).toBeTruthy();
   });

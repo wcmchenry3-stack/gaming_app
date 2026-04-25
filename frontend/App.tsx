@@ -63,7 +63,7 @@ export type HomeStackParamList = {
   Solitaire: undefined;
   Hearts: undefined;
   Sudoku: undefined;
-  Scoreboard: { gameKey: "hearts" };
+  Scoreboard: { gameKey: "hearts" | "yacht" | "blackjack" };
 };
 
 export type ProfileStackParamList = {
