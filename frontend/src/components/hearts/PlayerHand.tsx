@@ -1,5 +1,10 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { View, StyleSheet, useWindowDimensions } from "react-native";
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withSpring,
+} from "react-native-reanimated";
 import { useTranslation } from "react-i18next";
 import PlayingCard from "./PlayingCard";
 import type { Card } from "../../game/hearts/types";
@@ -38,8 +43,45 @@ function cardKey(c: Card): string {
 
 const CARD_WIDTH = 52;
 const CARD_HEIGHT = 74;
-const POP_AMOUNT = 16;
+const LIFT_AMOUNT = 28;
 const H_PADDING = 8;
+
+// Springy overshoot approximating the design's cubic-bezier(0.34, 1.56, 0.64, 1).
+const LIFT_SPRING = { mass: 0.5, damping: 11, stiffness: 180 } as const;
+
+function AnimatedCardSlot({
+  card,
+  left,
+  zIndex,
+  lifted,
+  highlighted,
+  disabled,
+  onPress,
+}: {
+  card: Card;
+  left: number;
+  zIndex: number;
+  lifted: boolean;
+  highlighted: boolean;
+  disabled: boolean;
+  onPress: (() => void) | undefined;
+}) {
+  const translateY = useSharedValue(lifted ? -LIFT_AMOUNT : 0);
+
+  useEffect(() => {
+    translateY.value = withSpring(lifted ? -LIFT_AMOUNT : 0, LIFT_SPRING);
+  }, [lifted, translateY]);
+
+  const animStyle = useAnimatedStyle(() => ({
+    transform: [{ translateY: translateY.value }],
+  }));
+
+  return (
+    <Animated.View style={[styles.cardSlot, { left, zIndex }, animStyle]}>
+      <PlayingCard card={card} highlighted={highlighted} disabled={disabled} onPress={onPress} />
+    </Animated.View>
+  );
+}
 
 export default function PlayerHand({ hand, selectedCards, validCards, onCardPress }: Props) {
   const { t } = useTranslation("hearts");
@@ -60,27 +102,23 @@ export default function PlayerHand({ hand, selectedCards, validCards, onCardPres
       accessibilityLabel={t("hand.player", { count })}
       accessibilityRole="none"
     >
-      <View style={[styles.container, { width: containerWidth, height: CARD_HEIGHT + POP_AMOUNT }]}>
+      <View
+        style={[styles.container, { width: containerWidth, height: CARD_HEIGHT + LIFT_AMOUNT }]}
+      >
         {sorted.map((card, i) => {
           const highlighted = inSet(selectedCards, card);
           const disabled = validCards !== undefined && !inSet(validCards, card);
-          const popped = highlighted;
           return (
-            <View
+            <AnimatedCardSlot
               key={cardKey(card)}
-              style={[
-                styles.cardSlot,
-                { left: i * offset, zIndex: i },
-                popped && styles.poppedSlot,
-              ]}
-            >
-              <PlayingCard
-                card={card}
-                highlighted={highlighted}
-                disabled={disabled}
-                onPress={onCardPress ? () => onCardPress(card) : undefined}
-              />
-            </View>
+              card={card}
+              left={i * offset}
+              zIndex={i}
+              lifted={highlighted}
+              highlighted={highlighted}
+              disabled={disabled}
+              onPress={onCardPress ? () => onCardPress(card) : undefined}
+            />
           );
         })}
       </View>
@@ -97,9 +135,6 @@ const styles = StyleSheet.create({
   },
   cardSlot: {
     position: "absolute",
-    top: POP_AMOUNT,
-  },
-  poppedSlot: {
-    top: 0,
+    top: LIFT_AMOUNT,
   },
 });

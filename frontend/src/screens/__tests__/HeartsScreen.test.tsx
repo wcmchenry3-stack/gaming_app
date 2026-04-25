@@ -42,6 +42,10 @@ jest.mock("expo-blur", () => ({
   BlurView: ({ children }: { children?: React.ReactNode }) => <>{children}</>,
 }));
 
+jest.mock("expo-linear-gradient", () => ({
+  LinearGradient: ({ children }: { children?: React.ReactNode }) => <>{children}</>,
+}));
+
 jest.useFakeTimers();
 
 function renderScreen() {
@@ -52,12 +56,12 @@ function renderScreen() {
   );
 }
 
-describe("HeartsScreen — passing phase", () => {
+describe("HeartsScreen — passing phase (inline banner)", () => {
   beforeEach(() => {
     setRng(createSeededRng(42));
   });
 
-  it("shows passing overlay with direction instruction", () => {
+  it("shows inline banner with direction instruction", () => {
     const { getByText } = renderScreen();
     expect(getByText(/pass left/i)).toBeTruthy();
   });
@@ -66,6 +70,27 @@ describe("HeartsScreen — passing phase", () => {
     const { getByRole } = renderScreen();
     const btn = getByRole("button", { name: /confirm/i });
     expect(btn.props.accessibilityState.disabled).toBe(true);
+  });
+
+  it("renders no Modal during passing phase", () => {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const { Modal } = require("react-native");
+    const { UNSAFE_queryAllByType } = renderScreen();
+    const visibleModals = UNSAFE_queryAllByType(Modal).filter((m: { props: { visible?: boolean } }) => m.props.visible !== false);
+    expect(visibleModals).toHaveLength(0);
+  });
+
+  it("tapping a card increments the selection counter", () => {
+    const { getByText, queryAllByRole } = renderScreen();
+    expect(getByText(/0 of 3 selected/i)).toBeTruthy();
+    const cardBtns = queryAllByRole("button").filter(
+      (el) =>
+        typeof el.props.accessibilityLabel === "string" &&
+        /of\s+\w+/i.test(el.props.accessibilityLabel)
+    );
+    expect(cardBtns.length).toBeGreaterThan(0);
+    fireEvent.press(cardBtns[0]!);
+    expect(getByText(/1 of 3 selected/i)).toBeTruthy();
   });
 
   it("unmounts cleanly while AI loop is pending", () => {

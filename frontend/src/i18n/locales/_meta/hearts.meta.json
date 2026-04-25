@@ -216,7 +216,7 @@
     "notes": null
   },
   "pass.direction.left": {
-    "component": "PassingOverlay",
+    "component": "PassBanner",
     "description": "Direction label when passing cards to the left.",
     "tone": "casual",
     "characterLimit": 20,
@@ -225,7 +225,7 @@
     "notes": null
   },
   "pass.direction.right": {
-    "component": "PassingOverlay",
+    "component": "PassBanner",
     "description": "Direction label when passing cards to the right.",
     "tone": "casual",
     "characterLimit": 20,
@@ -234,7 +234,7 @@
     "notes": null
   },
   "pass.direction.across": {
-    "component": "PassingOverlay",
+    "component": "PassBanner",
     "description": "Direction label when passing cards across.",
     "tone": "casual",
     "characterLimit": 20,
@@ -243,7 +243,7 @@
     "notes": null
   },
   "pass.direction.none": {
-    "component": "PassingOverlay",
+    "component": "PassBanner",
     "description": "Shown on the round when no cards are passed.",
     "tone": "casual",
     "characterLimit": 30,
@@ -252,7 +252,7 @@
     "notes": null
   },
   "pass.instructions": {
-    "component": "PassingOverlay body",
+    "component": "PassBanner body",
     "description": "Instruction telling the player to choose 3 cards to pass in a given direction.",
     "tone": "casual, instructional",
     "characterLimit": 50,
@@ -261,7 +261,7 @@
     "notes": "{{direction}} is replaced by one of pass.direction.* values."
   },
   "pass.selected": {
-    "component": "PassingOverlay counter",
+    "component": "PassBanner counter",
     "description": "Shows how many cards are currently selected out of 3.",
     "tone": "functional",
     "characterLimit": 20,
@@ -270,7 +270,7 @@
     "notes": null
   },
   "pass.confirm": {
-    "component": "PassingOverlay button label",
+    "component": "PassBanner button label",
     "description": "Short label on the confirm/pass button.",
     "tone": "casual",
     "characterLimit": 12,
@@ -279,7 +279,7 @@
     "notes": null
   },
   "pass.confirmLabel": {
-    "component": "PassingOverlay button (accessibility)",
+    "component": "PassBanner button (accessibility)",
     "description": "Full accessibility label for the confirm button including selected count.",
     "tone": "functional",
     "characterLimit": 60,

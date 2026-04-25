@@ -6,8 +6,12 @@ import PlayerHand from "../PlayerHand";
 import OpponentHand from "../OpponentHand";
 import TrickArea from "../TrickArea";
 import ScoreBoard from "../ScoreBoard";
-import PassingOverlay from "../PassingOverlay";
+import PassBanner from "../PassBanner";
 import type { Card, TrickCard } from "../../../game/hearts/types";
+
+jest.mock("expo-linear-gradient", () => ({
+  LinearGradient: ({ children }: { children?: React.ReactNode }) => <>{children}</>,
+}));
 
 function wrap(ui: React.ReactElement) {
   return render(<ThemeProvider>{ui}</ThemeProvider>);
@@ -214,52 +218,48 @@ describe("ScoreBoard", () => {
 });
 
 // ---------------------------------------------------------------------------
-// PassingOverlay
+// PassBanner
 // ---------------------------------------------------------------------------
 
-describe("PassingOverlay", () => {
-  const hand: Card[] = [c("spades", 1), c("hearts", 13), c("clubs", 7), c("diamonds", 4)];
-
+describe("PassBanner", () => {
   it("renders instructions with direction", () => {
     const { getByText } = wrap(
-      <PassingOverlay
-        hand={hand}
-        passDirection="left"
-        selectedCards={[]}
-        onCardPress={jest.fn()}
-        onConfirm={jest.fn()}
-      />
+      <PassBanner passDirection="left" selectedCount={0} onConfirm={jest.fn()} />
     );
     expect(getByText(/pass left/i)).toBeTruthy();
   });
 
+  it("shows 'X of 3 selected' counter", () => {
+    const { getByText } = wrap(
+      <PassBanner passDirection="right" selectedCount={2} onConfirm={jest.fn()} />
+    );
+    expect(getByText(/2 of 3 selected/i)).toBeTruthy();
+  });
+
   it("confirm button is disabled when fewer than 3 cards selected", () => {
     const { getByRole } = wrap(
-      <PassingOverlay
-        hand={hand}
-        passDirection="left"
-        selectedCards={[hand[0]!]}
-        onCardPress={jest.fn()}
-        onConfirm={jest.fn()}
-      />
+      <PassBanner passDirection="left" selectedCount={1} onConfirm={jest.fn()} />
     );
     expect(getByRole("button", { name: /confirm/i }).props.accessibilityState?.disabled).toBe(true);
   });
 
-  it("confirm button is enabled when exactly 3 cards selected", () => {
+  it("confirm button is enabled and fires onConfirm when exactly 3 selected", () => {
     const onConfirm = jest.fn();
     const { getByRole } = wrap(
-      <PassingOverlay
-        hand={hand}
-        passDirection="right"
-        selectedCards={[hand[0]!, hand[1]!, hand[2]!]}
-        onCardPress={jest.fn()}
-        onConfirm={onConfirm}
-      />
+      <PassBanner passDirection="across" selectedCount={3} onConfirm={onConfirm} />
     );
     const btn = getByRole("button", { name: /confirm/i });
     expect(btn.props.accessibilityState?.disabled).toBe(false);
     fireEvent.press(btn);
     expect(onConfirm).toHaveBeenCalledTimes(1);
+  });
+
+  it("does not render a Modal (inline UI, not overlay)", () => {
+    const { UNSAFE_queryAllByType } = wrap(
+      <PassBanner passDirection="left" selectedCount={0} onConfirm={jest.fn()} />
+    );
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const { Modal } = require("react-native");
+    expect(UNSAFE_queryAllByType(Modal)).toHaveLength(0);
   });
 });
