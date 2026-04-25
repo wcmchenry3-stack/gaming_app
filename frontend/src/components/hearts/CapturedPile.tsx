@@ -90,18 +90,6 @@ export function OpponentCapturedPile({ cards, seatLabel }: OpponentProps) {
           />
         ))}
       </View>
-      {count > 0 && (
-        <View
-          style={[
-            styles.summaryPill,
-            { backgroundColor: colors.surfaceAlt, borderColor: colors.border },
-          ]}
-        >
-          <Text style={[styles.summaryCount, { color: colors.text }]}>{count}</Text>
-          <Text style={[styles.summaryDivider, { color: colors.textMuted }]}>·</Text>
-          <Text style={[styles.summaryPoints, { color: colors.error }]}>{`+${points}`}</Text>
-        </View>
-      )}
     </View>
   );
 }
@@ -163,18 +151,6 @@ export function SelfCapturedPile({ cards }: SelfProps) {
           </View>
         )}
       </View>
-      {count > 0 && (
-        <View
-          style={[
-            styles.selfPointsPill,
-            {
-              backgroundColor: alpha40(colors.error),
-            },
-          ]}
-        >
-          <Text style={[styles.selfPointsText, { color: colors.error }]}>{`+${points}`}</Text>
-        </View>
-      )}
     </View>
   );
 }
@@ -196,28 +172,6 @@ const styles = StyleSheet.create({
     borderRadius: 4,
     borderWidth: 1,
   },
-  summaryPill: {
-    flexDirection: "row",
-    alignItems: "center",
-    borderWidth: 1,
-    borderRadius: 999,
-    paddingVertical: 3,
-    paddingHorizontal: 10,
-    gap: 4,
-  },
-  summaryCount: {
-    fontSize: 14,
-    fontWeight: "700",
-  },
-  summaryDivider: {
-    fontSize: 14,
-    fontWeight: "700",
-  },
-  summaryPoints: {
-    fontSize: 12,
-    fontWeight: "700",
-  },
-
   // ── Self ───────────────────────────────────────────────────────────────────
   selfRow: {
     flexDirection: "row",
@@ -259,14 +213,5 @@ const styles = StyleSheet.create({
   selfSuit: {
     fontSize: 12,
     lineHeight: 14,
-  },
-  selfPointsPill: {
-    borderRadius: 999,
-    paddingVertical: 3,
-    paddingHorizontal: 10,
-  },
-  selfPointsText: {
-    fontSize: 12,
-    fontWeight: "700",
   },
 });
