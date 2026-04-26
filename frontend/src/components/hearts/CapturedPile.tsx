@@ -41,7 +41,7 @@ export function penaltyPoints(cards: readonly Card[]): number {
 }
 
 function scoringCards(cards: readonly Card[]): Card[] {
-  return cards.filter(c => c.suit === "hearts" || (c.suit === "spades" && c.rank === 12));
+  return cards.filter((c) => c.suit === "hearts" || (c.suit === "spades" && c.rank === 12));
 }
 
 const OPP_CARD_W = 24;
