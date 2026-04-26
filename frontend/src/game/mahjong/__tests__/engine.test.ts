@@ -44,7 +44,7 @@ describe("TURTLE_LAYOUT", () => {
   it("has even slot count per layer", () => {
     const counts: Record<number, number> = {};
     for (const s of TURTLE_LAYOUT) counts[s.layer] = (counts[s.layer] ?? 0) + 1;
-    for (const [layer, count] of Object.entries(counts)) {
+    for (const [, count] of Object.entries(counts)) {
       expect(count % 2).toBe(0); // must be even so pairs can fill each layer
     }
   });
@@ -338,9 +338,7 @@ describe("selectTile", () => {
   });
 
   it("awards completion bonus when last pair is removed", () => {
-    // Build a minimal 2-tile layout (just 1 pair)
-    const miniLayout = [{ col: 0, row: 0, layer: 0 }, { col: 2, row: 0, layer: 0 }];
-    // Directly construct a state with 1 pair of matching tiles.
+    // Directly construct a minimal 2-tile state (1 pair).
     const a: SlotTile = { id: 0, suit: "characters", rank: 1, faceId: 8, col: 0, row: 0, layer: 0 };
     const b: SlotTile = { id: 1, suit: "characters", rank: 1, faceId: 8, col: 2, row: 0, layer: 0 };
     const state: MahjongState = {
