@@ -468,6 +468,38 @@ describe("playCard", () => {
 });
 
 // ---------------------------------------------------------------------------
+// Event propagation — sequential calls (regression #814)
+// ---------------------------------------------------------------------------
+
+describe("playCard — stale-event regression (#814)", () => {
+  it("does not carry forward heartsBroken when caller clears events between calls", () => {
+    // P0 plays a heart, completing a 4-card trick and triggering the event.
+    const state = mkState({
+      playerHands: h4([c("hearts", 5), c("clubs", 3)]),
+      tricksPlayedInHand: 1,
+      heartsBroken: false,
+      currentTrick: [
+        { card: c("hearts", 2), playerIndex: 3 },
+        { card: c("hearts", 3), playerIndex: 1 },
+        { card: c("hearts", 4), playerIndex: 2 },
+      ],
+    });
+    const withEvent = playCard(state, 0, c("hearts", 5));
+    expect(withEvent.events).toContainEqual({ type: "heartsBroken" });
+
+    // Without the fix: stale events carry into the next playCard call,
+    // producing a new array reference with the same events — re-triggering animations.
+    const withoutClear = playCard(withEvent, 0, c("clubs", 3));
+    expect(withoutClear.events).toContainEqual({ type: "heartsBroken" });
+
+    // With the fix: caller clears events before the next playCard call.
+    const cleared = { ...withEvent, events: [] as typeof withEvent.events };
+    const withClear = playCard(cleared, 0, c("clubs", 3));
+    expect(withClear.events ?? []).not.toContainEqual({ type: "heartsBroken" });
+  });
+});
+
+// ---------------------------------------------------------------------------
 // Trick resolution
 // ---------------------------------------------------------------------------
 

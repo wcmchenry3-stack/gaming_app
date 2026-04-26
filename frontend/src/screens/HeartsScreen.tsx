@@ -206,7 +206,9 @@ export default function HeartsScreen() {
     if (loopActiveRef.current) return;
     loopActiveRef.current = true;
     try {
-      let s = initial;
+      // Start with a clean events slate; initial events are already in React state
+      // and will be processed by useGameEvents independently.
+      let s = { ...initial, events: [] as typeof initial.events };
       while (s.currentPlayerIndex !== HUMAN && s.phase === "playing") {
         const willComplete = s.currentTrick.length === 3;
         await delay(400);
@@ -229,6 +231,8 @@ export default function HeartsScreen() {
           void saveGame(s);
         }
         setGameState(s);
+        // Clear events so the next playCard call doesn't re-emit them via a new array reference.
+        s = { ...s, events: [] };
 
         if (completedTrick && s.phase === "playing") {
           await new Promise<void>((resolve) => {
