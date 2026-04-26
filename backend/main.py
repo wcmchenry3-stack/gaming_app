@@ -18,6 +18,7 @@ from db.base import DATABASE_URL, get_engine, is_configured
 from limiter import _real_ip, limiter
 from cascade.router import router as cascade_router
 from blackjack.router import router as blackjack_router
+from freecell.router import router as freecell_router
 from hearts.router import router as hearts_router
 from solitaire.router import router as solitaire_router
 from sudoku.router import router as sudoku_router
@@ -53,6 +54,7 @@ app = FastAPI(title="Gaming App API")
 app.include_router(yacht_router, prefix="/yacht")
 app.include_router(cascade_router, prefix="/cascade")
 app.include_router(blackjack_router, prefix="/blackjack")
+app.include_router(freecell_router, prefix="/freecell")
 app.include_router(hearts_router, prefix="/hearts")
 app.include_router(solitaire_router, prefix="/solitaire")
 app.include_router(sudoku_router, prefix="/sudoku")
