@@ -62,14 +62,12 @@ When adding a sound:
 
 ---
 
----
-
 ## FreeCell (#844)
 
 ### freecell-card-place.mp3
 
 - **Event:** Card placed to tableau, free cell, or foundation
-- **Original filename:** 571575__el_boss__playing-card-deal-variation-3.wav (preview lq)
+- **Original filename:** `571575__el_boss__playing-card-deal-variation-3.wav` (preview lq)
 - **Source URL:** https://freesound.org/people/el_boss/sounds/571575/
 - **Creator:** el_boss on Freesound
 - **License:** Creative Commons Zero (CC0)
@@ -82,7 +80,7 @@ When adding a sound:
 ### freecell-supermove.mp3
 
 - **Event:** Multi-card supermove (≥2 cards moved at once)
-- **Original filename:** 60013__qubodup__whoosh.wav (preview lq)
+- **Original filename:** `60013__qubodup__whoosh.wav` (preview lq)
 - **Source URL:** https://freesound.org/people/qubodup/sounds/60013/
 - **Creator:** qubodup on Freesound
 - **License:** Creative Commons Zero (CC0)
@@ -95,7 +93,7 @@ When adding a sound:
 ### freecell-foundation-complete.mp3
 
 - **Event:** All 13 cards of one suit placed on its foundation (fires up to 4×)
-- **Original filename:** 456967__FunWithSound__success-resolution-video-game-sound-effect-strings.mp3 (preview lq)
+- **Original filename:** `456967__FunWithSound__success-resolution-video-game-sound-effect-strings.mp3` (preview lq)
 - **Source URL:** https://freesound.org/people/FunWithSound/sounds/456967/
 - **Creator:** FunWithSound on Freesound
 - **License:** Creative Commons Zero (CC0)
@@ -108,7 +106,7 @@ When adding a sound:
 ### freecell-game-win.mp3
 
 - **Event:** All 52 cards placed in foundations — game complete
-- **Original filename:** 466133__humanoide9000__victory-fanfare.mp3 (preview lq)
+- **Original filename:** `466133__humanoide9000__victory-fanfare.mp3` (preview lq)
 - **Source URL:** https://freesound.org/people/humanoide9000/sounds/466133/
 - **Creator:** humanoide9000 on Freesound
 - **License:** Creative Commons Attribution 4.0 (CC-BY 4.0)
@@ -121,7 +119,7 @@ When adding a sound:
 ### freecell-invalid-move.mp3
 
 - **Event:** Move rejected — wrong card, full free cell, or supermove limit exceeded
-- **Original filename:** 493163__Breviceps__buzzer-wrong-answer-error.mp3 (preview lq)
+- **Original filename:** `493163__Breviceps__buzzer-wrong-answer-error.mp3` (preview lq)
 - **Source URL:** https://freesound.org/people/Breviceps/sounds/493163/
 - **Creator:** Breviceps on Freesound
 - **License:** Creative Commons Zero (CC0)
