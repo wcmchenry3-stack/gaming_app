@@ -43,6 +43,7 @@ export const LazyScreens = {
  */
 export function prefetchLobbyGameScreens(): void {
   factories.Cascade().catch(() => undefined);
+  factories.StarSwarm().catch(() => undefined);
   factories.BlackjackBetting().catch(() => undefined);
   factories.Twenty48().catch(() => undefined);
   factories.Solitaire().catch(() => undefined);

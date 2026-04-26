@@ -39,6 +39,7 @@ export default function HomeScreen() {
     "freecell",
     "hearts",
     "sudoku",
+    "starswarm",
     "errors",
   ]);
   const { colors } = useTheme();
@@ -127,6 +128,13 @@ export default function HomeScreen() {
       description: t("sudoku:game.description"),
       action: () => navigation.navigate("Sudoku"),
     },
+    {
+      key: "starswarm",
+      emoji: "👾",
+      title: t("starswarm:game.title"),
+      description: t("starswarm:game.description"),
+      action: () => navigation.navigate("StarSwarm"),
+    },
   ];
 
   const playLabels: Record<string, string> = {
@@ -138,6 +146,7 @@ export default function HomeScreen() {
     [t("freecell:game.title")]: t("freecell:game.playLabel"),
     [t("hearts:game.title")]: t("hearts:game.playLabel"),
     [t("sudoku:game.title")]: t("sudoku:game.playLabel"),
+    [t("starswarm:game.title")]: t("starswarm:game.playLabel"),
   };
 
   // Cycle through BC Arcade accent colors for the gradient top border on each card.
