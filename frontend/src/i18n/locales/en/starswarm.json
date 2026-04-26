@@ -1,0 +1,14 @@
+{
+  "game.title": "Star Swarm",
+  "game.description": "Blast waves of alien invaders before they reach you.",
+  "game.playLabel": "Play Star Swarm",
+  "game.canvasLabel": "Star Swarm game — drag horizontally to move your ship and blast the alien formation.",
+  "hud.score": "SCORE",
+  "hud.best": "BEST",
+  "hud.wave": "WAVE",
+  "phase.waveClear": "WAVE CLEAR",
+  "phase.challengingStage": "CHALLENGING STAGE",
+  "phase.hits": "HITS: {{count}}",
+  "phase.gameOver": "GAME OVER",
+  "score.display": "Score: {{score}}"
+}

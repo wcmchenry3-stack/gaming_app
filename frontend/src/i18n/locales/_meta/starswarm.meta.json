@@ -1,0 +1,110 @@
+{
+  "game.title": {
+    "component": "HomeScreen",
+    "description": "Name of the Star Swarm game card.",
+    "tone": "neutral",
+    "characterLimit": 15,
+    "placeholders": [],
+    "doNotTranslate": ["Star Swarm"],
+    "notes": "Do not translate the game name."
+  },
+  "game.description": {
+    "component": "HomeScreen",
+    "description": "One-line description on the Star Swarm game card.",
+    "tone": "casual, punchy",
+    "characterLimit": 55,
+    "placeholders": [],
+    "doNotTranslate": [],
+    "notes": null
+  },
+  "game.playLabel": {
+    "component": "HomeScreen",
+    "description": "Accessibility label for the Star Swarm play button.",
+    "tone": "functional",
+    "characterLimit": 20,
+    "placeholders": [],
+    "doNotTranslate": ["Star Swarm"],
+    "notes": null
+  },
+  "game.canvasLabel": {
+    "component": "GameCanvas",
+    "description": "Accessible label for the game canvas — describes game and interaction.",
+    "tone": "functional, descriptive",
+    "characterLimit": 100,
+    "placeholders": [],
+    "doNotTranslate": ["Star Swarm"],
+    "notes": null
+  },
+  "hud.score": {
+    "component": "GameCanvas",
+    "description": "Short uppercase label for the current score in the HUD.",
+    "tone": "functional",
+    "characterLimit": 8,
+    "placeholders": [],
+    "doNotTranslate": [],
+    "notes": null
+  },
+  "hud.best": {
+    "component": "GameCanvas",
+    "description": "Short uppercase label for the high score in the HUD.",
+    "tone": "functional",
+    "characterLimit": 6,
+    "placeholders": [],
+    "doNotTranslate": [],
+    "notes": null
+  },
+  "hud.wave": {
+    "component": "GameCanvas",
+    "description": "Short uppercase label for the current wave number in the HUD.",
+    "tone": "functional",
+    "characterLimit": 6,
+    "placeholders": [],
+    "doNotTranslate": [],
+    "notes": null
+  },
+  "phase.waveClear": {
+    "component": "GameCanvas",
+    "description": "Overlay text shown for a moment when the player clears a wave.",
+    "tone": "celebratory, brief",
+    "characterLimit": 15,
+    "placeholders": [],
+    "doNotTranslate": [],
+    "notes": null
+  },
+  "phase.challengingStage": {
+    "component": "GameCanvas",
+    "description": "Overlay text shown at the start of a bonus Challenging Stage wave.",
+    "tone": "dramatic, arcade",
+    "characterLimit": 20,
+    "placeholders": [],
+    "doNotTranslate": [],
+    "notes": "Borrowed from Galaga — keep the arcade feel."
+  },
+  "phase.hits": {
+    "component": "GameCanvas",
+    "description": "Sub-line during Challenging Stage showing how many enemies the player has hit.",
+    "tone": "neutral",
+    "characterLimit": 15,
+    "placeholders": ["{{count}}"],
+    "doNotTranslate": [],
+    "notes": "{{count}} is an integer hit count."
+  },
+  "phase.gameOver": {
+    "component": "GameCanvas",
+    "description": "Large overlay text when the player loses all lives.",
+    "tone": "dramatic, classic arcade",
+    "characterLimit": 12,
+    "placeholders": [],
+    "doNotTranslate": [],
+    "notes": null
+  },
+  "score.display": {
+    "component": "GameCanvas",
+    "description": "Accessibility label for the score display.",
+    "tone": "functional",
+    "characterLimit": 20,
+    "placeholders": ["{{score}}"],
+    "doNotTranslate": [],
+    "notes": null
+  }
+}
