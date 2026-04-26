@@ -37,7 +37,20 @@ interface RenderState {
 }
 
 const GameCanvas = forwardRef<GameCanvasHandle, Props>(
-  ({ highScore = 0, onGameOver, onScoreChange, onPlayerHit, onWaveClear, isPaused = false, width, height, scale }, ref) => {
+  (
+    {
+      highScore = 0,
+      onGameOver,
+      onScoreChange,
+      onPlayerHit,
+      onWaveClear,
+      isPaused = false,
+      width,
+      height,
+      scale,
+    },
+    ref
+  ) => {
     const { t } = useTranslation("starswarm");
     const images = useStarSwarmImages();
 

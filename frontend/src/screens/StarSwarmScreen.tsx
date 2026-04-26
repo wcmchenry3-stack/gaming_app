@@ -23,7 +23,6 @@ export default function StarSwarmScreen() {
 
   const canvasRef = useRef<GameCanvasHandle>(null);
 
-  const [score, setScore] = useState(0);
   const [highScore, setHighScore] = useState(0);
   const [phase, setPhase] = useState<GamePhase>("SwoopIn");
   const [isPaused, setIsPaused] = useState(false);
@@ -41,7 +40,6 @@ export default function StarSwarmScreen() {
 
   const handleScoreChange = useCallback((s: number) => {
     scoreRef.current = s;
-    setScore(s);
   }, []);
 
   const handleGameOver = useCallback((finalScore: number) => {
@@ -62,16 +60,8 @@ export default function StarSwarmScreen() {
     hapticWaveClear();
   }, []);
 
-  // GameCanvas reports phase changes only for GameOver / WaveClear via callbacks.
-  // For other phases we rely on the game loop advancing — this is cosmetic only
-  // (phase is used by Controls to know when to show buttons).
-  const handlePhaseResume = useCallback(() => {
-    setPhase("Playing");
-  }, []);
-
   const handleNewGame = useCallback(() => {
     scoreRef.current = 0;
-    setScore(0);
     setPhase("SwoopIn");
     setIsPaused(false);
     canvasRef.current?.reset();
@@ -86,9 +76,7 @@ export default function StarSwarmScreen() {
   }, []);
 
   const scale =
-    containerW > 0 && containerH > 0
-      ? Math.min(containerW / CANVAS_W, containerH / CANVAS_H)
-      : 0;
+    containerW > 0 && containerH > 0 ? Math.min(containerW / CANVAS_W, containerH / CANVAS_H) : 0;
 
   const displayW = Math.round(CANVAS_W * scale);
   const displayH = Math.round(CANVAS_H * scale);
