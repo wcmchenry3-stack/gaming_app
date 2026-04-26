@@ -87,7 +87,7 @@ function countGivens(grid: Grid): number {
 
 describe("loadPuzzle", () => {
   it("returns a fresh state with difficulty set", () => {
-    const state = loadPuzzle("easy", rng0);
+    const state = loadPuzzle("easy", "classic", rng0);
     expect(state.difficulty).toBe("easy");
     expect(state._v).toBe(1);
     expect(state.selectedRow).toBeNull();
@@ -99,28 +99,28 @@ describe("loadPuzzle", () => {
   });
 
   it("hits the clue range for easy (36-44 givens)", () => {
-    const state = loadPuzzle("easy", rng0);
+    const state = loadPuzzle("easy", "classic", rng0);
     const n = countGivens(state.grid);
     expect(n).toBeGreaterThanOrEqual(36);
     expect(n).toBeLessThanOrEqual(44);
   });
 
   it("hits the clue range for medium (28-35 givens)", () => {
-    const state = loadPuzzle("medium", rng0);
+    const state = loadPuzzle("medium", "classic", rng0);
     const n = countGivens(state.grid);
     expect(n).toBeGreaterThanOrEqual(28);
     expect(n).toBeLessThanOrEqual(35);
   });
 
   it("hits the clue range for hard (22-27 givens)", () => {
-    const state = loadPuzzle("hard", rng0);
+    const state = loadPuzzle("hard", "classic", rng0);
     const n = countGivens(state.grid);
     expect(n).toBeGreaterThanOrEqual(22);
     expect(n).toBeLessThanOrEqual(27);
   });
 
   it("marks given cells as `given: true` and non-givens as `given: false`", () => {
-    const state = loadPuzzle("easy", rng0);
+    const state = loadPuzzle("easy", "classic", rng0);
     for (let r = 0; r < 9; r++) {
       for (let c = 0; c < 9; c++) {
         const cell = state.grid[r]![c]!;
@@ -136,7 +136,7 @@ describe("loadPuzzle", () => {
   });
 
   it("derives a full 81-char solution that matches the givens", () => {
-    const state = loadPuzzle("easy", rng0);
+    const state = loadPuzzle("easy", "classic", rng0);
     expect(state.solution).toHaveLength(81);
     for (let i = 0; i < 81; i++) {
       const puzCh = state.puzzle.charCodeAt(i);
@@ -153,14 +153,14 @@ describe("loadPuzzle", () => {
 
 describe("selectCell", () => {
   it("selects the given cell", () => {
-    const s0 = loadPuzzle("easy", rng0);
+    const s0 = loadPuzzle("easy", "classic", rng0);
     const s1 = selectCell(s0, 3, 4);
     expect(s1.selectedRow).toBe(3);
     expect(s1.selectedCol).toBe(4);
   });
 
   it("deselects when the same cell is selected again", () => {
-    const s0 = loadPuzzle("easy", rng0);
+    const s0 = loadPuzzle("easy", "classic", rng0);
     const s1 = selectCell(s0, 2, 2);
     const s2 = selectCell(s1, 2, 2);
     expect(s2.selectedRow).toBeNull();
@@ -198,7 +198,7 @@ function findGiven(state: SudokuState): { row: number; col: number } {
 
 describe("enterDigit (normal mode)", () => {
   it("places the correct digit without error", () => {
-    const s0 = loadPuzzle("easy", rng0);
+    const s0 = loadPuzzle("easy", "classic", rng0);
     const { row, col } = findEmpty(s0);
     const correct = s0.solution.charCodeAt(row * 9 + col) - 48;
     const s1 = enterDigit(selectCell(s0, row, col), correct as CellValue);
@@ -209,7 +209,7 @@ describe("enterDigit (normal mode)", () => {
   });
 
   it("flags isError and increments errorCount on wrong digit", () => {
-    const s0 = loadPuzzle("easy", rng0);
+    const s0 = loadPuzzle("easy", "classic", rng0);
     const { row, col } = findEmpty(s0);
     const correct = s0.solution.charCodeAt(row * 9 + col) - 48;
     const wrong = ((correct % 9) + 1) as CellValue;
@@ -221,7 +221,7 @@ describe("enterDigit (normal mode)", () => {
   });
 
   it("is a no-op on given cells", () => {
-    const s0 = loadPuzzle("easy", rng0);
+    const s0 = loadPuzzle("easy", "classic", rng0);
     const { row, col } = findGiven(s0);
     const original = s0.grid[row]![col]!.value;
     const s1 = enterDigit(selectCell(s0, row, col), 5);
@@ -230,7 +230,7 @@ describe("enterDigit (normal mode)", () => {
   });
 
   it("pushes previous state to undo stack", () => {
-    const s0 = loadPuzzle("easy", rng0);
+    const s0 = loadPuzzle("easy", "classic", rng0);
     const { row, col } = findEmpty(s0);
     const s1 = enterDigit(selectCell(s0, row, col), 3);
     expect(s1.undoStack).toHaveLength(1);
@@ -240,7 +240,7 @@ describe("enterDigit (normal mode)", () => {
     // Use a hard puzzle — easy ones have fewer than UNDO_STACK_LIMIT+5
     // empty cells, so the test can't push enough moves onto the stack
     // to trigger the cap.
-    let s = loadPuzzle("hard", rng0);
+    let s = loadPuzzle("hard", "classic", rng0);
     const empties: Array<[number, number]> = [];
     for (let r = 0; r < 9 && empties.length < UNDO_STACK_LIMIT + 5; r++) {
       for (let c = 0; c < 9 && empties.length < UNDO_STACK_LIMIT + 5; c++) {
@@ -255,7 +255,7 @@ describe("enterDigit (normal mode)", () => {
   });
 
   it("clears notes on the cell when a value is placed", () => {
-    const s0 = loadPuzzle("easy", rng0);
+    const s0 = loadPuzzle("easy", "classic", rng0);
     const { row, col } = findEmpty(s0);
     const sNotes = enterDigit(toggleNotesMode(selectCell(s0, row, col)), 4);
     expect(sNotes.grid[row]![col]!.notes.size).toBe(1);
@@ -265,13 +265,13 @@ describe("enterDigit (normal mode)", () => {
   });
 
   it("is a no-op when no cell is selected", () => {
-    const s0 = loadPuzzle("easy", rng0);
+    const s0 = loadPuzzle("easy", "classic", rng0);
     const s1 = enterDigit(s0, 5);
     expect(s1).toBe(s0);
   });
 
   it("snapshots stored on the undo stack carry an empty undoStack", () => {
-    const s0 = loadPuzzle("easy", rng0);
+    const s0 = loadPuzzle("easy", "classic", rng0);
     const { row, col } = findEmpty(s0);
     const s1 = enterDigit(selectCell(s0, row, col), 5);
     expect(s1.undoStack[0]!.undoStack).toEqual([]);
@@ -284,7 +284,7 @@ describe("enterDigit (normal mode)", () => {
 
 describe("enterDigit (notes mode)", () => {
   it("toggles a digit in the selected cell's notes", () => {
-    const s0 = loadPuzzle("easy", rng0);
+    const s0 = loadPuzzle("easy", "classic", rng0);
     const { row, col } = findEmpty(s0);
     const s1 = enterDigit(toggleNotesMode(selectCell(s0, row, col)), 4);
     expect(s1.grid[row]![col]!.notes.has(4 as NoteDigit)).toBe(true);
@@ -293,7 +293,7 @@ describe("enterDigit (notes mode)", () => {
   });
 
   it("does not affect errorCount or undoStack", () => {
-    const s0 = loadPuzzle("easy", rng0);
+    const s0 = loadPuzzle("easy", "classic", rng0);
     const { row, col } = findEmpty(s0);
     const s1 = enterDigit(toggleNotesMode(selectCell(s0, row, col)), 7);
     expect(s1.errorCount).toBe(0);
@@ -301,7 +301,7 @@ describe("enterDigit (notes mode)", () => {
   });
 
   it("is a no-op on given cells", () => {
-    const s0 = loadPuzzle("easy", rng0);
+    const s0 = loadPuzzle("easy", "classic", rng0);
     const { row, col } = findGiven(s0);
     const s1 = enterDigit(toggleNotesMode(selectCell(s0, row, col)), 2);
     expect(s1.grid[row]![col]!.notes.size).toBe(0);
@@ -314,7 +314,7 @@ describe("enterDigit (notes mode)", () => {
 
 describe("eraseCell", () => {
   it("clears value AND notes and pushes to undo stack", () => {
-    const s0 = loadPuzzle("easy", rng0);
+    const s0 = loadPuzzle("easy", "classic", rng0);
     const { row, col } = findEmpty(s0);
     const sNote = enterDigit(toggleNotesMode(selectCell(s0, row, col)), 3);
     const sValue = enterDigit(toggleNotesMode(sNote), 5);
@@ -326,7 +326,7 @@ describe("eraseCell", () => {
   });
 
   it("is a no-op on given cells", () => {
-    const s0 = loadPuzzle("easy", rng0);
+    const s0 = loadPuzzle("easy", "classic", rng0);
     const { row, col } = findGiven(s0);
     const s1 = eraseCell(selectCell(s0, row, col));
     expect(s1.grid[row]![col]!.value).toBe(s0.grid[row]![col]!.value);
@@ -334,7 +334,7 @@ describe("eraseCell", () => {
   });
 
   it("is a no-op when the cell is already empty with no notes", () => {
-    const s0 = loadPuzzle("easy", rng0);
+    const s0 = loadPuzzle("easy", "classic", rng0);
     const { row, col } = findEmpty(s0);
     const s1 = eraseCell(selectCell(s0, row, col));
     expect(s1.undoStack).toEqual([]);
@@ -347,13 +347,13 @@ describe("eraseCell", () => {
 
 describe("undo", () => {
   it("returns the state unchanged when stack is empty", () => {
-    const s0 = loadPuzzle("easy", rng0);
+    const s0 = loadPuzzle("easy", "classic", rng0);
     const s1 = undo(s0);
     expect(s1).toBe(s0);
   });
 
   it("restores the previous value after an enterDigit", () => {
-    const s0 = loadPuzzle("easy", rng0);
+    const s0 = loadPuzzle("easy", "classic", rng0);
     const { row, col } = findEmpty(s0);
     const s1 = enterDigit(selectCell(s0, row, col), 5);
     const s2 = undo(s1);
@@ -362,7 +362,7 @@ describe("undo", () => {
   });
 
   it("restores errorCount when undoing a wrong placement", () => {
-    const s0 = loadPuzzle("easy", rng0);
+    const s0 = loadPuzzle("easy", "classic", rng0);
     const { row, col } = findEmpty(s0);
     const correct = s0.solution.charCodeAt(row * 9 + col) - 48;
     const wrong = ((correct % 9) + 1) as CellValue;
@@ -373,7 +373,7 @@ describe("undo", () => {
   });
 
   it("restores notesMode on undo", () => {
-    const s0 = loadPuzzle("easy", rng0);
+    const s0 = loadPuzzle("easy", "classic", rng0);
     const { row, col } = findEmpty(s0);
     // Toggle notes → place value (in normal) → undo should restore
     // notesMode=false because the *pre-enterDigit* state had notesMode=false.
@@ -385,7 +385,7 @@ describe("undo", () => {
   });
 
   it("chains multiple undos back to the initial state", () => {
-    const s0 = loadPuzzle("easy", rng0);
+    const s0 = loadPuzzle("easy", "classic", rng0);
     const empties: Array<[number, number]> = [];
     for (let r = 0; r < 9 && empties.length < 3; r++) {
       for (let c = 0; c < 9 && empties.length < 3; c++) {
@@ -405,12 +405,12 @@ describe("undo", () => {
 
 describe("isComplete", () => {
   it("returns false for an unfilled grid", () => {
-    const s0 = loadPuzzle("easy", rng0);
+    const s0 = loadPuzzle("easy", "classic", rng0);
     expect(isComplete(s0.grid, s0.solution)).toBe(false);
   });
 
   it("returns true once every cell matches the solution", () => {
-    const s0 = loadPuzzle("easy", rng0);
+    const s0 = loadPuzzle("easy", "classic", rng0);
     // Programmatically fill in the solution.
     let s = s0;
     for (let r = 0; r < 9; r++) {
@@ -489,7 +489,7 @@ describe("getConflicts", () => {
 
 describe("toggleNotesMode", () => {
   it("flips the notesMode flag", () => {
-    const s0 = loadPuzzle("easy", rng0);
+    const s0 = loadPuzzle("easy", "classic", rng0);
     expect(s0.notesMode).toBe(false);
     expect(toggleNotesMode(s0).notesMode).toBe(true);
     expect(toggleNotesMode(toggleNotesMode(s0)).notesMode).toBe(false);

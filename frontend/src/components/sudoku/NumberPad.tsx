@@ -2,23 +2,18 @@ import React, { useMemo } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { useTranslation } from "react-i18next";
 import { useTheme } from "../../theme/ThemeContext";
-import type { CellValue, Grid } from "../../game/sudoku/types";
+import type { CellValue, Grid, Variant } from "../../game/sudoku/types";
+import { variantConfig } from "../../game/sudoku/types";
 
 interface Props {
-  /** Used to compute which digits already have all 9 instances placed. */
+  /** Used to compute which digits already have all instances placed. */
   grid: Grid;
+  variant: Variant;
   notesMode: boolean;
   onDigit: (digit: CellValue) => void;
   onErase: () => void;
   onToggleNotes: () => void;
 }
-
-const DIGITS: readonly CellValue[] = [1, 2, 3, 4, 5, 6, 7, 8, 9];
-const DIGIT_ROWS: readonly (readonly CellValue[])[] = [
-  [1, 2, 3],
-  [4, 5, 6],
-  [7, 8, 9],
-];
 
 function countValue(grid: Grid, digit: CellValue): number {
   let n = 0;
@@ -26,23 +21,42 @@ function countValue(grid: Grid, digit: CellValue): number {
   return n;
 }
 
-export default function NumberPad({ grid, notesMode, onDigit, onErase, onToggleNotes }: Props) {
+export default function NumberPad({
+  grid,
+  variant,
+  notesMode,
+  onDigit,
+  onErase,
+  onToggleNotes,
+}: Props) {
   const { t } = useTranslation("sudoku");
   const { colors } = useTheme();
+  const { size } = variantConfig(variant);
 
-  // Dim digits where all 9 instances are already placed. Recomputed on
-  // every render so that placing the 9th "8" immediately dims its key
-  // without waiting for another re-render trigger.
+  // Build digits 1–size in rows of 3.
+  const digits = useMemo<readonly CellValue[]>(
+    () => Array.from({ length: size }, (_, i) => (i + 1) as CellValue),
+    [size]
+  );
+  const digitRows = useMemo<readonly (readonly CellValue[])[]>(() => {
+    const rows: CellValue[][] = [];
+    for (let i = 0; i < digits.length; i += 3) {
+      rows.push(digits.slice(i, i + 3) as CellValue[]);
+    }
+    return rows;
+  }, [digits]);
+
+  // Dim digits where all `size` instances are already placed.
   const completed = useMemo<ReadonlySet<CellValue>>(() => {
     const done = new Set<CellValue>();
-    for (const d of DIGITS) if (countValue(grid, d) === 9) done.add(d);
+    for (const d of digits) if (countValue(grid, d) === size) done.add(d);
     return done;
-  }, [grid]);
+  }, [grid, digits, size]);
 
   return (
     <View style={styles.pad}>
       <View style={styles.digitGrid}>
-        {DIGIT_ROWS.map((row, ri) => (
+        {digitRows.map((row, ri) => (
           <View key={ri} style={styles.digitRow}>
             {row.map((d) => {
               const disabled = completed.has(d);

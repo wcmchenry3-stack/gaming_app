@@ -3,6 +3,7 @@ from typing import Literal
 from pydantic import BaseModel, ConfigDict, Field
 
 Difficulty = Literal["easy", "medium", "hard"]
+Variant = Literal["classic", "mini"]
 
 
 class SudokuMetadata(BaseModel):
@@ -16,12 +17,14 @@ class SudokuMetadata(BaseModel):
     model_config = ConfigDict(extra="forbid")
     player_name: str = Field(default="", max_length=64)
     difficulty: Difficulty
+    variant: Variant = "classic"
 
 
 class ScoreSubmitRequest(BaseModel):
     player_name: str = Field(..., min_length=1, max_length=32)
     score: int = Field(..., ge=0)
     difficulty: Difficulty
+    variant: Variant = "classic"
 
 
 class ScoreEntry(BaseModel):

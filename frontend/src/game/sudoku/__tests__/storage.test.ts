@@ -43,7 +43,7 @@ describe("sudoku storage", () => {
   });
 
   it("round-trips a fresh puzzle via save → load", async () => {
-    const s = loadPuzzle("easy", rng0);
+    const s = loadPuzzle("easy", "classic", rng0);
     await saveGame(s);
     const loaded = await loadGame();
     expect(loaded).not.toBeNull();
@@ -54,7 +54,7 @@ describe("sudoku storage", () => {
   });
 
   it("restores Set<NoteDigit> notes after a JSON round-trip", async () => {
-    let s = loadPuzzle("easy", rng0);
+    let s = loadPuzzle("easy", "classic", rng0);
     const { row, col } = findFirstEmpty(s);
     s = toggleNotesMode(s); // enter notes mode
     s = selectCell(s, row, col);
@@ -77,7 +77,7 @@ describe("sudoku storage", () => {
   });
 
   it("preserves errorCount, selection, and notesMode across reload", async () => {
-    let s = loadPuzzle("hard", rng0);
+    let s = loadPuzzle("hard", "classic", rng0);
     const { row, col } = findFirstEmpty(s);
     const correct = s.solution.charCodeAt(row * 9 + col) - 48;
     const wrong = ((correct % 9) + 1) as CellValue;
@@ -97,7 +97,7 @@ describe("sudoku storage", () => {
   });
 
   it("strips nested undoStack snapshots at save time", async () => {
-    let s = loadPuzzle("easy", rng0);
+    let s = loadPuzzle("easy", "classic", rng0);
     const { row, col } = findFirstEmpty(s);
     s = selectCell(s, row, col);
     s = enterDigit(s, 5 as CellValue);
@@ -152,7 +152,7 @@ describe("sudoku storage", () => {
   });
 
   it("clearGame removes the persisted state", async () => {
-    const s = loadPuzzle("easy", rng0);
+    const s = loadPuzzle("easy", "classic", rng0);
     await saveGame(s);
     expect(await AsyncStorage.getItem(GAME_KEY)).not.toBeNull();
     await clearGame();
@@ -190,18 +190,27 @@ describe("sudoku stats storage", () => {
     expect(stats).toEqual(EMPTY_SUDOKU_STATS);
   });
 
-  it("EMPTY_SUDOKU_STATS has zero values for all three difficulties", () => {
-    for (const diff of ["easy", "medium", "hard"] as const) {
-      expect(EMPTY_SUDOKU_STATS[diff].bestTimeS).toBe(0);
-      expect(EMPTY_SUDOKU_STATS[diff].gamesSolved).toBe(0);
+  it("EMPTY_SUDOKU_STATS has zero values for all difficulties and variants", () => {
+    for (const v of ["classic", "mini"] as const) {
+      for (const diff of ["easy", "medium", "hard"] as const) {
+        expect(EMPTY_SUDOKU_STATS[v][diff].bestTimeS).toBe(0);
+        expect(EMPTY_SUDOKU_STATS[v][diff].gamesSolved).toBe(0);
+      }
     }
   });
 
   it("round-trips stats via saveStats → loadStats", async () => {
     const stats = {
-      easy: { bestTimeS: 120, gamesSolved: 5 },
-      medium: { bestTimeS: 300, gamesSolved: 3 },
-      hard: { bestTimeS: 600, gamesSolved: 1 },
+      classic: {
+        easy: { bestTimeS: 120, gamesSolved: 5 },
+        medium: { bestTimeS: 300, gamesSolved: 3 },
+        hard: { bestTimeS: 600, gamesSolved: 1 },
+      },
+      mini: {
+        easy: { bestTimeS: 0, gamesSolved: 0 },
+        medium: { bestTimeS: 0, gamesSolved: 0 },
+        hard: { bestTimeS: 0, gamesSolved: 0 },
+      },
     };
     await saveStats(stats);
     const loaded = await loadStats();
@@ -210,9 +219,16 @@ describe("sudoku stats storage", () => {
 
   it("persists to STATS_KEY in AsyncStorage", async () => {
     const stats = {
-      easy: { bestTimeS: 90, gamesSolved: 2 },
-      medium: { bestTimeS: 0, gamesSolved: 0 },
-      hard: { bestTimeS: 0, gamesSolved: 0 },
+      classic: {
+        easy: { bestTimeS: 90, gamesSolved: 2 },
+        medium: { bestTimeS: 0, gamesSolved: 0 },
+        hard: { bestTimeS: 0, gamesSolved: 0 },
+      },
+      mini: {
+        easy: { bestTimeS: 0, gamesSolved: 0 },
+        medium: { bestTimeS: 0, gamesSolved: 0 },
+        hard: { bestTimeS: 0, gamesSolved: 0 },
+      },
     };
     await saveStats(stats);
     const raw = await AsyncStorage.getItem(STATS_KEY);
@@ -220,27 +236,32 @@ describe("sudoku stats storage", () => {
     expect(JSON.parse(raw!)).toEqual(stats);
   });
 
-  it("recovers missing difficulty fields as zeros", async () => {
-    // Simulate a payload that's missing the 'hard' key (e.g. old format).
+  it("migrates pre-#748 flat stats as classic variant", async () => {
+    // Simulate a payload from before the nested structure was introduced.
     await AsyncStorage.setItem(
       STATS_KEY,
-      JSON.stringify({ easy: { bestTimeS: 60, gamesSolved: 1 } })
+      JSON.stringify({
+        easy: { bestTimeS: 60, gamesSolved: 1 },
+        medium: { bestTimeS: 0, gamesSolved: 0 },
+        hard: { bestTimeS: 0, gamesSolved: 0 },
+      })
     );
     const loaded = await loadStats();
-    expect(loaded.easy).toEqual({ bestTimeS: 60, gamesSolved: 1 });
-    expect(loaded.medium).toEqual({ bestTimeS: 0, gamesSolved: 0 });
-    expect(loaded.hard).toEqual({ bestTimeS: 0, gamesSolved: 0 });
+    expect(loaded.classic.easy).toEqual({ bestTimeS: 60, gamesSolved: 1 });
+    expect(loaded.classic.medium).toEqual({ bestTimeS: 0, gamesSolved: 0 });
+    expect(loaded.classic.hard).toEqual({ bestTimeS: 0, gamesSolved: 0 });
+    expect(loaded.mini.easy).toEqual({ bestTimeS: 0, gamesSolved: 0 });
   });
 
-  it("recovers partial DifficultyStats fields as zeros", async () => {
+  it("recovers partial DifficultyStats fields as zeros (old flat format migration)", async () => {
     await AsyncStorage.setItem(
       STATS_KEY,
       JSON.stringify({ easy: { gamesSolved: 4 }, medium: {}, hard: null })
     );
     const loaded = await loadStats();
-    expect(loaded.easy).toEqual({ bestTimeS: 0, gamesSolved: 4 });
-    expect(loaded.medium).toEqual({ bestTimeS: 0, gamesSolved: 0 });
-    expect(loaded.hard).toEqual({ bestTimeS: 0, gamesSolved: 0 });
+    expect(loaded.classic.easy).toEqual({ bestTimeS: 0, gamesSolved: 4 });
+    expect(loaded.classic.medium).toEqual({ bestTimeS: 0, gamesSolved: 0 });
+    expect(loaded.classic.hard).toEqual({ bestTimeS: 0, gamesSolved: 0 });
   });
 
   it("returns empty stats and captures exception on AsyncStorage failure", async () => {

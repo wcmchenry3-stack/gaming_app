@@ -8,20 +8,21 @@ interface Props {
   cell: SudokuCellData;
   row: number;
   col: number;
+  /** Grid size (6 for mini, 9 for classic). */
+  size: number;
   selected: boolean;
   /** Non-selected cell that holds the same digit as the selected cell. */
   highlighted: boolean;
-  /** Cell in the same row, column, or 3×3 box as the selected cell. */
+  /** Cell in the same row, column, or box as the selected cell. */
   peer: boolean;
   onPress: () => void;
 }
-
-const NOTE_DIGITS: readonly NoteDigit[] = [1, 2, 3, 4, 5, 6, 7, 8, 9];
 
 export default function SudokuCell({
   cell,
   row,
   col,
+  size,
   selected,
   highlighted,
   peer,
@@ -30,11 +31,11 @@ export default function SudokuCell({
   const { t } = useTranslation("sudoku");
   const { colors } = useTheme();
 
+  // Notes occupy a 3-column grid regardless of variant; rows vary (3 for 9×9, 2 for 6×6).
+  const noteDigits = Array.from({ length: size }, (_, i) => (i + 1) as NoteDigit);
+
   const background = selected
-    ? // 20% tint of the accent colour — tokens don't expose a pre-mixed
-      // "accent-dim" so we piggyback on surfaceHigh and the accent border
-      // for the selection affordance.
-      colors.surfaceHigh
+    ? colors.surfaceHigh
     : highlighted
       ? colors.surfaceAlt
       : peer
@@ -73,7 +74,7 @@ export default function SudokuCell({
         </Text>
       ) : cell.notes.size > 0 ? (
         <View style={styles.notesGrid}>
-          {NOTE_DIGITS.map((d) => (
+          {noteDigits.map((d) => (
             <Text
               key={d}
               style={[styles.note, { color: cell.notes.has(d) ? colors.textMuted : "transparent" }]}

@@ -51,6 +51,7 @@ describe("SudokuCell", () => {
   it("renders a given digit", () => {
     const { getByText } = wrap(
       <SudokuCell
+        size={9}
         cell={cell({ value: 5, given: true })}
         row={0}
         col={0}
@@ -67,6 +68,7 @@ describe("SudokuCell", () => {
     const notes = new Set<NoteDigit>([1, 4, 7]);
     const { getByText } = wrap(
       <SudokuCell
+        size={9}
         cell={cell({ notes })}
         row={0}
         col={0}
@@ -84,6 +86,7 @@ describe("SudokuCell", () => {
   it("exposes accessibility role=button with row/col label", () => {
     const { getByRole } = wrap(
       <SudokuCell
+        size={9}
         cell={cell({ value: 3 })}
         row={4}
         col={6}
@@ -102,6 +105,7 @@ describe("SudokuCell", () => {
     const onPress = jest.fn();
     const { getByRole } = wrap(
       <SudokuCell
+        size={9}
         cell={cell()}
         row={0}
         col={0}
@@ -118,6 +122,7 @@ describe("SudokuCell", () => {
   it("matches snapshot — given value", () => {
     const tree = wrap(
       <SudokuCell
+        size={9}
         cell={cell({ value: 7, given: true })}
         row={0}
         col={0}
@@ -133,6 +138,7 @@ describe("SudokuCell", () => {
   it("matches snapshot — selected error cell", () => {
     const tree = wrap(
       <SudokuCell
+        size={9}
         cell={cell({ value: 2, isError: true })}
         row={3}
         col={3}
@@ -148,6 +154,7 @@ describe("SudokuCell", () => {
   it("matches snapshot — peer cell", () => {
     const tree = wrap(
       <SudokuCell
+        size={9}
         cell={cell({ value: 4 })}
         row={0}
         col={3}
@@ -169,6 +176,7 @@ describe("SudokuGrid", () => {
   it("renders 81 cell buttons", () => {
     const { getAllByRole } = wrap(
       <SudokuGrid
+        variant="classic"
         grid={asGrid(emptyGrid())}
         selectedRow={null}
         selectedCol={null}
@@ -182,6 +190,7 @@ describe("SudokuGrid", () => {
     const onCellPress = jest.fn();
     const { getAllByRole } = wrap(
       <SudokuGrid
+        variant="classic"
         grid={asGrid(emptyGrid())}
         selectedRow={null}
         selectedCol={null}
@@ -200,7 +209,13 @@ describe("SudokuGrid", () => {
     g[4]![4] = cell({ value: 3 });
     g[8]![8] = cell({ value: 7, isError: true });
     const tree = wrap(
-      <SudokuGrid grid={asGrid(g)} selectedRow={4} selectedCol={4} onCellPress={() => {}} />
+      <SudokuGrid
+        variant="classic"
+        grid={asGrid(g)}
+        selectedRow={4}
+        selectedCol={4}
+        onCellPress={() => {}}
+      />
     ).toJSON();
     expect(tree).toMatchSnapshot();
   });
@@ -212,6 +227,7 @@ describe("SudokuGrid", () => {
     it("marks cells in the same row as peers", () => {
       const { getAllByRole } = wrap(
         <SudokuGrid
+          variant="classic"
           grid={asGrid(emptyGrid())}
           selectedRow={4}
           selectedCol={4}
@@ -234,6 +250,7 @@ describe("SudokuGrid", () => {
     it("does not apply peer highlight to the selected cell itself", () => {
       const { getAllByRole } = wrap(
         <SudokuGrid
+          variant="classic"
           grid={asGrid(emptyGrid())}
           selectedRow={2}
           selectedCol={2}
@@ -252,6 +269,7 @@ describe("SudokuGrid", () => {
     it("marks cells in the same 3×3 box as peers", () => {
       const { getAllByRole } = wrap(
         <SudokuGrid
+          variant="classic"
           grid={asGrid(emptyGrid())}
           selectedRow={0}
           selectedCol={0}
@@ -271,6 +289,7 @@ describe("SudokuGrid", () => {
     it("clears peers when no cell is selected", () => {
       const { getAllByRole } = wrap(
         <SudokuGrid
+          variant="classic"
           grid={asGrid(emptyGrid())}
           selectedRow={null}
           selectedCol={null}
@@ -297,6 +316,7 @@ describe("NumberPad", () => {
   it("renders 9 digits + erase + notes actions", () => {
     const { getAllByRole, getByLabelText } = wrap(
       <NumberPad
+        variant="classic"
         grid={asGrid(emptyGrid())}
         notesMode={false}
         onDigit={() => {}}
@@ -314,6 +334,7 @@ describe("NumberPad", () => {
     const onDigit = jest.fn();
     const { getByLabelText } = wrap(
       <NumberPad
+        variant="classic"
         grid={asGrid(emptyGrid())}
         notesMode={false}
         onDigit={onDigit}
@@ -330,6 +351,7 @@ describe("NumberPad", () => {
     const onToggleNotes = jest.fn();
     const { getByLabelText } = wrap(
       <NumberPad
+        variant="classic"
         grid={asGrid(emptyGrid())}
         notesMode={false}
         onDigit={() => {}}
@@ -363,6 +385,7 @@ describe("NumberPad", () => {
     const onDigit = jest.fn();
     const { getByLabelText } = wrap(
       <NumberPad
+        variant="classic"
         grid={asGrid(g)}
         notesMode={false}
         onDigit={onDigit}
@@ -380,6 +403,7 @@ describe("NumberPad", () => {
   it("matches snapshot — notes mode active", () => {
     const tree = wrap(
       <NumberPad
+        variant="classic"
         grid={asGrid(emptyGrid())}
         notesMode={true}
         onDigit={() => {}}

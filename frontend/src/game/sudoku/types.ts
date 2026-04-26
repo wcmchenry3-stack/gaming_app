@@ -1,5 +1,5 @@
 /**
- * Sudoku — shared types (#616).
+ * Sudoku — shared types (#616, #748).
  *
  * Pure data. No React, no AsyncStorage, no side effects. Imported by the
  * engine, UI components, and persistence layer alike.
@@ -8,6 +8,24 @@
 export type Difficulty = "easy" | "medium" | "hard";
 
 export const DIFFICULTIES: readonly Difficulty[] = ["easy", "medium", "hard"];
+
+export type Variant = "classic" | "mini";
+
+export const VARIANTS: readonly Variant[] = ["classic", "mini"];
+
+/** Grid dimensions and box shape for a given variant. */
+export interface GridConfig {
+  readonly size: number;
+  readonly boxRows: number;
+  readonly boxCols: number;
+}
+
+export const CLASSIC_CONFIG: GridConfig = { size: 9, boxRows: 3, boxCols: 3 };
+export const MINI_CONFIG: GridConfig = { size: 6, boxRows: 2, boxCols: 3 };
+
+export function variantConfig(variant: Variant): GridConfig {
+  return variant === "mini" ? MINI_CONFIG : CLASSIC_CONFIG;
+}
 
 /** 0 means empty. 1-9 are the placed digits. */
 export type CellValue = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9;
@@ -21,22 +39,25 @@ export interface SudokuCell {
   readonly given: boolean;
   /** Digits the player has pencilled in. Empty when `value !== 0` in practice. */
   readonly notes: ReadonlySet<NoteDigit>;
-  /** True when `value !== 0` and `value !== solution[row*9+col]`. */
+  /** True when `value !== 0` and `value !== solution[row*size+col]`. */
   readonly isError: boolean;
 }
 
-/** 9×9 grid, indexed [row][col]. */
+/** size×size grid, indexed [row][col]. */
 export type Grid = readonly (readonly SudokuCell[])[];
 
 /** Immutable snapshot. `_v` is a schema version so persisted saves can
  * be migrated or rejected safely. */
 export interface SudokuState {
   readonly _v: 1;
+  readonly variant: Variant;
   readonly difficulty: Difficulty;
-  /** Original 81-character string from `puzzles.json`. Kept so the UI
-   * can detect givens and reset to initial state without recomputing. */
+  /** Original puzzle string from puzzles.json / puzzles_mini.json. 81 chars
+   * for classic, 36 chars for mini. Kept so the UI can detect givens and
+   * reset to initial state without recomputing. */
   readonly puzzle: string;
-  /** 81-character solution derived at load time by `solvePuzzle`. */
+  /** Solved puzzle string derived at load time by `solvePuzzle`. Same
+   * length as `puzzle`. */
   readonly solution: string;
   readonly grid: Grid;
   /** Selected cell (row, col) or null. Givens may be selected for
