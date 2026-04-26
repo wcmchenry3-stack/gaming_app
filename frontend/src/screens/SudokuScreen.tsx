@@ -45,14 +45,14 @@ import DifficultySelector from "../components/sudoku/DifficultySelector";
 import {
   enterDigit,
   eraseCell,
-  getConflicts,
   loadPuzzle,
   selectCell,
   toggleNotesMode,
   undo,
 } from "../game/sudoku/engine";
 import type { CellValue, Difficulty, SudokuState, Variant } from "../game/sudoku/types";
-import { VARIANTS, variantConfig } from "../game/sudoku/types";
+import { VARIANTS } from "../game/sudoku/types";
+import { useSound } from "../game/_shared/useSound";
 import {
   clearGame,
   loadGame,
@@ -118,7 +118,13 @@ export default function SudokuScreen() {
   const statsRef = useRef<SudokuStats>(EMPTY_SUDOKU_STATS);
 
   const flashOpacity = useRef(new Animated.Value(0)).current;
+  const unitFlashOpacity = useRef(new Animated.Value(0)).current;
   const isComplete = state?.isComplete ?? false;
+
+  const { play: playDigitPlace } = useSound("sudoku.digitPlace");
+  const { play: playErrorEntered } = useSound("sudoku.errorEntered");
+  const { play: playUnitComplete } = useSound("sudoku.unitComplete");
+  const { play: playPuzzleComplete } = useSound("sudoku.puzzleComplete");
 
   const {
     start: syncStart,
@@ -330,6 +336,27 @@ export default function SudokuScreen() {
     ]).start();
   }, [flashOpacity]);
 
+  useEffect(() => {
+    const evts = state?.events;
+    if (!evts?.length) return;
+    for (const evt of evts) {
+      if (evt.type === "digitPlace") playDigitPlace();
+      else if (evt.type === "errorEntered") {
+        playErrorEntered();
+        flashError();
+      } else if (evt.type === "unitComplete") {
+        playUnitComplete();
+        Animated.sequence([
+          Animated.timing(unitFlashOpacity, { toValue: 0.35, duration: 80, useNativeDriver: true }),
+          Animated.timing(unitFlashOpacity, { toValue: 0, duration: 400, useNativeDriver: true }),
+        ]).start();
+      } else if (evt.type === "puzzleComplete") {
+        playPuzzleComplete();
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state?.events]);
+
   const handleStart = useCallback(() => {
     clearGame().catch(() => {});
     digitCountRef.current = 0;
@@ -357,23 +384,10 @@ export default function SudokuScreen() {
         digitCountRef.current += 1;
         ensureSyncStarted(next);
 
-        if (!s.notesMode && s.selectedRow !== null && s.selectedCol !== null) {
-          const cell = next.grid[s.selectedRow]?.[s.selectedCol];
-          if (cell?.isError) {
-            const conflicts = getConflicts(
-              next.grid,
-              s.selectedRow,
-              s.selectedCol,
-              digit,
-              variantConfig(next.variant)
-            );
-            if (conflicts.length > 0) flashError();
-          }
-        }
         return next;
       });
     },
-    [ensureSyncStarted, flashError]
+    [ensureSyncStarted]
   );
 
   const handleErase = useCallback(() => {
@@ -523,6 +537,16 @@ export default function SudokuScreen() {
               { backgroundColor: colors.error, opacity: flashOpacity },
             ]}
             testID="sudoku-invalid-flash"
+          />
+          <Animated.View
+            pointerEvents="none"
+            accessibilityElementsHidden
+            importantForAccessibility="no-hide-descendants"
+            style={[
+              StyleSheet.absoluteFill,
+              { backgroundColor: "#2ecc71", opacity: unitFlashOpacity },
+            ]}
+            testID="sudoku-unit-flash"
           />
         </View>
       )}

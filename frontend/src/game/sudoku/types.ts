@@ -70,6 +70,13 @@ export interface SudokuState {
   /** Prior snapshots for undo. Capped at 50 entries (FIFO eviction).
    * Nested `undoStack` is always `[]` to prevent exponential nesting. */
   readonly undoStack: readonly SudokuState[];
+  readonly events?: readonly GameEvent[];
 }
 
 export const UNDO_STACK_LIMIT = 50;
+
+export type GameEvent =
+  | { readonly type: "digitPlace" }
+  | { readonly type: "errorEntered" }
+  | { readonly type: "unitComplete"; readonly unit: "row" | "col" | "box"; readonly index: number }
+  | { readonly type: "puzzleComplete" };

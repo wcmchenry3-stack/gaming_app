@@ -237,6 +237,61 @@ _(Previously placed — provenance to be confirmed)_
 
 ---
 
+## Sudoku (#833)
+
+### sudoku-digit-place.ogg
+
+- **Event:** Digit placed in a cell (normal mode, any digit)
+- **Original filename:** `pepSound1.ogg` from Kenney Digital Audio
+- **Source URL:** https://kenney.nl/assets/digital-audio
+- **Creator:** Kenney Vleugels (Kenney.nl)
+- **License:** Creative Commons Zero (CC0)
+- **License URL:** https://creativecommons.org/publicdomain/zero/1.0/
+- **Attribution required:** No
+- **Commercial use:** Yes
+- **Download date:** 2026-04-26
+- **Notes:** Short upbeat pep sound — subtle confirmation of each digit placement.
+
+### sudoku-error-entered.ogg
+
+- **Event:** Wrong digit entered (value doesn't match solution)
+- **Original filename:** `lowDown.ogg` from Kenney Digital Audio
+- **Source URL:** https://kenney.nl/assets/digital-audio
+- **Creator:** Kenney Vleugels (Kenney.nl)
+- **License:** Creative Commons Zero (CC0)
+- **License URL:** https://creativecommons.org/publicdomain/zero/1.0/
+- **Attribution required:** No
+- **Commercial use:** Yes
+- **Download date:** 2026-04-26
+- **Notes:** Descending digital tone. Accompanies the red flash on an incorrect digit.
+
+### sudoku-unit-complete.ogg
+
+- **Event:** A full row, column, or 3×3/2×3 box is completed correctly
+- **Original filename:** `phaserUp1.ogg` from Kenney Digital Audio
+- **Source URL:** https://kenney.nl/assets/digital-audio
+- **Creator:** Kenney Vleugels (Kenney.nl)
+- **License:** Creative Commons Zero (CC0)
+- **License URL:** https://creativecommons.org/publicdomain/zero/1.0/
+- **Attribution required:** No
+- **Commercial use:** Yes
+- **Download date:** 2026-04-26
+- **Notes:** Rising phaser sting. Fires once per completed unit; multiple units completing on the same digit play the sound once each.
+
+### sudoku-puzzle-complete (reuses hearts-moon-shot.mp3)
+
+- **Event:** Puzzle fully solved (all cells filled correctly)
+- **Original filename:** (reuses `hearts-moon-shot.mp3` — see Hearts section above)
+- **Source URL:** https://pixabay.com/sound-effects/orchestral-win-331233/
+- **Creator:** u_it78ck90s3 on Pixabay
+- **License:** Pixabay Content License
+- **License URL:** https://pixabay.com/service/license-summary/
+- **Attribution required:** No
+- **Commercial use:** Yes
+- **Notes:** Same orchestral win fanfare reused by Yacht, Twenty48, Blackjack, and Solitaire.
+
+---
+
 ## Solitaire (#831)
 
 ### solitaire-card-flip.ogg
