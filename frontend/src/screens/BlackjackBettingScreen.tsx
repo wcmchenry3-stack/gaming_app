@@ -19,7 +19,7 @@ export default function BlackjackBettingScreen({ navigation }: Props) {
   const { t } = useTranslation(["blackjack", "common"]);
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
-  const { engine, loading, error, apply, handleRulesChange } = useBlackjackGame();
+  const { engine, loading, error, apply, handleRulesChange, handlePlayAgain } = useBlackjackGame();
 
   // Redirect to TableScreen if loaded mid-hand (app restart, or injected state).
   useEffect(() => {
@@ -54,6 +54,7 @@ export default function BlackjackBettingScreen({ navigation }: Props) {
         title={t("game.title")}
         requireBack
         onBack={() => navigation.popToTop()}
+        onNewGame={handlePlayAgain}
         onOpenScoreboard={() => navigation.navigate("Scoreboard", { gameKey: "blackjack" })}
         rightSlot={
           state ? (
