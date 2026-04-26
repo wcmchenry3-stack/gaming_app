@@ -63,6 +63,7 @@ export type HomeStackParamList = {
   Home: undefined;
   Game: { initialState: GameState };
   Cascade: undefined;
+  StarSwarm: undefined;
   BlackjackBetting: undefined;
   BlackjackTable: undefined;
   Twenty48: undefined;
@@ -136,6 +137,7 @@ function withSuspense<P extends object>(
 }
 
 const LazyCascadeScreen = withSuspense(LazyScreens.Cascade, "cascade");
+const LazyStarSwarmScreen = withSuspense(LazyScreens.StarSwarm, "starswarm");
 const LazyBlackjackBettingScreen = withSuspense(LazyScreens.BlackjackBetting, "blackjack_betting");
 const LazyBlackjackTableScreen = withSuspense(LazyScreens.BlackjackTable, "blackjack_table");
 const LazyTwenty48Screen = withSuspense(LazyScreens.Twenty48, "twenty48");
@@ -159,6 +161,7 @@ function LobbyStack() {
       <HomeStack.Screen name="Home" component={HomeScreen} />
       <HomeStack.Screen name="Game" component={GameScreen} />
       <HomeStack.Screen name="Cascade" component={LazyCascadeScreen} />
+      <HomeStack.Screen name="StarSwarm" component={LazyStarSwarmScreen} />
       <HomeStack.Screen name="BlackjackBetting" component={LazyBlackjackBettingScreen} />
       <HomeStack.Screen name="BlackjackTable" component={LazyBlackjackTableScreen} />
       <HomeStack.Screen name="Twenty48" component={LazyTwenty48Screen} />

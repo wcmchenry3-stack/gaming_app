@@ -106,5 +106,59 @@
     "placeholders": ["{{score}}"],
     "doNotTranslate": [],
     "notes": null
+  },
+  "controls.chargeShotLabel": {
+    "component": "Controls",
+    "description": "Accessibility label for the charge shot button.",
+    "tone": "functional, descriptive",
+    "characterLimit": 50,
+    "placeholders": [],
+    "doNotTranslate": [],
+    "notes": null
+  },
+  "controls.paused": {
+    "component": "Controls",
+    "description": "Large text shown in the pause overlay.",
+    "tone": "neutral, arcade",
+    "characterLimit": 10,
+    "placeholders": [],
+    "doNotTranslate": [],
+    "notes": null
+  },
+  "controls.tapToResume": {
+    "component": "Controls",
+    "description": "Hint text under the PAUSED heading — instructs user to tap to resume.",
+    "tone": "functional",
+    "characterLimit": 20,
+    "placeholders": [],
+    "doNotTranslate": [],
+    "notes": null
+  },
+  "controls.resumeLabel": {
+    "component": "Controls",
+    "description": "Accessibility label for the pause-overlay resume pressable.",
+    "tone": "functional",
+    "characterLimit": 20,
+    "placeholders": [],
+    "doNotTranslate": [],
+    "notes": null
+  },
+  "controls.newGame": {
+    "component": "Controls",
+    "description": "Label on the new-game button shown on the game-over screen.",
+    "tone": "action, brief",
+    "characterLimit": 10,
+    "placeholders": [],
+    "doNotTranslate": [],
+    "notes": null
+  },
+  "controls.newGameLabel": {
+    "component": "Controls",
+    "description": "Accessibility label for the new-game button.",
+    "tone": "functional",
+    "characterLimit": 25,
+    "placeholders": [],
+    "doNotTranslate": [],
+    "notes": null
   }
 }

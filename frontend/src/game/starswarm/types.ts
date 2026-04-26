@@ -74,6 +74,7 @@ export interface Bullet {
   readonly owner: "player" | "enemy";
   readonly width: number;
   readonly height: number;
+  readonly damage: number;
 }
 
 export interface Player {
@@ -121,6 +122,8 @@ export interface StarSwarmState {
 export interface StarSwarmInput {
   /** Desired player center X in logical canvas pixels. */
   readonly playerX: number;
-  /** true while fire button is held. */
+  /** true while auto-fire is active. */
   readonly fire: boolean;
+  /** One-shot: fire a charge bullet this tick (Controls resets to false after one frame). */
+  readonly chargeShot: boolean;
 }
