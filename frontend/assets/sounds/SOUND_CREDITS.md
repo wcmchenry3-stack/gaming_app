@@ -135,7 +135,7 @@ When adding a sound:
 
 ### starswarm-laser.ogg, starswarm-chargeshot.ogg, starswarm-explosion.ogg, starswarm-gameover.ogg, starswarm-waveclear.ogg
 
-*(Previously placed — provenance to be confirmed)*
+_(Previously placed — provenance to be confirmed)_
 
 ### starswarm-playerhit.ogg
 
