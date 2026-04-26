@@ -29,14 +29,6 @@ function emptyFoundations(): Foundations {
   return { spades: [], hearts: [], diamonds: [], clubs: [] };
 }
 
-function fullFoundations(): Foundations {
-  return {
-    spades: Array.from({ length: 13 }, (_, i) => c("spades", (i + 1) as Rank)),
-    hearts: Array.from({ length: 13 }, (_, i) => c("hearts", (i + 1) as Rank)),
-    diamonds: Array.from({ length: 13 }, (_, i) => c("diamonds", (i + 1) as Rank)),
-    clubs: Array.from({ length: 13 }, (_, i) => c("clubs", (i + 1) as Rank)),
-  };
-}
 
 function mkState(overrides: Partial<FreeCellState> = {}): FreeCellState {
   return {
@@ -495,8 +487,6 @@ describe("isComplete", () => {
   });
 
   it("is false when 3 foundations are full but 1 is not", () => {
-    const state = mkState({ foundations: fullFoundations() });
-    // fullFoundations already has all 13 — but let's check an incomplete state
     const incomplete: Foundations = {
       spades: Array.from({ length: 13 }, (_, i) => c("spades", (i + 1) as Rank)),
       hearts: Array.from({ length: 13 }, (_, i) => c("hearts", (i + 1) as Rank)),
