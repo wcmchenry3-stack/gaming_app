@@ -4,9 +4,14 @@ import { render, fireEvent } from "@testing-library/react-native";
 import { ThemeProvider } from "../../../../theme/ThemeContext";
 import type { Card } from "../../types";
 import StockWastePile from "../StockWastePile";
+import { DragProvider } from "../../../_shared/drag/DragContext";
 
 function withTheme(children: React.ReactNode) {
-  return <ThemeProvider>{children}</ThemeProvider>;
+  return (
+    <DragProvider>
+      <ThemeProvider>{children}</ThemeProvider>
+    </DragProvider>
+  );
 }
 
 function card(rank: number): Card {
