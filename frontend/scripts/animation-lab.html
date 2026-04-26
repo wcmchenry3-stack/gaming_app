@@ -207,6 +207,38 @@
         margin-left: auto;
       }
 
+      /* ── Variant toggle ── */
+      .variant-toggle {
+        display: flex;
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        overflow: hidden;
+      }
+      .variant-btn {
+        flex: 1;
+        padding: 5px 12px;
+        border: none;
+        background: transparent;
+        color: var(--muted);
+        font-size: 12px;
+        font-weight: 600;
+        cursor: pointer;
+        transition:
+          background 0.12s,
+          color 0.12s;
+      }
+      .variant-btn + .variant-btn {
+        border-left: 1px solid var(--border);
+      }
+      .variant-btn.active {
+        background: var(--accent);
+        color: #fff;
+      }
+      .variant-btn:hover:not(.active) {
+        background: rgba(124, 58, 237, 0.15);
+        color: var(--text);
+      }
+
       /* ══════════════════════════════════════════════════
        ANIMATION 1: Moon Shot — full-screen overlay
        Duration is driven by sound length (soundDriven: true).
@@ -1215,6 +1247,25 @@
         const tpl = document.getElementById(anim.stageTemplate);
         const stage = tpl.content.cloneNode(true).querySelector(".stage");
 
+        let ticker = null;
+        let playedAt = null;
+        // activeVariant is null when no variants declared (use anim.play/reset directly)
+        let activeVariant = anim.variants?.[0] ?? null;
+
+        function currentPlay() {
+          return activeVariant ? activeVariant.play : anim.play;
+        }
+        function currentReset() {
+          return activeVariant ? activeVariant.reset : anim.reset;
+        }
+        function getActiveFlags() {
+          const v = activeVariant;
+          return {
+            soundDriven: v?.soundDriven !== undefined ? v.soundDriven : anim.soundDriven,
+            dismissible: v?.dismissible !== undefined ? v.dismissible : anim.dismissible,
+          };
+        }
+
         const statusEl = document.createElement("div");
         statusEl.className = "status";
         statusEl.textContent = "idle";
@@ -1233,11 +1284,7 @@
         resetBtn.className = "btn danger";
         resetBtn.textContent = "Reset";
 
-        let ticker = null;
-        let playedAt = null;
-
         playBtn.addEventListener("click", () => {
-          // Stop any prior sound for this animation
           stopSound(anim.id);
           playSound(anim.id);
           playedAt = Date.now();
@@ -1248,13 +1295,14 @@
             if (!playedAt) return;
             statusEl.textContent = `${((Date.now() - playedAt) / 1000).toFixed(1)}s`;
           }, 100);
-          anim.play(stage, reduceMotionToggle.checked, statusEl);
+          if (activeVariant) log(anim.id, "anim", `play() — variant: ${activeVariant.label}`);
+          currentPlay()(stage, reduceMotionToggle.checked, statusEl);
         });
 
         resetBtn.addEventListener("click", () => {
           clearInterval(ticker);
           playedAt = null;
-          anim.reset(stage);
+          currentReset()(stage);
           statusEl.textContent = "idle";
           statusEl.className = "status";
         });
@@ -1268,15 +1316,52 @@
 
         const tags = document.createElement("div");
         tags.style.cssText = "display:flex;gap:6px;flex-wrap:wrap;";
-        if (anim.soundDriven)
-          tags.innerHTML += `<span style="font-size:10px;padding:1px 6px;border-radius:3px;background:#1e293b;color:#38bdf8;">sound-driven</span>`;
-        if (anim.dismissible)
-          tags.innerHTML += `<span style="font-size:10px;padding:1px 6px;border-radius:3px;background:#1e293b;color:#a78bfa;">dismissible</span>`;
+
+        function renderTags() {
+          tags.innerHTML = "";
+          const { soundDriven, dismissible } = getActiveFlags();
+          if (soundDriven)
+            tags.innerHTML += `<span style="font-size:10px;padding:1px 6px;border-radius:3px;background:#1e293b;color:#38bdf8;">sound-driven</span>`;
+          if (dismissible)
+            tags.innerHTML += `<span style="font-size:10px;padding:1px 6px;border-radius:3px;background:#1e293b;color:#a78bfa;">dismissible</span>`;
+        }
+        renderTags();
 
         const p = document.createElement("p");
         p.textContent = anim.description;
 
-        card.append(h3, tags, stage, btnRow, p);
+        card.append(h3);
+
+        if (anim.variants?.length > 0) {
+          const variantToggle = document.createElement("div");
+          variantToggle.className = "variant-toggle";
+
+          anim.variants.forEach((v, i) => {
+            const btn = document.createElement("button");
+            btn.className = "variant-btn" + (i === 0 ? " active" : "");
+            btn.textContent = v.label;
+            btn.addEventListener("click", () => {
+              if (activeVariant === v) return;
+              // Reset before switching
+              currentReset()(stage);
+              clearInterval(ticker);
+              playedAt = null;
+              statusEl.textContent = "idle";
+              statusEl.className = "status";
+              activeVariant = v;
+              variantToggle.querySelectorAll(".variant-btn").forEach((b, j) => {
+                b.classList.toggle("active", j === i);
+              });
+              renderTags();
+              log(anim.id, "anim", `variant → ${v.label}`);
+            });
+            variantToggle.appendChild(btn);
+          });
+
+          card.append(variantToggle);
+        }
+
+        card.append(tags, stage, btnRow, p);
         return card;
       }
 

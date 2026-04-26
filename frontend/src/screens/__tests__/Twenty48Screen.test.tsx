@@ -305,6 +305,15 @@ describe("Twenty48Screen — initial load", () => {
 describe("Twenty48Screen — move persistence", () => {
   beforeEach(() => jest.clearAllMocks());
 
+  // Flush any pending move-lock timeouts (120 ms) so they don't fire
+  // during subsequent tests and pollute the saveGame mock call count.
+  afterEach(async () => {
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 200));
+    });
+    jest.clearAllMocks();
+  });
+
   it("calls saveGame after a valid move", async () => {
     // Start from null so the engine spawns a real random board.
     (loadGame as jest.Mock).mockResolvedValueOnce(null);
