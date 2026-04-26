@@ -192,7 +192,13 @@ export default function MahjongScreen() {
 
   // Keep audio callback refs up-to-date each render.
   useEffect(() => {
-    audioCallbacksRef.current = { playTileSelect, playTileMatch, playShuffle, playWin, playDeadlock };
+    audioCallbacksRef.current = {
+      playTileSelect,
+      playTileMatch,
+      playShuffle,
+      playWin,
+      playDeadlock,
+    };
   });
 
   // Reduce motion preference.
@@ -255,8 +261,13 @@ export default function MahjongScreen() {
     prevAudioStateRef.current = state;
     if (!prev || !state) return;
 
-    const { playTileSelect: pSelect, playTileMatch: pMatch, playShuffle: pShuffle, playWin: pWin, playDeadlock: pDead } =
-      audioCallbacksRef.current;
+    const {
+      playTileSelect: pSelect,
+      playTileMatch: pMatch,
+      playShuffle: pShuffle,
+      playWin: pWin,
+      playDeadlock: pDead,
+    } = audioCallbacksRef.current;
 
     if (state.tiles.length < prev.tiles.length) {
       pMatch();
@@ -472,7 +483,9 @@ export default function MahjongScreen() {
             <View style={[styles.boardWrap, outerWidth > 0 ? { height: BOARD_H * scale } : null]}>
               {/* boardAnimWrap handles shake + pulse; inner board View applies scale transform */}
               <Animated.View style={[styles.boardAnimWrap, boardAnimStyle]}>
-                <View style={[styles.board, { width: BOARD_W, transform: [{ scale }] } as ViewStyle]}>
+                <View
+                  style={[styles.board, { width: BOARD_W, transform: [{ scale }] } as ViewStyle]}
+                >
                   <GameCanvas
                     state={state}
                     onTilePress={handleTilePress}
