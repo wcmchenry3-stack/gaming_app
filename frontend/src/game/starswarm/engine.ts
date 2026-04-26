@@ -7,7 +7,6 @@ import type {
   Vec2,
   CubicBezier,
   EnemyTier,
-  EnemyPhase,
   StarSwarmInput,
 } from './types';
 
@@ -211,7 +210,7 @@ function challengePath(idx: number, total: number, canvasW: number, canvasH: num
 // Enemy factories
 // ---------------------------------------------------------------------------
 
-function makeEnemy(idx: number, slot: SlotDef, canvasW: number, wave: number): Enemy {
+function makeEnemy(idx: number, slot: SlotDef, canvasW: number, _wave: number): Enemy {
   const { fx, fy } = slotToWorld(slot, canvasW);
   const size = TIER_SIZE[slot.tier];
   const path = swoopPath(idx, fx, fy, canvasW);
@@ -446,7 +445,7 @@ function tickSingleEnemy(
   }
 }
 
-function tickSwoopIn(enemy: Enemy, dtMs: number, canvasH: number): EnemyTickResult {
+function tickSwoopIn(enemy: Enemy, dtMs: number, _canvasH: number): EnemyTickResult {
   const newT = enemy.pathT + dtMs / enemy.pathDuration;
 
   if (newT < 0) {

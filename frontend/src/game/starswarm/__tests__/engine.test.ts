@@ -145,9 +145,6 @@ describe('Dive AI', () => {
   it('diving enemies eventually return to Formation', () => {
     let s = initStarSwarm(CANVAS_W, CANVAS_H);
     s = advanceMs(s, 60_000); // long enough for multiple dive cycles
-    const allSettled = s.enemies
-      .filter((e) => e.isAlive)
-      .every((e) => e.phase === 'Formation' || e.phase === 'SwoopIn');
     // At least some should be back in Formation
     const inFormation = s.enemies.filter((e) => e.isAlive && e.phase === 'Formation');
     expect(inFormation.length).toBeGreaterThan(0);
