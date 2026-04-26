@@ -254,8 +254,20 @@ function buildBoard(
         const slotA = rowSlots[i]!;
         const slotB = rowSlots[N - 1 - i]!;
         const pair = shuffledPairs[pairIdx++]!;
-        result.push({ ...pair[0], id: nextId++, col: slotA.col, row: slotA.row, layer: slotA.layer });
-        result.push({ ...pair[1], id: nextId++, col: slotB.col, row: slotB.row, layer: slotB.layer });
+        result.push({
+          ...pair[0],
+          id: nextId++,
+          col: slotA.col,
+          row: slotA.row,
+          layer: slotA.layer,
+        });
+        result.push({
+          ...pair[1],
+          id: nextId++,
+          col: slotB.col,
+          row: slotB.row,
+          layer: slotB.layer,
+        });
       }
     }
   }
