@@ -245,7 +245,7 @@ export default function HomeScreen() {
                 {games
                   .slice(rowIndex * numColumns, rowIndex * numColumns + numColumns)
                   .map((item, colIndex) =>
-                    renderCard({ item, index: rowIndex * numColumns + colIndex }),
+                    renderCard({ item, index: rowIndex * numColumns + colIndex })
                   )}
               </View>
             ))}
