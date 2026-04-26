@@ -8,25 +8,18 @@ import pytest
 from fastapi.testclient import TestClient
 from hypothesis import HealthCheck, given, settings, strategies as st
 
-from yacht.router import reset_game
-
 
 @pytest.fixture()
 def client_default():
-    """Client using the default (dev) allowed origins. No reload — avoids accumulating
-    duplicate rate-limit decorator registrations that halve the effective limit."""
+    """Client using the default (dev) allowed origins."""
     import main as m
 
-    reset_game()
     yield TestClient(m.app)
-    reset_game()
 
 
 @pytest.fixture()
 def client_prod():
-    """Client with a production ALLOWED_ORIGINS env var.
-    Reloads main twice (setup + teardown restore). limiter.reset() is called after each
-    reload so accumulated registration counters don't bleed into subsequent tests."""
+    """Client with a production ALLOWED_ORIGINS env var."""
     from limiter import limiter
 
     os.environ["ALLOWED_ORIGINS"] = "https://dev-games.buffingchi.com"
@@ -38,21 +31,14 @@ def client_prod():
     os.environ.pop("ALLOWED_ORIGINS", None)
     importlib.reload(m)
     limiter.reset()
-    reset_game()
 
 
 def _sid() -> str:
     return str(uuid.uuid4())
 
 
-def _new_game(client, session_id):
-    return client.post("/yacht/new", headers={"X-Session-ID": session_id})
-
-
-def _roll(client, session_id, held=None):
-    if held is None:
-        held = [False] * 5
-    return client.post("/yacht/roll", json={"held": held}, headers={"X-Session-ID": session_id})
+def _fake_game_id() -> str:
+    return str(uuid.uuid4())
 
 
 # ---------------------------------------------------------------------------
@@ -62,9 +48,7 @@ def _roll(client, session_id, held=None):
 
 @pytest.mark.security
 def test_security_headers_present(client_default):
-    sid = _sid()
-    _new_game(client_default, sid)
-    res = client_default.get("/yacht/state", headers={"X-Session-ID": sid})
+    res = client_default.get("/health")
     assert res.headers.get("x-content-type-options") == "nosniff"
     assert res.headers.get("x-frame-options") == "DENY"
     assert res.headers.get("referrer-policy") == "strict-origin-when-cross-origin"
@@ -72,9 +56,7 @@ def test_security_headers_present(client_default):
 
 @pytest.mark.security
 def test_csp_header_present_on_get(client_default):
-    sid = _sid()
-    _new_game(client_default, sid)
-    res = client_default.get("/yacht/state", headers={"X-Session-ID": sid})
+    res = client_default.get("/health")
     csp = res.headers.get("content-security-policy", "")
     assert "default-src 'none'" in csp
     assert "frame-ancestors 'none'" in csp
@@ -83,16 +65,18 @@ def test_csp_header_present_on_get(client_default):
 @pytest.mark.security
 def test_csp_header_present_on_post(client_default):
     sid = _sid()
-    res = _new_game(client_default, sid)
+    res = client_default.patch(
+        f"/cascade/score/{_fake_game_id()}",
+        json={"player_name": "tester"},
+        headers={"X-Session-ID": sid},
+    )
     csp = res.headers.get("content-security-policy", "")
     assert "default-src" in csp
 
 
 @pytest.mark.security
 def test_server_header_suppressed(client_default):
-    sid = _sid()
-    _new_game(client_default, sid)
-    res = client_default.get("/yacht/state", headers={"X-Session-ID": sid})
+    res = client_default.get("/health")
     assert "server" not in res.headers
 
 
@@ -103,47 +87,36 @@ def test_server_header_suppressed(client_default):
 
 @pytest.mark.security
 def test_cors_allowed_origin_localhost(client_default):
-    sid = _sid()
-    _new_game(client_default, sid)
     res = client_default.get(
-        "/yacht/state",
-        headers={"Origin": "http://localhost:8081", "X-Session-ID": sid},
+        "/health",
+        headers={"Origin": "http://localhost:8081"},
     )
     assert res.headers.get("access-control-allow-origin") == "http://localhost:8081"
 
 
 @pytest.mark.security
 def test_cors_blocked_unknown_origin(client_default):
-    sid = _sid()
-    _new_game(client_default, sid)
     res = client_default.get(
-        "/yacht/state",
-        headers={"Origin": "https://evil.example.com", "X-Session-ID": sid},
+        "/health",
+        headers={"Origin": "https://evil.example.com"},
     )
     assert "access-control-allow-origin" not in res.headers
 
 
 @pytest.mark.security
 def test_cors_prod_allows_frontend(client_prod):
-    sid = _sid()
-    _new_game(client_prod, sid)
     res = client_prod.get(
-        "/yacht/state",
-        headers={
-            "Origin": "https://dev-games.buffingchi.com",
-            "X-Session-ID": sid,
-        },
+        "/health",
+        headers={"Origin": "https://dev-games.buffingchi.com"},
     )
     assert res.headers.get("access-control-allow-origin") == "https://dev-games.buffingchi.com"
 
 
 @pytest.mark.security
 def test_cors_prod_blocks_localhost(client_prod):
-    sid = _sid()
-    _new_game(client_prod, sid)
     res = client_prod.get(
-        "/yacht/state",
-        headers={"Origin": "http://localhost:8081", "X-Session-ID": sid},
+        "/health",
+        headers={"Origin": "http://localhost:8081"},
     )
     assert "access-control-allow-origin" not in res.headers
 
@@ -154,48 +127,23 @@ def test_cors_prod_blocks_localhost(client_prod):
 
 
 @pytest.mark.security
-def test_cors_post_new_game_allowed_origin(client_default):
-    res = client_default.post(
-        "/yacht/new",
+def test_cors_post_allowed_origin(client_default):
+    res = client_default.patch(
+        f"/cascade/score/{_fake_game_id()}",
+        json={"player_name": "tester"},
         headers={"Origin": "http://localhost:8081", "X-Session-ID": _sid()},
     )
     assert res.headers.get("access-control-allow-origin") == "http://localhost:8081"
 
 
 @pytest.mark.security
-def test_cors_post_new_game_blocked_origin(client_default):
-    res = client_default.post(
-        "/yacht/new",
+def test_cors_post_blocked_origin(client_default):
+    res = client_default.patch(
+        f"/cascade/score/{_fake_game_id()}",
+        json={"player_name": "tester"},
         headers={"Origin": "https://evil.example.com", "X-Session-ID": _sid()},
     )
     assert "access-control-allow-origin" not in res.headers
-
-
-@pytest.mark.security
-def test_cors_post_roll_allowed(client_default):
-    sid = _sid()
-    _new_game(client_default, sid)
-    _roll(client_default, sid)
-    # Add Origin for this check
-    res2 = client_default.post(
-        "/yacht/roll",
-        json={"held": [False] * 5},
-        headers={"Origin": "http://localhost:8081", "X-Session-ID": sid},
-    )
-    assert res2.headers.get("access-control-allow-origin") == "http://localhost:8081"
-
-
-@pytest.mark.security
-def test_cors_post_score_allowed(client_default):
-    sid = _sid()
-    _new_game(client_default, sid)
-    _roll(client_default, sid)
-    res = client_default.post(
-        "/yacht/score",
-        json={"category": "chance"},
-        headers={"Origin": "http://localhost:8081", "X-Session-ID": sid},
-    )
-    assert res.headers.get("access-control-allow-origin") == "http://localhost:8081"
 
 
 # ---------------------------------------------------------------------------
@@ -206,10 +154,10 @@ def test_cors_post_score_allowed(client_default):
 @pytest.mark.security
 def test_cors_preflight_allowed_origin(client_default):
     res = client_default.options(
-        "/yacht/new",
+        "/cascade/score/fake-id",
         headers={
             "Origin": "http://localhost:8081",
-            "Access-Control-Request-Method": "POST",
+            "Access-Control-Request-Method": "PATCH",
             "Access-Control-Request-Headers": "Content-Type, X-Session-ID",
         },
     )
@@ -220,10 +168,10 @@ def test_cors_preflight_allowed_origin(client_default):
 @pytest.mark.security
 def test_cors_preflight_blocked_origin(client_default):
     res = client_default.options(
-        "/yacht/new",
+        "/cascade/score/fake-id",
         headers={
             "Origin": "https://attacker.example.com",
-            "Access-Control-Request-Method": "POST",
+            "Access-Control-Request-Method": "PATCH",
         },
     )
     assert "access-control-allow-origin" not in res.headers
@@ -231,63 +179,11 @@ def test_cors_preflight_blocked_origin(client_default):
 
 @pytest.mark.security
 def test_cors_null_origin_blocked(client_default):
-    sid = _sid()
-    _new_game(client_default, sid)
     res = client_default.get(
-        "/yacht/state",
-        headers={"Origin": "null", "X-Session-ID": sid},
+        "/health",
+        headers={"Origin": "null"},
     )
     assert "access-control-allow-origin" not in res.headers
-
-
-# ---------------------------------------------------------------------------
-# Error message sanitization
-# ---------------------------------------------------------------------------
-
-
-@pytest.mark.security
-def test_unknown_category_error_is_fixed_string(client_default):
-    sid = _sid()
-    _new_game(client_default, sid)
-    _roll(client_default, sid)
-    res = client_default.post(
-        "/yacht/score",
-        json={"category": "bogus_xyz_123"},
-        headers={"X-Session-ID": sid},
-    )
-    assert res.status_code == 400
-    assert "bogus_xyz_123" not in res.json()["detail"]
-    assert "Unknown scoring category" in res.json()["detail"]
-
-
-@pytest.mark.security
-def test_xss_payload_not_reflected_in_error(client_default):
-    payload = "<script>alert(1)</script>"
-    sid = _sid()
-    _new_game(client_default, sid)
-    _roll(client_default, sid)
-    res = client_default.post(
-        "/yacht/score",
-        json={"category": payload},
-        headers={"X-Session-ID": sid},
-    )
-    assert res.status_code == 400
-    assert payload not in res.json()["detail"]
-
-
-@pytest.mark.security
-def test_duplicate_category_error_is_fixed_string(client_default):
-    sid = _sid()
-    _new_game(client_default, sid)
-    _roll(client_default, sid)
-    client_default.post("/yacht/score", json={"category": "chance"}, headers={"X-Session-ID": sid})
-    _roll(client_default, sid)
-    res = client_default.post(
-        "/yacht/score", json={"category": "chance"}, headers={"X-Session-ID": sid}
-    )
-    assert res.status_code == 400
-    assert "already scored" in res.json()["detail"]
-    assert "chance" not in res.json()["detail"]
 
 
 # ---------------------------------------------------------------------------
@@ -298,8 +194,8 @@ def test_duplicate_category_error_is_fixed_string(client_default):
 @pytest.mark.security
 def test_oversized_body_returns_413(client_default):
     sid = _sid()
-    res = client_default.post(
-        "/yacht/score",
+    res = client_default.patch(
+        f"/cascade/score/{_fake_game_id()}",
         content=b"x" * 2000,
         headers={
             "Content-Type": "application/json",
@@ -313,12 +209,12 @@ def test_oversized_body_returns_413(client_default):
 @pytest.mark.security
 def test_normal_body_not_rejected(client_default):
     sid = _sid()
-    _new_game(client_default, sid)
-    _roll(client_default, sid)
-    res = client_default.post(
-        "/yacht/score", json={"category": "chance"}, headers={"X-Session-ID": sid}
+    res = client_default.patch(
+        f"/cascade/score/{_fake_game_id()}",
+        json={"player_name": "tester"},
+        headers={"X-Session-ID": sid},
     )
-    assert res.status_code == 200
+    assert res.status_code != 413
 
 
 # ---------------------------------------------------------------------------
@@ -328,9 +224,16 @@ def test_normal_body_not_rejected(client_default):
 
 @pytest.mark.security
 def test_rate_limit_returns_429_after_threshold(client_default):
-    """POST /yacht/new has a 10/minute limit; 11th request must be 429."""
+    """PATCH /cascade/score has a 10/minute per-session limit; 11th request must be 429."""
+    sid = _sid()
+    game_id = _fake_game_id()
     responses = [
-        client_default.post("/yacht/new", headers={"X-Session-ID": _sid()}) for _ in range(11)
+        client_default.patch(
+            f"/cascade/score/{game_id}",
+            json={"player_name": "tester"},
+            headers={"X-Session-ID": sid},
+        )
+        for _ in range(11)
     ]
     assert any(r.status_code == 429 for r in responses)
 
@@ -338,8 +241,15 @@ def test_rate_limit_returns_429_after_threshold(client_default):
 @pytest.mark.security
 def test_rate_limit_429_has_retry_after(client_default):
     """429 responses must include Retry-After header."""
+    sid = _sid()
+    game_id = _fake_game_id()
     responses = [
-        client_default.post("/yacht/new", headers={"X-Session-ID": _sid()}) for _ in range(11)
+        client_default.patch(
+            f"/cascade/score/{game_id}",
+            json={"player_name": "tester"},
+            headers={"X-Session-ID": sid},
+        )
+        for _ in range(11)
     ]
     rate_limited = [r for r in responses if r.status_code == 429]
     assert rate_limited, "Expected at least one 429"
@@ -373,24 +283,14 @@ def test_cascade_score_strict_limit(client_default):
 
 @pytest.mark.security
 def test_missing_session_id_returns_400(client_default):
-    res = client_default.post("/yacht/new")
+    res = client_default.get("/games/me")
     assert res.status_code == 400
 
 
 @pytest.mark.security
 def test_invalid_uuid_session_id_returns_400(client_default):
-    res = client_default.post("/yacht/new", headers={"X-Session-ID": "not-a-uuid"})
+    res = client_default.get("/games/me", headers={"X-Session-ID": "not-a-uuid"})
     assert res.status_code == 400
-
-
-@pytest.mark.security
-def test_two_sessions_are_isolated(client_default):
-    sid1, sid2 = _sid(), _sid()
-    _new_game(client_default, sid1)
-    _new_game(client_default, sid2)
-    _roll(client_default, sid1)
-    state2 = client_default.get("/yacht/state", headers={"X-Session-ID": sid2}).json()
-    assert state2["rolls_used"] == 0
 
 
 # ---------------------------------------------------------------------------
@@ -399,45 +299,20 @@ def test_two_sessions_are_isolated(client_default):
 
 
 @pytest.mark.security
-@given(category=st.text(min_size=0, max_size=200))
+@given(player_name=st.text(min_size=0, max_size=200))
 @settings(
     max_examples=50,
     deadline=2000,
     suppress_health_check=[HealthCheck.function_scoped_fixture],
 )
-def test_score_category_fuzz_never_500(client_default, category):
-    """Arbitrary category strings must never produce 5xx errors."""
+def test_cascade_score_string_input_never_500(client_default, player_name):
+    """Arbitrary string values for player_name must never produce 5xx errors."""
     from limiter import limiter
 
-    limiter.reset()  # hypothesis runs many examples per test; reset to avoid 429s
-    sid = _sid()
-    _new_game(client_default, sid)
-    _roll(client_default, sid)
-    res = client_default.post(
-        "/yacht/score",
-        json={"category": category},
-        headers={"X-Session-ID": sid},
+    limiter.reset()
+    res = client_default.patch(
+        f"/cascade/score/{_fake_game_id()}",
+        json={"player_name": player_name},
+        headers={"X-Session-ID": _sid()},
     )
-    assert res.status_code < 500, f"5xx for category={category!r}: {res.text}"
-
-
-@pytest.mark.security
-@given(held=st.lists(st.booleans(), min_size=0, max_size=20))
-@settings(
-    max_examples=30,
-    deadline=2000,
-    suppress_health_check=[HealthCheck.function_scoped_fixture],
-)
-def test_roll_held_fuzz_never_500(client_default, held):
-    """Arbitrary held arrays must never produce 5xx errors."""
-    from limiter import limiter
-
-    limiter.reset()  # hypothesis runs many examples per test; reset to avoid 429s
-    sid = _sid()
-    _new_game(client_default, sid)
-    res = client_default.post(
-        "/yacht/roll",
-        json={"held": held},
-        headers={"X-Session-ID": sid},
-    )
-    assert res.status_code < 500, f"5xx for held={held!r}: {res.text}"
+    assert res.status_code < 500, f"5xx for player_name={player_name!r}: {res.text}"

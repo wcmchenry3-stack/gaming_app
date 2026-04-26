@@ -11,46 +11,10 @@ import pytest
 from fastapi.testclient import TestClient
 from main import app
 
-import yacht.router as yacht_router
-
 client = TestClient(app)
 
 TEST_SESSION_ID = str(uuid.uuid4())
 SESSION_HEADERS = {"X-Session-ID": TEST_SESSION_ID}
-
-
-@pytest.fixture(autouse=True)
-def reset_all():
-    yacht_router.reset_game()
-    yield
-    yacht_router.reset_game()
-
-
-# ---------------------------------------------------------------------------
-# Yacht — 404 responses include detail
-# ---------------------------------------------------------------------------
-
-
-class TestYacht404Detail:
-    def test_state_404_has_detail(self):
-        res = client.get("/yacht/state", headers=SESSION_HEADERS)
-        assert res.status_code == 404
-        assert "detail" in res.json()
-
-    def test_roll_404_has_detail(self):
-        res = client.post("/yacht/roll", json={"held": [False] * 5}, headers=SESSION_HEADERS)
-        assert res.status_code == 404
-        assert "detail" in res.json()
-
-    def test_score_404_has_detail(self):
-        res = client.post("/yacht/score", json={"category": "ones"}, headers=SESSION_HEADERS)
-        assert res.status_code == 404
-        assert "detail" in res.json()
-
-    def test_possible_scores_404_has_detail(self):
-        res = client.get("/yacht/possible-scores", headers=SESSION_HEADERS)
-        assert res.status_code == 404
-        assert "detail" in res.json()
 
 
 # ---------------------------------------------------------------------------
@@ -64,8 +28,8 @@ class TestMissingSessionHeader:
     @pytest.mark.parametrize(
         "method,path",
         [
-            ("POST", "/yacht/new"),
-            ("GET", "/yacht/state"),
+            ("GET", "/games/me"),
+            ("POST", "/games"),
         ],
     )
     def test_missing_header_returns_error(self, method, path):
