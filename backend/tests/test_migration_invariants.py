@@ -136,6 +136,35 @@ def _parse_frontend_event_names() -> set[str]:
     return names
 
 
+_ALEMBIC_VERSION_MAX_LEN = 32  # alembic_version.version_num is VARCHAR(32)
+
+
+def test_revision_ids_fit_in_alembic_version_column() -> None:
+    """All migration revision IDs must be ≤ 32 chars to fit in alembic_version VARCHAR(32).
+
+    Regression guard for the bug that blocked deploys via migrations 0003 and 0010:
+    alembic writes version_num to the DB after running upgrade(), and Postgres rejects
+    values longer than VARCHAR(32) with StringDataRightTruncation, rolling back the
+    entire migration transaction and leaving the service undeployable.
+    """
+    too_long: list[str] = []
+    for path in sorted(VERSIONS_DIR.glob("*.py")):
+        if path.name.startswith("__"):
+            continue
+        text = path.read_text(encoding="utf-8")
+        m = re.search(r'^revision\s*:\s*str\s*=\s*"([^"]+)"', text, re.MULTILINE)
+        if m:
+            rev_id = m.group(1)
+            if len(rev_id) > _ALEMBIC_VERSION_MAX_LEN:
+                too_long.append(f"  {path.name}: '{rev_id}' ({len(rev_id)} chars)")
+
+    assert not too_long, (
+        "These migration revision IDs exceed VARCHAR(32) and will break 'alembic upgrade head':\n"
+        + "\n".join(too_long)
+        + "\n\nFix: shorten the revision string to ≤ 32 characters."
+    )
+
+
 def test_event_queue_config_names_are_seeded_in_backend() -> None:
     """Every event type declared in frontend/eventQueueConfig.ts must exist in at
     least one game's event_types rows across all migrations (#746 PR-B).
