@@ -216,7 +216,9 @@ describe("merge detection", () => {
 
     world._fireCollision(1003, 1004);
     const step2 = handle.step();
-    expect(step2.events.some((e) => e.type === "fruitMerge" && (e as { tier: number }).tier === 3)).toBe(true);
+    expect(
+      step2.events.some((e) => e.type === "fruitMerge" && (e as { tier: number }).tier === 3)
+    ).toBe(true);
     const tiers = handle.step().snapshots.map((s) => s.tier);
     expect(tiers).toContain(4);
   });
@@ -231,7 +233,9 @@ describe("merge detection", () => {
 
     world._fireCollision(1003, 1004);
     const step2 = handle.step();
-    expect(step2.events.some((e) => e.type === "fruitMerge" && (e as { tier: number }).tier === 10)).toBe(true);
+    expect(
+      step2.events.some((e) => e.type === "fruitMerge" && (e as { tier: number }).tier === 10)
+    ).toBe(true);
     expect(handle.step().snapshots).toHaveLength(0);
   });
 

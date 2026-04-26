@@ -631,9 +631,7 @@ function CascadeGame() {
             <MergeBurst
               key={burst.id}
               {...burst}
-              onDone={() =>
-                setMergeBursts((prev) => prev.filter((b) => b.id !== burst.id))
-              }
+              onDone={() => setMergeBursts((prev) => prev.filter((b) => b.id !== burst.id))}
             />
           ))}
         </View>

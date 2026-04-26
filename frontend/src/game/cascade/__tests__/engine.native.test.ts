@@ -135,7 +135,10 @@ describe("merge detection", () => {
     // Step until merge fires
     for (let i = 0; i < 300; i++) {
       const { events } = handle.step(1 / 60);
-      if (events.some((e) => e.type === "fruitMerge")) { merged = true; break; }
+      if (events.some((e) => e.type === "fruitMerge")) {
+        merged = true;
+        break;
+      }
     }
 
     if (merged) {
