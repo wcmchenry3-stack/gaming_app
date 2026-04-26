@@ -48,6 +48,17 @@ export const SOUND_REGISTRY: Partial<Record<SoundKey, number>> = {
   "starswarm.bg3": require("../../../assets/sounds/starswarm-bg-3.mp3"),
   // eslint-disable-next-line @typescript-eslint/no-require-imports
   "starswarm.bg4": require("../../../assets/sounds/starswarm-bg-4.mp3"),
+  // Yacht (#827)
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  "yacht.diceRoll": require("../../../assets/sounds/yacht-dice-roll.ogg"),
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  "yacht.dieHold": require("../../../assets/sounds/yacht-die-hold.ogg"),
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  "yacht.yacht": require("../../../assets/sounds/hearts-moon-shot.mp3"),
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  "yacht.straight": require("../../../assets/sounds/yacht-straight.ogg"),
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  "yacht.upperBonus": require("../../../assets/sounds/yacht-upper-bonus.ogg"),
   // FreeCell (#844)
   // eslint-disable-next-line @typescript-eslint/no-require-imports
   "freecell.cardPlace": require("../../../assets/sounds/freecell-card-place.mp3"),

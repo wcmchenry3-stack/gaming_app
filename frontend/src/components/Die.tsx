@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import {
   Pressable,
   View,
@@ -8,6 +8,14 @@ import {
   useWindowDimensions,
   ViewStyle,
 } from "react-native";
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withSpring,
+  withSequence,
+  withTiming,
+  cancelAnimation,
+} from "react-native-reanimated";
 import { useTranslation } from "react-i18next";
 import { useTheme } from "../theme/ThemeContext";
 
@@ -17,6 +25,10 @@ interface DieProps {
   onPress: () => void;
   disabled: boolean;
   index: number;
+  /** True while this die is part of an active roll animation. */
+  rolling?: boolean;
+  /** When true, skip all animations (accessibility reduce-motion). */
+  reduceMotion?: boolean;
 }
 
 // Pip positions in a 3x3 grid, indexed 0..8 (row-major)
@@ -32,7 +44,15 @@ const PIP_PATTERNS: Record<number, number[]> = {
   6: [0, 2, 3, 5, 6, 8],
 };
 
-export default function Die({ value, held, onPress, disabled, index }: DieProps) {
+export default function Die({
+  value,
+  held,
+  onPress,
+  disabled,
+  index,
+  rolling = false,
+  reduceMotion = false,
+}: DieProps) {
   const { t } = useTranslation("yacht");
   const { colors } = useTheme();
   const { width } = useWindowDimensions();
@@ -46,6 +66,39 @@ export default function Die({ value, held, onPress, disabled, index }: DieProps)
   const pips = PIP_PATTERNS[value] ?? [];
   const pipColor = held ? colors.accent : colors.text;
 
+  // Rotation for roll tumble animation
+  const rotation = useSharedValue(0);
+  // Scale for hold/release spring
+  const holdScale = useSharedValue(1);
+
+  // Roll tumble: spin die when rolling prop turns true
+  useEffect(() => {
+    if (!rolling) return;
+    if (reduceMotion) return;
+    cancelAnimation(rotation);
+    rotation.value = withSequence(
+      withTiming(360 * 2, { duration: 350 }),
+      withTiming(0, { duration: 0 })
+    );
+  }, [rolling, reduceMotion, rotation]);
+
+  // Hold spring: pop scale when held state changes
+  useEffect(() => {
+    if (reduceMotion) {
+      holdScale.value = 1;
+      return;
+    }
+    holdScale.value = withSpring(held ? 1.12 : 1, { damping: 8, stiffness: 200 });
+  }, [held, reduceMotion, holdScale]);
+
+  const rollStyle = useAnimatedStyle(() => ({
+    transform: [{ rotate: `${rotation.value}deg` }],
+  }));
+
+  const holdStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: holdScale.value }],
+  }));
+
   // Web-only neon glow when held
   const glowStyle: ViewStyle | null =
     held && Platform.OS === "web"
@@ -55,56 +108,65 @@ export default function Die({ value, held, onPress, disabled, index }: DieProps)
       : null;
 
   return (
-    <Pressable
-      onPress={onPress}
-      disabled={disabled}
-      accessibilityRole="button"
-      accessibilityState={{ checked: held, disabled }}
-      accessibilityLabel={label}
-      accessibilityHint={disabled ? undefined : held ? t("dice.unholdHint") : t("dice.holdHint")}
-      style={({ pressed }) => [
-        styles.die,
-        {
-          width: dieSize,
-          height: dieSize,
-          backgroundColor: held ? colors.heldBg : colors.dieBg,
-          borderColor: held ? colors.heldBorder : colors.dieBorder,
-          borderWidth: held ? 2 : 1,
-          transform: [{ scale: pressed && !disabled ? 0.95 : 1 }],
-        },
-        glowStyle,
-        disabled && styles.disabled,
-      ]}
-    >
-      {value > 0 ? (
-        <View style={styles.grid}>
-          {Array.from({ length: 9 }).map((_, i) => (
-            <View key={i} style={styles.cell}>
-              {pips.includes(i) && (
-                <View
-                  style={{
-                    width: pipSize,
-                    height: pipSize,
-                    borderRadius: pipSize / 2,
-                    backgroundColor: pipColor,
-                  }}
-                />
-              )}
-            </View>
-          ))}
-        </View>
-      ) : (
-        <Text style={[styles.blank, { color: colors.textMuted }]}>—</Text>
-      )}
-      {held && (
-        <View
-          style={[styles.heldBadge, { backgroundColor: colors.accent }]}
-          importantForAccessibility="no"
+    <Animated.View style={holdStyle}>
+      <Pressable
+        onPress={onPress}
+        disabled={disabled}
+        accessibilityRole="button"
+        accessibilityState={{ checked: held, disabled }}
+        accessibilityLabel={label}
+        accessibilityHint={disabled ? undefined : held ? t("dice.unholdHint") : t("dice.holdHint")}
+        style={({ pressed }) => [
+          styles.die,
+          {
+            width: dieSize,
+            height: dieSize,
+            backgroundColor: held ? colors.heldBg : colors.dieBg,
+            borderColor: held ? colors.heldBorder : colors.dieBorder,
+            borderWidth: held ? 2 : 1,
+            transform: [{ scale: pressed && !disabled ? 0.95 : 1 }],
+          },
+          glowStyle,
+          disabled && styles.disabled,
+        ]}
+      >
+        <Animated.View
+          style={[
+            { flex: 1, width: "100%", alignItems: "center", justifyContent: "center" },
+            rollStyle,
+          ]}
         >
-          <Text style={[styles.heldBadgeText, { color: colors.textOnAccent }]}>HELD</Text>
-        </View>
-      )}
-    </Pressable>
+          {value > 0 ? (
+            <View style={styles.grid}>
+              {Array.from({ length: 9 }).map((_, i) => (
+                <View key={i} style={styles.cell}>
+                  {pips.includes(i) && (
+                    <View
+                      style={{
+                        width: pipSize,
+                        height: pipSize,
+                        borderRadius: pipSize / 2,
+                        backgroundColor: pipColor,
+                      }}
+                    />
+                  )}
+                </View>
+              ))}
+            </View>
+          ) : (
+            <Text style={[styles.blank, { color: colors.textMuted }]}>—</Text>
+          )}
+        </Animated.View>
+        {held && (
+          <View
+            style={[styles.heldBadge, { backgroundColor: colors.accent }]}
+            importantForAccessibility="no"
+          >
+            <Text style={[styles.heldBadgeText, { color: colors.textOnAccent }]}>HELD</Text>
+          </View>
+        )}
+      </Pressable>
+    </Animated.View>
   );
 }
 
