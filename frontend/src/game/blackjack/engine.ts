@@ -590,13 +590,22 @@ export function doubleDown(s: EngineState): EngineState {
     const busted = handValue(newHands[idx] ?? []) > 21;
     const splitDoubleEvents: BlackjackGameEvent[] = [{ type: "cardDeal" }];
     if (busted) splitDoubleEvents.push({ type: "bust" });
-    let next: EngineState = { ...s, deck, player_hands: newHands, hand_bets: newBets, events: splitDoubleEvents };
+    let next: EngineState = {
+      ...s,
+      deck,
+      player_hands: newHands,
+      hand_bets: newBets,
+      events: splitDoubleEvents,
+    };
     if (busted) {
       next = settleHand(next, idx, "lose");
     }
     const advanced = advanceHand(next);
     if (advanced.phase === "result" && advanced.outcome !== null && !busted) {
-      return { ...advanced, events: [...splitDoubleEvents, outcomeEvent(advanced.outcome as "win" | "lose" | "push")] };
+      return {
+        ...advanced,
+        events: [...splitDoubleEvents, outcomeEvent(advanced.outcome as "win" | "lose" | "push")],
+      };
     }
     return { ...advanced, events: splitDoubleEvents };
   }

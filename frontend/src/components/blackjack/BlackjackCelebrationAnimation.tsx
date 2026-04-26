@@ -110,7 +110,11 @@ export function BlackjackCelebrationAnimation({ visible, onDismiss }: Props) {
         {STAR_OFFSETS.map((offset, i) => (
           <Animated.Text
             key={i}
-            style={[styles.star, { left: "50%", top: "50%", marginLeft: offset.x, marginTop: offset.y }, starStyles[i]]}
+            style={[
+              styles.star,
+              { left: "50%", top: "50%", marginLeft: offset.x, marginTop: offset.y },
+              starStyles[i],
+            ]}
           >
             ★
           </Animated.Text>
