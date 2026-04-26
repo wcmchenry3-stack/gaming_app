@@ -36,6 +36,7 @@ export default function HomeScreen() {
     "blackjack",
     "twenty48",
     "solitaire",
+    "freecell",
     "hearts",
     "sudoku",
     "errors",
@@ -104,6 +105,13 @@ export default function HomeScreen() {
       action: () => navigation.navigate("Solitaire"),
     },
     {
+      key: "freecell",
+      emoji: "🂡",
+      title: t("freecell:game.title"),
+      description: t("freecell:game.description"),
+      action: () => navigation.navigate("FreeCell"),
+    },
+    {
       key: "hearts",
       emoji: "♥",
       title: t("hearts:game.title"),
@@ -127,6 +135,7 @@ export default function HomeScreen() {
     [t("blackjack:game.title")]: t("blackjack:game.playLabel"),
     [t("twenty48:game.title")]: t("twenty48:game.playLabel"),
     [t("solitaire:game.title")]: t("solitaire:game.playLabel"),
+    [t("freecell:game.title")]: t("freecell:game.playLabel"),
     [t("hearts:game.title")]: t("hearts:game.playLabel"),
     [t("sudoku:game.title")]: t("sudoku:game.playLabel"),
   };

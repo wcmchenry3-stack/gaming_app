@@ -9,6 +9,7 @@ const factories = {
   BlackjackTable: () => import("../screens/BlackjackTableScreen"),
   Twenty48: () => import("../screens/Twenty48Screen"),
   Solitaire: () => import("../screens/SolitaireScreen"),
+  FreeCell: () => import("../screens/FreeCellScreen"),
   Hearts: () => import("../screens/HeartsScreen"),
   Sudoku: () => import("../screens/SudokuScreen"),
   Leaderboard: () => import("../screens/LeaderboardScreen"),
@@ -23,6 +24,7 @@ export const LazyScreens = {
   BlackjackTable: React.lazy(factories.BlackjackTable),
   Twenty48: React.lazy(factories.Twenty48),
   Solitaire: React.lazy(factories.Solitaire),
+  FreeCell: React.lazy(factories.FreeCell),
   Hearts: React.lazy(factories.Hearts),
   Sudoku: React.lazy(factories.Sudoku),
   Leaderboard: React.lazy(factories.Leaderboard),
@@ -42,6 +44,7 @@ export function prefetchLobbyGameScreens(): void {
   factories.BlackjackBetting().catch(() => undefined);
   factories.Twenty48().catch(() => undefined);
   factories.Solitaire().catch(() => undefined);
+  factories.FreeCell().catch(() => undefined);
   factories.Hearts().catch(() => undefined);
   factories.Sudoku().catch(() => undefined);
 }

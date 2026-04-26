@@ -1,6 +1,9 @@
 {
   "game.title": "FreeCell",
   "game.description": "Move all cards to the foundations — plan every move.",
+  "game.playLabel": "Play FreeCell",
+  "action.undo": "Undo",
+  "action.newGame": "New Game",
   "suit.spades": "Spades",
   "suit.hearts": "Hearts",
   "suit.diamonds": "Diamonds",
@@ -11,5 +14,10 @@
   "pile.tableau.empty": "Empty tableau column {{col}}",
   "pile.foundation.empty": "Empty {{suit}} foundation",
   "pile.freecell.empty": "Empty free cell {{cell}}",
-  "a11y.boardRegion": "FreeCell board"
+  "a11y.boardRegion": "FreeCell board",
+  "score.moves": "Moves: {{moves}}",
+  "win.title": "You Win!",
+  "win.moves": "Completed in {{moves}} moves",
+  "win.newGame": "New Game",
+  "win.goHome": "Go Home"
 }
