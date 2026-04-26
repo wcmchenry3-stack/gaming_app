@@ -36,6 +36,7 @@ class GameType(str, Enum):
     SOLITAIRE = "solitaire"
     HEARTS = "hearts"
     SUDOKU = "sudoku"
+    MAHJONG = "mahjong"
 
 
 class GameOutcome(str, Enum):

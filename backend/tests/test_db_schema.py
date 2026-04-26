@@ -41,6 +41,7 @@ async def test_seed_data_present() -> None:
             "solitaire",
             "hearts",
             "sudoku",
+            "mahjong",
         ]
 
         total = (await s.execute(select(func.count()).select_from(EventType))).scalar_one()

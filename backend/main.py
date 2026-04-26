@@ -20,6 +20,7 @@ from cascade.router import router as cascade_router
 from blackjack.router import router as blackjack_router
 from freecell.router import router as freecell_router
 from hearts.router import router as hearts_router
+from mahjong.router import router as mahjong_router
 from solitaire.router import router as solitaire_router
 from sudoku.router import router as sudoku_router
 from yacht.router import router as yacht_router
@@ -57,6 +58,7 @@ app.include_router(cascade_router, prefix="/cascade")
 app.include_router(blackjack_router, prefix="/blackjack")
 app.include_router(freecell_router, prefix="/freecell")
 app.include_router(hearts_router, prefix="/hearts")
+app.include_router(mahjong_router, prefix="/mahjong")
 app.include_router(solitaire_router, prefix="/solitaire")
 app.include_router(sudoku_router, prefix="/sudoku")
 app.include_router(starswarm_router, prefix="/starswarm")
