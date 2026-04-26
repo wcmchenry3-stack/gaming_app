@@ -19,7 +19,7 @@ export interface StarfieldState {
 const LAYERS = [
   { count: 50, speed: 0.02, r: 0.6, opacity: 0.35 },
   { count: 30, speed: 0.05, r: 1.0, opacity: 0.65 },
-  { count: 15, speed: 0.10, r: 1.4, opacity: 1.0 },
+  { count: 15, speed: 0.1, r: 1.4, opacity: 1.0 },
 ] as const;
 
 /** Deterministic LCG so tests can use a fixed seed. */
@@ -31,11 +31,7 @@ function makePrng(seed: number) {
   };
 }
 
-export function initStarfield(
-  width: number,
-  height: number,
-  seed = 42,
-): StarfieldState {
+export function initStarfield(width: number, height: number, seed = 42): StarfieldState {
   const rand = makePrng(seed);
   const stars: Star[] = [];
   for (const layer of LAYERS) {
@@ -52,10 +48,7 @@ export function initStarfield(
   return { stars, width, height };
 }
 
-export function tickStarfield(
-  state: StarfieldState,
-  dtMs: number,
-): StarfieldState {
+export function tickStarfield(state: StarfieldState, dtMs: number): StarfieldState {
   const { width, height } = state;
   const stars = state.stars.map((s) => {
     const y = s.y + s.speed * dtMs;
