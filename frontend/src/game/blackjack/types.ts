@@ -4,6 +4,14 @@
 
 import type { GameOutcome, GameSession } from "../_shared/types";
 
+export type BlackjackGameEvent =
+  | { readonly type: "cardDeal" }
+  | { readonly type: "blackjack" }
+  | { readonly type: "bust" }
+  | { readonly type: "win" }
+  | { readonly type: "loss" }
+  | { readonly type: "push" };
+
 export interface CardResponse {
   rank: string;
   suit: string;
@@ -43,6 +51,8 @@ export interface BlackjackState {
   rules: GameRules;
   /** Net chip delta from the previously completed hand. Null until at least one hand resolves. */
   last_win: number | null;
+  /** One-shot UI events emitted by the engine and consumed by the animation layer. */
+  events?: readonly BlackjackGameEvent[];
 }
 
 export type BlackjackSession = GameSession<BlackjackState>;

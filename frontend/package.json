@@ -42,7 +42,7 @@
       }
     },
     "moduleNameMapper": {
-      "\\.mp3$": "<rootDir>/src/__mocks__/fileMock.js"
+      "\\.(mp3|ogg)$": "<rootDir>/src/__mocks__/fileMock.js"
     }
   },
   "dependencies": {

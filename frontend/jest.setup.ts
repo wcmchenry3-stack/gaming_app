@@ -43,6 +43,7 @@ jest.mock("react-native-reanimated", () => {
       in: () => () => 0,
       quad: () => 0,
     },
+    cancelAnimation: () => {},
     runOnJS: (fn: unknown) => fn,
     createAnimatedComponent,
     // Used internally by react-native-gesture-handler

@@ -14,6 +14,7 @@ interface BlackjackGameContextValue {
   error: string | null;
   sessionStats: SessionStats;
   apply: (fn: (s: EngineState) => EngineState, action?: PlayerActionHint) => void;
+  clearEvents: () => void;
   handleRulesChange: (rules: GameRules) => void;
   handlePlayAgain: () => void;
 }
@@ -219,7 +220,7 @@ export function BlackjackGameProvider({ children }: { children: React.ReactNode 
         const prev = engine;
         const next = fn(prev);
         setEngine(next);
-        saveGame(next);
+        saveGame({ ...next, events: undefined });
         emitTransitionEvents(prev, next, action);
       } catch (e: unknown) {
         setError(e instanceof Error ? e.message : String(e));
@@ -240,6 +241,10 @@ export function BlackjackGameProvider({ children }: { children: React.ReactNode 
     },
     [engine]
   );
+
+  const clearEvents = useCallback(() => {
+    setEngine((prev) => (prev ? { ...prev, events: undefined } : null));
+  }, []);
 
   const handlePlayAgain = useCallback(() => {
     // If a session is still open, close it out. When chips hit 0 mid-hand,
@@ -262,6 +267,7 @@ export function BlackjackGameProvider({ children }: { children: React.ReactNode 
         error,
         sessionStats,
         apply,
+        clearEvents,
         handleRulesChange,
         handlePlayAgain,
       }}

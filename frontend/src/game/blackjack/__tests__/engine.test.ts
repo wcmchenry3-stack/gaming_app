@@ -1181,3 +1181,156 @@ describe("toViewState with split", () => {
     expect(view.split_available).toBe(false);
   });
 });
+
+// ---------------------------------------------------------------------------
+// Game events (#826)
+// ---------------------------------------------------------------------------
+
+describe("game events", () => {
+  function stateInBetting(chips = 1000): EngineState {
+    return {
+      chips,
+      bet: 0,
+      phase: "betting",
+      outcome: null,
+      payout: 0,
+      lastWin: null,
+      deck: [],
+      player_hand: [],
+      dealer_hand: [],
+      doubled: false,
+      rules: DEFAULT_RULES,
+      ...emptySplitState(),
+    };
+  }
+
+  it("placeBet emits two cardDeal events on a normal deal", () => {
+    setRng(createSeededRng(1));
+    const s = stateInBetting();
+    const next = placeBet({ ...s, deck: [] }, 50);
+    expect(next.events).toBeDefined();
+    const types = next.events!.map((e) => e.type);
+    expect(types.filter((t) => t === "cardDeal")).toHaveLength(2);
+  });
+
+  it("placeBet emits blackjack event on natural 21", () => {
+    // Cards are drawn via pop() in order: player1, dealer1, player2, dealer2.
+    // Deck (right = top): A → player1, 6 → dealer1, K → player2, 5 → dealer2.
+    // Player hand: [A, K] = 21 (blackjack). Dealer hand: [6, 5] = 11 (no BJ).
+    const s: EngineState = {
+      ...stateInBetting(),
+      deck: [c("♣", "5"), c("♦", "K"), c("♥", "6"), c("♠", "A")],
+    };
+    const next = placeBet(s, 50);
+    const types = next.events!.map((e) => e.type);
+    expect(types).toContain("blackjack");
+    expect(next.phase).toBe("result");
+    expect(next.outcome).toBe("blackjack");
+  });
+
+  it("placeBet emits push event when both hands are natural 21", () => {
+    // Deal order (pop): player1=A, dealer1=K, player2=K, dealer2=A.
+    // Player: [A, K] = 21. Dealer: [K, A] = 21. Both blackjack → push.
+    const s: EngineState = {
+      ...stateInBetting(),
+      deck: [c("♦", "A"), c("♣", "K"), c("♠", "K"), c("♥", "A")],
+    };
+    const next = placeBet(s, 50);
+    const types = next.events!.map((e) => e.type);
+    expect(types).toContain("push");
+    expect(next.outcome).toBe("push");
+  });
+
+  it("hit emits cardDeal event", () => {
+    const s = stateInPlayer();
+    const next = hit(s);
+    expect(next.events!.map((e) => e.type)).toContain("cardDeal");
+  });
+
+  it("hit emits bust event when hand exceeds 21", () => {
+    const s: EngineState = {
+      ...stateInPlayer(),
+      player_hand: [c("♠", "K"), c("♥", "Q")], // 20
+      deck: [c("♦", "5")],
+    };
+    const next = hit(s);
+    expect(handValue(next.player_hand)).toBeGreaterThan(21);
+    const types = next.events!.map((e) => e.type);
+    expect(types).toContain("cardDeal");
+    expect(types).toContain("bust");
+  });
+
+  it("stand emits win event when player beats dealer", () => {
+    const s: EngineState = {
+      ...stateInPlayer(),
+      player_hand: [c("♠", "K"), c("♥", "9")], // 19
+      dealer_hand: [c("♦", "6"), c("♣", "7")], // 13
+      deck: Array(10).fill(c("♠", "4")), // dealer draws 4s (13,17 = stand)
+    };
+    const next = stand(s);
+    expect(next.outcome).toBe("win");
+    expect(next.events!.map((e) => e.type)).toContain("win");
+  });
+
+  it("stand emits push event on tie", () => {
+    const s: EngineState = {
+      ...stateInPlayer(),
+      player_hand: [c("♠", "K"), c("♥", "7")], // 17
+      dealer_hand: [c("♦", "K"), c("♣", "7")], // 17
+      deck: [],
+    };
+    const next = stand(s);
+    expect(next.outcome).toBe("push");
+    expect(next.events!.map((e) => e.type)).toContain("push");
+  });
+
+  it("stand emits loss event when dealer wins", () => {
+    const s: EngineState = {
+      ...stateInPlayer(),
+      player_hand: [c("♠", "7"), c("♥", "8")], // 15
+      dealer_hand: [c("♦", "K"), c("♣", "7")], // 17
+      deck: [],
+    };
+    const next = stand(s);
+    expect(next.outcome).toBe("lose");
+    expect(next.events!.map((e) => e.type)).toContain("loss");
+  });
+
+  it("doubleDown emits cardDeal and outcome events", () => {
+    const s: EngineState = {
+      ...stateInPlayer(1000, 100),
+      player_hand: [c("♠", "9"), c("♥", "8")], // 17
+      dealer_hand: [c("♦", "K"), c("♣", "6")], // 16
+      deck: [c("♠", "2"), c("♣", "4"), c("♥", "5")], // dealer draws to bust
+    };
+    const next = doubleDown(s);
+    const types = next.events!.map((e) => e.type);
+    expect(types).toContain("cardDeal");
+  });
+
+  it("events are cleared on the next engine call", () => {
+    const s = stateInPlayer();
+    const afterHit = hit(s);
+    expect(afterHit.events).toBeDefined();
+    const afterSecondHit = hit(afterHit);
+    // New array reference with only the new events — old cardDeal not duplicated
+    expect(afterSecondHit.events).not.toBe(afterHit.events);
+    expect(afterSecondHit.events!.filter((e) => e.type === "cardDeal")).toHaveLength(1);
+  });
+
+  it("newHand clears events", () => {
+    const s = stateInResult(1000, 100, "win", 100);
+    const sWithEvents: EngineState = { ...s, events: [{ type: "win" }] };
+    const next = newHand(sWithEvents);
+    expect(next.events).toBeUndefined();
+  });
+
+  it("toViewState projects events onto view state", () => {
+    const s: EngineState = {
+      ...stateInPlayer(),
+      events: [{ type: "cardDeal" }],
+    };
+    const view = toViewState(s);
+    expect(view.events).toEqual([{ type: "cardDeal" }]);
+  });
+});

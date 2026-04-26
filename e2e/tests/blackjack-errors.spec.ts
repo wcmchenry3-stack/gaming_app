@@ -71,7 +71,7 @@ test.describe("Blackjack — error paths and guardrails", () => {
     await page.getByRole("button", { name: "Play Blackjack" }).click();
 
     // Engine already settled — no Hit/Stand, outcome visible
-    await expect(page.getByText("Blackjack!")).toBeVisible({ timeout: 5000 });
+    await expect(page.getByTestId("result-outcome").getByText("Blackjack!")).toBeVisible({ timeout: 5000 });
     await expect(page.getByText("Hit")).not.toBeVisible();
   });
 

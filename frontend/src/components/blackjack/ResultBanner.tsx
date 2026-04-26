@@ -58,7 +58,10 @@ export default function ResultBanner({ outcome, payout, compact = false }: Props
         },
       ]}
     >
-      <Text style={[styles.outcome, compact && styles.outcomeCompact, { color: accentColor }]}>
+      <Text
+        testID="result-outcome"
+        style={[styles.outcome, compact && styles.outcomeCompact, { color: accentColor }]}
+      >
         {outcomeText}
       </Text>
       <Text
