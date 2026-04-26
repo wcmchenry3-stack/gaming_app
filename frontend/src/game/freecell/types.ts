@@ -26,6 +26,13 @@ export type FreeCells = readonly [Card | null, Card | null, Card | null, Card | 
 /** 4 foundation piles keyed by suit; each is ascending A→K. */
 export type Foundations = Readonly<Record<Suit, readonly Card[]>>;
 
+export type GameEvent =
+  | { readonly type: "cardPlace" }
+  | { readonly type: "supermove"; readonly cardCount: number }
+  | { readonly type: "foundationComplete"; readonly suit: Suit }
+  | { readonly type: "gameWin" }
+  | { readonly type: "invalidMove" };
+
 /** Immutable snapshot of the full game. `_v` is a schema version. */
 export interface FreeCellState {
   readonly _v: 1;
@@ -38,6 +45,7 @@ export interface FreeCellState {
   readonly undoStack: readonly FreeCellState[];
   readonly isComplete: boolean;
   readonly moveCount: number;
+  readonly events?: readonly GameEvent[];
 }
 
 export type Move =

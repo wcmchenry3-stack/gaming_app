@@ -36,4 +36,15 @@ export const SOUND_REGISTRY: Partial<Record<SoundKey, number>> = {
   "starswarm.gameover": require("../../../assets/sounds/starswarm-gameover.ogg"),
   // eslint-disable-next-line @typescript-eslint/no-require-imports
   "starswarm.waveclear": require("../../../assets/sounds/starswarm-waveclear.ogg"),
+  // FreeCell (#844)
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  "freecell.cardPlace": require("../../../assets/sounds/freecell-card-place.mp3"),
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  "freecell.supermove": require("../../../assets/sounds/freecell-supermove.mp3"),
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  "freecell.foundationComplete": require("../../../assets/sounds/freecell-foundation-complete.mp3"),
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  "freecell.gameWin": require("../../../assets/sounds/freecell-game-win.mp3"),
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  "freecell.invalidMove": require("../../../assets/sounds/freecell-invalid-move.mp3"),
 };
