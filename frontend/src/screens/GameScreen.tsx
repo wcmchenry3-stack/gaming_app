@@ -10,6 +10,7 @@ import {
   newGame,
   roll as engineRoll,
   score as engineScore,
+  toggleHold as engineToggleHold,
   possibleScores as enginePossibleScores,
   isInProgress,
   Category,
@@ -17,10 +18,13 @@ import {
 import { saveGame, clearGame } from "../game/yacht/storage";
 import { useYachtScorecard } from "../game/yacht/ScorecardContext";
 import { useGameSync } from "../game/_shared/useGameSync";
+import { useGameEvents } from "../game/_shared/useGameEvents";
+import { useSound } from "../game/_shared/useSound";
 import * as Sentry from "@sentry/react-native";
 import DiceRow from "../components/DiceRow";
 import Scorecard from "../components/Scorecard";
 import GameOverModal from "../components/yacht/GameOverModal";
+import { YachtCelebrationAnimation } from "../components/yacht/YachtCelebrationAnimation";
 import NewGameConfirmModal from "../components/shared/NewGameConfirmModal";
 import { useTheme } from "../theme/ThemeContext";
 import { GameShell } from "../components/shared/GameShell";
@@ -36,10 +40,10 @@ export default function GameScreen({ navigation, route }: Props) {
   const insets = useSafeAreaInsets();
   const [gameState, setGameState] = useState<GameState>(route.params.initialState);
   const [possibleScores, setPossibleScores] = useState<Record<string, number>>({});
-  const [resetHeld, setResetHeld] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const [gameKey, setGameKey] = useState(0);
   const [confirmNewGameVisible, setConfirmNewGameVisible] = useState(false);
+  const [showYachtCelebration, setShowYachtCelebration] = useState(false);
+  const [rollingIndices, setRollingIndices] = useState<readonly number[]>([]);
 
   // Keep a ref in sync so startNewGame can log the pre-reset state without
   // closing over a stale copy of gameState (useCallback has [] deps).
@@ -55,6 +59,13 @@ export default function GameScreen({ navigation, route }: Props) {
     enqueue: syncEnqueue,
     complete: syncComplete,
   } = useGameSync("yacht");
+
+  // Sound hooks
+  const { play: playDiceRoll } = useSound("yacht.diceRoll");
+  const { play: playDieHold } = useSound("yacht.dieHold");
+  const { play: playYacht } = useSound("yacht.yacht");
+  const { play: playStraight } = useSound("yacht.straight");
+  const { play: playUpperBonus } = useSound("yacht.upperBonus");
 
   function endedPayload(s: GameState, outcome: "completed" | "abandoned") {
     return {
@@ -94,11 +105,34 @@ export default function GameScreen({ navigation, route }: Props) {
     setPossibleScores(enginePossibleScores(gameState));
   }, [gameState]);
 
-  function handleRoll(held: boolean[]) {
+  // Process game events — play sounds, trigger animations, then clear
+  useGameEvents(
+    gameState.events,
+    {
+      diceRoll: (e) => {
+        playDiceRoll();
+        setRollingIndices(e.rolledIndices);
+        // Clear the rolling animation flag after the die spin duration
+        setTimeout(() => setRollingIndices([]), 400);
+      },
+      dieHold: () => playDieHold(),
+      dieRelease: () => playDieHold(),
+      yacht: () => {
+        playYacht();
+        setShowYachtCelebration(true);
+      },
+      largeStraight: () => playStraight(),
+      smallStraight: () => playStraight(),
+      upperBonus: () => playUpperBonus(),
+    },
+    () => setGameState((prev) => (prev === null ? prev : { ...prev, events: undefined }))
+  );
+
+  function handleRoll() {
     setError(null);
     syncMarkStarted();
     try {
-      const next = engineRoll(gameState, held);
+      const next = engineRoll(gameState, gameState.held);
       setGameState(next);
       syncEnqueue({
         type: "roll",
@@ -113,6 +147,11 @@ export default function GameScreen({ navigation, route }: Props) {
     }
   }
 
+  function handleToggleHold(index: number) {
+    const next = engineToggleHold(gameState, index);
+    if (next !== gameState) setGameState(next);
+  }
+
   function handleScore(category: string) {
     setError(null);
     try {
@@ -120,7 +159,6 @@ export default function GameScreen({ navigation, route }: Props) {
       const alternatives = possibleScores;
       const next = engineScore(prev, category as Category);
       setGameState(next);
-      setResetHeld((r) => !r);
       const value = next.scores[category as Category] ?? 0;
       const isJoker = next.yacht_bonus_count > prev.yacht_bonus_count;
       syncEnqueue({
@@ -143,6 +181,8 @@ export default function GameScreen({ navigation, route }: Props) {
     }
   }
 
+  const [error, setError] = useState<string | null>(null);
+
   const startNewGame = useCallback(async () => {
     const prev = gameStateRef.current;
     Sentry.addBreadcrumb({
@@ -164,7 +204,6 @@ export default function GameScreen({ navigation, route }: Props) {
     await clearGame();
     setGameState(newGame());
     setGameKey((k) => k + 1);
-    setResetHeld((r) => !r);
     setError(null);
     // Start a new instrumentation session for the fresh game.
     syncStart();
@@ -230,10 +269,12 @@ export default function GameScreen({ navigation, route }: Props) {
       {/* Dice */}
       <DiceRow
         dice={gameState.dice}
+        held={gameState.held}
         rollsUsed={gameState.rolls_used}
         gameOver={gameState.game_over}
         onRoll={handleRoll}
-        resetHeld={resetHeld}
+        onToggleHold={handleToggleHold}
+        rollingIndices={rollingIndices}
       />
 
       {/* Scorecard — key forces full remount on new game, preventing stale
@@ -253,6 +294,11 @@ export default function GameScreen({ navigation, route }: Props) {
           onScore={handleScore}
         />
       </View>
+
+      <YachtCelebrationAnimation
+        visible={showYachtCelebration}
+        onDismiss={() => setShowYachtCelebration(false)}
+      />
 
       <GameOverModal
         visible={gameState.game_over}

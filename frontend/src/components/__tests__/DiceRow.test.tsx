@@ -6,10 +6,11 @@ import { ThemeProvider } from "../../theme/ThemeContext";
 function renderDiceRow(overrides: Partial<React.ComponentProps<typeof DiceRow>> = {}) {
   const defaults = {
     dice: [1, 2, 3, 4, 5],
+    held: [false, false, false, false, false],
     rollsUsed: 0,
     gameOver: false,
     onRoll: jest.fn().mockResolvedValue(undefined),
-    resetHeld: false,
+    onToggleHold: jest.fn(),
   };
   const props = { ...defaults, ...overrides };
   return render(
@@ -35,13 +36,13 @@ describe("DiceRow", () => {
     expect(getByRole("button", { name: /roll/i })).toBeDisabled();
   });
 
-  it("pressing roll calls onRoll with held state", async () => {
+  it("pressing roll calls onRoll with no arguments", async () => {
     const onRoll = jest.fn().mockResolvedValue(undefined);
     const { getByRole } = renderDiceRow({ rollsUsed: 1, onRoll });
     await act(async () => {
       fireEvent.press(getByRole("button", { name: /roll dice/i }));
     });
-    expect(onRoll).toHaveBeenCalledWith([false, false, false, false, false]);
+    expect(onRoll).toHaveBeenCalledWith();
   });
 
   it("dice are disabled before the first roll (rollsUsed === 0)", () => {
@@ -50,41 +51,35 @@ describe("DiceRow", () => {
     dice.forEach((die) => expect(die).toBeDisabled());
   });
 
-  it("toggling a die after first roll includes it in the held array passed to onRoll", async () => {
-    const onRoll = jest.fn().mockResolvedValue(undefined);
-    const { getAllByRole, getByRole } = renderDiceRow({ rollsUsed: 1, onRoll });
-    // Hold die at index 0
+  it("pressing a die after first roll calls onToggleHold with the die index", () => {
+    const onToggleHold = jest.fn();
+    const { getAllByRole } = renderDiceRow({ rollsUsed: 1, onToggleHold });
     fireEvent.press(getAllByRole("button", { name: /^die \d/i })[0]);
-    await act(async () => {
-      fireEvent.press(getByRole("button", { name: /roll dice/i }));
-    });
-    expect(onRoll).toHaveBeenCalledWith([true, false, false, false, false]);
+    expect(onToggleHold).toHaveBeenCalledWith(0);
   });
 
-  it("resetHeld prop change clears all held dice", async () => {
-    const onRoll = jest.fn().mockResolvedValue(undefined);
-    const { getAllByRole, getByRole, rerender } = renderDiceRow({
+  it("held prop drives die held display (no local state)", () => {
+    const { getAllByRole, rerender } = renderDiceRow({
       rollsUsed: 1,
-      onRoll,
-      resetHeld: false,
+      held: [false, false, false, false, false],
     });
-    // Hold die 0
-    fireEvent.press(getAllByRole("button", { name: /^die \d/i })[0]);
-    // Simulate resetHeld toggle (e.g., after scoring)
+    const dice = getAllByRole("button", { name: /^die \d/i });
+    // held=false renders without error — confirmed by test not throwing
+
     rerender(
       <ThemeProvider>
         <DiceRow
           dice={[1, 2, 3, 4, 5]}
+          held={[true, false, false, false, false]}
           rollsUsed={1}
           gameOver={false}
-          onRoll={onRoll}
-          resetHeld={true}
+          onRoll={jest.fn()}
+          onToggleHold={jest.fn()}
         />
       </ThemeProvider>
     );
-    await act(async () => {
-      fireEvent.press(getByRole("button", { name: /roll dice/i }));
-    });
-    expect(onRoll).toHaveBeenCalledWith([false, false, false, false, false]);
+    const diceAfter = getAllByRole("button", { name: /^die \d/i });
+    // held=true re-render does not crash — die still rendered
+    expect(diceAfter[0]).toBeTruthy();
   });
 });

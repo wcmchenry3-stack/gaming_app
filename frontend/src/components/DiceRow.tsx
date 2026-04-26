@@ -8,6 +8,7 @@ import {
   ViewStyle,
   useWindowDimensions,
 } from "react-native";
+import { AccessibilityInfo } from "react-native";
 import { useTranslation } from "react-i18next";
 import Die from "./Die";
 import { useTheme } from "../theme/ThemeContext";
@@ -21,33 +22,31 @@ const COMPACT_HEIGHT_BREAKPOINT = 780;
 
 interface DiceRowProps {
   dice: number[];
+  held: boolean[];
   rollsUsed: number;
   gameOver: boolean;
-  onRoll: (held: boolean[]) => void | Promise<void>;
-  resetHeld: boolean;
+  onRoll: () => void | Promise<void>;
+  onToggleHold: (index: number) => void;
+  /** Indices of dice that are currently animating a roll. */
+  rollingIndices?: readonly number[];
 }
 
-export default function DiceRow({ dice, rollsUsed, gameOver, onRoll, resetHeld }: DiceRowProps) {
+export default function DiceRow({ dice, held, rollsUsed, gameOver, onRoll, onToggleHold, rollingIndices }: DiceRowProps) {
   const { t } = useTranslation("yacht");
   const { colors } = useTheme();
   const { height } = useWindowDimensions();
   const isCompact = height < COMPACT_HEIGHT_BREAKPOINT;
-  const [held, setHeld] = useState<boolean[]>([false, false, false, false, false]);
   const [rolling, setRolling] = useState(false);
+  const [reduceMotion, setReduceMotion] = useState(false);
 
   useEffect(() => {
-    setHeld([false, false, false, false, false]);
-  }, [resetHeld]);
-
-  function toggleHeld(index: number) {
-    if (rollsUsed === 0) return;
-    setHeld((prev) => prev.map((h, i) => (i === index ? !h : h)));
-  }
+    AccessibilityInfo.isReduceMotionEnabled().then(setReduceMotion);
+  }, []);
 
   async function handleRoll() {
     setRolling(true);
     try {
-      await onRoll(held);
+      await onRoll();
     } finally {
       setRolling(false);
     }
@@ -74,8 +73,10 @@ export default function DiceRow({ dice, rollsUsed, gameOver, onRoll, resetHeld }
             index={i}
             value={val}
             held={held[i] ?? false}
-            onPress={() => toggleHeld(i)}
+            onPress={() => onToggleHold(i)}
             disabled={rollsUsed === 0 || gameOver}
+            rolling={rollingIndices?.includes(i) ?? false}
+            reduceMotion={reduceMotion}
           />
         ))}
       </View>

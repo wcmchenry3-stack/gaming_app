@@ -9,7 +9,7 @@
  * in __tests__/engine.test.ts.
  */
 
-import { GameState } from "./types";
+import { GameEvent, GameState } from "./types";
 
 export const CATEGORIES = [
   "ones",
@@ -257,6 +257,7 @@ function withDerived(base: {
   scores: GameState["scores"];
   yacht_bonus_count: number;
   game_over: boolean;
+  events?: readonly GameEvent[];
 }): GameState {
   return {
     ...base,
@@ -315,8 +316,12 @@ export function roll(state: GameState, heldInput: readonly boolean[]): GameState
   if (held.length !== 5) throw new Error("'held' must have exactly 5 booleans.");
 
   const nextDice = [...state.dice];
+  const rolledIndices: number[] = [];
   for (let i = 0; i < 5; i++) {
-    if (!held[i]) nextDice[i] = 1 + Math.floor(_rng() * 6);
+    if (!held[i]) {
+      nextDice[i] = 1 + Math.floor(_rng() * 6);
+      rolledIndices.push(i);
+    }
   }
 
   return withDerived({
@@ -327,7 +332,18 @@ export function roll(state: GameState, heldInput: readonly boolean[]): GameState
     scores: state.scores,
     yacht_bonus_count: state.yacht_bonus_count,
     game_over: state.game_over,
+    events: [{ type: "diceRoll", rolledIndices }],
   });
+}
+
+/** Toggle a die's held state (only valid after at least one roll). Emits dieHold or dieRelease. */
+export function toggleHold(state: GameState, index: number): GameState {
+  if (state.rolls_used === 0 || state.game_over) return state;
+  if (index < 0 || index >= 5) return state;
+  const newHeld = [...state.held];
+  newHeld[index] = !newHeld[index];
+  const eventType = newHeld[index] ? ("dieHold" as const) : ("dieRelease" as const);
+  return { ...state, held: newHeld, events: [{ type: eventType, index }] };
 }
 
 export function score(state: GameState, category: Category): GameState {
@@ -380,6 +396,18 @@ export function score(state: GameState, category: Category): GameState {
   const nextRound = state.round + 1;
   const nextGameOver = nextRound > 13;
 
+  // Collect score events for this action.
+  const scoreEvents: GameEvent[] = [];
+  if (category === "yacht" && scoreValue === 50) scoreEvents.push({ type: "yacht" });
+  if (category === "large_straight" && scoreValue > 0) scoreEvents.push({ type: "largeStraight" });
+  if (category === "small_straight" && scoreValue > 0) scoreEvents.push({ type: "smallStraight" });
+  // upperBonus fires exactly once: when the upper total first reaches ≥ 63.
+  const prevUpperTotal = upperSubtotal(state.scores);
+  const nextUpperTotal = upperSubtotal(nextScores);
+  if (prevUpperTotal < UPPER_BONUS_THRESHOLD && nextUpperTotal >= UPPER_BONUS_THRESHOLD) {
+    scoreEvents.push({ type: "upperBonus" });
+  }
+
   return withDerived({
     dice: [0, 0, 0, 0, 0],
     held: [false, false, false, false, false],
@@ -388,6 +416,7 @@ export function score(state: GameState, category: Category): GameState {
     scores: nextScores,
     yacht_bonus_count: nextYachtBonusCount,
     game_over: nextGameOver,
+    events: scoreEvents.length > 0 ? scoreEvents : undefined,
   });
 }
 

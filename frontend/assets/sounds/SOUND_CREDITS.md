@@ -131,6 +131,76 @@ When adding a sound:
 
 ---
 
+---
+
+## Yacht (#827)
+
+### yacht-dice-roll.ogg
+
+- **Event:** Dice rolled (every roll action)
+- **Original filename:** `dice-shake-1.ogg` from Kenney Casino Audio 1.1
+- **Source URL:** https://kenney.nl/assets/casino-audio
+- **Creator:** Kenney Vleugels (Kenney.nl)
+- **License:** Creative Commons Zero (CC0)
+- **License URL:** https://creativecommons.org/publicdomain/zero/1.0/
+- **Attribution required:** No
+- **Commercial use:** Yes
+- **Download date:** 2026-04-26
+- **Notes:** Dice shaking sound from the Kenney Casino Audio pack.
+
+### yacht-die-hold.ogg
+
+- **Event:** Die toggled hold / release
+- **Original filename:** `chip-lay-1.ogg` from Kenney Casino Audio 1.1
+- **Source URL:** https://kenney.nl/assets/casino-audio
+- **Creator:** Kenney Vleugels (Kenney.nl)
+- **License:** Creative Commons Zero (CC0)
+- **License URL:** https://creativecommons.org/publicdomain/zero/1.0/
+- **Attribution required:** No
+- **Commercial use:** Yes
+- **Download date:** 2026-04-26
+- **Notes:** Short chip-place click used as a satisfying toggle sound.
+
+### yacht-yacht.mp3
+
+- **Event:** Yacht scored (all 5 dice match)
+- **Original filename:** (reuses `hearts-moon-shot.mp3` — see Hearts section above)
+- **Source URL:** https://pixabay.com/sound-effects/orchestral-win-331233/
+- **Creator:** u_it78ck90s3 on Pixabay
+- **License:** Pixabay Content License
+- **License URL:** https://pixabay.com/service/license-summary/
+- **Attribution required:** No
+- **Commercial use:** Yes
+- **Notes:** Same orchestral win fanfare reused by Blackjack (#826) for big moments.
+
+### yacht-straight.ogg
+
+- **Event:** Large or small straight scored
+- **Original filename:** `highUp.ogg` from Kenney Digital Audio
+- **Source URL:** https://kenney.nl/assets/digital-audio
+- **Creator:** Kenney Vleugels (Kenney.nl)
+- **License:** Creative Commons Zero (CC0)
+- **License URL:** https://creativecommons.org/publicdomain/zero/1.0/
+- **Attribution required:** No
+- **Commercial use:** Yes
+- **Download date:** 2026-04-26
+- **Notes:** Ascending digital tone — suits the "streak" feeling of a straight.
+
+### yacht-upper-bonus.ogg
+
+- **Event:** Upper section bonus reached (cumulative upper score ≥ 63)
+- **Original filename:** `pepSound3.ogg` from Kenney Digital Audio
+- **Source URL:** https://kenney.nl/assets/digital-audio
+- **Creator:** Kenney Vleugels (Kenney.nl)
+- **License:** Creative Commons Zero (CC0)
+- **License URL:** https://creativecommons.org/publicdomain/zero/1.0/
+- **Attribution required:** No
+- **Commercial use:** Yes
+- **Download date:** 2026-04-26
+- **Notes:** Upbeat pep sound for a one-time bonus notification.
+
+---
+
 ## Freesound CC0 License summary (as of 2026-04-25)
 
 > Sounds licensed under Creative Commons Zero (CC0) have been dedicated to the
