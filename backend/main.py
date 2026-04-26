@@ -17,7 +17,6 @@ from sentry_sdk.integrations.starlette import StarletteIntegration
 from db.base import DATABASE_URL, get_engine, is_configured
 from limiter import _real_ip, limiter
 from cascade.router import router as cascade_router
-from blackjack.router import router as blackjack_router
 from freecell.router import router as freecell_router
 from hearts.router import router as hearts_router
 from mahjong.router import router as mahjong_router
@@ -53,7 +52,6 @@ if _sentry_dsn:
 
 app = FastAPI(title="Gaming App API")
 app.include_router(cascade_router, prefix="/cascade")
-app.include_router(blackjack_router, prefix="/blackjack")
 app.include_router(freecell_router, prefix="/freecell")
 app.include_router(hearts_router, prefix="/hearts")
 app.include_router(mahjong_router, prefix="/mahjong")

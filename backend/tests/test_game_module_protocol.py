@@ -9,6 +9,7 @@ from cascade.module import module as cascade_module
 from games.protocol import GameModule
 from games.registry import get_module
 from hearts.module import module as hearts_module
+from mahjong.module import module as mahjong_module
 from solitaire.module import module as solitaire_module
 from sudoku.module import module as sudoku_module
 from vocab import GameType
@@ -20,8 +21,15 @@ from vocab import GameType
 
 @pytest.mark.parametrize(
     "mod",
-    [blackjack_module, cascade_module, hearts_module, solitaire_module, sudoku_module],
-    ids=["blackjack", "cascade", "hearts", "solitaire", "sudoku"],
+    [
+        blackjack_module,
+        cascade_module,
+        hearts_module,
+        mahjong_module,
+        solitaire_module,
+        sudoku_module,
+    ],
+    ids=["blackjack", "cascade", "hearts", "mahjong", "solitaire", "sudoku"],
 )
 def test_module_satisfies_protocol(mod) -> None:
     assert isinstance(mod, GameModule), f"{mod!r} does not satisfy the GameModule Protocol"
@@ -43,6 +51,10 @@ def test_hearts_module_game_type() -> None:
     assert hearts_module.game_type == GameType.HEARTS
 
 
+def test_mahjong_module_game_type() -> None:
+    assert mahjong_module.game_type == GameType.MAHJONG
+
+
 def test_sudoku_module_game_type() -> None:
     assert sudoku_module.game_type == GameType.SUDOKU
 
@@ -56,6 +68,7 @@ def test_registry_returns_correct_modules() -> None:
     assert get_module("blackjack") is blackjack_module
     assert get_module("cascade") is cascade_module
     assert get_module("hearts") is hearts_module
+    assert get_module("mahjong") is mahjong_module
     assert get_module("solitaire") is solitaire_module
     assert get_module("sudoku") is sudoku_module
 
@@ -202,4 +215,29 @@ def test_sudoku_stats_shape_preserves_aggregate_fields() -> None:
 
 def test_sudoku_stats_shape_strips_latest_score() -> None:
     shaped = sudoku_module.stats_shape(_RAW_SUDOKU)
+    assert "latest_score" not in shaped
+
+
+# ---------------------------------------------------------------------------
+# MahjongModule.stats_shape — pass-through, strips latest_score
+# ---------------------------------------------------------------------------
+
+_RAW_MAHJONG = {
+    "played": 2,
+    "best": 4500,
+    "avg": 3200.0,
+    "last_played_at": None,
+    "latest_score": 4100,
+}
+
+
+def test_mahjong_stats_shape_preserves_aggregate_fields() -> None:
+    shaped = mahjong_module.stats_shape(_RAW_MAHJONG)
+    assert shaped["played"] == 2
+    assert shaped["best"] == 4500
+    assert shaped["avg"] == 3200.0
+
+
+def test_mahjong_stats_shape_strips_latest_score() -> None:
+    shaped = mahjong_module.stats_shape(_RAW_MAHJONG)
     assert "latest_score" not in shaped
