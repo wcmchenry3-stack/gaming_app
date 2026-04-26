@@ -50,7 +50,9 @@ def _new_game(client, session_id):
 
 
 def _bet(client, session_id, amount=10):
-    return client.post("/blackjack/bet", json={"amount": amount}, headers={"X-Session-ID": session_id})
+    return client.post(
+        "/blackjack/bet", json={"amount": amount}, headers={"X-Session-ID": session_id}
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -281,9 +283,7 @@ def test_oversized_body_returns_413(client_default):
 def test_normal_body_not_rejected(client_default):
     sid = _sid()
     _new_game(client_default, sid)
-    res = client_default.post(
-        "/blackjack/bet", json={"amount": 10}, headers={"X-Session-ID": sid}
-    )
+    res = client_default.post("/blackjack/bet", json={"amount": 10}, headers={"X-Session-ID": sid})
     assert res.status_code == 200
 
 
