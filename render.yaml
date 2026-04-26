@@ -38,6 +38,11 @@ services:
         value: "https://dev-games-api.buffingchi.com"
       - key: EXPO_PUBLIC_SENTRY_DSN
         sync: false
+      # react-native-skia's postinstall downloads native binaries for all platforms.
+      # This build only targets Expo Web; native binaries are not needed and the
+      # download fails transiently on CDN errors. Skip it unconditionally.
+      - key: SKIP_SKIA_DOWNLOAD
+        value: "1"
     headers:
       - path: /*
         name: Content-Security-Policy
