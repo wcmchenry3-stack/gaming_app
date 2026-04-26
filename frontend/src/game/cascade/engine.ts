@@ -33,7 +33,7 @@ import {
   WALL_THICKNESS,
   DANGER_LINE_RATIO,
 } from "./engine.shared";
-import type { FruitBody, BodySnapshot, MergeEvent, EngineHandle } from "./engine.shared";
+import type { FruitBody, BodySnapshot, EngineHandle } from "./engine.shared";
 import type { GameEvent } from "./types";
 
 // Import type only for typing purposes (no runtime import at module level)

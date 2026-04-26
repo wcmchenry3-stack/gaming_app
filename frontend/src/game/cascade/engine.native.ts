@@ -30,7 +30,7 @@ import {
   FRUIT_RESTITUTION,
   FRUIT_FRICTION,
 } from "./engine.shared";
-import type { FruitBody, BodySnapshot, MergeEvent, EngineHandle } from "./engine.shared";
+import type { FruitBody, BodySnapshot, EngineHandle } from "./engine.shared";
 import type { GameEvent } from "./types";
 
 /** @deprecated Callbacks removed in #834 — events now returned from step(). Kept for type compat. */
