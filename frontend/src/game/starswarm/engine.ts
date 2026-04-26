@@ -210,7 +210,7 @@ function challengePath(idx: number, total: number, canvasW: number, canvasH: num
 // Enemy factories
 // ---------------------------------------------------------------------------
 
-function makeEnemy(idx: number, slot: SlotDef, canvasW: number, _wave: number): Enemy {
+function makeEnemy(idx: number, slot: SlotDef, canvasW: number): Enemy {
   const { fx, fy } = slotToWorld(slot, canvasW);
   const size = TIER_SIZE[slot.tier];
   const path = swoopPath(idx, fx, fy, canvasW);
@@ -332,7 +332,7 @@ function buildWaveState(
     phase = 'ChallengingStage';
   } else {
     const slots = waveSlots(wave);
-    enemies = slots.map((slot, idx) => makeEnemy(idx, slot, canvasW, wave));
+    enemies = slots.map((slot, idx) => makeEnemy(idx, slot, canvasW));
     phase = 'SwoopIn';
   }
 
@@ -433,7 +433,7 @@ function tickSingleEnemy(
 
   switch (enemy.phase) {
     case 'SwoopIn':
-      return tickSwoopIn(enemy, dtMs, canvasH);
+      return tickSwoopIn(enemy, dtMs);
     case 'Formation':
       return tickFormation(enemy, dtMs, playerX, shouldDive);
     case 'Diving':
@@ -445,7 +445,7 @@ function tickSingleEnemy(
   }
 }
 
-function tickSwoopIn(enemy: Enemy, dtMs: number, _canvasH: number): EnemyTickResult {
+function tickSwoopIn(enemy: Enemy, dtMs: number): EnemyTickResult {
   const newT = enemy.pathT + dtMs / enemy.pathDuration;
 
   if (newT < 0) {
