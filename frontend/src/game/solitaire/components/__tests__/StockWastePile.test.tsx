@@ -68,4 +68,49 @@ describe("StockWastePile", () => {
     );
     expect(getByLabelText(/Empty waste pile/)).toBeTruthy();
   });
+
+  describe("draw-3 fan", () => {
+    it("shows all 3 visible waste cards when 3+ are present", () => {
+      const waste = [card(2), card(5), card(9), card(11)];
+      const { getByLabelText } = render(
+        withTheme(<StockWastePile stock={[card(1)]} waste={waste} drawMode={3} />)
+      );
+      expect(getByLabelText(/9 of Spades/)).toBeTruthy();
+      expect(getByLabelText(/J of Spades/)).toBeTruthy();
+      // card(2) is not in the visible top-3; card(5) is the oldest visible
+      expect(getByLabelText(/5 of Spades/)).toBeTruthy();
+    });
+
+    it("shows only the cards present when waste has fewer than 3", () => {
+      const waste = [card(3), card(7)];
+      const { getByLabelText, queryByLabelText } = render(
+        withTheme(<StockWastePile stock={[card(1)]} waste={waste} drawMode={3} />)
+      );
+      expect(getByLabelText(/3 of Spades/)).toBeTruthy();
+      expect(getByLabelText(/7 of Spades/)).toBeTruthy();
+      // only 2 cards; nothing else visible
+      expect(queryByLabelText(/Ace of Spades/)).toBeNull();
+    });
+
+    it("only the top card is interactive; background cards have image role", () => {
+      const onWastePress = jest.fn();
+      const waste = [card(2), card(5), card(9)];
+      const { getByLabelText } = render(
+        withTheme(
+          <StockWastePile
+            stock={[card(1)]}
+            waste={waste}
+            drawMode={3}
+            onWastePress={onWastePress}
+          />
+        )
+      );
+      expect(getByLabelText(/9 of Spades/).props.accessibilityRole).toBe("button");
+      expect(getByLabelText(/5 of Spades/).props.accessibilityRole).toBe("image");
+      expect(getByLabelText(/2 of Spades/).props.accessibilityRole).toBe("image");
+
+      fireEvent.press(getByLabelText(/9 of Spades/));
+      expect(onWastePress).toHaveBeenCalledTimes(1);
+    });
+  });
 });
