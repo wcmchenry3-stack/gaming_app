@@ -30,8 +30,15 @@ export default function StarSwarmScreen() {
   const [containerW, setContainerW] = useState(0);
   const [containerH, setContainerH] = useState(0);
 
-  const { playLaser, playChargeShot, playExplosion, playPlayerHit, playWaveClear, playGameOver, playChallengingStage } =
-    useStarSwarmAudio(phase !== "GameOver");
+  const {
+    playLaser,
+    playChargeShot,
+    playExplosion,
+    playPlayerHit,
+    playWaveClear,
+    playGameOver,
+    playChallengingStage,
+  } = useStarSwarmAudio(phase !== "GameOver");
 
   const scoreRef = useRef(0);
   const highScoreRef = useRef(0);
@@ -46,15 +53,18 @@ export default function StarSwarmScreen() {
     scoreRef.current = s;
   }, []);
 
-  const handleGameOver = useCallback((finalScore: number) => {
-    setPhase("GameOver");
-    playGameOver();
-    hapticPlayerDeath();
-    if (finalScore > highScoreRef.current) {
-      highScoreRef.current = finalScore;
-      setHighScore(finalScore);
-    }
-  }, [playGameOver]);
+  const handleGameOver = useCallback(
+    (finalScore: number) => {
+      setPhase("GameOver");
+      playGameOver();
+      hapticPlayerDeath();
+      if (finalScore > highScoreRef.current) {
+        highScoreRef.current = finalScore;
+        setHighScore(finalScore);
+      }
+    },
+    [playGameOver]
+  );
 
   const handlePlayerHit = useCallback(() => {
     playPlayerHit();
