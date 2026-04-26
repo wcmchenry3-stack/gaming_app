@@ -12,7 +12,6 @@ from fastapi.testclient import TestClient
 from main import app
 
 import yacht.router as yacht_router
-import blackjack.router as blackjack_router
 
 client = TestClient(app)
 
@@ -23,10 +22,8 @@ SESSION_HEADERS = {"X-Session-ID": TEST_SESSION_ID}
 @pytest.fixture(autouse=True)
 def reset_all():
     yacht_router.reset_game()
-    blackjack_router.reset_game()
     yield
     yacht_router.reset_game()
-    blackjack_router.reset_game()
 
 
 # ---------------------------------------------------------------------------
@@ -57,43 +54,6 @@ class TestYacht404Detail:
 
 
 # ---------------------------------------------------------------------------
-# Blackjack — 404 responses include detail
-# ---------------------------------------------------------------------------
-
-
-class TestBlackjack404Detail:
-    def test_state_404_has_detail(self):
-        res = client.get("/blackjack/state", headers=SESSION_HEADERS)
-        assert res.status_code == 404
-        assert "detail" in res.json()
-
-    def test_bet_404_has_detail(self):
-        res = client.post("/blackjack/bet", json={"amount": 10}, headers=SESSION_HEADERS)
-        assert res.status_code == 404
-        assert "detail" in res.json()
-
-    def test_hit_404_has_detail(self):
-        res = client.post("/blackjack/hit", headers=SESSION_HEADERS)
-        assert res.status_code == 404
-        assert "detail" in res.json()
-
-    def test_stand_404_has_detail(self):
-        res = client.post("/blackjack/stand", headers=SESSION_HEADERS)
-        assert res.status_code == 404
-        assert "detail" in res.json()
-
-    def test_double_down_404_has_detail(self):
-        res = client.post("/blackjack/double-down", headers=SESSION_HEADERS)
-        assert res.status_code == 404
-        assert "detail" in res.json()
-
-    def test_new_hand_404_has_detail(self):
-        res = client.post("/blackjack/new-hand", headers=SESSION_HEADERS)
-        assert res.status_code == 404
-        assert "detail" in res.json()
-
-
-# ---------------------------------------------------------------------------
 # Missing X-Session-ID header returns 422
 # ---------------------------------------------------------------------------
 
@@ -106,8 +66,6 @@ class TestMissingSessionHeader:
         [
             ("POST", "/yacht/new"),
             ("GET", "/yacht/state"),
-            ("POST", "/blackjack/new"),
-            ("GET", "/blackjack/state"),
         ],
     )
     def test_missing_header_returns_error(self, method, path):
