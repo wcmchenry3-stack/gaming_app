@@ -47,7 +47,13 @@ export default function StockWastePile({
         drawMode={drawMode}
         t={t}
       />
-      <Waste waste={waste} drawMode={drawMode} selected={wasteSelected} onPress={onWastePress} t={t} />
+      <Waste
+        waste={waste}
+        drawMode={drawMode}
+        selected={wasteSelected}
+        onPress={onWastePress}
+        t={t}
+      />
     </View>
   );
 }
