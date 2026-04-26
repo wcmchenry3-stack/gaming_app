@@ -499,7 +499,11 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
           const STEP_S = 1 / 60; // ~16.67 ms per step
           const steps = Math.ceil(ms / (STEP_S * 1000));
           for (let i = 0; i < steps; i++) {
-            bodiesRef.current = engineRef.current.step(STEP_S).snapshots;
+            const result = engineRef.current.step(STEP_S);
+            bodiesRef.current = result.snapshots;
+            if (result.events.length > 0) {
+              onEventsRef.current?.(result.events);
+            }
           }
           drawRef.current();
         },
