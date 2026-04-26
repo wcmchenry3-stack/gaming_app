@@ -1,5 +1,5 @@
 import React, { useEffect } from "react";
-import { View, Text, Pressable, StyleSheet, FlatList, useWindowDimensions } from "react-native";
+import { View, Text, Pressable, StyleSheet, ScrollView, useWindowDimensions } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTranslation } from "react-i18next";
 import { useNavigation } from "@react-navigation/native";
@@ -228,13 +228,7 @@ export default function HomeScreen() {
         <OfflineBanner />
       </View>
 
-      <FlatList
-        data={games}
-        renderItem={renderCard}
-        keyExtractor={(item) => item.key}
-        key={numColumns}
-        numColumns={numColumns}
-        initialNumToRender={games.length}
+      <ScrollView
         contentContainerStyle={[
           styles.grid,
           {
@@ -243,9 +237,19 @@ export default function HomeScreen() {
             paddingHorizontal: 16,
           },
         ]}
-        columnWrapperStyle={numColumns > 1 ? styles.row : undefined}
-        scrollEnabled={true}
-      />
+      >
+        {numColumns === 1
+          ? games.map((item, index) => renderCard({ item, index }))
+          : Array.from({ length: Math.ceil(games.length / numColumns) }, (_, rowIndex) => (
+              <View key={rowIndex} style={styles.row}>
+                {games
+                  .slice(rowIndex * numColumns, rowIndex * numColumns + numColumns)
+                  .map((item, colIndex) =>
+                    renderCard({ item, index: rowIndex * numColumns + colIndex }),
+                  )}
+              </View>
+            ))}
+      </ScrollView>
     </View>
   );
 }
@@ -265,6 +269,7 @@ const styles = StyleSheet.create({
     gap: 16,
   },
   row: {
+    flexDirection: "row",
     gap: 16,
   },
   cardWrapper: {
