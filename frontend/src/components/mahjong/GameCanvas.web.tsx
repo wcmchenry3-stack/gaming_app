@@ -1,0 +1,330 @@
+/**
+ * Mahjong Solitaire — web canvas (Expo Web / browser).
+ *
+ * Rendered via HTML Canvas 2D.
+ * Metro uses this file automatically on the web platform.
+ *
+ * Tile geometry (grid → pixels):
+ *   pixel_x = PAD_X + (col / 2) * TILE_W + layer * LAYER_DX
+ *   pixel_y = PAD_Y + row * TILE_H − layer * LAYER_DY
+ *
+ * SVG face art is gated behind a placeholder until Story #875 lands.
+ */
+
+import React, { useCallback, useEffect, useMemo, useRef } from "react";
+import { Pressable, StyleSheet, Text, View } from "react-native";
+import { useTranslation } from "react-i18next";
+import { hasFreePairs, isFreeTile } from "../../game/mahjong/engine";
+import type { MahjongState, SlotTile } from "../../game/mahjong/types";
+
+// ---------------------------------------------------------------------------
+// Layout constants (mirror GameCanvas.tsx exactly)
+// ---------------------------------------------------------------------------
+
+const TILE_W = 44;
+const TILE_H = 56;
+const SIDE_W = 5;
+const LAYER_DX = 6;
+const LAYER_DY = 5;
+const PAD_X = 10;
+const PAD_Y = 30;
+
+export const BOARD_W = PAD_X + 12 * TILE_W + 4 * LAYER_DX + PAD_X; // 572
+export const BOARD_H = PAD_Y + 8 * TILE_H + 4 * LAYER_DY + PAD_Y; // 508
+
+function tileX(col: number, layer: number): number {
+  return PAD_X + (col / 2) * TILE_W + layer * LAYER_DX;
+}
+function tileY(row: number, layer: number): number {
+  return PAD_Y + row * TILE_H - layer * LAYER_DY;
+}
+
+// ---------------------------------------------------------------------------
+// Colors
+// ---------------------------------------------------------------------------
+
+const BG = "#1a3a1a";
+const TILE_FACE = "#f5f0e8";
+const TILE_FACE_LOCKED = "#d0c8b8";
+const BORDER_NORMAL = "#8b7355";
+const BORDER_SELECTED = "#ffd700";
+const BORDER_HINT = "#5dbcd2";
+const SIDE_R = "#a89070";
+const SIDE_B = "#987860";
+
+const SUIT_COLOR: Record<string, string> = {
+  characters: "#cc0000",
+  circles: "#006633",
+  bamboos: "#003322",
+  winds: "#334455",
+  dragons: "#880011",
+  flowers: "#aa2299",
+  seasons: "#0044aa",
+};
+
+// ---------------------------------------------------------------------------
+// Hit-testing
+// ---------------------------------------------------------------------------
+
+function hitTest(tiles: readonly SlotTile[], tapX: number, tapY: number): number | null {
+  const fw = TILE_W - SIDE_W;
+  const fh = TILE_H - SIDE_W;
+  const sorted = [...tiles].sort((a, b) => b.layer - a.layer);
+  for (const tile of sorted) {
+    const x = tileX(tile.col, tile.layer);
+    const y = tileY(tile.row, tile.layer);
+    if (tapX >= x && tapX < x + fw && tapY >= y && tapY < y + fh) {
+      return tile.id;
+    }
+  }
+  return null;
+}
+
+// ---------------------------------------------------------------------------
+// Canvas 2D drawing
+// ---------------------------------------------------------------------------
+
+function drawBoard(
+  ctx: CanvasRenderingContext2D,
+  state: MahjongState,
+  freeTiles: ReadonlySet<number>
+): void {
+  ctx.clearRect(0, 0, BOARD_W, BOARD_H);
+
+  // Background
+  ctx.fillStyle = BG;
+  ctx.fillRect(0, 0, BOARD_W, BOARD_H);
+
+  const selectedId = state.selected?.id ?? null;
+  const hasSelection = selectedId !== null;
+
+  // Draw tiles lowest layer → highest so higher layers appear on top.
+  const sorted = [...state.tiles].sort((a, b) => a.layer - b.layer || a.row - b.row);
+
+  for (const tile of sorted) {
+    const x = tileX(tile.col, tile.layer);
+    const y = tileY(tile.row, tile.layer);
+    const isSelected = tile.id === selectedId;
+    const isFree = freeTiles.has(tile.id);
+    const fw = TILE_W - SIDE_W;
+    const fh = TILE_H - SIDE_W;
+
+    const borderColor = isSelected
+      ? BORDER_SELECTED
+      : isFree && hasSelection
+        ? BORDER_HINT
+        : BORDER_NORMAL;
+    const faceColor = isFree ? TILE_FACE : TILE_FACE_LOCKED;
+    const suitColor = SUIT_COLOR[tile.suit] ?? "#888888";
+
+    // Drop shadow
+    ctx.fillStyle = "rgba(0,0,0,0.35)";
+    ctx.fillRect(x + SIDE_W + 2, y + SIDE_W + 2, fw, fh);
+
+    // Right 3-D side
+    ctx.fillStyle = SIDE_R;
+    ctx.fillRect(x + fw, y + SIDE_W, SIDE_W, fh);
+
+    // Bottom 3-D side
+    ctx.fillStyle = SIDE_B;
+    ctx.fillRect(x + SIDE_W, y + fh, fw, SIDE_W);
+
+    // Border
+    ctx.fillStyle = borderColor;
+    ctx.fillRect(x, y, fw, fh);
+
+    // Face
+    ctx.fillStyle = faceColor;
+    ctx.fillRect(x + 1, y + 1, fw - 2, fh - 2);
+
+    // Suit placeholder — replaced by SVG art in Story #875
+    ctx.globalAlpha = isFree ? 0.8 : 0.35;
+    ctx.fillStyle = suitColor;
+    ctx.fillRect(x + 8, y + 10, fw - 16, fh - 20);
+    ctx.globalAlpha = 1;
+
+    // Rank text (placeholder — gives extra visual info on web)
+    ctx.font = "bold 11px monospace";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "bottom";
+    ctx.fillStyle = isFree ? "#ffffff" : "#aaaaaa";
+    ctx.fillText(String(tile.rank), x + fw / 2, y + fh - 2);
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Component
+// ---------------------------------------------------------------------------
+
+interface Props {
+  state: MahjongState;
+  onTilePress: (tileId: number) => void;
+  onShufflePress: () => void;
+  onNewGamePress: () => void;
+}
+
+export default function GameCanvas({ state, onTilePress, onShufflePress, onNewGamePress }: Props) {
+  const { t } = useTranslation("mahjong");
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+
+  const freeTiles = useMemo(() => {
+    const s = new Set<number>();
+    for (const tile of state.tiles) {
+      if (isFreeTile(tile, state.tiles)) s.add(tile.id);
+    }
+    return s;
+  }, [state.tiles]);
+
+  const noFreePairs = useMemo(
+    () => !state.isComplete && !hasFreePairs(state.tiles),
+    [state.isComplete, state.tiles]
+  );
+  const showShuffleCTA = noFreePairs && state.shufflesLeft > 0;
+  const gameActive = !state.isComplete && !state.isDeadlocked && !showShuffleCTA;
+
+  // Redraw whenever state changes.
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+    drawBoard(ctx, state, freeTiles);
+  }, [state, freeTiles]);
+
+  const handleClick = useCallback(
+    (e: React.MouseEvent<HTMLCanvasElement>) => {
+      if (!gameActive) return;
+      const canvas = canvasRef.current;
+      if (!canvas) return;
+      const rect = canvas.getBoundingClientRect();
+      const tapX = e.clientX - rect.left;
+      const tapY = e.clientY - rect.top;
+      const tileId = hitTest(state.tiles, tapX, tapY);
+      if (tileId !== null) onTilePress(tileId);
+    },
+    [state.tiles, onTilePress, gameActive]
+  );
+
+  return (
+    <View style={{ width: BOARD_W, height: BOARD_H }}>
+      <canvas
+        ref={canvasRef}
+        width={BOARD_W}
+        height={BOARD_H}
+        onClick={handleClick}
+        style={{ display: "block", cursor: gameActive ? "pointer" : "default" }}
+        aria-label={t("game.canvasLabel")}
+        role="img"
+      />
+
+      {/* Shuffle CTA overlay */}
+      {showShuffleCTA && (
+        <View style={[styles.overlay, styles.noMovesOverlay]}>
+          <Text style={styles.overlayTitle}>{t("overlay.noMoves")}</Text>
+          <Text style={styles.overlayDetail}>{t("overlay.noMovesDetail")}</Text>
+          <Pressable
+            style={styles.btn}
+            onPress={onShufflePress}
+            accessibilityLabel={t("action.shuffleLabel")}
+          >
+            <Text style={styles.btnText}>
+              {t("overlay.shuffleButton")} ({state.shufflesLeft})
+            </Text>
+          </Pressable>
+        </View>
+      )}
+
+      {/* Deadlock overlay */}
+      {state.isDeadlocked && (
+        <View style={[styles.overlay, styles.noMovesOverlay]}>
+          <Text style={styles.overlayTitle}>{t("overlay.noMoves")}</Text>
+          <Text style={styles.overlayDetail}>{t("overlay.noMovesDetail")}</Text>
+          <Pressable
+            style={styles.btn}
+            onPress={onNewGamePress}
+            accessibilityLabel={t("action.newGameLabel")}
+          >
+            <Text style={styles.btnText}>{t("overlay.newGameButton")}</Text>
+          </Pressable>
+        </View>
+      )}
+
+      {/* Win overlay */}
+      {state.isComplete && (
+        <View style={[styles.overlay, styles.winOverlay]}>
+          <Text style={styles.winTitle}>{t("overlay.youWon")}</Text>
+          <Text style={styles.overlayDetail}>
+            {t("overlay.youWonDetail", { count: state.pairsRemoved })}
+          </Text>
+          <Text style={styles.winScore}>{t("score.display", { score: state.score })}</Text>
+          <Pressable
+            style={styles.btn}
+            onPress={onNewGamePress}
+            accessibilityLabel={t("action.newGameLabel")}
+          >
+            <Text style={styles.btnText}>{t("overlay.newGameButton")}</Text>
+          </Pressable>
+        </View>
+      )}
+    </View>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Styles
+// ---------------------------------------------------------------------------
+
+const styles = StyleSheet.create({
+  overlay: {
+    ...StyleSheet.absoluteFillObject,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 24,
+  },
+  noMovesOverlay: {
+    backgroundColor: "rgba(0,0,0,0.72)",
+  },
+  winOverlay: {
+    backgroundColor: "rgba(0,20,0,0.82)",
+  },
+  overlayTitle: {
+    color: "#ffffff",
+    fontSize: 24,
+    fontWeight: "bold",
+    textAlign: "center",
+    marginBottom: 8,
+  },
+  overlayDetail: {
+    color: "#cccccc",
+    fontSize: 14,
+    textAlign: "center",
+    marginBottom: 16,
+  },
+  winTitle: {
+    color: "#ffd700",
+    fontSize: 30,
+    fontWeight: "bold",
+    textAlign: "center",
+    marginBottom: 8,
+  },
+  winScore: {
+    color: "#ffffff",
+    fontSize: 18,
+    textAlign: "center",
+    marginBottom: 20,
+    fontVariant: ["tabular-nums"],
+  },
+  btn: {
+    backgroundColor: "#2a7a2a",
+    paddingVertical: 10,
+    paddingHorizontal: 28,
+    borderRadius: 6,
+    marginTop: 4,
+  },
+  btnText: {
+    color: "#ffffff",
+    fontSize: 15,
+    fontWeight: "bold",
+    textAlign: "center",
+  },
+});
