@@ -106,4 +106,21 @@ export const SOUND_REGISTRY: Partial<Record<SoundKey, number>> = {
   "freecell.gameWin": require("../../../assets/sounds/freecell-game-win.mp3"),
   // eslint-disable-next-line @typescript-eslint/no-require-imports
   "freecell.invalidMove": require("../../../assets/sounds/freecell-invalid-move.mp3"),
+  // Mahjong (#914)
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  "mahjong.tileSelect": require("../../../assets/sounds/mahjong-tile-select.ogg"),
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  "mahjong.tileMatch": require("../../../assets/sounds/mahjong-tile-match.ogg"),
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  "mahjong.shuffle": require("../../../assets/sounds/mahjong-shuffle.ogg"),
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  "mahjong.win": require("../../../assets/sounds/hearts-moon-shot.mp3"),
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  "mahjong.deadlock": require("../../../assets/sounds/cascade-game-over.ogg"),
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  "mahjong.bg1": require("../../../assets/sounds/mahjong-bg-1.mp3"),
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  "mahjong.bg2": require("../../../assets/sounds/mahjong-bg-2.mp3"),
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  "mahjong.bg3": require("../../../assets/sounds/mahjong-bg-3.mp3"),
 };
