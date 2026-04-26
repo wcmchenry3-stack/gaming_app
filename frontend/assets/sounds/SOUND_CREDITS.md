@@ -182,6 +182,61 @@ _(Previously placed — provenance to be confirmed)_
 
 ---
 
+## Twenty48 (#829)
+
+### twenty48-tile-merge.ogg
+
+- **Event:** Tile merge (two equal tiles combine)
+- **Original filename:** `pepSound2.ogg` from Kenney Digital Audio
+- **Source URL:** https://kenney.nl/assets/digital-audio
+- **Creator:** Kenney Vleugels (Kenney.nl)
+- **License:** Creative Commons Zero (CC0)
+- **License URL:** https://creativecommons.org/publicdomain/zero/1.0/
+- **Attribution required:** No
+- **Commercial use:** Yes
+- **Download date:** 2026-04-26
+- **Notes:** Short upbeat pep sound — satisfying pop for a tile merge.
+
+### twenty48-tile-spawn.ogg
+
+- **Event:** New tile spawned on the board
+- **Original filename:** `tone1.ogg` from Kenney Digital Audio
+- **Source URL:** https://kenney.nl/assets/digital-audio
+- **Creator:** Kenney Vleugels (Kenney.nl)
+- **License:** Creative Commons Zero (CC0)
+- **License URL:** https://creativecommons.org/publicdomain/zero/1.0/
+- **Attribution required:** No
+- **Commercial use:** Yes
+- **Download date:** 2026-04-26
+- **Notes:** Subtle single tone for the tile appearing after each move.
+
+### twenty48-win.mp3
+
+- **Event:** Player reaches the 2048 tile (win)
+- **Original filename:** (reuses `hearts-moon-shot.mp3` — see Hearts section above)
+- **Source URL:** https://pixabay.com/sound-effects/orchestral-win-331233/
+- **Creator:** u_it78ck90s3 on Pixabay
+- **License:** Pixabay Content License
+- **License URL:** https://pixabay.com/service/license-summary/
+- **Attribution required:** No
+- **Commercial use:** Yes
+- **Notes:** Same orchestral win fanfare reused by Yacht and Blackjack for big moments.
+
+### twenty48-game-over.ogg
+
+- **Event:** Game over (no valid moves remain)
+- **Original filename:** `phaserDown2.ogg` from Kenney Digital Audio
+- **Source URL:** https://kenney.nl/assets/digital-audio
+- **Creator:** Kenney Vleugels (Kenney.nl)
+- **License:** Creative Commons Zero (CC0)
+- **License URL:** https://creativecommons.org/publicdomain/zero/1.0/
+- **Attribution required:** No
+- **Commercial use:** Yes
+- **Download date:** 2026-04-26
+- **Notes:** Descending phaser tone — signals no moves remaining without being harsh.
+
+---
+
 ## Yacht (#827)
 
 ### yacht-dice-roll.ogg
