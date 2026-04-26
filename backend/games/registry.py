@@ -11,6 +11,7 @@ from __future__ import annotations
 from blackjack.module import module as blackjack_module
 from cascade.module import module as cascade_module
 from hearts.module import module as hearts_module
+from mahjong.module import module as mahjong_module
 from solitaire.module import module as solitaire_module
 from sudoku.module import module as sudoku_module
 
@@ -22,6 +23,7 @@ _REGISTRY: dict[str, GameModule] = {
     blackjack_module.game_type.value: blackjack_module,
     cascade_module.game_type.value: cascade_module,
     hearts_module.game_type.value: hearts_module,
+    mahjong_module.game_type.value: mahjong_module,
     solitaire_module.game_type.value: solitaire_module,
     sudoku_module.game_type.value: sudoku_module,
 }
