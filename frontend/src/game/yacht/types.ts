@@ -4,6 +4,15 @@
 
 import type { GameOutcome, GameSession } from "../_shared/types";
 
+export type GameEvent =
+  | { readonly type: "diceRoll"; readonly rolledIndices: readonly number[] }
+  | { readonly type: "dieHold"; readonly index: number }
+  | { readonly type: "dieRelease"; readonly index: number }
+  | { readonly type: "yacht" }
+  | { readonly type: "largeStraight" }
+  | { readonly type: "smallStraight" }
+  | { readonly type: "upperBonus" };
+
 export interface GameState {
   dice: number[];
   held: boolean[];
@@ -16,6 +25,7 @@ export interface GameState {
   yacht_bonus_count: number;
   yacht_bonus_total: number;
   total_score: number;
+  events?: readonly GameEvent[];
 }
 
 export interface PossibleScores {

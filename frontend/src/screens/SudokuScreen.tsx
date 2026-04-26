@@ -338,7 +338,7 @@ export default function SudokuScreen() {
     setElapsed(0);
     startMsRef.current = null;
     pausedAtRef.current = null;
-  }, [difficulty]);
+  }, [difficulty, variant]);
 
   const handleCellPress = useCallback((row: number, col: number) => {
     setState((s) => (s ? selectCell(s, row, col) : s));

@@ -8,6 +8,7 @@ import {
   newGame,
   roll,
   score,
+  toggleHold,
   possibleScores,
   calculateScore,
   computeDerived,
@@ -654,5 +655,153 @@ describe("isInProgress", () => {
   it("returns true when a category is scored to 0 (still a decision made)", () => {
     const g = newGame();
     expect(isInProgress({ ...g, scores: { ...g.scores, yacht: 0 } })).toBe(true);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// GameEvent emissions
+// ---------------------------------------------------------------------------
+
+describe("roll — diceRoll event", () => {
+  afterEach(() => setRng(Math.random));
+
+  it("emits diceRoll with all 5 indices on first roll", () => {
+    setRng(createSeededRng(42));
+    const g = newGame();
+    const next = roll(g, [false, false, false, false, false]);
+    expect(next.events).toEqual([{ type: "diceRoll", rolledIndices: [0, 1, 2, 3, 4] }]);
+  });
+
+  it("emits diceRoll with only unhold indices on subsequent rolls", () => {
+    setRng(createSeededRng(1));
+    const g = newGame();
+    const after1 = roll(g, [false, false, false, false, false]);
+    setRng(createSeededRng(2));
+    const after2 = roll(after1, [true, false, true, false, true]);
+    const event = after2.events?.[0];
+    expect(event?.type).toBe("diceRoll");
+    if (event?.type === "diceRoll") {
+      expect(event.rolledIndices).toEqual([1, 3]);
+    }
+  });
+
+  it("clears events when another roll is made", () => {
+    setRng(createSeededRng(10));
+    const g = newGame();
+    const after1 = roll(g, [false, false, false, false, false]);
+    setRng(createSeededRng(11));
+    const after2 = roll(after1, [false, false, false, false, false]);
+    // The second roll replaces the first roll's events
+    expect(after2.events?.[0]?.type).toBe("diceRoll");
+    expect(after2.events).toHaveLength(1);
+  });
+});
+
+describe("toggleHold — dieHold / dieRelease events", () => {
+  it("emits dieHold when die is not held", () => {
+    const g = makeGame([1, 2, 3, 4, 5], 1);
+    const next = toggleHold(g, 2);
+    expect(next.held[2]).toBe(true);
+    expect(next.events).toEqual([{ type: "dieHold", index: 2 }]);
+  });
+
+  it("emits dieRelease when die is already held", () => {
+    const g = { ...makeGame([1, 2, 3, 4, 5], 1), held: [false, false, true, false, false] };
+    const next = toggleHold(g, 2);
+    expect(next.held[2]).toBe(false);
+    expect(next.events).toEqual([{ type: "dieRelease", index: 2 }]);
+  });
+
+  it("does nothing before first roll (rolls_used === 0)", () => {
+    const g = newGame();
+    const next = toggleHold(g, 0);
+    expect(next).toBe(g);
+  });
+
+  it("does nothing when game is over", () => {
+    const g = { ...makeGame([1, 2, 3, 4, 5], 1), game_over: true };
+    const next = toggleHold(g, 0);
+    expect(next).toBe(g);
+  });
+});
+
+describe("score — yacht event", () => {
+  afterEach(() => setRng(Math.random));
+
+  it("emits yacht event when scoring the yacht category with all-match dice", () => {
+    const g = makeGame([3, 3, 3, 3, 3], 1);
+    const next = score(g, "yacht");
+    expect(next.events).toContainEqual({ type: "yacht" });
+  });
+
+  it("does not emit yacht event when scoring yacht with 0 (no match)", () => {
+    const g = makeGame([1, 2, 3, 4, 5], 1);
+    const next = score(g, "yacht");
+    expect(next.events ?? []).not.toContainEqual({ type: "yacht" });
+  });
+});
+
+describe("score — straight events", () => {
+  it("emits largeStraight when scoring large_straight with a run of 5", () => {
+    const g = makeGame([1, 2, 3, 4, 5], 1);
+    const next = score(g, "large_straight");
+    expect(next.events).toContainEqual({ type: "largeStraight" });
+  });
+
+  it("does not emit largeStraight when scoring large_straight for 0", () => {
+    const g = makeGame([1, 1, 3, 4, 5], 1);
+    const next = score(g, "large_straight");
+    expect(next.events ?? []).not.toContainEqual({ type: "largeStraight" });
+  });
+
+  it("emits smallStraight when scoring small_straight with a run of 4", () => {
+    const g = makeGame([1, 2, 3, 4, 6], 1);
+    const next = score(g, "small_straight");
+    expect(next.events).toContainEqual({ type: "smallStraight" });
+  });
+});
+
+describe("score — upperBonus event", () => {
+  it("emits upperBonus exactly once when upper total first reaches 63", () => {
+    // Fill upper scores so total is 60 (3+6+9+12+15+15 = 60 — just below 63)
+    const base = newGame();
+    const partial = computeDerived({
+      ...base,
+      scores: {
+        ...base.scores,
+        ones: 3,
+        twos: 6,
+        threes: 9,
+        fours: 12,
+        fives: 15,
+        // sixes not yet scored
+      },
+    });
+    // Score sixes with [6,6,6,6,6] → 30 pts; total = 3+6+9+12+15+30 = 75 ≥ 63
+    const withDice = { ...partial, dice: [6, 6, 6, 6, 6], rolls_used: 1 };
+    const next = score(withDice, "sixes");
+    expect(next.events).toContainEqual({ type: "upperBonus" });
+  });
+
+  it("does not emit upperBonus when upper total was already ≥ 63 before scoring", () => {
+    const base = newGame();
+    const already = computeDerived({
+      ...base,
+      scores: {
+        ...base.scores,
+        ones: 5,
+        twos: 10,
+        threes: 15,
+        fours: 20,
+        fives: 25,
+        // sixes not scored yet but total already 75 ≥ 63 — not possible in normal play
+        // but let's test the guard anyway
+        sixes: 18,
+      },
+    });
+    // Now try scoring something else; upperBonus should not re-fire
+    const withDice = { ...already, dice: [1, 2, 3, 4, 5], rolls_used: 1 };
+    const next = score(withDice, "chance");
+    expect(next.events ?? []).not.toContainEqual({ type: "upperBonus" });
   });
 });
