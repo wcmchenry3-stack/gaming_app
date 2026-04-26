@@ -23,7 +23,6 @@ from hearts.router import router as hearts_router
 from mahjong.router import router as mahjong_router
 from solitaire.router import router as solitaire_router
 from sudoku.router import router as sudoku_router
-from yacht.router import router as yacht_router
 from starswarm.router import router as starswarm_router
 from games.router import router as games_router
 from logs.router import router as logs_router
@@ -53,7 +52,6 @@ if _sentry_dsn:
 # ---------------------------------------------------------------------------
 
 app = FastAPI(title="Gaming App API")
-app.include_router(yacht_router, prefix="/yacht")
 app.include_router(cascade_router, prefix="/cascade")
 app.include_router(blackjack_router, prefix="/blackjack")
 app.include_router(freecell_router, prefix="/freecell")
