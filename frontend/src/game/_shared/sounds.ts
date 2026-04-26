@@ -25,4 +25,15 @@ export const SOUND_REGISTRY: Partial<Record<SoundKey, number>> = {
   "blackjack.win": require("../../../assets/sounds/blackjack-win.ogg"),
   // eslint-disable-next-line @typescript-eslint/no-require-imports
   "blackjack.push": require("../../../assets/sounds/blackjack-push.ogg"),
+  // Star Swarm (#803)
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  "starswarm.laser": require("../../../assets/sounds/starswarm-laser.ogg"),
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  "starswarm.chargeshot": require("../../../assets/sounds/starswarm-chargeshot.ogg"),
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  "starswarm.explosion": require("../../../assets/sounds/starswarm-explosion.ogg"),
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  "starswarm.gameover": require("../../../assets/sounds/starswarm-gameover.ogg"),
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  "starswarm.waveclear": require("../../../assets/sounds/starswarm-waveclear.ogg"),
 };
