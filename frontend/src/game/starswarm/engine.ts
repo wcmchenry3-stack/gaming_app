@@ -246,7 +246,7 @@ function makeEnemy(idx: number, slot: SlotDef, canvasW: number): Enemy {
     circleRadius: CIRCLE_RADIUS + rng() * 10,
     circleAngle: 0,
     circleSpeed: CIRCLE_SPEED * (0.85 + rng() * 0.3),
-    shootTimer: SHOOT_INTERVAL_BASE + rng() * SHOOT_INTERVAL_JITTER,
+    shootTimer: rng() * (SHOOT_INTERVAL_BASE + SHOOT_INTERVAL_JITTER),
     diveTargetX: 0,
     hp: TIER_HP[slot.tier],
     isAlive: true,

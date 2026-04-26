@@ -3,7 +3,7 @@ import { createAudioPlayer, AudioPlayer } from "expo-audio";
 import { useSoundSettings } from "./SoundContext";
 import { SOUND_REGISTRY, SoundKey } from "./sounds";
 
-export function useSound(key: SoundKey): { play: () => void } {
+export function useSound(key: SoundKey, volume = 1.0): { play: () => void } {
   const { muted } = useSoundSettings();
   const playerRef = useRef<AudioPlayer | null>(null);
   const mutedRef = useRef(muted);
@@ -17,6 +17,7 @@ export function useSound(key: SoundKey): { play: () => void } {
     const source = SOUND_REGISTRY[key];
     if (source == null) return;
     const player = createAudioPlayer(source);
+    player.volume = volume;
     playerRef.current = player;
     return () => {
       player.remove();
