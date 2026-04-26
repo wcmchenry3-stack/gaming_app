@@ -13,6 +13,7 @@ const factories = {
   FreeCell: () => import("../screens/FreeCellScreen"),
   Hearts: () => import("../screens/HeartsScreen"),
   Sudoku: () => import("../screens/SudokuScreen"),
+  Mahjong: () => import("../screens/MahjongScreen"),
   Leaderboard: () => import("../screens/LeaderboardScreen"),
   GameDetail: () => import("../screens/GameDetailScreen"),
   Settings: () => import("../screens/SettingsScreen"),
@@ -29,6 +30,7 @@ export const LazyScreens = {
   FreeCell: React.lazy(factories.FreeCell),
   Hearts: React.lazy(factories.Hearts),
   Sudoku: React.lazy(factories.Sudoku),
+  Mahjong: React.lazy(factories.Mahjong),
   Leaderboard: React.lazy(factories.Leaderboard),
   GameDetail: React.lazy(factories.GameDetail),
   Settings: React.lazy(factories.Settings),
@@ -50,4 +52,5 @@ export function prefetchLobbyGameScreens(): void {
   factories.FreeCell().catch(() => undefined);
   factories.Hearts().catch(() => undefined);
   factories.Sudoku().catch(() => undefined);
+  factories.Mahjong().catch(() => undefined);
 }

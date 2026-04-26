@@ -32,6 +32,7 @@ import { Twenty48ScoreboardProvider } from "./src/game/twenty48/Twenty48Scoreboa
 import { SolitaireScoreboardProvider } from "./src/game/solitaire/SolitaireScoreboardContext";
 import { SudokuScoreboardProvider } from "./src/game/sudoku/SudokuScoreboardContext";
 import { CascadeScoreboardProvider } from "./src/game/cascade/CascadeScoreboardContext";
+import { MahjongScoreboardProvider } from "./src/game/mahjong/MahjongScoreboardContext";
 import { SessionLogger } from "./src/components/FeedbackWidget/SessionLogger";
 import { installSentryConsoleErrorCapture } from "./src/utils/sentryConsoleError";
 import { LazyScreens } from "./src/utils/lazyScreens";
@@ -71,8 +72,17 @@ export type HomeStackParamList = {
   FreeCell: undefined;
   Hearts: undefined;
   Sudoku: undefined;
+  Mahjong: undefined;
   Scoreboard: {
-    gameKey: "hearts" | "yacht" | "blackjack" | "twenty48" | "solitaire" | "sudoku" | "cascade";
+    gameKey:
+      | "hearts"
+      | "yacht"
+      | "blackjack"
+      | "twenty48"
+      | "solitaire"
+      | "sudoku"
+      | "cascade"
+      | "mahjong";
   };
 };
 
@@ -145,6 +155,7 @@ const LazySolitaireScreen = withSuspense(LazyScreens.Solitaire, "solitaire");
 const LazyFreeCellScreen = withSuspense(LazyScreens.FreeCell, "freecell");
 const LazyHeartsScreen = withSuspense(LazyScreens.Hearts, "hearts");
 const LazySudokuScreen = withSuspense(LazyScreens.Sudoku, "sudoku");
+const LazyMahjongScreen = withSuspense(LazyScreens.Mahjong, "mahjong");
 const LazyLeaderboardScreen = withSuspense(LazyScreens.Leaderboard, "leaderboard");
 const LazyGameDetailScreen = withSuspense(LazyScreens.GameDetail, "game_detail");
 const LazySettingsScreen = withSuspense(LazyScreens.Settings, "settings");
@@ -169,6 +180,7 @@ function LobbyStack() {
       <HomeStack.Screen name="FreeCell" component={LazyFreeCellScreen} />
       <HomeStack.Screen name="Hearts" component={LazyHeartsScreen} />
       <HomeStack.Screen name="Sudoku" component={LazySudokuScreen} />
+      <HomeStack.Screen name="Mahjong" component={LazyMahjongScreen} />
       <HomeStack.Screen name="Scoreboard" component={LazyScoreboardScreen} />
     </HomeStack.Navigator>
   );
@@ -222,11 +234,13 @@ function AppInner() {
                     <SolitaireScoreboardProvider>
                       <SudokuScoreboardProvider>
                         <CascadeScoreboardProvider>
-                          <NavigationContainer>
-                            <Stack.Navigator screenOptions={{ headerShown: false }}>
-                              <Stack.Screen name="MainTabs" component={MainTabs} />
-                            </Stack.Navigator>
-                          </NavigationContainer>
+                          <MahjongScoreboardProvider>
+                            <NavigationContainer>
+                              <Stack.Navigator screenOptions={{ headerShown: false }}>
+                                <Stack.Screen name="MainTabs" component={MainTabs} />
+                              </Stack.Navigator>
+                            </NavigationContainer>
+                          </MahjongScoreboardProvider>
                         </CascadeScoreboardProvider>
                       </SudokuScoreboardProvider>
                     </SolitaireScoreboardProvider>
