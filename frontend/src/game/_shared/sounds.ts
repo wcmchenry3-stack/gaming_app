@@ -33,9 +33,21 @@ export const SOUND_REGISTRY: Partial<Record<SoundKey, number>> = {
   // eslint-disable-next-line @typescript-eslint/no-require-imports
   "starswarm.explosion": require("../../../assets/sounds/starswarm-explosion.ogg"),
   // eslint-disable-next-line @typescript-eslint/no-require-imports
+  "starswarm.playerhit": require("../../../assets/sounds/starswarm-playerhit.ogg"),
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  "starswarm.challengingstage": require("../../../assets/sounds/starswarm-challengingstage.ogg"),
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
   "starswarm.gameover": require("../../../assets/sounds/starswarm-gameover.ogg"),
   // eslint-disable-next-line @typescript-eslint/no-require-imports
   "starswarm.waveclear": require("../../../assets/sounds/starswarm-waveclear.ogg"),
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  "starswarm.bg1": require("../../../assets/sounds/starswarm-bg-1.mp3"),
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  "starswarm.bg2": require("../../../assets/sounds/starswarm-bg-2.mp3"),
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  "starswarm.bg3": require("../../../assets/sounds/starswarm-bg-3.mp3"),
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  "starswarm.bg4": require("../../../assets/sounds/starswarm-bg-4.mp3"),
   // Yacht (#827)
   // eslint-disable-next-line @typescript-eslint/no-require-imports
   "yacht.diceRoll": require("../../../assets/sounds/yacht-dice-roll.ogg"),

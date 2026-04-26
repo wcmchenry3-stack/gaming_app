@@ -15,6 +15,7 @@ import Controls, {
 } from "../components/starswarm/Controls";
 import { CANVAS_W, CANVAS_H } from "../game/starswarm/engine";
 import type { GamePhase } from "../game/starswarm/types";
+import { useStarSwarmAudio } from "../hooks/useStarSwarmAudio";
 
 export default function StarSwarmScreen() {
   const { t } = useTranslation("starswarm");
@@ -29,6 +30,16 @@ export default function StarSwarmScreen() {
   const [containerW, setContainerW] = useState(0);
   const [containerH, setContainerH] = useState(0);
 
+  const {
+    playLaser,
+    playChargeShot,
+    playExplosion,
+    playPlayerHit,
+    playWaveClear,
+    playGameOver,
+    playChallengingStage,
+  } = useStarSwarmAudio(phase !== "GameOver");
+
   const scoreRef = useRef(0);
   const highScoreRef = useRef(0);
 
@@ -42,23 +53,29 @@ export default function StarSwarmScreen() {
     scoreRef.current = s;
   }, []);
 
-  const handleGameOver = useCallback((finalScore: number) => {
-    setPhase("GameOver");
-    hapticPlayerDeath();
-    if (finalScore > highScoreRef.current) {
-      highScoreRef.current = finalScore;
-      setHighScore(finalScore);
-    }
-  }, []);
+  const handleGameOver = useCallback(
+    (finalScore: number) => {
+      setPhase("GameOver");
+      playGameOver();
+      hapticPlayerDeath();
+      if (finalScore > highScoreRef.current) {
+        highScoreRef.current = finalScore;
+        setHighScore(finalScore);
+      }
+    },
+    [playGameOver]
+  );
 
   const handlePlayerHit = useCallback(() => {
+    playPlayerHit();
     hapticPlayerHit();
-  }, []);
+  }, [playPlayerHit]);
 
   const handleWaveClear = useCallback(() => {
     setPhase("WaveClear");
+    playWaveClear();
     hapticWaveClear();
-  }, []);
+  }, [playWaveClear]);
 
   const handleNewGame = useCallback(() => {
     scoreRef.current = 0;
@@ -103,6 +120,10 @@ export default function StarSwarmScreen() {
               onGameOver={handleGameOver}
               onPlayerHit={handlePlayerHit}
               onWaveClear={handleWaveClear}
+              onLaserFire={playLaser}
+              onChargeShotFire={playChargeShot}
+              onExplosion={playExplosion}
+              onChallengingStage={playChallengingStage}
               isPaused={isPaused}
               width={CANVAS_W}
               height={CANVAS_H}
