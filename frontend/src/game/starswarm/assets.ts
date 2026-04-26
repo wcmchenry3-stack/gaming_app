@@ -1,13 +1,13 @@
 import { useImage } from "@shopify/react-native-skia";
 import type { SkImage } from "@shopify/react-native-skia";
 
-import playerShipSrc from "../../../assets/starswarm/player-ship.png";
-import enemyGruntSrc from "../../../assets/starswarm/enemy-grunt.png";
-import enemyEliteSrc from "../../../assets/starswarm/enemy-elite.png";
-import enemyBossSrc from "../../../assets/starswarm/enemy-boss.png";
-import bulletPlayerSrc from "../../../assets/starswarm/bullet-player.png";
-import bulletEnemySrc from "../../../assets/starswarm/bullet-enemy.png";
-import bulletChargeSrc from "../../../assets/starswarm/bullet-charge.png";
+import playerShipSrc from "../../../assets/starswarm/player-ship.webp";
+import enemyGruntSrc from "../../../assets/starswarm/enemy-grunt.webp";
+import enemyEliteSrc from "../../../assets/starswarm/enemy-elite.webp";
+import enemyBossSrc from "../../../assets/starswarm/enemy-boss.webp";
+import bulletPlayerSrc from "../../../assets/starswarm/bullet-player.webp";
+import bulletEnemySrc from "../../../assets/starswarm/bullet-enemy.webp";
+import bulletChargeSrc from "../../../assets/starswarm/bullet-charge.webp";
 import explosionFrame00 from "../../../assets/starswarm/explosion/frame00.png";
 import explosionFrame01 from "../../../assets/starswarm/explosion/frame01.png";
 import explosionFrame02 from "../../../assets/starswarm/explosion/frame02.png";
