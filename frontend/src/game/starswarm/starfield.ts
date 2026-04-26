@@ -1,4 +1,5 @@
 export interface Star {
+  id: number;
   x: number;
   y: number;
   /** Logical radius in canvas pixels. */
@@ -34,9 +35,11 @@ function makePrng(seed: number) {
 export function initStarfield(width: number, height: number, seed = 42): StarfieldState {
   const rand = makePrng(seed);
   const stars: Star[] = [];
+  let id = 0;
   for (const layer of LAYERS) {
     for (let i = 0; i < layer.count; i++) {
       stars.push({
+        id: id++,
         x: rand() * width,
         y: rand() * height,
         r: layer.r,
