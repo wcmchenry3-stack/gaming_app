@@ -40,6 +40,7 @@ export default function HomeScreen() {
     "hearts",
     "sudoku",
     "starswarm",
+    "mahjong",
     "errors",
   ]);
   const { colors } = useTheme();
@@ -135,6 +136,13 @@ export default function HomeScreen() {
       description: t("starswarm:game.description"),
       action: () => navigation.navigate("StarSwarm"),
     },
+    {
+      key: "mahjong",
+      emoji: "🀄",
+      title: t("mahjong:game.title"),
+      description: t("mahjong:game.description"),
+      action: () => navigation.navigate("Mahjong"),
+    },
   ];
 
   const playLabels: Record<string, string> = {
@@ -147,6 +155,7 @@ export default function HomeScreen() {
     [t("hearts:game.title")]: t("hearts:game.playLabel"),
     [t("sudoku:game.title")]: t("sudoku:game.playLabel"),
     [t("starswarm:game.title")]: t("starswarm:game.playLabel"),
+    [t("mahjong:game.title")]: t("mahjong:game.playLabel"),
   };
 
   // Cycle through BC Arcade accent colors for the gradient top border on each card.
