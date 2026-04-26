@@ -1,0 +1,15 @@
+{
+  "game.title": "FreeCell",
+  "game.description": "Move all cards to the foundations — plan every move.",
+  "suit.spades": "Spades",
+  "suit.hearts": "Hearts",
+  "suit.diamonds": "Diamonds",
+  "suit.clubs": "Clubs",
+  "card.label": "{{rank}} of {{suit}}",
+  "card.selected": "{{rank}} of {{suit}} (selected)",
+  "pile.tableau.label": "Tableau column {{col}}, {{count}} cards",
+  "pile.tableau.empty": "Empty tableau column {{col}}",
+  "pile.foundation.empty": "Empty {{suit}} foundation",
+  "pile.freecell.empty": "Empty free cell {{cell}}",
+  "a11y.boardRegion": "FreeCell board"
+}

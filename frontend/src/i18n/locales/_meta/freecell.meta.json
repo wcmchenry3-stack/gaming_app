@@ -1,0 +1,119 @@
+{
+  "game.title": {
+    "component": "HomeScreen",
+    "description": "Name of the FreeCell game card.",
+    "tone": "neutral",
+    "characterLimit": 15,
+    "placeholders": [],
+    "doNotTranslate": [],
+    "notes": "Use the locale's standard name for FreeCell. The name 'FreeCell' is widely recognised internationally."
+  },
+  "game.description": {
+    "component": "HomeScreen",
+    "description": "One-line description on the FreeCell game card.",
+    "tone": "casual, punchy",
+    "characterLimit": 60,
+    "placeholders": [],
+    "doNotTranslate": [],
+    "notes": null
+  },
+  "suit.spades": {
+    "component": "FreeCellSlot / FoundationPile / TableauColumn",
+    "description": "Suit name — Spades.",
+    "tone": "neutral",
+    "characterLimit": 16,
+    "placeholders": [],
+    "doNotTranslate": [],
+    "notes": "Use the standard card-game name in the locale."
+  },
+  "suit.hearts": {
+    "component": "FreeCellSlot / FoundationPile / TableauColumn",
+    "description": "Suit name — Hearts.",
+    "tone": "neutral",
+    "characterLimit": 16,
+    "placeholders": [],
+    "doNotTranslate": [],
+    "notes": "Use the standard card-game name in the locale."
+  },
+  "suit.diamonds": {
+    "component": "FreeCellSlot / FoundationPile / TableauColumn",
+    "description": "Suit name — Diamonds.",
+    "tone": "neutral",
+    "characterLimit": 16,
+    "placeholders": [],
+    "doNotTranslate": [],
+    "notes": "Use the standard card-game name in the locale."
+  },
+  "suit.clubs": {
+    "component": "FreeCellSlot / FoundationPile / TableauColumn",
+    "description": "Suit name — Clubs.",
+    "tone": "neutral",
+    "characterLimit": 16,
+    "placeholders": [],
+    "doNotTranslate": [],
+    "notes": "Use the standard card-game name in the locale."
+  },
+  "card.label": {
+    "component": "FreeCellSlot / FoundationPile / TableauColumn",
+    "description": "Accessibility label for a face-up card — 'Ace of Spades', etc.",
+    "tone": "functional",
+    "characterLimit": 40,
+    "placeholders": ["{{rank}}", "{{suit}}"],
+    "doNotTranslate": [],
+    "notes": "{{rank}} is rendered as 'A','2'-'10','J','Q','K' — do not translate single-letter ranks. {{suit}} is already-localized."
+  },
+  "card.selected": {
+    "component": "FreeCellSlot / FoundationPile / TableauColumn",
+    "description": "Accessibility label for a face-up card that is selected.",
+    "tone": "functional",
+    "characterLimit": 48,
+    "placeholders": ["{{rank}}", "{{suit}}"],
+    "doNotTranslate": [],
+    "notes": "Same conventions as card.label; add a '(selected)' annotation idiomatic to the locale."
+  },
+  "pile.tableau.label": {
+    "component": "TableauColumn",
+    "description": "Accessibility label on a non-empty tableau column.",
+    "tone": "functional",
+    "characterLimit": 60,
+    "placeholders": ["{{col}}", "{{count}}"],
+    "doNotTranslate": [],
+    "notes": "{{col}} is the 1-indexed column; {{count}} is the number of cards in it."
+  },
+  "pile.tableau.empty": {
+    "component": "TableauColumn",
+    "description": "Accessibility label on an empty tableau column slot.",
+    "tone": "functional",
+    "characterLimit": 40,
+    "placeholders": ["{{col}}"],
+    "doNotTranslate": [],
+    "notes": null
+  },
+  "pile.foundation.empty": {
+    "component": "FoundationPile",
+    "description": "Accessibility label on an empty foundation pile.",
+    "tone": "functional",
+    "characterLimit": 40,
+    "placeholders": ["{{suit}}"],
+    "doNotTranslate": [],
+    "notes": "{{suit}} is already-localized suit name."
+  },
+  "pile.freecell.empty": {
+    "component": "FreeCellSlot",
+    "description": "Accessibility label on an empty free cell slot.",
+    "tone": "functional",
+    "characterLimit": 40,
+    "placeholders": ["{{cell}}"],
+    "doNotTranslate": [],
+    "notes": "{{cell}} is the 1-indexed slot number (1–4)."
+  },
+  "a11y.boardRegion": {
+    "component": "FreeCellBoard",
+    "description": "Accessibility region label wrapping the whole FreeCell board.",
+    "tone": "functional",
+    "characterLimit": 30,
+    "placeholders": [],
+    "doNotTranslate": [],
+    "notes": null
+  }
+}

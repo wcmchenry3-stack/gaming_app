@@ -12,6 +12,7 @@ type Namespace =
   | "blackjack"
   | "twenty48"
   | "solitaire"
+  | "freecell"
   | "hearts"
   | "sudoku"
   | "feedback"
@@ -41,6 +42,7 @@ const localeLoaders: Record<string, Partial<Record<Namespace, () => TranslationM
     blackjack: () => import("./locales/en/blackjack.json") as TranslationModule,
     twenty48: () => import("./locales/en/twenty48.json") as TranslationModule,
     solitaire: () => import("./locales/en/solitaire.json") as TranslationModule,
+    freecell: () => import("./locales/en/freecell.json") as TranslationModule,
     hearts: () => import("./locales/en/hearts.json") as TranslationModule,
     sudoku: () => import("./locales/en/sudoku.json") as TranslationModule,
     feedback: () => import("./locales/en/feedback.json") as TranslationModule,
@@ -196,6 +198,7 @@ i18n
       "blackjack",
       "twenty48",
       "solitaire",
+      "freecell",
       "hearts",
       "sudoku",
       "feedback",
