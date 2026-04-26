@@ -23,6 +23,7 @@ from hearts.router import router as hearts_router
 from solitaire.router import router as solitaire_router
 from sudoku.router import router as sudoku_router
 from yacht.router import router as yacht_router
+from starswarm.router import router as starswarm_router
 from games.router import router as games_router
 from logs.router import router as logs_router
 from stats.router import router as stats_router
@@ -58,6 +59,7 @@ app.include_router(freecell_router, prefix="/freecell")
 app.include_router(hearts_router, prefix="/hearts")
 app.include_router(solitaire_router, prefix="/solitaire")
 app.include_router(sudoku_router, prefix="/sudoku")
+app.include_router(starswarm_router, prefix="/starswarm")
 app.include_router(games_router, prefix="/games")
 app.include_router(logs_router, prefix="/logs")
 app.include_router(stats_router, prefix="/stats")
