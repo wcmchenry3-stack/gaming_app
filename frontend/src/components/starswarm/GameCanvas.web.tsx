@@ -35,8 +35,26 @@ import ef18 from "../../../assets/starswarm/explosion/frame18.png";
 import ef19 from "../../../assets/starswarm/explosion/frame19.png";
 
 const EXPLOSION_SRCS = [
-  ef00, ef01, ef02, ef03, ef04, ef05, ef06, ef07, ef08, ef09,
-  ef10, ef11, ef12, ef13, ef14, ef15, ef16, ef17, ef18, ef19,
+  ef00,
+  ef01,
+  ef02,
+  ef03,
+  ef04,
+  ef05,
+  ef06,
+  ef07,
+  ef08,
+  ef09,
+  ef10,
+  ef11,
+  ef12,
+  ef13,
+  ef14,
+  ef15,
+  ef16,
+  ef17,
+  ef18,
+  ef19,
 ] as const;
 
 const EXPLOSION_DRAW_SIZE = 48;
@@ -141,8 +159,15 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
           ...EXPLOSION_SRCS.map((s) => loadImg(s as number)),
         ]);
         if (cancelled) return;
-        const [playerShip, enemyGrunt, enemyElite, enemyBoss, bulletPlayer, bulletEnemy, ...frames] =
-          results;
+        const [
+          playerShip,
+          enemyGrunt,
+          enemyElite,
+          enemyBoss,
+          bulletPlayer,
+          bulletEnemy,
+          ...frames
+        ] = results;
         imagesRef.current = {
           playerShip: playerShip ?? null,
           enemyGrunt: enemyGrunt ?? null,
@@ -288,7 +313,13 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
         const frameImg = imgs.explosionFrames[exp.frame] ?? null;
         const half = EXPLOSION_DRAW_SIZE / 2;
         if (frameImg) {
-          ctx.drawImage(frameImg, exp.x - half, exp.y - half, EXPLOSION_DRAW_SIZE, EXPLOSION_DRAW_SIZE);
+          ctx.drawImage(
+            frameImg,
+            exp.x - half,
+            exp.y - half,
+            EXPLOSION_DRAW_SIZE,
+            EXPLOSION_DRAW_SIZE
+          );
         } else {
           const progress = exp.frame / 20;
           ctx.globalAlpha = 1 - progress;
@@ -406,12 +437,7 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
         accessibilityLabel={t("game.canvasLabel")}
         accessibilityRole="image"
       >
-        <canvas
-          ref={canvasRef}
-          width={displayW}
-          height={displayH}
-          style={{ display: "block" }}
-        />
+        <canvas ref={canvasRef} width={displayW} height={displayH} style={{ display: "block" }} />
       </View>
     );
   }

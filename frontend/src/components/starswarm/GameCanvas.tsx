@@ -1,13 +1,6 @@
 import React, { forwardRef, useEffect, useImperativeHandle, useRef, useState } from "react";
 import { StyleSheet, Text, View } from "react-native";
-import {
-  Canvas,
-  Circle,
-  Fill,
-  Group,
-  Image as SkiaImage,
-  Rect,
-} from "@shopify/react-native-skia";
+import { Canvas, Circle, Fill, Group, Image as SkiaImage, Rect } from "@shopify/react-native-skia";
 import { useTranslation } from "react-i18next";
 import { initStarSwarm, tick } from "../../game/starswarm/engine";
 import { initStarfield, tickStarfield } from "../../game/starswarm/starfield";
@@ -196,11 +189,7 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
                     ? images.enemyElite
                     : images.enemyBoss;
               const fallbackColor =
-                enemy.tier === "Grunt"
-                  ? "#8888ff"
-                  : enemy.tier === "Elite"
-                    ? "#ff88ff"
-                    : "#ffff44";
+                enemy.tier === "Grunt" ? "#8888ff" : enemy.tier === "Elite" ? "#ff88ff" : "#ffff44";
               return img ? (
                 <SkiaImage
                   key={enemy.id}
