@@ -1,19 +1,19 @@
-export type EnemyTier = 'Grunt' | 'Elite' | 'Boss';
+export type EnemyTier = "Grunt" | "Elite" | "Boss";
 
 /** Four-state AI machine + SwoopIn entry animation. */
 export type EnemyPhase =
-  | 'SwoopIn'    // following Bézier path onto screen into formation slot
-  | 'Formation'  // holding grid position
-  | 'Diving'     // heading toward player's captured X
-  | 'Circling'   // looping around a fixed center point
-  | 'Returning'; // following Bézier path back to formation slot
+  | "SwoopIn" // following Bézier path onto screen into formation slot
+  | "Formation" // holding grid position
+  | "Diving" // heading toward player's captured X
+  | "Circling" // looping around a fixed center point
+  | "Returning"; // following Bézier path back to formation slot
 
 export type GamePhase =
-  | 'SwoopIn'          // wave intro — enemies filling the grid
-  | 'Playing'          // normal combat
-  | 'ChallengingStage' // non-hostile bonus wave
-  | 'WaveClear'        // brief pause before next wave
-  | 'GameOver';
+  | "SwoopIn" // wave intro — enemies filling the grid
+  | "Playing" // normal combat
+  | "ChallengingStage" // non-hostile bonus wave
+  | "WaveClear" // brief pause before next wave
+  | "GameOver";
 
 export interface Vec2 {
   readonly x: number;
@@ -71,7 +71,7 @@ export interface Bullet {
   readonly y: number;
   readonly vx: number;
   readonly vy: number;
-  readonly owner: 'player' | 'enemy';
+  readonly owner: "player" | "enemy";
   readonly width: number;
   readonly height: number;
 }

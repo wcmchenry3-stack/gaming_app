@@ -8,7 +8,7 @@ import type {
   CubicBezier,
   EnemyTier,
   StarSwarmInput,
-} from './types';
+} from "./types";
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -29,7 +29,7 @@ const BULLET_P_VY = -0.56; // px/ms upward
 
 const BULLET_E_W = 5;
 const BULLET_E_H = 10;
-const BULLET_E_VY = 0.20; // px/ms downward
+const BULLET_E_VY = 0.2; // px/ms downward
 
 const FORMATION_COLS = 8;
 const FORMATION_COL_W = 38;
@@ -37,17 +37,17 @@ const FORMATION_ROW_H = 46;
 const FORMATION_TOP = 90;
 
 const SWOOP_DURATION = 1400; // ms per enemy traversal
-const SWOOP_STAGGER = 55;    // ms delay between successive enemies
+const SWOOP_STAGGER = 55; // ms delay between successive enemies
 
-const DIVE_SPEED = 0.27;     // px/ms
+const DIVE_SPEED = 0.27; // px/ms
 const CIRCLE_RADIUS = 42;
 const CIRCLE_SPEED = 0.0032; // rad/ms
 const RETURN_DURATION = 1900; // ms for return path
 
 const DIVE_INTERVAL_BASE = 3200; // ms between dive triggers
-const DIVE_INTERVAL_MIN = 900;   // floor regardless of wave
+const DIVE_INTERVAL_MIN = 900; // floor regardless of wave
 
-const WAVE_CLEAR_PAUSE = 1600;   // ms
+const WAVE_CLEAR_PAUSE = 1600; // ms
 const CHALLENGING_CLEAR_PAUSE = 2200; // ms
 
 const SHOOT_INTERVAL_BASE = 2600; // ms base
@@ -117,8 +117,14 @@ function evalCubic(c: CubicBezier, t: number): Vec2 {
 
 /** AABB overlap — positions are centers, w/h are full extents. */
 function aabb(
-  ax: number, ay: number, aw: number, ah: number,
-  bx: number, by: number, bw: number, bh: number,
+  ax: number,
+  ay: number,
+  aw: number,
+  ah: number,
+  bx: number,
+  by: number,
+  bw: number,
+  bh: number
 ): boolean {
   return (
     ax - aw / 2 < bx + bw / 2 &&
@@ -143,18 +149,18 @@ function waveSlots(wave: number): SlotDef[] {
   const slots: SlotDef[] = [];
 
   // Boss row: 4 enemies, centered
-  for (let c = 0; c < 4; c++) slots.push({ tier: 'Boss', row: 0, col: c, rowCols: 4 });
+  for (let c = 0; c < 4; c++) slots.push({ tier: "Boss", row: 0, col: c, rowCols: 4 });
 
   // Two Elite rows
   for (let r = 1; r <= 2; r++)
     for (let c = 0; c < FORMATION_COLS; c++)
-      slots.push({ tier: 'Elite', row: r, col: c, rowCols: FORMATION_COLS });
+      slots.push({ tier: "Elite", row: r, col: c, rowCols: FORMATION_COLS });
 
   // Grunt rows: 2 at wave 1, +1 every other wave, max 5
   const gruntRows = Math.min(2 + Math.floor((wave - 1) / 2), 5);
   for (let r = 3; r < 3 + gruntRows; r++)
     for (let c = 0; c < FORMATION_COLS; c++)
-      slots.push({ tier: 'Grunt', row: r, col: c, rowCols: FORMATION_COLS });
+      slots.push({ tier: "Grunt", row: r, col: c, rowCols: FORMATION_COLS });
 
   return slots;
 }
@@ -220,7 +226,7 @@ function makeEnemy(idx: number, slot: SlotDef, canvasW: number): Enemy {
   return {
     id: nextId(),
     tier: slot.tier,
-    phase: 'SwoopIn',
+    phase: "SwoopIn",
     x: p0.x,
     y: p0.y,
     width: size.w,
@@ -244,7 +250,7 @@ function makeEnemy(idx: number, slot: SlotDef, canvasW: number): Enemy {
 }
 
 function makeChallengeEnemy(idx: number, total: number, canvasW: number, canvasH: number): Enemy {
-  const tier: EnemyTier = idx % 6 === 0 ? 'Boss' : idx % 3 === 0 ? 'Elite' : 'Grunt';
+  const tier: EnemyTier = idx % 6 === 0 ? "Boss" : idx % 3 === 0 ? "Elite" : "Grunt";
   const size = TIER_SIZE[tier];
   const path = challengePath(idx, total, canvasW, canvasH);
   const p0 = evalCubic(path, 0);
@@ -253,7 +259,7 @@ function makeChallengeEnemy(idx: number, total: number, canvasW: number, canvasH
   return {
     id: nextId(),
     tier,
-    phase: 'SwoopIn',
+    phase: "SwoopIn",
     x: p0.x,
     y: p0.y,
     width: size.w,
@@ -296,7 +302,7 @@ export function initStarSwarm(
   canvasW: number,
   canvasH: number,
   wave = 1,
-  seed = 42,
+  seed = 42
 ): StarSwarmState {
   seedRng(seed);
   _resetIds();
@@ -319,21 +325,21 @@ function buildWaveState(
   canvasH: number,
   wave: number,
   player: Player,
-  score: number,
+  score: number
 ): StarSwarmState {
   let enemies: Enemy[];
-  let phase: StarSwarmState['phase'];
+  let phase: StarSwarmState["phase"];
 
   if (isChallengingWave(wave)) {
     const total = FORMATION_COLS * 3;
     enemies = Array.from({ length: total }, (_, i) =>
       makeChallengeEnemy(i, total, canvasW, canvasH)
     );
-    phase = 'ChallengingStage';
+    phase = "ChallengingStage";
   } else {
     const slots = waveSlots(wave);
     enemies = slots.map((slot, idx) => makeEnemy(idx, slot, canvasW));
-    phase = 'SwoopIn';
+    phase = "SwoopIn";
   }
 
   return {
@@ -357,14 +363,10 @@ function buildWaveState(
 // Public: tick
 // ---------------------------------------------------------------------------
 
-export function tick(
-  state: StarSwarmState,
-  dtMs: number,
-  input: StarSwarmInput,
-): StarSwarmState {
-  if (state.phase === 'GameOver') return state;
+export function tick(state: StarSwarmState, dtMs: number, input: StarSwarmInput): StarSwarmState {
+  if (state.phase === "GameOver") return state;
 
-  if (state.phase === 'WaveClear') {
+  if (state.phase === "WaveClear") {
     const timer = state.phaseTimer - dtMs;
     if (timer <= 0) return startNextWave(state);
     return { ...state, phaseTimer: timer };
@@ -399,7 +401,7 @@ function tickPlayer(state: StarSwarmState, dtMs: number, input: StarSwarmInput):
       y: p.y - p.height / 2,
       vx: 0,
       vy: BULLET_P_VY,
-      owner: 'player',
+      owner: "player",
       width: BULLET_P_W,
       height: BULLET_P_H,
     };
@@ -427,20 +429,20 @@ function tickSingleEnemy(
   dtMs: number,
   playerX: number,
   canvasH: number,
-  shouldDive: boolean,
+  shouldDive: boolean
 ): EnemyTickResult {
   if (!enemy.isAlive) return { enemy, bullet: null };
 
   switch (enemy.phase) {
-    case 'SwoopIn':
+    case "SwoopIn":
       return tickSwoopIn(enemy, dtMs);
-    case 'Formation':
+    case "Formation":
       return tickFormation(enemy, dtMs, playerX, shouldDive);
-    case 'Diving':
+    case "Diving":
       return tickDiving(enemy, dtMs, canvasH);
-    case 'Circling':
+    case "Circling":
       return tickCircling(enemy, dtMs);
-    case 'Returning':
+    case "Returning":
       return tickReturning(enemy, dtMs);
   }
 }
@@ -458,7 +460,7 @@ function tickSwoopIn(enemy: Enemy, dtMs: number): EnemyTickResult {
     return {
       enemy: {
         ...enemy,
-        phase: 'Formation',
+        phase: "Formation",
         x: enemy.formationX,
         y: enemy.formationY,
         pathT: 1,
@@ -476,7 +478,7 @@ function tickFormation(
   enemy: Enemy,
   dtMs: number,
   playerX: number,
-  shouldDive: boolean,
+  shouldDive: boolean
 ): EnemyTickResult {
   const shootTimer = enemy.shootTimer - dtMs;
   let bullet: Bullet | null = null;
@@ -485,7 +487,7 @@ function tickFormation(
     return {
       enemy: {
         ...enemy,
-        phase: 'Diving',
+        phase: "Diving",
         diveTargetX: playerX,
         vel: { x: 0, y: DIVE_SPEED },
         shootTimer,
@@ -501,7 +503,7 @@ function tickFormation(
       y: enemy.y + enemy.height / 2,
       vx: 0,
       vy: BULLET_E_VY,
-      owner: 'enemy',
+      owner: "enemy",
       width: BULLET_E_W,
       height: BULLET_E_H,
     };
@@ -533,7 +535,7 @@ function tickDiving(enemy: Enemy, dtMs: number, canvasH: number): EnemyTickResul
     return {
       enemy: {
         ...enemy,
-        phase: 'Circling',
+        phase: "Circling",
         x: newX,
         y: newY,
         circleCx,
@@ -559,7 +561,7 @@ function tickCircling(enemy: Enemy, dtMs: number): EnemyTickResult {
     return {
       enemy: {
         ...enemy,
-        phase: 'Returning',
+        phase: "Returning",
         x: newX,
         y: newY,
         circleAngle: newAngle,
@@ -581,7 +583,7 @@ function tickReturning(enemy: Enemy, dtMs: number): EnemyTickResult {
     return {
       enemy: {
         ...enemy,
-        phase: 'Formation',
+        phase: "Formation",
         x: enemy.formationX,
         y: enemy.formationY,
         pathT: 1,
@@ -601,13 +603,13 @@ function tickEnemies(state: StarSwarmState, dtMs: number): StarSwarmState {
   let nextDiveTimer = state.nextDiveTimer;
   let diveIdx: number | null = null;
 
-  if (state.phase === 'Playing') {
+  if (state.phase === "Playing") {
     nextDiveTimer -= dtMs;
     if (nextDiveTimer <= 0) {
       nextDiveTimer = diveInterval(state.wave);
       const candidates = state.enemies
         .map((e, i) => ({ e, i }))
-        .filter(({ e }) => e.isAlive && e.phase === 'Formation');
+        .filter(({ e }) => e.isAlive && e.phase === "Formation");
       if (candidates.length > 0) {
         diveIdx = candidates[Math.floor(rng() * candidates.length)]?.i ?? null;
       }
@@ -671,10 +673,10 @@ function tickCollisions(state: StarSwarmState): StarSwarmState {
       if (newHp <= 0) {
         newExplosions.push(spawnExplosion(enemy.x, enemy.y));
         const base = TIER_SCORE[enemy.tier];
-        const mult = (enemy.phase === 'Diving' || enemy.phase === 'Circling') ? DIVE_SCORE_MULT : 1;
-        const bonus = state.phase === 'ChallengingStage' ? 1 : mult;
+        const mult = enemy.phase === "Diving" || enemy.phase === "Circling" ? DIVE_SCORE_MULT : 1;
+        const bonus = state.phase === "ChallengingStage" ? 1 : mult;
         score += base * bonus;
-        if (state.phase === 'ChallengingStage') challengingHits += 1;
+        if (state.phase === "ChallengingStage") challengingHits += 1;
         return { ...enemy, hp: 0, isAlive: false };
       }
 
@@ -708,7 +710,7 @@ function tickCollisions(state: StarSwarmState): StarSwarmState {
           score,
           challengingHits,
           player: { ...player, lives: 0 },
-          phase: 'GameOver',
+          phase: "GameOver",
         };
       }
 
@@ -754,14 +756,14 @@ function checkPhaseTransitions(state: StarSwarmState): StarSwarmState {
   const liveEnemies = state.enemies.filter((e) => e.isAlive);
 
   // SwoopIn → Playing once all enemies are in Formation (or Challenging started)
-  if (state.phase === 'SwoopIn') {
-    const allArrived = liveEnemies.every((e) => e.phase !== 'SwoopIn');
-    if (allArrived) return { ...state, phase: 'Playing' };
+  if (state.phase === "SwoopIn") {
+    const allArrived = liveEnemies.every((e) => e.phase !== "SwoopIn");
+    if (allArrived) return { ...state, phase: "Playing" };
     return state;
   }
 
   // ChallengingStage → WaveClear once all challenge enemies have exited
-  if (state.phase === 'ChallengingStage') {
+  if (state.phase === "ChallengingStage") {
     // Enemies exit when their path completes (they reach formationY which is off-screen bottom)
     const anyAlive = liveEnemies.length > 0;
     if (!anyAlive) {
@@ -769,7 +771,7 @@ function checkPhaseTransitions(state: StarSwarmState): StarSwarmState {
       return {
         ...state,
         score: state.score + waveClearBonus + state.challengingHits * 50,
-        phase: 'WaveClear',
+        phase: "WaveClear",
         phaseTimer: CHALLENGING_CLEAR_PAUSE,
       };
     }
@@ -777,13 +779,13 @@ function checkPhaseTransitions(state: StarSwarmState): StarSwarmState {
   }
 
   // Playing → WaveClear once all enemies dead
-  if (state.phase === 'Playing') {
+  if (state.phase === "Playing") {
     if (liveEnemies.length === 0) {
       const waveClearBonus = state.wave * WAVE_CLEAR_BONUS_BASE;
       return {
         ...state,
         score: state.score + waveClearBonus,
-        phase: 'WaveClear',
+        phase: "WaveClear",
         phaseTimer: WAVE_CLEAR_PAUSE,
       };
     }
@@ -804,12 +806,11 @@ function startNextWave(state: StarSwarmState): StarSwarmState {
 
 /** True while any enemy is still in the SwoopIn entry animation. */
 export function isSwooping(state: StarSwarmState): boolean {
-  return state.enemies.some((e) => e.isAlive && e.phase === 'SwoopIn');
+  return state.enemies.some((e) => e.isAlive && e.phase === "SwoopIn");
 }
 
 /** Number of enemies currently airborne (Diving or Circling). */
 export function diverCount(state: StarSwarmState): number {
-  return state.enemies.filter(
-    (e) => e.isAlive && (e.phase === 'Diving' || e.phase === 'Circling')
-  ).length;
+  return state.enemies.filter((e) => e.isAlive && (e.phase === "Diving" || e.phase === "Circling"))
+    .length;
 }
