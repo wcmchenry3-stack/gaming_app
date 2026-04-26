@@ -1,4 +1,4 @@
-import React, { useCallback, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { Platform, Pressable, StyleSheet, Text, View } from "react-native";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import * as Haptics from "expo-haptics";
@@ -79,15 +79,50 @@ export default function Controls({
       activeDragRef.current = false;
     });
 
+  // Arrow-key movement for web (and external keyboards on iOS).
+  useEffect(() => {
+    if (Platform.OS !== "web") return;
+    const STEP = 6;
+    const held = new Set<string>();
+    let rafId: number;
+
+    function loop() {
+      if (held.size > 0) {
+        const dx = (held.has("ArrowRight") ? STEP : 0) - (held.has("ArrowLeft") ? STEP : 0);
+        if (dx !== 0) {
+          playerXRef.current = clamp(playerXRef.current + dx, 0, CANVAS_W);
+          canvasRef.current?.setPlayerX(playerXRef.current);
+        }
+      }
+      rafId = requestAnimationFrame(loop);
+    }
+
+    function onKeyDown(e: KeyboardEvent) {
+      if (e.key === "ArrowLeft" || e.key === "ArrowRight") {
+        e.preventDefault();
+        held.add(e.key);
+      }
+    }
+    function onKeyUp(e: KeyboardEvent) {
+      held.delete(e.key);
+    }
+
+    window.addEventListener("keydown", onKeyDown);
+    window.addEventListener("keyup", onKeyUp);
+    rafId = requestAnimationFrame(loop);
+    return () => {
+      window.removeEventListener("keydown", onKeyDown);
+      window.removeEventListener("keyup", onKeyUp);
+      cancelAnimationFrame(rafId);
+    };
+  }, [canvasRef]);
+
   const isGameOver = phase === "GameOver";
   const gameActive = !isGameOver && !isPaused;
 
   return (
     <GestureDetector gesture={panGesture}>
-      <View
-        style={[styles.overlay, { width: displayW, height: displayH }]}
-        pointerEvents="box-none"
-      >
+      <View style={[styles.overlay, { width: displayW, height: displayH }]}>
         {/* Charge shot button — bottom-right corner, only during active play */}
         {gameActive && (
           <Pressable
