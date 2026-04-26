@@ -47,7 +47,7 @@ export default function StockWastePile({
         drawMode={drawMode}
         t={t}
       />
-      <Waste waste={waste} selected={wasteSelected} onPress={onWastePress} t={t} />
+      <Waste waste={waste} drawMode={drawMode} selected={wasteSelected} onPress={onWastePress} t={t} />
     </View>
   );
 }
@@ -107,13 +107,17 @@ function Stock({
   );
 }
 
+const WASTE_FAN_OFFSET = 16;
+
 function Waste({
   waste,
+  drawMode,
   selected,
   onPress,
   t,
 }: {
   readonly waste: readonly Card[];
+  readonly drawMode: DrawMode;
   readonly selected: boolean;
   readonly onPress?: () => void;
   readonly t: TFunction<"solitaire">;
@@ -127,11 +131,36 @@ function Waste({
       />
     );
   }
-  const top = waste[waste.length - 1];
-  if (top === undefined) {
-    return null;
+
+  if (drawMode !== 3) {
+    const top = waste[waste.length - 1];
+    if (top === undefined) return null;
+    return <CardView card={top} selected={selected} onPress={onPress} />;
   }
-  return <CardView card={top} selected={selected} onPress={onPress} />;
+
+  const visibleCount = Math.min(3, waste.length);
+  const visible = waste.slice(waste.length - visibleCount);
+  const containerWidth = (visibleCount - 1) * WASTE_FAN_OFFSET + CARD_WIDTH;
+
+  return (
+    <View style={[styles.wasteFanContainer, { width: containerWidth }]}>
+      {visible.map((card, i) => {
+        const isTop = i === visible.length - 1;
+        return (
+          <View
+            key={`${card.suit}-${card.rank}`}
+            style={[styles.wasteFanCard, { left: i * WASTE_FAN_OFFSET }]}
+          >
+            <CardView
+              card={card}
+              selected={isTop && selected}
+              onPress={isTop ? onPress : undefined}
+            />
+          </View>
+        );
+      })}
+    </View>
+  );
 }
 
 const styles = StyleSheet.create({
@@ -149,6 +178,14 @@ const styles = StyleSheet.create({
   wasteEmpty: {
     width: CARD_WIDTH,
     height: CARD_HEIGHT,
+  },
+  wasteFanContainer: {
+    height: CARD_HEIGHT,
+    position: "relative",
+  },
+  wasteFanCard: {
+    position: "absolute",
+    top: 0,
   },
   recycleSymbol: {
     fontSize: 28,
