@@ -62,12 +62,30 @@ export function SolitaireWinCascade({ visible }: Props) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [visible]);
 
-  const a0 = useAnimatedStyle(() => ({ transform: [{ translateY: y0.value }], opacity: op0.value }));
-  const a1 = useAnimatedStyle(() => ({ transform: [{ translateY: y1.value }], opacity: op1.value }));
-  const a2 = useAnimatedStyle(() => ({ transform: [{ translateY: y2.value }], opacity: op2.value }));
-  const a3 = useAnimatedStyle(() => ({ transform: [{ translateY: y3.value }], opacity: op3.value }));
-  const a4 = useAnimatedStyle(() => ({ transform: [{ translateY: y4.value }], opacity: op4.value }));
-  const a5 = useAnimatedStyle(() => ({ transform: [{ translateY: y5.value }], opacity: op5.value }));
+  const a0 = useAnimatedStyle(() => ({
+    transform: [{ translateY: y0.value }],
+    opacity: op0.value,
+  }));
+  const a1 = useAnimatedStyle(() => ({
+    transform: [{ translateY: y1.value }],
+    opacity: op1.value,
+  }));
+  const a2 = useAnimatedStyle(() => ({
+    transform: [{ translateY: y2.value }],
+    opacity: op2.value,
+  }));
+  const a3 = useAnimatedStyle(() => ({
+    transform: [{ translateY: y3.value }],
+    opacity: op3.value,
+  }));
+  const a4 = useAnimatedStyle(() => ({
+    transform: [{ translateY: y4.value }],
+    opacity: op4.value,
+  }));
+  const a5 = useAnimatedStyle(() => ({
+    transform: [{ translateY: y5.value }],
+    opacity: op5.value,
+  }));
 
   if (!visible || reduceMotion) return null;
 

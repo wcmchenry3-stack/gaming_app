@@ -521,15 +521,7 @@ describe("game events", () => {
 
   it("applyMove emits cardFlip when a face-down tableau card is revealed", () => {
     const state = mkState({
-      tableau: [
-        [c("hearts", 2, false), c("spades", 1)],
-        [],
-        [],
-        [],
-        [],
-        [],
-        [],
-      ],
+      tableau: [[c("hearts", 2, false), c("spades", 1)], [], [], [], [], [], []],
     });
     const next = applyMove(state, { type: "tableau-to-foundation", fromCol: 0 });
     expect(next.events).toContain("cardFlip" as GameEvent);

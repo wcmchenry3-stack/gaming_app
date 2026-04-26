@@ -53,12 +53,7 @@ export interface SolitaireState {
   readonly events?: readonly GameEvent[];
 }
 
-export type GameEvent =
-  | "cardFlip"
-  | "cardPlace"
-  | "foundationComplete"
-  | "gameWin"
-  | "invalidMove";
+export type GameEvent = "cardFlip" | "cardPlace" | "foundationComplete" | "gameWin" | "invalidMove";
 
 /** Card moves are the 5 player actions that shuffle cards between piles.
  * Stock draw and waste recycle are separate operations (no `Move` variant). */

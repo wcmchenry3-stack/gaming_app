@@ -13,7 +13,16 @@
  */
 
 import seedsJson from "./seeds.json";
-import type { Card, DrawMode, Foundations, GameEvent, Move, Rank, SolitaireState, Suit } from "./types";
+import type {
+  Card,
+  DrawMode,
+  Foundations,
+  GameEvent,
+  Move,
+  Rank,
+  SolitaireState,
+  Suit,
+} from "./types";
 import { cardColor, RANKS, SUITS } from "./types";
 
 // ---------------------------------------------------------------------------
