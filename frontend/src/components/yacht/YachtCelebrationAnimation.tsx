@@ -51,7 +51,9 @@ export function YachtCelebrationAnimation({ visible, onDismiss }: Props) {
     if (!visible) {
       badgeScale.value = 0;
       badgeOpacity.value = 0;
-      faces.forEach((f) => { f.value = 0; });
+      faces.forEach((f) => {
+        f.value = 0;
+      });
       cancelAnimation(badgeScale);
       cancelAnimation(badgeOpacity);
       faces.forEach((f) => cancelAnimation(f));
@@ -68,7 +70,9 @@ export function YachtCelebrationAnimation({ visible, onDismiss }: Props) {
     // Phase 2 — fade out after lingering
     const t1 = setTimeout(() => {
       badgeOpacity.value = withTiming(0, { duration: 500 });
-      faces.forEach((f) => { f.value = withTiming(0, { duration: 400 }); });
+      faces.forEach((f) => {
+        f.value = withTiming(0, { duration: 400 });
+      });
     }, 2200);
     const t2 = setTimeout(onDismiss, 2800);
     timersRef.current.push(t1, t2);

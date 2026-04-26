@@ -44,7 +44,15 @@ const PIP_PATTERNS: Record<number, number[]> = {
   6: [0, 2, 3, 5, 6, 8],
 };
 
-export default function Die({ value, held, onPress, disabled, index, rolling = false, reduceMotion = false }: DieProps) {
+export default function Die({
+  value,
+  held,
+  onPress,
+  disabled,
+  index,
+  rolling = false,
+  reduceMotion = false,
+}: DieProps) {
   const { t } = useTranslation("yacht");
   const { colors } = useTheme();
   const { width } = useWindowDimensions();
@@ -70,7 +78,7 @@ export default function Die({ value, held, onPress, disabled, index, rolling = f
     cancelAnimation(rotation);
     rotation.value = withSequence(
       withTiming(360 * 2, { duration: 350 }),
-      withTiming(0, { duration: 0 }),
+      withTiming(0, { duration: 0 })
     );
   }, [rolling, reduceMotion, rotation]);
 
@@ -122,7 +130,12 @@ export default function Die({ value, held, onPress, disabled, index, rolling = f
           disabled && styles.disabled,
         ]}
       >
-        <Animated.View style={[{ flex: 1, width: "100%", alignItems: "center", justifyContent: "center" }, rollStyle]}>
+        <Animated.View
+          style={[
+            { flex: 1, width: "100%", alignItems: "center", justifyContent: "center" },
+            rollStyle,
+          ]}
+        >
           {value > 0 ? (
             <View style={styles.grid}>
               {Array.from({ length: 9 }).map((_, i) => (

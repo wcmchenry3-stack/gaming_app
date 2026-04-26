@@ -31,7 +31,15 @@ interface DiceRowProps {
   rollingIndices?: readonly number[];
 }
 
-export default function DiceRow({ dice, held, rollsUsed, gameOver, onRoll, onToggleHold, rollingIndices }: DiceRowProps) {
+export default function DiceRow({
+  dice,
+  held,
+  rollsUsed,
+  gameOver,
+  onRoll,
+  onToggleHold,
+  rollingIndices,
+}: DiceRowProps) {
   const { t } = useTranslation("yacht");
   const { colors } = useTheme();
   const { height } = useWindowDimensions();

@@ -669,9 +669,7 @@ describe("roll — diceRoll event", () => {
     setRng(createSeededRng(42));
     const g = newGame();
     const next = roll(g, [false, false, false, false, false]);
-    expect(next.events).toEqual([
-      { type: "diceRoll", rolledIndices: [0, 1, 2, 3, 4] },
-    ]);
+    expect(next.events).toEqual([{ type: "diceRoll", rolledIndices: [0, 1, 2, 3, 4] }]);
   });
 
   it("emits diceRoll with only unhold indices on subsequent rolls", () => {
