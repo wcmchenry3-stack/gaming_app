@@ -23,8 +23,12 @@
   "action.start": "Start",
   "action.submitScore": "Submit Score",
 
+  "variant.groupLabel": "Variant",
+  "variant.classic": "Classic 9×9",
+  "variant.mini": "Mini 6×6",
+
   "preGame.title": "Choose Difficulty",
-  "preGame.body": "Pick a difficulty to begin.",
+  "preGame.body": "Pick a variant and difficulty to begin.",
 
   "hud.errors": "{{count}} errors",
   "hud.errorsOne": "1 error",

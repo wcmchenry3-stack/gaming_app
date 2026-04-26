@@ -119,7 +119,7 @@ describe("SudokuScreen — pre-game (after load)", () => {
 
 describe("SudokuScreen — mount resume", () => {
   it("resumes a previously-saved game silently", async () => {
-    const saved = loadPuzzle("medium", () => 0);
+    const saved = loadPuzzle("medium", "classic", () => 0);
     await saveGame(saved);
 
     const { queryByLabelText, getAllByRole } = renderScreen();
@@ -193,7 +193,7 @@ describe("SudokuScreen — win flow", () => {
   // state whose enterDigit-of-the-last-cell set isComplete=true; we
   // persist that and load it.
   async function renderIntoWinModal(): Promise<ReturnType<typeof renderScreen>> {
-    const fresh = loadPuzzle("easy", () => 0);
+    const fresh = loadPuzzle("easy", "classic", () => 0);
     const solved = fillAllExcept(fresh, { row: -1, col: -1 });
     expect(solved.isComplete).toBe(true);
     await saveGame(solved);

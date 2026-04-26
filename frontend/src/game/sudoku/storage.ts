@@ -1,5 +1,5 @@
 /**
- * AsyncStorage persistence for in-progress Sudoku games (#619).
+ * AsyncStorage persistence for in-progress Sudoku games (#619, #748).
  *
  * Saves after every state mutation so a crash or backgrounded app
  * doesn't lose progress. One slot per device — no account linkage in
@@ -11,14 +11,13 @@
  * those get the same treatment.
  *
  * `loadGame` enforces `_v: 1` so future schema bumps reject
- * incompatible payloads rather than corrupting state.  Anything
- * unparseable or shape-invalid is discarded and returns null; the
- * caller recovers by starting a fresh puzzle.
+ * incompatible payloads rather than corrupting state. The `variant`
+ * field was added in #748; saves without it are migrated to "classic".
  */
 
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as Sentry from "@sentry/react-native";
-import type { Grid, NoteDigit, SudokuCell, SudokuState } from "./types";
+import type { Grid, NoteDigit, SudokuCell, SudokuState, Variant } from "./types";
 
 const GAME_KEY = "sudoku_game";
 
@@ -31,6 +30,7 @@ interface SerializedCell {
 
 interface SerializedState {
   _v: 1;
+  variant?: string;
   difficulty: string;
   puzzle: string;
   solution: string;
@@ -59,6 +59,7 @@ function serializeGrid(g: Grid): SerializedCell[][] {
 function serializeSnapshot(s: SudokuState): Omit<SerializedState, "undoStack"> {
   return {
     _v: 1,
+    variant: s.variant,
     difficulty: s.difficulty,
     puzzle: s.puzzle,
     solution: s.solution,
@@ -95,8 +96,11 @@ function restoreGrid(rows: SerializedCell[][]): Grid {
 }
 
 function restoreSnapshot(p: Omit<SerializedState, "undoStack">): Omit<SudokuState, "undoStack"> {
+  const variant: Variant =
+    p.variant === "mini" || p.variant === "classic" ? p.variant : "classic";
   return {
     _v: 1,
+    variant,
     difficulty: p.difficulty as SudokuState["difficulty"],
     puzzle: p.puzzle,
     solution: p.solution,
@@ -118,11 +122,15 @@ function looksValid(p: unknown): p is SerializedState {
   if (o.difficulty !== "easy" && o.difficulty !== "medium" && o.difficulty !== "hard") {
     return false;
   }
-  if (typeof o.puzzle !== "string" || o.puzzle.length !== 81) return false;
-  if (typeof o.solution !== "string" || o.solution.length !== 81) return false;
-  if (!Array.isArray(o.grid) || o.grid.length !== 9) return false;
+  const variant = o.variant ?? "classic";
+  if (variant !== "classic" && variant !== "mini") return false;
+  const size = variant === "mini" ? 6 : 9;
+  const total = size * size;
+  if (typeof o.puzzle !== "string" || o.puzzle.length !== total) return false;
+  if (typeof o.solution !== "string" || o.solution.length !== total) return false;
+  if (!Array.isArray(o.grid) || o.grid.length !== size) return false;
   for (const row of o.grid) {
-    if (!Array.isArray(row) || row.length !== 9) return false;
+    if (!Array.isArray(row) || row.length !== size) return false;
     for (const cell of row) {
       if (cell === null || typeof cell !== "object") return false;
       if (typeof (cell as SerializedCell).value !== "number") return false;
@@ -202,7 +210,7 @@ export async function clearGame(): Promise<void> {
 }
 
 // ---------------------------------------------------------------------------
-// Stats persistence (#762)
+// Stats persistence (#762, #748)
 // ---------------------------------------------------------------------------
 
 const STATS_KEY = "sudoku_stats_v1";
@@ -212,16 +220,26 @@ export interface DifficultyStats {
   gamesSolved: number;
 }
 
-export interface SudokuStats {
+export interface VariantStats {
   easy: DifficultyStats;
   medium: DifficultyStats;
   hard: DifficultyStats;
 }
 
-export const EMPTY_SUDOKU_STATS: SudokuStats = {
+export interface SudokuStats {
+  classic: VariantStats;
+  mini: VariantStats;
+}
+
+const EMPTY_VARIANT_STATS: VariantStats = {
   easy: { bestTimeS: 0, gamesSolved: 0 },
   medium: { bestTimeS: 0, gamesSolved: 0 },
   hard: { bestTimeS: 0, gamesSolved: 0 },
+};
+
+export const EMPTY_SUDOKU_STATS: SudokuStats = {
+  classic: { ...EMPTY_VARIANT_STATS },
+  mini: { ...EMPTY_VARIANT_STATS },
 };
 
 function parseDiffStats(d: unknown): DifficultyStats {
@@ -233,15 +251,33 @@ function parseDiffStats(d: unknown): DifficultyStats {
   };
 }
 
+function parseVariantStats(v: unknown): VariantStats {
+  if (v === null || typeof v !== "object") return { ...EMPTY_VARIANT_STATS };
+  const o = v as Record<string, unknown>;
+  return {
+    easy: parseDiffStats(o.easy),
+    medium: parseDiffStats(o.medium),
+    hard: parseDiffStats(o.hard),
+  };
+}
+
 export async function loadStats(): Promise<SudokuStats> {
   try {
     const raw = await AsyncStorage.getItem(STATS_KEY);
     if (!raw) return { ...EMPTY_SUDOKU_STATS };
     const parsed = JSON.parse(raw) as Record<string, unknown>;
+
+    // Migration: pre-#748 saves have flat { easy, medium, hard } — wrap as classic.
+    if ("classic" in parsed || "mini" in parsed) {
+      return {
+        classic: parseVariantStats(parsed.classic),
+        mini: parseVariantStats(parsed.mini),
+      };
+    }
+    // Old flat format → treat as classic stats.
     return {
-      easy: parseDiffStats(parsed?.easy),
-      medium: parseDiffStats(parsed?.medium),
-      hard: parseDiffStats(parsed?.hard),
+      classic: parseVariantStats(parsed),
+      mini: { ...EMPTY_VARIANT_STATS },
     };
   } catch (e) {
     Sentry.captureException(e, { tags: { subsystem: "sudoku.storage", op: "loadStats" } });

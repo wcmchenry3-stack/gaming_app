@@ -25,7 +25,9 @@ export default function SudokuScoreboard({ snapshot }: Props) {
       })
     : t("scoreboard.heroSubEmpty");
 
-  const { easy, medium, hard } = snapshot.stats;
+  // Show stats for the currently active variant.
+  const variantStats = snapshot.stats[snapshot.variant];
+  const { easy, medium, hard } = variantStats;
   const totalSolved = easy.gamesSolved + medium.gamesSolved + hard.gamesSolved;
 
   const cards = [

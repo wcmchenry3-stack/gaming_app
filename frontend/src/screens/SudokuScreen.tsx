@@ -51,7 +51,8 @@ import {
   toggleNotesMode,
   undo,
 } from "../game/sudoku/engine";
-import type { CellValue, Difficulty, SudokuState } from "../game/sudoku/types";
+import type { CellValue, Difficulty, SudokuState, Variant } from "../game/sudoku/types";
+import { VARIANTS, variantConfig } from "../game/sudoku/types";
 import {
   clearGame,
   loadGame,
@@ -95,6 +96,7 @@ export default function SudokuScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<HomeStackParamList>>();
 
   const [difficulty, setDifficulty] = useState<Difficulty>("easy");
+  const [variant, setVariant] = useState<Variant>("classic");
   const [state, setState] = useState<SudokuState | null>(null);
   const [elapsed, setElapsed] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -132,6 +134,7 @@ export default function SudokuScreen() {
     setScoreboardSnapshot({
       elapsed,
       difficulty: state.difficulty,
+      variant: state.variant,
       errorCount: state.errorCount,
       hasGame: true,
       stats: statsRef.current,
@@ -150,6 +153,7 @@ export default function SudokuScreen() {
         if (saved !== null) {
           setState(saved);
           setDifficulty(saved.difficulty);
+          setVariant(saved.variant);
           // Treat any resumed state that already has moves as "timer
           // already started" — the player wants to see it ticking
           // immediately on return.  Elapsed resets to 0 because we
@@ -227,17 +231,15 @@ export default function SudokuScreen() {
       return;
     }
     if (state.isComplete && !prevCompleteRef.current) {
+      const score = computeScore(state.difficulty, state.errorCount);
       if (syncGetGameId()) {
         syncComplete(
+          { finalScore: score, outcome: "completed", durationMs: 0 },
           {
-            finalScore: computeScore(state.difficulty, state.errorCount),
-            outcome: "completed",
-            durationMs: 0,
-          },
-          {
-            final_score: computeScore(state.difficulty, state.errorCount),
+            final_score: score,
             outcome: "completed",
             difficulty: state.difficulty,
+            variant: state.variant,
             errors: state.errorCount,
           }
         );
@@ -247,13 +249,19 @@ export default function SudokuScreen() {
       const finalElapsed =
         startMsRef.current !== null ? Math.floor((Date.now() - startMsRef.current) / 1000) : 0;
       const diff = state.difficulty;
-      const prev = statsRef.current[diff];
+      const variantKey = state.variant;
+      const prev = statsRef.current[variantKey][diff];
       const updatedStats: SudokuStats = {
         ...statsRef.current,
-        [diff]: {
-          bestTimeS:
-            prev.bestTimeS === 0 || finalElapsed < prev.bestTimeS ? finalElapsed : prev.bestTimeS,
-          gamesSolved: prev.gamesSolved + 1,
+        [variantKey]: {
+          ...statsRef.current[variantKey],
+          [diff]: {
+            bestTimeS:
+              prev.bestTimeS === 0 || finalElapsed < prev.bestTimeS
+                ? finalElapsed
+                : prev.bestTimeS,
+            gamesSolved: prev.gamesSolved + 1,
+          },
         },
       };
       statsRef.current = updatedStats;
@@ -261,6 +269,7 @@ export default function SudokuScreen() {
       setScoreboardSnapshot({
         elapsed: finalElapsed,
         difficulty: state.difficulty,
+        variant: state.variant,
         errorCount: state.errorCount,
         hasGame: true,
         stats: updatedStats,
@@ -282,12 +291,14 @@ export default function SudokuScreen() {
       syncComplete(
         {
           outcome: "abandoned",
-          finalScore: s !== null ? computeScore(s.difficulty, s.errorCount) : 0,
+          finalScore:
+            s !== null ? computeScore(s.difficulty, s.errorCount) : 0,
           durationMs: 0,
         },
         {
           outcome: "abandoned",
           difficulty: s?.difficulty,
+          variant: s?.variant,
           errors: s?.errorCount ?? 0,
         }
       );
@@ -298,7 +309,10 @@ export default function SudokuScreen() {
   const ensureSyncStarted = useCallback(
     (next: SudokuState) => {
       if (syncGetGameId()) return;
-      syncStart({ difficulty: next.difficulty }, { difficulty: next.difficulty });
+      syncStart(
+        { difficulty: next.difficulty, variant: next.variant },
+        { difficulty: next.difficulty, variant: next.variant }
+      );
       syncMarkStarted();
     },
     [syncGetGameId, syncStart, syncMarkStarted]
@@ -322,7 +336,7 @@ export default function SudokuScreen() {
   const handleStart = useCallback(() => {
     clearGame().catch(() => {});
     digitCountRef.current = 0;
-    const fresh = loadPuzzle(difficulty);
+    const fresh = loadPuzzle(difficulty, variant);
     setState(fresh);
     setElapsed(0);
     startMsRef.current = null;
@@ -349,7 +363,13 @@ export default function SudokuScreen() {
         if (!s.notesMode && s.selectedRow !== null && s.selectedCol !== null) {
           const cell = next.grid[s.selectedRow]?.[s.selectedCol];
           if (cell?.isError) {
-            const conflicts = getConflicts(next.grid, s.selectedRow, s.selectedCol, digit);
+            const conflicts = getConflicts(
+              next.grid,
+              s.selectedRow,
+              s.selectedCol,
+              digit,
+              variantConfig(next.variant)
+            );
             if (conflicts.length > 0) flashError();
           }
         }
@@ -442,7 +462,13 @@ export default function SudokuScreen() {
       }}
     >
       {state === null ? (
-        <PreGame difficulty={difficulty} onChange={setDifficulty} onStart={handleStart} />
+        <PreGame
+          difficulty={difficulty}
+          onChange={setDifficulty}
+          variant={variant}
+          onVariantChange={setVariant}
+          onStart={handleStart}
+        />
       ) : (
         <View style={styles.body}>
           <View style={styles.hudRow} accessibilityRole="summary">
@@ -469,6 +495,7 @@ export default function SudokuScreen() {
               grid={state.grid}
               selectedRow={state.selectedRow}
               selectedCol={state.selectedCol}
+              variant={state.variant}
               onCellPress={handleCellPress}
             />
           </View>
@@ -482,6 +509,7 @@ export default function SudokuScreen() {
           <View style={styles.padWrap}>
             <NumberPad
               grid={state.grid}
+              variant={state.variant}
               notesMode={state.notesMode}
               onDigit={handleDigit}
               onErase={handleErase}
@@ -505,6 +533,7 @@ export default function SudokuScreen() {
       {state !== null && isComplete ? (
         <WinModal
           difficulty={state.difficulty}
+          variant={state.variant}
           errors={state.errorCount}
           elapsed={elapsed}
           score={computeScore(state.difficulty, state.errorCount)}
@@ -523,10 +552,14 @@ export default function SudokuScreen() {
 function PreGame({
   difficulty,
   onChange,
+  variant,
+  onVariantChange,
   onStart,
 }: {
   readonly difficulty: Difficulty;
   readonly onChange: (d: Difficulty) => void;
+  readonly variant: Variant;
+  readonly onVariantChange: (v: Variant) => void;
   readonly onStart: () => void;
 }) {
   const { t } = useTranslation("sudoku");
@@ -551,6 +584,9 @@ function PreGame({
         </Text>
         <Text style={[styles.preGameBody, { color: colors.textMuted }]}>{t("preGame.body")}</Text>
         <View style={styles.preGameSelector}>
+          <VariantSelector value={variant} onChange={onVariantChange} />
+        </View>
+        <View style={[styles.preGameSelector, { marginTop: 8 }]}>
           <DifficultySelector value={difficulty} onChange={onChange} />
         </View>
         <Pressable
@@ -569,11 +605,65 @@ function PreGame({
 }
 
 // ---------------------------------------------------------------------------
+// Variant selector — Classic (9×9) vs Mini (6×6)
+// ---------------------------------------------------------------------------
+
+function VariantSelector({
+  value,
+  onChange,
+}: {
+  readonly value: Variant;
+  readonly onChange: (v: Variant) => void;
+}) {
+  const { t } = useTranslation("sudoku");
+  const { colors } = useTheme();
+
+  return (
+    <View
+      accessibilityRole="radiogroup"
+      accessibilityLabel={t("variant.groupLabel", { defaultValue: "Variant" })}
+      style={[styles.variantRow, { borderColor: colors.border }]}
+    >
+      {VARIANTS.map((v) => {
+        const selected = v === value;
+        return (
+          <Pressable
+            key={v}
+            onPress={() => onChange(v)}
+            accessibilityRole="radio"
+            accessibilityLabel={t(`variant.${v}`, {
+              defaultValue: v === "classic" ? "Classic 9×9" : "Mini 6×6",
+            })}
+            accessibilityState={{ selected }}
+            style={[
+              styles.variantBtn,
+              { backgroundColor: selected ? colors.accent : colors.surface },
+            ]}
+          >
+            <Text
+              style={[
+                styles.variantLabel,
+                { color: selected ? colors.textOnAccent : colors.text },
+              ]}
+            >
+              {t(`variant.${v}`, {
+                defaultValue: v === "classic" ? "Classic 9×9" : "Mini 6×6",
+              })}
+            </Text>
+          </Pressable>
+        );
+      })}
+    </View>
+  );
+}
+
+// ---------------------------------------------------------------------------
 // Win modal — name entry + score POST with retry
 // ---------------------------------------------------------------------------
 
 function WinModal({
   difficulty,
+  variant,
   errors,
   elapsed,
   score,
@@ -581,6 +671,7 @@ function WinModal({
   onChangeDifficulty,
 }: {
   readonly difficulty: Difficulty;
+  readonly variant: Variant;
   readonly errors: number;
   readonly elapsed: number;
   readonly score: number;
@@ -613,7 +704,7 @@ function WinModal({
     setSubmitting(true);
     setError(null);
     try {
-      await scoreQueue.enqueue("sudoku", { player_name: trimmed, score, difficulty });
+      await scoreQueue.enqueue("sudoku", { player_name: trimmed, score, difficulty, variant });
       setSubmitted(true);
       // Kick off a background flush; failures are retried on next reconnect.
       scoreQueue.flush().catch(() => undefined);
@@ -824,6 +915,24 @@ const styles = StyleSheet.create({
   preGameSelector: {
     alignSelf: "stretch",
     marginBottom: 20,
+  },
+  variantRow: {
+    flexDirection: "row",
+    borderWidth: 1,
+    borderRadius: 8,
+    overflow: "hidden",
+    alignSelf: "stretch",
+    marginBottom: 0,
+  },
+  variantBtn: {
+    flex: 1,
+    paddingVertical: 10,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  variantLabel: {
+    fontSize: 15,
+    fontWeight: "600",
   },
   preGameStart: {
     paddingHorizontal: 32,

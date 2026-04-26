@@ -101,6 +101,34 @@
     "doNotTranslate": [],
     "notes": null
   },
+  "variant.groupLabel": {
+    "component": "VariantSelector (accessibility)",
+    "description": "Accessibility group label for the variant radio buttons.",
+    "tone": "functional",
+    "characterLimit": 20,
+    "placeholders": [],
+    "doNotTranslate": [],
+    "notes": null
+  },
+  "variant.classic": {
+    "component": "VariantSelector",
+    "description": "Label for the classic 9×9 variant.",
+    "tone": "casual",
+    "characterLimit": 15,
+    "placeholders": [],
+    "doNotTranslate": [],
+    "notes": "Show grid size after the name, e.g. 'Classic 9×9'. Sudoku is a loan-word."
+  },
+  "variant.mini": {
+    "component": "VariantSelector",
+    "description": "Label for the mini 6×6 variant.",
+    "tone": "casual",
+    "characterLimit": 15,
+    "placeholders": [],
+    "doNotTranslate": [],
+    "notes": "Show grid size after the name, e.g. 'Mini 6×6'."
+  },
+
   "difficulty.easy": {
     "component": "DifficultySelector",
     "description": "Label for the 'Easy' difficulty tier (36-44 given cells).",

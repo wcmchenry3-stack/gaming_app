@@ -1,12 +1,13 @@
 #!/usr/bin/env python3
-"""Sudoku puzzle bank generator (#616).
+"""Sudoku puzzle bank generator (#616, #748).
 
-Dev-time tool. Writes ``frontend/src/game/sudoku/puzzles.json``:
+Dev-time tool. Writes ``frontend/src/game/sudoku/puzzles.json`` (classic
+9×9) or ``frontend/src/game/sudoku/puzzles_mini.json`` (mini 6×6):
 
     {
-      "easy":   ["<81 chars>", ...],   # 1000 puzzles, 36-44 clues
-      "medium": [...],                  # 1000 puzzles, 28-35 clues
-      "hard":   [...]                   # 1000 puzzles, 22-27 clues
+      "easy":   ["<N² chars>", ...],
+      "medium": [...],
+      "hard":   [...]
     }
 
 Solvability guarantee
@@ -18,16 +19,20 @@ confirms exactly one solution remains. Removals that would create a
 second solution are rejected and the cell is restored. This makes it
 mathematically impossible for this script to emit an ambiguous puzzle.
 
-Difficulty classification is by clue count (the Sudoku community's
-rough-but-reasonable proxy). Technique-based verification (naked singles
-only for Easy, X-Wing etc. for Hard) is a follow-up — tracked in the
-QA release issue.
+Difficulty classification is by clue count.
 
 Usage
 -----
+    # Classic 9×9 (default):
     python backend/scripts/gen_sudoku_puzzles.py \\
         --count 1000 \\
         --output frontend/src/game/sudoku/puzzles.json
+
+    # Mini 6×6:
+    python backend/scripts/gen_sudoku_puzzles.py \\
+        --variant mini \\
+        --count 1000 \\
+        --output frontend/src/game/sudoku/puzzles_mini.json
 """
 
 from __future__ import annotations
@@ -39,50 +44,52 @@ import sys
 import time
 from pathlib import Path
 
+
 # ---------------------------------------------------------------------------
-# Grid representation
+# Grid representation — parameterised on (SIZE, BOX_ROWS, BOX_COLS)
 # ---------------------------------------------------------------------------
-# Flat list of 81 ints; 0 = empty, 1-9 = digit.
 
-N = 9
-BOX_ROW = [r // 3 for r in range(N)]
-BOX_COL = [c // 3 for c in range(N)]
-
-# Pre-computed peer lists: peers[i] is the set of indices that share a
-# row, column, or box with i (excluding i itself).
-_PEERS: list[frozenset[int]] = []
-for i in range(81):
-    r, c = divmod(i, 9)
-    br, bc = BOX_ROW[r], BOX_COL[c]
-    peers: set[int] = set()
-    for j in range(81):
-        if j == i:
-            continue
-        jr, jc = divmod(j, 9)
-        if jr == r or jc == c or (BOX_ROW[jr] == br and BOX_COL[jc] == bc):
-            peers.add(j)
-    _PEERS.append(frozenset(peers))
+def _make_peers(size: int, box_rows: int, box_cols: int) -> list[frozenset[int]]:
+    """Pre-compute peer sets for all SIZE² cells."""
+    total = size * size
+    peers_list: list[frozenset[int]] = []
+    for i in range(total):
+        r, c = divmod(i, size)
+        br, bc = r // box_rows, c // box_cols
+        peers: set[int] = set()
+        for j in range(total):
+            if j == i:
+                continue
+            jr, jc = divmod(j, size)
+            if jr == r or jc == c or (jr // box_rows == br and jc // box_cols == bc):
+                peers.add(j)
+        peers_list.append(frozenset(peers))
+    return peers_list
 
 
-def _candidates(grid: list[int], i: int) -> int:
-    """Return a 9-bit mask of digits not conflicting with peers of cell ``i``."""
+def _candidates(grid: list[int], i: int, peers_list: list[frozenset[int]], size: int) -> int:
+    """Return a SIZE-bit mask of digits not conflicting with peers of cell ``i``."""
     used = 0
-    for p in _PEERS[i]:
+    for p in peers_list[i]:
         v = grid[p]
         if v:
             used |= 1 << (v - 1)
-    return (~used) & 0x1FF
+    full = (1 << size) - 1
+    return (~used) & full
 
 
-def _pick_empty(grid: list[int]) -> tuple[int, int]:
-    """Return (index, candidate_mask) for the empty cell with fewest
-    candidates.  Returns (-1, 0) when the grid is full.  (MRV heuristic.)"""
+def _pick_empty(
+    grid: list[int], peers_list: list[frozenset[int]], size: int
+) -> tuple[int, int]:
+    """Return (index, candidate_mask) for empty cell with fewest candidates.
+    Returns (-1, 0) when full. (MRV heuristic.)"""
+    total = size * size
     best_i = -1
     best_mask = 0
-    best_count = 10
-    for i in range(81):
+    best_count = size + 1
+    for i in range(total):
         if grid[i] == 0:
-            mask = _candidates(grid, i)
+            mask = _candidates(grid, i, peers_list, size)
             cnt = bin(mask).count("1")
             if cnt < best_count:
                 best_count = cnt
@@ -98,23 +105,24 @@ def _pick_empty(grid: list[int]) -> tuple[int, int]:
 # ---------------------------------------------------------------------------
 
 
-def count_solutions(grid: list[int], limit: int = 2) -> int:
-    """Count solutions up to ``limit``.  Returns 0, 1, or ``limit`` (stops
-    exploring once ``limit`` solutions have been found).
-
-    Used two ways:
-    - ``count_solutions(g, 2)`` during hollowing — a cell removal is only
-      accepted if the count returns to exactly 1.
-    - ``count_solutions(g, 2)`` during the final audit — every emitted
-      puzzle must still count exactly 1.
-    """
+def count_solutions(
+    grid: list[int],
+    limit: int = 2,
+    peers_list: list[frozenset[int]] | None = None,
+    size: int = 9,
+) -> int:
+    """Count solutions up to ``limit``. Returns 0, 1, or ``limit``."""
+    if peers_list is None:
+        # Default to classic 9×9
+        peers_list = _CLASSIC_PEERS
+        size = 9
     counter = [0]
-    work = list(grid)  # private working copy
+    work = list(grid)
 
     def recurse() -> None:
         if counter[0] >= limit:
             return
-        i, mask = _pick_empty(work)
+        i, mask = _pick_empty(work, peers_list, size)  # type: ignore[arg-type]
         if i == -1:
             counter[0] += 1
             return
@@ -132,12 +140,19 @@ def count_solutions(grid: list[int], limit: int = 2) -> int:
     return counter[0]
 
 
-def solve(grid: list[int]) -> list[int] | None:
+def solve(
+    grid: list[int],
+    peers_list: list[frozenset[int]] | None = None,
+    size: int = 9,
+) -> list[int] | None:
     """Return a solved copy of ``grid``, or None if unsolvable."""
+    if peers_list is None:
+        peers_list = _CLASSIC_PEERS
+        size = 9
     work = list(grid)
 
     def recurse() -> bool:
-        i, mask = _pick_empty(work)
+        i, mask = _pick_empty(work, peers_list, size)  # type: ignore[arg-type]
         if i == -1:
             return True
         while mask:
@@ -158,12 +173,17 @@ def solve(grid: list[int]) -> list[int] | None:
 # ---------------------------------------------------------------------------
 
 
-def random_full_grid(rng: random.Random) -> list[int]:
+def random_full_grid(
+    rng: random.Random,
+    peers_list: list[frozenset[int]],
+    size: int,
+) -> list[int]:
     """Return a random complete valid grid."""
-    grid = [0] * 81
+    total = size * size
+    grid = [0] * total
 
     def recurse() -> bool:
-        i, mask = _pick_empty(grid)
+        i, mask = _pick_empty(grid, peers_list, size)
         if i == -1:
             return True
         digits = []
@@ -185,28 +205,35 @@ def random_full_grid(rng: random.Random) -> list[int]:
 
 
 # ---------------------------------------------------------------------------
-# Hollowing (the uniqueness-preserving removal loop)
+# Hollowing (uniqueness-preserving removal loop)
 # ---------------------------------------------------------------------------
 
-TIER_RANGES = {
+TIER_RANGES: dict[str, tuple[int, int]] = {
     "easy": (36, 44),
     "medium": (28, 35),
     "hard": (22, 27),
 }
 
+TIER_RANGES_MINI: dict[str, tuple[int, int]] = {
+    "easy": (14, 18),
+    "medium": (11, 13),
+    "hard": (8, 10),
+}
 
-def hollow(grid: list[int], target_clues: int, rng: random.Random) -> list[int] | None:
-    """Remove cells from ``grid`` one at a time, keeping only those
-    removals that preserve a unique solution, until the count drops to
-    ``target_clues`` clues (or no further removals possible).
 
-    Returns the hollowed grid, or None if we couldn't reach within the
-    acceptable range.
-    """
+def hollow(
+    grid: list[int],
+    target_clues: int,
+    rng: random.Random,
+    peers_list: list[frozenset[int]],
+    size: int,
+) -> list[int] | None:
+    """Remove cells preserving unique solution until ``target_clues`` reached."""
     puzzle = list(grid)
-    order = list(range(81))
+    total = size * size
+    order = list(range(total))
     rng.shuffle(order)
-    current_clues = 81
+    current_clues = total
 
     for idx in order:
         if current_clues <= target_clues:
@@ -215,7 +242,7 @@ def hollow(grid: list[int], target_clues: int, rng: random.Random) -> list[int] 
         if saved == 0:
             continue
         puzzle[idx] = 0
-        if count_solutions(puzzle, 2) == 1:
+        if count_solutions(puzzle, 2, peers_list, size) == 1:
             current_clues -= 1
         else:
             puzzle[idx] = saved
@@ -223,11 +250,9 @@ def hollow(grid: list[int], target_clues: int, rng: random.Random) -> list[int] 
     return puzzle
 
 
-def classify(puzzle: list[int]) -> str | None:
-    """Assign a puzzle to a tier based on its clue count, or None if it
-    doesn't land in any configured tier."""
+def classify(puzzle: list[int], tier_ranges: dict[str, tuple[int, int]]) -> str | None:
     clues = sum(1 for v in puzzle if v)
-    for tier, (lo, hi) in TIER_RANGES.items():
+    for tier, (lo, hi) in tier_ranges.items():
         if lo <= clues <= hi:
             return tier
     return None
@@ -238,35 +263,44 @@ def puzzle_to_string(puzzle: list[int]) -> str:
 
 
 # ---------------------------------------------------------------------------
+# Lazy-initialised classic peer list (kept for test_sudoku_puzzles backward compat)
+# ---------------------------------------------------------------------------
+
+_CLASSIC_PEERS: list[frozenset[int]] = _make_peers(9, 3, 3)
+
+
+# ---------------------------------------------------------------------------
 # Main loop
 # ---------------------------------------------------------------------------
 
 
-def generate_bank(count_per_tier: int, seed: int = 20260419) -> dict[str, list[str]]:
+def generate_bank(
+    count_per_tier: int,
+    size: int,
+    box_rows: int,
+    box_cols: int,
+    tier_ranges: dict[str, tuple[int, int]],
+    seed: int = 20260419,
+) -> dict[str, list[str]]:
     rng = random.Random(seed)
+    peers_list = _make_peers(size, box_rows, box_cols)
     banks: dict[str, list[str]] = {"easy": [], "medium": [], "hard": []}
     start = time.monotonic()
     attempts = 0
 
-    # Interleave: target the currently-shortest tier first.  Each "hard"
-    # generation attempt is the slowest path but also the most likely to
-    # yield a hard puzzle (low clue count).  Easy/medium tiers are
-    # seeded by generating with their tier's target and keeping any
-    # by-product that drops into another tier along the way.
     while min(len(b) for b in banks.values()) < count_per_tier:
         attempts += 1
-        grid = random_full_grid(rng)
+        grid = random_full_grid(rng, peers_list, size)
 
-        # Pick target based on which tier is most under-filled.
         need = {t: count_per_tier - len(banks[t]) for t in banks}
         tier = max(need, key=lambda t: need[t])
-        lo, hi = TIER_RANGES[tier]
+        lo, hi = tier_ranges[tier]
         target = rng.randint(lo, hi)
 
-        puzzle = hollow(grid, target, rng)
+        puzzle = hollow(grid, target, rng, peers_list, size)
         if puzzle is None:
             continue
-        resolved = classify(puzzle)
+        resolved = classify(puzzle, tier_ranges)
         if resolved is None:
             continue
         if len(banks[resolved]) >= count_per_tier:
@@ -297,22 +331,28 @@ def main() -> int:
     ap = argparse.ArgumentParser(description="Generate Sudoku puzzle bank.")
     ap.add_argument("--count", type=int, default=1000, help="puzzles per difficulty")
     ap.add_argument("--seed", type=int, default=20260419)
+    ap.add_argument("--variant", choices=["classic", "mini"], default="classic")
     ap.add_argument(
         "--output",
-        default=str(
-            Path(__file__).resolve().parents[2]
-            / "frontend"
-            / "src"
-            / "game"
-            / "sudoku"
-            / "puzzles.json"
-        ),
+        default=None,
     )
     args = ap.parse_args()
 
-    banks = generate_bank(args.count, args.seed)
+    _FRONTEND = Path(__file__).resolve().parents[2] / "frontend" / "src" / "game" / "sudoku"
 
-    out_path = Path(args.output)
+    if args.variant == "mini":
+        size, box_rows, box_cols = 6, 2, 3
+        tier_ranges = TIER_RANGES_MINI
+        default_output = str(_FRONTEND / "puzzles_mini.json")
+    else:
+        size, box_rows, box_cols = 9, 3, 3
+        tier_ranges = TIER_RANGES
+        default_output = str(_FRONTEND / "puzzles.json")
+
+    out_path = Path(args.output or default_output)
+
+    banks = generate_bank(args.count, size, box_rows, box_cols, tier_ranges, args.seed)
+
     out_path.parent.mkdir(parents=True, exist_ok=True)
     out_path.write_text(json.dumps(banks, indent=2) + "\n")
     print(f"Wrote {out_path}", file=sys.stderr)
