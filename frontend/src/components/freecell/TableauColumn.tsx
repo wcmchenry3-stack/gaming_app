@@ -33,10 +33,7 @@ export default function TableauColumn({
     return (
       <Pressable
         onPress={onEmptyPress ? () => onEmptyPress(colIndex) : undefined}
-        style={[
-          styles.empty,
-          { borderColor: colors.border, backgroundColor: colors.background },
-        ]}
+        style={[styles.empty, { borderColor: colors.border, backgroundColor: colors.background }]}
         accessibilityRole="button"
         accessibilityLabel={t("pile.tableau.empty", { col: colIndex + 1 })}
       />
@@ -70,10 +67,7 @@ export default function TableauColumn({
           : t("card.label", { rank: rl, suit: suitName });
         const handlePress = onCardPress ? () => onCardPress(colIndex, cardIndex) : undefined;
         return (
-          <View
-            key={cardIndex}
-            style={[styles.cardSlot, { top: offsets[cardIndex] ?? 0 }]}
-          >
+          <View key={cardIndex} style={[styles.cardSlot, { top: offsets[cardIndex] ?? 0 }]}>
             <SharedPlayingCard
               suit={card.suit as CanonicalSuit}
               rank={card.rank}

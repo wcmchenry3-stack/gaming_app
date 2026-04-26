@@ -70,13 +70,7 @@ export default function FreeCellSlot({
     );
   }
 
-  return (
-    <View
-      style={slotStyle}
-      accessibilityRole="image"
-      accessibilityLabel={emptyLabel}
-    />
-  );
+  return <View style={slotStyle} accessibilityRole="image" accessibilityLabel={emptyLabel} />;
 }
 
 const styles = StyleSheet.create({

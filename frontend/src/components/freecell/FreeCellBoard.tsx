@@ -4,7 +4,7 @@ import { useTranslation } from "react-i18next";
 
 import { SUITS } from "../../game/freecell/types";
 import { validateMove } from "../../game/freecell/engine";
-import type { FreeCellState, Move, Suit } from "../../game/freecell/types";
+import type { FreeCellState, Move } from "../../game/freecell/types";
 import FreeCellSlot, { CARD_WIDTH } from "./FreeCellSlot";
 import FoundationPile from "./FoundationPile";
 import TableauColumn from "./TableauColumn";
@@ -90,7 +90,7 @@ export default function FreeCellBoard({ state, onMove }: FreeCellBoardProps) {
     }
   }
 
-  function handleFoundationPress(suit: Suit) {
+  function handleFoundationPress() {
     if (selection === null) return;
     if (selection.kind === "tableau") {
       tryMove({ type: "tableau-to-foundation", fromCol: selection.col });
@@ -100,11 +100,7 @@ export default function FreeCellBoard({ state, onMove }: FreeCellBoardProps) {
   }
 
   return (
-    <View
-      style={styles.board}
-      accessibilityRole="none"
-      accessibilityLabel={t("a11y.boardRegion")}
-    >
+    <View style={styles.board} accessibilityRole="none" accessibilityLabel={t("a11y.boardRegion")}>
       <View style={styles.topRow}>
         <View style={styles.slotGroup}>
           {state.freeCells.map((card, i) => (
@@ -124,7 +120,7 @@ export default function FreeCellBoard({ state, onMove }: FreeCellBoardProps) {
               pile={state.foundations[suit]}
               suit={suit}
               selected={false}
-              onPress={handleFoundationPress}
+              onPress={() => handleFoundationPress()}
             />
           ))}
         </View>
@@ -137,9 +133,7 @@ export default function FreeCellBoard({ state, onMove }: FreeCellBoardProps) {
             pile={pile}
             colIndex={col}
             selectedIndex={
-              selection?.kind === "tableau" && selection.col === col
-                ? selection.index
-                : undefined
+              selection?.kind === "tableau" && selection.col === col ? selection.index : undefined
             }
             onCardPress={handleTableauCardPress}
             onEmptyPress={handleTableauEmptyPress}
