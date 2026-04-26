@@ -1,6 +1,6 @@
 """seed event_types for solitaire, hearts, and sudoku (#697)
 
-Revision ID: 0010_add_event_types_solitaire_hearts_sudoku
+Revision ID: 0010_seed_event_types
 Revises: 0009_add_sudoku_game_type
 Create Date: 2026-04-21
 
@@ -18,7 +18,7 @@ from typing import Sequence, Union
 import sqlalchemy as sa
 from alembic import op
 
-revision: str = "0010_add_event_types_solitaire_hearts_sudoku"
+revision: str = "0010_seed_event_types"
 down_revision: Union[str, None] = "0009_add_sudoku_game_type"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
