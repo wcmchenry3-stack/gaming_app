@@ -21,9 +21,13 @@ import { typography } from "../theme/typography";
 import { GameShell } from "../components/shared/GameShell";
 import FreeCellBoard from "../components/freecell/FreeCellBoard";
 import { CARD_WIDTH, CARD_HEIGHT } from "../components/freecell/FreeCellSlot";
+import { FreeCellFoundationAnimation } from "../components/freecell/FreeCellFoundationAnimation";
+import { FreeCellGameWinAnimation } from "../components/freecell/FreeCellGameWinAnimation";
 import { dealGame, applyMove, undoMove } from "../game/freecell/engine";
 import type { FreeCellState, Move } from "../game/freecell/types";
 import { clearGame, loadGame, saveGame } from "../game/freecell/storage";
+import { useGameEvents } from "../game/_shared/useGameEvents";
+import { useSound } from "../game/_shared/useSound";
 
 // 8 columns × 40px + 7 gaps × 4px
 const TABLEAU_COLS = 8;
@@ -45,6 +49,15 @@ export default function FreeCellScreen() {
   const flashOpacity = useRef(new Animated.Value(0)).current;
   const hasLoadedRef = useRef(false);
 
+  const [showFoundation, setShowFoundation] = useState(false);
+  const [showGameWin, setShowGameWin] = useState(false);
+
+  const { play: playCardPlace } = useSound("freecell.cardPlace");
+  const { play: playSupermove } = useSound("freecell.supermove");
+  const { play: playFoundationComplete } = useSound("freecell.foundationComplete");
+  const { play: playGameWin } = useSound("freecell.gameWin");
+  const { play: playInvalidMove } = useSound("freecell.invalidMove");
+
   // Mount: resume saved game or deal fresh
   useEffect(() => {
     let alive = true;
@@ -65,6 +78,23 @@ export default function FreeCellScreen() {
     saveGame(state).catch(() => {});
   }, [state]);
 
+  useGameEvents(
+    state?.events,
+    {
+      cardPlace: () => playCardPlace(),
+      supermove: () => playSupermove(),
+      foundationComplete: () => {
+        playFoundationComplete();
+        setShowFoundation(true);
+      },
+      gameWin: () => {
+        playGameWin();
+        setShowGameWin(true);
+      },
+    },
+    () => setState((prev) => (prev === null ? null : { ...prev, events: [] }))
+  );
+
   const flashInvalid = useCallback(() => {
     Animated.sequence([
       Animated.timing(flashOpacity, { toValue: 0.4, duration: 80, useNativeDriver: true }),
@@ -78,11 +108,12 @@ export default function FreeCellScreen() {
       const next = applyMove(state, move);
       if (next === state) {
         flashInvalid();
+        playInvalidMove();
         return;
       }
       setState(next);
     },
-    [state, flashInvalid]
+    [state, flashInvalid, playInvalidMove]
   );
 
   const handleUndo = useCallback(() => {
@@ -180,6 +211,12 @@ export default function FreeCellScreen() {
           onGoHome={() => navigation.popToTop()}
         />
       )}
+
+      <FreeCellFoundationAnimation
+        visible={showFoundation}
+        onAnimationEnd={() => setShowFoundation(false)}
+      />
+      <FreeCellGameWinAnimation visible={showGameWin} onDismiss={() => setShowGameWin(false)} />
     </GameShell>
   );
 }

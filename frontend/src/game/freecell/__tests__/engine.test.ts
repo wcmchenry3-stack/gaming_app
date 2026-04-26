@@ -16,6 +16,7 @@
 import { applyMove, createSeededRng, dealGame, setRng, undoMove, validateMove } from "../engine";
 import type { Card, Foundations, FreeCellState, Rank, Suit } from "../types";
 import { SUITS } from "../types";
+import type { GameEvent } from "../types";
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -499,5 +500,128 @@ describe("isComplete", () => {
   it("starts as false on a freshly dealt game", () => {
     const state = dealGame(1);
     expect(state.isComplete).toBe(false);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Event emission
+// ---------------------------------------------------------------------------
+
+describe("game events", () => {
+  it("emits cardPlace for a single-card tableau → tableau move", () => {
+    const state = mkState({
+      tableau: [[c("spades", 5)], [c("hearts", 6)], [], [], [], [], [], []],
+    });
+    const next = applyMove(state, {
+      type: "tableau-to-tableau",
+      fromCol: 0,
+      fromIndex: 0,
+      toCol: 1,
+    });
+    expect(next.events).toEqual<readonly GameEvent[]>([{ type: "cardPlace" }]);
+  });
+
+  it("emits supermove (not cardPlace) for a multi-card tableau → tableau move", () => {
+    const state = mkState({
+      freeCells: [null, null, null, null],
+      tableau: [
+        [c("hearts", 7), c("spades", 6), c("hearts", 5)],
+        [c("spades", 8)],
+        [c("clubs", 2)],
+        [c("clubs", 3)],
+        [c("clubs", 4)],
+        [c("clubs", 5)],
+        [c("clubs", 6)],
+        [c("clubs", 7)],
+      ],
+    });
+    const next = applyMove(state, {
+      type: "tableau-to-tableau",
+      fromCol: 0,
+      fromIndex: 0,
+      toCol: 1,
+    });
+    expect(next.events).toEqual<readonly GameEvent[]>([{ type: "supermove", cardCount: 3 }]);
+  });
+
+  it("emits cardPlace for tableau → free cell", () => {
+    const state = mkState({
+      tableau: [[c("spades", 5)], [], [], [], [], [], [], []],
+    });
+    const next = applyMove(state, { type: "tableau-to-freecell", fromCol: 0, toCell: 0 });
+    expect(next.events).toEqual<readonly GameEvent[]>([{ type: "cardPlace" }]);
+  });
+
+  it("emits cardPlace for free cell → tableau", () => {
+    const state = mkState({
+      freeCells: [c("spades", 5), null, null, null],
+      tableau: [[], [c("hearts", 6)], [], [], [], [], [], []],
+    });
+    const next = applyMove(state, { type: "freecell-to-tableau", fromCell: 0, toCol: 1 });
+    expect(next.events).toEqual<readonly GameEvent[]>([{ type: "cardPlace" }]);
+  });
+
+  it("emits only cardPlace for a non-completing tableau → foundation move", () => {
+    const state = mkState({
+      tableau: [[c("spades", 1)], [], [], [], [], [], [], []],
+    });
+    const next = applyMove(state, { type: "tableau-to-foundation", fromCol: 0 });
+    expect(next.events).toEqual<readonly GameEvent[]>([{ type: "cardPlace" }]);
+  });
+
+  it("emits cardPlace + foundationComplete when a suit reaches 13 cards (tableau → foundation)", () => {
+    const foundations: Foundations = {
+      spades: Array.from({ length: 12 }, (_, i) => c("spades", (i + 1) as Rank)),
+      hearts: [],
+      diamonds: [],
+      clubs: [],
+    };
+    const state = mkState({
+      foundations,
+      tableau: [[c("spades", 13)], [], [], [], [], [], [], []],
+    });
+    const next = applyMove(state, { type: "tableau-to-foundation", fromCol: 0 });
+    expect(next.events).toEqual<readonly GameEvent[]>([
+      { type: "cardPlace" },
+      { type: "foundationComplete", suit: "spades" },
+    ]);
+  });
+
+  it("emits cardPlace + foundationComplete when a suit reaches 13 cards (free cell → foundation)", () => {
+    const foundations: Foundations = {
+      clubs: Array.from({ length: 12 }, (_, i) => c("clubs", (i + 1) as Rank)),
+      spades: [],
+      hearts: [],
+      diamonds: [],
+    };
+    const state = mkState({
+      freeCells: [c("clubs", 13), null, null, null],
+      foundations,
+    });
+    const next = applyMove(state, { type: "freecell-to-foundation", fromCell: 0 });
+    expect(next.events).toEqual<readonly GameEvent[]>([
+      { type: "cardPlace" },
+      { type: "foundationComplete", suit: "clubs" },
+    ]);
+  });
+
+  it("emits gameWin as the final event when all 52 cards reach foundations", () => {
+    const foundations: Foundations = {
+      spades: Array.from({ length: 13 }, (_, i) => c("spades", (i + 1) as Rank)),
+      hearts: Array.from({ length: 13 }, (_, i) => c("hearts", (i + 1) as Rank)),
+      diamonds: Array.from({ length: 13 }, (_, i) => c("diamonds", (i + 1) as Rank)),
+      clubs: Array.from({ length: 12 }, (_, i) => c("clubs", (i + 1) as Rank)),
+    };
+    const state = mkState({
+      foundations,
+      tableau: [[c("clubs", 13)], [], [], [], [], [], [], []],
+    });
+    const next = applyMove(state, { type: "tableau-to-foundation", fromCol: 0 });
+    expect(next.events).toEqual<readonly GameEvent[]>([
+      { type: "cardPlace" },
+      { type: "foundationComplete", suit: "clubs" },
+      { type: "gameWin" },
+    ]);
+    expect(next.isComplete).toBe(true);
   });
 });
