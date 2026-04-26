@@ -13,7 +13,16 @@
  */
 
 import seedsJson from "./seeds.json";
-import type { Card, DrawMode, Foundations, Move, Rank, SolitaireState, Suit } from "./types";
+import type {
+  Card,
+  DrawMode,
+  Foundations,
+  GameEvent,
+  Move,
+  Rank,
+  SolitaireState,
+  Suit,
+} from "./types";
 import { cardColor, RANKS, SUITS } from "./types";
 
 // ---------------------------------------------------------------------------
@@ -282,7 +291,7 @@ function withUndo(
   prev: SolitaireState,
   next: Omit<SolitaireState, "undoStack" | "startedAt" | "accumulatedMs">
 ): SolitaireState {
-  const snapshot: SolitaireState = { ...prev, undoStack: [] };
+  const snapshot: SolitaireState = { ...prev, undoStack: [], events: undefined };
   const stack = [...prev.undoStack, snapshot];
   const capped = stack.length > UNDO_CAP ? stack.slice(stack.length - UNDO_CAP) : stack;
   return {
@@ -334,7 +343,26 @@ function finalizeAfterMove(
   const nowComplete = isWin(next.foundations);
   const bonus = !wasComplete && nowComplete ? SCORE_WIN_BONUS : 0;
   const finalScore = clampScore(next.score + bonus);
-  return applyTimer(prev, withUndo(prev, { ...next, score: finalScore, isComplete: nowComplete }));
+
+  const events: GameEvent[] = [...(next.events ?? [])];
+  if (!wasComplete) {
+    for (const suit of SUITS) {
+      if (prev.foundations[suit].length < 13 && next.foundations[suit].length === 13) {
+        events.push("foundationComplete");
+      }
+    }
+    if (nowComplete) events.push("gameWin");
+  }
+
+  return applyTimer(
+    prev,
+    withUndo(prev, {
+      ...next,
+      score: finalScore,
+      isComplete: nowComplete,
+      events: events.length > 0 ? events : undefined,
+    })
+  );
 }
 
 // ---------------------------------------------------------------------------
@@ -348,7 +376,7 @@ function finalizeAfterMove(
  * the +500 win bonus exactly once when the game transitions to complete.
  */
 export function applyMove(state: SolitaireState, move: Move): SolitaireState {
-  if (!validateMove(state, move)) return state;
+  if (!validateMove(state, move)) return { ...state, events: ["invalidMove"] };
 
   switch (move.type) {
     case "waste-to-tableau": {
@@ -368,6 +396,7 @@ export function applyMove(state: SolitaireState, move: Move): SolitaireState {
         waste: newWaste,
         score: state.score + SCORE_WASTE_TO_TABLEAU,
         recycleCount: state.recycleCount,
+        events: ["cardPlace"],
       });
     }
     case "waste-to-foundation": {
@@ -385,6 +414,7 @@ export function applyMove(state: SolitaireState, move: Move): SolitaireState {
         waste: newWaste,
         score: state.score + SCORE_WASTE_TO_FOUNDATION,
         recycleCount: state.recycleCount,
+        events: ["cardPlace"],
       });
     }
     case "tableau-to-tableau": {
@@ -397,6 +427,8 @@ export function applyMove(state: SolitaireState, move: Move): SolitaireState {
       const revealed = revealIfNeeded(newSrc);
       let tableau = replaceAt(state.tableau, move.fromCol, revealed.col);
       tableau = replaceAt(tableau, move.toCol, newDst);
+      const ttEvents: GameEvent[] = ["cardPlace"];
+      if (revealed.scoreDelta > 0) ttEvents.push("cardFlip");
       return finalizeAfterMove(state, {
         _v: 1,
         drawMode: state.drawMode,
@@ -406,6 +438,7 @@ export function applyMove(state: SolitaireState, move: Move): SolitaireState {
         waste: state.waste,
         score: state.score + revealed.scoreDelta,
         recycleCount: state.recycleCount,
+        events: ttEvents,
       });
     }
     case "tableau-to-foundation": {
@@ -418,6 +451,8 @@ export function applyMove(state: SolitaireState, move: Move): SolitaireState {
       const foundations = withFoundation(state.foundations, card.suit, newPile);
       const revealed = revealIfNeeded(newSrc);
       const tableau = replaceAt(state.tableau, move.fromCol, revealed.col);
+      const tfEvents: GameEvent[] = ["cardPlace"];
+      if (revealed.scoreDelta > 0) tfEvents.push("cardFlip");
       return finalizeAfterMove(state, {
         _v: 1,
         drawMode: state.drawMode,
@@ -427,6 +462,7 @@ export function applyMove(state: SolitaireState, move: Move): SolitaireState {
         waste: state.waste,
         score: state.score + SCORE_TABLEAU_TO_FOUNDATION + revealed.scoreDelta,
         recycleCount: state.recycleCount,
+        events: tfEvents,
       });
     }
     case "foundation-to-tableau": {
@@ -448,6 +484,7 @@ export function applyMove(state: SolitaireState, move: Move): SolitaireState {
         waste: state.waste,
         score: state.score + SCORE_FOUNDATION_TO_TABLEAU,
         recycleCount: state.recycleCount,
+        events: ["cardPlace"],
       });
     }
   }
@@ -491,6 +528,7 @@ export function drawFromStock(state: SolitaireState): SolitaireState {
       score: state.score,
       recycleCount: state.recycleCount,
       isComplete: state.isComplete,
+      events: ["cardFlip"],
     })
   );
 }

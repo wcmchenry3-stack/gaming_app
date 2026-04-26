@@ -50,7 +50,10 @@ export interface SolitaireState {
   readonly startedAt: number | null;
   /** Total elapsed milliseconds accumulated across all sessions before the current one. */
   readonly accumulatedMs: number;
+  readonly events?: readonly GameEvent[];
 }
+
+export type GameEvent = "cardFlip" | "cardPlace" | "foundationComplete" | "gameWin" | "invalidMove";
 
 /** Card moves are the 5 player actions that shuffle cards between piles.
  * Stock draw and waste recycle are separate operations (no `Move` variant). */

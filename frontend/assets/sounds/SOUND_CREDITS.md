@@ -237,6 +237,74 @@ _(Previously placed — provenance to be confirmed)_
 
 ---
 
+## Solitaire (#831)
+
+### solitaire-card-flip.ogg
+
+- **Event:** Stock draw (cards flipped face-up) and face-down tableau card revealed
+- **Original filename:** `card-slide-2.ogg` from Kenney Casino Audio 1.1
+- **Source URL:** https://kenney.nl/assets/casino-audio
+- **Creator:** Kenney Vleugels (Kenney.nl)
+- **License:** Creative Commons Zero (CC0)
+- **License URL:** https://creativecommons.org/publicdomain/zero/1.0/
+- **Attribution required:** No
+- **Commercial use:** Yes
+- **Download date:** 2026-04-26
+- **Notes:** Card slide sound. Used for both stock draws and revealing a face-down tableau card.
+
+### solitaire-card-place.ogg
+
+- **Event:** Any card placed to tableau or foundation
+- **Original filename:** `card-place-2.ogg` from Kenney Casino Audio 1.1
+- **Source URL:** https://kenney.nl/assets/casino-audio
+- **Creator:** Kenney Vleugels (Kenney.nl)
+- **License:** Creative Commons Zero (CC0)
+- **License URL:** https://creativecommons.org/publicdomain/zero/1.0/
+- **Attribution required:** No
+- **Commercial use:** Yes
+- **Download date:** 2026-04-26
+- **Notes:** Card placement thud. Plays on every valid card move.
+
+### solitaire-foundation-complete.ogg
+
+- **Event:** All 13 cards of one suit placed on its foundation (fires up to 4×)
+- **Original filename:** `powerUp1.ogg` from Kenney Digital Audio
+- **Source URL:** https://kenney.nl/assets/digital-audio
+- **Creator:** Kenney Vleugels (Kenney.nl)
+- **License:** Creative Commons Zero (CC0)
+- **License URL:** https://creativecommons.org/publicdomain/zero/1.0/
+- **Attribution required:** No
+- **Commercial use:** Yes
+- **Download date:** 2026-04-26
+- **Notes:** Rising power-up tone. Signals the satisfying completion of a full suit.
+
+### solitaire-invalid-move.ogg
+
+- **Event:** Move rejected (wrong card, wrong pile)
+- **Original filename:** `lowDown.ogg` from Kenney Digital Audio
+- **Source URL:** https://kenney.nl/assets/digital-audio
+- **Creator:** Kenney Vleugels (Kenney.nl)
+- **License:** Creative Commons Zero (CC0)
+- **License URL:** https://creativecommons.org/publicdomain/zero/1.0/
+- **Attribution required:** No
+- **Commercial use:** Yes
+- **Download date:** 2026-04-26
+- **Notes:** Descending digital tone. Accompanies the red flash on an invalid move.
+
+### solitaire-game-win (reuses hearts-moon-shot.mp3)
+
+- **Event:** Game complete (all 52 cards in foundations)
+- **Original filename:** (reuses `hearts-moon-shot.mp3` — see Hearts section above)
+- **Source URL:** https://pixabay.com/sound-effects/orchestral-win-331233/
+- **Creator:** u_it78ck90s3 on Pixabay
+- **License:** Pixabay Content License
+- **License URL:** https://pixabay.com/service/license-summary/
+- **Attribution required:** No
+- **Commercial use:** Yes
+- **Notes:** Same orchestral win fanfare reused by Yacht, Twenty48, and Blackjack for big moments.
+
+---
+
 ## Yacht (#827)
 
 ### yacht-dice-roll.ogg
