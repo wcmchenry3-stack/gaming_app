@@ -428,6 +428,49 @@ _(Previously placed — provenance to be confirmed)_
 
 ---
 
+## Cascade (#834)
+
+### cascade-fruit-merge.ogg
+
+- **Event:** Two same-tier fruits merge (tier-scaled playback volume: louder at higher tiers)
+- **Original filename:** `tile-move.ogg` from Kenney Digital Audio (same source as `twenty48-tile-merge.ogg`)
+- **Source URL:** https://kenney.nl/assets/digital-audio
+- **Creator:** Kenney Vleugels (Kenney.nl)
+- **License:** Creative Commons Zero (CC0)
+- **License URL:** https://creativecommons.org/publicdomain/zero/1.0/
+- **Attribution required:** No
+- **Commercial use:** Yes
+- **Download date:** 2026-04-26
+- **Notes:** Satisfying merge thud. Volume scales from 0.35 (tier 0) to 1.0 (tier 10) to reward higher-tier merges.
+
+### cascade-cascade-combo.ogg
+
+- **Event:** Chain of 3+ consecutive merge steps (cascadeCombo event)
+- **Original filename:** `waveclear.ogg` from Kenney Digital Audio (same source as `starswarm-waveclear.ogg`)
+- **Source URL:** https://kenney.nl/assets/digital-audio
+- **Creator:** Kenney Vleugels (Kenney.nl)
+- **License:** Creative Commons Zero (CC0)
+- **License URL:** https://creativecommons.org/publicdomain/zero/1.0/
+- **Attribution required:** No
+- **Commercial use:** Yes
+- **Download date:** 2026-04-26
+- **Notes:** Escalating whoosh/clear sting fired once when a combo chain crosses the 3-merge threshold.
+
+### cascade-game-over.ogg
+
+- **Event:** Game over (fruit crosses the danger line after grace period)
+- **Original filename:** (same source as `twenty48-game-over.ogg` from Kenney Digital Audio)
+- **Source URL:** https://kenney.nl/assets/digital-audio
+- **Creator:** Kenney Vleugels (Kenney.nl)
+- **License:** Creative Commons Zero (CC0)
+- **License URL:** https://creativecommons.org/publicdomain/zero/1.0/
+- **Attribution required:** No
+- **Commercial use:** Yes
+- **Download date:** 2026-04-26
+- **Notes:** Descending game-over tone.
+
+---
+
 ## Freesound CC0 License summary (as of 2026-04-25)
 
 > Sounds licensed under Creative Commons Zero (CC0) have been dedicated to the

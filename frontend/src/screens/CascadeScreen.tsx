@@ -1,16 +1,25 @@
-import React, { useCallback, useEffect, useRef, useState } from "react";
-import { View, StyleSheet, LayoutChangeEvent } from "react-native";
+import React, { useCallback, useEffect, useId, useRef, useState } from "react";
+import { AccessibilityInfo, StyleSheet, View, LayoutChangeEvent } from "react-native";
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withTiming,
+  withSpring,
+  runOnJS,
+} from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTranslation } from "react-i18next";
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import { createAudioPlayer } from "expo-audio";
 import { HomeStackParamList } from "../../App";
 import { useTheme } from "../theme/ThemeContext";
 import { GameShell } from "../components/shared/GameShell";
+import { AnimationOverlay } from "../components/shared/AnimationOverlay";
 import { FruitSetProvider, useFruitSet } from "../theme/FruitSetContext";
 import { FruitQueue } from "../game/cascade/fruitQueue";
 import { ControlledSpawnSelector, createSeededRng } from "../game/cascade/spawnSelector";
-import { MergeEvent, WORLD_W, WORLD_H } from "../game/cascade/engine";
+import { WORLD_W, WORLD_H, GameEvent } from "../game/cascade/engine";
 import type { FruitTier } from "../theme/fruitSets";
 import { scoreForMerge } from "../game/cascade/scoring";
 import GameCanvas, { GameCanvasHandle } from "../components/cascade/GameCanvas";
@@ -26,9 +35,89 @@ import {
   CascadeGameSnapshot,
 } from "../game/cascade/storage";
 import { useCascadeScoreboard } from "../game/cascade/CascadeScoreboardContext";
+import { useSound } from "../game/_shared/useSound";
+import { useSoundSettings } from "../game/_shared/SoundContext";
+import { SOUND_REGISTRY } from "../game/_shared/sounds";
 
 /** Throttle for save-during-play — saves at most this often. */
 const SAVE_THROTTLE_MS = 2000;
+
+// ---------------------------------------------------------------------------
+// Merge burst animation (react-native-reanimated)
+// ---------------------------------------------------------------------------
+
+interface MergeBurstData {
+  id: string;
+  x: number; // display px from left of canvas container
+  y: number; // display px from top of canvas container
+  color: string;
+}
+
+function MergeBurst({ x, y, color, onDone }: MergeBurstData & { onDone: () => void }) {
+  const scale = useSharedValue(0.1);
+  const opacity = useSharedValue(0.75);
+
+  useEffect(() => {
+    scale.value = withSpring(2.2, { damping: 6, stiffness: 50 });
+    opacity.value = withTiming(0, { duration: 550 }, (finished) => {
+      if (finished) runOnJS(onDone)();
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const animStyle = useAnimatedStyle(() => ({
+    position: "absolute",
+    left: x - 20,
+    top: y - 20,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: color,
+    transform: [{ scale: scale.value }],
+    opacity: opacity.value,
+  }));
+
+  return <Animated.View pointerEvents="none" style={animStyle} />;
+}
+
+// ---------------------------------------------------------------------------
+// Tier-scaled merge sound (volume 0.35 → 1.0 across tiers 0 → 10)
+// ---------------------------------------------------------------------------
+
+function useTieredMergeSound() {
+  const { muted } = useSoundSettings();
+  const mutedRef = useRef(muted);
+  useEffect(() => {
+    mutedRef.current = muted;
+  }, [muted]);
+
+  const playerRef = useRef<ReturnType<typeof createAudioPlayer> | null>(null);
+  useEffect(() => {
+    const source = SOUND_REGISTRY["cascade.fruitMerge"];
+    if (!source) return;
+    const player = createAudioPlayer(source);
+    playerRef.current = player;
+    return () => {
+      player.remove();
+      playerRef.current = null;
+    };
+  }, []);
+
+  return useCallback(
+    (tier: number) => {
+      if (mutedRef.current || !playerRef.current) return;
+      const volume = Math.min(1, 0.35 + tier * 0.065);
+      try {
+        (playerRef.current as unknown as { volume: number }).volume = volume;
+        playerRef.current.seekTo(0);
+        playerRef.current.play();
+      } catch {
+        /* expo-audio may throw if audio context is suspended */
+      }
+    },
+    [] // stable — reads only refs
+  );
+}
 
 function CascadeGame() {
   const { t } = useTranslation(["cascade", "common"]);
@@ -42,6 +131,21 @@ function CascadeGame() {
   const [containerWidth, setContainerWidth] = useState(0);
   const [containerHeight, setContainerHeight] = useState(0);
   const [, setQueueVersion] = useState(0);
+
+  // Animation state
+  const [mergeBursts, setMergeBursts] = useState<MergeBurstData[]>([]);
+  const [reduceMotion, setReduceMotion] = useState(false);
+  useEffect(() => {
+    AccessibilityInfo.isReduceMotionEnabled().then(setReduceMotion);
+  }, []);
+  const comboOpacity = useSharedValue(0);
+  const comboAnimStyle = useAnimatedStyle(() => ({ opacity: comboOpacity.value }));
+  const nextBurstId = useId();
+
+  // Sounds
+  const playFruitMerge = useTieredMergeSound();
+  const { play: playCascadeCombo } = useSound("cascade.cascadeCombo");
+  const { play: playGameOver } = useSound("cascade.gameOver");
 
   const canvasRef = useRef<GameCanvasHandle>(null);
   const queueRef = useRef(new FruitQueue());
@@ -234,10 +338,11 @@ function CascadeGame() {
     const { width, height } = e.nativeEvent.layout;
     setContainerWidth(Math.floor(width));
     setContainerHeight(Math.floor(height));
+    containerWidthRef.current = Math.floor(width);
   }, []);
 
   const handleMerge = useCallback(
-    (event: MergeEvent) => {
+    (event: { tier: number; x: number; y: number }) => {
       const delta = scoreForMerge(event.tier);
       scoreRef.current += delta;
       setScore((s) => s + delta);
@@ -285,6 +390,53 @@ function CascadeGame() {
     }
     pushScoreboardSnapshot();
   }, [t, endInstrumentedSession, getGameId, pushScoreboardSnapshot]);
+
+  // Refs used inside handleEvents to avoid stale closure issues
+  const scaleRef2 = useRef(0);
+  const containerWidthRef = useRef(0);
+
+  const handleEvents = useCallback(
+    (events: GameEvent[]) => {
+      for (const evt of events) {
+        if (evt.type === "fruitMerge") {
+          handleMerge(evt);
+          playFruitMerge(evt.tier);
+          if (!reduceMotion) {
+            const canvasScale = scaleRef2.current;
+            const canvasOffsetX = (containerWidthRef.current - WORLD_W * canvasScale) / 2;
+            const dispX = canvasOffsetX + evt.x * canvasScale;
+            const dispY = evt.y * canvasScale;
+            const fruitColor = activeFruitSet.fruits[evt.tier]?.color ?? "#fff";
+            const burstId = `${nextBurstId}-${Date.now()}-${evt.x.toFixed(0)}`;
+            setMergeBursts((prev) => [
+              ...prev,
+              { id: burstId, x: dispX, y: dispY, color: fruitColor },
+            ]);
+          }
+        } else if (evt.type === "cascadeCombo") {
+          playCascadeCombo();
+          if (!reduceMotion) {
+            comboOpacity.value = 0.4;
+            comboOpacity.value = withTiming(0, { duration: 700 });
+          }
+        } else if (evt.type === "gameOver") {
+          playGameOver();
+          handleGameOver();
+        }
+      }
+    },
+    [
+      handleMerge,
+      handleGameOver,
+      playFruitMerge,
+      playCascadeCombo,
+      playGameOver,
+      reduceMotion,
+      activeFruitSet,
+      nextBurstId,
+      comboOpacity,
+    ]
+  );
 
   const handleTap = useCallback(
     (x: number) => {
@@ -418,6 +570,7 @@ function CascadeGame() {
     containerWidth > 0 && containerHeight > 0
       ? Math.min(containerWidth / WORLD_W, containerHeight / WORLD_H)
       : 0;
+  scaleRef2.current = scale;
 
   return (
     <GameShell
@@ -442,29 +595,50 @@ function CascadeGame() {
       <ThemeSelector />
 
       {/* Canvas — portrait-constrained, centered */}
-      <View
-        style={[
-          styles.canvasOuter,
-          { backgroundColor: colors.surface, borderColor: colors.border },
-        ]}
-        onLayout={onLayout}
-      >
-        {scale > 0 && currentDef !== undefined && (
-          <GameCanvas
-            ref={canvasRef}
-            fruitSet={activeFruitSet}
-            nextDef={currentDef}
-            onMerge={handleMerge}
-            onGameOver={handleGameOver}
-            onTap={handleTap}
-            onReady={handleCanvasReady}
-            width={WORLD_W}
-            height={WORLD_H}
-            scale={scale}
+      <View style={styles.canvasWrapper}>
+        <View
+          style={[
+            styles.canvasOuter,
+            { backgroundColor: colors.surface, borderColor: colors.border },
+          ]}
+          onLayout={onLayout}
+        >
+          {scale > 0 && currentDef !== undefined && (
+            <GameCanvas
+              ref={canvasRef}
+              fruitSet={activeFruitSet}
+              nextDef={currentDef}
+              onEvents={handleEvents}
+              onTap={handleTap}
+              onReady={handleCanvasReady}
+              width={WORLD_W}
+              height={WORLD_H}
+              scale={scale}
+            />
+          )}
+        </View>
+
+        {/* Animation overlay — covers the canvas area, not clipped by canvasOuter */}
+        <View style={StyleSheet.absoluteFillObject} pointerEvents="none">
+          {/* Cascade combo pulse */}
+          <Animated.View
+            style={[StyleSheet.absoluteFillObject, styles.comboFlash, comboAnimStyle]}
+            accessibilityElementsHidden
+            importantForAccessibility="no-hide-descendants"
           />
-        )}
+          {/* Per-merge burst particles */}
+          {mergeBursts.map((burst) => (
+            <MergeBurst
+              key={burst.id}
+              {...burst}
+              onDone={() => setMergeBursts((prev) => prev.filter((b) => b.id !== burst.id))}
+            />
+          ))}
+        </View>
       </View>
 
+      {/* Game over: fade-out overlay then the score/restart panel */}
+      <AnimationOverlay visible={gameOver} onDismiss={() => {}} />
       {gameOver && (
         <GameOverOverlay
           score={score}
@@ -485,6 +659,9 @@ export default function CascadeScreen() {
 }
 
 const styles = StyleSheet.create({
+  canvasWrapper: {
+    flex: 1,
+  },
   canvasOuter: {
     flex: 1,
     alignItems: "center",
@@ -496,5 +673,9 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     opacity: 0.95,
     overflow: "hidden",
+  },
+  comboFlash: {
+    backgroundColor: "rgba(255, 165, 0, 1)",
+    zIndex: 1,
   },
 });

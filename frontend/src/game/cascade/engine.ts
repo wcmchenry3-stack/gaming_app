@@ -21,6 +21,7 @@ export type {
   EngineHandle,
   EngineSetup,
 } from "./engine.shared";
+export type { GameEvent } from "./types";
 
 import {
   GAME_OVER_GRACE_MS,
@@ -32,7 +33,8 @@ import {
   WALL_THICKNESS,
   DANGER_LINE_RATIO,
 } from "./engine.shared";
-import type { FruitBody, BodySnapshot, MergeEvent, EngineHandle } from "./engine.shared";
+import type { FruitBody, BodySnapshot, EngineHandle } from "./engine.shared";
+import type { GameEvent } from "./types";
 
 // Import type only for typing purposes (no runtime import at module level)
 import type RAPIER_TYPE from "@dimforge/rapier2d-compat";
@@ -60,6 +62,7 @@ async function getRapier(): Promise<RapierLib> {
   return _rapierPromise;
 }
 
+/** @deprecated Callbacks removed in #834 — events now returned from step(). Kept for type compat. */
 export interface BoundaryEscapeEvent {
   tier: number;
   x: number;
@@ -68,13 +71,13 @@ export interface BoundaryEscapeEvent {
   height: number;
 }
 
+/** Merges in a chain needed before a cascadeCombo event fires. */
+const COMBO_THRESHOLD = 3;
+
 export async function createEngine(
   W: number,
   H: number,
-  fruitSet: FruitSet,
-  onMerge: (event: MergeEvent) => void,
-  onGameOver: () => void,
-  onBoundaryEscape?: (event: BoundaryEscapeEvent) => void
+  fruitSet: FruitSet
 ): Promise<EngineHandle> {
   const R = await getRapier();
 
@@ -114,6 +117,8 @@ export async function createEngine(
 
   const dangerY = H * DANGER_LINE_RATIO; // pixels
   let gameOverFired = false;
+  let comboMergeCount = 0;
+  let comboFired = false;
 
   // Merges are queued during collision events and processed synchronously after draining.
   // The third element is the tier snapshotted at enqueue time; processMerges re-verifies
@@ -200,7 +205,7 @@ export async function createEngine(
     fruitMap.delete(bodyHandle);
   }
 
-  function processMerges(): void {
+  function processMerges(events: GameEvent[]): void {
     if (mergeQueue.length > 0) {
       console.log(`[Engine] processMerges queueLen=${mergeQueue.length} t=${Date.now()}`);
     }
@@ -230,7 +235,7 @@ export async function createEngine(
 
       removeBody(ha);
       removeBody(hb);
-      onMerge({ tier, x: midX, y: midY });
+      events.push({ type: "fruitMerge", tier, x: midX, y: midY });
 
       if (tier < 10) {
         const nextDef = fruitSet.fruits[(tier + 1) as FruitTier];
@@ -244,10 +249,12 @@ export async function createEngine(
   let stepCount = 0;
 
   return {
-    step(dt?: number): BodySnapshot[] {
-      if (disposed) return [];
+    step(dt?: number): { snapshots: BodySnapshot[]; events: GameEvent[] } {
+      if (disposed) return { snapshots: [], events: [] };
       stepCount += 1;
       const countBefore = fruitMap.size;
+
+      const events: GameEvent[] = [];
 
       if (dt !== undefined) {
         // Clamp: min 1/120s (avoid micro-steps), max 1/30s (avoid spiral of death on slow frames)
@@ -269,7 +276,21 @@ export async function createEngine(
         }
       });
 
-      processMerges();
+      // Capture merge count before processing (processMerges clears the queue).
+      const mergesThisStep = mergeQueue.length;
+      processMerges(events);
+
+      // Cascade combo: fire when a chain of consecutive-step merges reaches COMBO_THRESHOLD.
+      if (mergesThisStep > 0) {
+        comboMergeCount += mergesThisStep;
+        if (!comboFired && comboMergeCount >= COMBO_THRESHOLD) {
+          events.push({ type: "cascadeCombo", count: comboMergeCount });
+          comboFired = true;
+        }
+      } else {
+        comboMergeCount = 0;
+        comboFired = false;
+      }
 
       // Game-over: a settled fruit (past grace period) with its top above the danger line
       if (!gameOverFired) {
@@ -283,7 +304,7 @@ export async function createEngine(
           const topY = pos.y / SCALE - fb.fruitRadius; // top edge in pixels
           if (topY < dangerY) {
             gameOverFired = true;
-            onGameOver();
+            events.push({ type: "gameOver" });
           }
         });
       }
@@ -315,17 +336,13 @@ export async function createEngine(
         const px = pos.x / SCALE;
         const py = pos.y / SCALE;
 
-        // Detect bodies that have escaped the play area (with margin)
+        // Bodies escaping the play area are silently removed.
         const margin = fb.fruitRadius * 2;
         if (px < -margin || px > W + margin || py > H + margin) {
+          console.warn(
+            `[Engine] boundary escape tier=${fb.fruitTier} px=${Math.round(px)} py=${Math.round(py)}`
+          );
           escapedHandles.push(handle);
-          onBoundaryEscape?.({
-            tier: fb.fruitTier,
-            x: px,
-            y: py,
-            width: W,
-            height: H,
-          });
           return;
         }
 
@@ -342,7 +359,7 @@ export async function createEngine(
       for (const h of escapedHandles) {
         removeBody(h);
       }
-      return snapshots;
+      return { snapshots, events };
     },
 
     drop(def: FruitDefinition, fruitSetId: string, x: number, y: number): void {

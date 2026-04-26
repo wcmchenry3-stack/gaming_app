@@ -1,4 +1,5 @@
 import { FruitDefinition, FruitTier } from "../../theme/fruitSets";
+import type { GameEvent } from "./types";
 
 // --- Canonical physics world dimensions (px) ---
 // Physics always runs at this fixed size. The renderer scales the canvas to fit
@@ -54,8 +55,8 @@ export interface MergeEvent {
 }
 
 export interface EngineHandle {
-  /** Advance physics one step and return current body positions in pixels. */
-  step: (dt?: number) => BodySnapshot[];
+  /** Advance physics one step and return snapshots + any game events that fired. */
+  step: (dt?: number) => { snapshots: BodySnapshot[]; events: GameEvent[] };
   /** Drop a fruit at the given pixel coordinates. */
   drop: (def: FruitDefinition, fruitSetId: string, x: number, y: number) => void;
   cleanup: () => void;

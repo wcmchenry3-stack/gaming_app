@@ -59,8 +59,8 @@ function getWorld(): MockWorld {
   return last.value as MockWorld;
 }
 
-async function buildEngine(onMerge = jest.fn(), onGameOver = jest.fn()): Promise<EngineHandle> {
-  return createEngine(W, H, fruitSet, onMerge, onGameOver);
+async function buildEngine(): Promise<EngineHandle> {
+  return createEngine(W, H, fruitSet);
 }
 
 afterEach(() => {
@@ -73,9 +73,8 @@ afterEach(() => {
 // ---------------------------------------------------------------------------
 
 describe("chain merge: tier 0 → tier 1", () => {
-  it("fires onMerge with tier 0 when two tier-0 fruits collide", async () => {
-    const onMerge = jest.fn();
-    const handle = await buildEngine(onMerge);
+  it("emits fruitMerge(tier:0) when two tier-0 fruits collide", async () => {
+    const handle = await buildEngine();
     const world = getWorld();
 
     // Wall colliders get handles 1000–1002; first two fruit colliders get 1003, 1004
@@ -84,10 +83,11 @@ describe("chain merge: tier 0 → tier 1", () => {
     handle.step();
 
     world._fireCollision(1003, 1004);
-    handle.step();
+    const { events } = handle.step();
 
-    expect(onMerge).toHaveBeenCalledTimes(1);
-    expect(onMerge).toHaveBeenCalledWith(expect.objectContaining({ tier: 0 }));
+    const mergeEvts = events.filter((e) => e.type === "fruitMerge");
+    expect(mergeEvts).toHaveLength(1);
+    expect((mergeEvts[0] as { tier: number }).tier).toBe(0);
   });
 
   it("produces a tier-1 body after a tier-0 merge", async () => {
@@ -101,7 +101,7 @@ describe("chain merge: tier 0 → tier 1", () => {
     handle.step();
 
     // The merged tier-1 fruit should appear in the next step
-    const tiers = handle.step().map((s) => s.tier);
+    const tiers = handle.step().snapshots.map((s) => s.tier);
     expect(tiers).toContain(1);
   });
 });
@@ -111,9 +111,8 @@ describe("chain merge: tier 0 → tier 1", () => {
 // ---------------------------------------------------------------------------
 
 describe("chain merge: tier 1 → tier 2", () => {
-  it("fires onMerge with tier 1 after a second-level merge", async () => {
-    const onMerge = jest.fn();
-    const handle = await buildEngine(onMerge);
+  it("emits fruitMerge(tier:1) after a second-level merge", async () => {
+    const handle = await buildEngine();
     const world = getWorld();
 
     // First merge: two tier-0 → tier-1 (colliders 1003, 1004)
@@ -127,11 +126,12 @@ describe("chain merge: tier 1 → tier 2", () => {
     handle.drop(fruit(1), fruitSet.id, 120, 300);
     handle.step(); // assigns collider 1006
     world._fireCollision(1005, 1006);
-    handle.step();
+    const { events } = handle.step();
 
-    expect(onMerge).toHaveBeenCalledTimes(2);
-    const tiers = onMerge.mock.calls.map((call: [{ tier: number }]) => call[0].tier);
-    expect(tiers).toEqual([0, 1]);
+    const tiers = events
+      .filter((e) => e.type === "fruitMerge")
+      .map((e) => (e as { tier: number }).tier);
+    expect(tiers).toContain(1);
   });
 
   it("produces a tier-2 body after the second-level merge", async () => {
@@ -149,7 +149,7 @@ describe("chain merge: tier 1 → tier 2", () => {
     world._fireCollision(1005, 1006);
     handle.step();
 
-    const tiers = handle.step().map((s) => s.tier);
+    const tiers = handle.step().snapshots.map((s) => s.tier);
     expect(tiers).toContain(2);
   });
 });
@@ -159,12 +159,9 @@ describe("chain merge: tier 1 → tier 2", () => {
 // ---------------------------------------------------------------------------
 
 describe("score accumulation across a merge sequence", () => {
-  it("sum of onMerge scores equals expected tier values", async () => {
+  it("sum of fruitMerge tier values equals expected scores", async () => {
     let totalScore = 0;
-    const onMerge = jest.fn((e: { tier: number }) => {
-      totalScore += scoreForMerge(e.tier as Parameters<typeof scoreForMerge>[0]);
-    });
-    const handle = await buildEngine(onMerge);
+    const handle = await buildEngine();
     const world = getWorld();
 
     // Merge 1: tier 0 → scores scoreForMerge(0) = 2
@@ -172,34 +169,48 @@ describe("score accumulation across a merge sequence", () => {
     handle.drop(fruit(0), fruitSet.id, 110, 300);
     handle.step();
     world._fireCollision(1003, 1004);
-    handle.step(); // spawns tier-1 at 1005
+    const step1 = handle.step(); // spawns tier-1 at 1005
+
+    for (const evt of step1.events) {
+      if (evt.type === "fruitMerge") {
+        totalScore += scoreForMerge((evt as { tier: Parameters<typeof scoreForMerge>[0] }).tier);
+      }
+    }
 
     // Merge 2: tier 1 → scores scoreForMerge(1) = 4
     handle.drop(fruit(1), fruitSet.id, 120, 300);
     handle.step(); // assigns 1006
     world._fireCollision(1005, 1006);
-    handle.step();
+    const step2 = handle.step();
+
+    for (const evt of step2.events) {
+      if (evt.type === "fruitMerge") {
+        totalScore += scoreForMerge((evt as { tier: Parameters<typeof scoreForMerge>[0] }).tier);
+      }
+    }
 
     expect(totalScore).toBe(scoreForMerge(0) + scoreForMerge(1)); // 2 + 4 = 6
   });
 
-  it("five sequential tier-0 merges produce correct cumulative score", async () => {
-    // Each pair of tier-0 fruits merges for scoreForMerge(0) = 2
-    // After first merge a tier-1 spawns; it won't merge unless we fire another collision
-    // This test just counts 3 isolated tier-0 merges
+  it("three isolated tier-0 merges produce correct cumulative score", async () => {
     let totalScore = 0;
-    const onMerge = jest.fn((e: { tier: number }) => {
-      totalScore += scoreForMerge(e.tier as Parameters<typeof scoreForMerge>[0]);
-    });
-    const handle = await buildEngine(onMerge);
+    const handle = await buildEngine();
     const world = getWorld();
+
+    function collectScore(evts: typeof handle.step extends () => { events: infer E } ? E : never) {
+      for (const evt of evts) {
+        if (evt.type === "fruitMerge") {
+          totalScore += scoreForMerge((evt as { tier: Parameters<typeof scoreForMerge>[0] }).tier);
+        }
+      }
+    }
 
     // Merge 1: colliders 1003, 1004
     handle.drop(fruit(0), fruitSet.id, 50, 500);
     handle.drop(fruit(0), fruitSet.id, 60, 500);
     handle.step();
     world._fireCollision(1003, 1004);
-    handle.step();
+    collectScore(handle.step().events);
 
     // After first merge a tier-1 spawns at 1005.
     // Merge 2 uses two new tier-0 drops → 1006, 1007
@@ -207,7 +218,7 @@ describe("score accumulation across a merge sequence", () => {
     handle.drop(fruit(0), fruitSet.id, 110, 500);
     handle.step();
     world._fireCollision(1006, 1007);
-    handle.step();
+    collectScore(handle.step().events);
 
     // After merge 2, spawned tier-1 gets collider 1008.
     // Merge 3 uses two new tier-0 drops → colliders 1009, 1010
@@ -215,9 +226,8 @@ describe("score accumulation across a merge sequence", () => {
     handle.drop(fruit(0), fruitSet.id, 160, 500);
     handle.step();
     world._fireCollision(1009, 1010);
-    handle.step();
+    collectScore(handle.step().events);
 
-    expect(onMerge).toHaveBeenCalledTimes(3);
     expect(totalScore).toBe(3 * scoreForMerge(0)); // 3 × 2 = 6
   });
 });
@@ -227,36 +237,39 @@ describe("score accumulation across a merge sequence", () => {
 // ---------------------------------------------------------------------------
 
 describe("watermelon tier-10 merge", () => {
-  it("fires onMerge with tier 10 and no new body spawns", async () => {
-    const onMerge = jest.fn();
-    const handle = await buildEngine(onMerge);
+  it("emits fruitMerge(tier:10) and no new body spawns", async () => {
+    const handle = await buildEngine();
     const world = getWorld();
 
     handle.drop(fruit(10), fruitSet.id, 100, 300);
     handle.drop(fruit(10), fruitSet.id, 110, 300);
     handle.step();
     world._fireCollision(1003, 1004);
-    handle.step();
+    const { events } = handle.step();
 
-    expect(onMerge).toHaveBeenCalledWith(expect.objectContaining({ tier: 10 }));
+    expect(events.some((e) => e.type === "fruitMerge" && (e as { tier: number }).tier === 10)).toBe(
+      true
+    );
     // No new fruit body should exist after watermelon disappears
-    expect(handle.step()).toHaveLength(0);
+    expect(handle.step().snapshots).toHaveLength(0);
   });
 
   it("awards the watermelon bonus score (256)", async () => {
     let mergeScore = 0;
-    const onMerge = jest.fn((e: { tier: number }) => {
-      mergeScore += scoreForMerge(e.tier as Parameters<typeof scoreForMerge>[0]);
-    });
-    const handle = await buildEngine(onMerge);
+    const handle = await buildEngine();
     const world = getWorld();
 
     handle.drop(fruit(10), fruitSet.id, 100, 300);
     handle.drop(fruit(10), fruitSet.id, 110, 300);
     handle.step();
     world._fireCollision(1003, 1004);
-    handle.step();
+    const { events } = handle.step();
 
+    for (const evt of events) {
+      if (evt.type === "fruitMerge") {
+        mergeScore += scoreForMerge((evt as { tier: Parameters<typeof scoreForMerge>[0] }).tier);
+      }
+    }
     expect(mergeScore).toBe(256);
   });
 });
@@ -266,9 +279,8 @@ describe("watermelon tier-10 merge", () => {
 // ---------------------------------------------------------------------------
 
 describe("game-over with multiple fruits above the danger line", () => {
-  it("fires onGameOver exactly once when multiple fruits exceed the danger line", async () => {
-    const onGameOver = jest.fn();
-    const handle = await buildEngine(jest.fn(), onGameOver);
+  it("emits gameOver exactly once when multiple fruits exceed the danger line", async () => {
+    const handle = await buildEngine();
 
     // tier-0 radius ≈ 18px. Top = y - 18. dangerY = H * DANGER_LINE_RATIO ≈ 108px.
     // Placing at y=50 → top = 32, well above the danger line.
@@ -277,30 +289,30 @@ describe("game-over with multiple fruits above the danger line", () => {
     handle.drop(fruit(0), fruitSet.id, 170, 50);
     handle.step(); // within grace period — no game-over yet
 
-    expect(onGameOver).not.toHaveBeenCalled();
+    expect(handle.step().events.some((e) => e.type === "gameOver")).toBe(false);
 
     jest.useFakeTimers();
     jest.setSystemTime(Date.now() + 3001);
-    handle.step();
+    const { events } = handle.step();
     jest.useRealTimers();
 
-    expect(onGameOver).toHaveBeenCalledTimes(1);
+    expect(events.filter((e) => e.type === "gameOver")).toHaveLength(1);
   });
 
-  it("fires onGameOver only once even after additional steps", async () => {
-    const onGameOver = jest.fn();
-    const handle = await buildEngine(jest.fn(), onGameOver);
+  it("emits gameOver only once even after additional steps", async () => {
+    const handle = await buildEngine();
 
     handle.drop(fruit(0), fruitSet.id, 150, 50);
 
     jest.useFakeTimers();
     jest.setSystemTime(Date.now() + 3001);
+    let totalGameOver = 0;
     for (let i = 0; i < 5; i++) {
-      handle.step();
+      totalGameOver += handle.step().events.filter((e) => e.type === "gameOver").length;
     }
     jest.useRealTimers();
 
-    expect(onGameOver).toHaveBeenCalledTimes(1);
+    expect(totalGameOver).toBe(1);
   });
 });
 
@@ -311,23 +323,20 @@ describe("game-over with multiple fruits above the danger line", () => {
 describe("determinism", () => {
   it("same drop + collision sequence produces identical merge event tiers", async () => {
     async function runSequence(): Promise<number[]> {
-      const events: number[] = [];
-      const handle = await createEngine(
-        W,
-        H,
-        fruitSet,
-        (e: { tier: number }) => events.push(e.tier),
-        jest.fn()
-      );
+      const tiers: number[] = [];
+      const handle = await createEngine(W, H, fruitSet);
       const world = getWorld();
 
       handle.drop(fruit(2), fruitSet.id, 150, 300);
       handle.drop(fruit(2), fruitSet.id, 160, 300);
       handle.step();
       world._fireCollision(1003, 1004);
-      handle.step();
+      const { events } = handle.step();
+      for (const evt of events) {
+        if (evt.type === "fruitMerge") tiers.push((evt as { tier: number }).tier);
+      }
 
-      return events;
+      return tiers;
     }
 
     // Need to clear mocks between runs so getWorld() returns the right instance
@@ -345,7 +354,7 @@ describe("determinism", () => {
       handle.drop(fruit(1), fruitSet.id, 100, 300);
       handle.drop(fruit(2), fruitSet.id, 150, 300);
       handle.drop(fruit(3), fruitSet.id, 200, 300);
-      return handle.step().length;
+      return handle.step().snapshots.length;
     }
 
     const count1 = await runDrops();

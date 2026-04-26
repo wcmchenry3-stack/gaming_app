@@ -11,12 +11,10 @@ import {
   createEngine,
   EngineHandle,
   BodySnapshot,
-  MergeEvent,
+  GameEvent,
   WALL_THICKNESS,
   DANGER_LINE_RATIO,
-  BoundaryEscapeEvent,
 } from "../../game/cascade/engine";
-import * as Sentry from "@sentry/react-native";
 import { FruitDefinition, FruitSet } from "../../theme/fruitSets";
 import { useTheme } from "../../theme/ThemeContext";
 import { useTranslation } from "react-i18next";
@@ -68,8 +66,8 @@ export interface GameCanvasHandle {
 interface Props {
   fruitSet: FruitSet;
   nextDef: FruitDefinition;
-  onMerge: (event: MergeEvent) => void;
-  onGameOver: () => void;
+  /** Called each RAF tick with any game events that fired during that step. */
+  onEvents?: (events: GameEvent[]) => void;
   onTap: (x: number) => void;
   /** Called once, after createEngine() resolves and the engine is ready to drop. */
   onReady?: () => void;
@@ -157,14 +155,13 @@ function drawCollisionOverlay(
 }
 
 const GameCanvas = forwardRef<GameCanvasHandle, Props>(
-  ({ fruitSet, nextDef, onMerge, onGameOver, onTap, onReady, width, height, scale }, ref) => {
+  ({ fruitSet, nextDef, onEvents, onTap, onReady, width, height, scale }, ref) => {
     const { colors } = useTheme();
     const { t } = useTranslation("cascade");
 
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const engineRef = useRef<EngineHandle | null>(null);
-    const onMergeRef = useRef(onMerge);
-    const onGameOverRef = useRef(onGameOver);
+    const onEventsRef = useRef(onEvents);
     const onReadyRef = useRef(onReady);
     const fruitSetRef = useRef(fruitSet);
     const colorsRef = useRef(colors);
@@ -176,11 +173,8 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
     const lastFrameTimeRef = useRef<number>(0); // tracks last RAF timestamp for elapsed-time physics
 
     useEffect(() => {
-      onMergeRef.current = onMerge;
-    }, [onMerge]);
-    useEffect(() => {
-      onGameOverRef.current = onGameOver;
-    }, [onGameOver]);
+      onEventsRef.current = onEvents;
+    }, [onEvents]);
     useEffect(() => {
       onReadyRef.current = onReady;
     }, [onReady]);
@@ -350,25 +344,7 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
       engineRef.current?.cleanup();
       engineRef.current = null;
       bodiesRef.current = [];
-      engineRef.current = await createEngine(
-        width,
-        height,
-        fruitSet,
-        (e) => onMergeRef.current(e),
-        () => onGameOverRef.current(),
-        (escape: BoundaryEscapeEvent) => {
-          Sentry.captureMessage("Cascade: fruit escaped boundary", {
-            level: "warning",
-            extra: {
-              tier: escape.tier,
-              x: Math.round(escape.x),
-              y: Math.round(escape.y),
-              canvasWidth: escape.width,
-              canvasHeight: escape.height,
-            },
-          });
-        }
-      );
+      engineRef.current = await createEngine(width, height, fruitSet);
       // Notify listeners — CascadeScreen uses this to know when it's
       // safe to restore saved fruits via restoreFruits().
       onReadyRef.current?.();
@@ -424,7 +400,11 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
         }
 
         if (engineRef.current) {
-          bodiesRef.current = engineRef.current.step(elapsed);
+          const result = engineRef.current.step(elapsed);
+          bodiesRef.current = result.snapshots;
+          if (result.events.length > 0) {
+            onEventsRef.current?.(result.events);
+          }
         }
         drawRef.current();
         id = requestAnimationFrame(loop);
@@ -519,7 +499,11 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
           const STEP_S = 1 / 60; // ~16.67 ms per step
           const steps = Math.ceil(ms / (STEP_S * 1000));
           for (let i = 0; i < steps; i++) {
-            bodiesRef.current = engineRef.current.step(STEP_S);
+            const result = engineRef.current.step(STEP_S);
+            bodiesRef.current = result.snapshots;
+            if (result.events.length > 0) {
+              onEventsRef.current?.(result.events);
+            }
           }
           drawRef.current();
         },

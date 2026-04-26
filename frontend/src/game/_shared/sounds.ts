@@ -88,6 +88,13 @@ export const SOUND_REGISTRY: Partial<Record<SoundKey, number>> = {
   "sudoku.unitComplete": require("../../../assets/sounds/sudoku-unit-complete.ogg"),
   // eslint-disable-next-line @typescript-eslint/no-require-imports
   "sudoku.puzzleComplete": require("../../../assets/sounds/hearts-moon-shot.mp3"),
+  // Cascade (#834)
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  "cascade.fruitMerge": require("../../../assets/sounds/cascade-fruit-merge.ogg"),
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  "cascade.cascadeCombo": require("../../../assets/sounds/cascade-cascade-combo.ogg"),
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  "cascade.gameOver": require("../../../assets/sounds/cascade-game-over.ogg"),
   // FreeCell (#844)
   // eslint-disable-next-line @typescript-eslint/no-require-imports
   "freecell.cardPlace": require("../../../assets/sounds/freecell-card-place.mp3"),

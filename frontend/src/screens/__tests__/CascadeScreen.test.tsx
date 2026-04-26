@@ -68,8 +68,7 @@ jest.mock("../../components/cascade/GameCanvas", () => {
     (
       props: {
         onTap: (x: number) => void;
-        onMerge: (e: { tier: number; x: number; y: number }) => void;
-        onGameOver: () => void;
+        onEvents?: (events: { type: string; [key: string]: unknown }[]) => void;
       },
       ref: unknown
     ) => {
@@ -83,8 +82,11 @@ jest.mock("../../components/cascade/GameCanvas", () => {
         testID: "mock-canvas",
         onTouchEnd: () => props.onTap(150),
         __onTap: props.onTap,
-        __onMerge: props.onMerge,
-        __onGameOver: props.onGameOver,
+        __onEvents: props.onEvents,
+        // Convenience shims so individual tests can stay concise
+        __onMerge: (e: { tier: number; x: number; y: number }) =>
+          props.onEvents?.([{ type: "fruitMerge", ...e }]),
+        __onGameOver: () => props.onEvents?.([{ type: "gameOver" }]),
       });
     }
   );
