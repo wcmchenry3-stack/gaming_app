@@ -40,6 +40,10 @@ export function penaltyPoints(cards: readonly Card[]): number {
   }, 0);
 }
 
+function scoringCards(cards: readonly Card[]): Card[] {
+  return cards.filter(c => c.suit === "hearts" || (c.suit === "spades" && c.rank === 12));
+}
+
 const OPP_CARD_W = 24;
 const OPP_CARD_H = 28;
 const OPP_OFFSET = 8;
@@ -64,7 +68,8 @@ export function OpponentCapturedPile({ cards, seatLabel }: OpponentProps) {
   const { colors } = useTheme();
   const count = cards.length;
   const points = penaltyPoints(cards);
-  const visible = Math.min(count, OPP_MAX_VISIBLE);
+  const scoredCount = scoringCards(cards).length;
+  const visible = Math.min(scoredCount, OPP_MAX_VISIBLE);
   const fanWidth = visible > 0 ? (visible - 1) * OPP_OFFSET + OPP_CARD_W : 0;
 
   return (
@@ -101,7 +106,7 @@ interface SelfProps {
 export function SelfCapturedPile({ cards }: SelfProps) {
   const { t } = useTranslation("hearts");
   const { colors } = useTheme();
-  const sorted = sortHand(cards);
+  const sorted = sortHand(scoringCards(cards));
   const count = sorted.length;
   const points = penaltyPoints(cards);
   const rowWidth = count > 0 ? (count - 1) * SELF_OFFSET + SELF_CARD_W : 0;
