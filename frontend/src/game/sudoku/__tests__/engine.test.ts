@@ -24,7 +24,7 @@ import {
   toggleNotesMode,
   undo,
 } from "../engine";
-import type { CellValue, Grid, NoteDigit, SudokuCell, SudokuState } from "../types";
+import type { CellValue, GameEvent, Grid, NoteDigit, SudokuCell, SudokuState } from "../types";
 import { UNDO_STACK_LIMIT } from "../types";
 
 // ---------------------------------------------------------------------------
@@ -493,5 +493,123 @@ describe("toggleNotesMode", () => {
     expect(s0.notesMode).toBe(false);
     expect(toggleNotesMode(s0).notesMode).toBe(true);
     expect(toggleNotesMode(toggleNotesMode(s0)).notesMode).toBe(false);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// game events
+// ---------------------------------------------------------------------------
+
+describe("game events", () => {
+  it("emits digitPlace on a correct placement", () => {
+    const s0 = loadPuzzle("easy", "classic", rng0);
+    const { row, col } = findEmpty(s0);
+    const correct = (s0.solution.charCodeAt(row * 9 + col) - 48) as CellValue;
+    const s1 = enterDigit(selectCell(s0, row, col), correct);
+    expect(s1.events).toContainEqual({ type: "digitPlace" } satisfies GameEvent);
+    expect(s1.events?.some((e) => e.type === "errorEntered")).toBe(false);
+  });
+
+  it("emits digitPlace and errorEntered on a wrong digit", () => {
+    const s0 = loadPuzzle("easy", "classic", rng0);
+    const { row, col } = findEmpty(s0);
+    const correct = s0.solution.charCodeAt(row * 9 + col) - 48;
+    const wrong = ((correct % 9) + 1) as CellValue;
+    const s1 = enterDigit(selectCell(s0, row, col), wrong);
+    expect(s1.events).toContainEqual({ type: "digitPlace" } satisfies GameEvent);
+    expect(s1.events).toContainEqual({ type: "errorEntered" } satisfies GameEvent);
+    expect(s1.events?.some((e) => e.type === "unitComplete")).toBe(false);
+  });
+
+  it("does not emit events in notes mode", () => {
+    const s0 = loadPuzzle("easy", "classic", rng0);
+    const { row, col } = findEmpty(s0);
+    const s1 = enterDigit(toggleNotesMode(selectCell(s0, row, col)), 4 as CellValue);
+    expect(s1.events).toBeUndefined();
+  });
+
+  it("emits unitComplete(row) when placing the last digit in a row", () => {
+    let s = loadPuzzle("easy", "classic", rng0);
+    const emptyInRow0: number[] = [];
+    for (let c = 0; c < 9; c++) {
+      if (!s.grid[0]![c]!.given) emptyInRow0.push(c);
+    }
+    expect(emptyInRow0.length).toBeGreaterThan(0);
+    // Fill all but the last empty cell in row 0.
+    for (let i = 0; i < emptyInRow0.length - 1; i++) {
+      const c = emptyInRow0[i]!;
+      const v = (s.solution.charCodeAt(c) - 48) as CellValue;
+      s = enterDigit(selectCell(s, 0, c), v);
+    }
+    const lastC = emptyInRow0[emptyInRow0.length - 1]!;
+    const v = (s.solution.charCodeAt(lastC) - 48) as CellValue;
+    const final = enterDigit(selectCell(s, 0, lastC), v);
+    expect(
+      final.events?.some((e) => e.type === "unitComplete" && e.unit === "row" && e.index === 0)
+    ).toBe(true);
+  });
+
+  it("emits unitComplete(col) when placing the last digit in a column", () => {
+    let s = loadPuzzle("easy", "classic", rng0);
+    const emptyInCol0: number[] = [];
+    for (let r = 0; r < 9; r++) {
+      if (!s.grid[r]![0]!.given) emptyInCol0.push(r);
+    }
+    expect(emptyInCol0.length).toBeGreaterThan(0);
+    for (let i = 0; i < emptyInCol0.length - 1; i++) {
+      const r = emptyInCol0[i]!;
+      const v = (s.solution.charCodeAt(r * 9) - 48) as CellValue;
+      s = enterDigit(selectCell(s, r, 0), v);
+    }
+    const lastR = emptyInCol0[emptyInCol0.length - 1]!;
+    const v = (s.solution.charCodeAt(lastR * 9) - 48) as CellValue;
+    const final = enterDigit(selectCell(s, lastR, 0), v);
+    expect(
+      final.events?.some((e) => e.type === "unitComplete" && e.unit === "col" && e.index === 0)
+    ).toBe(true);
+  });
+
+  it("emits puzzleComplete when the last cell is correctly placed", () => {
+    let s = loadPuzzle("easy", "classic", rng0);
+    for (let r = 0; r < 9; r++) {
+      for (let c = 0; c < 9; c++) {
+        if (s.grid[r]![c]!.given) continue;
+        const v = (s.solution.charCodeAt(r * 9 + c) - 48) as CellValue;
+        s = enterDigit(selectCell(s, r, c), v);
+      }
+    }
+    expect(s.events).toContainEqual({ type: "puzzleComplete" } satisfies GameEvent);
+    expect(s.isComplete).toBe(true);
+  });
+
+  it("clears events on undo (snapshot carries no events)", () => {
+    const s0 = loadPuzzle("easy", "classic", rng0);
+    const { row, col } = findEmpty(s0);
+    const correct = (s0.solution.charCodeAt(row * 9 + col) - 48) as CellValue;
+    const s1 = enterDigit(selectCell(s0, row, col), correct);
+    expect(s1.events?.length).toBeGreaterThan(0);
+    const s2 = undo(s1);
+    expect(s2.events).toBeUndefined();
+  });
+
+  it("emits digitPlace and row unitComplete in the mini (6×6) variant", () => {
+    let s = loadPuzzle("easy", "mini", rng0);
+    const emptyInRow0: number[] = [];
+    for (let c = 0; c < 6; c++) {
+      if (!s.grid[0]![c]!.given) emptyInRow0.push(c);
+    }
+    expect(emptyInRow0.length).toBeGreaterThan(0);
+    for (let i = 0; i < emptyInRow0.length - 1; i++) {
+      const c = emptyInRow0[i]!;
+      const v = (s.solution.charCodeAt(c) - 48) as CellValue;
+      s = enterDigit(selectCell(s, 0, c), v);
+    }
+    const lastC = emptyInRow0[emptyInRow0.length - 1]!;
+    const v = (s.solution.charCodeAt(lastC) - 48) as CellValue;
+    const final = enterDigit(selectCell(s, 0, lastC), v);
+    expect(final.events).toContainEqual({ type: "digitPlace" } satisfies GameEvent);
+    expect(
+      final.events?.some((e) => e.type === "unitComplete" && e.unit === "row" && e.index === 0)
+    ).toBe(true);
   });
 });

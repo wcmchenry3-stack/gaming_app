@@ -13,6 +13,7 @@ import miniPuzzleBank from "./puzzles_mini.json";
 import type {
   CellValue,
   Difficulty,
+  GameEvent,
   Grid,
   GridConfig,
   NoteDigit,
@@ -240,7 +241,7 @@ export function toggleNotesMode(state: SudokuState): SudokuState {
 }
 
 function pushUndo(state: SudokuState): readonly SudokuState[] {
-  const snapshot: SudokuState = { ...state, undoStack: [] };
+  const snapshot: SudokuState = { ...state, undoStack: [], events: undefined };
   const next = [...state.undoStack, snapshot];
   return next.length > UNDO_STACK_LIMIT ? next.slice(next.length - UNDO_STACK_LIMIT) : next;
 }
@@ -262,6 +263,38 @@ function isGridComplete(grid: Grid, solution: string): boolean {
  * without reaching into the `state.isComplete` field directly. */
 export function isComplete(grid: Grid, solution: string): boolean {
   return isGridComplete(grid, solution);
+}
+
+function isRowComplete(grid: Grid, row: number, size: number): boolean {
+  for (let c = 0; c < size; c++) {
+    const cell = grid[row]?.[c];
+    if (!cell || cell.value === 0 || cell.isError) return false;
+  }
+  return true;
+}
+
+function isColComplete(grid: Grid, col: number, size: number): boolean {
+  for (let r = 0; r < size; r++) {
+    const cell = grid[r]?.[col];
+    if (!cell || cell.value === 0 || cell.isError) return false;
+  }
+  return true;
+}
+
+function isBoxComplete(
+  grid: Grid,
+  boxRow: number,
+  boxCol: number,
+  boxRows: number,
+  boxCols: number
+): boolean {
+  for (let r = 0; r < boxRows; r++) {
+    for (let c = 0; c < boxCols; c++) {
+      const cell = grid[boxRow + r]?.[boxCol + c];
+      if (!cell || cell.value === 0 || cell.isError) return false;
+    }
+  }
+  return true;
 }
 
 /** Enter a digit into the selected cell.
@@ -323,12 +356,31 @@ export function enterDigit(state: SudokuState, digit: CellValue): SudokuState {
     isError,
   }));
   const nextErrorCount = isError ? state.errorCount + 1 : state.errorCount;
+  const complete = isGridComplete(nextGrid, state.solution);
+
+  const events: GameEvent[] = [{ type: "digitPlace" }];
+  if (isError) {
+    events.push({ type: "errorEntered" });
+  } else {
+    const { boxRows, boxCols } = cfg;
+    if (isRowComplete(nextGrid, row, size))
+      events.push({ type: "unitComplete", unit: "row", index: row });
+    if (isColComplete(nextGrid, col, size))
+      events.push({ type: "unitComplete", unit: "col", index: col });
+    const boxRow = Math.floor(row / boxRows) * boxRows;
+    const boxCol = Math.floor(col / boxCols) * boxCols;
+    if (isBoxComplete(nextGrid, boxRow, boxCol, boxRows, boxCols))
+      events.push({ type: "unitComplete", unit: "box", index: boxRow * size + boxCol });
+    if (complete) events.push({ type: "puzzleComplete" });
+  }
+
   return {
     ...state,
     grid: nextGrid,
     errorCount: nextErrorCount,
-    isComplete: isGridComplete(nextGrid, state.solution),
+    isComplete: complete,
     undoStack,
+    events,
   };
 }
 
