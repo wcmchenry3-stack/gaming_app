@@ -67,6 +67,7 @@ export type HomeStackParamList = {
   BlackjackTable: undefined;
   Twenty48: undefined;
   Solitaire: undefined;
+  FreeCell: undefined;
   Hearts: undefined;
   Sudoku: undefined;
   Scoreboard: {
@@ -139,6 +140,7 @@ const LazyBlackjackBettingScreen = withSuspense(LazyScreens.BlackjackBetting, "b
 const LazyBlackjackTableScreen = withSuspense(LazyScreens.BlackjackTable, "blackjack_table");
 const LazyTwenty48Screen = withSuspense(LazyScreens.Twenty48, "twenty48");
 const LazySolitaireScreen = withSuspense(LazyScreens.Solitaire, "solitaire");
+const LazyFreeCellScreen = withSuspense(LazyScreens.FreeCell, "freecell");
 const LazyHeartsScreen = withSuspense(LazyScreens.Hearts, "hearts");
 const LazySudokuScreen = withSuspense(LazyScreens.Sudoku, "sudoku");
 const LazyLeaderboardScreen = withSuspense(LazyScreens.Leaderboard, "leaderboard");
@@ -161,6 +163,7 @@ function LobbyStack() {
       <HomeStack.Screen name="BlackjackTable" component={LazyBlackjackTableScreen} />
       <HomeStack.Screen name="Twenty48" component={LazyTwenty48Screen} />
       <HomeStack.Screen name="Solitaire" component={LazySolitaireScreen} />
+      <HomeStack.Screen name="FreeCell" component={LazyFreeCellScreen} />
       <HomeStack.Screen name="Hearts" component={LazyHeartsScreen} />
       <HomeStack.Screen name="Sudoku" component={LazySudokuScreen} />
       <HomeStack.Screen name="Scoreboard" component={LazyScoreboardScreen} />
