@@ -31,7 +31,9 @@ import {
   FRUIT_FRICTION,
 } from "./engine.shared";
 import type { FruitBody, BodySnapshot, MergeEvent, EngineHandle } from "./engine.shared";
+import type { GameEvent } from "./types";
 
+/** @deprecated Callbacks removed in #834 — events now returned from step(). Kept for type compat. */
 export interface BoundaryEscapeEvent {
   tier: number;
   x: number;
@@ -39,6 +41,8 @@ export interface BoundaryEscapeEvent {
   width: number;
   height: number;
 }
+
+const COMBO_THRESHOLD = 3;
 
 // matter.js gravity scale: Rapier uses GRAVITY_Y=14 with SCALE=0.01, i.e. 1400 px/s².
 // matter.js default gravity.scale = 0.001 and gravity.y = 1 → effective ≈ 1 px/tick².
@@ -55,10 +59,7 @@ const FIXED_STEP_MS = 1000 / 60;
 export async function createEngine(
   W: number,
   H: number,
-  fruitSet: FruitSet,
-  onMerge: (event: MergeEvent) => void,
-  onGameOver: () => void,
-  onBoundaryEscape?: (event: BoundaryEscapeEvent) => void
+  fruitSet: FruitSet
 ): Promise<EngineHandle> {
   const engine = Matter.Engine.create({
     gravity: { x: 0, y: MATTER_GRAVITY_Y },
@@ -88,6 +89,8 @@ export async function createEngine(
   let gameOverFired = false;
 
   const mergeQueue: Array<[number, number]> = [];
+  let comboMergeCount = 0;
+  let comboFired = false;
 
   // --- Collision handler ---
   Matter.Events.on(engine, "collisionStart", (event) => {
@@ -155,7 +158,7 @@ export async function createEngine(
     fruitMap.delete(bodyId);
   }
 
-  function processMerges(): void {
+  function processMerges(events: GameEvent[]): void {
     for (const [idA, idB] of mergeQueue) {
       const fa = fruitMap.get(idA);
       const fb = fruitMap.get(idB);
@@ -176,7 +179,7 @@ export async function createEngine(
 
       removeBody(idA);
       removeBody(idB);
-      onMerge({ tier, x: midX, y: midY });
+      events.push({ type: "fruitMerge", tier, x: midX, y: midY });
 
       if (tier < 10) {
         const nextDef = fruitSet.fruits[(tier + 1) as FruitTier];
@@ -199,7 +202,7 @@ export async function createEngine(
   }
 
   return {
-    step(dt?: number): BodySnapshot[] {
+    step(dt?: number): { snapshots: BodySnapshot[]; events: GameEvent[] } {
       // Matter recommends physics steps ≤ 16.67ms; larger steps let
       // fast bodies tunnel through thin static walls (#499). Break a
       // large frame into fixed sub-steps. Clamp total elapsed to 1/6s
@@ -212,7 +215,20 @@ export async function createEngine(
         remainingMs -= stepMs;
       }
 
-      processMerges();
+      const events: GameEvent[] = [];
+      const mergesThisStep = mergeQueue.length;
+      processMerges(events);
+
+      if (mergesThisStep > 0) {
+        comboMergeCount += mergesThisStep;
+        if (!comboFired && comboMergeCount >= COMBO_THRESHOLD) {
+          events.push({ type: "cascadeCombo", count: comboMergeCount });
+          comboFired = true;
+        }
+      } else {
+        comboMergeCount = 0;
+        comboFired = false;
+      }
 
       // Safety net: hard-clamp any body that drifted slightly outside the
       // left/right walls or below the floor and zero outward velocity so it
@@ -268,7 +284,7 @@ export async function createEngine(
           const topY = body.position.y - fb.fruitRadius;
           if (topY < dangerY) {
             gameOverFired = true;
-            onGameOver();
+            events.push({ type: "gameOver" });
           }
         });
       }
@@ -287,13 +303,7 @@ export async function createEngine(
         const margin = fb.fruitRadius * 2;
         if (px < -margin || px > W + margin || py > H + margin) {
           escapedIds.push(bodyId);
-          onBoundaryEscape?.({
-            tier: fb.fruitTier,
-            x: px,
-            y: py,
-            width: W,
-            height: H,
-          });
+          console.warn(`[Engine.native] boundary escape tier=${fb.fruitTier} x=${px} y=${py}`);
           return;
         }
 
@@ -310,7 +320,7 @@ export async function createEngine(
       for (const id of escapedIds) {
         removeBody(id);
       }
-      return snapshots;
+      return { snapshots, events };
     },
 
     drop(def: FruitDefinition, fruitSetId: string, x: number, y: number): void {

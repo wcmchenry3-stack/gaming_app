@@ -26,13 +26,11 @@ import {
 } from "@shopify/react-native-skia";
 import type { SkImage } from "@shopify/react-native-skia";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
-import * as Sentry from "@sentry/react-native";
 import {
   createEngine,
   EngineHandle,
   BodySnapshot,
-  MergeEvent,
-  BoundaryEscapeEvent,
+  GameEvent,
   WALL_THICKNESS,
   DANGER_LINE_RATIO,
 } from "../../game/cascade/engine";
@@ -78,8 +76,8 @@ export interface GameCanvasHandle {
 interface Props {
   fruitSet: FruitSet;
   nextDef: FruitDefinition;
-  onMerge: (event: MergeEvent) => void;
-  onGameOver: () => void;
+  /** Called each RAF tick with any game events that fired during that step. */
+  onEvents?: (events: GameEvent[]) => void;
   onTap: (x: number) => void;
   /** Fires once after createEngine() resolves. */
   onReady?: () => void;
@@ -131,7 +129,7 @@ function FruitBodySkia({
 }
 
 const GameCanvas = forwardRef<GameCanvasHandle, Props>(
-  ({ fruitSet, nextDef, onMerge, onGameOver, onTap, onReady, width, height, scale }, ref) => {
+  ({ fruitSet, nextDef, onEvents, onTap, onReady, width, height, scale }, ref) => {
     const { colors } = useTheme();
     const { t } = useTranslation("cascade");
 
@@ -145,17 +143,13 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
 
     const engineRef = useRef<EngineHandle | null>(null);
     const lastFrameTimeRef = useRef<number>(0); // tracks last RAF timestamp for elapsed-time physics
-    const onMergeRef = useRef(onMerge);
-    const onGameOverRef = useRef(onGameOver);
+    const onEventsRef = useRef(onEvents);
     const onReadyRef = useRef(onReady);
     const fruitSetRef = useRef(fruitSet);
 
     useEffect(() => {
-      onMergeRef.current = onMerge;
-    }, [onMerge]);
-    useEffect(() => {
-      onGameOverRef.current = onGameOver;
-    }, [onGameOver]);
+      onEventsRef.current = onEvents;
+    }, [onEvents]);
     useEffect(() => {
       onReadyRef.current = onReady;
     }, [onReady]);
@@ -169,25 +163,7 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
       setBodies([]);
       setEngineError(null);
       try {
-        engineRef.current = await createEngine(
-          width,
-          height,
-          fruitSet,
-          (e) => onMergeRef.current(e),
-          () => onGameOverRef.current(),
-          (escape: BoundaryEscapeEvent) => {
-            Sentry.captureMessage("Cascade: fruit escaped boundary", {
-              level: "warning",
-              extra: {
-                tier: escape.tier,
-                x: Math.round(escape.x),
-                y: Math.round(escape.y),
-                canvasWidth: escape.width,
-                canvasHeight: escape.height,
-              },
-            });
-          }
-        );
+        engineRef.current = await createEngine(width, height, fruitSet);
       } catch (err) {
         setEngineError(err instanceof Error ? err.message : String(err));
         return;
@@ -214,7 +190,11 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
         const elapsed = Math.min((timestamp - lastFrameTimeRef.current) / 1000, 1 / 30);
         lastFrameTimeRef.current = timestamp;
         if (engineRef.current) {
-          setBodies(engineRef.current.step(elapsed));
+          const result = engineRef.current.step(elapsed);
+          setBodies(result.snapshots);
+          if (result.events.length > 0) {
+            onEventsRef.current?.(result.events);
+          }
         }
         id = requestAnimationFrame(loop);
       }

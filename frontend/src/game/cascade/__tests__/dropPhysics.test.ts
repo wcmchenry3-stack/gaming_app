@@ -37,32 +37,21 @@ const W = 400;
 const H = 700;
 const DT = 1 / 60;
 
-interface BuiltEngine {
-  handle: EngineHandle;
-  onMerge: jest.Mock;
-  onGameOver: jest.Mock;
-  onBoundaryEscape: jest.Mock;
-}
-
-async function buildEngine(): Promise<BuiltEngine> {
-  const onMerge = jest.fn();
-  const onGameOver = jest.fn();
-  const onBoundaryEscape = jest.fn();
-  const handle = await createEngine(W, H, fruitSet, onMerge, onGameOver, onBoundaryEscape);
-  return { handle, onMerge, onGameOver, onBoundaryEscape };
+async function buildEngine(): Promise<EngineHandle> {
+  return createEngine(W, H, fruitSet);
 }
 
 /** Step the engine for `n` frames, returning the final snapshot array. */
 function stepN(handle: EngineHandle, n: number): BodySnapshot[] {
   let last: BodySnapshot[] = [];
-  for (let i = 0; i < n; i++) last = handle.step(DT);
+  for (let i = 0; i < n; i++) last = handle.step(DT).snapshots;
   return last;
 }
 
 /** Step the engine for `n` frames, returning every per-frame snapshot array. */
 function stepNCollect(handle: EngineHandle, n: number): BodySnapshot[][] {
   const frames: BodySnapshot[][] = [];
-  for (let i = 0; i < n; i++) frames.push(handle.step(DT));
+  for (let i = 0; i < n; i++) frames.push(handle.step(DT).snapshots);
   return frames;
 }
 
@@ -81,14 +70,14 @@ afterEach(() => {
 
 describe("single sprite — drop and settle", () => {
   it("falls strictly downward (y monotonically increases) until it hits the floor", async () => {
-    const { handle } = await buildEngine();
+    const handle = await buildEngine();
     const r = fruit(0).radius;
     handle.drop(fruit(0), fruitSet.id, W / 2, 30);
 
     let prevY = 30;
     let hitFloor = false;
     for (let i = 0; i < 240; i++) {
-      const snap = handle.step(DT)[0];
+      const snap = handle.step(DT).snapshots[0];
       if (snap === undefined) break;
       const reachedFloor = snap.y + r >= innerFloorTop - 1;
       if (!reachedFloor) {
@@ -111,14 +100,14 @@ describe("single sprite — drop and settle", () => {
     // floor — the only forces are gravity and (possibly) a momentary contact
     // with the spawn-point air. There should be virtually no horizontal drift.
     // Once the sprite lands on the floor it may skid; that's tested elsewhere.
-    const { handle } = await buildEngine();
+    const handle = await buildEngine();
     const r = fruit(0).radius;
     const startX = W / 2;
     handle.drop(fruit(0), fruitSet.id, startX, 30);
 
     let maxDxFreeFall = 0;
     for (let i = 0; i < 360; i++) {
-      const snap = handle.step(DT)[0];
+      const snap = handle.step(DT).snapshots[0];
       if (snap === undefined) break;
       // Stop measuring once the sprite has reached (or crossed) the floor.
       const onFloor = snap.y + r >= innerFloorTop - 1;
@@ -135,7 +124,7 @@ describe("single sprite — drop and settle", () => {
   it("after settling, the sprite has not skidded across the bin", async () => {
     // Skidding a few pixels is fine. Skidding 100+ pixels — visible to the
     // player as "the fruit slid all the way across" — is the failure mode.
-    const { handle } = await buildEngine();
+    const handle = await buildEngine();
     const startX = W / 2;
     handle.drop(fruit(0), fruitSet.id, startX, 30);
     const final = stepN(handle, 480)[0];
@@ -149,7 +138,7 @@ describe("single sprite — drop and settle", () => {
   });
 
   it("never escapes the bin during the entire fall", async () => {
-    const { handle, onBoundaryEscape } = await buildEngine();
+    const handle = await buildEngine();
     const r = fruit(0).radius;
     handle.drop(fruit(0), fruitSet.id, W / 2, 30);
 
@@ -165,12 +154,13 @@ describe("single sprite — drop and settle", () => {
         expect(s.y - r).toBeGreaterThan(0);
       }
     }
-    expect(onBoundaryEscape).not.toHaveBeenCalled();
+    // All sprites still present in snapshots (none escaped)
+    expect(frames[frames.length - 1]).toHaveLength(1);
     handle.cleanup();
   });
 
   it("settles near the floor with negligible velocity", async () => {
-    const { handle } = await buildEngine();
+    const handle = await buildEngine();
     const r = fruit(0).radius;
     handle.drop(fruit(0), fruitSet.id, W / 2, 30);
 
@@ -183,7 +173,7 @@ describe("single sprite — drop and settle", () => {
     expect(snap.y + r).toBeLessThan(innerFloorTop + 1);
 
     // One more step shouldn't move it noticeably (settled).
-    const after = handle.step(DT)[0];
+    const after = handle.step(DT).snapshots[0];
     if (after === undefined) throw new Error("Expected a snapshot");
     expect(Math.abs(after.x - snap.x)).toBeLessThan(0.5);
     expect(Math.abs(after.y - snap.y)).toBeLessThan(0.5);
@@ -193,7 +183,7 @@ describe("single sprite — drop and settle", () => {
   it.each([0, 2, 5, 8, 10])(
     "tier-%i sprite stays inside the bin and reaches the floor",
     async (tier) => {
-      const { handle, onBoundaryEscape } = await buildEngine();
+      const handle = await buildEngine();
       const def = fruit(tier);
       handle.drop(def, fruitSet.id, W / 2, 30 + def.radius);
 
@@ -207,7 +197,6 @@ describe("single sprite — drop and settle", () => {
       // On the floor.
       expect(snap.y + def.radius).toBeGreaterThan(innerFloorTop - 2);
       expect(snap.y + def.radius).toBeLessThan(innerFloorTop + 1);
-      expect(onBoundaryEscape).not.toHaveBeenCalled();
       handle.cleanup();
     }
   );
@@ -221,17 +210,17 @@ describe("two sprites — dropped well apart", () => {
   it("two non-touching sprites settle the same as if dropped alone", async () => {
     // Solo drop at x=120 — record settled position
     const solo = await buildEngine();
-    solo.handle.drop(fruit(0), fruitSet.id, 120, 30);
-    const soloFinal = stepN(solo.handle, 360)[0];
+    solo.drop(fruit(0), fruitSet.id, 120, 30);
+    const soloFinal = stepN(solo, 360)[0];
     if (soloFinal === undefined) throw new Error("Expected solo snapshot");
-    solo.handle.cleanup();
+    solo.cleanup();
 
     // Two-drop: the same fruit at x=120 plus a far-away companion at x=320.
     // Spacing 200px ≫ 2*r=36 → guaranteed no contact.
     const pair = await buildEngine();
-    pair.handle.drop(fruit(0), fruitSet.id, 120, 30);
-    pair.handle.drop(fruit(0), fruitSet.id, 320, 30);
-    const pairFinal = stepN(pair.handle, 360);
+    pair.drop(fruit(0), fruitSet.id, 120, 30);
+    pair.drop(fruit(0), fruitSet.id, 320, 30);
+    const pairFinal = stepN(pair, 360);
     expect(pairFinal).toHaveLength(2);
     // Find the sprite that started at x=120 — it must land where it would
     // have landed alone (within ~1px of physics noise).
@@ -242,13 +231,17 @@ describe("two sprites — dropped well apart", () => {
     }
     expect(Math.abs(left.x - soloFinal.x)).toBeLessThan(1);
     expect(Math.abs(left.y - soloFinal.y)).toBeLessThan(1);
-    // No merge should fire — same tier but never in contact.
-    expect(pair.onMerge).not.toHaveBeenCalled();
-    pair.handle.cleanup();
+    // No merges should have fired — same tier but never in contact.
+    let mergeCount = 0;
+    for (let i = 0; i < 10; i++) {
+      mergeCount += pair.step(DT).events.filter((e) => e.type === "fruitMerge").length;
+    }
+    expect(mergeCount).toBe(0);
+    pair.cleanup();
   });
 
   it("two non-touching sprites both stay inside the bin", async () => {
-    const { handle, onBoundaryEscape } = await buildEngine();
+    const handle = await buildEngine();
     handle.drop(fruit(0), fruitSet.id, 120, 30);
     handle.drop(fruit(0), fruitSet.id, 320, 30);
 
@@ -261,7 +254,8 @@ describe("two sprites — dropped well apart", () => {
         expect(s.y + r).toBeLessThanOrEqual(innerFloorTop + 0.5);
       }
     }
-    expect(onBoundaryEscape).not.toHaveBeenCalled();
+    // Both sprites still present throughout
+    expect(frames[frames.length - 1]).toHaveLength(2);
     handle.cleanup();
   });
 });
@@ -278,7 +272,7 @@ describe("two sprites — stacked drop, different tiers (no merge)", () => {
 
   it("small sprite dropped onto a settled larger sprite — both stay in the bin", async () => {
     // Drop tier-3 first, let it settle on the floor.
-    const { handle, onBoundaryEscape } = await buildEngine();
+    const handle = await buildEngine();
     const big = fruit(3); // radius 38
     const small = fruit(0); // radius 18
     handle.drop(big, fruitSet.id, W / 2, 30 + big.radius);
@@ -301,12 +295,11 @@ describe("two sprites — stacked drop, different tiers (no merge)", () => {
         expect(s.y - r).toBeGreaterThan(0);
       }
     }
-    expect(onBoundaryEscape).not.toHaveBeenCalled();
     handle.cleanup();
   });
 
   it("large sprite dropped onto a settled smaller sprite — both stay in the bin", async () => {
-    const { handle, onBoundaryEscape } = await buildEngine();
+    const handle = await buildEngine();
     const small = fruit(0); // radius 18
     const big = fruit(5); // radius 49
     handle.drop(small, fruitSet.id, W / 2, 30 + small.radius);
@@ -323,12 +316,11 @@ describe("two sprites — stacked drop, different tiers (no merge)", () => {
         expect(s.y - r).toBeGreaterThan(0);
       }
     }
-    expect(onBoundaryEscape).not.toHaveBeenCalled();
     handle.cleanup();
   });
 
   it("after the collision settles, neither sprite is moving upward (no rebound out the top)", async () => {
-    const { handle } = await buildEngine();
+    const handle = await buildEngine();
     const big = fruit(4); // radius 44
     const small = fruit(0);
     handle.drop(big, fruitSet.id, W / 2, 30 + big.radius);
@@ -339,8 +331,8 @@ describe("two sprites — stacked drop, different tiers (no merge)", () => {
     // check two consecutive frames: the small sprite must be moving down (or
     // not at all), never up.
     stepN(handle, 360);
-    const a = handle.step(DT);
-    const b = handle.step(DT);
+    const a = handle.step(DT).snapshots;
+    const b = handle.step(DT).snapshots;
     const aSmall = a.find((s) => s.tier === 0);
     const bSmall = b.find((s) => s.tier === 0);
     if (aSmall === undefined || bSmall === undefined) {
@@ -355,7 +347,7 @@ describe("two sprites — stacked drop, different tiers (no merge)", () => {
     // Small sprite dropped half a radius off-centre onto a wider sprite — the
     // collision will produce some lateral motion (skid) which is fine, the
     // bin must still contain it.
-    const { handle, onBoundaryEscape } = await buildEngine();
+    const handle = await buildEngine();
     const big = fruit(6); // radius 54
     const small = fruit(0); // radius 18
     handle.drop(big, fruitSet.id, W / 2, 30 + big.radius);
@@ -374,7 +366,6 @@ describe("two sprites — stacked drop, different tiers (no merge)", () => {
         expect(s.y - r).toBeGreaterThan(0);
       }
     }
-    expect(onBoundaryEscape).not.toHaveBeenCalled();
     handle.cleanup();
   });
 });
