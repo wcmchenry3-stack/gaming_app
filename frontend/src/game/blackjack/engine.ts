@@ -11,7 +11,7 @@
  * player phase (mirrors backend's conceal behavior).
  */
 
-import { BlackjackState, CardResponse, GameRules, HandResponse } from "./types";
+import { BlackjackGameEvent, BlackjackState, CardResponse, GameRules, HandResponse } from "./types";
 
 const SUITS = ["♠", "♥", "♦", "♣"] as const;
 const RANKS = ["A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K"] as const;
@@ -71,6 +71,7 @@ export interface EngineState {
   split_count: number;
   split_from_aces: boolean[];
   rules: GameRules;
+  events?: readonly BlackjackGameEvent[];
 }
 
 // ---------------------------------------------------------------------------
@@ -205,6 +206,17 @@ function deal(deck: Card[], deckCount: number = 1): { deck: Card[]; card: Card }
 }
 
 // ---------------------------------------------------------------------------
+// Event helpers
+// ---------------------------------------------------------------------------
+
+function outcomeEvent(outcome: "blackjack" | "win" | "lose" | "push"): BlackjackGameEvent {
+  if (outcome === "blackjack") return { type: "blackjack" };
+  if (outcome === "win") return { type: "win" };
+  if (outcome === "lose") return { type: "loss" };
+  return { type: "push" };
+}
+
+// ---------------------------------------------------------------------------
 // View projection
 // ---------------------------------------------------------------------------
 
@@ -296,6 +308,7 @@ export function toViewState(s: EngineState): BlackjackState {
     hand_outcomes: isSplit ? [...s.hand_outcomes] : s.outcome !== null ? [s.outcome] : [],
     hand_payouts: isSplit ? [...s.hand_payouts] : s.payout !== 0 ? [s.payout] : [],
     rules: s.rules,
+    events: s.events,
   };
 }
 
@@ -386,14 +399,24 @@ export function placeBet(s: EngineState, amount: number): EngineState {
     deck,
     player_hand: playerHand,
     dealer_hand: dealerHand,
+    events: undefined,
     ...emptySplitState(),
   };
 
   // Natural blackjack check
   if (isNaturalBlackjack(playerHand)) {
-    return settleWith(afterDeal, isNaturalBlackjack(dealerHand) ? "push" : "blackjack");
+    const outcome = isNaturalBlackjack(dealerHand) ? "push" : "blackjack";
+    const settled = settleWith(afterDeal, outcome);
+    return {
+      ...settled,
+      events: [{ type: "cardDeal" }, { type: "cardDeal" }, outcomeEvent(outcome)],
+    };
   }
-  return { ...afterDeal, phase: "player" };
+  return {
+    ...afterDeal,
+    phase: "player",
+    events: [{ type: "cardDeal" }, { type: "cardDeal" }],
+  };
 }
 
 function dealerShouldDraw(hand: readonly Card[], hitSoft17: boolean): boolean {
@@ -500,10 +523,13 @@ export function hit(s: EngineState): EngineState {
     }
     const { deck, card } = deal(s.deck);
     const newHands = s.player_hands.map((h, i) => (i === s.active_hand_index ? [...h, card] : h));
-    let next: EngineState = { ...s, deck, player_hands: newHands };
-    if (handValue(newHands[s.active_hand_index] ?? []) > 21) {
+    const busted = handValue(newHands[s.active_hand_index] ?? []) > 21;
+    const events: BlackjackGameEvent[] = [{ type: "cardDeal" }];
+    if (busted) events.push({ type: "bust" });
+    let next: EngineState = { ...s, deck, player_hands: newHands, events };
+    if (busted) {
       next = settleHand(next, s.active_hand_index, "lose");
-      return advanceHand(next);
+      return { ...advanceHand(next), events };
     }
     return next;
   }
@@ -515,17 +541,22 @@ export function hit(s: EngineState): EngineState {
     player_hand: [...s.player_hand, card],
   };
   if (handValue(next.player_hand) > 21) {
-    return settleWith(next, "lose");
+    return { ...settleWith(next, "lose"), events: [{ type: "cardDeal" }, { type: "bust" }] };
   }
-  return next;
+  return { ...next, events: [{ type: "cardDeal" }] };
 }
 
 export function stand(s: EngineState): EngineState {
   if (s.phase !== "player") throw new Error("Not in player phase.");
   if (s.split_count > 0) {
-    return advanceHand(s);
+    const next = advanceHand({ ...s, events: undefined });
+    if (next.phase === "result" && next.outcome !== null) {
+      return { ...next, events: [outcomeEvent(next.outcome as "win" | "lose" | "push")] };
+    }
+    return next;
   }
-  return determineAndSettle(dealerPlay(s));
+  const next = determineAndSettle(dealerPlay({ ...s, events: undefined }));
+  return { ...next, events: [outcomeEvent(next.outcome as "win" | "lose" | "push")] };
 }
 
 export function doubleDown(s: EngineState): EngineState {
@@ -556,11 +587,18 @@ export function doubleDown(s: EngineState): EngineState {
     const newBets = [...s.hand_bets];
     newBets[idx] = handBet * 2;
 
-    let next: EngineState = { ...s, deck, player_hands: newHands, hand_bets: newBets };
-    if (handValue(newHands[idx] ?? []) > 21) {
+    const busted = handValue(newHands[idx] ?? []) > 21;
+    const splitDoubleEvents: BlackjackGameEvent[] = [{ type: "cardDeal" }];
+    if (busted) splitDoubleEvents.push({ type: "bust" });
+    let next: EngineState = { ...s, deck, player_hands: newHands, hand_bets: newBets, events: splitDoubleEvents };
+    if (busted) {
       next = settleHand(next, idx, "lose");
     }
-    return advanceHand(next);
+    const advanced = advanceHand(next);
+    if (advanced.phase === "result" && advanced.outcome !== null && !busted) {
+      return { ...advanced, events: [...splitDoubleEvents, outcomeEvent(advanced.outcome as "win" | "lose" | "push")] };
+    }
+    return { ...advanced, events: splitDoubleEvents };
   }
 
   if (s.player_hand.length !== 2) {
@@ -575,17 +613,26 @@ export function doubleDown(s: EngineState): EngineState {
     doubled: true,
     deck,
     player_hand: [...s.player_hand, card],
+    events: undefined,
   };
 
   if (handValue(afterDouble.player_hand) > 21) {
-    return settleWith(afterDouble, "lose");
+    return {
+      ...settleWith(afterDouble, "lose"),
+      events: [{ type: "cardDeal" }, { type: "bust" }],
+    };
   }
-  return determineAndSettle(dealerPlay(afterDouble));
+  const settled = determineAndSettle(dealerPlay(afterDouble));
+  return {
+    ...settled,
+    events: [{ type: "cardDeal" }, outcomeEvent(settled.outcome as "win" | "lose" | "push")],
+  };
 }
 
 export function split(s: EngineState): EngineState {
   if (s.phase !== "player") throw new Error("Not in player phase.");
   if (s.split_count >= MAX_SPLITS) throw new Error("Maximum number of splits reached.");
+  s = { ...s, events: undefined };
 
   const isSplit = s.split_count > 0;
   const hand: readonly Card[] = isSplit
@@ -699,6 +746,7 @@ export function newHand(s: EngineState): EngineState {
     deck,
     player_hand: [],
     dealer_hand: [],
+    events: undefined,
     ...emptySplitState(),
   };
 }

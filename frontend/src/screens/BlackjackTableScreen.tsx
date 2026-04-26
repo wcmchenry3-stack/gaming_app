@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { View, Text, Pressable, StyleSheet, useWindowDimensions } from "react-native";
+import Animated, { useAnimatedStyle, useSharedValue, withSequence, withTiming } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTranslation } from "react-i18next";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
@@ -14,6 +15,8 @@ import {
   toViewState,
 } from "../game/blackjack/engine";
 import { useBlackjackGame } from "../game/blackjack/BlackjackGameContext";
+import { useGameEvents } from "../game/_shared/useGameEvents";
+import { useSound } from "../game/_shared/useSound";
 import BlackjackTable from "../components/blackjack/BlackjackTable";
 import ActionButtons from "../components/blackjack/ActionButtons";
 import ResultBanner from "../components/blackjack/ResultBanner";
@@ -21,6 +24,7 @@ import GameOverModal from "../components/blackjack/GameOverModal";
 import HudSidebar from "../components/blackjack/HudSidebar";
 import NewGameConfirmModal from "../components/shared/NewGameConfirmModal";
 import { GameShell } from "../components/shared/GameShell";
+import { BlackjackCelebrationAnimation } from "../components/blackjack/BlackjackCelebrationAnimation";
 
 // Below this viewport height, card sizes, action-button sizes, and table
 // padding collapse to compact variants so the dealer hand, player hand, and
@@ -39,8 +43,61 @@ export default function BlackjackTableScreen({ navigation }: Props) {
   const insets = useSafeAreaInsets();
   const { height } = useWindowDimensions();
   const isCompact = height < COMPACT_HEIGHT_BREAKPOINT;
-  const { engine, loading, error, apply, handlePlayAgain } = useBlackjackGame();
+  const { engine, loading, error, apply, clearEvents, handlePlayAgain } = useBlackjackGame();
   const [confirmNewGameVisible, setConfirmNewGameVisible] = useState(false);
+  const [celebrationVisible, setCelebrationVisible] = useState(false);
+
+  const cardDealSound = useSound("blackjack.cardDeal");
+  const blackjackSound = useSound("blackjack.blackjack");
+  const bustSound = useSound("blackjack.bust");
+  const winSound = useSound("blackjack.win");
+  const pushSound = useSound("blackjack.push");
+
+  // Flash animations for player hand area
+  const bustFlash = useSharedValue(0);
+  const winFlash = useSharedValue(0);
+
+  const bustFlashStyle = useAnimatedStyle(() => ({
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "rgba(220,38,38,0.4)",
+    opacity: bustFlash.value,
+    pointerEvents: "none",
+  }));
+  const winFlashStyle = useAnimatedStyle(() => ({
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "rgba(34,197,94,0.35)",
+    opacity: winFlash.value,
+    pointerEvents: "none",
+  }));
+
+  const state = engine ? toViewState(engine) : null;
+
+  useGameEvents(
+    state?.events,
+    {
+      cardDeal: () => cardDealSound.play(),
+      blackjack: () => {
+        blackjackSound.play();
+        setCelebrationVisible(true);
+      },
+      bust: () => {
+        bustSound.play();
+        bustFlash.value = withSequence(
+          withTiming(1, { duration: 80 }),
+          withTiming(0, { duration: 400 })
+        );
+      },
+      win: () => {
+        winSound.play();
+        winFlash.value = withSequence(
+          withTiming(1, { duration: 80 }),
+          withTiming(0, { duration: 500 })
+        );
+      },
+      push: () => pushSound.play(),
+    },
+    clearEvents
+  );
 
   // Redirect to BettingScreen when Next Hand transitions phase back to betting.
   useEffect(() => {
@@ -70,7 +127,6 @@ export default function BlackjackTableScreen({ navigation }: Props) {
     navigation.replace("BlackjackBetting");
   }, [handlePlayAgain, navigation]);
 
-  const state = engine ? toViewState(engine) : null;
   const isSplit = (state?.player_hands?.length ?? 0) > 1;
 
   const handleHit = () => apply(engineHit, "hit");
@@ -147,6 +203,8 @@ export default function BlackjackTableScreen({ navigation }: Props) {
               handPayouts={state.hand_payouts}
               compact={isCompact}
             />
+            <Animated.View style={bustFlashStyle} />
+            <Animated.View style={winFlashStyle} />
           </View>
 
           {/* Right spacer to balance the sidebar — collapsed on split so both hands fit */}
@@ -216,6 +274,11 @@ export default function BlackjackTableScreen({ navigation }: Props) {
         visible={confirmNewGameVisible}
         onConfirm={handleConfirmNewGame}
         onCancel={() => setConfirmNewGameVisible(false)}
+      />
+
+      <BlackjackCelebrationAnimation
+        visible={celebrationVisible}
+        onDismiss={() => setCelebrationVisible(false)}
       />
     </GameShell>
   );
