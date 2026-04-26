@@ -51,9 +51,13 @@ import {
   drawFromStock,
   recycleWaste,
   undo,
+  validateMove,
 } from "../game/solitaire/engine";
 import type { DrawMode, Move, SolitaireState, Suit } from "../game/solitaire/types";
 import { SUITS } from "../game/solitaire/types";
+import { DragProvider } from "../game/_shared/drag/DragContext";
+import { DragContainer } from "../game/_shared/drag/DragContainer";
+import type { DragSource, DragCard } from "../game/_shared/drag/DragContext";
 import {
   clearGame,
   loadGame,
@@ -433,6 +437,73 @@ export default function SolitaireScreen() {
     [state, selection, autoCompleting, tryMove, flashInvalid]
   );
 
+  // ── Drag-and-drop handlers ─────────────────────────────────────────────────
+
+  const handleDropToTableau = useCallback(
+    (source: DragSource, toCol: number): boolean => {
+      if (source.game !== "solitaire") return false;
+      if (source.type === "tableau") {
+        return tryMove({
+          type: "tableau-to-tableau",
+          fromCol: source.col,
+          fromIndex: source.fromIndex,
+          toCol,
+        });
+      }
+      if (source.type === "waste") return tryMove({ type: "waste-to-tableau", toCol });
+      if (source.type === "foundation") {
+        return tryMove({ type: "foundation-to-tableau", fromSuit: source.suit as Suit, toCol });
+      }
+      return false;
+    },
+    [tryMove]
+  );
+
+  const handleDropToFoundation = useCallback(
+    (source: DragSource): boolean => {
+      if (source.game !== "solitaire") return false;
+      if (source.type === "tableau")
+        return tryMove({ type: "tableau-to-foundation", fromCol: source.col });
+      if (source.type === "waste") return tryMove({ type: "waste-to-foundation" });
+      return false;
+    },
+    [tryMove]
+  );
+
+  const getLegalDropIds = useCallback(
+    (source: DragSource, cards: DragCard[]): string[] => {
+      if (state === null || source.game !== "solitaire") return [];
+      const ids: string[] = [];
+
+      for (let col = 0; col < TABLEAU_COLS; col++) {
+        let move: Move | null = null;
+        if (source.type === "tableau" && source.col !== col) {
+          move = { type: "tableau-to-tableau", fromCol: source.col, fromIndex: source.fromIndex, toCol: col };
+        } else if (source.type === "waste") {
+          move = { type: "waste-to-tableau", toCol: col };
+        } else if (source.type === "foundation") {
+          move = { type: "foundation-to-tableau", fromSuit: source.suit as Suit, toCol: col };
+        }
+        if (move && validateMove(state, move)) ids.push(`solitaire-tableau-${col}`);
+      }
+
+      if (cards.length === 1) {
+        let foundMove: Move | null = null;
+        if (source.type === "tableau")
+          foundMove = { type: "tableau-to-foundation", fromCol: source.col };
+        else if (source.type === "waste") foundMove = { type: "waste-to-foundation" };
+        if (foundMove && validateMove(state, foundMove)) {
+          for (const suit of SUITS) ids.push(`solitaire-foundation-${suit}`);
+        }
+      }
+
+      return ids;
+    },
+    [state]
+  );
+
+  // ── Undo / auto-complete ────────────────────────────────────────────────────
+
   const handleUndo = useCallback(() => {
     if (state === null || autoCompleting) return;
     if (state.undoStack.length === 0) return;
@@ -493,6 +564,7 @@ export default function SolitaireScreen() {
   };
 
   return (
+    <DragProvider getLegalDropIds={getLegalDropIds}>
     <GameShell
       title={t("solitaire:game.title")}
       requireBack
@@ -526,7 +598,7 @@ export default function SolitaireScreen() {
       {state === null ? (
         <PreGameModal onChoose={deal} />
       ) : (
-        <View style={styles.body} onLayout={onOuterLayout}>
+        <DragContainer style={styles.body as ViewStyle} onLayout={onOuterLayout}>
           <View style={styles.hudRow} accessibilityRole="summary">
             <Text
               style={[styles.hudText, { color: colors.text }]}
@@ -563,6 +635,8 @@ export default function SolitaireScreen() {
                     suit={suit}
                     selected={selection?.kind === "foundation" && selection.suit === suit}
                     onPress={handleFoundationPress}
+                    dropId={`solitaire-foundation-${suit}`}
+                    onDrop={(source) => handleDropToFoundation(source)}
                   />
                 ))}
               </View>
@@ -576,6 +650,8 @@ export default function SolitaireScreen() {
                     selectedIndex={tableauSelection(col)}
                     onCardPress={handleTableauCardPress}
                     onEmptyPress={handleEmptyTableauPress}
+                    dropId={`solitaire-tableau-${col}`}
+                    onDrop={(source) => handleDropToTableau(source, col)}
                   />
                 ))}
               </View>
@@ -616,11 +692,12 @@ export default function SolitaireScreen() {
             ]}
             testID="solitaire-invalid-flash"
           />
-        </View>
+        </DragContainer>
       )}
 
       {state?.isComplete === true && <WinModal score={state.score} onNewGame={resetToPreGame} />}
     </GameShell>
+    </DragProvider>
   );
 }
 

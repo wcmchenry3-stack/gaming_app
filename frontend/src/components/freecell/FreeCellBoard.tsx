@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useCallback, useState } from "react";
 import { StyleSheet, View } from "react-native";
 import { useTranslation } from "react-i18next";
 
@@ -8,6 +8,9 @@ import type { FreeCellState, Move } from "../../game/freecell/types";
 import FreeCellSlot, { CARD_WIDTH } from "./FreeCellSlot";
 import FoundationPile from "./FoundationPile";
 import TableauColumn from "./TableauColumn";
+import { DragProvider } from "../../game/_shared/drag/DragContext";
+import { DragContainer } from "../../game/_shared/drag/DragContainer";
+import type { DragSource, DragCard } from "../../game/_shared/drag/DragContext";
 
 const TABLEAU_COLS = 8;
 const COL_GAP = 4;
@@ -47,12 +50,7 @@ export default function FreeCellBoard({ state, onMove }: FreeCellBoardProps) {
       return;
     }
     if (selection.kind === "tableau") {
-      tryMove({
-        type: "tableau-to-tableau",
-        fromCol: selection.col,
-        fromIndex: selection.index,
-        toCol: col,
-      });
+      tryMove({ type: "tableau-to-tableau", fromCol: selection.col, fromIndex: selection.index, toCol: col });
     } else {
       tryMove({ type: "freecell-to-tableau", fromCell: selection.cell, toCol: col });
     }
@@ -61,12 +59,7 @@ export default function FreeCellBoard({ state, onMove }: FreeCellBoardProps) {
   function handleTableauEmptyPress(col: number) {
     if (selection === null) return;
     if (selection.kind === "tableau") {
-      tryMove({
-        type: "tableau-to-tableau",
-        fromCol: selection.col,
-        fromIndex: selection.index,
-        toCol: col,
-      });
+      tryMove({ type: "tableau-to-tableau", fromCol: selection.col, fromIndex: selection.index, toCol: col });
     } else {
       tryMove({ type: "freecell-to-tableau", fromCell: selection.cell, toCol: col });
     }
@@ -99,48 +92,150 @@ export default function FreeCellBoard({ state, onMove }: FreeCellBoardProps) {
     }
   }
 
-  return (
-    <View style={styles.board} accessibilityRole="none" accessibilityLabel={t("a11y.boardRegion")}>
-      <View style={styles.topRow}>
-        <View style={styles.slotGroup}>
-          {state.freeCells.map((card, i) => (
-            <FreeCellSlot
-              key={i}
-              card={card}
-              cellIndex={i}
-              selected={selection?.kind === "freecell" && selection.cell === i}
-              onPress={handleFreeCellPress}
-            />
-          ))}
-        </View>
-        <View style={styles.slotGroup}>
-          {SUITS.map((suit) => (
-            <FoundationPile
-              key={suit}
-              pile={state.foundations[suit]}
-              suit={suit}
-              selected={false}
-              onPress={() => handleFoundationPress()}
-            />
-          ))}
-        </View>
-      </View>
+  // ── Drag-and-drop handlers ──────────────────────────────────────────────────
 
-      <View style={styles.tableau}>
-        {state.tableau.map((pile, col) => (
-          <TableauColumn
-            key={col}
-            pile={pile}
-            colIndex={col}
-            selectedIndex={
-              selection?.kind === "tableau" && selection.col === col ? selection.index : undefined
-            }
-            onCardPress={handleTableauCardPress}
-            onEmptyPress={handleTableauEmptyPress}
-          />
-        ))}
-      </View>
-    </View>
+  const handleDropToTableau = useCallback(
+    (source: DragSource, toCol: number): boolean => {
+      if (source.game !== "freecell") return false;
+      if (source.type === "tableau") {
+        if (!validateMove(state, { type: "tableau-to-tableau", fromCol: source.col, fromIndex: source.fromIndex, toCol }))
+          return false;
+        onMove({ type: "tableau-to-tableau", fromCol: source.col, fromIndex: source.fromIndex, toCol });
+        return true;
+      }
+      if (source.type === "freecell") {
+        if (!validateMove(state, { type: "freecell-to-tableau", fromCell: source.cell, toCol }))
+          return false;
+        onMove({ type: "freecell-to-tableau", fromCell: source.cell, toCol });
+        return true;
+      }
+      return false;
+    },
+    [state, onMove]
+  );
+
+  const handleDropToFoundation = useCallback(
+    (source: DragSource): boolean => {
+      if (source.game !== "freecell") return false;
+      if (source.type === "tableau") {
+        if (!validateMove(state, { type: "tableau-to-foundation", fromCol: source.col })) return false;
+        onMove({ type: "tableau-to-foundation", fromCol: source.col });
+        return true;
+      }
+      if (source.type === "freecell") {
+        if (!validateMove(state, { type: "freecell-to-foundation", fromCell: source.cell })) return false;
+        onMove({ type: "freecell-to-foundation", fromCell: source.cell });
+        return true;
+      }
+      return false;
+    },
+    [state, onMove]
+  );
+
+  const handleDropToFreeCell = useCallback(
+    (source: DragSource, toCell: number): boolean => {
+      if (source.game !== "freecell" || source.type !== "tableau") return false;
+      if (!validateMove(state, { type: "tableau-to-freecell", fromCol: source.col, toCell })) return false;
+      onMove({ type: "tableau-to-freecell", fromCol: source.col, toCell });
+      return true;
+    },
+    [state, onMove]
+  );
+
+  const getLegalDropIds = useCallback(
+    (source: DragSource, cards: DragCard[]): string[] => {
+      if (source.game !== "freecell") return [];
+      const ids: string[] = [];
+
+      // Tableau columns.
+      for (let col = 0; col < TABLEAU_COLS; col++) {
+        let move: Move | null = null;
+        if (source.type === "tableau" && source.col !== col) {
+          move = { type: "tableau-to-tableau", fromCol: source.col, fromIndex: source.fromIndex, toCol: col };
+        } else if (source.type === "freecell") {
+          move = { type: "freecell-to-tableau", fromCell: source.cell, toCol: col };
+        }
+        if (move && validateMove(state, move)) ids.push(`freecell-tableau-${col}`);
+      }
+
+      // Free cell slots (single-card only).
+      if (cards.length === 1 && source.type === "tableau") {
+        for (let cell = 0; cell < 4; cell++) {
+          if (validateMove(state, { type: "tableau-to-freecell", fromCol: source.col, toCell: cell })) {
+            ids.push(`freecell-slot-${cell}`);
+          }
+        }
+      }
+
+      // Foundation (single-card only).
+      if (cards.length === 1) {
+        let foundMove: Move | null = null;
+        if (source.type === "tableau")
+          foundMove = { type: "tableau-to-foundation", fromCol: source.col };
+        else if (source.type === "freecell")
+          foundMove = { type: "freecell-to-foundation", fromCell: source.cell };
+        if (foundMove && validateMove(state, foundMove)) {
+          for (const suit of SUITS) ids.push(`freecell-foundation-${suit}`);
+        }
+      }
+
+      return ids;
+    },
+    [state]
+  );
+
+  return (
+    <DragProvider getLegalDropIds={getLegalDropIds}>
+      <DragContainer>
+        <View style={styles.board} accessibilityRole="none" accessibilityLabel={t("a11y.boardRegion")}>
+          <View style={styles.topRow}>
+            <View style={styles.slotGroup}>
+              {state.freeCells.map((card, i) => (
+                <FreeCellSlot
+                  key={i}
+                  card={card}
+                  cellIndex={i}
+                  selected={selection?.kind === "freecell" && selection.cell === i}
+                  onPress={handleFreeCellPress}
+                  dropId={`freecell-slot-${i}`}
+                  onDrop={(source) => handleDropToFreeCell(source, i)}
+                />
+              ))}
+            </View>
+            <View style={styles.slotGroup}>
+              {SUITS.map((suit) => (
+                <FoundationPile
+                  key={suit}
+                  pile={state.foundations[suit]}
+                  suit={suit}
+                  selected={false}
+                  onPress={() => handleFoundationPress()}
+                  dropId={`freecell-foundation-${suit}`}
+                  onDrop={(source) => handleDropToFoundation(source)}
+                />
+              ))}
+            </View>
+          </View>
+
+          <View style={styles.tableau}>
+            {state.tableau.map((pile, col) => (
+              <TableauColumn
+                key={col}
+                pile={pile}
+                colIndex={col}
+                selectedIndex={
+                  selection?.kind === "tableau" && selection.col === col ? selection.index : undefined
+                }
+                onCardPress={handleTableauCardPress}
+                onEmptyPress={handleTableauEmptyPress}
+                dropId={`freecell-tableau-${col}`}
+                onDrop={(source) => handleDropToTableau(source, col)}
+              />
+            ))}
+          </View>
+        </View>
+      </DragContainer>
+    </DragProvider>
   );
 }
 

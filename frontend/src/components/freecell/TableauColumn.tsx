@@ -8,6 +8,9 @@ import { rankLabel } from "../../game/_shared/decks/cardId";
 import type { CanonicalSuit } from "../../game/_shared/decks/types";
 import type { Card } from "../../game/freecell/types";
 import { CARD_WIDTH, CARD_HEIGHT } from "./FreeCellSlot";
+import { DraggableCard } from "../../game/_shared/drag/DraggableCard";
+import { DropTarget } from "../../game/_shared/drag/DropTarget";
+import type { DropHandler } from "../../game/_shared/drag/DragContext";
 
 const FACE_UP_OFFSET = 24;
 
@@ -17,6 +20,8 @@ export interface TableauColumnProps {
   readonly selectedIndex?: number;
   readonly onCardPress?: (colIndex: number, cardIndex: number) => void;
   readonly onEmptyPress?: (colIndex: number) => void;
+  readonly dropId?: string;
+  readonly onDrop?: DropHandler;
 }
 
 export default function TableauColumn({
@@ -25,12 +30,18 @@ export default function TableauColumn({
   selectedIndex,
   onCardPress,
   onEmptyPress,
+  dropId,
+  onDrop,
 }: TableauColumnProps) {
   const { colors } = useTheme();
   const { t } = useTranslation("freecell");
 
+  const highlightStyle: ViewStyle = { borderColor: colors.accent, borderWidth: 2, borderRadius: 8 };
+  const dimStyle: ViewStyle = { opacity: 0.4 };
+  const hasDrop = dropId !== undefined && onDrop !== undefined;
+
   if (pile.length === 0) {
-    return (
+    const empty = (
       <Pressable
         onPress={onEmptyPress ? () => onEmptyPress(colIndex) : undefined}
         style={[styles.empty, { borderColor: colors.border, backgroundColor: colors.background }]}
@@ -38,6 +49,14 @@ export default function TableauColumn({
         accessibilityLabel={t("pile.tableau.empty", { col: colIndex + 1 })}
       />
     );
+    if (hasDrop) {
+      return (
+        <DropTarget id={dropId!} onDrop={onDrop!} highlightStyle={highlightStyle} dimStyle={dimStyle}>
+          {empty}
+        </DropTarget>
+      );
+    }
+    return empty;
   }
 
   const offsets: number[] = [];
@@ -47,39 +66,70 @@ export default function TableauColumn({
     acc += FACE_UP_OFFSET;
   }
   const containerHeight = CARD_HEIGHT + (offsets[pile.length - 1] ?? 0);
+  const containerStyle: ViewStyle = { width: CARD_WIDTH, height: containerHeight };
 
-  const containerStyle: ViewStyle = {
-    width: CARD_WIDTH,
-    height: containerHeight,
-  };
+  const cards = pile.map((card, cardIndex) => {
+    const isSelected = selectedIndex !== undefined && cardIndex >= selectedIndex;
+    const rl = rankLabel(card.rank);
+    const suitName = t(`suit.${card.suit}` as const);
+    const label = isSelected
+      ? t("card.selected", { rank: rl, suit: suitName })
+      : t("card.label", { rank: rl, suit: suitName });
+    const handlePress = onCardPress ? () => onCardPress(colIndex, cardIndex) : undefined;
+
+    const dragCards = pile.slice(cardIndex).map((c) => ({
+      suit: c.suit as CanonicalSuit,
+      rank: c.rank,
+      faceDown: false,
+      width: CARD_WIDTH,
+      height: CARD_HEIGHT,
+    }));
+
+    return (
+      <DraggableCard
+        key={cardIndex}
+        style={[styles.cardSlot, { top: offsets[cardIndex] ?? 0 }]}
+        onTap={handlePress}
+        dragCards={dragCards}
+        dragSource={{ game: "freecell", type: "tableau", col: colIndex, fromIndex: cardIndex }}
+      >
+        <SharedPlayingCard
+          suit={card.suit as CanonicalSuit}
+          rank={card.rank}
+          width={CARD_WIDTH}
+          height={CARD_HEIGHT}
+          highlighted={isSelected}
+          accessibilityLabel={label}
+        />
+      </DraggableCard>
+    );
+  });
+
+  if (hasDrop) {
+    return (
+      <DropTarget
+        id={dropId!}
+        onDrop={onDrop!}
+        style={containerStyle}
+        highlightStyle={highlightStyle}
+        dimStyle={dimStyle}
+      >
+        <View
+          style={StyleSheet.absoluteFill}
+          accessibilityLabel={t("pile.tableau.label", { col: colIndex + 1, count: pile.length })}
+        >
+          {cards}
+        </View>
+      </DropTarget>
+    );
+  }
 
   return (
     <View
       style={containerStyle}
       accessibilityLabel={t("pile.tableau.label", { col: colIndex + 1, count: pile.length })}
     >
-      {pile.map((card, cardIndex) => {
-        const isSelected = selectedIndex !== undefined && cardIndex >= selectedIndex;
-        const rl = rankLabel(card.rank);
-        const suitName = t(`suit.${card.suit}` as const);
-        const label = isSelected
-          ? t("card.selected", { rank: rl, suit: suitName })
-          : t("card.label", { rank: rl, suit: suitName });
-        const handlePress = onCardPress ? () => onCardPress(colIndex, cardIndex) : undefined;
-        return (
-          <View key={cardIndex} style={[styles.cardSlot, { top: offsets[cardIndex] ?? 0 }]}>
-            <SharedPlayingCard
-              suit={card.suit as CanonicalSuit}
-              rank={card.rank}
-              width={CARD_WIDTH}
-              height={CARD_HEIGHT}
-              highlighted={isSelected}
-              onPress={handlePress}
-              accessibilityLabel={label}
-            />
-          </View>
-        );
-      })}
+      {cards}
     </View>
   );
 }

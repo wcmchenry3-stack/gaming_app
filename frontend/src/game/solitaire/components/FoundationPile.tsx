@@ -13,6 +13,8 @@ import { useTranslation } from "react-i18next";
 import { useTheme } from "../../../theme/ThemeContext";
 import type { Card, Suit } from "../types";
 import CardView, { CARD_HEIGHT, CARD_WIDTH } from "./CardView";
+import { DropTarget } from "../../_shared/drag/DropTarget";
+import type { DropHandler } from "../../_shared/drag/DragContext";
 
 const SUIT_SYMBOL: Record<Suit, string> = {
   spades: "♠",
@@ -26,6 +28,9 @@ export interface FoundationPileProps {
   readonly suit: Suit;
   readonly selected?: boolean;
   readonly onPress?: (suit: Suit) => void;
+  /** Unique drop-zone ID, e.g. "solitaire-foundation-spades". */
+  readonly dropId?: string;
+  readonly onDrop?: DropHandler;
 }
 
 export default function FoundationPile({
@@ -33,56 +38,71 @@ export default function FoundationPile({
   suit,
   selected = false,
   onPress,
+  dropId,
+  onDrop,
 }: FoundationPileProps) {
   const { colors } = useTheme();
   const { t } = useTranslation("solitaire");
+  const hasDrop = dropId !== undefined && onDrop !== undefined;
 
-  // Non-empty: show the top card (always face-up on foundations).
-  if (pile.length > 0) {
-    const top = pile[pile.length - 1];
-    if (top !== undefined) {
+  const highlightStyle = { borderColor: colors.accent, borderWidth: 2, borderRadius: 8 };
+  const dimStyle = { opacity: 0.4 };
+
+  const inner = (() => {
+    if (pile.length > 0) {
+      const top = pile[pile.length - 1];
+      if (top !== undefined) {
+        return (
+          <CardView
+            card={top}
+            selected={selected}
+            onPress={onPress ? () => onPress(suit) : undefined}
+          />
+        );
+      }
+    }
+
+    const label = t("pile.foundation.empty", { suit: t(`suit.${suit}` as const) });
+    const style = [
+      styles.empty,
+      {
+        borderColor: selected ? colors.accent : colors.border,
+        borderWidth: selected ? 2 : 1,
+        backgroundColor: colors.background,
+      },
+    ];
+    const content = (
+      <Text style={[styles.suit, { color: colors.textMuted }]}>{SUIT_SYMBOL[suit]}</Text>
+    );
+
+    if (onPress) {
       return (
-        <CardView
-          card={top}
-          selected={selected}
-          onPress={onPress ? () => onPress(suit) : undefined}
-        />
+        <Pressable onPress={() => onPress(suit)} style={style} accessibilityRole="button" accessibilityLabel={label}>
+          {content}
+        </Pressable>
       );
     }
-  }
-
-  // Empty: suit-symbol placeholder.
-  const label = t("pile.foundation.empty", { suit: t(`suit.${suit}` as const) });
-  const style = [
-    styles.empty,
-    {
-      borderColor: selected ? colors.accent : colors.border,
-      borderWidth: selected ? 2 : 1,
-      backgroundColor: colors.background,
-    },
-  ];
-
-  const content = (
-    <Text style={[styles.suit, { color: colors.textMuted }]}>{SUIT_SYMBOL[suit]}</Text>
-  );
-
-  if (onPress) {
     return (
-      <Pressable
-        onPress={() => onPress(suit)}
-        style={style}
-        accessibilityRole="button"
-        accessibilityLabel={label}
-      >
+      <View style={style} accessibilityRole="image" accessibilityLabel={label}>
         {content}
-      </Pressable>
+      </View>
+    );
+  })();
+
+  if (hasDrop) {
+    return (
+      <DropTarget
+        id={dropId!}
+        onDrop={onDrop!}
+        highlightStyle={highlightStyle}
+        dimStyle={dimStyle}
+      >
+        {inner}
+      </DropTarget>
     );
   }
-  return (
-    <View style={style} accessibilityRole="image" accessibilityLabel={label}>
-      {content}
-    </View>
-  );
+
+  return inner;
 }
 
 const styles = StyleSheet.create({

@@ -4,9 +4,14 @@ import { render, fireEvent } from "@testing-library/react-native";
 import { ThemeProvider } from "../../../../theme/ThemeContext";
 import type { Card, Rank, Suit } from "../../types";
 import TableauPile from "../TableauPile";
+import { DragProvider } from "../../../_shared/drag/DragContext";
 
 function withTheme(children: React.ReactNode) {
-  return <ThemeProvider>{children}</ThemeProvider>;
+  return (
+    <DragProvider>
+      <ThemeProvider>{children}</ThemeProvider>
+    </DragProvider>
+  );
 }
 
 function card(suit: Suit, rank: Rank, faceUp = true): Card {

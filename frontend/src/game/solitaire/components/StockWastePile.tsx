@@ -16,7 +16,9 @@ import type { TFunction } from "i18next";
 
 import { useTheme } from "../../../theme/ThemeContext";
 import type { Card, DrawMode } from "../types";
+import type { CanonicalSuit } from "../../_shared/decks/types";
 import CardView, { CARD_HEIGHT, CARD_WIDTH } from "./CardView";
+import { DraggableCard } from "../../_shared/drag/DraggableCard";
 
 export interface StockWastePileProps {
   readonly stock: readonly Card[];
@@ -40,20 +42,8 @@ export default function StockWastePile({
 
   return (
     <View style={styles.row}>
-      <Stock
-        count={stock.length}
-        colors={colors}
-        onPress={onStockPress}
-        drawMode={drawMode}
-        t={t}
-      />
-      <Waste
-        waste={waste}
-        drawMode={drawMode}
-        selected={wasteSelected}
-        onPress={onWastePress}
-        t={t}
-      />
+      <Stock count={stock.length} colors={colors} onPress={onStockPress} drawMode={drawMode} t={t} />
+      <Waste waste={waste} drawMode={drawMode} selected={wasteSelected} onPress={onWastePress} t={t} />
     </View>
   );
 }
@@ -89,19 +79,12 @@ function Stock({
   const content = isEmpty ? (
     <Text style={[styles.recycleSymbol, { color: colors.textMuted }]}>↻</Text>
   ) : (
-    <>
-      <Text style={[styles.countText, { color: colors.textMuted }]}>{count}</Text>
-    </>
+    <Text style={[styles.countText, { color: colors.textMuted }]}>{count}</Text>
   );
 
   if (onPress) {
     return (
-      <Pressable
-        onPress={onPress}
-        style={style}
-        accessibilityRole="button"
-        accessibilityLabel={label}
-      >
+      <Pressable onPress={onPress} style={style} accessibilityRole="button" accessibilityLabel={label}>
         {content}
       </Pressable>
     );
@@ -138,10 +121,21 @@ function Waste({
     );
   }
 
+  const top = waste[waste.length - 1]!;
+  const topDragCards = [
+    { suit: top.suit as CanonicalSuit, rank: top.rank, faceDown: false, width: CARD_WIDTH, height: CARD_HEIGHT },
+  ];
+
   if (drawMode !== 3) {
-    const top = waste[waste.length - 1];
-    if (top === undefined) return null;
-    return <CardView card={top} selected={selected} onPress={onPress} />;
+    return (
+      <DraggableCard
+        onTap={onPress}
+        dragCards={topDragCards}
+        dragSource={{ game: "solitaire", type: "waste" }}
+      >
+        <CardView card={top} selected={selected} />
+      </DraggableCard>
+    );
   }
 
   const visibleCount = Math.min(3, waste.length);
@@ -152,16 +146,22 @@ function Waste({
     <View style={[styles.wasteFanContainer, { width: containerWidth }]}>
       {visible.map((card, i) => {
         const isTop = i === visible.length - 1;
+        if (isTop) {
+          return (
+            <View key={`${card.suit}-${card.rank}`} style={[styles.wasteFanCard, { left: i * WASTE_FAN_OFFSET }]}>
+              <DraggableCard
+                onTap={onPress}
+                dragCards={topDragCards}
+                dragSource={{ game: "solitaire", type: "waste" }}
+              >
+                <CardView card={card} selected={selected} />
+              </DraggableCard>
+            </View>
+          );
+        }
         return (
-          <View
-            key={`${card.suit}-${card.rank}`}
-            style={[styles.wasteFanCard, { left: i * WASTE_FAN_OFFSET }]}
-          >
-            <CardView
-              card={card}
-              selected={isTop && selected}
-              onPress={isTop ? onPress : undefined}
-            />
+          <View key={`${card.suit}-${card.rank}`} style={[styles.wasteFanCard, { left: i * WASTE_FAN_OFFSET }]}>
+            <CardView card={card} selected={false} />
           </View>
         );
       })}
