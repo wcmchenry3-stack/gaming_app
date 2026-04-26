@@ -58,7 +58,15 @@ export default function FreeCellSlot({
     const draggable = (
       <DraggableCard
         onTap={handlePress}
-        dragCards={[{ suit: card.suit as CanonicalSuit, rank: card.rank, faceDown: false, width: CARD_WIDTH, height: CARD_HEIGHT }]}
+        dragCards={[
+          {
+            suit: card.suit as CanonicalSuit,
+            rank: card.rank,
+            faceDown: false,
+            width: CARD_WIDTH,
+            height: CARD_HEIGHT,
+          },
+        ]}
         dragSource={{ game: "freecell", type: "freecell", cell: cellIndex }}
       >
         {cardEl}
@@ -92,7 +100,12 @@ export default function FreeCellSlot({
   ];
 
   const emptyEl = handlePress ? (
-    <Pressable onPress={handlePress} style={slotStyle} accessibilityRole="button" accessibilityLabel={emptyLabel} />
+    <Pressable
+      onPress={handlePress}
+      style={slotStyle}
+      accessibilityRole="button"
+      accessibilityLabel={emptyLabel}
+    />
   ) : (
     <View style={slotStyle} accessibilityRole="image" accessibilityLabel={emptyLabel} />
   );

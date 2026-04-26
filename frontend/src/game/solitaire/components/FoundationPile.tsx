@@ -77,7 +77,12 @@ export default function FoundationPile({
 
     if (onPress) {
       return (
-        <Pressable onPress={() => onPress(suit)} style={style} accessibilityRole="button" accessibilityLabel={label}>
+        <Pressable
+          onPress={() => onPress(suit)}
+          style={style}
+          accessibilityRole="button"
+          accessibilityLabel={label}
+        >
           {content}
         </Pressable>
       );
@@ -91,12 +96,7 @@ export default function FoundationPile({
 
   if (hasDrop) {
     return (
-      <DropTarget
-        id={dropId!}
-        onDrop={onDrop!}
-        highlightStyle={highlightStyle}
-        dimStyle={dimStyle}
-      >
+      <DropTarget id={dropId!} onDrop={onDrop!} highlightStyle={highlightStyle} dimStyle={dimStyle}>
         {inner}
       </DropTarget>
     );

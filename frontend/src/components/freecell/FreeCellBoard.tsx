@@ -50,7 +50,12 @@ export default function FreeCellBoard({ state, onMove }: FreeCellBoardProps) {
       return;
     }
     if (selection.kind === "tableau") {
-      tryMove({ type: "tableau-to-tableau", fromCol: selection.col, fromIndex: selection.index, toCol: col });
+      tryMove({
+        type: "tableau-to-tableau",
+        fromCol: selection.col,
+        fromIndex: selection.index,
+        toCol: col,
+      });
     } else {
       tryMove({ type: "freecell-to-tableau", fromCell: selection.cell, toCol: col });
     }
@@ -59,7 +64,12 @@ export default function FreeCellBoard({ state, onMove }: FreeCellBoardProps) {
   function handleTableauEmptyPress(col: number) {
     if (selection === null) return;
     if (selection.kind === "tableau") {
-      tryMove({ type: "tableau-to-tableau", fromCol: selection.col, fromIndex: selection.index, toCol: col });
+      tryMove({
+        type: "tableau-to-tableau",
+        fromCol: selection.col,
+        fromIndex: selection.index,
+        toCol: col,
+      });
     } else {
       tryMove({ type: "freecell-to-tableau", fromCell: selection.cell, toCol: col });
     }
@@ -98,9 +108,21 @@ export default function FreeCellBoard({ state, onMove }: FreeCellBoardProps) {
     (source: DragSource, toCol: number): boolean => {
       if (source.game !== "freecell") return false;
       if (source.type === "tableau") {
-        if (!validateMove(state, { type: "tableau-to-tableau", fromCol: source.col, fromIndex: source.fromIndex, toCol }))
+        if (
+          !validateMove(state, {
+            type: "tableau-to-tableau",
+            fromCol: source.col,
+            fromIndex: source.fromIndex,
+            toCol,
+          })
+        )
           return false;
-        onMove({ type: "tableau-to-tableau", fromCol: source.col, fromIndex: source.fromIndex, toCol });
+        onMove({
+          type: "tableau-to-tableau",
+          fromCol: source.col,
+          fromIndex: source.fromIndex,
+          toCol,
+        });
         return true;
       }
       if (source.type === "freecell") {
@@ -118,12 +140,14 @@ export default function FreeCellBoard({ state, onMove }: FreeCellBoardProps) {
     (source: DragSource): boolean => {
       if (source.game !== "freecell") return false;
       if (source.type === "tableau") {
-        if (!validateMove(state, { type: "tableau-to-foundation", fromCol: source.col })) return false;
+        if (!validateMove(state, { type: "tableau-to-foundation", fromCol: source.col }))
+          return false;
         onMove({ type: "tableau-to-foundation", fromCol: source.col });
         return true;
       }
       if (source.type === "freecell") {
-        if (!validateMove(state, { type: "freecell-to-foundation", fromCell: source.cell })) return false;
+        if (!validateMove(state, { type: "freecell-to-foundation", fromCell: source.cell }))
+          return false;
         onMove({ type: "freecell-to-foundation", fromCell: source.cell });
         return true;
       }
@@ -135,7 +159,8 @@ export default function FreeCellBoard({ state, onMove }: FreeCellBoardProps) {
   const handleDropToFreeCell = useCallback(
     (source: DragSource, toCell: number): boolean => {
       if (source.game !== "freecell" || source.type !== "tableau") return false;
-      if (!validateMove(state, { type: "tableau-to-freecell", fromCol: source.col, toCell })) return false;
+      if (!validateMove(state, { type: "tableau-to-freecell", fromCol: source.col, toCell }))
+        return false;
       onMove({ type: "tableau-to-freecell", fromCol: source.col, toCell });
       return true;
     },
@@ -151,7 +176,12 @@ export default function FreeCellBoard({ state, onMove }: FreeCellBoardProps) {
       for (let col = 0; col < TABLEAU_COLS; col++) {
         let move: Move | null = null;
         if (source.type === "tableau" && source.col !== col) {
-          move = { type: "tableau-to-tableau", fromCol: source.col, fromIndex: source.fromIndex, toCol: col };
+          move = {
+            type: "tableau-to-tableau",
+            fromCol: source.col,
+            fromIndex: source.fromIndex,
+            toCol: col,
+          };
         } else if (source.type === "freecell") {
           move = { type: "freecell-to-tableau", fromCell: source.cell, toCol: col };
         }
@@ -161,7 +191,9 @@ export default function FreeCellBoard({ state, onMove }: FreeCellBoardProps) {
       // Free cell slots (single-card only).
       if (cards.length === 1 && source.type === "tableau") {
         for (let cell = 0; cell < 4; cell++) {
-          if (validateMove(state, { type: "tableau-to-freecell", fromCol: source.col, toCell: cell })) {
+          if (
+            validateMove(state, { type: "tableau-to-freecell", fromCol: source.col, toCell: cell })
+          ) {
             ids.push(`freecell-slot-${cell}`);
           }
         }
@@ -187,7 +219,11 @@ export default function FreeCellBoard({ state, onMove }: FreeCellBoardProps) {
   return (
     <DragProvider getLegalDropIds={getLegalDropIds}>
       <DragContainer>
-        <View style={styles.board} accessibilityRole="none" accessibilityLabel={t("a11y.boardRegion")}>
+        <View
+          style={styles.board}
+          accessibilityRole="none"
+          accessibilityLabel={t("a11y.boardRegion")}
+        >
           <View style={styles.topRow}>
             <View style={styles.slotGroup}>
               {state.freeCells.map((card, i) => (
@@ -224,7 +260,9 @@ export default function FreeCellBoard({ state, onMove }: FreeCellBoardProps) {
                 pile={pile}
                 colIndex={col}
                 selectedIndex={
-                  selection?.kind === "tableau" && selection.col === col ? selection.index : undefined
+                  selection?.kind === "tableau" && selection.col === col
+                    ? selection.index
+                    : undefined
                 }
                 onCardPress={handleTableauCardPress}
                 onEmptyPress={handleTableauEmptyPress}

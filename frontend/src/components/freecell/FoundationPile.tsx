@@ -77,7 +77,12 @@ export default function FoundationPile({
 
     if (onPress) {
       return (
-        <Pressable onPress={() => onPress(suit)} style={pileStyle} accessibilityRole="button" accessibilityLabel={label}>
+        <Pressable
+          onPress={() => onPress(suit)}
+          style={pileStyle}
+          accessibilityRole="button"
+          accessibilityLabel={label}
+        >
           {content}
         </Pressable>
       );

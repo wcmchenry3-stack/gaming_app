@@ -51,7 +51,12 @@ export default function TableauColumn({
     );
     if (hasDrop) {
       return (
-        <DropTarget id={dropId!} onDrop={onDrop!} highlightStyle={highlightStyle} dimStyle={dimStyle}>
+        <DropTarget
+          id={dropId!}
+          onDrop={onDrop!}
+          highlightStyle={highlightStyle}
+          dimStyle={dimStyle}
+        >
           {empty}
         </DropTarget>
       );

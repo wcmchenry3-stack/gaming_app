@@ -42,8 +42,20 @@ export default function StockWastePile({
 
   return (
     <View style={styles.row}>
-      <Stock count={stock.length} colors={colors} onPress={onStockPress} drawMode={drawMode} t={t} />
-      <Waste waste={waste} drawMode={drawMode} selected={wasteSelected} onPress={onWastePress} t={t} />
+      <Stock
+        count={stock.length}
+        colors={colors}
+        onPress={onStockPress}
+        drawMode={drawMode}
+        t={t}
+      />
+      <Waste
+        waste={waste}
+        drawMode={drawMode}
+        selected={wasteSelected}
+        onPress={onWastePress}
+        t={t}
+      />
     </View>
   );
 }
@@ -84,7 +96,12 @@ function Stock({
 
   if (onPress) {
     return (
-      <Pressable onPress={onPress} style={style} accessibilityRole="button" accessibilityLabel={label}>
+      <Pressable
+        onPress={onPress}
+        style={style}
+        accessibilityRole="button"
+        accessibilityLabel={label}
+      >
         {content}
       </Pressable>
     );
@@ -123,7 +140,13 @@ function Waste({
 
   const top = waste[waste.length - 1]!;
   const topDragCards = [
-    { suit: top.suit as CanonicalSuit, rank: top.rank, faceDown: false, width: CARD_WIDTH, height: CARD_HEIGHT },
+    {
+      suit: top.suit as CanonicalSuit,
+      rank: top.rank,
+      faceDown: false,
+      width: CARD_WIDTH,
+      height: CARD_HEIGHT,
+    },
   ];
 
   if (drawMode !== 3) {
@@ -148,7 +171,10 @@ function Waste({
         const isTop = i === visible.length - 1;
         if (isTop) {
           return (
-            <View key={`${card.suit}-${card.rank}`} style={[styles.wasteFanCard, { left: i * WASTE_FAN_OFFSET }]}>
+            <View
+              key={`${card.suit}-${card.rank}`}
+              style={[styles.wasteFanCard, { left: i * WASTE_FAN_OFFSET }]}
+            >
               <DraggableCard
                 onTap={onPress}
                 dragCards={topDragCards}
@@ -160,7 +186,10 @@ function Waste({
           );
         }
         return (
-          <View key={`${card.suit}-${card.rank}`} style={[styles.wasteFanCard, { left: i * WASTE_FAN_OFFSET }]}>
+          <View
+            key={`${card.suit}-${card.rank}`}
+            style={[styles.wasteFanCard, { left: i * WASTE_FAN_OFFSET }]}
+          >
             <CardView card={card} selected={false} />
           </View>
         );

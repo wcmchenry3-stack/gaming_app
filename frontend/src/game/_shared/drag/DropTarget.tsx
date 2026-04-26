@@ -54,8 +54,7 @@ export function DropTarget({
   const isDragActive = dragState !== null;
   const isLegal = legalTargetIds.has(id);
 
-  const overlayStyle =
-    isDragActive ? (isLegal ? highlightStyle : dimStyle) : undefined;
+  const overlayStyle = isDragActive ? (isLegal ? highlightStyle : dimStyle) : undefined;
 
   return (
     <View ref={viewRef} style={[style, overlayStyle]} onLayout={onLayout}>

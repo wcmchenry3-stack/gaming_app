@@ -478,7 +478,12 @@ export default function SolitaireScreen() {
       for (let col = 0; col < TABLEAU_COLS; col++) {
         let move: Move | null = null;
         if (source.type === "tableau" && source.col !== col) {
-          move = { type: "tableau-to-tableau", fromCol: source.col, fromIndex: source.fromIndex, toCol: col };
+          move = {
+            type: "tableau-to-tableau",
+            fromCol: source.col,
+            fromIndex: source.fromIndex,
+            toCol: col,
+          };
         } else if (source.type === "waste") {
           move = { type: "waste-to-tableau", toCol: col };
         } else if (source.type === "foundation") {
@@ -565,138 +570,138 @@ export default function SolitaireScreen() {
 
   return (
     <DragProvider getLegalDropIds={getLegalDropIds}>
-    <GameShell
-      title={t("solitaire:game.title")}
-      requireBack
-      loading={loading}
-      onBack={() => navigation.popToTop()}
-      style={{
-        paddingBottom: Math.max(insets.bottom, 16),
-        paddingLeft: Math.max(insets.left, 12),
-        paddingRight: Math.max(insets.right, 12),
-      }}
-      onNewGame={resetToPreGame}
-      onOpenScoreboard={() => navigation.navigate("Scoreboard", { gameKey: "solitaire" })}
-      rightSlot={
-        <Pressable
-          onPress={handleUndo}
-          disabled={undoDisabled}
-          style={[
-            styles.headerBtn,
-            { borderColor: colors.accent, opacity: undoDisabled ? 0.4 : 1 },
-          ]}
-          accessibilityRole="button"
-          accessibilityLabel={t("solitaire:action.undo")}
-          accessibilityState={{ disabled: undoDisabled }}
-        >
-          <Text style={[styles.headerBtnText, { color: colors.accent }]}>
-            {t("solitaire:action.undo")}
-          </Text>
-        </Pressable>
-      }
-    >
-      {state === null ? (
-        <PreGameModal onChoose={deal} />
-      ) : (
-        <DragContainer style={styles.body as ViewStyle} onLayout={onOuterLayout}>
-          <View style={styles.hudRow} accessibilityRole="summary">
-            <Text
-              style={[styles.hudText, { color: colors.text }]}
-              accessibilityLabel={t("solitaire:score.label", { score: state.score })}
-            >
-              {t("solitaire:score.label", { score: state.score })}
-            </Text>
-            <Text
-              style={[styles.hudText, { color: colors.textMuted }]}
-              accessibilityLabel={t("solitaire:score.moves", { moves })}
-            >
-              {t("solitaire:score.moves", { moves })}
-            </Text>
-          </View>
-
-          <View
-            style={[styles.boardWrap, outerWidth > 0 ? { height: BOARD_HEIGHT * scale } : null]}
-            accessibilityLabel={t("solitaire:a11y.boardRegion")}
+      <GameShell
+        title={t("solitaire:game.title")}
+        requireBack
+        loading={loading}
+        onBack={() => navigation.popToTop()}
+        style={{
+          paddingBottom: Math.max(insets.bottom, 16),
+          paddingLeft: Math.max(insets.left, 12),
+          paddingRight: Math.max(insets.right, 12),
+        }}
+        onNewGame={resetToPreGame}
+        onOpenScoreboard={() => navigation.navigate("Scoreboard", { gameKey: "solitaire" })}
+        rightSlot={
+          <Pressable
+            onPress={handleUndo}
+            disabled={undoDisabled}
+            style={[
+              styles.headerBtn,
+              { borderColor: colors.accent, opacity: undoDisabled ? 0.4 : 1 },
+            ]}
+            accessibilityRole="button"
+            accessibilityLabel={t("solitaire:action.undo")}
+            accessibilityState={{ disabled: undoDisabled }}
           >
+            <Text style={[styles.headerBtnText, { color: colors.accent }]}>
+              {t("solitaire:action.undo")}
+            </Text>
+          </Pressable>
+        }
+      >
+        {state === null ? (
+          <PreGameModal onChoose={deal} />
+        ) : (
+          <DragContainer style={styles.body as ViewStyle} onLayout={onOuterLayout}>
+            <View style={styles.hudRow} accessibilityRole="summary">
+              <Text
+                style={[styles.hudText, { color: colors.text }]}
+                accessibilityLabel={t("solitaire:score.label", { score: state.score })}
+              >
+                {t("solitaire:score.label", { score: state.score })}
+              </Text>
+              <Text
+                style={[styles.hudText, { color: colors.textMuted }]}
+                accessibilityLabel={t("solitaire:score.moves", { moves })}
+              >
+                {t("solitaire:score.moves", { moves })}
+              </Text>
+            </View>
+
             <View
-              style={[
-                styles.board,
-                {
-                  width: BOARD_WIDTH,
-                  transform: [{ scale }],
-                } as ViewStyle,
-              ]}
+              style={[styles.boardWrap, outerWidth > 0 ? { height: BOARD_HEIGHT * scale } : null]}
+              accessibilityLabel={t("solitaire:a11y.boardRegion")}
             >
-              <View style={styles.foundationsRow}>
-                {SUITS.map((suit) => (
-                  <FoundationPile
-                    key={suit}
-                    pile={state.foundations[suit]}
-                    suit={suit}
-                    selected={selection?.kind === "foundation" && selection.suit === suit}
-                    onPress={handleFoundationPress}
-                    dropId={`solitaire-foundation-${suit}`}
-                    onDrop={(source) => handleDropToFoundation(source)}
-                  />
-                ))}
-              </View>
+              <View
+                style={[
+                  styles.board,
+                  {
+                    width: BOARD_WIDTH,
+                    transform: [{ scale }],
+                  } as ViewStyle,
+                ]}
+              >
+                <View style={styles.foundationsRow}>
+                  {SUITS.map((suit) => (
+                    <FoundationPile
+                      key={suit}
+                      pile={state.foundations[suit]}
+                      suit={suit}
+                      selected={selection?.kind === "foundation" && selection.suit === suit}
+                      onPress={handleFoundationPress}
+                      dropId={`solitaire-foundation-${suit}`}
+                      onDrop={(source) => handleDropToFoundation(source)}
+                    />
+                  ))}
+                </View>
 
-              <View style={styles.tableauRow}>
-                {state.tableau.map((pile, col) => (
-                  <TableauPile
-                    key={col}
-                    pile={pile}
-                    colIndex={col}
-                    selectedIndex={tableauSelection(col)}
-                    onCardPress={handleTableauCardPress}
-                    onEmptyPress={handleEmptyTableauPress}
-                    dropId={`solitaire-tableau-${col}`}
-                    onDrop={(source) => handleDropToTableau(source, col)}
-                  />
-                ))}
-              </View>
+                <View style={styles.tableauRow}>
+                  {state.tableau.map((pile, col) => (
+                    <TableauPile
+                      key={col}
+                      pile={pile}
+                      colIndex={col}
+                      selectedIndex={tableauSelection(col)}
+                      onCardPress={handleTableauCardPress}
+                      onEmptyPress={handleEmptyTableauPress}
+                      dropId={`solitaire-tableau-${col}`}
+                      onDrop={(source) => handleDropToTableau(source, col)}
+                    />
+                  ))}
+                </View>
 
-              <View style={styles.stockWasteRow}>
-                <StockWastePile
-                  stock={state.stock}
-                  waste={state.waste}
-                  drawMode={state.drawMode}
-                  wasteSelected={selection?.kind === "waste"}
-                  onStockPress={handleStockPress}
-                  onWastePress={handleWastePress}
-                />
+                <View style={styles.stockWasteRow}>
+                  <StockWastePile
+                    stock={state.stock}
+                    waste={state.waste}
+                    drawMode={state.drawMode}
+                    wasteSelected={selection?.kind === "waste"}
+                    onStockPress={handleStockPress}
+                    onWastePress={handleWastePress}
+                  />
+                </View>
               </View>
             </View>
-          </View>
 
-          {showAutoComplete && (
-            <Pressable
-              onPress={handleAutoComplete}
-              style={[styles.autoBtn, { backgroundColor: colors.accent }]}
-              accessibilityRole="button"
-              accessibilityLabel={t("solitaire:action.autoComplete")}
-            >
-              <Text style={[styles.autoBtnText, { color: colors.textOnAccent }]}>
-                {t("solitaire:action.autoComplete")}
-              </Text>
-            </Pressable>
-          )}
+            {showAutoComplete && (
+              <Pressable
+                onPress={handleAutoComplete}
+                style={[styles.autoBtn, { backgroundColor: colors.accent }]}
+                accessibilityRole="button"
+                accessibilityLabel={t("solitaire:action.autoComplete")}
+              >
+                <Text style={[styles.autoBtnText, { color: colors.textOnAccent }]}>
+                  {t("solitaire:action.autoComplete")}
+                </Text>
+              </Pressable>
+            )}
 
-          <Animated.View
-            pointerEvents="none"
-            accessibilityElementsHidden
-            importantForAccessibility="no-hide-descendants"
-            style={[
-              StyleSheet.absoluteFill,
-              { backgroundColor: colors.error, opacity: flashOpacity },
-            ]}
-            testID="solitaire-invalid-flash"
-          />
-        </DragContainer>
-      )}
+            <Animated.View
+              pointerEvents="none"
+              accessibilityElementsHidden
+              importantForAccessibility="no-hide-descendants"
+              style={[
+                StyleSheet.absoluteFill,
+                { backgroundColor: colors.error, opacity: flashOpacity },
+              ]}
+              testID="solitaire-invalid-flash"
+            />
+          </DragContainer>
+        )}
 
-      {state?.isComplete === true && <WinModal score={state.score} onNewGame={resetToPreGame} />}
-    </GameShell>
+        {state?.isComplete === true && <WinModal score={state.score} onNewGame={resetToPreGame} />}
+      </GameShell>
     </DragProvider>
   );
 }

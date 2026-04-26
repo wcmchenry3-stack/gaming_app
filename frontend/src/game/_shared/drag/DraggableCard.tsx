@@ -100,8 +100,7 @@ export function DraggableCard({
 
   // Hide this card when it (or a card above it in the same run) is being dragged —
   // the DragOverlay renders the visual at the finger position instead.
-  const beingDragged =
-    dragState !== null && isCardInDragStack(dragState.source, dragSource);
+  const beingDragged = dragState !== null && isCardInDragStack(dragState.source, dragSource);
 
   // Clone the child to inject onPress so that:
   //   • In production: GestureDetector (RNGH) intercepts touches before the inner
@@ -112,11 +111,7 @@ export function DraggableCard({
   const innerEl = onTap ? React.cloneElement(child, { onPress: onTap }) : child;
 
   return (
-    <View
-      ref={viewRef}
-      style={[style, beingDragged && { opacity: 0 }]}
-      onLayout={onLayout}
-    >
+    <View ref={viewRef} style={[style, beingDragged && { opacity: 0 }]} onLayout={onLayout}>
       <GestureDetector gesture={gesture}>{innerEl}</GestureDetector>
     </View>
   );

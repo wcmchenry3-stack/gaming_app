@@ -1,10 +1,4 @@
-import React, {
-  createContext,
-  useCallback,
-  useContext,
-  useRef,
-  useState,
-} from "react";
+import React, { createContext, useCallback, useContext, useRef, useState } from "react";
 import { useSharedValue, runOnJS, withTiming } from "react-native-reanimated";
 import type { SharedValue } from "react-native-reanimated";
 import type { CanonicalSuit } from "../decks/types";
@@ -183,10 +177,7 @@ export function DragProvider({ children, getLegalDropIds }: DragProviderProps) {
 // ---------------------------------------------------------------------------
 
 /** True when the given cardSource is part of the currently dragged stack. */
-export function isCardInDragStack(
-  activeSource: DragSource,
-  cardSource: DragSource
-): boolean {
+export function isCardInDragStack(activeSource: DragSource, cardSource: DragSource): boolean {
   if (activeSource.game !== cardSource.game || activeSource.type !== cardSource.type) return false;
   switch (activeSource.type) {
     case "tableau":
@@ -202,8 +193,7 @@ export function isCardInDragStack(
     case "foundation":
       return (
         cardSource.type === "foundation" &&
-        (activeSource as { suit: string }).suit ===
-          (cardSource as { suit: string }).suit
+        (activeSource as { suit: string }).suit === (cardSource as { suit: string }).suit
       );
   }
 }
