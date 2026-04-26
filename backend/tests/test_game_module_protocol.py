@@ -21,7 +21,14 @@ from vocab import GameType
 
 @pytest.mark.parametrize(
     "mod",
-    [blackjack_module, cascade_module, hearts_module, mahjong_module, solitaire_module, sudoku_module],
+    [
+        blackjack_module,
+        cascade_module,
+        hearts_module,
+        mahjong_module,
+        solitaire_module,
+        sudoku_module,
+    ],
     ids=["blackjack", "cascade", "hearts", "mahjong", "solitaire", "sudoku"],
 )
 def test_module_satisfies_protocol(mod) -> None:
