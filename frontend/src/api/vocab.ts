@@ -17,6 +17,7 @@ export const GAME_TYPES = [
   "solitaire",
   "hearts",
   "sudoku",
+  "mahjong",
 ] as const;
 
 export type GameType = (typeof GAME_TYPES)[number];
