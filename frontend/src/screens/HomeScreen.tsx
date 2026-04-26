@@ -234,6 +234,7 @@ export default function HomeScreen() {
         keyExtractor={(item) => item.key}
         key={numColumns}
         numColumns={numColumns}
+        initialNumToRender={games.length}
         contentContainerStyle={[
           styles.grid,
           {
