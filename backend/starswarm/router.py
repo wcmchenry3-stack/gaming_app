@@ -1,23 +1,27 @@
-"""Star Swarm high score submission + leaderboard (#805).
+"""Star Swarm high score submission + leaderboard (#898).
 
-In-memory store — no DB required. Top-10 by score, tie-broken by submission
-time (earlier submission wins on equal score).
+DB-backed — scores persist across server restarts. Top-10 by score,
+tie-broken by submission time (earlier submission wins on equal score).
 """
 
 from __future__ import annotations
 
 from datetime import datetime, timezone
 
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel, Field
+from sqlalchemy import desc, select
+from sqlalchemy.ext.asyncio import AsyncSession
 
+from db.base import get_session_factory
+from db.models import Game, GameType
 from limiter import limiter, session_key
+from vocab import GameType as GameTypeEnum
 
 router = APIRouter()
 
 LEADERBOARD_LIMIT = 10
-
-_scores: list[dict] = []
+_STARSWARM_SESSION = "starswarm-anon"
 
 
 class ScoreRequest(BaseModel):
@@ -38,40 +42,79 @@ class LeaderboardResponse(BaseModel):
     scores: list[LeaderboardEntry]
 
 
-def _top10() -> list[LeaderboardEntry]:
-    ranked = sorted(_scores, key=lambda s: (-s["score"], s["submitted_at"]))[:LEADERBOARD_LIMIT]
-    return [
-        LeaderboardEntry(
-            player_id=s["player_id"],
-            score=s["score"],
-            wave_reached=s["wave_reached"],
-            timestamp=s["submitted_at"].isoformat(),
-            rank=i + 1,
+async def _starswarm_game_type_id(db: AsyncSession) -> int:
+    row = (
+        await db.execute(select(GameType.id).where(GameType.name == GameTypeEnum.STARSWARM))
+    ).scalar_one_or_none()
+    if row is None:
+        raise HTTPException(
+            status_code=500,
+            detail="starswarm game_type missing — run alembic migrations.",
         )
-        for i, s in enumerate(ranked)
-    ]
+    return row
+
+
+async def _top10(db: AsyncSession) -> list[LeaderboardEntry]:
+    gt_id = await _starswarm_game_type_id(db)
+    rows = (
+        (
+            await db.execute(
+                select(Game)
+                .where(
+                    Game.game_type_id == gt_id,
+                    Game.final_score.is_not(None),
+                )
+                .order_by(desc(Game.final_score), Game.completed_at.asc())
+                .limit(LEADERBOARD_LIMIT)
+            )
+        )
+        .scalars()
+        .all()
+    )
+    entries: list[LeaderboardEntry] = []
+    for i, g in enumerate(rows):
+        meta = g.game_metadata or {}
+        entries.append(
+            LeaderboardEntry(
+                player_id=str(meta.get("player_name") or "anon"),
+                score=int(g.final_score or 0),
+                wave_reached=int(meta.get("wave_reached") or 1),
+                timestamp=g.completed_at.isoformat() if g.completed_at else "",
+                rank=i + 1,
+            )
+        )
+    return entries
 
 
 @router.post("/score", response_model=LeaderboardResponse, status_code=200)
 @limiter.limit("10/minute", key_func=session_key)
 async def submit_score(request: Request, body: ScoreRequest) -> LeaderboardResponse:
-    _scores.append(
-        {
-            "player_id": body.player_id,
-            "score": body.score,
-            "wave_reached": body.wave_reached,
-            "submitted_at": datetime.now(tz=timezone.utc),
-        }
-    )
-    return LeaderboardResponse(scores=_top10())
+    factory = get_session_factory()
+    async with factory() as db:
+        gt_id = await _starswarm_game_type_id(db)
+        game = Game(
+            session_id=_STARSWARM_SESSION,
+            game_type_id=gt_id,
+            final_score=body.score,
+            outcome="completed",
+            completed_at=datetime.now(timezone.utc),
+            game_metadata={"player_name": body.player_id, "wave_reached": body.wave_reached},
+        )
+        db.add(game)
+        await db.commit()
+        top = await _top10(db)
+    return LeaderboardResponse(scores=top)
 
 
 @router.get("/leaderboard", response_model=LeaderboardResponse)
 @limiter.limit("60/minute")
 async def get_leaderboard(request: Request) -> LeaderboardResponse:
-    return LeaderboardResponse(scores=_top10())
+    factory = get_session_factory()
+    async with factory() as db:
+        top = await _top10(db)
+    return LeaderboardResponse(scores=top)
 
 
 def reset_leaderboard() -> None:
-    """Test helper — clears the in-memory store."""
-    _scores.clear()
+    """Test helper — no-op. DB isolation is handled by conftest's _clean_db_tables fixture."""
+    return None
