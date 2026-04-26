@@ -56,7 +56,9 @@ def submit_score(request: Request, body: ScoreSubmitRequest) -> ScoreEntry:
     for e in top:
         if e.player_id == body.player_id and e.move_count == body.move_count:
             return e
-    return ScoreEntry(player_id=body.player_id, move_count=body.move_count, rank=LEADERBOARD_LIMIT + 1)
+    return ScoreEntry(
+        player_id=body.player_id, move_count=body.move_count, rank=LEADERBOARD_LIMIT + 1
+    )
 
 
 @router.get("/leaderboard", response_model=LeaderboardResponse)

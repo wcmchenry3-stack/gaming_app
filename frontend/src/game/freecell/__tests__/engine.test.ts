@@ -111,8 +111,15 @@ describe("tableau → tableau", () => {
     const state = mkState({
       tableau: [[c("spades", 5)], [c("hearts", 6)], [], [], [], [], [], []],
     });
-    expect(validateMove(state, { type: "tableau-to-tableau", fromCol: 0, fromIndex: 0, toCol: 1 })).toBe(true);
-    const next = applyMove(state, { type: "tableau-to-tableau", fromCol: 0, fromIndex: 0, toCol: 1 });
+    expect(
+      validateMove(state, { type: "tableau-to-tableau", fromCol: 0, fromIndex: 0, toCol: 1 })
+    ).toBe(true);
+    const next = applyMove(state, {
+      type: "tableau-to-tableau",
+      fromCol: 0,
+      fromIndex: 0,
+      toCol: 1,
+    });
     expect(next.tableau[0]).toEqual([]);
     expect(next.tableau[1]).toHaveLength(2);
     expect(next.moveCount).toBe(1);
@@ -123,7 +130,9 @@ describe("tableau → tableau", () => {
     const state = mkState({
       tableau: [[c("hearts", 5)], [c("diamonds", 6)], [], [], [], [], [], []],
     });
-    expect(validateMove(state, { type: "tableau-to-tableau", fromCol: 0, fromIndex: 0, toCol: 1 })).toBe(false);
+    expect(
+      validateMove(state, { type: "tableau-to-tableau", fromCol: 0, fromIndex: 0, toCol: 1 })
+    ).toBe(false);
   });
 
   it("rejects wrong-rank stacking", () => {
@@ -131,31 +140,47 @@ describe("tableau → tableau", () => {
     const state = mkState({
       tableau: [[c("spades", 4)], [c("hearts", 6)], [], [], [], [], [], []],
     });
-    expect(validateMove(state, { type: "tableau-to-tableau", fromCol: 0, fromIndex: 0, toCol: 1 })).toBe(false);
+    expect(
+      validateMove(state, { type: "tableau-to-tableau", fromCol: 0, fromIndex: 0, toCol: 1 })
+    ).toBe(false);
   });
 
   it("rejects same-column move", () => {
     const state = mkState({ tableau: [[c("spades", 5)], [], [], [], [], [], [], []] });
-    expect(validateMove(state, { type: "tableau-to-tableau", fromCol: 0, fromIndex: 0, toCol: 0 })).toBe(false);
+    expect(
+      validateMove(state, { type: "tableau-to-tableau", fromCol: 0, fromIndex: 0, toCol: 0 })
+    ).toBe(false);
   });
 
   it("rejects out-of-bounds column indices", () => {
     const state = mkState();
-    expect(validateMove(state, { type: "tableau-to-tableau", fromCol: -1, fromIndex: 0, toCol: 1 })).toBe(false);
-    expect(validateMove(state, { type: "tableau-to-tableau", fromCol: 0, fromIndex: 0, toCol: 8 })).toBe(false);
+    expect(
+      validateMove(state, { type: "tableau-to-tableau", fromCol: -1, fromIndex: 0, toCol: 1 })
+    ).toBe(false);
+    expect(
+      validateMove(state, { type: "tableau-to-tableau", fromCol: 0, fromIndex: 0, toCol: 8 })
+    ).toBe(false);
   });
 
   it("applyMove returns same reference on invalid move", () => {
-    const state = mkState({ tableau: [[c("hearts", 5)], [c("diamonds", 6)], [], [], [], [], [], []] });
-    expect(applyMove(state, { type: "tableau-to-tableau", fromCol: 0, fromIndex: 0, toCol: 1 })).toBe(state);
+    const state = mkState({
+      tableau: [[c("hearts", 5)], [c("diamonds", 6)], [], [], [], [], [], []],
+    });
+    expect(
+      applyMove(state, { type: "tableau-to-tableau", fromCol: 0, fromIndex: 0, toCol: 1 })
+    ).toBe(state);
   });
 
   it("only allows a King on an empty column", () => {
     const nonKing = mkState({ tableau: [[c("hearts", 7)], [], [], [], [], [], [], []] });
-    expect(validateMove(nonKing, { type: "tableau-to-tableau", fromCol: 0, fromIndex: 0, toCol: 1 })).toBe(false);
+    expect(
+      validateMove(nonKing, { type: "tableau-to-tableau", fromCol: 0, fromIndex: 0, toCol: 1 })
+    ).toBe(false);
 
     const king = mkState({ tableau: [[c("hearts", 13)], [], [], [], [], [], [], []] });
-    expect(validateMove(king, { type: "tableau-to-tableau", fromCol: 0, fromIndex: 0, toCol: 1 })).toBe(true);
+    expect(
+      validateMove(king, { type: "tableau-to-tableau", fromCol: 0, fromIndex: 0, toCol: 1 })
+    ).toBe(true);
   });
 });
 
@@ -190,7 +215,9 @@ describe("tableau → free cell", () => {
       freeCells: [c("hearts", 1), c("diamonds", 2), c("clubs", 3), c("spades", 4)],
     });
     for (let cell = 0; cell < 4; cell++) {
-      expect(validateMove(state, { type: "tableau-to-freecell", fromCol: 0, toCell: cell })).toBe(false);
+      expect(validateMove(state, { type: "tableau-to-freecell", fromCol: 0, toCell: cell })).toBe(
+        false
+      );
     }
   });
 
@@ -319,7 +346,9 @@ describe("supermove", () => {
         [c("clubs", 7)],
       ],
     });
-    expect(validateMove(state, { type: "tableau-to-tableau", fromCol: 0, fromIndex: 0, toCol: 1 })).toBe(true);
+    expect(
+      validateMove(state, { type: "tableau-to-tableau", fromCol: 0, fromIndex: 0, toCol: 1 })
+    ).toBe(true);
   });
 
   it("blocks moving N cards when supermove capacity is exceeded", () => {
@@ -329,7 +358,7 @@ describe("supermove", () => {
       freeCells: [c("clubs", 1), c("clubs", 2), c("clubs", 3), c("clubs", 4)],
       tableau: [
         [c("hearts", 6), c("spades", 5)], // 2-card run
-        [c("diamonds", 7)],              // dest
+        [c("diamonds", 7)], // dest
         [c("clubs", 9)],
         [c("clubs", 10)],
         [c("clubs", 11)],
@@ -338,7 +367,9 @@ describe("supermove", () => {
         [c("hearts", 1)],
       ],
     });
-    expect(validateMove(state, { type: "tableau-to-tableau", fromCol: 0, fromIndex: 0, toCol: 1 })).toBe(false);
+    expect(
+      validateMove(state, { type: "tableau-to-tableau", fromCol: 0, fromIndex: 0, toCol: 1 })
+    ).toBe(false);
   });
 
   it("excludes the destination column from the empty column count", () => {
@@ -350,7 +381,7 @@ describe("supermove", () => {
       freeCells: [null, c("clubs", 1), c("clubs", 2), c("clubs", 3)],
       tableau: [
         [c("hearts", 7), c("spades", 6), c("hearts", 5)], // 3-card run
-        [],                                                // dest — empty but excluded
+        [], // dest — empty but excluded
         [c("clubs", 4)],
         [c("clubs", 5)],
         [c("clubs", 6)],
@@ -359,7 +390,9 @@ describe("supermove", () => {
         [c("clubs", 9)],
       ],
     });
-    expect(validateMove(state, { type: "tableau-to-tableau", fromCol: 0, fromIndex: 0, toCol: 1 })).toBe(false);
+    expect(
+      validateMove(state, { type: "tableau-to-tableau", fromCol: 0, fromIndex: 0, toCol: 1 })
+    ).toBe(false);
   });
 
   it("includes non-destination empty columns in the count", () => {
@@ -369,16 +402,18 @@ describe("supermove", () => {
       freeCells: [c("clubs", 1), c("clubs", 2), c("clubs", 3), c("clubs", 4)],
       tableau: [
         [c("hearts", 7), c("spades", 6), c("hearts", 5)], // 3-card run
-        [c("spades", 8)],                                  // dest
-        [],                                                // empty col 1
-        [],                                                // empty col 2
+        [c("spades", 8)], // dest
+        [], // empty col 1
+        [], // empty col 2
         [c("clubs", 5)],
         [c("clubs", 6)],
         [c("clubs", 7)],
         [c("clubs", 9)],
       ],
     });
-    expect(validateMove(state, { type: "tableau-to-tableau", fromCol: 0, fromIndex: 0, toCol: 1 })).toBe(true);
+    expect(
+      validateMove(state, { type: "tableau-to-tableau", fromCol: 0, fromIndex: 0, toCol: 1 })
+    ).toBe(true);
   });
 });
 
