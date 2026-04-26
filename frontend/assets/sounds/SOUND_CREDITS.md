@@ -471,6 +471,98 @@ _(Previously placed — provenance to be confirmed)_
 
 ---
 
+## Mahjong (#914)
+
+### mahjong-tile-select.ogg
+
+- **Event:** Free tile tapped — selection set or swapped to a different tile
+- **Original filename:** `impactGeneric_light_000.ogg` from Kenney Impact Sounds (www.kenney.nl)
+- **Source URL:** https://kenney.nl/assets/impact-sounds
+- **Creator:** Kenney Vleugels (Kenney.nl)
+- **License:** Creative Commons Zero (CC0)
+- **License URL:** https://creativecommons.org/publicdomain/zero/1.0/
+- **Attribution required:** No
+- **Commercial use:** Yes
+- **Download date:** 2026-04-26
+- **Notes:** Subtle generic light impact — unobtrusive tap confirming tile selection.
+
+### mahjong-tile-match.ogg
+
+- **Event:** Matched pair successfully removed from the board
+- **Original filename:** `impactBell_heavy_000.ogg` from Kenney Impact Sounds (www.kenney.nl)
+- **Source URL:** https://kenney.nl/assets/impact-sounds
+- **Creator:** Kenney Vleugels (Kenney.nl)
+- **License:** Creative Commons Zero (CC0)
+- **License URL:** https://creativecommons.org/publicdomain/zero/1.0/
+- **Attribution required:** No
+- **Commercial use:** Yes
+- **Download date:** 2026-04-26
+- **Notes:** Resonant bell impact — fits the zen/meditative atmosphere of Mahjong and complements the lo-fi background music.
+
+### mahjong-shuffle.ogg
+
+- **Event:** Shuffle used — remaining tiles redistributed into a new solvable arrangement
+- **Original filename:** `card-shuffle.ogg` from Kenney Casino Audio 1.1 (www.kenney.nl)
+- **Source URL:** https://kenney.nl/assets/casino-audio
+- **Creator:** Kenney Vleugels (Kenney.nl)
+- **License:** Creative Commons Zero (CC0)
+- **License URL:** https://creativecommons.org/publicdomain/zero/1.0/
+- **Attribution required:** No
+- **Commercial use:** Yes
+- **Download date:** 2026-04-26
+- **Notes:** Satisfying card-shuffle sound thematically appropriate for tile rearrangement.
+
+### mahjong-win (reuses hearts-moon-shot.mp3)
+
+- **Event:** All 144 tiles cleared — board complete
+- **Notes:** Same orchestral win fanfare reused by Yacht, Twenty48, Blackjack, Solitaire, and Sudoku.
+
+### mahjong-deadlock (reuses cascade-game-over.ogg)
+
+- **Event:** No valid pairs remain and all shuffles are exhausted
+- **Notes:** Same descending phaser tone used by Cascade and Twenty48 game-over events (`phaserDown2.ogg`, Kenney Digital Audio).
+
+### mahjong-bg-1.mp3
+
+- **Event:** Background music track 1 (looping, one of three chosen at random per game session)
+- **Original filename:** `lofi_music_library-chill-amp-relaxing-lofi-music-455381.mp3`
+- **Source URL:** https://pixabay.com/music/lofi-chill-amp-relaxing-lofi-music-455381/
+- **Creator:** lofi_music_library on Pixabay
+- **License:** Pixabay Content License
+- **License URL:** https://pixabay.com/service/license-summary/
+- **Attribution required:** No
+- **Commercial use:** Yes
+- **Download date:** 2026-04-26
+- **Notes:** Chill & relaxing lo-fi track. File is ~9.6 MB — compress with `ffmpeg -i mahjong-bg-1.mp3 -b:a 48k mahjong-bg-1.mp3` when ffmpeg is available. Played at BG_VOLUME = 0.2 (same level as Star Swarm).
+
+### mahjong-bg-2.mp3
+
+- **Event:** Background music track 2 (looping, one of three chosen at random per game session)
+- **Original filename:** `fassounds-lofi-study-calm-peaceful-chill-hop-112191.mp3`
+- **Source URL:** https://pixabay.com/music/lofi-lofi-study-calm-peaceful-chill-hop-112191/
+- **Creator:** fassounds on Pixabay
+- **License:** Pixabay Content License
+- **License URL:** https://pixabay.com/service/license-summary/
+- **Attribution required:** No
+- **Commercial use:** Yes
+- **Download date:** 2026-04-26
+- **Notes:** Lo-fi study / chill-hop track (~4.5 MB). Played at BG_VOLUME = 0.2.
+
+### mahjong-bg-3.mp3
+
+- **Event:** Background music track 3 (looping, one of three chosen at random per game session)
+- **Original filename:** `lofi_music_library-coffee-lofi-chill-lofi-ambient-458901.mp3`
+- **Source URL:** https://pixabay.com/music/lofi-coffee-lofi-chill-lofi-ambient-458901/
+- **Creator:** lofi_music_library on Pixabay
+- **License:** Pixabay Content License
+- **License URL:** https://pixabay.com/service/license-summary/
+- **Attribution required:** No
+- **Commercial use:** Yes
+- **Download date:** 2026-04-26
+- **Notes:** Coffee lo-fi / chill ambient track (~6.0 MB). Played at BG_VOLUME = 0.2.
+
+---
+
 ## Freesound CC0 License summary (as of 2026-04-25)
 
 > Sounds licensed under Creative Commons Zero (CC0) have been dedicated to the

@@ -10,10 +10,13 @@
  *      completed on win, abandoned on back-navigation.
  *   4. Score submission — scoreQueue.enqueue("mahjong", …) on win; never
  *      calls mahjongApi.submitScore directly.
+ *   5. Audio + animations (#914) — SFX on every game event, lo-fi bg music,
+ *      MatchBurst / DeadlockShake / ShufflePulse / WinModal spring.
  */
 
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
+  AccessibilityInfo,
   ActivityIndicator,
   LayoutChangeEvent,
   Modal,
@@ -26,6 +29,14 @@ import {
   View,
   ViewStyle,
 } from "react-native";
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withTiming,
+  withSpring,
+  withSequence,
+  runOnJS,
+} from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTranslation } from "react-i18next";
 import { useNavigation } from "@react-navigation/native";
@@ -39,7 +50,7 @@ import { OfflineBanner } from "../components/shared/OfflineBanner";
 import GameCanvas, { BOARD_W, BOARD_H } from "../components/mahjong/GameCanvas";
 import { createGame, elapsedMs, selectTile, shuffleBoard, undoMove } from "../game/mahjong/engine";
 import { TURTLE_LAYOUT } from "../game/mahjong/layouts/turtle";
-import type { MahjongState } from "../game/mahjong/types";
+import type { MahjongState, SlotTile } from "../game/mahjong/types";
 import {
   clearGame,
   loadGame,
@@ -49,11 +60,79 @@ import {
   type MahjongStats,
 } from "../game/mahjong/storage";
 import { useMahjongScoreboard } from "../game/mahjong/MahjongScoreboardContext";
+import { useMahjongAudio } from "../game/mahjong/useMahjongAudio";
 import { scoreQueue } from "../game/_shared/scoreQueue";
 import { useGameSync } from "../game/_shared/useGameSync";
 import { useNetwork } from "../game/_shared/NetworkContext";
 
 const MAX_NAME_LENGTH = 32;
+
+// ---------------------------------------------------------------------------
+// Tile layout constants (mirrors GameCanvas internals — must stay in sync)
+// ---------------------------------------------------------------------------
+
+const TILE_W = 44;
+const TILE_H = 56;
+const LAYER_DX = 6;
+const LAYER_DY = 5;
+const PAD_X = 10;
+const PAD_Y = 30;
+
+function tileCenter(tile: SlotTile): { cx: number; cy: number } {
+  return {
+    cx: PAD_X + (tile.col / 2) * TILE_W + tile.layer * LAYER_DX + TILE_W / 2,
+    cy: PAD_Y + tile.row * TILE_H - tile.layer * LAYER_DY + TILE_H / 2,
+  };
+}
+
+// ---------------------------------------------------------------------------
+// MatchBurst — overlay flash at matched tile positions
+// ---------------------------------------------------------------------------
+
+interface MatchBurstData {
+  id: string;
+  cx: number;
+  cy: number;
+}
+
+const BURST_R = 22;
+
+function MatchBurst({
+  cx,
+  cy,
+  scale,
+  color,
+  onDone,
+}: MatchBurstData & { scale: number; color: string; onDone: () => void }) {
+  const scaleVal = useSharedValue(0.1);
+  const opacity = useSharedValue(0.8);
+
+  useEffect(() => {
+    scaleVal.value = withSpring(1.5, { damping: 8, stiffness: 60 });
+    opacity.value = withTiming(0, { duration: 350 }, (finished) => {
+      if (finished) runOnJS(onDone)();
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const animStyle = useAnimatedStyle(() => ({
+    position: "absolute",
+    left: cx * scale - BURST_R,
+    top: cy * scale - BURST_R,
+    width: BURST_R * 2,
+    height: BURST_R * 2,
+    borderRadius: BURST_R,
+    backgroundColor: color,
+    transform: [{ scale: scaleVal.value }],
+    opacity: opacity.value,
+  }));
+
+  return <Animated.View pointerEvents="none" style={animStyle} />;
+}
+
+// ---------------------------------------------------------------------------
+// MahjongScreen
+// ---------------------------------------------------------------------------
 
 export default function MahjongScreen() {
   const { t } = useTranslation("mahjong");
@@ -71,10 +150,31 @@ export default function MahjongScreen() {
     gamesWon: 0,
   });
 
+  // Animation state
+  const [matchBursts, setMatchBursts] = useState<MatchBurstData[]>([]);
+  const [reduceMotion, setReduceMotion] = useState(false);
+  const boardShakeX = useSharedValue(0);
+  const boardOpacity = useSharedValue(1);
+  const boardAnimStyle = useAnimatedStyle(() => ({
+    transform: [{ translateX: boardShakeX.value }],
+    opacity: boardOpacity.value,
+  }));
+
   const hasLoadedRef = useRef(false);
   const stateRef = useRef<MahjongState | null>(null);
   const winRecordedRef = useRef(false);
   const prevCompleteRef = useRef(false);
+  // Tracks previous state for audio/animation event detection.
+  const prevAudioStateRef = useRef<MahjongState | null>(null);
+  // Stable refs to audio callbacks — avoids re-running the detection effect when
+  // play functions change reference (they're recreated each render by useSound).
+  const audioCallbacksRef = useRef({
+    playTileSelect: () => {},
+    playTileMatch: () => {},
+    playShuffle: () => {},
+    playWin: () => {},
+    playDeadlock: () => {},
+  });
 
   const {
     start: syncStart,
@@ -84,6 +184,21 @@ export default function MahjongScreen() {
   } = useGameSync("mahjong");
 
   const { setSnapshot: setScoreboardSnapshot } = useMahjongScoreboard();
+
+  // Audio
+  const musicActive = state !== null && !state.isComplete && !state.isDeadlocked;
+  const { playTileSelect, playTileMatch, playShuffle, playWin, playDeadlock } =
+    useMahjongAudio(musicActive);
+
+  // Keep audio callback refs up-to-date each render.
+  useEffect(() => {
+    audioCallbacksRef.current = { playTileSelect, playTileMatch, playShuffle, playWin, playDeadlock };
+  });
+
+  // Reduce motion preference.
+  useEffect(() => {
+    AccessibilityInfo.isReduceMotionEnabled().then(setReduceMotion);
+  }, []);
 
   // Scoreboard snapshot — updated on every state change.
   useEffect(() => {
@@ -132,6 +247,59 @@ export default function MahjongScreen() {
     stateRef.current = state;
     if (!hasLoadedRef.current || state === null) return;
     saveGame(state).catch(() => {});
+  }, [state]);
+
+  // Audio + animation event detection — compare previous vs current state.
+  useEffect(() => {
+    const prev = prevAudioStateRef.current;
+    prevAudioStateRef.current = state;
+    if (!prev || !state) return;
+
+    const { playTileSelect: pSelect, playTileMatch: pMatch, playShuffle: pShuffle, playWin: pWin, playDeadlock: pDead } =
+      audioCallbacksRef.current;
+
+    if (state.tiles.length < prev.tiles.length) {
+      pMatch();
+      if (!reduceMotion) {
+        const removed = prev.tiles.filter((t) => !state.tiles.some((nt) => nt.id === t.id));
+        setMatchBursts((existing) => [
+          ...existing,
+          ...removed.map((t) => ({ id: `${Date.now()}-${t.id}`, ...tileCenter(t) })),
+        ]);
+      }
+    } else if (state.selected !== null) {
+      pSelect();
+    }
+
+    if (state.shufflesLeft < prev.shufflesLeft) {
+      pShuffle();
+      if (!reduceMotion) {
+        boardOpacity.value = withSequence(
+          withTiming(0.35, { duration: 180 }),
+          withTiming(1, { duration: 180 })
+        );
+      }
+    }
+
+    if (state.isComplete && !prev.isComplete) {
+      pWin();
+    }
+
+    if (state.isDeadlocked && !prev.isDeadlocked) {
+      pDead();
+      if (!reduceMotion) {
+        boardShakeX.value = withSequence(
+          withTiming(8, { duration: 60 }),
+          withTiming(-8, { duration: 60 }),
+          withTiming(6, { duration: 60 }),
+          withTiming(-6, { duration: 60 }),
+          withTiming(4, { duration: 60 }),
+          withTiming(-4, { duration: 60 }),
+          withTiming(0, { duration: 60 })
+        );
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state]);
 
   // Win lifecycle: complete sync session, record stats.
@@ -185,7 +353,6 @@ export default function MahjongScreen() {
       if (syncGetGameId()) return;
       syncStart({ layout: "turtle" });
       syncMarkStarted();
-      // Count the new game on the first real action (first tile tap).
       if (s.pairsRemoved === 0 && !hasLoadedRef.current) return;
     },
     [syncGetGameId, syncStart, syncMarkStarted]
@@ -231,7 +398,6 @@ export default function MahjongScreen() {
       saveStats(updated).catch(() => {});
       return updated;
     });
-    // Abandon any open session before starting a new one.
     if (syncGetGameId()) {
       syncComplete(
         { outcome: "abandoned", finalScore: 0, durationMs: 0 },
@@ -249,6 +415,10 @@ export default function MahjongScreen() {
   }, []);
 
   const undoDisabled = !state || state.undoStack.length === 0 || state.isComplete;
+
+  const removeBurst = useCallback((id: string) => {
+    setMatchBursts((prev) => prev.filter((b) => b.id !== id));
+  }, []);
 
   return (
     <GameShell
@@ -300,21 +470,38 @@ export default function MahjongScreen() {
             </View>
 
             <View style={[styles.boardWrap, outerWidth > 0 ? { height: BOARD_H * scale } : null]}>
-              <View style={[styles.board, { width: BOARD_W, transform: [{ scale }] } as ViewStyle]}>
-                <GameCanvas
-                  state={state}
-                  onTilePress={handleTilePress}
-                  onShufflePress={handleShuffle}
-                  onNewGamePress={startNewGame}
+              {/* boardAnimWrap handles shake + pulse; inner board View applies scale transform */}
+              <Animated.View style={[styles.boardAnimWrap, boardAnimStyle]}>
+                <View style={[styles.board, { width: BOARD_W, transform: [{ scale }] } as ViewStyle]}>
+                  <GameCanvas
+                    state={state}
+                    onTilePress={handleTilePress}
+                    onShufflePress={handleShuffle}
+                    onNewGamePress={startNewGame}
+                  />
+                </View>
+              </Animated.View>
+              {matchBursts.map((burst) => (
+                <MatchBurst
+                  key={burst.id}
+                  {...burst}
+                  scale={scale}
+                  color={colors.accent + "80"}
+                  onDone={() => removeBurst(burst.id)}
                 />
-              </View>
+              ))}
             </View>
           </>
         )}
       </ScrollView>
 
       {state?.isComplete && (
-        <WinModal score={state.score} pairsRemoved={state.pairsRemoved} onNewGame={startNewGame} />
+        <WinModal
+          score={state.score}
+          pairsRemoved={state.pairsRemoved}
+          reduceMotion={reduceMotion}
+          onNewGame={startNewGame}
+        />
       )}
     </GameShell>
   );
@@ -327,10 +514,12 @@ export default function MahjongScreen() {
 function WinModal({
   score,
   pairsRemoved,
+  reduceMotion,
   onNewGame,
 }: {
   readonly score: number;
   readonly pairsRemoved: number;
+  readonly reduceMotion: boolean;
   readonly onNewGame: () => void;
 }) {
   const { t } = useTranslation("mahjong");
@@ -341,6 +530,16 @@ function WinModal({
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Spring entrance on the card (skipped when reduceMotion is on).
+  const cardScale = useSharedValue(reduceMotion ? 1 : 0.82);
+  useEffect(() => {
+    if (!reduceMotion) {
+      cardScale.value = withSpring(1, { damping: 14, stiffness: 120 });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  const cardAnimStyle = useAnimatedStyle(() => ({ transform: [{ scale: cardScale.value }] }));
 
   const offline = isInitialized && !isOnline;
   const trimmed = name.trim();
@@ -375,10 +574,11 @@ function WinModal({
   return (
     <Modal visible transparent animationType="fade" accessibilityViewIsModal>
       <View style={styles.modalOverlay}>
-        <View
+        <Animated.View
           style={[
             styles.modalCard,
             { backgroundColor: colors.surfaceHigh, borderColor: colors.border },
+            cardAnimStyle,
           ]}
         >
           <Text style={[styles.modalTitle, { color: colors.text }]} accessibilityRole="header">
@@ -459,7 +659,7 @@ function WinModal({
               {t("action.newGame")}
             </Text>
           </Pressable>
-        </View>
+        </Animated.View>
       </View>
     </Modal>
   );
@@ -505,6 +705,9 @@ const styles = StyleSheet.create({
     alignSelf: "stretch",
     alignItems: "flex-start",
     overflow: "hidden",
+  },
+  boardAnimWrap: {
+    alignSelf: "flex-start",
   },
   board: {
     alignSelf: "flex-start",
