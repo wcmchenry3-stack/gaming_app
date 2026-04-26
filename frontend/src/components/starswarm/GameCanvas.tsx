@@ -25,6 +25,10 @@ interface Props {
   onScoreChange?: (score: number) => void;
   onPlayerHit?: () => void;
   onWaveClear?: () => void;
+  onLaserFire?: () => void;
+  onChargeShotFire?: () => void;
+  onExplosion?: () => void;
+  onChallengingStage?: () => void;
   isPaused?: boolean;
   width: number;
   height: number;
@@ -44,6 +48,10 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
       onScoreChange,
       onPlayerHit,
       onWaveClear,
+      onLaserFire,
+      onChargeShotFire,
+      onExplosion,
+      onChallengingStage,
       isPaused = false,
       width,
       height,
@@ -66,6 +74,10 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
     const onScoreChangeRef = useRef(onScoreChange);
     const onPlayerHitRef = useRef(onPlayerHit);
     const onWaveClearRef = useRef(onWaveClear);
+    const onLaserFireRef = useRef(onLaserFire);
+    const onChargeShotFireRef = useRef(onChargeShotFire);
+    const onExplosionRef = useRef(onExplosion);
+    const onChallengingStageRef = useRef(onChallengingStage);
 
     useEffect(() => {
       const wasPaused = isPausedRef.current;
@@ -84,6 +96,18 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
     useEffect(() => {
       onWaveClearRef.current = onWaveClear;
     }, [onWaveClear]);
+    useEffect(() => {
+      onLaserFireRef.current = onLaserFire;
+    }, [onLaserFire]);
+    useEffect(() => {
+      onChargeShotFireRef.current = onChargeShotFire;
+    }, [onChargeShotFire]);
+    useEffect(() => {
+      onExplosionRef.current = onExplosion;
+    }, [onExplosion]);
+    useEffect(() => {
+      onChallengingStageRef.current = onChallengingStage;
+    }, [onChallengingStage]);
 
     const [renderState, setRenderState] = useState<RenderState>({
       game: gameRef.current,
@@ -127,6 +151,8 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
 
         const prev = gameRef.current;
         if (prev.phase !== "GameOver" && !isPausedRef.current) {
+          const chargeShotRequested = inputRef.current.chargeShot;
+          const prevCooldown = prev.player.shootCooldown;
           const next = tick(prev, dtMs, {
             playerX: inputRef.current.playerX,
             fire: inputRef.current.fire,
@@ -138,12 +164,25 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
             prevScoreRef.current = next.score;
             onScoreChangeRef.current?.(next.score);
           }
+          if (next.player.shootCooldown > prevCooldown) {
+            if (chargeShotRequested) {
+              onChargeShotFireRef.current?.();
+            } else {
+              onLaserFireRef.current?.();
+            }
+          }
+          if (next.explosions.length > prev.explosions.length) {
+            onExplosionRef.current?.();
+          }
           if (next.player.lives < prevLivesRef.current) {
             if (next.phase !== "GameOver") onPlayerHitRef.current?.();
           }
           prevLivesRef.current = next.player.lives;
           if (next.phase === "WaveClear" && prevPhaseRef.current !== "WaveClear") {
             onWaveClearRef.current?.();
+          }
+          if (next.phase === "ChallengingStage" && prevPhaseRef.current !== "ChallengingStage") {
+            onChallengingStageRef.current?.();
           }
           prevPhaseRef.current = next.phase;
           if (next.phase === "GameOver") {

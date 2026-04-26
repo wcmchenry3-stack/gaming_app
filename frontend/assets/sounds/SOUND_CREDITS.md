@@ -131,6 +131,57 @@ When adding a sound:
 
 ---
 
+## Star Swarm (#803)
+
+### starswarm-laser.ogg, starswarm-chargeshot.ogg, starswarm-explosion.ogg, starswarm-gameover.ogg, starswarm-waveclear.ogg
+
+*(Previously placed — provenance to be confirmed)*
+
+### starswarm-playerhit.ogg
+
+- **Event:** Player ship takes a hit (life lost, not game over)
+- **Original filename:** `forceField_000.ogg`
+- **Source:** Kenney Sci-Fi Sounds v1.0 (www.kenney.nl)
+- **License:** Creative Commons Zero (CC0)
+- **License URL:** https://creativecommons.org/publicdomain/zero/1.0/
+- **Attribution required:** No
+- **Commercial use:** Yes
+- **Download date:** 2026-04-26
+- **Notes:** Force-field deflection sound. Signals a shield/hull hit without sounding like a full explosion.
+
+### starswarm-challengingstage.ogg
+
+- **Event:** Challenging Stage phase begins
+- **Original filename:** `phaserUp5.ogg`
+- **Source:** Kenney Digital Audio (www.kenney.nl)
+- **License:** Creative Commons Zero (CC0)
+- **License URL:** https://creativecommons.org/publicdomain/zero/1.0/
+- **Attribution required:** No
+- **Commercial use:** Yes
+- **Download date:** 2026-04-26
+- **Notes:** Rising phaser sting. Signals the start of the bonus Challenging Stage wave.
+
+### starswarm-bg-1.mp3 — starswarm-bg-4.mp3
+
+- **Event:** Background music (looping ambient track, one chosen at random per game)
+- **Original filenames:**
+  - `audiopapkin-ambient-soundscapes-003-space-atmosphere-303242.mp3` → bg-1
+  - `audiopapkin-ambient-soundscapes-001-space-atmosphere-303246.mp3` → bg-2
+  - `audiopapkin-ambient-soundscapes-004-space-atmosphere-303243.mp3` → bg-3
+  - `audiopapkin-ambient-soundscapes-007-space-atmosphere-304974.mp3` → bg-4
+- **Source URL:** https://pixabay.com/users/audiopapkin-42202696/ (Pixabay)
+- **Creator:** audiopapkin on Pixabay
+- **License:** Pixabay Content License
+- **License URL:** https://pixabay.com/service/license-summary/
+- **Attribution required:** No
+- **Commercial use:** Yes
+- **Download date:** 2026-04-26
+- **Notes:** Ambient space-atmosphere soundscapes. Played at 20% volume (BG_VOLUME = 0.2) looped.
+  File sizes are 4.4–6.1 MB each — exceed the 500 KB spec target. Compress with ffmpeg if needed:
+  `ffmpeg -i starswarm-bg-N.mp3 -b:a 32k starswarm-bg-N-compressed.mp3`
+
+---
+
 ## Freesound CC0 License summary (as of 2026-04-25)
 
 > Sounds licensed under Creative Commons Zero (CC0) have been dedicated to the
