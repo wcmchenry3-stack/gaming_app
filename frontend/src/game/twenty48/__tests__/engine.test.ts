@@ -15,7 +15,7 @@ import {
   SIZE,
   Direction,
 } from "../engine";
-import { Twenty48State, TileData } from "../types";
+import { Twenty48State, TileData, GameEvent } from "../types";
 
 /**
  * Build a Twenty48State from a board, synthesising a tiles[] array by
@@ -574,5 +574,78 @@ describe("timer — game over freezes the clock", () => {
     // accumulatedMs = prior 500 ms + elapsed since t0 (≥ 2000 ms).
     expect(result.accumulatedMs).toBeGreaterThanOrEqual(500 + (before - t0));
     expect(result.accumulatedMs).toBeLessThanOrEqual(500 + (after - t0));
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Game events
+// ---------------------------------------------------------------------------
+
+describe("game events", () => {
+  afterEach(() => setRng(Math.random));
+
+  it("emits win2048 exactly once when has_won first becomes true", () => {
+    setRng(() => 0);
+    // Board one merge away from 2048.
+    const preWin = stateWith([
+      [1024, 1024, 0, 0],
+      [0, 0, 0, 0],
+      [0, 0, 0, 0],
+      [0, 0, 0, 0],
+    ]);
+    const next = move(preWin, "left");
+    expect(next.has_won).toBe(true);
+    expect(next.events).toContain<GameEvent>("win2048");
+  });
+
+  it("does not emit win2048 on subsequent moves after already won", () => {
+    setRng(() => 0);
+    // Board has already won; a valid left merge exists (row 1: 2+2→4).
+    const alreadyWon = stateWith(
+      [
+        [2048, 0, 0, 0],
+        [2, 2, 0, 0],
+        [0, 0, 0, 0],
+        [0, 0, 0, 0],
+      ],
+      { has_won: true }
+    );
+    const next = move(alreadyWon, "left");
+    expect(next.has_won).toBe(true);
+    expect(next.events ?? []).not.toContain<GameEvent>("win2048");
+  });
+
+  it("emits gameOver when no valid moves remain after a move", () => {
+    setRng(() => 0);
+    // Board: one merge available; after the merge the spawned tile fills the
+    // last empty cell and creates a game-over position.
+    const almostDoneBoard = [
+      [4, 2, 4, 2],
+      [2, 4, 2, 4],
+      [4, 2, 4, 2],
+      [4, 2, 8, 8],
+    ];
+    const result = move(stateWith(almostDoneBoard), "right");
+    expect(result.game_over).toBe(true);
+    expect(result.events).toContain<GameEvent>("gameOver");
+  });
+
+  it("does not emit events on a regular non-terminal move", () => {
+    setRng(() => 0);
+    const s = stateWith([
+      [2, 2, 0, 0],
+      [0, 0, 0, 0],
+      [0, 0, 0, 0],
+      [0, 0, 0, 0],
+    ]);
+    const next = move(s, "left");
+    expect(next.game_over).toBe(false);
+    expect(next.has_won).toBe(false);
+    expect(next.events).toBeUndefined();
+  });
+
+  it("newGame returns state with no events", () => {
+    const s = newGame();
+    expect(s.events).toBeUndefined();
   });
 });

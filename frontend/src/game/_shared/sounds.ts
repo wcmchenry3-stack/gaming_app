@@ -59,6 +59,15 @@ export const SOUND_REGISTRY: Partial<Record<SoundKey, number>> = {
   "yacht.straight": require("../../../assets/sounds/yacht-straight.ogg"),
   // eslint-disable-next-line @typescript-eslint/no-require-imports
   "yacht.upperBonus": require("../../../assets/sounds/yacht-upper-bonus.ogg"),
+  // Twenty48 (#829)
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  "twenty48.tileMerge": require("../../../assets/sounds/twenty48-tile-merge.ogg"),
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  "twenty48.tileSpawn": require("../../../assets/sounds/twenty48-tile-spawn.ogg"),
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  "twenty48.win2048": require("../../../assets/sounds/hearts-moon-shot.mp3"),
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  "twenty48.gameOver": require("../../../assets/sounds/twenty48-game-over.ogg"),
   // FreeCell (#844)
   // eslint-disable-next-line @typescript-eslint/no-require-imports
   "freecell.cardPlace": require("../../../assets/sounds/freecell-card-place.mp3"),

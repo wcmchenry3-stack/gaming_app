@@ -24,8 +24,10 @@ import ScoreBoard from "../components/twenty48/ScoreBoard";
 import GameOverlay from "../components/twenty48/GameOverlay";
 import StatsBento from "../components/twenty48/StatsBento";
 import NewGameConfirmModal from "../components/shared/NewGameConfirmModal";
+import { AnimationOverlay } from "../components/shared/AnimationOverlay";
 import { useGameSync } from "../game/_shared/useGameSync";
 import { useTwenty48Scoreboard } from "../game/twenty48/Twenty48ScoreboardContext";
+import { useSound } from "../game/_shared/useSound";
 
 function flattenBoard(board: number[][]): number[] {
   return board.flat();
@@ -65,6 +67,11 @@ export default function Twenty48Screen({ navigation }: Props) {
   const pendingMove = useRef<Direction | null>(null);
   /** Guards against double-counting a win within a single game session. */
   const winRecordedRef = useRef(false);
+
+  const { play: playTileMerge } = useSound("twenty48.tileMerge");
+  const { play: playTileSpawn } = useSound("twenty48.tileSpawn");
+  const { play: playWin2048 } = useSound("twenty48.win2048");
+  const { play: playGameOverSound } = useSound("twenty48.gameOver");
 
   // Game event instrumentation (#369 / #549). One session per game from load /
   // reset until game_over OR keep-playing. After a keep-playing end, further
@@ -153,6 +160,24 @@ export default function Twenty48Screen({ navigation }: Props) {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state?.score]); // intentional: only re-run when score changes, not on every state update
+
+  // Fire tile sounds from isMerge/isNew flags on the render layer.
+  useEffect(() => {
+    if (!state) return;
+    const hasMerge = state.tiles.some((t) => t.isMerge);
+    const hasSpawn = state.tiles.some((t) => t.isNew && !t.isMerge);
+    if (hasMerge) playTileMerge();
+    if (hasSpawn) playTileSpawn();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state?.tiles]);
+
+  // Fire one-shot event sounds from engine events.
+  useEffect(() => {
+    if (!state?.events) return;
+    if (state.events.includes("win2048")) playWin2048();
+    if (state.events.includes("gameOver")) playGameOverSound();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state?.events]);
 
   useEffect(() => {
     if (!state) return;
@@ -409,32 +434,40 @@ export default function Twenty48Screen({ navigation }: Props) {
       {state && <StatsBento state={state} />}
 
       {/* Overlays */}
-      {showWinOverlay && (
-        <GameOverlay
-          type="win"
-          score={state!.score}
-          onNewGame={resetGame}
-          onKeepPlaying={() => {
-            setWinDismissed(true);
-            const s = stateRef.current;
-            if (s) {
-              syncComplete(
-                { finalScore: s.score, outcome: "kept_playing", durationMs: computeDurationMs(s) },
-                endedPayload(s, "kept_playing")
-              );
-            }
-          }}
-          onHome={() => navigation.goBack()}
-        />
-      )}
-      {showGameOverOverlay && (
-        <GameOverlay
-          type="game_over"
-          score={state!.score}
-          onNewGame={resetGame}
-          onHome={() => navigation.goBack()}
-        />
-      )}
+      <AnimationOverlay visible={!!showWinOverlay} onDismiss={() => setWinDismissed(true)}>
+        {showWinOverlay && (
+          <GameOverlay
+            type="win"
+            score={state!.score}
+            onNewGame={resetGame}
+            onKeepPlaying={() => {
+              setWinDismissed(true);
+              const s = stateRef.current;
+              if (s) {
+                syncComplete(
+                  {
+                    finalScore: s.score,
+                    outcome: "kept_playing",
+                    durationMs: computeDurationMs(s),
+                  },
+                  endedPayload(s, "kept_playing")
+                );
+              }
+            }}
+            onHome={() => navigation.goBack()}
+          />
+        )}
+      </AnimationOverlay>
+      <AnimationOverlay visible={!!showGameOverOverlay} onDismiss={() => {}}>
+        {showGameOverOverlay && (
+          <GameOverlay
+            type="game_over"
+            score={state!.score}
+            onNewGame={resetGame}
+            onHome={() => navigation.goBack()}
+          />
+        )}
+      </AnimationOverlay>
 
       <NewGameConfirmModal
         visible={confirmNewGameVisible}

@@ -18,6 +18,8 @@ export interface TileData {
   isMerge: boolean;
 }
 
+export type GameEvent = "win2048" | "gameOver";
+
 export interface Twenty48State {
   board: number[][];
   tiles: TileData[];
@@ -30,6 +32,8 @@ export interface Twenty48State {
   startedAt: number | null;
   /** Total elapsed milliseconds accumulated across all sessions before the current one. */
   accumulatedMs: number;
+  /** One-shot events emitted on the move that caused them; undefined otherwise. */
+  events?: readonly GameEvent[];
 }
 
 export type Twenty48Session = GameSession<Twenty48State>;

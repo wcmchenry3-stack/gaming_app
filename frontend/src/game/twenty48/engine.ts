@@ -10,7 +10,7 @@
  * without tracking state itself.
  */
 
-import { Twenty48State, TileData } from "./types";
+import { Twenty48State, TileData, GameEvent } from "./types";
 
 export const SIZE = 4;
 
@@ -439,6 +439,10 @@ export function move(state: Twenty48State, direction: Direction): Twenty48State 
   const has_won = state.has_won || boardHas2048(nextBoard);
   const game_over = isGameOver(nextBoard);
 
+  const emittedEvents: GameEvent[] = [];
+  if (!state.has_won && has_won) emittedEvents.push("win2048");
+  if (game_over) emittedEvents.push("gameOver");
+
   // --- Timer tracking ---
   const now = Date.now();
   // Start timer on first move of a session.
@@ -460,5 +464,6 @@ export function move(state: Twenty48State, direction: Direction): Twenty48State 
     has_won,
     startedAt: nextStartedAt,
     accumulatedMs: nextAccumulatedMs,
+    events: emittedEvents.length > 0 ? emittedEvents : undefined,
   };
 }
