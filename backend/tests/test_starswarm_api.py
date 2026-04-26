@@ -64,7 +64,9 @@ class TestSubmitScore:
         assert res.status_code == 422
 
     def test_zero_wave_reached_returns_422(self):
-        res = client.post("/starswarm/score", json={"player_id": "alice", "score": 0, "wave_reached": 0})
+        res = client.post(
+            "/starswarm/score", json={"player_id": "alice", "score": 0, "wave_reached": 0}
+        )
         assert res.status_code == 422
 
 
