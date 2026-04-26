@@ -26,7 +26,7 @@ import {
   undo,
   validateMove,
 } from "../engine";
-import type { Card, Foundations, Rank, SolitaireState, Suit } from "../types";
+import type { Card, Foundations, GameEvent, Rank, SolitaireState, Suit } from "../types";
 import { SUITS } from "../types";
 
 // ---------------------------------------------------------------------------
@@ -484,9 +484,11 @@ describe("invalid moves", () => {
     expect(validateMove(state, { type: "waste-to-tableau", toCol: 0 })).toBe(false);
   });
 
-  it("applyMove returns the same reference on an invalid move", () => {
+  it("applyMove emits invalidMove event and returns a new reference on an invalid move", () => {
     const state = mkState({ waste: [c("hearts", 5)] });
-    expect(applyMove(state, { type: "waste-to-tableau", toCol: 0 })).toBe(state);
+    const result = applyMove(state, { type: "waste-to-tableau", toCol: 0 });
+    expect(result).not.toBe(state);
+    expect(result.events).toContain("invalidMove" as GameEvent);
   });
 
   it("rejects same-color tableau stacking", () => {
@@ -503,6 +505,108 @@ describe("invalid moves", () => {
       foundations: { ...emptyFoundations(), spades: [c("spades", 1)] },
     });
     expect(validateMove(state, { type: "waste-to-foundation" })).toBe(false);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Game events
+// ---------------------------------------------------------------------------
+
+describe("game events", () => {
+  it("applyMove emits cardPlace on a valid waste-to-foundation move", () => {
+    const state = mkState({ waste: [c("spades", 1)] });
+    const next = applyMove(state, { type: "waste-to-foundation" });
+    expect(next.events).toContain("cardPlace" as GameEvent);
+  });
+
+  it("applyMove emits cardFlip when a face-down tableau card is revealed", () => {
+    const state = mkState({
+      tableau: [
+        [c("hearts", 2, false), c("spades", 1)],
+        [],
+        [],
+        [],
+        [],
+        [],
+        [],
+      ],
+    });
+    const next = applyMove(state, { type: "tableau-to-foundation", fromCol: 0 });
+    expect(next.events).toContain("cardFlip" as GameEvent);
+    expect(next.events).toContain("cardPlace" as GameEvent);
+  });
+
+  it("applyMove emits foundationComplete when a suit reaches 13 cards", () => {
+    const foundations: Foundations = {
+      spades: Array.from({ length: 12 }, (_, i) => c("spades", (i + 1) as Rank)),
+      hearts: [],
+      diamonds: [],
+      clubs: [],
+    };
+    const state = mkState({
+      foundations,
+      tableau: [[c("spades", 13)], [], [], [], [], [], []],
+    });
+    const next = applyMove(state, { type: "tableau-to-foundation", fromCol: 0 });
+    expect(next.events).toContain("foundationComplete" as GameEvent);
+  });
+
+  it("applyMove emits gameWin when the last card completes all foundations", () => {
+    const foundations: Foundations = {
+      spades: Array.from({ length: 13 }, (_, i) => c("spades", (i + 1) as Rank)),
+      hearts: Array.from({ length: 13 }, (_, i) => c("hearts", (i + 1) as Rank)),
+      diamonds: Array.from({ length: 13 }, (_, i) => c("diamonds", (i + 1) as Rank)),
+      clubs: Array.from({ length: 12 }, (_, i) => c("clubs", (i + 1) as Rank)),
+    };
+    const state = mkState({
+      foundations,
+      tableau: [[c("clubs", 13)], [], [], [], [], [], []],
+    });
+    const next = applyMove(state, { type: "tableau-to-foundation", fromCol: 0 });
+    expect(next.events).toContain("gameWin" as GameEvent);
+    expect(next.isComplete).toBe(true);
+  });
+
+  it("drawFromStock emits cardFlip", () => {
+    const state = mkState({ stock: [c("clubs", 5, false)] });
+    const next = drawFromStock(state);
+    expect(next.events).toContain("cardFlip" as GameEvent);
+  });
+
+  it("events are cleared from undo snapshots so undo does not re-fire them", () => {
+    const state = mkState({ waste: [c("spades", 1)] });
+    const after = applyMove(state, { type: "waste-to-foundation" });
+    expect(after.events).toContain("cardPlace" as GameEvent);
+    const reverted = undo(after);
+    expect(reverted.events).toBeUndefined();
+  });
+
+  it("applyMove does not emit foundationComplete on subsequent moves once already won", () => {
+    const foundations: Foundations = {
+      spades: Array.from({ length: 13 }, (_, i) => c("spades", (i + 1) as Rank)),
+      hearts: Array.from({ length: 13 }, (_, i) => c("hearts", (i + 1) as Rank)),
+      diamonds: Array.from({ length: 13 }, (_, i) => c("diamonds", (i + 1) as Rank)),
+      clubs: Array.from({ length: 12 }, (_, i) => c("clubs", (i + 1) as Rank)),
+    };
+    // Win the game first
+    const preWin = mkState({
+      foundations,
+      tableau: [[c("clubs", 13)], [], [], [], [], [], []],
+    });
+    const won = applyMove(preWin, { type: "tableau-to-foundation", fromCol: 0 });
+    expect(won.isComplete).toBe(true);
+    // After win, move A♠ back to tableau and then to foundation again — should not re-emit
+    const withSpadeOnTableau = {
+      ...won,
+      foundations: {
+        ...won.foundations,
+        spades: Array.from({ length: 12 }, (_, i) => c("spades", (i + 1) as Rank)),
+      },
+      tableau: [[c("spades", 13)], [], [], [], [], [], []],
+    };
+    const reMove = applyMove(withSpadeOnTableau, { type: "tableau-to-foundation", fromCol: 0 });
+    expect(reMove.events).not.toContain("foundationComplete" as GameEvent);
+    expect(reMove.events).not.toContain("gameWin" as GameEvent);
   });
 });
 

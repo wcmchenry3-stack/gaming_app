@@ -68,6 +68,17 @@ export const SOUND_REGISTRY: Partial<Record<SoundKey, number>> = {
   "twenty48.win2048": require("../../../assets/sounds/hearts-moon-shot.mp3"),
   // eslint-disable-next-line @typescript-eslint/no-require-imports
   "twenty48.gameOver": require("../../../assets/sounds/twenty48-game-over.ogg"),
+  // Solitaire (#831)
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  "solitaire.cardFlip": require("../../../assets/sounds/solitaire-card-flip.ogg"),
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  "solitaire.cardPlace": require("../../../assets/sounds/solitaire-card-place.ogg"),
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  "solitaire.foundationComplete": require("../../../assets/sounds/solitaire-foundation-complete.ogg"),
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  "solitaire.invalidMove": require("../../../assets/sounds/solitaire-invalid-move.ogg"),
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  "solitaire.gameWin": require("../../../assets/sounds/hearts-moon-shot.mp3"),
   // FreeCell (#844)
   // eslint-disable-next-line @typescript-eslint/no-require-imports
   "freecell.cardPlace": require("../../../assets/sounds/freecell-card-place.mp3"),

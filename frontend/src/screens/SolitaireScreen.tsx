@@ -42,6 +42,8 @@ import { GameShell } from "../components/shared/GameShell";
 import TableauPile from "../game/solitaire/components/TableauPile";
 import FoundationPile from "../game/solitaire/components/FoundationPile";
 import StockWastePile from "../game/solitaire/components/StockWastePile";
+import { SolitaireWinCascade } from "../game/solitaire/components/SolitaireWinCascade";
+import { useSound } from "../game/_shared/useSound";
 import { CARD_HEIGHT, CARD_WIDTH } from "../game/solitaire/components/CardView";
 import {
   applyMove,
@@ -112,8 +114,10 @@ export default function SolitaireScreen() {
   // Invalid-move flash — red overlay pulse instead of positional shake so we
   // don't fight React Navigation / safe-area layout math.
   const flashOpacity = useRef(new Animated.Value(0)).current;
+  const sparkleOpacity = useRef(new Animated.Value(0)).current;
   const lastTapRef = useRef<{ key: string; time: number } | null>(null);
   const autoStepTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const winCascadeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Lifecycle refs.
   const hasLoadedRef = useRef(false);
@@ -122,6 +126,14 @@ export default function SolitaireScreen() {
   const prevCompleteRef = useRef(false);
   /** Guards against double-counting a win within a single game session. */
   const winRecordedRef = useRef(false);
+
+  const [cascadeVisible, setCascadeVisible] = useState(false);
+
+  const { play: playCardFlip } = useSound("solitaire.cardFlip");
+  const { play: playCardPlace } = useSound("solitaire.cardPlace");
+  const { play: playFoundationComplete } = useSound("solitaire.foundationComplete");
+  const { play: playInvalidMove } = useSound("solitaire.invalidMove");
+  const { play: playGameWin } = useSound("solitaire.gameWin");
 
   const {
     start: syncStart,
@@ -135,6 +147,7 @@ export default function SolitaireScreen() {
   useEffect(() => {
     return () => {
       if (autoStepTimeoutRef.current !== null) clearTimeout(autoStepTimeoutRef.current);
+      if (winCascadeTimeoutRef.current !== null) clearTimeout(winCascadeTimeoutRef.current);
     };
   }, []);
 
@@ -245,6 +258,26 @@ export default function SolitaireScreen() {
     return unsub;
   }, [navigation, syncComplete, syncGetGameId]);
 
+  useEffect(() => {
+    if (!state?.events) return;
+    if (state.events.includes("cardPlace")) playCardPlace();
+    if (state.events.includes("cardFlip")) playCardFlip();
+    if (state.events.includes("foundationComplete")) {
+      playFoundationComplete();
+      Animated.sequence([
+        Animated.timing(sparkleOpacity, { toValue: 1, duration: 100, useNativeDriver: true }),
+        Animated.timing(sparkleOpacity, { toValue: 0, duration: 500, useNativeDriver: true }),
+      ]).start();
+    }
+    if (state.events.includes("gameWin")) {
+      playGameWin();
+      setCascadeVisible(true);
+      if (winCascadeTimeoutRef.current !== null) clearTimeout(winCascadeTimeoutRef.current);
+      winCascadeTimeoutRef.current = setTimeout(() => setCascadeVisible(false), 2000);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state?.events]);
+
   const ensureSyncStarted = useCallback(
     (s: SolitaireState) => {
       if (syncGetGameId()) return;
@@ -255,12 +288,13 @@ export default function SolitaireScreen() {
   );
 
   const flashInvalid = useCallback(() => {
+    playInvalidMove();
     setSelection(null);
     Animated.sequence([
       Animated.timing(flashOpacity, { toValue: 0.4, duration: 80, useNativeDriver: true }),
       Animated.timing(flashOpacity, { toValue: 0, duration: 180, useNativeDriver: true }),
     ]).start();
-  }, [flashOpacity]);
+  }, [flashOpacity, playInvalidMove]);
 
   const deal = useCallback((drawMode: DrawMode) => {
     setState(dealGame(drawMode));
@@ -277,7 +311,7 @@ export default function SolitaireScreen() {
     (move: Move): boolean => {
       if (state === null) return false;
       const next = applyMove(state, move);
-      if (next === state) return false;
+      if (next.events?.includes("invalidMove")) return false;
       ensureSyncStarted(next);
       setState(next);
       setMoves((m) => m + 1);
@@ -546,11 +580,16 @@ export default function SolitaireScreen() {
       clearTimeout(autoStepTimeoutRef.current);
       autoStepTimeoutRef.current = null;
     }
+    if (winCascadeTimeoutRef.current !== null) {
+      clearTimeout(winCascadeTimeoutRef.current);
+      winCascadeTimeoutRef.current = null;
+    }
     clearGame().catch(() => {});
     setAutoCompleting(false);
     setState(null);
     setSelection(null);
     setMoves(0);
+    setCascadeVisible(false);
     winRecordedRef.current = false;
   }, []);
 
@@ -632,18 +671,29 @@ export default function SolitaireScreen() {
                   } as ViewStyle,
                 ]}
               >
-                <View style={styles.foundationsRow}>
-                  {SUITS.map((suit) => (
-                    <FoundationPile
-                      key={suit}
-                      pile={state.foundations[suit]}
-                      suit={suit}
-                      selected={selection?.kind === "foundation" && selection.suit === suit}
-                      onPress={handleFoundationPress}
-                      dropId={`solitaire-foundation-${suit}`}
-                      onDrop={(source) => handleDropToFoundation(source)}
-                    />
-                  ))}
+                <View>
+                  <View style={styles.foundationsRow}>
+                    {SUITS.map((suit) => (
+                      <FoundationPile
+                        key={suit}
+                        pile={state.foundations[suit]}
+                        suit={suit}
+                        selected={selection?.kind === "foundation" && selection.suit === suit}
+                        onPress={handleFoundationPress}
+                        dropId={`solitaire-foundation-${suit}`}
+                        onDrop={(source) => handleDropToFoundation(source)}
+                      />
+                    ))}
+                  </View>
+                  <Animated.View
+                    pointerEvents="none"
+                    accessibilityElementsHidden
+                    importantForAccessibility="no-hide-descendants"
+                    style={[
+                      StyleSheet.absoluteFill,
+                      { backgroundColor: "#ffd700", opacity: sparkleOpacity, borderRadius: 8 },
+                    ]}
+                  />
                 </View>
 
                 <View style={styles.tableauRow}>
@@ -686,6 +736,8 @@ export default function SolitaireScreen() {
                 </Text>
               </Pressable>
             )}
+
+            <SolitaireWinCascade visible={cascadeVisible} />
 
             <Animated.View
               pointerEvents="none"
