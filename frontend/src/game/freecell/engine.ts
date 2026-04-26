@@ -79,7 +79,7 @@ function emptyFreeCells(): FreeCells {
  * columns 0–3 receive 7 cards each; columns 4–7 receive 6 cards each.
  */
 export function dealGame(explicitSeed?: number): FreeCellState {
-  const seed = explicitSeed ?? (Math.floor(_rng() * 0xffffffff) >>> 0);
+  const seed = explicitSeed ?? Math.floor(_rng() * 0xffffffff) >>> 0;
   const deck = fisherYates(createDeck(), createSeededRng(seed));
 
   const tableau: Card[][] = [];
@@ -232,10 +232,7 @@ function isWin(foundations: Foundations): boolean {
 
 /** Take a snapshot of `prev` (undoStack cleared to []), append to the stack,
  * cap at UNDO_CAP, then attach to `next`. */
-function withUndo(
-  prev: FreeCellState,
-  next: Omit<FreeCellState, "undoStack">
-): FreeCellState {
+function withUndo(prev: FreeCellState, next: Omit<FreeCellState, "undoStack">): FreeCellState {
   const snapshot: FreeCellState = { ...prev, undoStack: [] };
   const stack = [...prev.undoStack, snapshot];
   const capped = stack.length > UNDO_CAP ? stack.slice(stack.length - UNDO_CAP) : stack;
