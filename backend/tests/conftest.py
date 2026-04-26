@@ -85,7 +85,7 @@ async def _clean_db_tables():
     """Truncate DB state between tests so ordering doesn't matter.
 
     Lightweight — only touches tables the new API suite writes to. Existing
-    in-memory game state (blackjack, yacht, cascade in-memory) is reset by
+    in-memory game state (blackjack, cascade in-memory) is reset by
     their own router-level reset helpers.
     """
     from db.base import get_engine, is_configured
