@@ -63,7 +63,7 @@ describe("DiceRow", () => {
       rollsUsed: 1,
       held: [false, false, false, false, false],
     });
-    const dice = getAllByRole("button", { name: /^die \d/i });
+    getAllByRole("button", { name: /^die \d/i });
     // held=false renders without error — confirmed by test not throwing
 
     rerender(
