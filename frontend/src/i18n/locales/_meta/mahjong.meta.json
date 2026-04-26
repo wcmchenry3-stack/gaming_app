@@ -1,0 +1,236 @@
+{
+  "game.title": {
+    "component": "HomeScreen",
+    "description": "Name of the Mahjong Solitaire game card.",
+    "tone": "neutral",
+    "characterLimit": 20,
+    "placeholders": [],
+    "doNotTranslate": ["Mahjong Solitaire"],
+    "notes": "Do not translate the game name."
+  },
+  "game.description": {
+    "component": "HomeScreen",
+    "description": "One-line description on the Mahjong Solitaire game card.",
+    "tone": "casual, punchy",
+    "characterLimit": 55,
+    "placeholders": [],
+    "doNotTranslate": [],
+    "notes": null
+  },
+  "game.playLabel": {
+    "component": "HomeScreen",
+    "description": "Accessibility label for the Mahjong Solitaire play button.",
+    "tone": "functional",
+    "characterLimit": 25,
+    "placeholders": [],
+    "doNotTranslate": ["Mahjong Solitaire"],
+    "notes": null
+  },
+  "game.canvasLabel": {
+    "component": "GameCanvas",
+    "description": "Accessible label for the game canvas — describes the game and interaction.",
+    "tone": "functional, descriptive",
+    "characterLimit": 100,
+    "placeholders": [],
+    "doNotTranslate": ["Mahjong Solitaire"],
+    "notes": null
+  },
+  "hud.score": {
+    "component": "GameCanvas",
+    "description": "Short uppercase label for the current score in the HUD.",
+    "tone": "functional",
+    "characterLimit": 8,
+    "placeholders": [],
+    "doNotTranslate": [],
+    "notes": null
+  },
+  "hud.pairs": {
+    "component": "GameCanvas",
+    "description": "Short uppercase label for the number of remaining tile pairs in the HUD.",
+    "tone": "functional",
+    "characterLimit": 8,
+    "placeholders": [],
+    "doNotTranslate": [],
+    "notes": null
+  },
+  "hud.time": {
+    "component": "GameCanvas",
+    "description": "Short uppercase label for the elapsed timer in the HUD.",
+    "tone": "functional",
+    "characterLimit": 6,
+    "placeholders": [],
+    "doNotTranslate": [],
+    "notes": null
+  },
+  "action.newGame": {
+    "component": "Controls",
+    "description": "Label on the new-game button.",
+    "tone": "action, brief",
+    "characterLimit": 10,
+    "placeholders": [],
+    "doNotTranslate": [],
+    "notes": null
+  },
+  "action.newGameLabel": {
+    "component": "Controls",
+    "description": "Accessibility label for the new-game button.",
+    "tone": "functional",
+    "characterLimit": 25,
+    "placeholders": [],
+    "doNotTranslate": [],
+    "notes": null
+  },
+  "action.shuffle": {
+    "component": "Controls",
+    "description": "Label on the shuffle button.",
+    "tone": "action, brief",
+    "characterLimit": 10,
+    "placeholders": [],
+    "doNotTranslate": [],
+    "notes": null
+  },
+  "action.shuffleLabel": {
+    "component": "Controls",
+    "description": "Accessibility label for the shuffle button.",
+    "tone": "functional, descriptive",
+    "characterLimit": 60,
+    "placeholders": [],
+    "doNotTranslate": [],
+    "notes": null
+  },
+  "action.undo": {
+    "component": "Controls",
+    "description": "Label on the undo button.",
+    "tone": "action, brief",
+    "characterLimit": 6,
+    "placeholders": [],
+    "doNotTranslate": [],
+    "notes": null
+  },
+  "action.undoLabel": {
+    "component": "Controls",
+    "description": "Accessibility label for the undo button.",
+    "tone": "functional",
+    "characterLimit": 30,
+    "placeholders": [],
+    "doNotTranslate": [],
+    "notes": null
+  },
+  "overlay.noMoves": {
+    "component": "GameCanvas",
+    "description": "Large heading on the no-moves overlay when no tile pairs are available.",
+    "tone": "neutral, informative",
+    "characterLimit": 12,
+    "placeholders": [],
+    "doNotTranslate": [],
+    "notes": null
+  },
+  "overlay.noMovesDetail": {
+    "component": "GameCanvas",
+    "description": "Detail line under the no-moves heading, explaining what to do next.",
+    "tone": "helpful",
+    "characterLimit": 50,
+    "placeholders": [],
+    "doNotTranslate": [],
+    "notes": null
+  },
+  "overlay.youWon": {
+    "component": "GameCanvas",
+    "description": "Large heading on the win overlay when all tiles are cleared.",
+    "tone": "celebratory, brief",
+    "characterLimit": 10,
+    "placeholders": [],
+    "doNotTranslate": [],
+    "notes": null
+  },
+  "overlay.youWonDetail": {
+    "component": "GameCanvas",
+    "description": "Detail line showing how many pairs were cleared on the win overlay.",
+    "tone": "celebratory",
+    "characterLimit": 30,
+    "placeholders": ["{{count}}"],
+    "doNotTranslate": [],
+    "notes": "{{count}} is the total number of matched pairs (72 for a full Turtle board)."
+  },
+  "overlay.shuffleButton": {
+    "component": "GameCanvas",
+    "description": "Button label on the no-moves overlay to trigger a shuffle.",
+    "tone": "action, brief",
+    "characterLimit": 10,
+    "placeholders": [],
+    "doNotTranslate": [],
+    "notes": null
+  },
+  "overlay.newGameButton": {
+    "component": "GameCanvas",
+    "description": "Button label on the win overlay to start a fresh game.",
+    "tone": "action, brief",
+    "characterLimit": 10,
+    "placeholders": [],
+    "doNotTranslate": [],
+    "notes": null
+  },
+  "layout.turtle": {
+    "component": "MahjongScreen",
+    "description": "Display name for the Turtle board layout.",
+    "tone": "neutral",
+    "characterLimit": 12,
+    "placeholders": [],
+    "doNotTranslate": [],
+    "notes": "Named after the turtle shape formed by the tile arrangement. Translate the animal name naturally."
+  },
+  "score.display": {
+    "component": "GameCanvas",
+    "description": "Accessibility label for the score display.",
+    "tone": "functional",
+    "characterLimit": 20,
+    "placeholders": ["{{score}}"],
+    "doNotTranslate": [],
+    "notes": null
+  },
+  "scoreboard.title": {
+    "component": "ScoreboardScreen",
+    "description": "Heading for the Mahjong Solitaire scoreboard.",
+    "tone": "neutral",
+    "characterLimit": 15,
+    "placeholders": [],
+    "doNotTranslate": [],
+    "notes": null
+  },
+  "scoreboard.rank": {
+    "component": "ScoreboardScreen",
+    "description": "Column header for rank position in the leaderboard.",
+    "tone": "functional",
+    "characterLimit": 6,
+    "placeholders": [],
+    "doNotTranslate": [],
+    "notes": null
+  },
+  "scoreboard.player": {
+    "component": "ScoreboardScreen",
+    "description": "Column header for the player name in the leaderboard.",
+    "tone": "functional",
+    "characterLimit": 10,
+    "placeholders": [],
+    "doNotTranslate": [],
+    "notes": null
+  },
+  "scoreboard.score": {
+    "component": "ScoreboardScreen",
+    "description": "Column header for the score value in the leaderboard.",
+    "tone": "functional",
+    "characterLimit": 8,
+    "placeholders": [],
+    "doNotTranslate": [],
+    "notes": null
+  },
+  "scoreboard.empty": {
+    "component": "ScoreboardScreen",
+    "description": "Empty state message when no scores have been submitted yet.",
+    "tone": "encouraging, casual",
+    "characterLimit": 45,
+    "placeholders": [],
+    "doNotTranslate": [],
+    "notes": null
+  }
+}
