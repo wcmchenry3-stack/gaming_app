@@ -16,12 +16,16 @@ export interface GameCanvasHandle {
   reset: () => void;
   setPlayerX: (x: number) => void;
   setFire: (fire: boolean) => void;
+  setChargeShot: (fire: boolean) => void;
 }
 
 interface Props {
   highScore?: number;
   onGameOver?: (finalScore: number) => void;
   onScoreChange?: (score: number) => void;
+  onPlayerHit?: () => void;
+  onWaveClear?: () => void;
+  isPaused?: boolean;
   width: number;
   height: number;
   scale: number;
@@ -33,24 +37,40 @@ interface RenderState {
 }
 
 const GameCanvas = forwardRef<GameCanvasHandle, Props>(
-  ({ highScore = 0, onGameOver, onScoreChange, width, height, scale }, ref) => {
+  ({ highScore = 0, onGameOver, onScoreChange, onPlayerHit, onWaveClear, isPaused = false, width, height, scale }, ref) => {
     const { t } = useTranslation("starswarm");
     const images = useStarSwarmImages();
 
     const gameRef = useRef<StarSwarmState>(initStarSwarm(width, height));
     const sfRef = useRef<StarfieldState>(initStarfield(width, height));
-    const inputRef = useRef({ playerX: width / 2, fire: true });
+    const inputRef = useRef({ playerX: width / 2, fire: true, chargeShot: false });
     const lastFrameTimeRef = useRef(0);
     const prevScoreRef = useRef(0);
+    const prevLivesRef = useRef(gameRef.current.player.lives);
+    const prevPhaseRef = useRef(gameRef.current.phase);
+    const isPausedRef = useRef(isPaused);
     const onGameOverRef = useRef(onGameOver);
     const onScoreChangeRef = useRef(onScoreChange);
+    const onPlayerHitRef = useRef(onPlayerHit);
+    const onWaveClearRef = useRef(onWaveClear);
 
+    useEffect(() => {
+      const wasPaused = isPausedRef.current;
+      isPausedRef.current = isPaused;
+      if (wasPaused && !isPaused) lastFrameTimeRef.current = 0; // prevent delta spike on resume
+    }, [isPaused]);
     useEffect(() => {
       onGameOverRef.current = onGameOver;
     }, [onGameOver]);
     useEffect(() => {
       onScoreChangeRef.current = onScoreChange;
     }, [onScoreChange]);
+    useEffect(() => {
+      onPlayerHitRef.current = onPlayerHit;
+    }, [onPlayerHit]);
+    useEffect(() => {
+      onWaveClearRef.current = onWaveClear;
+    }, [onWaveClear]);
 
     const [renderState, setRenderState] = useState<RenderState>({
       game: gameRef.current,
@@ -64,7 +84,10 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
           gameRef.current = initStarSwarm(width, height);
           sfRef.current = initStarfield(width, height);
           inputRef.current.playerX = width / 2;
+          inputRef.current.chargeShot = false;
           prevScoreRef.current = 0;
+          prevLivesRef.current = gameRef.current.player.lives;
+          prevPhaseRef.current = gameRef.current.phase;
           setRenderState({ game: gameRef.current, sf: sfRef.current });
         },
         setPlayerX(x) {
@@ -72,6 +95,9 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
         },
         setFire(fire) {
           inputRef.current.fire = fire;
+        },
+        setChargeShot(fire) {
+          inputRef.current.chargeShot = fire;
         },
       }),
       [width, height]
@@ -87,16 +113,26 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
         lastFrameTimeRef.current = timestamp;
 
         const prev = gameRef.current;
-        if (prev.phase !== "GameOver") {
+        if (prev.phase !== "GameOver" && !isPausedRef.current) {
           const next = tick(prev, dtMs, {
             playerX: inputRef.current.playerX,
             fire: inputRef.current.fire,
+            chargeShot: inputRef.current.chargeShot,
           });
+          if (inputRef.current.chargeShot) inputRef.current.chargeShot = false;
           gameRef.current = next;
           if (next.score !== prevScoreRef.current) {
             prevScoreRef.current = next.score;
             onScoreChangeRef.current?.(next.score);
           }
+          if (next.player.lives < prevLivesRef.current) {
+            if (next.phase !== "GameOver") onPlayerHitRef.current?.();
+          }
+          prevLivesRef.current = next.player.lives;
+          if (next.phase === "WaveClear" && prevPhaseRef.current !== "WaveClear") {
+            onWaveClearRef.current?.();
+          }
+          prevPhaseRef.current = next.phase;
           if (next.phase === "GameOver") {
             onGameOverRef.current?.(next.score);
           }

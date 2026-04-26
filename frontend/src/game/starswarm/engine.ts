@@ -27,6 +27,10 @@ const BULLET_P_W = 5;
 const BULLET_P_H = 14;
 const BULLET_P_VY = -0.56; // px/ms upward
 
+const BULLET_C_W = 12; // charge shot — wider
+const BULLET_C_H = 22;
+const CHARGE_SHOOT_COOLDOWN = 900; // ms; longer cooldown than auto-fire
+
 const BULLET_E_W = 5;
 const BULLET_E_H = 10;
 const BULLET_E_VY = 0.2; // px/ms downward
@@ -394,22 +398,43 @@ function tickPlayer(state: StarSwarmState, dtMs: number, input: StarSwarmInput):
 
   const player: Player = { ...p, x: newX, invincibleTimer, shootCooldown };
 
-  if (input.fire && shootCooldown === 0) {
-    const bullet: Bullet = {
-      id: nextId(),
-      x: newX,
-      y: p.y - p.height / 2,
-      vx: 0,
-      vy: BULLET_P_VY,
-      owner: "player",
-      width: BULLET_P_W,
-      height: BULLET_P_H,
-    };
-    return {
-      ...state,
-      player: { ...player, shootCooldown: PLAYER_SHOOT_COOLDOWN },
-      playerBullets: [...state.playerBullets, bullet],
-    };
+  if (shootCooldown === 0) {
+    if (input.chargeShot) {
+      const bullet: Bullet = {
+        id: nextId(),
+        x: newX,
+        y: p.y - p.height / 2,
+        vx: 0,
+        vy: BULLET_P_VY,
+        owner: "player",
+        width: BULLET_C_W,
+        height: BULLET_C_H,
+        damage: 2,
+      };
+      return {
+        ...state,
+        player: { ...player, shootCooldown: CHARGE_SHOOT_COOLDOWN },
+        playerBullets: [...state.playerBullets, bullet],
+      };
+    }
+    if (input.fire) {
+      const bullet: Bullet = {
+        id: nextId(),
+        x: newX,
+        y: p.y - p.height / 2,
+        vx: 0,
+        vy: BULLET_P_VY,
+        owner: "player",
+        width: BULLET_P_W,
+        height: BULLET_P_H,
+        damage: 1,
+      };
+      return {
+        ...state,
+        player: { ...player, shootCooldown: PLAYER_SHOOT_COOLDOWN },
+        playerBullets: [...state.playerBullets, bullet],
+      };
+    }
   }
 
   return { ...state, player };
@@ -506,6 +531,7 @@ function tickFormation(
       owner: "enemy",
       width: BULLET_E_W,
       height: BULLET_E_H,
+      damage: 1,
     };
     return {
       enemy: {
@@ -668,7 +694,7 @@ function tickCollisions(state: StarSwarmState): StarSwarmState {
       if (!aabb(b.x, b.y, b.width, b.height, enemy.x, enemy.y, enemy.width, enemy.height)) continue;
 
       hitBulletIds.add(b.id);
-      const newHp = enemy.hp - 1;
+      const newHp = enemy.hp - b.damage;
 
       if (newHp <= 0) {
         newExplosions.push(spawnExplosion(enemy.x, enemy.y));

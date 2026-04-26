@@ -10,5 +10,11 @@
   "phase.challengingStage": "CHALLENGING STAGE",
   "phase.hits": "HITS: {{count}}",
   "phase.gameOver": "GAME OVER",
-  "score.display": "Score: {{score}}"
+  "score.display": "Score: {{score}}",
+  "controls.chargeShotLabel": "Charge shot — hold and release to fire",
+  "controls.paused": "PAUSED",
+  "controls.tapToResume": "Tap to resume",
+  "controls.resumeLabel": "Resume game",
+  "controls.newGame": "NEW GAME",
+  "controls.newGameLabel": "Start a new game"
 }

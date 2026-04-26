@@ -10,8 +10,8 @@ import {
 } from "../engine";
 import type { Bullet, StarSwarmInput, StarSwarmState } from "../types";
 
-const NO_INPUT: StarSwarmInput = { playerX: CANVAS_W / 2, fire: false };
-const FIRE_INPUT: StarSwarmInput = { playerX: CANVAS_W / 2, fire: true };
+const NO_INPUT: StarSwarmInput = { playerX: CANVAS_W / 2, fire: false, chargeShot: false };
+const FIRE_INPUT: StarSwarmInput = { playerX: CANVAS_W / 2, fire: true, chargeShot: false };
 
 function advanceMs(state: StarSwarmState, ms: number, input = NO_INPUT): StarSwarmState {
   const step = 16;
@@ -173,6 +173,7 @@ describe("Collision: player bullets vs enemies", () => {
       owner: "player",
       width: 5,
       height: 14,
+      damage: 1,
     };
     s = { ...s, playerBullets: [bullet] };
     s = tick(s, 16, NO_INPUT);
@@ -189,7 +190,7 @@ describe("Collision: player bullets vs enemies", () => {
     const target = s.enemies.find((e) => e.isAlive && e.tier === "Grunt");
     if (!target) return; // no grunt on this wave config, skip
 
-    const aim: StarSwarmInput = { playerX: target.x, fire: true };
+    const aim: StarSwarmInput = { playerX: target.x, fire: true, chargeShot: false };
     s = advanceMs(s, 3000, aim);
     expect(s.score).toBeGreaterThan(scoreBefore);
   });
@@ -201,7 +202,7 @@ describe("Collision: player bullets vs enemies", () => {
     const target = s.enemies.find((e) => e.isAlive);
     if (!target) return;
 
-    const aim: StarSwarmInput = { playerX: target.x, fire: true };
+    const aim: StarSwarmInput = { playerX: target.x, fire: true, chargeShot: false };
     s = tick(s, 16, aim); // fire one bullet
     const bulletsBefore = s.playerBullets.length;
 
@@ -234,6 +235,7 @@ describe("Collision: enemy bullets vs player", () => {
       owner: "enemy" as const,
       width: 5,
       height: 10,
+      damage: 1,
     };
     s = { ...s, enemyBullets: [bullet] };
     s = tick(s, 16, NO_INPUT);
@@ -257,6 +259,7 @@ describe("Collision: enemy bullets vs player", () => {
       owner: "enemy" as const,
       width: 5,
       height: 10,
+      damage: 1,
     };
     s = { ...s, enemyBullets: [bullet] };
     s = tick(s, 16, NO_INPUT);
@@ -278,6 +281,7 @@ describe("Collision: enemy bullets vs player", () => {
       owner: "enemy" as const,
       width: 5,
       height: 10,
+      damage: 1,
     };
     s = { ...s, enemyBullets: [bullet] };
     s = tick(s, 16, NO_INPUT);
@@ -299,6 +303,7 @@ describe("Collision: enemy bullets vs player", () => {
       owner: "enemy" as const,
       width: 50,
       height: 50,
+      damage: 1,
     };
     s = { ...s, enemyBullets: [bullet] };
     s = tick(s, 16, NO_INPUT);
@@ -329,6 +334,7 @@ describe("Scoring", () => {
       owner: "player" as const,
       width: 5,
       height: 14,
+      damage: 1,
     };
     s = { ...s, playerBullets: [bullet] };
     s = tick(s, 16, NO_INPUT);
@@ -351,6 +357,7 @@ describe("Scoring", () => {
       owner: "player" as const,
       width: 5,
       height: 14,
+      damage: 1,
     });
     const scoreBeforeKill = s.score;
     s = { ...s, playerBullets: [makeBullet(1)] };
@@ -445,6 +452,7 @@ describe("ChallengingStage", () => {
       owner: "player",
       width: 5,
       height: 14,
+      damage: 1,
     };
     s = { ...s, playerBullets: [bullet] };
     s = tick(s, 16, NO_INPUT);

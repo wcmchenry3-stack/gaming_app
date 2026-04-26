@@ -5,6 +5,7 @@ import React from "react";
 // React.lazy promise resolves synchronously on navigation.
 const factories = {
   Cascade: () => import("../screens/CascadeScreen"),
+  StarSwarm: () => import("../screens/StarSwarmScreen"),
   BlackjackBetting: () => import("../screens/BlackjackBettingScreen"),
   BlackjackTable: () => import("../screens/BlackjackTableScreen"),
   Twenty48: () => import("../screens/Twenty48Screen"),
@@ -20,6 +21,7 @@ const factories = {
 
 export const LazyScreens = {
   Cascade: React.lazy(factories.Cascade),
+  StarSwarm: React.lazy(factories.StarSwarm),
   BlackjackBetting: React.lazy(factories.BlackjackBetting),
   BlackjackTable: React.lazy(factories.BlackjackTable),
   Twenty48: React.lazy(factories.Twenty48),
