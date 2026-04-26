@@ -29,7 +29,6 @@ function emptyFoundations(): Foundations {
   return { spades: [], hearts: [], diamonds: [], clubs: [] };
 }
 
-
 function mkState(overrides: Partial<FreeCellState> = {}): FreeCellState {
   return {
     _v: 1,
