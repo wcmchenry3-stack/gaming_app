@@ -373,13 +373,7 @@ export function undo(state: SudokuState): SudokuState {
 // Helpers for UI / error flash
 // ---------------------------------------------------------------------------
 
-export function peers(
-  r1: number,
-  c1: number,
-  r2: number,
-  c2: number,
-  cfg: GridConfig
-): boolean {
+export function peers(r1: number, c1: number, r2: number, c2: number, cfg: GridConfig): boolean {
   if (r1 === r2 && c1 === c2) return false;
   if (r1 === r2 || c1 === c2) return true;
   return (

@@ -240,7 +240,11 @@ describe("sudoku stats storage", () => {
     // Simulate a payload from before the nested structure was introduced.
     await AsyncStorage.setItem(
       STATS_KEY,
-      JSON.stringify({ easy: { bestTimeS: 60, gamesSolved: 1 }, medium: { bestTimeS: 0, gamesSolved: 0 }, hard: { bestTimeS: 0, gamesSolved: 0 } })
+      JSON.stringify({
+        easy: { bestTimeS: 60, gamesSolved: 1 },
+        medium: { bestTimeS: 0, gamesSolved: 0 },
+        hard: { bestTimeS: 0, gamesSolved: 0 },
+      })
     );
     const loaded = await loadStats();
     expect(loaded.classic.easy).toEqual({ bestTimeS: 60, gamesSolved: 1 });

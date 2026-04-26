@@ -117,9 +117,9 @@ _MINI_SAMPLE_SIZE = 50
 def test_mini_puzzle_has_unique_solution(mini_bank: dict[str, list[str]], tier: str) -> None:
     """Sample uniqueness check for the 6×6 mini bank (#748)."""
     puzzles = mini_bank[tier]
-    assert len(puzzles) >= _MINI_SAMPLE_SIZE, (
-        f"{tier} mini bank has only {len(puzzles)} puzzles, expected ≥{_MINI_SAMPLE_SIZE}"
-    )
+    assert (
+        len(puzzles) >= _MINI_SAMPLE_SIZE
+    ), f"{tier} mini bank has only {len(puzzles)} puzzles, expected ≥{_MINI_SAMPLE_SIZE}"
 
     non_unique: list[tuple[int, int]] = []
     for i, puzzle_str in enumerate(puzzles[:_MINI_SAMPLE_SIZE]):

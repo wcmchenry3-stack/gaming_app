@@ -176,8 +176,8 @@ describe("SudokuGrid", () => {
   it("renders 81 cell buttons", () => {
     const { getAllByRole } = wrap(
       <SudokuGrid
-          variant="classic"
-          grid={asGrid(emptyGrid())}
+        variant="classic"
+        grid={asGrid(emptyGrid())}
         selectedRow={null}
         selectedCol={null}
         onCellPress={() => {}}
@@ -190,8 +190,8 @@ describe("SudokuGrid", () => {
     const onCellPress = jest.fn();
     const { getAllByRole } = wrap(
       <SudokuGrid
-          variant="classic"
-          grid={asGrid(emptyGrid())}
+        variant="classic"
+        grid={asGrid(emptyGrid())}
         selectedRow={null}
         selectedCol={null}
         onCellPress={onCellPress}
@@ -209,7 +209,13 @@ describe("SudokuGrid", () => {
     g[4]![4] = cell({ value: 3 });
     g[8]![8] = cell({ value: 7, isError: true });
     const tree = wrap(
-      <SudokuGrid variant="classic" grid={asGrid(g)} selectedRow={4} selectedCol={4} onCellPress={() => {}} />
+      <SudokuGrid
+        variant="classic"
+        grid={asGrid(g)}
+        selectedRow={4}
+        selectedCol={4}
+        onCellPress={() => {}}
+      />
     ).toJSON();
     expect(tree).toMatchSnapshot();
   });

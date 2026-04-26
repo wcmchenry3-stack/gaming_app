@@ -257,9 +257,7 @@ export default function SudokuScreen() {
           ...statsRef.current[variantKey],
           [diff]: {
             bestTimeS:
-              prev.bestTimeS === 0 || finalElapsed < prev.bestTimeS
-                ? finalElapsed
-                : prev.bestTimeS,
+              prev.bestTimeS === 0 || finalElapsed < prev.bestTimeS ? finalElapsed : prev.bestTimeS,
             gamesSolved: prev.gamesSolved + 1,
           },
         },
@@ -291,8 +289,7 @@ export default function SudokuScreen() {
       syncComplete(
         {
           outcome: "abandoned",
-          finalScore:
-            s !== null ? computeScore(s.difficulty, s.errorCount) : 0,
+          finalScore: s !== null ? computeScore(s.difficulty, s.errorCount) : 0,
           durationMs: 0,
         },
         {
@@ -641,10 +638,7 @@ function VariantSelector({
             ]}
           >
             <Text
-              style={[
-                styles.variantLabel,
-                { color: selected ? colors.textOnAccent : colors.text },
-              ]}
+              style={[styles.variantLabel, { color: selected ? colors.textOnAccent : colors.text }]}
             >
               {t(`variant.${v}`, {
                 defaultValue: v === "classic" ? "Classic 9×9" : "Mini 6×6",

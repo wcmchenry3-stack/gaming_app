@@ -96,8 +96,7 @@ function restoreGrid(rows: SerializedCell[][]): Grid {
 }
 
 function restoreSnapshot(p: Omit<SerializedState, "undoStack">): Omit<SudokuState, "undoStack"> {
-  const variant: Variant =
-    p.variant === "mini" || p.variant === "classic" ? p.variant : "classic";
+  const variant: Variant = p.variant === "mini" || p.variant === "classic" ? p.variant : "classic";
   return {
     _v: 1,
     variant,

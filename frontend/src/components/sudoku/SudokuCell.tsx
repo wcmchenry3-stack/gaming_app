@@ -77,10 +77,7 @@ export default function SudokuCell({
           {noteDigits.map((d) => (
             <Text
               key={d}
-              style={[
-                styles.note,
-                { color: cell.notes.has(d) ? colors.textMuted : "transparent" },
-              ]}
+              style={[styles.note, { color: cell.notes.has(d) ? colors.textMuted : "transparent" }]}
             >
               {d}
             </Text>

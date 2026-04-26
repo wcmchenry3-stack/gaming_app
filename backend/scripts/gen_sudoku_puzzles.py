@@ -44,10 +44,10 @@ import sys
 import time
 from pathlib import Path
 
-
 # ---------------------------------------------------------------------------
 # Grid representation — parameterised on (SIZE, BOX_ROWS, BOX_COLS)
 # ---------------------------------------------------------------------------
+
 
 def _make_peers(size: int, box_rows: int, box_cols: int) -> list[frozenset[int]]:
     """Pre-compute peer sets for all SIZE² cells."""
@@ -78,9 +78,7 @@ def _candidates(grid: list[int], i: int, peers_list: list[frozenset[int]], size:
     return (~used) & full
 
 
-def _pick_empty(
-    grid: list[int], peers_list: list[frozenset[int]], size: int
-) -> tuple[int, int]:
+def _pick_empty(grid: list[int], peers_list: list[frozenset[int]], size: int) -> tuple[int, int]:
     """Return (index, candidate_mask) for empty cell with fewest candidates.
     Returns (-1, 0) when full. (MRV heuristic.)"""
     total = size * size
