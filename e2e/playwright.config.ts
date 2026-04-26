@@ -64,6 +64,11 @@ export default defineConfig({
       use: { ...devices["Desktop Chrome"] },
     },
     {
+      name: "starswarm",
+      testMatch: "starswarm-*.spec.ts",
+      use: { ...devices["Desktop Chrome"] },
+    },
+    {
       name: "cross",
       testMatch: ["accessibility.spec.ts", "ui-preferences.spec.ts"],
       use: { ...devices["Desktop Chrome"] },

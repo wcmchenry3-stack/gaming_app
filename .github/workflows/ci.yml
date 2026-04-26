@@ -139,6 +139,11 @@ jobs:
               - 'frontend/src/components/cascade/**'
               - 'frontend/src/game/cascade/**'
               - 'backend/games/cascade*'
+            starswarm:
+              - 'frontend/src/screens/StarSwarmScreen*'
+              - 'frontend/src/components/starswarm/**'
+              - 'frontend/src/game/starswarm/**'
+              - 'backend/starswarm/**'
             logstore:
               - 'frontend/src/game/_shared/eventStore*'
               - 'frontend/src/game/_shared/eventQueueConfig*'
@@ -169,7 +174,7 @@ jobs:
           if [[ "${{ github.event_name }}" == "push" ]] || \
              [[ "${{ github.base_ref }}" == "main" ]] || \
              [[ "${{ steps.filter.outputs.shared }}" == "true" ]]; then
-            echo "projects=yacht blackjack twenty48 cascade cross logs-budget" >> "$GITHUB_OUTPUT"
+            echo "projects=yacht blackjack twenty48 cascade starswarm cross logs-budget" >> "$GITHUB_OUTPUT"
             echo "label=full suite (push/main/shared change)" >> "$GITHUB_OUTPUT"
           else
             projects="cross"
@@ -178,6 +183,7 @@ jobs:
             [[ "${{ steps.filter.outputs.twenty48 }}"  == "true" ]] && projects="$projects twenty48"
 
             [[ "${{ steps.filter.outputs.cascade }}"   == "true" ]] && projects="$projects cascade"
+            [[ "${{ steps.filter.outputs.starswarm }}" == "true" ]] && projects="$projects starswarm"
             [[ "${{ steps.filter.outputs.logstore }}"  == "true" ]] && projects="$projects logs-budget"
             echo "projects=$projects" >> "$GITHUB_OUTPUT"
             echo "label=selective: $projects" >> "$GITHUB_OUTPUT"
