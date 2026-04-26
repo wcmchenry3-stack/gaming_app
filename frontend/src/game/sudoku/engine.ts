@@ -274,7 +274,7 @@ function isRowComplete(grid: Grid, row: number, size: number): boolean {
 }
 
 function isColComplete(grid: Grid, col: number, size: number): boolean {
-  for (let r = 0; r < grid.length; r++) {
+  for (let r = 0; r < size; r++) {
     const cell = grid[r]?.[col];
     if (!cell || cell.value === 0 || cell.isError) return false;
   }
