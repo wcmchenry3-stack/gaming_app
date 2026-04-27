@@ -48,7 +48,7 @@ test.describe("FreeCell — smoke tests", () => {
       page.getByRole("heading", { name: "FreeCell", exact: true }),
     ).toBeVisible({ timeout: 10_000 });
     await expect(
-      page.getByLabel("FreeCell board"),
+      page.getByLabel("FreeCell board").first(),
     ).toBeVisible({ timeout: 5_000 });
   });
 
@@ -58,7 +58,7 @@ test.describe("FreeCell — smoke tests", () => {
       page.getByRole("heading", { name: "FreeCell", exact: true }),
     ).toBeVisible({ timeout: 10_000 });
 
-    const board = page.getByLabel("FreeCell board");
+    const board = page.getByLabel("FreeCell board").first();
     await expect(board).toBeVisible({ timeout: 5_000 });
 
     const box = await board.boundingBox();
