@@ -23,8 +23,8 @@ export function useSound(key: SoundKey, volume = 1.0): { play: () => void } {
       player.remove();
       playerRef.current = null;
     };
-  // volume intentionally excluded — sync effect below handles live updates without recreating the player
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // volume intentionally excluded — sync effect below handles live updates without recreating the player
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [key]);
 
   // Sync volume changes to the live player without recreating it.

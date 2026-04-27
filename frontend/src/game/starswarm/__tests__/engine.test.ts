@@ -560,9 +560,7 @@ describe("Dive/circle shooting", () => {
     s = {
       ...s,
       enemies: s.enemies.map((e, i) =>
-        i === 0
-          ? { ...e, phase: "Diving" as const, diveTargetX: playerX, shootTimer: 0 }
-          : e
+        i === 0 ? { ...e, phase: "Diving" as const, diveTargetX: playerX, shootTimer: 0 } : e
       ),
     };
 

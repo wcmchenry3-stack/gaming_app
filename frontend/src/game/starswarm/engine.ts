@@ -622,7 +622,16 @@ function tickDiving(enemy: Enemy, dtMs: number, canvasH: number, playerX: number
     };
   }
 
-  return { enemy: { ...enemy, x: newX, y: newY, vel: { x: hSpeed, y: DIVE_SPEED }, shootTimer: nextShootTimer }, bullet };
+  return {
+    enemy: {
+      ...enemy,
+      x: newX,
+      y: newY,
+      vel: { x: hSpeed, y: DIVE_SPEED },
+      shootTimer: nextShootTimer,
+    },
+    bullet,
+  };
 }
 
 function tickCircling(enemy: Enemy, dtMs: number, playerX: number): EnemyTickResult {
@@ -667,7 +676,10 @@ function tickCircling(enemy: Enemy, dtMs: number, playerX: number): EnemyTickRes
     };
   }
 
-  return { enemy: { ...enemy, x: newX, y: newY, circleAngle: newAngle, shootTimer: nextShootTimer }, bullet };
+  return {
+    enemy: { ...enemy, x: newX, y: newY, circleAngle: newAngle, shootTimer: nextShootTimer },
+    bullet,
+  };
 }
 
 function tickReturning(enemy: Enemy, dtMs: number): EnemyTickResult {
