@@ -20,7 +20,9 @@ TEST_SESSION = str(uuid.uuid4())
 SESSION_HEADERS = {"X-Session-ID": TEST_SESSION}
 
 
-def _create_game(difficulty: str = "easy", variant: str = "classic", session_id: str = TEST_SESSION) -> str:
+def _create_game(
+    difficulty: str = "easy", variant: str = "classic", session_id: str = TEST_SESSION
+) -> str:
     """POST /games and return the new game_id."""
     res = client.post(
         "/games",
