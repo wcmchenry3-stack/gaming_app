@@ -43,7 +43,7 @@ jest.mock("../../game/_shared/gameEventClient", () => ({
 
 jest.mock("../../game/sudoku/api", () => ({
   sudokuApi: {
-    submitScore: jest.fn(),
+    submitPlayerName: jest.fn(),
     getLeaderboard: jest.fn(),
   },
 }));
@@ -188,16 +188,44 @@ describe("SudokuScreen — in-game input", () => {
 });
 
 describe("SudokuScreen — win flow", () => {
-  // Seed a fully-solved save so the screen mounts straight into the
-  // win-modal state.  fillAllExcept with no excluded cell produces a
-  // state whose enterDigit-of-the-last-cell set isComplete=true; we
-  // persist that and load it.
+  // Load an almost-complete save (one non-given cell remaining), then enter
+  // the last correct digit so ensureSyncStarted fires and completedGameId is
+  // captured before syncComplete clears gameIdRef.
   async function renderIntoWinModal(): Promise<ReturnType<typeof renderScreen>> {
     const fresh = loadPuzzle("easy", "classic", () => 0);
-    const solved = fillAllExcept(fresh, { row: -1, col: -1 });
-    expect(solved.isComplete).toBe(true);
-    await saveGame(solved);
+
+    // Find the first non-given cell to leave as the "last move".
+    let lastCell: { row: number; col: number } | null = null;
+    outer: for (let r = 0; r < 9; r++) {
+      for (let c = 0; c < 9; c++) {
+        if (!fresh.grid[r]![c]!.given) {
+          lastCell = { row: r, col: c };
+          break outer;
+        }
+      }
+    }
+    expect(lastCell).not.toBeNull();
+
+    const almostSolved = fillAllExcept(fresh, lastCell!);
+    expect(almostSolved.isComplete).toBe(false);
+    await saveGame(almostSolved);
+
     const rendered = renderScreen();
+    // Wait for the board to load (no Start button = in-game).
+    await waitFor(() => expect(rendered.queryByLabelText(/start/i)).toBeNull());
+
+    // Select the one remaining empty cell and enter the correct digit.
+    const emptyCells = rendered
+      .getAllByRole("button")
+      .filter((n) => /empty/.test(String(n.props.accessibilityLabel ?? "")));
+    act(() => {
+      fireEvent.press(emptyCells[0]!);
+    });
+    const correctDigit = fresh.solution.charCodeAt(lastCell!.row * 9 + lastCell!.col) - 48;
+    act(() => {
+      fireEvent.press(rendered.getByLabelText(new RegExp(`enter digit ${correctDigit}`, "i")));
+    });
+
     await waitFor(() => rendered.getByLabelText(/submit score/i));
     return rendered;
   }
@@ -214,7 +242,7 @@ describe("SudokuScreen — win flow", () => {
     await findByText(/saved/i);
     expect(scoreQueue.enqueue).toHaveBeenCalledWith(
       "sudoku",
-      expect.objectContaining({ player_name: "Alice", difficulty: "easy" })
+      expect.objectContaining({ game_id: "game-123", player_name: "Alice" })
     );
   });
 

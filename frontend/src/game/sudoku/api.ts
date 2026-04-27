@@ -1,5 +1,5 @@
 /**
- * Sudoku API client (#619, #748).
+ * Sudoku API client (#619, #748, #901).
  *
  * Scores are partitioned by (variant, difficulty) server-side (#748),
  * so both submit and read endpoints carry both parameters. variant
@@ -23,15 +23,10 @@ export interface LeaderboardResponse {
 }
 
 export const sudokuApi = {
-  submitScore: (
-    player_name: string,
-    score: number,
-    difficulty: Difficulty,
-    variant: Variant = "classic"
-  ) =>
-    request<ScoreEntry>("/sudoku/score", {
-      method: "POST",
-      body: JSON.stringify({ player_name, score, difficulty, variant }),
+  submitPlayerName: (gameId: string, player_name: string) =>
+    request<ScoreEntry>(`/sudoku/score/${gameId}`, {
+      method: "PATCH",
+      body: JSON.stringify({ player_name }),
     }),
   getLeaderboard: (difficulty: Difficulty, variant: Variant = "classic") =>
     request<LeaderboardResponse>(`/sudoku/scores/${difficulty}?variant=${variant}`),

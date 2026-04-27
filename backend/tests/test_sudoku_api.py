@@ -1,9 +1,14 @@
-"""Tests for /sudoku/score and /sudoku/scores/{difficulty} (#615).
+"""Tests for /sudoku/score and /sudoku/scores/{difficulty} (#615, #901).
 
-Adapts the Solitaire leaderboard test pattern to Sudoku's
-difficulty-partitioned model: each of easy / medium / hard is its own
-top-10 list, enforced at the query level via ``game_metadata->>'difficulty'``.
+All leaderboard entries are now created via the unified games pipeline:
+  1. POST /games          → creates the game row (handled by SyncWorker in prod)
+  2. PATCH /games/:id/complete → records final_score
+  3. PATCH /sudoku/score/:id  → sets player_name, returns rank
+
+GET /sudoku/scores/{difficulty} remains unchanged.
 """
+
+import uuid
 
 from fastapi.testclient import TestClient
 
@@ -11,51 +16,116 @@ from main import app
 
 client = TestClient(app)
 
+TEST_SESSION = str(uuid.uuid4())
+SESSION_HEADERS = {"X-Session-ID": TEST_SESSION}
 
-def _submit(player_name: str, score: int, difficulty: str = "easy"):
-    return client.post(
-        "/sudoku/score",
-        json={"player_name": player_name, "score": score, "difficulty": difficulty},
+
+def _create_game(
+    difficulty: str = "easy", variant: str = "classic", session_id: str = TEST_SESSION
+) -> str:
+    """POST /games and return the new game_id."""
+    res = client.post(
+        "/games",
+        json={"game_type": "sudoku", "metadata": {"difficulty": difficulty, "variant": variant}},
+        headers={"X-Session-ID": session_id},
+    )
+    assert res.status_code in (200, 201), res.text
+    return res.json()["id"]
+
+
+def _complete_game(game_id: str, score: int, session_id: str = TEST_SESSION) -> None:
+    """PATCH /games/:id/complete."""
+    from limiter import limiter
+
+    limiter.reset()
+    res = client.patch(
+        f"/games/{game_id}/complete",
+        json={"final_score": score, "outcome": "completed"},
+        headers={"X-Session-ID": session_id},
+    )
+    assert res.status_code == 200, res.text
+
+
+def _set_name(game_id: str, player_name: str, session_id: str = TEST_SESSION):
+    """PATCH /sudoku/score/:id — sets player_name, returns ScoreEntry."""
+    return client.patch(
+        f"/sudoku/score/{game_id}",
+        json={"player_name": player_name},
+        headers={"X-Session-ID": session_id},
     )
 
 
+def _submit(
+    player_name: str,
+    score: int,
+    difficulty: str = "easy",
+    variant: str = "classic",
+    session_id: str = TEST_SESSION,
+):
+    """Create + complete + name a game in one call. Returns the PATCH response."""
+    from limiter import limiter
+
+    limiter.reset()
+    gid = _create_game(difficulty, variant, session_id)
+    _complete_game(gid, score, session_id)
+    return _set_name(gid, player_name, session_id)
+
+
 # ---------------------------------------------------------------------------
-# POST /sudoku/score — validation
+# PATCH /sudoku/score/{game_id}
 # ---------------------------------------------------------------------------
 
 
-class TestSubmitScore:
-    def test_valid_submission_returns_201(self):
-        res = _submit("Alice", 80, "easy")
-        assert res.status_code == 201
+class TestSetPlayerName:
+    def test_valid_update_returns_200_with_score_entry(self):
+        gid = _create_game()
+        _complete_game(gid, 80)
+        res = _set_name(gid, "Alice")
+        assert res.status_code == 200
         body = res.json()
         assert body["player_name"] == "Alice"
         assert body["score"] == 80
         assert body["rank"] == 1
 
     def test_missing_player_name_returns_422(self):
-        res = client.post("/sudoku/score", json={"score": 100, "difficulty": "easy"})
-        assert res.status_code == 422
-
-    def test_missing_score_returns_422(self):
-        res = client.post("/sudoku/score", json={"player_name": "Bob", "difficulty": "easy"})
-        assert res.status_code == 422
-
-    def test_missing_difficulty_returns_422(self):
-        res = client.post("/sudoku/score", json={"player_name": "Bob", "score": 100})
+        gid = _create_game()
+        _complete_game(gid, 100)
+        res = client.patch(
+            f"/sudoku/score/{gid}",
+            json={},
+            headers=SESSION_HEADERS,
+        )
         assert res.status_code == 422
 
     def test_empty_player_name_returns_422(self):
-        assert _submit("", 100).status_code == 422
+        gid = _create_game()
+        _complete_game(gid, 100)
+        assert _set_name(gid, "").status_code == 422
 
     def test_name_too_long_returns_422(self):
-        assert _submit("x" * 33, 100).status_code == 422
+        gid = _create_game()
+        _complete_game(gid, 100)
+        assert _set_name(gid, "x" * 33).status_code == 422
 
-    def test_negative_score_returns_422(self):
-        assert _submit("Alice", -1).status_code == 422
+    def test_unknown_game_id_returns_404(self):
+        res = client.patch(
+            f"/sudoku/score/{uuid.uuid4()}",
+            json={"player_name": "Ghost"},
+            headers=SESSION_HEADERS,
+        )
+        assert res.status_code == 404
 
-    def test_invalid_difficulty_returns_422(self):
-        assert _submit("Alice", 100, "impossible").status_code == 422
+    def test_wrong_session_returns_403(self):
+        """A game owned by session A must not be claimable by session B."""
+        other_session = str(uuid.uuid4())
+        gid = _create_game(session_id=other_session)
+        _complete_game(gid, 200, session_id=other_session)
+        res = client.patch(
+            f"/sudoku/score/{gid}",
+            json={"player_name": "Thief"},
+            headers=SESSION_HEADERS,
+        )
+        assert res.status_code == 403
 
 
 # ---------------------------------------------------------------------------
@@ -156,19 +226,29 @@ class TestSubmitRank:
 
 
 # ---------------------------------------------------------------------------
-# Rate limiter — POST /sudoku/score is 5/min
+# Rate limiter — PATCH /sudoku/score/{game_id} is 10/min
 # ---------------------------------------------------------------------------
 
 
 class TestRateLimit:
-    def test_rate_limit_enforced_after_threshold(self):
+    def test_eleventh_set_name_returns_429(self):
+        """PATCH /sudoku/score/:id is limited to 10/minute per (session, URL).
+
+        slowapi buckets on (session_id, URL), so we exhaust the limit by
+        calling set_name 11 times on the *same* game ID.
+        """
         from limiter import limiter
 
-        # Limit raised to 30/minute (session-keyed) in #662.
-        # In-process tests share a single fixed session-id so we can still
-        # trigger the limit — just need 31 requests instead of 6.
-        for i in range(30):
-            r = _submit(f"P{i}", i, "easy")
-            assert r.status_code == 201, f"request {i} failed: {r.text}"
-        assert _submit("Excess", 999, "easy").status_code == 429
+        limiter.reset()
+        gid = _create_game("easy")
+        _complete_game(gid, 100)
+        limiter.reset()
+
+        for i in range(10):
+            res = _set_name(gid, f"Player{i}")
+            assert res.status_code == 200, f"call {i + 1} returned {res.status_code}"
+
+        res = _set_name(gid, "Excess")
+        assert res.status_code == 429
+
         limiter.reset()

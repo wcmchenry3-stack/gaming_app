@@ -100,6 +100,8 @@ export default function SudokuScreen() {
   const [state, setState] = useState<SudokuState | null>(null);
   const [elapsed, setElapsed] = useState(0);
   const [loading, setLoading] = useState(true);
+  // Game ID captured at completion time (before syncComplete clears it).
+  const [completedGameId, setCompletedGameId] = useState<string | null>(null);
 
   // Timer bookkeeping.  `startMs` is the wall-clock at which play began,
   // shifted forward while the app sits in the background so elapsed
@@ -238,7 +240,9 @@ export default function SudokuScreen() {
     }
     if (state.isComplete && !prevCompleteRef.current) {
       const score = computeScore(state.difficulty, state.errorCount);
-      if (syncGetGameId()) {
+      const gid = syncGetGameId();
+      if (gid) {
+        setCompletedGameId(gid);
         syncComplete(
           { finalScore: score, outcome: "completed", durationMs: 0 },
           {
@@ -280,7 +284,7 @@ export default function SudokuScreen() {
       });
     }
     prevCompleteRef.current = state.isComplete;
-  }, [state, syncComplete, syncGetGameId, setScoreboardSnapshot]);
+  }, [state, syncComplete, syncGetGameId, setCompletedGameId, setScoreboardSnapshot]);
 
   // Abandon on back-navigation when a digit has been placed and the
   // puzzle isn't finished.  useGameSync's own unmount handler provides
@@ -554,10 +558,10 @@ export default function SudokuScreen() {
       {state !== null && isComplete ? (
         <WinModal
           difficulty={state.difficulty}
-          variant={state.variant}
           errors={state.errorCount}
           elapsed={elapsed}
           score={computeScore(state.difficulty, state.errorCount)}
+          gameId={completedGameId ?? undefined}
           onNewPuzzle={handleStart}
           onChangeDifficulty={handleChangeDifficulty}
         />
@@ -681,18 +685,18 @@ function VariantSelector({
 
 function WinModal({
   difficulty,
-  variant,
   errors,
   elapsed,
   score,
+  gameId,
   onNewPuzzle,
   onChangeDifficulty,
 }: {
   readonly difficulty: Difficulty;
-  readonly variant: Variant;
   readonly errors: number;
   readonly elapsed: number;
   readonly score: number;
+  readonly gameId?: string;
   readonly onNewPuzzle: () => void;
   readonly onChangeDifficulty: () => void;
 }) {
@@ -718,11 +722,11 @@ function WinModal({
   const canSubmit = !submitting && !offline && trimmed.length > 0;
 
   async function handleSubmit() {
-    if (!canSubmit) return;
+    if (!canSubmit || !gameId) return;
     setSubmitting(true);
     setError(null);
     try {
-      await scoreQueue.enqueue("sudoku", { player_name: trimmed, score, difficulty, variant });
+      await scoreQueue.enqueue("sudoku", { game_id: gameId, player_name: trimmed });
       setSubmitted(true);
       // Kick off a background flush; failures are retried on next reconnect.
       scoreQueue.flush().catch(() => undefined);
