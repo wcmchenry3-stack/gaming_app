@@ -38,8 +38,8 @@ test.describe("Mahjong — smoke tests", () => {
 
   test("score and remaining-tile display is visible", async ({ page }) => {
     await gotoMahjong(page);
-    await expect(page.getByText(/SCORE/i).first()).toBeVisible();
-    await expect(page.getByText(/PAIRS/i).first()).toBeVisible();
+    await expect(page.getByText(/^SCORE\s+\d/).first()).toBeVisible();
+    await expect(page.getByText(/^PAIRS\s+\d/).first()).toBeVisible();
   });
 
   test("scoreboard screen is accessible via overflow menu", async ({
