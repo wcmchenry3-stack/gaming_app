@@ -196,10 +196,7 @@ export default function StarSwarmScreen() {
                   <Text style={styles.devPrimaryText}>New Game</Text>
                 </Pressable>
 
-                <Pressable
-                  style={styles.devActionBtn}
-                  onPress={() => setDevPanelOpen(false)}
-                >
+                <Pressable style={styles.devActionBtn} onPress={() => setDevPanelOpen(false)}>
                   <Text style={styles.devLabel}>Close</Text>
                 </Pressable>
               </View>
