@@ -125,12 +125,3 @@ async def get_scores(request: Request) -> LeaderboardResponse:
     async with factory() as db:
         scores = await _top_scores(db)
     return LeaderboardResponse(scores=scores)
-
-
-def reset_leaderboard() -> None:
-    """Test helper — no-op; leaderboard lives in the DB.
-
-    Kept for backward compatibility with the autouse fixture in
-    test_cascade_api.py. The conftest clean_db_tables fixture handles cleanup.
-    """
-    return None

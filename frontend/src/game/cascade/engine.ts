@@ -127,16 +127,7 @@ export async function createEngine(
   // body, making fruitMap.get(handle) return the wrong tier in subsequent queue entries).
   const mergeQueue: Array<[number, number, number]> = []; // [handleA, handleB, tier]
 
-  function spawnAt(
-    def: FruitDefinition,
-    setId: string,
-    x: number,
-    y: number,
-    source: "player" | "merge" = "player"
-  ): FruitBody {
-    console.log(
-      `[Engine] spawn tier=${def.tier} source=${source} totalBefore=${fruitMap.size} t=${Date.now()}`
-    );
+  function spawnAt(def: FruitDefinition, setId: string, x: number, y: number): FruitBody {
     const rbDesc = R.RigidBodyDesc.dynamic()
       .setTranslation(x * SCALE, y * SCALE)
       .setCcdEnabled(true);
@@ -206,9 +197,6 @@ export async function createEngine(
   }
 
   function processMerges(events: GameEvent[]): void {
-    if (mergeQueue.length > 0) {
-      console.log(`[Engine] processMerges queueLen=${mergeQueue.length} t=${Date.now()}`);
-    }
     for (const [ha, hb, enqueuedTier] of mergeQueue) {
       const fa = fruitMap.get(ha);
       const fb = fruitMap.get(hb);
@@ -231,7 +219,6 @@ export async function createEngine(
       const posB = rbb.translation();
       const midX = (posA.x + posB.x) / 2 / SCALE; // back to pixels
       const midY = (posA.y + posB.y) / 2 / SCALE;
-      console.log(`[Engine] merge tier=${tier} midX=${midX.toFixed(0)} midY=${midY.toFixed(0)}`);
 
       removeBody(ha);
       removeBody(hb);
@@ -239,19 +226,17 @@ export async function createEngine(
 
       if (tier < 10) {
         const nextDef = fruitSet.fruits[(tier + 1) as FruitTier];
-        spawnAt(nextDef, fruitSet.id, midX, midY, "merge");
+        spawnAt(nextDef, fruitSet.id, midX, midY);
       }
     }
     mergeQueue.length = 0;
   }
 
   let disposed = false;
-  let stepCount = 0;
 
   return {
     step(dt?: number): { snapshots: BodySnapshot[]; events: GameEvent[] } {
       if (disposed) return { snapshots: [], events: [] };
-      stepCount += 1;
       const countBefore = fruitMap.size;
 
       const events: GameEvent[] = [];
@@ -315,15 +300,6 @@ export async function createEngine(
         console.warn(
           `[Engine] step added ${delta} fruits in one tick — expected 1 from a single player drop`
         );
-      }
-
-      // Periodic bin snapshot (~5 s at 60 fps)
-      if (stepCount % 300 === 0) {
-        const tierCounts: Record<number, number> = {};
-        fruitMap.forEach((fb) => {
-          tierCounts[fb.fruitTier] = (tierCounts[fb.fruitTier] ?? 0) + 1;
-        });
-        console.log("[Engine] bin snapshot", tierCounts, "total=", fruitMap.size);
       }
 
       // Collect body snapshots (pixel coordinates) and detect boundary escapes

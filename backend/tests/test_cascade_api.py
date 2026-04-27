@@ -10,23 +10,14 @@ GET /cascade/scores remains unchanged.
 
 import uuid
 
-import pytest
 from fastapi.testclient import TestClient
 
-import cascade.router as cascade_router_module
 from main import app
 
 client = TestClient(app)
 
 TEST_SESSION = str(uuid.uuid4())
 SESSION_HEADERS = {"X-Session-ID": TEST_SESSION}
-
-
-@pytest.fixture(autouse=True)
-def reset_leaderboard():
-    cascade_router_module.reset_leaderboard()
-    yield
-    cascade_router_module.reset_leaderboard()
 
 
 def _create_game(session_id: str = TEST_SESSION) -> str:
