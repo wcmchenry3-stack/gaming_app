@@ -25,6 +25,13 @@ export function useSound(key: SoundKey, volume = 1.0): { play: () => void } {
     };
   }, [key]);
 
+  // Sync volume changes to the live player without recreating it.
+  useEffect(() => {
+    if (playerRef.current) {
+      playerRef.current.volume = volume;
+    }
+  }, [volume]);
+
   const play = useCallback(() => {
     if (mutedRef.current) return;
     const player = playerRef.current;
