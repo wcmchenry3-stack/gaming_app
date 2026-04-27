@@ -116,6 +116,10 @@ export interface StarSwarmState {
   readonly challengingHits: number;
   /** ms until the next dive-AI trigger fires. */
   readonly nextDiveTimer: number;
+  /** Current left/right sway offset applied to all Formation enemies (px). */
+  readonly formationSwayX: number;
+  /** Direction the formation is currently travelling: +1 = right, -1 = left. */
+  readonly formationSwayDir: 1 | -1;
 }
 
 /** Input snapshot consumed by each `tick` call. */
