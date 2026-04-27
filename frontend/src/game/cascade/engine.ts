@@ -132,7 +132,7 @@ export async function createEngine(
     setId: string,
     x: number,
     y: number,
-    source: "player" | "merge" = "player"
+    _source: "player" | "merge" = "player"
   ): FruitBody {
     const rbDesc = R.RigidBodyDesc.dynamic()
       .setTranslation(x * SCALE, y * SCALE)
@@ -239,12 +239,10 @@ export async function createEngine(
   }
 
   let disposed = false;
-  let stepCount = 0;
 
   return {
     step(dt?: number): { snapshots: BodySnapshot[]; events: GameEvent[] } {
       if (disposed) return { snapshots: [], events: [] };
-      stepCount += 1;
       const countBefore = fruitMap.size;
 
       const events: GameEvent[] = [];

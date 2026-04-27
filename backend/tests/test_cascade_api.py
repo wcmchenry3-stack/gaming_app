@@ -10,7 +10,6 @@ GET /cascade/scores remains unchanged.
 
 import uuid
 
-import pytest
 from fastapi.testclient import TestClient
 
 from main import app
