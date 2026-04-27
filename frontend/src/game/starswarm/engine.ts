@@ -65,6 +65,9 @@ const WAVE_CLEAR_BONUS_BASE = 500;
 // Score diving enemies get a 2× multiplier.
 const DIVE_SCORE_MULT = 2;
 
+// #944 Dive/circle shooting
+const DIVE_SHOOT_INTERVAL = 1500; // ms between shots while Diving or Circling
+
 // #923 Formation sway
 const SWAY_SPEED_BASE = 0.03; // px/ms at wave 1
 const SWAY_SPEED_PER_WAVE = 0.008; // px/ms added per wave
@@ -492,9 +495,9 @@ function tickSingleEnemy(
     case "Formation":
       return tickFormation(enemy, dtMs, playerX, shouldDive, wave);
     case "Diving":
-      return tickDiving(enemy, dtMs, canvasH);
+      return tickDiving(enemy, dtMs, canvasH, playerX);
     case "Circling":
-      return tickCircling(enemy, dtMs);
+      return tickCircling(enemy, dtMs, playerX);
     case "Returning":
       return tickReturning(enemy, dtMs);
   }
@@ -544,7 +547,7 @@ function tickFormation(
         phase: "Diving",
         diveTargetX: playerX,
         vel: { x: 0, y: DIVE_SPEED },
-        shootTimer,
+        shootTimer: rng() * DIVE_SHOOT_INTERVAL, // #944: reset timer so enemy fires during dive
       },
       bullet: null,
     };
@@ -574,7 +577,7 @@ function tickFormation(
   return { enemy: { ...enemy, shootTimer }, bullet: null };
 }
 
-function tickDiving(enemy: Enemy, dtMs: number, canvasH: number): EnemyTickResult {
+function tickDiving(enemy: Enemy, dtMs: number, canvasH: number, playerX: number): EnemyTickResult {
   // Steer toward diveTargetX
   const dx = enemy.diveTargetX - enemy.x;
   const dist = Math.abs(dx);
@@ -583,32 +586,67 @@ function tickDiving(enemy: Enemy, dtMs: number, canvasH: number): EnemyTickResul
   const newX = enemy.x + hSpeed * dtMs;
   const newY = enemy.y + DIVE_SPEED * dtMs;
 
+  // #944: tick shoot timer and fire aimed bullet if ready
+  const shootTimer = enemy.shootTimer - dtMs;
+  let bullet: Bullet | null = null;
+  if (shootTimer <= 0) {
+    bullet = {
+      id: nextId(),
+      x: enemy.x,
+      y: enemy.y + enemy.height / 2,
+      vx: Math.sign(playerX - enemy.x) * BULLET_E_VY * 0.5,
+      vy: BULLET_E_VY,
+      owner: "enemy",
+      width: BULLET_E_W,
+      height: BULLET_E_H,
+      damage: 1,
+    };
+  }
+  const nextShootTimer = shootTimer <= 0 ? DIVE_SHOOT_INTERVAL : shootTimer;
+
   // Transition to Circling when past 85% of canvas height (#951: was 0.6 — enemy looped 184 px above player)
   if (newY > canvasH * 0.85) {
-    const circleCx = newX;
-    const circleCy = newY;
     return {
       enemy: {
         ...enemy,
         phase: "Circling",
         x: newX,
         y: newY,
-        circleCx,
-        circleCy,
+        circleCx: newX,
+        circleCy: newY,
         circleAngle: Math.PI / 2, // start at bottom of circle
         vel: { x: hSpeed, y: DIVE_SPEED },
+        shootTimer: nextShootTimer,
       },
-      bullet: null,
+      bullet,
     };
   }
 
-  return { enemy: { ...enemy, x: newX, y: newY, vel: { x: hSpeed, y: DIVE_SPEED } }, bullet: null };
+  return { enemy: { ...enemy, x: newX, y: newY, vel: { x: hSpeed, y: DIVE_SPEED }, shootTimer: nextShootTimer }, bullet };
 }
 
-function tickCircling(enemy: Enemy, dtMs: number): EnemyTickResult {
+function tickCircling(enemy: Enemy, dtMs: number, playerX: number): EnemyTickResult {
   const newAngle = enemy.circleAngle + enemy.circleSpeed * dtMs;
   const newX = enemy.circleCx + Math.cos(newAngle) * enemy.circleRadius;
   const newY = enemy.circleCy + Math.sin(newAngle) * enemy.circleRadius;
+
+  // #944: tick shoot timer and fire aimed bullet if ready
+  const shootTimer = enemy.shootTimer - dtMs;
+  let bullet: Bullet | null = null;
+  if (shootTimer <= 0) {
+    bullet = {
+      id: nextId(),
+      x: enemy.x,
+      y: enemy.y + enemy.height / 2,
+      vx: Math.sign(playerX - enemy.x) * BULLET_E_VY * 0.5,
+      vy: BULLET_E_VY,
+      owner: "enemy",
+      width: BULLET_E_W,
+      height: BULLET_E_H,
+      damage: 1,
+    };
+  }
+  const nextShootTimer = shootTimer <= 0 ? DIVE_SHOOT_INTERVAL : shootTimer;
 
   // After ~1 full revolution (2π rad), start returning
   if (newAngle - Math.PI / 2 >= Math.PI * 2) {
@@ -623,12 +661,13 @@ function tickCircling(enemy: Enemy, dtMs: number): EnemyTickResult {
         path,
         pathT: 0,
         pathDuration: RETURN_DURATION,
+        shootTimer: nextShootTimer,
       },
-      bullet: null,
+      bullet,
     };
   }
 
-  return { enemy: { ...enemy, x: newX, y: newY, circleAngle: newAngle }, bullet: null };
+  return { enemy: { ...enemy, x: newX, y: newY, circleAngle: newAngle, shootTimer: nextShootTimer }, bullet };
 }
 
 function tickReturning(enemy: Enemy, dtMs: number): EnemyTickResult {

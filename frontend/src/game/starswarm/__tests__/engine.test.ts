@@ -544,3 +544,39 @@ describe("ChallengingStage off-screen cleanup", () => {
     expect(s.phase).toBe("WaveClear");
   });
 });
+
+// ---------------------------------------------------------------------------
+// Dive/circle shooting (#944)
+// ---------------------------------------------------------------------------
+
+describe("Dive/circle shooting", () => {
+  it("a diving enemy fires an aimed bullet with non-zero vx", () => {
+    let s = initStarSwarm(CANVAS_W, CANVAS_H);
+    s = advanceMs(s, 8000); // reach Playing
+    expect(s.phase).toBe("Playing");
+
+    // Force one enemy into Diving with an expired shoot timer so it fires immediately
+    const playerX = s.player.x;
+    s = {
+      ...s,
+      enemies: s.enemies.map((e, i) =>
+        i === 0
+          ? { ...e, phase: "Diving" as const, diveTargetX: playerX, shootTimer: 0 }
+          : e
+      ),
+    };
+
+    s = tick(s, 16, NO_INPUT);
+
+    const divingBullet = s.enemyBullets.find((b) => b.vx !== 0);
+    expect(divingBullet).toBeDefined();
+    expect(divingBullet?.vy).toBeGreaterThan(0); // moving downward
+  });
+
+  it("challenge stage enemies do not fire while attacking", () => {
+    let s = initStarSwarm(CANVAS_W, CANVAS_H, 3);
+    expect(s.phase).toBe("ChallengingStage");
+    s = advanceMs(s, 5000, NO_INPUT);
+    expect(s.enemyBullets).toHaveLength(0);
+  });
+});
