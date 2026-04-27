@@ -144,7 +144,7 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
           inputRef.current.chargeShot = fire;
         },
       }),
-      [width, height]
+      []
     );
 
     // Prop-driven reset: fires when resetTick increments (new game requested from parent).
