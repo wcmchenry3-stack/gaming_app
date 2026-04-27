@@ -36,7 +36,7 @@ const BULLET_E_H = 10;
 const BULLET_E_VY = 0.2; // px/ms downward
 
 const FORMATION_COLS = 8;
-const FORMATION_COL_W = 38;
+const FORMATION_COL_W = 44; // #950: was 38 — Boss (36 px) had only 1 px margin/side
 const FORMATION_ROW_H = 46;
 const FORMATION_TOP = 90;
 
