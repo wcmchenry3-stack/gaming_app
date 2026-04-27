@@ -8,23 +8,23 @@ query treats those as "classic" so the classic leaderboard stays populated.
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+import uuid
 
 from fastapi import APIRouter, HTTPException, Path, Query, Request
-from sqlalchemy import desc, or_, select
+from sqlalchemy import and_, desc, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from db.base import get_session_factory
 from db.models import Game, GameType
 from limiter import limiter, session_key
+from session import get_session_id
 from vocab import GameType as GameTypeEnum
 
-from .models import Difficulty, LeaderboardResponse, ScoreEntry, ScoreSubmitRequest, Variant
+from .models import Difficulty, LeaderboardResponse, ScoreEntry, SetPlayerNameRequest, Variant
 
 router = APIRouter()
 
 LEADERBOARD_LIMIT = 10
-_SUDOKU_SESSION = "sudoku-anon"  # placeholder until SSO
 
 
 async def _sudoku_game_type_id(db: AsyncSession) -> int:
@@ -75,33 +75,68 @@ async def _top_scores(
     return entries
 
 
-@router.post("/score", response_model=ScoreEntry, status_code=201)
-@limiter.limit("30/minute", key_func=session_key)
-async def submit_score(request: Request, body: ScoreSubmitRequest) -> ScoreEntry:
+@router.patch("/score/{game_id}", response_model=ScoreEntry, status_code=200)
+@limiter.limit("10/minute", key_func=session_key)
+async def set_player_name(
+    request: Request, game_id: uuid.UUID, body: SetPlayerNameRequest
+) -> ScoreEntry:
+    sid = get_session_id(request)
     factory = get_session_factory()
     async with factory() as db:
         gt_id = await _sudoku_game_type_id(db)
-        game = Game(
-            session_id=_SUDOKU_SESSION,
-            game_type_id=gt_id,
-            final_score=body.score,
-            completed_at=datetime.now(timezone.utc),
-            game_metadata={
-                "player_name": body.player_name,
-                "difficulty": body.difficulty,
-                "variant": body.variant,
-            },
-        )
-        db.add(game)
+        game = (
+            await db.execute(
+                select(Game).where(
+                    Game.id == game_id,
+                    Game.game_type_id == gt_id,
+                )
+            )
+        ).scalar_one_or_none()
+
+        if game is None:
+            raise HTTPException(status_code=404, detail="Game not found.")
+        if game.session_id != sid:
+            raise HTTPException(status_code=403, detail="Forbidden.")
+
+        metadata = dict(game.game_metadata or {})
+        metadata["player_name"] = body.player_name
+        game.game_metadata = metadata
         await db.commit()
 
-        top = await _top_scores(db, body.difficulty, body.variant)
+        # Rank within (difficulty, variant) partition.
+        difficulty = metadata.get("difficulty")
+        variant = metadata.get("variant") or "classic"
+        score_val = game.final_score or 0
+        variant_col = Game.game_metadata["variant"].as_string()
+        if variant == "classic":
+            variant_filter = or_(variant_col == "classic", variant_col.is_(None))
+        else:
+            variant_filter = variant_col == variant
 
-    for entry in top:
-        if entry.player_name == body.player_name and entry.score == body.score:
-            return entry
-    # Not in top 10 — report the truncated-off rank.
-    return ScoreEntry(player_name=body.player_name, score=body.score, rank=LEADERBOARD_LIMIT + 1)
+        count = (
+            await db.execute(
+                select(func.count()).where(
+                    Game.game_type_id == gt_id,
+                    Game.final_score.is_not(None),
+                    Game.game_metadata["difficulty"].as_string() == difficulty,
+                    variant_filter,
+                    or_(
+                        Game.final_score > score_val,
+                        and_(
+                            Game.final_score == score_val,
+                            Game.completed_at < game.completed_at,
+                        ),
+                    ),
+                )
+            )
+        ).scalar()
+
+    rank = int(count or 0) + 1
+    return ScoreEntry(
+        player_name=body.player_name,
+        score=int(game.final_score or 0),
+        rank=rank,
+    )
 
 
 @router.get("/scores/{difficulty}", response_model=LeaderboardResponse)

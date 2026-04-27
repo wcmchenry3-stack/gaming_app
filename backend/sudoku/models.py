@@ -20,11 +20,8 @@ class SudokuMetadata(BaseModel):
     variant: Variant = "classic"
 
 
-class ScoreSubmitRequest(BaseModel):
+class SetPlayerNameRequest(BaseModel):
     player_name: str = Field(..., min_length=1, max_length=32)
-    score: int = Field(..., ge=0)
-    difficulty: Difficulty
-    variant: Variant = "classic"
 
 
 class ScoreEntry(BaseModel):
