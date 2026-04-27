@@ -75,6 +75,8 @@ export interface Bullet {
   readonly width: number;
   readonly height: number;
   readonly damage: number;
+  /** Charge shot: passes through all enemies in its lane instead of stopping on first hit. */
+  readonly piercing?: boolean;
 }
 
 export interface Player {
@@ -120,6 +122,8 @@ export interface StarSwarmState {
   readonly formationSwayX: number;
   /** Direction the formation is currently travelling: +1 = right, -1 = left. */
   readonly formationSwayDir: 1 | -1;
+  /** How many bonus lives have been awarded so far (prevents re-awarding at same threshold). */
+  readonly bonusLivesAwarded: number;
 }
 
 /** Input snapshot consumed by each `tick` call. */

@@ -34,6 +34,7 @@ interface Props {
   onChargeShotFire?: () => void;
   onExplosion?: () => void;
   onChallengingStage?: () => void;
+  onBonusLife?: () => void;
   isPaused?: boolean;
   width: number;
   height: number;
@@ -62,6 +63,7 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
       onChargeShotFire,
       onExplosion,
       onChallengingStage,
+      onBonusLife,
       isPaused = false,
       width,
       height,
@@ -95,6 +97,9 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
     const onChargeShotFireRef = useRef(onChargeShotFire);
     const onExplosionRef = useRef(onExplosion);
     const onChallengingStageRef = useRef(onChallengingStage);
+    const onBonusLifeRef = useRef(onBonusLife);
+    const prevBonusLivesRef = useRef(gameRef.current.bonusLivesAwarded);
+    const bonusFlashEndRef = useRef(0); // ms timestamp when 1UP flash expires
 
     useEffect(() => {
       const wasPaused = isPausedRef.current;
@@ -125,6 +130,9 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
     useEffect(() => {
       onChallengingStageRef.current = onChallengingStage;
     }, [onChallengingStage]);
+    useEffect(() => {
+      onBonusLifeRef.current = onBonusLife;
+    }, [onBonusLife]);
 
     const [renderState, setRenderState] = useState<RenderState>({
       game: gameRef.current,
@@ -162,6 +170,8 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
       prevScoreRef.current = 0;
       prevLivesRef.current = gameRef.current.player.lives;
       prevPhaseRef.current = gameRef.current.phase;
+      prevBonusLivesRef.current = gameRef.current.bonusLivesAwarded;
+      bonusFlashEndRef.current = 0;
       setRenderState({ game: gameRef.current, sf: sfRef.current });
     }, [resetTick, width, height]);
 
@@ -184,7 +194,6 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
               fire: inputRef.current.fire,
               chargeShot: inputRef.current.chargeShot,
             });
-            if (inputRef.current.chargeShot) inputRef.current.chargeShot = false;
 
             // Dev: when infinite lives is on, intercept any lives decrement and
             // restore lives + phase so the game never transitions to GameOver.
@@ -195,6 +204,11 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
                 phase: next.phase === "GameOver" ? prevPhaseRef.current : next.phase,
                 player: { ...next.player, lives: prevLivesRef.current, invincibleTimer: 2000 },
               };
+            }
+
+            // Only clear chargeShot when the engine actually consumed it (cooldown advanced)
+            if (chargeShotRequested && applied.player.shootCooldown > prevCooldown) {
+              inputRef.current.chargeShot = false;
             }
 
             gameRef.current = applied;
@@ -216,6 +230,11 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
               if (applied.phase !== "GameOver") onPlayerHitRef.current?.();
             }
             prevLivesRef.current = applied.player.lives;
+            if (applied.bonusLivesAwarded > prevBonusLivesRef.current) {
+              onBonusLifeRef.current?.();
+              bonusFlashEndRef.current = Date.now() + 1500;
+            }
+            prevBonusLivesRef.current = applied.bonusLivesAwarded;
             if (applied.phase === "WaveClear" && prevPhaseRef.current !== "WaveClear") {
               onWaveClearRef.current?.();
             }
@@ -249,6 +268,7 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
     const displayW = Math.round(width * scale);
     const displayH = Math.round(height * scale);
     const hs = Math.max(highScore, state.score);
+    const showBonusFlash = Date.now() < bonusFlashEndRef.current;
 
     const blink =
       player.invincibleTimer > 0 &&
@@ -420,6 +440,12 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
             ))}
           </View>
 
+          {showBonusFlash && (
+            <View style={styles.bonusLifeOverlay} pointerEvents="none">
+              <Text style={styles.bonusLifeText}>1UP</Text>
+            </View>
+          )}
+
           {state.phase === "WaveClear" && (
             <View style={styles.phaseOverlay}>
               <Text style={styles.overlayTitle}>{t("phase.waveClear")}</Text>
@@ -521,5 +547,18 @@ const styles = StyleSheet.create({
     textAlign: "center",
     marginTop: 16,
     fontVariant: ["tabular-nums"],
+  },
+  bonusLifeOverlay: {
+    position: "absolute",
+    top: "40%",
+    alignSelf: "center",
+  },
+  bonusLifeText: {
+    color: "#ffff00",
+    fontSize: 36,
+    fontWeight: "bold",
+    textShadowColor: "#ff8800",
+    textShadowOffset: { width: 0, height: 0 },
+    textShadowRadius: 8,
   },
 });
