@@ -558,7 +558,6 @@ export default function SudokuScreen() {
       {state !== null && isComplete ? (
         <WinModal
           difficulty={state.difficulty}
-          variant={state.variant}
           errors={state.errorCount}
           elapsed={elapsed}
           score={computeScore(state.difficulty, state.errorCount)}
@@ -686,7 +685,6 @@ function VariantSelector({
 
 function WinModal({
   difficulty,
-  variant,
   errors,
   elapsed,
   score,
@@ -695,7 +693,6 @@ function WinModal({
   onChangeDifficulty,
 }: {
   readonly difficulty: Difficulty;
-  readonly variant: Variant;
   readonly errors: number;
   readonly elapsed: number;
   readonly score: number;
