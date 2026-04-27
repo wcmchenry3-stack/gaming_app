@@ -115,10 +115,3 @@ async def get_scores(
     async with factory() as db:
         scores = await _top_scores(db, difficulty, variant)
     return LeaderboardResponse(scores=scores)
-
-
-def reset_leaderboard() -> None:
-    """Test helper — no-op. The leaderboard lives in the DB; conftest's
-    ``clean_db_tables`` fixture handles per-test isolation.
-    """
-    return None
