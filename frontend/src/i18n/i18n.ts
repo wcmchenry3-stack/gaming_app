@@ -17,7 +17,8 @@ type Namespace =
   | "sudoku"
   | "feedback"
   | "profile"
-  | "starswarm";
+  | "starswarm"
+  | "mahjong";
 type TranslationModule = Promise<{ default: Record<string, string> }>;
 
 // Resolve the best supported locale from the device's preference list
@@ -49,6 +50,7 @@ const localeLoaders: Record<string, Partial<Record<Namespace, () => TranslationM
     feedback: () => import("./locales/en/feedback.json") as TranslationModule,
     profile: () => import("./locales/en/profile.json") as TranslationModule,
     starswarm: () => import("./locales/en/starswarm.json") as TranslationModule,
+    mahjong: () => import("./locales/en/mahjong.json") as TranslationModule,
   },
   "fr-CA": {
     common: () => import("./locales/fr-CA/common.json") as TranslationModule,
@@ -206,6 +208,7 @@ i18n
       "feedback",
       "profile",
       "starswarm",
+      "mahjong",
     ],
     defaultNS: "common",
     interpolation: { escapeValue: false },
