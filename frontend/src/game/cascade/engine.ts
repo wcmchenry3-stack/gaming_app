@@ -131,8 +131,7 @@ export async function createEngine(
     def: FruitDefinition,
     setId: string,
     x: number,
-    y: number,
-    _source: "player" | "merge" = "player"
+    y: number
   ): FruitBody {
     const rbDesc = R.RigidBodyDesc.dynamic()
       .setTranslation(x * SCALE, y * SCALE)
@@ -232,7 +231,7 @@ export async function createEngine(
 
       if (tier < 10) {
         const nextDef = fruitSet.fruits[(tier + 1) as FruitTier];
-        spawnAt(nextDef, fruitSet.id, midX, midY, "merge");
+        spawnAt(nextDef, fruitSet.id, midX, midY);
       }
     }
     mergeQueue.length = 0;
