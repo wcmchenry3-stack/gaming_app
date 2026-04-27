@@ -583,8 +583,8 @@ function tickDiving(enemy: Enemy, dtMs: number, canvasH: number): EnemyTickResul
   const newX = enemy.x + hSpeed * dtMs;
   const newY = enemy.y + DIVE_SPEED * dtMs;
 
-  // Transition to Circling when past 60% of canvas height
-  if (newY > canvasH * 0.6) {
+  // Transition to Circling when past 85% of canvas height (#951: was 0.6 — enemy looped 184 px above player)
+  if (newY > canvasH * 0.85) {
     const circleCx = newX;
     const circleCy = newY;
     return {
