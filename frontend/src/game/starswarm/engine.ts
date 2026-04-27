@@ -75,7 +75,7 @@ const MAX_SWAY = 40; // max offset from center in px
 
 // #924 Aimed shots — start gentle from wave 1, ramp +5%/wave, cap 60%
 const AIMED_SHOT_WAVE_START = 1;
-const AIMED_SHOT_FRACTION = 0.10; // 10% aimed at wave 1, +5% per wave, cap 60%
+const AIMED_SHOT_FRACTION = 0.1; // 10% aimed at wave 1, +5% per wave, cap 60%
 
 // #945 Bonus lives
 const BONUS_LIFE_THRESHOLDS = [30_000, 70_000];
