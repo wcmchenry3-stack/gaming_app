@@ -1,8 +1,18 @@
 import React, { useCallback, useRef, useState } from "react";
-import { LayoutChangeEvent, Modal, Pressable, StyleSheet, Switch, Text, View } from "react-native";
+import {
+  LayoutChangeEvent,
+  Modal,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Switch,
+  Text,
+  View,
+} from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTranslation } from "react-i18next";
 import { useNavigation } from "@react-navigation/native";
+import { useTheme } from "../theme/ThemeContext";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { HomeStackParamList } from "../../App";
 import { GameShell } from "../components/shared/GameShell";
@@ -15,10 +25,12 @@ import Controls, {
 } from "../components/starswarm/Controls";
 import { CANVAS_W, CANVAS_H } from "../game/starswarm/engine";
 import type { GamePhase } from "../game/starswarm/types";
-import { useStarSwarmAudio } from "../hooks/useStarSwarmAudio";
+import { useStarSwarmAudio, DEFAULT_SFX_VOLUMES } from "../hooks/useStarSwarmAudio";
+import type { SfxVolumes } from "../hooks/useStarSwarmAudio";
 
 export default function StarSwarmScreen() {
   const { t } = useTranslation("starswarm");
+  const { colors } = useTheme();
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<NativeStackNavigationProp<HomeStackParamList, "StarSwarm">>();
 
@@ -34,6 +46,14 @@ export default function StarSwarmScreen() {
   const [devPanelOpen, setDevPanelOpen] = useState(false);
   const [devWave, setDevWave] = useState(1);
   const [devInfiniteLives, setDevInfiniteLives] = useState(false);
+  const [devVolumes, setDevVolumes] = useState<SfxVolumes>(DEFAULT_SFX_VOLUMES);
+
+  const adjustVolume = useCallback((key: keyof SfxVolumes, delta: number) => {
+    setDevVolumes((v) => ({
+      ...v,
+      [key]: Math.round(Math.min(1, Math.max(0, v[key] + delta)) * 10) / 10,
+    }));
+  }, []);
 
   const {
     playLaser,
@@ -43,7 +63,7 @@ export default function StarSwarmScreen() {
     playWaveClear,
     playGameOver,
     playChallengingStage,
-  } = useStarSwarmAudio(phase !== "GameOver");
+  } = useStarSwarmAudio(phase !== "GameOver", devVolumes);
 
   const scoreRef = useRef(0);
   const highScoreRef = useRef(0);
@@ -97,6 +117,8 @@ export default function StarSwarmScreen() {
     setIsPaused(false);
   }, []);
 
+  const dynamicStyles = getStyles(colors);
+
   const scale =
     containerW > 0 && containerH > 0 ? Math.min(containerW / CANVAS_W, containerH / CANVAS_H) : 0;
 
@@ -144,7 +166,7 @@ export default function StarSwarmScreen() {
               onNewGame={handleNewGame}
             />
             {__DEV__ && (
-              <Pressable style={styles.devButton} onPress={() => setDevPanelOpen(true)}>
+              <Pressable style={dynamicStyles.devButton} onPress={() => setDevPanelOpen(true)}>
                 <Text style={styles.devButtonText}>DEV</Text>
               </Pressable>
             )}
@@ -159,46 +181,84 @@ export default function StarSwarmScreen() {
             onRequestClose={() => setDevPanelOpen(false)}
           >
             <View style={styles.devOverlay}>
-              <View style={styles.devPanel}>
-                <Text style={styles.devTitle}>Dev Panel</Text>
-
-                <View style={styles.devRow}>
-                  <Text style={styles.devLabel}>Wave</Text>
-                  <Pressable
-                    style={styles.devStepBtn}
-                    onPress={() => setDevWave((w) => Math.max(1, w - 1))}
-                    accessibilityLabel="Decrease wave"
-                  >
-                    <Text style={styles.devStepText}>−</Text>
-                  </Pressable>
-                  <Text style={styles.devValue}>{devWave}</Text>
-                  <Pressable
-                    style={styles.devStepBtn}
-                    onPress={() => setDevWave((w) => Math.min(15, w + 1))}
-                    accessibilityLabel="Increase wave"
-                  >
-                    <Text style={styles.devStepText}>+</Text>
-                  </Pressable>
-                </View>
-
-                <View style={styles.devRow}>
-                  <Text style={styles.devLabel}>Infinite lives</Text>
-                  <Switch value={devInfiniteLives} onValueChange={setDevInfiniteLives} />
-                </View>
-
-                <Pressable
-                  style={[styles.devActionBtn, styles.devPrimary]}
-                  onPress={() => {
-                    setDevPanelOpen(false);
-                    handleNewGame({ wave: devWave, infiniteLives: devInfiniteLives });
-                  }}
+              <View style={dynamicStyles.devPanel}>
+                <ScrollView
+                  showsVerticalScrollIndicator={false}
+                  contentContainerStyle={styles.devScrollContent}
                 >
-                  <Text style={styles.devPrimaryText}>New Game</Text>
-                </Pressable>
+                  <Text style={dynamicStyles.devTitle}>Dev Panel</Text>
 
-                <Pressable style={styles.devActionBtn} onPress={() => setDevPanelOpen(false)}>
-                  <Text style={styles.devLabel}>Close</Text>
-                </Pressable>
+                  <View style={styles.devRow}>
+                    <Text style={dynamicStyles.devLabel}>Wave</Text>
+                    <Pressable
+                      style={styles.devStepBtn}
+                      onPress={() => setDevWave((w) => Math.max(1, w - 1))}
+                      accessibilityLabel="Decrease wave"
+                    >
+                      <Text style={styles.devStepText}>−</Text>
+                    </Pressable>
+                    <Text style={styles.devValue}>{devWave}</Text>
+                    <Pressable
+                      style={styles.devStepBtn}
+                      onPress={() => setDevWave((w) => Math.min(15, w + 1))}
+                      accessibilityLabel="Increase wave"
+                    >
+                      <Text style={styles.devStepText}>+</Text>
+                    </Pressable>
+                  </View>
+
+                  <View style={styles.devRow}>
+                    <Text style={dynamicStyles.devLabel}>Infinite lives</Text>
+                    <Switch value={devInfiniteLives} onValueChange={setDevInfiniteLives} />
+                  </View>
+
+                  <Text style={dynamicStyles.devSectionHeader}>── Sound Mixer ──</Text>
+
+                  {(
+                    [
+                      ["Laser", "laser"],
+                      ["Charge shot", "chargeshot"],
+                      ["Explosion", "explosion"],
+                      ["Player hit", "playerhit"],
+                      ["Wave clear", "waveclear"],
+                      ["Game over", "gameover"],
+                      ["Challenging", "challengingstage"],
+                    ] as [string, keyof SfxVolumes][]
+                  ).map(([label, key]) => (
+                    <View key={key} style={styles.devRow}>
+                      <Text style={[dynamicStyles.devLabel, styles.devMixerLabel]}>{label}</Text>
+                      <Pressable
+                        style={styles.devStepBtn}
+                        onPress={() => adjustVolume(key, -0.1)}
+                        accessibilityLabel={`Decrease ${label} volume`}
+                      >
+                        <Text style={styles.devStepText}>−</Text>
+                      </Pressable>
+                      <Text style={styles.devValue}>{devVolumes[key].toFixed(1)}</Text>
+                      <Pressable
+                        style={styles.devStepBtn}
+                        onPress={() => adjustVolume(key, 0.1)}
+                        accessibilityLabel={`Increase ${label} volume`}
+                      >
+                        <Text style={styles.devStepText}>+</Text>
+                      </Pressable>
+                    </View>
+                  ))}
+
+                  <Pressable
+                    style={[styles.devActionBtn, dynamicStyles.devPrimary]}
+                    onPress={() => {
+                      setDevPanelOpen(false);
+                      handleNewGame({ wave: devWave, infiniteLives: devInfiniteLives });
+                    }}
+                  >
+                    <Text style={styles.devPrimaryText}>New Game</Text>
+                  </Pressable>
+
+                  <Pressable style={styles.devActionBtn} onPress={() => setDevPanelOpen(false)}>
+                    <Text style={dynamicStyles.devLabel}>Close</Text>
+                  </Pressable>
+                </ScrollView>
               </View>
             </View>
           </Modal>
@@ -208,21 +268,11 @@ export default function StarSwarmScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const baseStyles = StyleSheet.create({
   canvasOuter: {
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
-  },
-  devButton: {
-    position: "absolute",
-    top: 6,
-    left: 6,
-    backgroundColor: "rgba(255,80,0,0.85)",
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 4,
-    zIndex: 100,
   },
   devButtonText: {
     color: "#fff",
@@ -236,33 +286,11 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  devPanel: {
-    backgroundColor: "#1a1a2e",
-    borderRadius: 12,
-    padding: 24,
-    width: 280,
-    gap: 16,
-    borderWidth: 1,
-    borderColor: "rgba(255,80,0,0.5)",
-  },
-  devTitle: {
-    color: "#ff5000",
-    fontSize: 14,
-    fontWeight: "700",
-    letterSpacing: 2,
-    textAlign: "center",
-    textTransform: "uppercase",
-  },
   devRow: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
     gap: 8,
-  },
-  devLabel: {
-    color: "#ccc",
-    fontSize: 13,
-    flex: 1,
   },
   devStepBtn: {
     backgroundColor: "rgba(255,255,255,0.1)",
@@ -284,14 +312,18 @@ const styles = StyleSheet.create({
     minWidth: 28,
     textAlign: "center",
   },
+  devScrollContent: {
+    gap: 16,
+  },
+  devMixerLabel: {
+    fontSize: 11,
+    minWidth: 80,
+  },
   devActionBtn: {
     paddingVertical: 10,
     borderRadius: 8,
     alignItems: "center",
     backgroundColor: "rgba(255,255,255,0.08)",
-  },
-  devPrimary: {
-    backgroundColor: "#ff5000",
   },
   devPrimaryText: {
     color: "#fff",
@@ -299,3 +331,53 @@ const styles = StyleSheet.create({
     fontWeight: "700",
   },
 });
+
+// Create dynamic styles based on theme tokens to comply with design-tokens policy
+const getStyles = (colors: ReturnType<typeof useTheme>["colors"]) =>
+  StyleSheet.create({
+    ...baseStyles,
+    devButton: {
+      position: "absolute",
+      top: 6,
+      left: 6,
+      backgroundColor: "rgba(255,128,0,0.85)",
+      paddingHorizontal: 6,
+      paddingVertical: 2,
+      borderRadius: 4,
+      zIndex: 100,
+    },
+    devPanel: {
+      backgroundColor: colors.surfaceHigh,
+      borderRadius: 12,
+      padding: 24,
+      width: 300,
+      maxHeight: "80%",
+      borderWidth: 1,
+      borderColor: "rgba(255,128,0,0.5)",
+    },
+    devTitle: {
+      color: "rgba(255,128,0,1)",
+      fontSize: 14,
+      fontWeight: "700",
+      letterSpacing: 2,
+      textAlign: "center",
+      textTransform: "uppercase",
+    },
+    devLabel: {
+      color: colors.textMuted,
+      fontSize: 13,
+      flex: 1,
+    },
+    devSectionHeader: {
+      color: "rgba(255,128,0,0.7)",
+      fontSize: 10,
+      letterSpacing: 1,
+      textAlign: "center",
+      marginTop: 4,
+    },
+    devPrimary: {
+      backgroundColor: "rgba(255,128,0,1)",
+    },
+  });
+
+const styles = baseStyles;

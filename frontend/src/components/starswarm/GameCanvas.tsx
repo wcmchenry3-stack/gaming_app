@@ -2,7 +2,7 @@ import React, { forwardRef, useEffect, useImperativeHandle, useRef, useState } f
 import { StyleSheet, Text, View } from "react-native";
 import { Canvas, Circle, Fill, Group, Image as SkiaImage, Rect } from "@shopify/react-native-skia";
 import { useTranslation } from "react-i18next";
-import { initStarSwarm, tick } from "../../game/starswarm/engine";
+import { initStarSwarm, tick, BULLET_C_W } from "../../game/starswarm/engine";
 import { initStarfield, tickStarfield } from "../../game/starswarm/starfield";
 import type { StarfieldState } from "../../game/starswarm/starfield";
 import { useStarSwarmImages } from "../../game/starswarm/assets";
@@ -262,9 +262,18 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
               />
             ))}
 
-            {/* Player bullets */}
+            {/* Player bullets — charge bullets (wider) rendered as a distinct cyan beam */}
             {state.playerBullets.map((b) =>
-              images.bulletPlayer ? (
+              b.width >= BULLET_C_W ? (
+                <Rect
+                  key={b.id}
+                  x={b.x - b.width / 2}
+                  y={b.y - b.height / 2}
+                  width={b.width}
+                  height={b.height}
+                  color="#00f0ff"
+                />
+              ) : images.bulletPlayer ? (
                 <SkiaImage
                   key={b.id}
                   image={images.bulletPlayer}
