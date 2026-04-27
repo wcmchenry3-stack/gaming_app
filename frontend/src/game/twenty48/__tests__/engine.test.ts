@@ -11,6 +11,7 @@ import {
   slideAndMerge,
   isGameOver,
   setRng,
+  getRng,
   createSeededRng,
   SIZE,
   Direction,
@@ -456,15 +457,7 @@ describe("seedable RNG (setRng + createSeededRng)", () => {
   });
 
   it("setRng(Math.random) after afterEach restores non-determinism", () => {
-    // Sanity: back on default, two games should almost always differ.
-    const a = newGame();
-    const b = newGame();
-    // Not guaranteed to differ, but across 16 cells with random placement
-    // the odds of a full match are vanishingly small.
-    const flatA = a.board.flat();
-    const flatB = b.board.flat();
-    const anyDiff = flatA.some((v, i) => v !== flatB[i]);
-    expect(anyDiff).toBe(true);
+    expect(getRng()).toBe(Math.random);
   });
 });
 

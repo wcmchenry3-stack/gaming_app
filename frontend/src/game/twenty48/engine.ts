@@ -160,6 +160,10 @@ export function setRng(fn: RandomSource): void {
   _rng = fn;
 }
 
+export function getRng(): RandomSource {
+  return _rng;
+}
+
 /**
  * LCG deterministic RNG — for testing only.
  */
