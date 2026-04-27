@@ -11,6 +11,7 @@ import { join } from "path";
  *   yacht       — yacht-*.spec.ts
  *   blackjack   — blackjack-*.spec.ts
  *   twenty48    — twenty48-*.spec.ts
+ *   mahjong     — mahjong-*.spec.ts
  *   cross       — accessibility.spec.ts, cascade-flow.spec.ts, ui-preferences.spec.ts
  *   logs-budget — logs-*.spec.ts (#373 acceptance gate, CPU-throttled to
  *                  approximate mid-tier mobile device performance)
@@ -61,6 +62,11 @@ export default defineConfig({
     {
       name: "cascade",
       testMatch: "cascade-*.spec.ts",
+      use: { ...devices["Desktop Chrome"] },
+    },
+    {
+      name: "mahjong",
+      testMatch: "mahjong-*.spec.ts",
       use: { ...devices["Desktop Chrome"] },
     },
     {
