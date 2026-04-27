@@ -67,8 +67,10 @@ export default function StarSwarmScreen() {
 
   const scoreRef = useRef(0);
   const highScoreRef = useRef(0);
-  // In dev builds, remember the last dev options so that every "New Game"
-  // (header button, game-over overlay) re-applies them without reopening the panel.
+  // Increments on every new-game request; GameCanvas watches this via useEffect to reset.
+  const [resetTick, setResetTick] = useState(0);
+  // In dev builds, track the last opts from the panel so every subsequent "New Game"
+  // (header, game-over overlay) re-applies them without reopening the dev panel.
   const lastDevOptsRef = useRef<DevOptions | undefined>(undefined);
 
   const onLayout = useCallback((e: LayoutChangeEvent) => {
@@ -106,16 +108,11 @@ export default function StarSwarmScreen() {
   }, [playWaveClear]);
 
   const handleNewGame = useCallback((opts?: DevOptions) => {
-    // In dev builds, save explicit opts and fall back to them for subsequent restarts.
-    let activeOpts = opts;
-    if (__DEV__) {
-      if (opts !== undefined) lastDevOptsRef.current = opts;
-      activeOpts = opts ?? lastDevOptsRef.current;
-    }
+    if (__DEV__ && opts !== undefined) lastDevOptsRef.current = opts;
     scoreRef.current = 0;
     setPhase("SwoopIn");
     setIsPaused(false);
-    canvasRef.current?.reset(activeOpts);
+    setResetTick((t) => t + 1);
   }, []);
 
   const handlePause = useCallback(() => {
@@ -164,6 +161,8 @@ export default function StarSwarmScreen() {
               width={CANVAS_W}
               height={CANVAS_H}
               scale={scale}
+              resetTick={resetTick}
+              devOptions={lastDevOptsRef.current}
             />
             <Controls
               canvasRef={canvasRef}

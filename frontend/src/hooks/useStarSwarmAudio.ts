@@ -14,7 +14,7 @@ export interface SfxVolumes {
 }
 
 export const DEFAULT_SFX_VOLUMES: SfxVolumes = {
-  laser: 0.35,
+  laser: 0,
   chargeshot: 0.6,
   explosion: 0.45,
   playerhit: 0.7,

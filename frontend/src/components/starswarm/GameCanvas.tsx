@@ -2,6 +2,7 @@ import React, { forwardRef, useEffect, useImperativeHandle, useRef, useState } f
 import { StyleSheet, Text, View } from "react-native";
 import { Canvas, Circle, Fill, Group, Image as SkiaImage, Rect } from "@shopify/react-native-skia";
 import { useTranslation } from "react-i18next";
+import * as Sentry from "@sentry/react-native";
 import { initStarSwarm, tick, BULLET_C_W } from "../../game/starswarm/engine";
 import { initStarfield, tickStarfield } from "../../game/starswarm/starfield";
 import type { StarfieldState } from "../../game/starswarm/starfield";
@@ -18,7 +19,6 @@ export interface DevOptions {
 }
 
 export interface GameCanvasHandle {
-  reset: (opts?: DevOptions) => void;
   setPlayerX: (x: number) => void;
   setFire: (fire: boolean) => void;
   setChargeShot: (fire: boolean) => void;
@@ -38,6 +38,11 @@ interface Props {
   width: number;
   height: number;
   scale: number;
+  /** Increments each time a new game is requested — triggers an internal reset. */
+  resetTick?: number;
+  /** Dev options applied on each reset (wave, infiniteLives). Passed as prop so reset
+   *  is reactive and doesn't depend on the imperative ref being non-null. */
+  devOptions?: DevOptions;
 }
 
 interface RenderState {
@@ -61,6 +66,8 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
       width,
       height,
       scale,
+      resetTick,
+      devOptions,
     },
     ref
   ) => {
@@ -71,6 +78,10 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
     const sfRef = useRef<StarfieldState>(initStarfield(width, height));
     const inputRef = useRef({ playerX: width / 2, fire: true, chargeShot: false });
     const infiniteLivesRef = useRef(false);
+    // Assign during render (not via effect) so the reset effect always reads the
+    // latest devOptions even though devOptions is not in its dependency array.
+    const devOptionsRef = useRef<DevOptions | undefined>(devOptions);
+    devOptionsRef.current = devOptions;
     const lastFrameTimeRef = useRef(0);
     const prevScoreRef = useRef(0);
     const prevLivesRef = useRef(gameRef.current.player.lives);
@@ -123,19 +134,6 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
     useImperativeHandle(
       ref,
       () => ({
-        reset(opts?: DevOptions) {
-          infiniteLivesRef.current = opts?.infiniteLives ?? false;
-          gameRef.current = initStarSwarm(width, height, opts?.wave ?? 1);
-          sfRef.current = initStarfield(width, height);
-          lastFrameTimeRef.current = 0; // prevent stale dt on first frame after reset
-          inputRef.current.playerX = width / 2;
-          inputRef.current.fire = true;
-          inputRef.current.chargeShot = false;
-          prevScoreRef.current = 0;
-          prevLivesRef.current = gameRef.current.player.lives;
-          prevPhaseRef.current = gameRef.current.phase;
-          setRenderState({ game: gameRef.current, sf: sfRef.current });
-        },
         setPlayerX(x) {
           inputRef.current.playerX = x;
         },
@@ -149,6 +147,24 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
       [width, height]
     );
 
+    // Prop-driven reset: fires when resetTick increments (new game requested from parent).
+    // devOptionsRef.current is assigned during render so it's always current here.
+    useEffect(() => {
+      if (!resetTick) return;
+      const opts = devOptionsRef.current;
+      infiniteLivesRef.current = opts?.infiniteLives ?? false;
+      gameRef.current = initStarSwarm(width, height, opts?.wave ?? 1);
+      sfRef.current = initStarfield(width, height);
+      lastFrameTimeRef.current = 0;
+      inputRef.current.playerX = width / 2;
+      inputRef.current.fire = true;
+      inputRef.current.chargeShot = false;
+      prevScoreRef.current = 0;
+      prevLivesRef.current = gameRef.current.player.lives;
+      prevPhaseRef.current = gameRef.current.phase;
+      setRenderState({ game: gameRef.current, sf: sfRef.current });
+    }, [resetTick, width, height]);
+
     // RAF game loop — drives both engine tick and Skia re-renders
     useEffect(() => {
       let id: number;
@@ -160,54 +176,61 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
 
         const prev = gameRef.current;
         if (prev.phase !== "GameOver" && !isPausedRef.current) {
-          const chargeShotRequested = inputRef.current.chargeShot;
-          const prevCooldown = prev.player.shootCooldown;
-          const next = tick(prev, dtMs, {
-            playerX: inputRef.current.playerX,
-            fire: inputRef.current.fire,
-            chargeShot: inputRef.current.chargeShot,
-          });
-          if (inputRef.current.chargeShot) inputRef.current.chargeShot = false;
+          try {
+            const chargeShotRequested = inputRef.current.chargeShot;
+            const prevCooldown = prev.player.shootCooldown;
+            const next = tick(prev, dtMs, {
+              playerX: inputRef.current.playerX,
+              fire: inputRef.current.fire,
+              chargeShot: inputRef.current.chargeShot,
+            });
+            if (inputRef.current.chargeShot) inputRef.current.chargeShot = false;
 
-          // Dev: when infinite lives is on, intercept any lives decrement and
-          // restore lives + phase so the game never transitions to GameOver.
-          let applied = next;
-          if (infiniteLivesRef.current && next.player.lives < prevLivesRef.current) {
-            applied = {
-              ...next,
-              phase: next.phase === "GameOver" ? prevPhaseRef.current : next.phase,
-              player: { ...next.player, lives: prevLivesRef.current, invincibleTimer: 2000 },
-            };
-          }
-
-          gameRef.current = applied;
-          if (applied.score !== prevScoreRef.current) {
-            prevScoreRef.current = applied.score;
-            onScoreChangeRef.current?.(applied.score);
-          }
-          if (applied.player.shootCooldown > prevCooldown) {
-            if (chargeShotRequested) {
-              onChargeShotFireRef.current?.();
-            } else {
-              onLaserFireRef.current?.();
+            // Dev: when infinite lives is on, intercept any lives decrement and
+            // restore lives + phase so the game never transitions to GameOver.
+            let applied = next;
+            if (infiniteLivesRef.current && next.player.lives < prevLivesRef.current) {
+              applied = {
+                ...next,
+                phase: next.phase === "GameOver" ? prevPhaseRef.current : next.phase,
+                player: { ...next.player, lives: prevLivesRef.current, invincibleTimer: 2000 },
+              };
             }
-          }
-          if (applied.explosions.length > prev.explosions.length) {
-            onExplosionRef.current?.();
-          }
-          if (applied.player.lives < prevLivesRef.current) {
-            if (applied.phase !== "GameOver") onPlayerHitRef.current?.();
-          }
-          prevLivesRef.current = applied.player.lives;
-          if (applied.phase === "WaveClear" && prevPhaseRef.current !== "WaveClear") {
-            onWaveClearRef.current?.();
-          }
-          if (applied.phase === "ChallengingStage" && prevPhaseRef.current !== "ChallengingStage") {
-            onChallengingStageRef.current?.();
-          }
-          prevPhaseRef.current = applied.phase;
-          if (applied.phase === "GameOver") {
-            onGameOverRef.current?.(applied.score);
+
+            gameRef.current = applied;
+            if (applied.score !== prevScoreRef.current) {
+              prevScoreRef.current = applied.score;
+              onScoreChangeRef.current?.(applied.score);
+            }
+            if (applied.player.shootCooldown > prevCooldown) {
+              if (chargeShotRequested) {
+                onChargeShotFireRef.current?.();
+              } else {
+                onLaserFireRef.current?.();
+              }
+            }
+            if (applied.explosions.length > prev.explosions.length) {
+              onExplosionRef.current?.();
+            }
+            if (applied.player.lives < prevLivesRef.current) {
+              if (applied.phase !== "GameOver") onPlayerHitRef.current?.();
+            }
+            prevLivesRef.current = applied.player.lives;
+            if (applied.phase === "WaveClear" && prevPhaseRef.current !== "WaveClear") {
+              onWaveClearRef.current?.();
+            }
+            if (
+              applied.phase === "ChallengingStage" &&
+              prevPhaseRef.current !== "ChallengingStage"
+            ) {
+              onChallengingStageRef.current?.();
+            }
+            prevPhaseRef.current = applied.phase;
+            if (applied.phase === "GameOver") {
+              onGameOverRef.current?.(applied.score);
+            }
+          } catch (e) {
+            Sentry.captureException(e, { tags: { subsystem: "starswarm.loop" } });
           }
         }
         // Starfield scrolls continuously
