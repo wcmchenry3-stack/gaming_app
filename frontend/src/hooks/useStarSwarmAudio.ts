@@ -11,6 +11,7 @@ export interface SfxVolumes {
   waveclear: number;
   gameover: number;
   challengingstage: number;
+  bonuslife: number;
 }
 
 export const DEFAULT_SFX_VOLUMES: SfxVolumes = {
@@ -21,6 +22,7 @@ export const DEFAULT_SFX_VOLUMES: SfxVolumes = {
   waveclear: 0.8,
   gameover: 0.8,
   challengingstage: 0.8,
+  bonuslife: 0.9,
 };
 
 // bgMusicActive should be false when the game is over so the track stops.
@@ -36,6 +38,7 @@ export function useStarSwarmAudio(bgMusicActive: boolean, volumes?: Partial<SfxV
   const { play: playWaveClear } = useSound("starswarm.waveclear", v.waveclear);
   const { play: playGameOver } = useSound("starswarm.gameover", v.gameover);
   const { play: playChallengingStage } = useSound("starswarm.challengingstage", v.challengingstage);
+  const { play: playBonusLife } = useSound("starswarm.bonuslife", v.bonuslife);
 
   return {
     playLaser,
@@ -45,5 +48,6 @@ export function useStarSwarmAudio(bgMusicActive: boolean, volumes?: Partial<SfxV
     playWaveClear,
     playGameOver,
     playChallengingStage,
+    playBonusLife,
   };
 }

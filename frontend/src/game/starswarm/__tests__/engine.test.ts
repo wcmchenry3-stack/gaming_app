@@ -578,3 +578,80 @@ describe("Dive/circle shooting", () => {
     expect(s.enemyBullets).toHaveLength(0);
   });
 });
+
+// ---------------------------------------------------------------------------
+// Bonus lives (#945)
+// ---------------------------------------------------------------------------
+
+describe("Bonus lives", () => {
+  it("awards +1 life when score crosses 30,000", () => {
+    let s = initStarSwarm(CANVAS_W, CANVAS_H);
+    s = advanceMs(s, 8000); // reach Playing
+    const startLives = s.player.lives;
+    // Inject score just below threshold, then cross it via a kill
+    s = { ...s, score: 29_999 };
+    // Force enemy to be in formation at a known position and kill it with a bullet
+    const enemy = s.enemies.find((e) => e.isAlive);
+    if (!enemy) throw new Error("no enemy");
+    const bullet: Bullet = {
+      id: 99999,
+      x: enemy.x,
+      y: enemy.y,
+      vx: 0,
+      vy: 0,
+      owner: "player",
+      width: enemy.width,
+      height: enemy.height,
+      damage: 10,
+    };
+    s = { ...s, playerBullets: [bullet] };
+    s = tick(s, 16, NO_INPUT);
+    expect(s.player.lives).toBe(startLives + 1);
+    expect(s.bonusLivesAwarded).toBe(1);
+  });
+
+  it("does not re-award bonus life on the same threshold", () => {
+    let s = initStarSwarm(CANVAS_W, CANVAS_H);
+    s = advanceMs(s, 8000);
+    s = { ...s, score: 29_999, bonusLivesAwarded: 0 };
+    const enemy = s.enemies.find((e) => e.isAlive);
+    if (!enemy) throw new Error("no enemy");
+    const bullet: Bullet = {
+      id: 99998,
+      x: enemy.x,
+      y: enemy.y,
+      vx: 0,
+      vy: 0,
+      owner: "player",
+      width: enemy.width,
+      height: enemy.height,
+      damage: 10,
+    };
+    s = tick({ ...s, playerBullets: [bullet] }, 16, NO_INPUT);
+    const livesAfterFirst = s.player.lives;
+    // Tick again from same score — threshold already crossed, bonusLivesAwarded=1
+    s = tick(s, 16, NO_INPUT);
+    expect(s.player.lives).toBe(livesAfterFirst);
+  });
+
+  it("caps lives at MAX_LIVES (5)", () => {
+    let s = initStarSwarm(CANVAS_W, CANVAS_H);
+    s = advanceMs(s, 8000);
+    s = { ...s, score: 29_999, player: { ...s.player, lives: 5 } };
+    const enemy = s.enemies.find((e) => e.isAlive);
+    if (!enemy) throw new Error("no enemy");
+    const bullet: Bullet = {
+      id: 99997,
+      x: enemy.x,
+      y: enemy.y,
+      vx: 0,
+      vy: 0,
+      owner: "player",
+      width: enemy.width,
+      height: enemy.height,
+      damage: 10,
+    };
+    s = tick({ ...s, playerBullets: [bullet] }, 16, NO_INPUT);
+    expect(s.player.lives).toBe(5);
+  });
+});

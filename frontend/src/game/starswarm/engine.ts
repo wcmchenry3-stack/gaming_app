@@ -33,7 +33,7 @@ export const CHARGE_SHOOT_COOLDOWN = 900; // ms; longer cooldown than auto-fire
 
 const BULLET_E_W = 5;
 const BULLET_E_H = 10;
-const BULLET_E_VY = 0.2; // px/ms downward
+const BULLET_E_VY = 0.35; // px/ms downward
 
 const FORMATION_COLS = 8;
 const FORMATION_COL_W = 44; // #950: was 38 — Boss (36 px) had only 1 px margin/side
@@ -73,9 +73,13 @@ const SWAY_SPEED_BASE = 0.03; // px/ms at wave 1
 const SWAY_SPEED_PER_WAVE = 0.008; // px/ms added per wave
 const MAX_SWAY = 40; // max offset from center in px
 
-// #924 Aimed shots
-const AIMED_SHOT_WAVE_START = 4;
-const AIMED_SHOT_FRACTION = 0.25; // 25% of shots aimed at wave 4, +5% per wave, cap 60%
+// #924 Aimed shots — start gentle from wave 1, ramp +5%/wave, cap 60%
+const AIMED_SHOT_WAVE_START = 1;
+const AIMED_SHOT_FRACTION = 0.1; // 10% aimed at wave 1, +5% per wave, cap 60%
+
+// #945 Bonus lives
+const BONUS_LIFE_THRESHOLDS = [30_000, 70_000];
+const MAX_LIVES = 5;
 
 const TIER_SCORE: Record<EnemyTier, number> = { Grunt: 100, Elite: 200, Boss: 400 };
 const TIER_HP: Record<EnemyTier, number> = { Grunt: 1, Elite: 2, Boss: 3 };
@@ -357,7 +361,8 @@ function buildWaveState(
   canvasH: number,
   wave: number,
   player: Player,
-  score: number
+  score: number,
+  bonusLivesAwarded = 0
 ): StarSwarmState {
   let enemies: Enemy[];
   let phase: StarSwarmState["phase"];
@@ -390,6 +395,7 @@ function buildWaveState(
     nextDiveTimer: diveInterval(wave),
     formationSwayX: 0,
     formationSwayDir: 1,
+    bonusLivesAwarded,
   };
 }
 
@@ -410,9 +416,34 @@ export function tick(state: StarSwarmState, dtMs: number, input: StarSwarmInput)
   s = tickEnemies(s, dtMs);
   s = tickBullets(s, dtMs);
   s = tickCollisions(s);
+  s = tickBonusLives(state, s);
   s = tickExplosions(s, dtMs);
   s = checkPhaseTransitions(s);
   return s;
+}
+
+// ---------------------------------------------------------------------------
+// Bonus lives (#945)
+// ---------------------------------------------------------------------------
+
+function tickBonusLives(prev: StarSwarmState, next: StarSwarmState): StarSwarmState {
+  if (next.phase === "GameOver") return next;
+
+  let { player, bonusLivesAwarded } = next;
+
+  for (const [i, threshold] of BONUS_LIFE_THRESHOLDS.entries()) {
+    if (
+      next.score >= threshold &&
+      prev.score < threshold &&
+      bonusLivesAwarded < i + 1 &&
+      player.lives < MAX_LIVES
+    ) {
+      player = { ...player, lives: player.lives + 1 };
+      bonusLivesAwarded++;
+    }
+  }
+
+  return { ...next, player, bonusLivesAwarded };
 }
 
 // ---------------------------------------------------------------------------
@@ -439,7 +470,8 @@ function tickPlayer(state: StarSwarmState, dtMs: number, input: StarSwarmInput):
         owner: "player",
         width: BULLET_C_W,
         height: BULLET_C_H,
-        damage: 2,
+        damage: 4,
+        piercing: true,
       };
       return {
         ...state,
@@ -807,15 +839,22 @@ function tickCollisions(state: StarSwarmState): StarSwarmState {
   const newExplosions: Explosion[] = [...state.explosions];
 
   // ── Player bullets ↔ enemies ──────────────────────────────────────────────
-  const hitBulletIds = new Set<number>();
+  const hitBulletIds = new Set<number>(); // non-piercing bullets consumed this tick
+  const piercingHits = new Set<string>(); // `${bulletId}:${enemyId}` — prevents double-hit
   const enemies = state.enemies.map((enemy) => {
     if (!enemy.isAlive) return enemy;
 
     for (const b of state.playerBullets) {
-      if (hitBulletIds.has(b.id)) continue;
+      if (!b.piercing && hitBulletIds.has(b.id)) continue;
+      if (b.piercing && piercingHits.has(`${b.id}:${enemy.id}`)) continue;
       if (!aabb(b.x, b.y, b.width, b.height, enemy.x, enemy.y, enemy.width, enemy.height)) continue;
 
-      hitBulletIds.add(b.id);
+      if (b.piercing) {
+        piercingHits.add(`${b.id}:${enemy.id}`);
+      } else {
+        hitBulletIds.add(b.id);
+      }
+
       const newHp = enemy.hp - b.damage;
 
       if (newHp <= 0) {
@@ -833,6 +872,7 @@ function tickCollisions(state: StarSwarmState): StarSwarmState {
     return enemy;
   });
 
+  // Piercing bullets are removed by the off-screen filter in tickBullets, not here
   const playerBullets = state.playerBullets.filter((b) => !hitBulletIds.has(b.id));
 
   // ── Enemy contact ↔ player (bullets + #925 diving/circling ships) ──────────
@@ -840,18 +880,40 @@ function tickCollisions(state: StarSwarmState): StarSwarmState {
     const hitByBullet = state.enemyBullets.some((b) =>
       aabb(b.x, b.y, b.width, b.height, player.x, player.y, player.width, player.height)
     );
+
+    // #956: capture the ramming enemy so we can destroy it on collision
+    let rammingEnemyId: number | null = null;
     const hitByShip =
       !hitByBullet &&
-      enemies.some(
-        (e) =>
+      enemies.some((e) => {
+        if (
           e.isAlive &&
           (e.phase === "Diving" || e.phase === "Circling") &&
           aabb(e.x, e.y, e.width, e.height, player.x, player.y, player.width, player.height)
-      );
+        ) {
+          rammingEnemyId = e.id;
+          return true;
+        }
+        return false;
+      });
 
     if (hitByBullet || hitByShip) {
       const newLives = player.lives - 1;
       newExplosions.push(spawnExplosion(player.x, player.y));
+
+      // Kill the enemy that rammed the player (classic Galaga behaviour)
+      const finalEnemies =
+        hitByShip && rammingEnemyId !== null
+          ? enemies.map((e) => {
+              if (e.id === rammingEnemyId) {
+                newExplosions.push(spawnExplosion(e.x, e.y));
+                score += TIER_SCORE[e.tier] * DIVE_SCORE_MULT;
+                return { ...e, hp: 0, isAlive: false };
+              }
+              return e;
+            })
+          : enemies;
+
       const enemyBullets = hitByBullet
         ? state.enemyBullets.filter(
             (b) =>
@@ -862,7 +924,7 @@ function tickCollisions(state: StarSwarmState): StarSwarmState {
       if (newLives <= 0) {
         return {
           ...state,
-          enemies,
+          enemies: finalEnemies,
           playerBullets,
           enemyBullets,
           explosions: newExplosions,
@@ -875,7 +937,7 @@ function tickCollisions(state: StarSwarmState): StarSwarmState {
 
       return {
         ...state,
-        enemies,
+        enemies: finalEnemies,
         playerBullets,
         enemyBullets,
         explosions: newExplosions,
@@ -956,7 +1018,14 @@ function checkPhaseTransitions(state: StarSwarmState): StarSwarmState {
 
 function startNextWave(state: StarSwarmState): StarSwarmState {
   const nextWave = state.wave + 1;
-  return buildWaveState(state.canvasW, state.canvasH, nextWave, state.player, state.score);
+  return buildWaveState(
+    state.canvasW,
+    state.canvasH,
+    nextWave,
+    state.player,
+    state.score,
+    state.bonusLivesAwarded
+  );
 }
 
 // ---------------------------------------------------------------------------

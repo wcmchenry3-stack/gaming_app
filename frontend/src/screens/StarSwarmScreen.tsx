@@ -63,6 +63,7 @@ export default function StarSwarmScreen() {
     playWaveClear,
     playGameOver,
     playChallengingStage,
+    playBonusLife,
   } = useStarSwarmAudio(phase !== "GameOver", devVolumes);
 
   const scoreRef = useRef(0);
@@ -106,6 +107,10 @@ export default function StarSwarmScreen() {
     playWaveClear();
     hapticWaveClear();
   }, [playWaveClear]);
+
+  const handleBonusLife = useCallback(() => {
+    playBonusLife();
+  }, [playBonusLife]);
 
   const handleNewGame = useCallback((opts?: DevOptions) => {
     if (__DEV__ && opts !== undefined) lastDevOptsRef.current = opts;
@@ -157,6 +162,7 @@ export default function StarSwarmScreen() {
               onChargeShotFire={playChargeShot}
               onExplosion={playExplosion}
               onChallengingStage={playChallengingStage}
+              onBonusLife={handleBonusLife}
               isPaused={isPaused}
               width={CANVAS_W}
               height={CANVAS_H}

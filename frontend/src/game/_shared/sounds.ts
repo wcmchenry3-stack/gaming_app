@@ -41,6 +41,8 @@ export const SOUND_REGISTRY: Partial<Record<SoundKey, number>> = {
   // eslint-disable-next-line @typescript-eslint/no-require-imports
   "starswarm.waveclear": require("../../../assets/sounds/starswarm-waveclear.ogg"),
   // eslint-disable-next-line @typescript-eslint/no-require-imports
+  "starswarm.bonuslife": require("../../../assets/sounds/starswarm-waveclear.ogg"),
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
   "starswarm.bg1": require("../../../assets/sounds/starswarm-bg-1.mp3"),
   // eslint-disable-next-line @typescript-eslint/no-require-imports
   "starswarm.bg2": require("../../../assets/sounds/starswarm-bg-2.mp3"),
