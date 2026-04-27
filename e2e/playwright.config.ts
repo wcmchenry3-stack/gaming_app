@@ -12,6 +12,7 @@ import { join } from "path";
  *   blackjack   — blackjack-*.spec.ts
  *   twenty48    — twenty48-*.spec.ts
  *   mahjong     — mahjong-*.spec.ts
+ *   freecell    — freecell-*.spec.ts
  *   cross       — accessibility.spec.ts, cascade-flow.spec.ts, ui-preferences.spec.ts
  *   logs-budget — logs-*.spec.ts (#373 acceptance gate, CPU-throttled to
  *                  approximate mid-tier mobile device performance)
@@ -67,6 +68,11 @@ export default defineConfig({
     {
       name: "mahjong",
       testMatch: "mahjong-*.spec.ts",
+      use: { ...devices["Desktop Chrome"] },
+    },
+    {
+      name: "freecell",
+      testMatch: "freecell-*.spec.ts",
       use: { ...devices["Desktop Chrome"] },
     },
     {
