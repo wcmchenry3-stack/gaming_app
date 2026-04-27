@@ -487,34 +487,42 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
               chargeShot: inputRef.current.chargeShot,
             });
             if (inputRef.current.chargeShot) inputRef.current.chargeShot = false;
-            stateRef.current = next;
-            if (next.score !== prevScoreRef.current) {
-              prevScoreRef.current = next.score;
-              onScoreChangeRef.current?.(next.score);
+            let applied = next;
+            if (infiniteLivesRef.current && next.player.lives < prevLivesRef.current) {
+              applied = {
+                ...next,
+                phase: next.phase === "GameOver" ? prevPhaseRef.current : next.phase,
+                player: { ...next.player, lives: prevLivesRef.current, invincibleTimer: 2000 },
+              };
             }
-            if (next.player.shootCooldown > prevCooldown) {
+            stateRef.current = applied;
+            if (applied.score !== prevScoreRef.current) {
+              prevScoreRef.current = applied.score;
+              onScoreChangeRef.current?.(applied.score);
+            }
+            if (applied.player.shootCooldown > prevCooldown) {
               if (chargeShotRequested) {
                 onChargeShotFireRef.current?.();
               } else {
                 onLaserFireRef.current?.();
               }
             }
-            if (next.explosions.length > prev.explosions.length) {
+            if (applied.explosions.length > prev.explosions.length) {
               onExplosionRef.current?.();
             }
-            if (next.player.lives < prevLivesRef.current) {
-              if (next.phase !== "GameOver") onPlayerHitRef.current?.();
+            if (applied.player.lives < prevLivesRef.current) {
+              if (applied.phase !== "GameOver") onPlayerHitRef.current?.();
             }
-            prevLivesRef.current = next.player.lives;
-            if (next.phase === "WaveClear" && prevPhaseRef.current !== "WaveClear") {
+            prevLivesRef.current = applied.player.lives;
+            if (applied.phase === "WaveClear" && prevPhaseRef.current !== "WaveClear") {
               onWaveClearRef.current?.();
             }
-            if (next.phase === "ChallengingStage" && prevPhaseRef.current !== "ChallengingStage") {
+            if (applied.phase === "ChallengingStage" && prevPhaseRef.current !== "ChallengingStage") {
               onChallengingStageRef.current?.();
             }
-            prevPhaseRef.current = next.phase;
-            if (next.phase === "GameOver") {
-              onGameOverRef.current?.(next.score);
+            prevPhaseRef.current = applied.phase;
+            if (applied.phase === "GameOver") {
+              onGameOverRef.current?.(applied.score);
             }
           } catch (e) {
             Sentry.captureException(e, { tags: { subsystem: "starswarm.loop" } });
