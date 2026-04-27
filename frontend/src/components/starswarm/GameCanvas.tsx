@@ -12,8 +12,13 @@ const EXPLOSION_DRAW_SIZE = 48;
 const DT_CAP_MS = 33;
 const INVINCIBLE_BLINK_INTERVAL = 120; // ms
 
+export interface DevOptions {
+  wave?: number;
+  infiniteLives?: boolean;
+}
+
 export interface GameCanvasHandle {
-  reset: () => void;
+  reset: (opts?: DevOptions) => void;
   setPlayerX: (x: number) => void;
   setFire: (fire: boolean) => void;
   setChargeShot: (fire: boolean) => void;
@@ -65,6 +70,7 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
     const gameRef = useRef<StarSwarmState>(initStarSwarm(width, height));
     const sfRef = useRef<StarfieldState>(initStarfield(width, height));
     const inputRef = useRef({ playerX: width / 2, fire: true, chargeShot: false });
+    const infiniteLivesRef = useRef(false);
     const lastFrameTimeRef = useRef(0);
     const prevScoreRef = useRef(0);
     const prevLivesRef = useRef(gameRef.current.player.lives);
@@ -117,8 +123,9 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
     useImperativeHandle(
       ref,
       () => ({
-        reset() {
-          gameRef.current = initStarSwarm(width, height);
+        reset(opts?: DevOptions) {
+          infiniteLivesRef.current = opts?.infiniteLives ?? false;
+          gameRef.current = initStarSwarm(width, height, opts?.wave ?? 1);
           sfRef.current = initStarfield(width, height);
           inputRef.current.playerX = width / 2;
           inputRef.current.chargeShot = false;
@@ -159,34 +166,46 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
             chargeShot: inputRef.current.chargeShot,
           });
           if (inputRef.current.chargeShot) inputRef.current.chargeShot = false;
-          gameRef.current = next;
-          if (next.score !== prevScoreRef.current) {
-            prevScoreRef.current = next.score;
-            onScoreChangeRef.current?.(next.score);
+
+          // Dev: when infinite lives is on, intercept any lives decrement and
+          // restore lives + phase so the game never transitions to GameOver.
+          let applied = next;
+          if (infiniteLivesRef.current && next.player.lives < prevLivesRef.current) {
+            applied = {
+              ...next,
+              phase: next.phase === "GameOver" ? prevPhaseRef.current : next.phase,
+              player: { ...next.player, lives: prevLivesRef.current, invincibleTimer: 2000 },
+            };
           }
-          if (next.player.shootCooldown > prevCooldown) {
+
+          gameRef.current = applied;
+          if (applied.score !== prevScoreRef.current) {
+            prevScoreRef.current = applied.score;
+            onScoreChangeRef.current?.(applied.score);
+          }
+          if (applied.player.shootCooldown > prevCooldown) {
             if (chargeShotRequested) {
               onChargeShotFireRef.current?.();
             } else {
               onLaserFireRef.current?.();
             }
           }
-          if (next.explosions.length > prev.explosions.length) {
+          if (applied.explosions.length > prev.explosions.length) {
             onExplosionRef.current?.();
           }
-          if (next.player.lives < prevLivesRef.current) {
-            if (next.phase !== "GameOver") onPlayerHitRef.current?.();
+          if (applied.player.lives < prevLivesRef.current) {
+            if (applied.phase !== "GameOver") onPlayerHitRef.current?.();
           }
-          prevLivesRef.current = next.player.lives;
-          if (next.phase === "WaveClear" && prevPhaseRef.current !== "WaveClear") {
+          prevLivesRef.current = applied.player.lives;
+          if (applied.phase === "WaveClear" && prevPhaseRef.current !== "WaveClear") {
             onWaveClearRef.current?.();
           }
-          if (next.phase === "ChallengingStage" && prevPhaseRef.current !== "ChallengingStage") {
+          if (applied.phase === "ChallengingStage" && prevPhaseRef.current !== "ChallengingStage") {
             onChallengingStageRef.current?.();
           }
-          prevPhaseRef.current = next.phase;
-          if (next.phase === "GameOver") {
-            onGameOverRef.current?.(next.score);
+          prevPhaseRef.current = applied.phase;
+          if (applied.phase === "GameOver") {
+            onGameOverRef.current?.(applied.score);
           }
         }
         // Starfield scrolls continuously
