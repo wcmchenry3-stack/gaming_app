@@ -67,6 +67,9 @@ export default function StarSwarmScreen() {
 
   const scoreRef = useRef(0);
   const highScoreRef = useRef(0);
+  // In dev builds, remember the last dev options so that every "New Game"
+  // (header button, game-over overlay) re-applies them without reopening the panel.
+  const lastDevOptsRef = useRef<DevOptions | undefined>(undefined);
 
   const onLayout = useCallback((e: LayoutChangeEvent) => {
     const { width, height } = e.nativeEvent.layout;
@@ -103,10 +106,16 @@ export default function StarSwarmScreen() {
   }, [playWaveClear]);
 
   const handleNewGame = useCallback((opts?: DevOptions) => {
+    // In dev builds, save explicit opts and fall back to them for subsequent restarts.
+    let activeOpts = opts;
+    if (__DEV__) {
+      if (opts !== undefined) lastDevOptsRef.current = opts;
+      activeOpts = opts ?? lastDevOptsRef.current;
+    }
     scoreRef.current = 0;
     setPhase("SwoopIn");
     setIsPaused(false);
-    canvasRef.current?.reset(opts);
+    canvasRef.current?.reset(activeOpts);
   }, []);
 
   const handlePause = useCallback(() => {
