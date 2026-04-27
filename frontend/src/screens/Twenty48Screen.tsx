@@ -68,8 +68,8 @@ export default function Twenty48Screen({ navigation }: Props) {
   /** Guards against double-counting a win within a single game session. */
   const winRecordedRef = useRef(false);
 
-  const { play: playTileMerge } = useSound("twenty48.tileMerge");
-  const { play: playTileSpawn } = useSound("twenty48.tileSpawn");
+  const { play: playTileMerge } = useSound("twenty48.tileMerge", 0.3);
+  const { play: playTileSpawn } = useSound("twenty48.tileSpawn", 0.2);
   const { play: playWin2048 } = useSound("twenty48.win2048");
   const { play: playGameOverSound } = useSound("twenty48.gameOver");
 

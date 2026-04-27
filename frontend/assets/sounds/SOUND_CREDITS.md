@@ -187,15 +187,16 @@ _(Previously placed — provenance to be confirmed)_
 ### twenty48-tile-merge.ogg
 
 - **Event:** Tile merge (two equal tiles combine)
-- **Original filename:** `pepSound2.ogg` from Kenney Digital Audio
-- **Source URL:** https://kenney.nl/assets/digital-audio
+- **Original filename:** `drop_001.ogg` from Kenney Interface Sounds
+- **Source URL:** https://kenney.nl/assets/interface-sounds
 - **Creator:** Kenney Vleugels (Kenney.nl)
 - **License:** Creative Commons Zero (CC0)
 - **License URL:** https://creativecommons.org/publicdomain/zero/1.0/
 - **Attribution required:** No
 - **Commercial use:** Yes
 - **Download date:** 2026-04-26
-- **Notes:** Short upbeat pep sound — satisfying pop for a tile merge.
+- **Notes:** Short soft drop thud — muted "tile placed on a surface" feel. Played at volume 0.3. Sits in the background without becoming grating during extended play.
+- **Replaced:** `pepSound2.ogg` from Kenney Digital Audio (https://kenney.nl/assets/digital-audio) — swapped 2026-04-26; original was too sharp and upbeat for a slow puzzle game (#936).
 
 ### twenty48-tile-spawn.ogg
 
@@ -208,7 +209,7 @@ _(Previously placed — provenance to be confirmed)_
 - **Attribution required:** No
 - **Commercial use:** Yes
 - **Download date:** 2026-04-26
-- **Notes:** Subtle single tone for the tile appearing after each move.
+- **Notes:** Subtle single tone for the tile appearing after each move. Played at volume 0.2 (#936) — fires on every move so sits well in the background.
 
 ### twenty48-win.mp3
 
