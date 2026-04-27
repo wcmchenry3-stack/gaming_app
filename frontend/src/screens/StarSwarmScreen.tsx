@@ -182,80 +182,83 @@ export default function StarSwarmScreen() {
           >
             <View style={styles.devOverlay}>
               <View style={dynamicStyles.devPanel}>
-              <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.devScrollContent}>
-                <Text style={dynamicStyles.devTitle}>Dev Panel</Text>
+                <ScrollView
+                  showsVerticalScrollIndicator={false}
+                  contentContainerStyle={styles.devScrollContent}
+                >
+                  <Text style={dynamicStyles.devTitle}>Dev Panel</Text>
 
-                <View style={styles.devRow}>
-                  <Text style={dynamicStyles.devLabel}>Wave</Text>
-                  <Pressable
-                    style={styles.devStepBtn}
-                    onPress={() => setDevWave((w) => Math.max(1, w - 1))}
-                    accessibilityLabel="Decrease wave"
-                  >
-                    <Text style={styles.devStepText}>−</Text>
-                  </Pressable>
-                  <Text style={styles.devValue}>{devWave}</Text>
-                  <Pressable
-                    style={styles.devStepBtn}
-                    onPress={() => setDevWave((w) => Math.min(15, w + 1))}
-                    accessibilityLabel="Increase wave"
-                  >
-                    <Text style={styles.devStepText}>+</Text>
-                  </Pressable>
-                </View>
-
-                <View style={styles.devRow}>
-                  <Text style={dynamicStyles.devLabel}>Infinite lives</Text>
-                  <Switch value={devInfiniteLives} onValueChange={setDevInfiniteLives} />
-                </View>
-
-                <Text style={dynamicStyles.devSectionHeader}>── Sound Mixer ──</Text>
-
-                {(
-                  [
-                    ["Laser", "laser"],
-                    ["Charge shot", "chargeshot"],
-                    ["Explosion", "explosion"],
-                    ["Player hit", "playerhit"],
-                    ["Wave clear", "waveclear"],
-                    ["Game over", "gameover"],
-                    ["Challenging", "challengingstage"],
-                  ] as [string, keyof SfxVolumes][]
-                ).map(([label, key]) => (
-                  <View key={key} style={styles.devRow}>
-                    <Text style={[dynamicStyles.devLabel, styles.devMixerLabel]}>{label}</Text>
+                  <View style={styles.devRow}>
+                    <Text style={dynamicStyles.devLabel}>Wave</Text>
                     <Pressable
                       style={styles.devStepBtn}
-                      onPress={() => adjustVolume(key, -0.1)}
-                      accessibilityLabel={`Decrease ${label} volume`}
+                      onPress={() => setDevWave((w) => Math.max(1, w - 1))}
+                      accessibilityLabel="Decrease wave"
                     >
                       <Text style={styles.devStepText}>−</Text>
                     </Pressable>
-                    <Text style={styles.devValue}>{devVolumes[key].toFixed(1)}</Text>
+                    <Text style={styles.devValue}>{devWave}</Text>
                     <Pressable
                       style={styles.devStepBtn}
-                      onPress={() => adjustVolume(key, 0.1)}
-                      accessibilityLabel={`Increase ${label} volume`}
+                      onPress={() => setDevWave((w) => Math.min(15, w + 1))}
+                      accessibilityLabel="Increase wave"
                     >
                       <Text style={styles.devStepText}>+</Text>
                     </Pressable>
                   </View>
-                ))}
 
-                <Pressable
-                  style={[styles.devActionBtn, dynamicStyles.devPrimary]}
-                  onPress={() => {
-                    setDevPanelOpen(false);
-                    handleNewGame({ wave: devWave, infiniteLives: devInfiniteLives });
-                  }}
-                >
-                  <Text style={styles.devPrimaryText}>New Game</Text>
-                </Pressable>
+                  <View style={styles.devRow}>
+                    <Text style={dynamicStyles.devLabel}>Infinite lives</Text>
+                    <Switch value={devInfiniteLives} onValueChange={setDevInfiniteLives} />
+                  </View>
 
-                <Pressable style={styles.devActionBtn} onPress={() => setDevPanelOpen(false)}>
-                  <Text style={dynamicStyles.devLabel}>Close</Text>
-                </Pressable>
-              </ScrollView>
+                  <Text style={dynamicStyles.devSectionHeader}>── Sound Mixer ──</Text>
+
+                  {(
+                    [
+                      ["Laser", "laser"],
+                      ["Charge shot", "chargeshot"],
+                      ["Explosion", "explosion"],
+                      ["Player hit", "playerhit"],
+                      ["Wave clear", "waveclear"],
+                      ["Game over", "gameover"],
+                      ["Challenging", "challengingstage"],
+                    ] as [string, keyof SfxVolumes][]
+                  ).map(([label, key]) => (
+                    <View key={key} style={styles.devRow}>
+                      <Text style={[dynamicStyles.devLabel, styles.devMixerLabel]}>{label}</Text>
+                      <Pressable
+                        style={styles.devStepBtn}
+                        onPress={() => adjustVolume(key, -0.1)}
+                        accessibilityLabel={`Decrease ${label} volume`}
+                      >
+                        <Text style={styles.devStepText}>−</Text>
+                      </Pressable>
+                      <Text style={styles.devValue}>{devVolumes[key].toFixed(1)}</Text>
+                      <Pressable
+                        style={styles.devStepBtn}
+                        onPress={() => adjustVolume(key, 0.1)}
+                        accessibilityLabel={`Increase ${label} volume`}
+                      >
+                        <Text style={styles.devStepText}>+</Text>
+                      </Pressable>
+                    </View>
+                  ))}
+
+                  <Pressable
+                    style={[styles.devActionBtn, dynamicStyles.devPrimary]}
+                    onPress={() => {
+                      setDevPanelOpen(false);
+                      handleNewGame({ wave: devWave, infiniteLives: devInfiniteLives });
+                    }}
+                  >
+                    <Text style={styles.devPrimaryText}>New Game</Text>
+                  </Pressable>
+
+                  <Pressable style={styles.devActionBtn} onPress={() => setDevPanelOpen(false)}>
+                    <Text style={dynamicStyles.devLabel}>Close</Text>
+                  </Pressable>
+                </ScrollView>
               </View>
             </View>
           </Modal>
