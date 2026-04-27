@@ -46,7 +46,7 @@ jobs:
       # See wcmchenry3-stack/.github#45.
       backend-url: "https://gaming-app-api-dev.onrender.com"
       health-path: "/health"
-      probe-path: "/yacht/state"
+      probe-path: "/games/me"
       probe-expected-status: "400"
     secrets: inherit
 
