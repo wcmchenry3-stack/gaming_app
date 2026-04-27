@@ -12,6 +12,7 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTranslation } from "react-i18next";
 import { useNavigation } from "@react-navigation/native";
+import { useTheme } from "../theme/ThemeContext";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { HomeStackParamList } from "../../App";
 import { GameShell } from "../components/shared/GameShell";
@@ -29,6 +30,7 @@ import type { SfxVolumes } from "../hooks/useStarSwarmAudio";
 
 export default function StarSwarmScreen() {
   const { t } = useTranslation("starswarm");
+  const { colors } = useTheme();
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<NativeStackNavigationProp<HomeStackParamList, "StarSwarm">>();
 
@@ -115,6 +117,8 @@ export default function StarSwarmScreen() {
     setIsPaused(false);
   }, []);
 
+  const dynamicStyles = getStyles(colors);
+
   const scale =
     containerW > 0 && containerH > 0 ? Math.min(containerW / CANVAS_W, containerH / CANVAS_H) : 0;
 
@@ -162,7 +166,7 @@ export default function StarSwarmScreen() {
               onNewGame={handleNewGame}
             />
             {__DEV__ && (
-              <Pressable style={styles.devButton} onPress={() => setDevPanelOpen(true)}>
+              <Pressable style={dynamicStyles.devButton} onPress={() => setDevPanelOpen(true)}>
                 <Text style={styles.devButtonText}>DEV</Text>
               </Pressable>
             )}
@@ -177,12 +181,12 @@ export default function StarSwarmScreen() {
             onRequestClose={() => setDevPanelOpen(false)}
           >
             <View style={styles.devOverlay}>
-              <View style={styles.devPanel}>
+              <View style={dynamicStyles.devPanel}>
               <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.devScrollContent}>
-                <Text style={styles.devTitle}>Dev Panel</Text>
+                <Text style={dynamicStyles.devTitle}>Dev Panel</Text>
 
                 <View style={styles.devRow}>
-                  <Text style={styles.devLabel}>Wave</Text>
+                  <Text style={dynamicStyles.devLabel}>Wave</Text>
                   <Pressable
                     style={styles.devStepBtn}
                     onPress={() => setDevWave((w) => Math.max(1, w - 1))}
@@ -201,11 +205,11 @@ export default function StarSwarmScreen() {
                 </View>
 
                 <View style={styles.devRow}>
-                  <Text style={styles.devLabel}>Infinite lives</Text>
+                  <Text style={dynamicStyles.devLabel}>Infinite lives</Text>
                   <Switch value={devInfiniteLives} onValueChange={setDevInfiniteLives} />
                 </View>
 
-                <Text style={styles.devSectionHeader}>── Sound Mixer ──</Text>
+                <Text style={dynamicStyles.devSectionHeader}>── Sound Mixer ──</Text>
 
                 {(
                   [
@@ -219,7 +223,7 @@ export default function StarSwarmScreen() {
                   ] as [string, keyof SfxVolumes][]
                 ).map(([label, key]) => (
                   <View key={key} style={styles.devRow}>
-                    <Text style={[styles.devLabel, styles.devMixerLabel]}>{label}</Text>
+                    <Text style={[dynamicStyles.devLabel, styles.devMixerLabel]}>{label}</Text>
                     <Pressable
                       style={styles.devStepBtn}
                       onPress={() => adjustVolume(key, -0.1)}
@@ -239,7 +243,7 @@ export default function StarSwarmScreen() {
                 ))}
 
                 <Pressable
-                  style={[styles.devActionBtn, styles.devPrimary]}
+                  style={[styles.devActionBtn, dynamicStyles.devPrimary]}
                   onPress={() => {
                     setDevPanelOpen(false);
                     handleNewGame({ wave: devWave, infiniteLives: devInfiniteLives });
@@ -249,7 +253,7 @@ export default function StarSwarmScreen() {
                 </Pressable>
 
                 <Pressable style={styles.devActionBtn} onPress={() => setDevPanelOpen(false)}>
-                  <Text style={styles.devLabel}>Close</Text>
+                  <Text style={dynamicStyles.devLabel}>Close</Text>
                 </Pressable>
               </ScrollView>
               </View>
@@ -261,21 +265,11 @@ export default function StarSwarmScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const baseStyles = StyleSheet.create({
   canvasOuter: {
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
-  },
-  devButton: {
-    position: "absolute",
-    top: 6,
-    left: 6,
-    backgroundColor: "rgba(255,80,0,0.85)",
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 4,
-    zIndex: 100,
   },
   devButtonText: {
     color: "#fff",
@@ -289,33 +283,11 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  devPanel: {
-    backgroundColor: "#1a1a2e",
-    borderRadius: 12,
-    padding: 24,
-    width: 300,
-    maxHeight: "80%",
-    borderWidth: 1,
-    borderColor: "rgba(255,80,0,0.5)",
-  },
-  devTitle: {
-    color: "#ff5000",
-    fontSize: 14,
-    fontWeight: "700",
-    letterSpacing: 2,
-    textAlign: "center",
-    textTransform: "uppercase",
-  },
   devRow: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
     gap: 8,
-  },
-  devLabel: {
-    color: "#ccc",
-    fontSize: 13,
-    flex: 1,
   },
   devStepBtn: {
     backgroundColor: "rgba(255,255,255,0.1)",
@@ -340,13 +312,6 @@ const styles = StyleSheet.create({
   devScrollContent: {
     gap: 16,
   },
-  devSectionHeader: {
-    color: "rgba(255,80,0,0.7)",
-    fontSize: 10,
-    letterSpacing: 1,
-    textAlign: "center",
-    marginTop: 4,
-  },
   devMixerLabel: {
     fontSize: 11,
     minWidth: 80,
@@ -357,12 +322,59 @@ const styles = StyleSheet.create({
     alignItems: "center",
     backgroundColor: "rgba(255,255,255,0.08)",
   },
-  devPrimary: {
-    backgroundColor: "#ff5000",
-  },
   devPrimaryText: {
     color: "#fff",
     fontSize: 14,
     fontWeight: "700",
   },
 });
+
+// Create dynamic styles based on theme tokens to comply with design-tokens policy
+const getStyles = (colors: ReturnType<typeof useTheme>["colors"]) =>
+  StyleSheet.create({
+    ...baseStyles,
+    devButton: {
+      position: "absolute",
+      top: 6,
+      left: 6,
+      backgroundColor: "rgba(255,128,0,0.85)",
+      paddingHorizontal: 6,
+      paddingVertical: 2,
+      borderRadius: 4,
+      zIndex: 100,
+    },
+    devPanel: {
+      backgroundColor: colors.surfaceHigh,
+      borderRadius: 12,
+      padding: 24,
+      width: 300,
+      maxHeight: "80%",
+      borderWidth: 1,
+      borderColor: "rgba(255,128,0,0.5)",
+    },
+    devTitle: {
+      color: "rgba(255,128,0,1)",
+      fontSize: 14,
+      fontWeight: "700",
+      letterSpacing: 2,
+      textAlign: "center",
+      textTransform: "uppercase",
+    },
+    devLabel: {
+      color: colors.textMuted,
+      fontSize: 13,
+      flex: 1,
+    },
+    devSectionHeader: {
+      color: "rgba(255,128,0,0.7)",
+      fontSize: 10,
+      letterSpacing: 1,
+      textAlign: "center",
+      marginTop: 4,
+    },
+    devPrimary: {
+      backgroundColor: "rgba(255,128,0,1)",
+    },
+  });
+
+const styles = baseStyles;

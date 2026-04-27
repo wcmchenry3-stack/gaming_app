@@ -33,7 +33,11 @@
       "Bash(npx expo:*)",
       "Bash(echo \"exit: $?\")",
       "Bash(grep -v \"^$\")",
-      "Bash(grep:*)"
+      "Bash(grep:*)",
+      "WebSearch",
+      "WebFetch(domain:kenney.nl)",
+      "WebFetch(domain:gamesounds.xyz)",
+      "Bash(./node_modules/.bin/tsc --noEmit src/screens/StarSwarmScreen.tsx)"
     ]
   }
 }
