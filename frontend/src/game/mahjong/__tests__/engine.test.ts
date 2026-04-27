@@ -283,7 +283,7 @@ describe("deal variety", () => {
     for (let seed = 0; seed < 30; seed++) {
       const state = createGame(TURTLE_LAYOUT, seed);
       const tile = state.tiles.find(
-        (t) => t.col === target.col && t.row === target.row && t.layer === target.layer,
+        (t) => t.col === target.col && t.row === target.row && t.layer === target.layer
       );
       if (tile) facesAtSlot.add(tile.faceId);
     }
