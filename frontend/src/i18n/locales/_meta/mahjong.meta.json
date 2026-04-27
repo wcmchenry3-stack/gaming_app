@@ -62,6 +62,15 @@
     "doNotTranslate": [],
     "notes": null
   },
+  "hud.deal": {
+    "component": "MahjongScreen",
+    "description": "Short uppercase label preceding the 4-char deal ID code in the HUD (e.g. 'DEAL #A3F2').",
+    "tone": "functional",
+    "characterLimit": 6,
+    "placeholders": [],
+    "doNotTranslate": [],
+    "notes": "Displayed small and muted. The code after the label is always '#' followed by 4 uppercase hex chars and is never translated."
+  },
   "action.newGame": {
     "component": "Controls",
     "description": "Label on the new-game button.",

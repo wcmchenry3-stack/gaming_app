@@ -249,6 +249,52 @@ describe("createGame", () => {
     expect(state.startedAt).toBeNull();
     expect(state.accumulatedMs).toBe(0);
   });
+
+  it("includes a dealId of exactly 4 uppercase hex chars", () => {
+    const state = createGame(TURTLE_LAYOUT, 1);
+    expect(state.dealId).toMatch(/^[0-9A-F]{4}$/);
+  });
+
+  it("dealId is deterministic for the same seed", () => {
+    expect(createGame(TURTLE_LAYOUT, 7).dealId).toBe(createGame(TURTLE_LAYOUT, 7).dealId);
+  });
+
+  it("dealId changes across different seeds", () => {
+    const ids = new Set<string>();
+    for (let seed = 0; seed < 20; seed++) ids.add(createGame(TURTLE_LAYOUT, seed).dealId);
+    expect(ids.size).toBeGreaterThan(15);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// deal variety — secondary face-assignment shuffle (#943)
+// ---------------------------------------------------------------------------
+
+describe("deal variety", () => {
+  it("100 seeded games produce highly distinct face distributions", () => {
+    const dealIds = new Set<string>();
+    for (let seed = 0; seed < 100; seed++) dealIds.add(createGame(TURTLE_LAYOUT, seed).dealId);
+    expect(dealIds.size).toBeGreaterThanOrEqual(90);
+  });
+
+  it("a specific board slot shows varied faces across games (no fixed face→position mapping)", () => {
+    const target = TURTLE_LAYOUT[0]!;
+    const facesAtSlot = new Set<number>();
+    for (let seed = 0; seed < 30; seed++) {
+      const state = createGame(TURTLE_LAYOUT, seed);
+      const tile = state.tiles.find(
+        (t) => t.col === target.col && t.row === target.row && t.layer === target.layer,
+      );
+      if (tile) facesAtSlot.add(tile.faceId);
+    }
+    expect(facesAtSlot.size).toBeGreaterThan(3);
+  });
+
+  it("matched tile pairs are solvable after face-assignment shuffle", () => {
+    for (let seed = 0; seed < 10; seed++) {
+      expect(hasFreePairs(createGame(TURTLE_LAYOUT, seed).tiles)).toBe(true);
+    }
+  });
 });
 
 // ---------------------------------------------------------------------------
@@ -353,6 +399,7 @@ describe("selectTile", () => {
       isDeadlocked: false,
       startedAt: null,
       accumulatedMs: 0,
+      dealId: "TEST",
     };
     const s1 = selectTile(state, a.id);
     const s2 = selectTile(s1, b.id);

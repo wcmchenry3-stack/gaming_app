@@ -78,4 +78,7 @@ export interface MahjongState {
   readonly startedAt: number | null;
   /** Accumulated elapsed milliseconds from all sessions before the current. */
   readonly accumulatedMs: number;
+  /** Short 4-char hex identifier computed from the dealt face sequence.
+   * Changes on every new deal; lets players confirm they have a fresh shuffle. */
+  readonly dealId: string;
 }
