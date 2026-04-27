@@ -18,6 +18,19 @@ jest.mock("@shopify/react-native-skia", () => ({
   Fill: () => null,
   Group: ({ children }: { children?: React.ReactNode }) => <>{children}</>,
   Rect: () => null,
+  ImageSVG: () => null,
+  useSVG: () => null,
+}));
+
+// expo-asset is unavailable in jsdom — return a no-op stub.
+jest.mock("expo-asset", () => ({
+  Asset: {
+    fromModule: () => ({
+      downloadAsync: async () => {},
+      localUri: null,
+      uri: null,
+    }),
+  },
 }));
 
 // Use the web variant (no Skia). The canvas ref will be null in jsdom, which

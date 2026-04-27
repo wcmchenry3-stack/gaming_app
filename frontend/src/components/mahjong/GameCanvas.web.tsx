@@ -7,15 +7,15 @@
  * Tile geometry (grid → pixels):
  *   pixel_x = PAD_X + (col / 2) * TILE_W + layer * LAYER_DX
  *   pixel_y = PAD_Y + row * TILE_H − layer * LAYER_DY
- *
- * SVG face art is gated behind a placeholder until Story #875 lands.
  */
 
-import React, { useCallback, useEffect, useMemo, useRef } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
+import { Asset } from "expo-asset";
 import { useTranslation } from "react-i18next";
 import { hasFreePairs, isFreeTile } from "../../game/mahjong/engine";
 import type { MahjongState, SlotTile } from "../../game/mahjong/types";
+import { TILE_REQUIRES } from "./tileAssets";
 
 // ---------------------------------------------------------------------------
 // Layout constants (mirror GameCanvas.tsx exactly)
@@ -87,7 +87,8 @@ function hitTest(tiles: readonly SlotTile[], tapX: number, tapY: number): number
 function drawBoard(
   ctx: CanvasRenderingContext2D,
   state: MahjongState,
-  freeTiles: ReadonlySet<number>
+  freeTiles: ReadonlySet<number>,
+  tileImages: readonly (HTMLImageElement | null)[]
 ): void {
   ctx.clearRect(0, 0, BOARD_W, BOARD_H);
 
@@ -137,18 +138,16 @@ function drawBoard(
     ctx.fillStyle = faceColor;
     ctx.fillRect(x + 1, y + 1, fw - 2, fh - 2);
 
-    // Suit placeholder — replaced by SVG art in Story #875
-    ctx.globalAlpha = isFree ? 0.8 : 0.35;
-    ctx.fillStyle = suitColor;
-    ctx.fillRect(x + 8, y + 10, fw - 16, fh - 20);
+    // SVG face art — fall back to suit-color rect while image is loading
+    const img = tileImages[tile.faceId - 1];
+    ctx.globalAlpha = isFree ? 1 : 0.35;
+    if (img?.complete && img.naturalWidth > 0) {
+      ctx.drawImage(img, x + 2, y + 2, fw - 4, fh - 4);
+    } else {
+      ctx.fillStyle = suitColor;
+      ctx.fillRect(x + 8, y + 10, fw - 16, fh - 20);
+    }
     ctx.globalAlpha = 1;
-
-    // Rank text (placeholder — gives extra visual info on web)
-    ctx.font = "bold 11px monospace";
-    ctx.textAlign = "center";
-    ctx.textBaseline = "bottom";
-    ctx.fillStyle = isFree ? "#ffffff" : "#aaaaaa";
-    ctx.fillText(String(tile.rank), x + fw / 2, y + fh - 2);
   }
 }
 
@@ -166,6 +165,8 @@ interface Props {
 export default function GameCanvas({ state, onTilePress, onShufflePress, onNewGamePress }: Props) {
   const { t } = useTranslation("mahjong");
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const tileImagesRef = useRef<(HTMLImageElement | null)[]>(Array(42).fill(null));
+  const [imagesVersion, setImagesVersion] = useState(0);
 
   const freeTiles = useMemo(() => {
     const s = new Set<number>();
@@ -182,14 +183,51 @@ export default function GameCanvas({ state, onTilePress, onShufflePress, onNewGa
   const showShuffleCTA = noFreePairs && state.shufflesLeft > 0;
   const gameActive = !state.isComplete && !state.isDeadlocked && !showShuffleCTA;
 
-  // Redraw whenever state changes.
+  // Load all 42 SVG tile images once on mount.
+  useEffect(() => {
+    const images: (HTMLImageElement | null)[] = Array(42).fill(null);
+    tileImagesRef.current = images;
+    let cancelled = false;
+
+    (async () => {
+      await Promise.all(
+        (TILE_REQUIRES as number[]).map(async (src, i) => {
+          try {
+            const asset = Asset.fromModule(src);
+            await asset.downloadAsync();
+            const uri = asset.localUri ?? asset.uri;
+            if (!uri || cancelled) return;
+            await new Promise<void>((resolve) => {
+              const img = new window.Image();
+              img.crossOrigin = "anonymous";
+              img.src = uri;
+              img.onload = () => {
+                if (!cancelled) images[i] = img;
+                resolve();
+              };
+              img.onerror = () => resolve();
+            });
+          } catch {
+            // SVG failed to load — suit-color fallback stays
+          }
+        })
+      );
+      if (!cancelled && images.some((img) => img !== null)) setImagesVersion((v) => v + 1);
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  // Redraw whenever state or tile images change.
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
-    drawBoard(ctx, state, freeTiles);
-  }, [state, freeTiles]);
+    drawBoard(ctx, state, freeTiles, tileImagesRef.current);
+  }, [state, freeTiles, imagesVersion]);
 
   const handleClick = useCallback(
     (e: React.MouseEvent<HTMLCanvasElement>) => {

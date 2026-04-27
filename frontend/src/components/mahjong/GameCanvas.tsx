@@ -10,16 +10,15 @@
  *
  * Rendering order: layer ASC so higher layers appear on top.
  * Hit-testing: topmost tile (highest layer) at touch point wins.
- *
- * SVG face art is gated behind a placeholder until Story #875 lands.
  */
 
 import React, { useMemo } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
-import { Canvas, Fill, Group, Rect } from "@shopify/react-native-skia";
+import { Canvas, Fill, Group, ImageSVG, Rect, useSVG } from "@shopify/react-native-skia";
 import { useTranslation } from "react-i18next";
 import { hasFreePairs, isFreeTile } from "../../game/mahjong/engine";
 import type { MahjongState, SlotTile } from "../../game/mahjong/types";
+import { TILE_REQUIRES } from "./tileAssets";
 
 // ---------------------------------------------------------------------------
 // Layout constants
@@ -57,15 +56,29 @@ const SIDE_R = "#a89070";
 const SIDE_B = "#987860";
 const SHADOW = "rgba(0,0,0,0.35)";
 
-const SUIT_COLOR: Record<string, string> = {
-  characters: "#cc0000",
-  circles: "#006633",
-  bamboos: "#003322",
-  winds: "#334455",
-  dragons: "#880011",
-  flowers: "#aa2299",
-  seasons: "#0044aa",
-};
+// ---------------------------------------------------------------------------
+// SVG face art
+// ---------------------------------------------------------------------------
+
+function TileFaceLayer({
+  faceId,
+  x,
+  y,
+  w,
+  h,
+  opacity,
+}: {
+  faceId: number;
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+  opacity: number;
+}) {
+  const svg = useSVG(TILE_REQUIRES[faceId - 1]);
+  if (!svg) return null;
+  return <ImageSVG svg={svg} x={x} y={y} width={w} height={h} opacity={opacity} />;
+}
 
 // ---------------------------------------------------------------------------
 // Hit-testing
@@ -149,7 +162,6 @@ export default function GameCanvas({ state, onTilePress, onShufflePress, onNewGa
               ? BORDER_HINT
               : BORDER_NORMAL;
           const faceColor = isFree ? TILE_FACE : TILE_FACE_LOCKED;
-          const suitColor = SUIT_COLOR[tile.suit] ?? "#888888";
           const fw = TILE_W - SIDE_W;
           const fh = TILE_H - SIDE_W;
 
@@ -165,14 +177,14 @@ export default function GameCanvas({ state, onTilePress, onShufflePress, onNewGa
               <Rect x={x} y={y} width={fw} height={fh} color={borderColor} />
               {/* Face */}
               <Rect x={x + 1} y={y + 1} width={fw - 2} height={fh - 2} color={faceColor} />
-              {/* Suit placeholder — replaced by SVG art in Story #875 */}
-              <Rect
-                x={x + 8}
-                y={y + 10}
-                width={fw - 16}
-                height={fh - 20}
-                color={suitColor}
-                opacity={isFree ? 0.8 : 0.35}
+              {/* SVG face art */}
+              <TileFaceLayer
+                faceId={tile.faceId}
+                x={x + 2}
+                y={y + 2}
+                w={fw - 4}
+                h={fh - 4}
+                opacity={isFree ? 1 : 0.35}
               />
             </Group>
           );
