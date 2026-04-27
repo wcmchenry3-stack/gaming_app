@@ -15,6 +15,8 @@
   "action.undoLabel": "__NEEDS_TRANSLATION__",
   "overlay.noMoves": "__NEEDS_TRANSLATION__",
   "overlay.noMovesDetail": "__NEEDS_TRANSLATION__",
+  "overlay.deadlocked": "__NEEDS_TRANSLATION__",
+  "overlay.deadlockedDetail": "__NEEDS_TRANSLATION__",
   "overlay.youWon": "__NEEDS_TRANSLATION__",
   "overlay.youWonDetail": "__NEEDS_TRANSLATION__",
   "overlay.shuffleButton": "__NEEDS_TRANSLATION__",

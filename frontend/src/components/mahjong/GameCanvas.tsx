@@ -12,7 +12,7 @@
  * Hit-testing: topmost tile (highest layer) at touch point wins.
  */
 
-import React, { useMemo } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { Canvas, Fill, Group, ImageSVG, Rect, useSVG } from "@shopify/react-native-skia";
 import { useTranslation } from "react-i18next";
@@ -127,6 +127,16 @@ export default function GameCanvas({ state, onTilePress, onShufflePress, onNewGa
   );
   const showShuffleCTA = noFreePairs && state.shufflesLeft > 0;
 
+  const [showDeadlockOverlay, setShowDeadlockOverlay] = useState(false);
+  useEffect(() => {
+    if (!state.isDeadlocked) {
+      setShowDeadlockOverlay(false);
+      return;
+    }
+    const timer = setTimeout(() => setShowDeadlockOverlay(true), 500);
+    return () => clearTimeout(timer);
+  }, [state.isDeadlocked]);
+
   const sortedTiles = useMemo(
     () => [...state.tiles].sort((a, b) => a.layer - b.layer || a.row - b.row),
     [state.tiles]
@@ -213,11 +223,11 @@ export default function GameCanvas({ state, onTilePress, onShufflePress, onNewGa
         </View>
       )}
 
-      {/* Deadlock overlay */}
-      {state.isDeadlocked && (
+      {/* Deadlock overlay — shown after shake animation completes */}
+      {showDeadlockOverlay && (
         <View style={[styles.overlay, styles.noMovesOverlay]}>
-          <Text style={styles.overlayTitle}>{t("overlay.noMoves")}</Text>
-          <Text style={styles.overlayDetail}>{t("overlay.noMovesDetail")}</Text>
+          <Text style={styles.overlayTitle}>{t("overlay.deadlocked")}</Text>
+          <Text style={styles.overlayDetail}>{t("overlay.deadlockedDetail")}</Text>
           <Pressable
             style={styles.btn}
             onPress={onNewGamePress}

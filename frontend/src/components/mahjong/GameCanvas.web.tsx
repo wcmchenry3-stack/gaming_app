@@ -183,6 +183,16 @@ export default function GameCanvas({ state, onTilePress, onShufflePress, onNewGa
   const showShuffleCTA = noFreePairs && state.shufflesLeft > 0;
   const gameActive = !state.isComplete && !state.isDeadlocked && !showShuffleCTA;
 
+  const [showDeadlockOverlay, setShowDeadlockOverlay] = useState(false);
+  useEffect(() => {
+    if (!state.isDeadlocked) {
+      setShowDeadlockOverlay(false);
+      return;
+    }
+    const timer = setTimeout(() => setShowDeadlockOverlay(true), 500);
+    return () => clearTimeout(timer);
+  }, [state.isDeadlocked]);
+
   // Load all 42 SVG tile images once on mount.
   useEffect(() => {
     const images: (HTMLImageElement | null)[] = Array(42).fill(null);
@@ -272,11 +282,11 @@ export default function GameCanvas({ state, onTilePress, onShufflePress, onNewGa
         </View>
       )}
 
-      {/* Deadlock overlay */}
-      {state.isDeadlocked && (
+      {/* Deadlock overlay — shown after shake animation completes */}
+      {showDeadlockOverlay && (
         <View style={[styles.overlay, styles.noMovesOverlay]}>
-          <Text style={styles.overlayTitle}>{t("overlay.noMoves")}</Text>
-          <Text style={styles.overlayDetail}>{t("overlay.noMovesDetail")}</Text>
+          <Text style={styles.overlayTitle}>{t("overlay.deadlocked")}</Text>
+          <Text style={styles.overlayDetail}>{t("overlay.deadlockedDetail")}</Text>
           <Pressable
             style={styles.btn}
             onPress={onNewGamePress}

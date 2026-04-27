@@ -143,6 +143,24 @@
     "doNotTranslate": [],
     "notes": null
   },
+  "overlay.deadlocked": {
+    "component": "GameCanvas",
+    "description": "Large heading on the deadlock overlay when no free pairs remain and no shuffles are left.",
+    "tone": "neutral, informative",
+    "characterLimit": 16,
+    "placeholders": [],
+    "doNotTranslate": [],
+    "notes": "Distinct from overlay.noMoves (shuffle CTA). This fires only when shuffles are exhausted."
+  },
+  "overlay.deadlockedDetail": {
+    "component": "GameCanvas",
+    "description": "Detail line under the deadlock heading explaining the game is over.",
+    "tone": "helpful",
+    "characterLimit": 30,
+    "placeholders": [],
+    "doNotTranslate": [],
+    "notes": "Do not mention shuffling — there are none left."
+  },
   "overlay.youWon": {
     "component": "GameCanvas",
     "description": "Large heading on the win overlay when all tiles are cleared.",
