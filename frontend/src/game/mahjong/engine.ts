@@ -276,6 +276,51 @@ function buildBoard(
 }
 
 // ---------------------------------------------------------------------------
+// Post-deal face-assignment shuffle — breaks visual symmetry
+// ---------------------------------------------------------------------------
+
+/**
+ * After buildBoard, tiles are emitted in positional pairs: (0,1), (2,3), …
+ * The backwards-build assigns the same face-pair to both slots in each
+ * positional pair, which means symmetric slot positions always show the same
+ * face — causing a visually regular pattern across games.
+ *
+ * This shuffles which face-pair is assigned to which positional pair (keeping
+ * each positional pair's two tiles mutually matching) so that specific faces
+ * are no longer correlated with specific board positions.
+ *
+ * Solvability is preserved: the positional pairings that guarantee removability
+ * are unchanged; only which face-type goes to each pair changes.
+ */
+function shuffleFaceAssignments(tiles: SlotTile[], rng: RandomSource): SlotTile[] {
+  type FaceData = Pick<TileSpec, "suit" | "rank" | "faceId">;
+  const facePairs: [FaceData, FaceData][] = [];
+  for (let i = 0; i < tiles.length; i += 2) {
+    facePairs.push([
+      { suit: tiles[i]!.suit, rank: tiles[i]!.rank, faceId: tiles[i]!.faceId },
+      { suit: tiles[i + 1]!.suit, rank: tiles[i + 1]!.rank, faceId: tiles[i + 1]!.faceId },
+    ]);
+  }
+  fisherYates(facePairs, rng);
+  const result = [...tiles];
+  for (let i = 0; i < facePairs.length; i++) {
+    const [a, b] = facePairs[i]!;
+    result[2 * i] = { ...tiles[2 * i]!, ...a };
+    result[2 * i + 1] = { ...tiles[2 * i + 1]!, ...b };
+  }
+  return result;
+}
+
+/** FNV-1a (32-bit) hash of the tile faceId sequence → 4 uppercase hex chars. */
+function computeDealId(tiles: readonly SlotTile[]): string {
+  let h = 2166136261; // FNV-1a offset basis
+  for (const tile of tiles) {
+    h = Math.imul(h ^ tile.faceId, 16777619) >>> 0;
+  }
+  return h.toString(16).toUpperCase().padStart(8, "0").slice(0, 4);
+}
+
+// ---------------------------------------------------------------------------
 // Public API
 // ---------------------------------------------------------------------------
 
@@ -284,11 +329,13 @@ export function createGame(layout: Layout, seed?: number): MahjongState {
   const rng = seed !== undefined ? createSeededRng(seed) : _rng;
   const specs = buildFullTileSet();
   const pairs = buildPairs(specs);
-  const tiles = buildBoard(layout, pairs, rng);
+  const tiles = shuffleFaceAssignments(buildBoard(layout, pairs, rng), rng);
+  const dealId = computeDealId(tiles);
 
   return {
     _v: 1,
     tiles,
+    dealId,
     pairsRemoved: 0,
     score: 0,
     shufflesLeft: MAX_SHUFFLES,

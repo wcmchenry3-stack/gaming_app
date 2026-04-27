@@ -61,6 +61,8 @@ export async function loadGame(): Promise<MahjongState | null> {
       return null;
     }
     parsed.startedAt = parsed.startedAt ?? null;
+    // dealId added in #943 — fall back gracefully for saves from older builds
+    if (typeof parsed.dealId !== "string") parsed.dealId = "0000";
     return parsed as MahjongState;
   } catch (e) {
     Sentry.captureMessage("mahjong.storage: corrupt game payload, discarding", {

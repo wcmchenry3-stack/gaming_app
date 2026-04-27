@@ -6,6 +6,7 @@
   "hud.score": "SCORE",
   "hud.pairs": "PAIRS",
   "hud.time": "TIME",
+  "hud.deal": "DEAL",
   "action.newGame": "NEW GAME",
   "action.newGameLabel": "Start a new game",
   "action.shuffle": "SHUFFLE",

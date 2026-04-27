@@ -478,6 +478,9 @@ export default function MahjongScreen() {
               <Text style={[styles.hudText, { color: colors.textMuted }]}>
                 {t("action.shuffle")} {state.shufflesLeft}
               </Text>
+              <Text style={[styles.hudText, styles.dealIdText, { color: colors.textMuted }]}>
+                {t("hud.deal")} #{state.dealId}
+              </Text>
             </View>
 
             <View style={[styles.boardWrap, outerWidth > 0 ? { height: BOARD_H * scale } : null]}>
@@ -713,6 +716,10 @@ const styles = StyleSheet.create({
     fontFamily: typography.heading,
     fontSize: 14,
     letterSpacing: 0.5,
+  },
+  dealIdText: {
+    fontSize: 10,
+    opacity: 0.6,
   },
   boardWrap: {
     alignSelf: "stretch",
