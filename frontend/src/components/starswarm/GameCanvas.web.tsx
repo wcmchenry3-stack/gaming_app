@@ -266,7 +266,7 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
           inputRef.current.chargeShot = fire;
         },
       }),
-      [width, height]
+      []
     );
 
     useEffect(() => {
