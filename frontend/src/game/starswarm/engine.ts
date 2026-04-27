@@ -65,6 +65,15 @@ const WAVE_CLEAR_BONUS_BASE = 500;
 // Score diving enemies get a 2× multiplier.
 const DIVE_SCORE_MULT = 2;
 
+// #923 Formation sway
+const SWAY_SPEED_BASE = 0.03; // px/ms at wave 1
+const SWAY_SPEED_PER_WAVE = 0.008; // px/ms added per wave
+const MAX_SWAY = 40; // max offset from center in px
+
+// #924 Aimed shots
+const AIMED_SHOT_WAVE_START = 4;
+const AIMED_SHOT_FRACTION = 0.25; // 25% of shots aimed at wave 4, +5% per wave, cap 60%
+
 const TIER_SCORE: Record<EnemyTier, number> = { Grunt: 100, Elite: 200, Boss: 400 };
 const TIER_HP: Record<EnemyTier, number> = { Grunt: 1, Elite: 2, Boss: 3 };
 const TIER_SIZE: Record<EnemyTier, { w: number; h: number }> = {
@@ -298,6 +307,22 @@ function isChallengingWave(wave: number): boolean {
   return wave % 3 === 0;
 }
 
+// #926: how many enemies may dive simultaneously at a given wave
+function maxDivers(wave: number): number {
+  if (wave <= 2) return 1;
+  if (wave <= 4) return 2;
+  if (wave <= 6) return 3;
+  return 4;
+}
+
+// #924: compute vx for an enemy bullet — non-zero only at wave 4+
+function aimedBulletVx(enemyX: number, playerX: number, wave: number): number {
+  if (wave < AIMED_SHOT_WAVE_START) return 0;
+  const fraction = Math.min(0.6, AIMED_SHOT_FRACTION + (wave - AIMED_SHOT_WAVE_START) * 0.05);
+  if (rng() > fraction) return 0;
+  return Math.sign(playerX - enemyX) * BULLET_E_VY * 0.5;
+}
+
 // ---------------------------------------------------------------------------
 // Public: initStarSwarm
 // ---------------------------------------------------------------------------
@@ -360,6 +385,8 @@ function buildWaveState(
     canvasH,
     challengingHits: 0,
     nextDiveTimer: diveInterval(wave),
+    formationSwayX: 0,
+    formationSwayDir: 1,
   };
 }
 
@@ -454,7 +481,8 @@ function tickSingleEnemy(
   dtMs: number,
   playerX: number,
   canvasH: number,
-  shouldDive: boolean
+  shouldDive: boolean,
+  wave: number
 ): EnemyTickResult {
   if (!enemy.isAlive) return { enemy, bullet: null };
 
@@ -462,7 +490,7 @@ function tickSingleEnemy(
     case "SwoopIn":
       return tickSwoopIn(enemy, dtMs);
     case "Formation":
-      return tickFormation(enemy, dtMs, playerX, shouldDive);
+      return tickFormation(enemy, dtMs, playerX, shouldDive, wave);
     case "Diving":
       return tickDiving(enemy, dtMs, canvasH);
     case "Circling":
@@ -503,7 +531,8 @@ function tickFormation(
   enemy: Enemy,
   dtMs: number,
   playerX: number,
-  shouldDive: boolean
+  shouldDive: boolean,
+  wave: number
 ): EnemyTickResult {
   const shootTimer = enemy.shootTimer - dtMs;
   let bullet: Bullet | null = null;
@@ -526,7 +555,7 @@ function tickFormation(
       id: nextId(),
       x: enemy.x,
       y: enemy.y + enemy.height / 2,
-      vx: 0,
+      vx: aimedBulletVx(enemy.x, playerX, wave),
       vy: BULLET_E_VY,
       owner: "enemy",
       width: BULLET_E_W,
@@ -625,9 +654,9 @@ function tickReturning(enemy: Enemy, dtMs: number): EnemyTickResult {
 }
 
 function tickEnemies(state: StarSwarmState, dtMs: number): StarSwarmState {
-  // Dive AI: decrement timer and pick a target if it fires
+  // #926 Dive AI: pick up to maxDivers(wave) formation enemies to send diving
   let nextDiveTimer = state.nextDiveTimer;
-  let diveIdx: number | null = null;
+  const diveIndices = new Set<number>();
 
   if (state.phase === "Playing") {
     nextDiveTimer -= dtMs;
@@ -636,21 +665,55 @@ function tickEnemies(state: StarSwarmState, dtMs: number): StarSwarmState {
       const candidates = state.enemies
         .map((e, i) => ({ e, i }))
         .filter(({ e }) => e.isAlive && e.phase === "Formation");
-      if (candidates.length > 0) {
-        diveIdx = candidates[Math.floor(rng() * candidates.length)]?.i ?? null;
+      const max = maxDivers(state.wave);
+      for (let k = 0; k < max && candidates.length > 0; k++) {
+        const pick = Math.floor(rng() * candidates.length);
+        diveIndices.add(candidates[pick]!.i);
+        candidates.splice(pick, 1);
       }
     }
   }
 
+  // #923 Formation sway: advance offset, bounce at ±MAX_SWAY
+  const swaySpeed = SWAY_SPEED_BASE + (state.wave - 1) * SWAY_SPEED_PER_WAVE;
+  let swayX = state.formationSwayX + state.formationSwayDir * swaySpeed * dtMs;
+  let swayDir = state.formationSwayDir;
+  if (swayX >= MAX_SWAY) {
+    swayX = MAX_SWAY;
+    swayDir = -1;
+  } else if (swayX <= -MAX_SWAY) {
+    swayX = -MAX_SWAY;
+    swayDir = 1;
+  }
+
   const newEnemyBullets: Bullet[] = [...state.enemyBullets];
   const enemies = state.enemies.map((enemy, idx) => {
-    const shouldDive = idx === diveIdx;
-    const result = tickSingleEnemy(enemy, dtMs, state.player.x, state.canvasH, shouldDive);
+    const shouldDive = diveIndices.has(idx);
+    const result = tickSingleEnemy(
+      enemy,
+      dtMs,
+      state.player.x,
+      state.canvasH,
+      shouldDive,
+      state.wave
+    );
+    let e = result.enemy;
+    // Apply sway offset to enemies holding Formation position
+    if (e.isAlive && e.phase === "Formation") {
+      e = { ...e, x: e.formationX + swayX };
+    }
     if (result.bullet) newEnemyBullets.push(result.bullet);
-    return result.enemy;
+    return e;
   });
 
-  return { ...state, enemies, enemyBullets: newEnemyBullets, nextDiveTimer };
+  return {
+    ...state,
+    enemies,
+    enemyBullets: newEnemyBullets,
+    nextDiveTimer,
+    formationSwayX: swayX,
+    formationSwayDir: swayDir,
+  };
 }
 
 // ---------------------------------------------------------------------------
@@ -713,18 +776,29 @@ function tickCollisions(state: StarSwarmState): StarSwarmState {
 
   const playerBullets = state.playerBullets.filter((b) => !hitBulletIds.has(b.id));
 
-  // ── Enemy bullets ↔ player ────────────────────────────────────────────────
+  // ── Enemy contact ↔ player (bullets + #925 diving/circling ships) ──────────
   if (player.invincibleTimer <= 0) {
-    const hitByEnemy = state.enemyBullets.some((b) =>
+    const hitByBullet = state.enemyBullets.some((b) =>
       aabb(b.x, b.y, b.width, b.height, player.x, player.y, player.width, player.height)
     );
+    const hitByShip =
+      !hitByBullet &&
+      enemies.some(
+        (e) =>
+          e.isAlive &&
+          (e.phase === "Diving" || e.phase === "Circling") &&
+          aabb(e.x, e.y, e.width, e.height, player.x, player.y, player.width, player.height)
+      );
 
-    if (hitByEnemy) {
+    if (hitByBullet || hitByShip) {
       const newLives = player.lives - 1;
       newExplosions.push(spawnExplosion(player.x, player.y));
-      const enemyBullets = state.enemyBullets.filter(
-        (b) => !aabb(b.x, b.y, b.width, b.height, player.x, player.y, player.width, player.height)
-      );
+      const enemyBullets = hitByBullet
+        ? state.enemyBullets.filter(
+            (b) =>
+              !aabb(b.x, b.y, b.width, b.height, player.x, player.y, player.width, player.height)
+          )
+        : state.enemyBullets;
 
       if (newLives <= 0) {
         return {
