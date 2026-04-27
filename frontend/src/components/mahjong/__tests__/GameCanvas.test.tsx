@@ -72,7 +72,8 @@ describe("GameCanvas (web)", () => {
     expect(JSON.stringify(tree!.toJSON())).toContain("overlay.youWon");
   });
 
-  it("shows the no-moves overlay when isDeadlocked", () => {
+  it("shows the deadlock overlay after 500 ms when isDeadlocked", () => {
+    jest.useFakeTimers();
     const state = makeState({ isDeadlocked: true, shufflesLeft: 0 });
     let tree: ReturnType<typeof create>;
     act(() => {
@@ -80,7 +81,13 @@ describe("GameCanvas (web)", () => {
         <GameCanvas state={state} onTilePress={noop} onShufflePress={noop} onNewGamePress={noop} />
       );
     });
-    expect(JSON.stringify(tree!.toJSON())).toContain("overlay.noMoves");
+    // Overlay is intentionally delayed — not visible before the timer fires.
+    expect(JSON.stringify(tree!.toJSON())).not.toContain("overlay.deadlocked");
+    act(() => {
+      jest.advanceTimersByTime(500);
+    });
+    expect(JSON.stringify(tree!.toJSON())).toContain("overlay.deadlocked");
+    jest.useRealTimers();
   });
 
   it("shows the shuffle CTA when no free pairs remain and shuffles are available", () => {
@@ -114,5 +121,6 @@ describe("GameCanvas (web)", () => {
     const str = JSON.stringify(tree!.toJSON());
     expect(str).not.toContain("overlay.youWon");
     expect(str).not.toContain("overlay.noMoves");
+    expect(str).not.toContain("overlay.deadlocked");
   });
 });
