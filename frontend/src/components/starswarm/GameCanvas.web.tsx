@@ -517,7 +517,10 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
             if (applied.phase === "WaveClear" && prevPhaseRef.current !== "WaveClear") {
               onWaveClearRef.current?.();
             }
-            if (applied.phase === "ChallengingStage" && prevPhaseRef.current !== "ChallengingStage") {
+            if (
+              applied.phase === "ChallengingStage" &&
+              prevPhaseRef.current !== "ChallengingStage"
+            ) {
               onChallengingStageRef.current?.();
             }
             prevPhaseRef.current = applied.phase;
