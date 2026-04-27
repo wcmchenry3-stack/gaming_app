@@ -516,3 +516,31 @@ describe("GameOver terminal state", () => {
     expect(s2).toBe(s);
   });
 });
+
+// ---------------------------------------------------------------------------
+// ChallengingStage — off-screen enemy cleanup (#934)
+// ---------------------------------------------------------------------------
+
+describe("ChallengingStage off-screen cleanup", () => {
+  it("transitions to WaveClear after enemies exit without being shot", () => {
+    // Wave 3 starts as ChallengingStage; enemies follow a path to canvasH + 80
+    let s = initStarSwarm(CANVAS_W, CANVAS_H, 3);
+    expect(s.phase).toBe("ChallengingStage");
+
+    // Last enemy (idx 23) starts with pathT = -(23*80/3200) ≈ -0.575
+    // It exits the canvas after (1 + 0.575) * 3200 ≈ 5040 ms.
+    // Advance past that with no firing so enemies scroll off instead of being shot.
+    s = advanceMs(s, 6000, NO_INPUT);
+    expect(s.phase).toBe("WaveClear");
+  });
+
+  it("transitions immediately if player shoots all enemies early", () => {
+    let s = initStarSwarm(CANVAS_W, CANVAS_H, 3);
+    // Advance briefly so enemies are on screen and reachable
+    s = advanceMs(s, 500, NO_INPUT);
+    // Force all enemies dead to simulate shooting them all
+    s = { ...s, enemies: s.enemies.map((e) => ({ ...e, isAlive: false })) };
+    s = tick(s, 16, NO_INPUT);
+    expect(s.phase).toBe("WaveClear");
+  });
+});

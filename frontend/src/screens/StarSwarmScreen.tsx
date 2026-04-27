@@ -1,5 +1,14 @@
 import React, { useCallback, useRef, useState } from "react";
-import { LayoutChangeEvent, Modal, Pressable, StyleSheet, Switch, Text, View } from "react-native";
+import {
+  LayoutChangeEvent,
+  Modal,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Switch,
+  Text,
+  View,
+} from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTranslation } from "react-i18next";
 import { useNavigation } from "@react-navigation/native";
@@ -15,7 +24,8 @@ import Controls, {
 } from "../components/starswarm/Controls";
 import { CANVAS_W, CANVAS_H } from "../game/starswarm/engine";
 import type { GamePhase } from "../game/starswarm/types";
-import { useStarSwarmAudio } from "../hooks/useStarSwarmAudio";
+import { useStarSwarmAudio, DEFAULT_SFX_VOLUMES } from "../hooks/useStarSwarmAudio";
+import type { SfxVolumes } from "../hooks/useStarSwarmAudio";
 
 export default function StarSwarmScreen() {
   const { t } = useTranslation("starswarm");
@@ -34,6 +44,14 @@ export default function StarSwarmScreen() {
   const [devPanelOpen, setDevPanelOpen] = useState(false);
   const [devWave, setDevWave] = useState(1);
   const [devInfiniteLives, setDevInfiniteLives] = useState(false);
+  const [devVolumes, setDevVolumes] = useState<SfxVolumes>(DEFAULT_SFX_VOLUMES);
+
+  const adjustVolume = useCallback((key: keyof SfxVolumes, delta: number) => {
+    setDevVolumes((v) => ({
+      ...v,
+      [key]: Math.round(Math.min(1, Math.max(0, v[key] + delta)) * 10) / 10,
+    }));
+  }, []);
 
   const {
     playLaser,
@@ -43,7 +61,7 @@ export default function StarSwarmScreen() {
     playWaveClear,
     playGameOver,
     playChallengingStage,
-  } = useStarSwarmAudio(phase !== "GameOver");
+  } = useStarSwarmAudio(phase !== "GameOver", devVolumes);
 
   const scoreRef = useRef(0);
   const highScoreRef = useRef(0);
@@ -160,6 +178,7 @@ export default function StarSwarmScreen() {
           >
             <View style={styles.devOverlay}>
               <View style={styles.devPanel}>
+              <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.devScrollContent}>
                 <Text style={styles.devTitle}>Dev Panel</Text>
 
                 <View style={styles.devRow}>
@@ -186,6 +205,39 @@ export default function StarSwarmScreen() {
                   <Switch value={devInfiniteLives} onValueChange={setDevInfiniteLives} />
                 </View>
 
+                <Text style={styles.devSectionHeader}>── Sound Mixer ──</Text>
+
+                {(
+                  [
+                    ["Laser", "laser"],
+                    ["Charge shot", "chargeshot"],
+                    ["Explosion", "explosion"],
+                    ["Player hit", "playerhit"],
+                    ["Wave clear", "waveclear"],
+                    ["Game over", "gameover"],
+                    ["Challenging", "challengingstage"],
+                  ] as [string, keyof SfxVolumes][]
+                ).map(([label, key]) => (
+                  <View key={key} style={styles.devRow}>
+                    <Text style={[styles.devLabel, styles.devMixerLabel]}>{label}</Text>
+                    <Pressable
+                      style={styles.devStepBtn}
+                      onPress={() => adjustVolume(key, -0.1)}
+                      accessibilityLabel={`Decrease ${label} volume`}
+                    >
+                      <Text style={styles.devStepText}>−</Text>
+                    </Pressable>
+                    <Text style={styles.devValue}>{devVolumes[key].toFixed(1)}</Text>
+                    <Pressable
+                      style={styles.devStepBtn}
+                      onPress={() => adjustVolume(key, 0.1)}
+                      accessibilityLabel={`Increase ${label} volume`}
+                    >
+                      <Text style={styles.devStepText}>+</Text>
+                    </Pressable>
+                  </View>
+                ))}
+
                 <Pressable
                   style={[styles.devActionBtn, styles.devPrimary]}
                   onPress={() => {
@@ -199,6 +251,7 @@ export default function StarSwarmScreen() {
                 <Pressable style={styles.devActionBtn} onPress={() => setDevPanelOpen(false)}>
                   <Text style={styles.devLabel}>Close</Text>
                 </Pressable>
+              </ScrollView>
               </View>
             </View>
           </Modal>
@@ -240,8 +293,8 @@ const styles = StyleSheet.create({
     backgroundColor: "#1a1a2e",
     borderRadius: 12,
     padding: 24,
-    width: 280,
-    gap: 16,
+    width: 300,
+    maxHeight: "80%",
     borderWidth: 1,
     borderColor: "rgba(255,80,0,0.5)",
   },
@@ -283,6 +336,20 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     minWidth: 28,
     textAlign: "center",
+  },
+  devScrollContent: {
+    gap: 16,
+  },
+  devSectionHeader: {
+    color: "rgba(255,80,0,0.7)",
+    fontSize: 10,
+    letterSpacing: 1,
+    textAlign: "center",
+    marginTop: 4,
+  },
+  devMixerLabel: {
+    fontSize: 11,
+    minWidth: 80,
   },
   devActionBtn: {
     paddingVertical: 10,

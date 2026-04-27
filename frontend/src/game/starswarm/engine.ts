@@ -27,9 +27,9 @@ const BULLET_P_W = 5;
 const BULLET_P_H = 14;
 const BULLET_P_VY = -0.56; // px/ms upward
 
-const BULLET_C_W = 12; // charge shot — wider
+export const BULLET_C_W = 12; // charge shot — wider
 const BULLET_C_H = 22;
-const CHARGE_SHOOT_COOLDOWN = 900; // ms; longer cooldown than auto-fire
+export const CHARGE_SHOOT_COOLDOWN = 900; // ms; longer cooldown than auto-fire
 
 const BULLET_E_W = 5;
 const BULLET_E_H = 10;
@@ -687,7 +687,7 @@ function tickEnemies(state: StarSwarmState, dtMs: number): StarSwarmState {
   }
 
   const newEnemyBullets: Bullet[] = [...state.enemyBullets];
-  const enemies = state.enemies.map((enemy, idx) => {
+  let enemies = state.enemies.map((enemy, idx) => {
     const shouldDive = diveIndices.has(idx);
     const result = tickSingleEnemy(
       enemy,
@@ -705,6 +705,14 @@ function tickEnemies(state: StarSwarmState, dtMs: number): StarSwarmState {
     if (result.bullet) newEnemyBullets.push(result.bullet);
     return e;
   });
+
+  // #934: challenge enemies follow a path that exits off the bottom; once they
+  // cross canvasH they can't be shot, so mark them dead to unblock WaveClear.
+  if (state.phase === "ChallengingStage") {
+    enemies = enemies.map((e) =>
+      e.isAlive && e.y > state.canvasH + 60 ? { ...e, isAlive: false } : e
+    );
+  }
 
   return {
     ...state,
