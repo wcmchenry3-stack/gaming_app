@@ -127,12 +127,7 @@ export async function createEngine(
   // body, making fruitMap.get(handle) return the wrong tier in subsequent queue entries).
   const mergeQueue: Array<[number, number, number]> = []; // [handleA, handleB, tier]
 
-  function spawnAt(
-    def: FruitDefinition,
-    setId: string,
-    x: number,
-    y: number
-  ): FruitBody {
+  function spawnAt(def: FruitDefinition, setId: string, x: number, y: number): FruitBody {
     const rbDesc = R.RigidBodyDesc.dynamic()
       .setTranslation(x * SCALE, y * SCALE)
       .setCcdEnabled(true);
