@@ -215,14 +215,13 @@ describe("SudokuScreen — win flow", () => {
     await waitFor(() => expect(rendered.queryByLabelText(/start/i)).toBeNull());
 
     // Select the one remaining empty cell and enter the correct digit.
-    const emptyCells = rendered.getAllByRole("button").filter((n) =>
-      /empty/.test(String(n.props.accessibilityLabel ?? ""))
-    );
+    const emptyCells = rendered
+      .getAllByRole("button")
+      .filter((n) => /empty/.test(String(n.props.accessibilityLabel ?? "")));
     act(() => {
       fireEvent.press(emptyCells[0]!);
     });
-    const correctDigit =
-      fresh.solution.charCodeAt(lastCell!.row * 9 + lastCell!.col) - 48;
+    const correctDigit = fresh.solution.charCodeAt(lastCell!.row * 9 + lastCell!.col) - 48;
     act(() => {
       fireEvent.press(rendered.getByLabelText(new RegExp(`enter digit ${correctDigit}`, "i")));
     });
