@@ -1,0 +1,75 @@
+"""add freecell to game_types lookup table (#899)
+
+Revision ID: 0013_add_freecell_game_type
+Revises: 0012_add_starswarm_game_type
+Create Date: 2026-04-26
+
+Migrates the FreeCell leaderboard from in-memory storage to DB-backed
+persistence. Seeds the game_types row so GameType.FREECELL stays in sync
+with the lookup table.
+"""
+
+from typing import Sequence, Union
+
+import sqlalchemy as sa
+from alembic import op
+
+revision: str = "0013_add_freecell_game_type"
+down_revision: Union[str, None] = "0012_add_starswarm_game_type"
+branch_labels: Union[str, Sequence[str], None] = None
+depends_on: Union[str, Sequence[str], None] = None
+
+
+def upgrade() -> None:
+    game_types = sa.table(
+        "game_types",
+        sa.column("id", sa.SmallInteger),
+        sa.column("name", sa.Text),
+        sa.column("display_name", sa.Text),
+        sa.column("icon_emoji", sa.Text),
+        sa.column("sort_order", sa.SmallInteger),
+        sa.column("is_active", sa.Boolean),
+    )
+    op.bulk_insert(
+        game_types,
+        [
+            {
+                "id": 11,
+                "name": "freecell",
+                "display_name": "FreeCell",
+                "icon_emoji": "🃏",
+                "sort_order": 110,
+                "is_active": True,
+            }
+        ],
+    )
+
+    event_types = sa.table(
+        "event_types",
+        sa.column("game_type_id", sa.SmallInteger),
+        sa.column("name", sa.Text),
+        sa.column("display_name", sa.Text),
+        sa.column("description", sa.Text),
+    )
+    op.bulk_insert(
+        event_types,
+        [
+            {
+                "game_type_id": 11,
+                "name": "game_started",
+                "display_name": "Game Started",
+                "description": None,
+            },
+            {
+                "game_type_id": 11,
+                "name": "game_ended",
+                "display_name": "Game Ended",
+                "description": None,
+            },
+        ],
+    )
+
+
+def downgrade() -> None:
+    op.execute("DELETE FROM event_types WHERE game_type_id = 11")
+    op.execute("DELETE FROM game_types WHERE name = 'freecell'")

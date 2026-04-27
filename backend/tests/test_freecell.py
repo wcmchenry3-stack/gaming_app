@@ -1,6 +1,14 @@
-"""Tests for /freecell/score and /freecell/leaderboard (#812)."""
+"""Tests for /freecell/score and /freecell/leaderboard (#899).
+
+DB-backed leaderboard — mirrors starswarm/hearts pattern. The autouse
+_clean_db_tables fixture in conftest.py handles per-test DB isolation.
+"""
+
+from datetime import datetime, timezone
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
+from fastapi import HTTPException
 from fastapi.testclient import TestClient
 
 import freecell.router as freecell_router_module
@@ -167,3 +175,87 @@ class TestRateLimit:
     def test_leaderboard_get_not_rate_limited_at_low_volume(self):
         for _ in range(5):
             assert client.get("/freecell/leaderboard").status_code == 200
+
+
+# ---------------------------------------------------------------------------
+# Async unit tests for internal helpers
+# ---------------------------------------------------------------------------
+
+
+class TestInternalHelpers:
+    async def test_game_type_id_raises_500_when_missing(self):
+        """HTTPException(500) when freecell GameType absent from DB."""
+        mock_result = MagicMock()
+        mock_result.scalar_one_or_none.return_value = None
+        mock_session = AsyncMock()
+        mock_session.execute.return_value = mock_result
+
+        with pytest.raises(HTTPException) as exc_info:
+            await freecell_router_module._freecell_game_type_id(mock_session)
+
+        assert exc_info.value.status_code == 500
+        assert "missing" in exc_info.value.detail
+
+    async def test_top10_returns_leaderboard_entries(self):
+        """_top10 correctly builds ScoreEntry list from DB rows."""
+        mock_game = MagicMock()
+        mock_game.final_score = 75
+        mock_game.game_metadata = {"player_name": "tester"}
+        mock_game.completed_at = datetime(2024, 1, 1, tzinfo=timezone.utc)
+
+        mock_scalars = MagicMock()
+        mock_scalars.all.return_value = [mock_game]
+        mock_execute_result = MagicMock()
+        mock_execute_result.scalars.return_value = mock_scalars
+
+        mock_session = AsyncMock()
+        mock_session.execute.return_value = mock_execute_result
+
+        with patch.object(
+            freecell_router_module, "_freecell_game_type_id", AsyncMock(return_value=1)
+        ):
+            entries = await freecell_router_module._top10(mock_session)
+
+        assert len(entries) == 1
+        assert entries[0].player_id == "tester"
+        assert entries[0].move_count == 75
+        assert entries[0].rank == 1
+
+    async def test_top10_falls_back_on_missing_metadata(self):
+        """_top10 defaults player_id='anon' when metadata absent."""
+        mock_game = MagicMock()
+        mock_game.final_score = 50
+        mock_game.game_metadata = {}
+        mock_game.completed_at = datetime(2024, 6, 1, tzinfo=timezone.utc)
+
+        mock_scalars = MagicMock()
+        mock_scalars.all.return_value = [mock_game]
+        mock_execute_result = MagicMock()
+        mock_execute_result.scalars.return_value = mock_scalars
+
+        mock_session = AsyncMock()
+        mock_session.execute.return_value = mock_execute_result
+
+        with patch.object(
+            freecell_router_module, "_freecell_game_type_id", AsyncMock(return_value=1)
+        ):
+            entries = await freecell_router_module._top10(mock_session)
+
+        assert entries[0].player_id == "anon"
+
+    async def test_top10_empty_when_no_rows(self):
+        """_top10 returns [] when DB has no scores."""
+        mock_scalars = MagicMock()
+        mock_scalars.all.return_value = []
+        mock_execute_result = MagicMock()
+        mock_execute_result.scalars.return_value = mock_scalars
+
+        mock_session = AsyncMock()
+        mock_session.execute.return_value = mock_execute_result
+
+        with patch.object(
+            freecell_router_module, "_freecell_game_type_id", AsyncMock(return_value=1)
+        ):
+            entries = await freecell_router_module._top10(mock_session)
+
+        assert entries == []
