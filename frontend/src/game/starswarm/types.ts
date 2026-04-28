@@ -63,6 +63,8 @@ export interface Enemy {
   readonly diveTargetX: number;
   readonly hp: number;
   readonly isAlive: boolean;
+  /** ms remaining for white hit-flash; 0 when not flashing. */
+  readonly hitFlashTimer: number;
 }
 
 export interface Bullet {
