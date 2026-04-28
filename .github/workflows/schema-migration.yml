@@ -4,6 +4,8 @@ on:
   pull_request:
     branches: [main, dev]
 
+permissions: {}
+
 jobs:
   schema-check:
     uses: wcmchenry3-stack/.github/.github/workflows/called-schema-migration.yml@main

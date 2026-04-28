@@ -145,7 +145,8 @@ describe("Scorecard — reset to all-null scores (GH #263)", () => {
       // Use a loose regex — category labels include point values like "(25)"
       expect(
         getByRole("button", {
-          name: new RegExp(`${cat.replace(/[()]/g, "\\$&")}.*not available`, "i"),
+          // codeql[js/regex-injection] cat is from LOWER_CATS constant — not user input
+          name: new RegExp(`${cat.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}.*not available`, "i"),
         })
       ).toBeTruthy();
     }
@@ -209,7 +210,8 @@ describe("Scorecard — reset to all-null scores (GH #263)", () => {
     for (const cat of LOWER_CATS) {
       expect(
         getByRole("button", {
-          name: new RegExp(`${cat.replace(/[()]/g, "\\$&")}.*not available`, "i"),
+          // codeql[js/regex-injection] cat is from LOWER_CATS constant — not user input
+          name: new RegExp(`${cat.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}.*not available`, "i"),
         })
       ).toBeTruthy();
     }

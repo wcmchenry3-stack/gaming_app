@@ -5,6 +5,8 @@ on:
     types: [opened, edited, synchronize, reopened]
     branches: [main, dev]
 
+permissions: {}
+
 jobs:
   commitlint:
     uses: wcmchenry3-stack/.github/.github/workflows/called-commitlint.yml@main
