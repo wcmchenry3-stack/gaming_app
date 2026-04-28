@@ -40,19 +40,24 @@ describe("getOrCreateSessionId", () => {
       });
     });
 
-    it("returns a valid v4 UUID when crypto is completely absent", async () => {
+    it("uses crypto.getRandomValues when randomUUID is absent", async () => {
+      const getRandomValues = jest.fn((buf: Uint8Array) => {
+        buf.fill(0xab);
+        return buf;
+      });
       Object.defineProperty(globalThis, "crypto", {
-        value: undefined,
+        value: { getRandomValues },
         configurable: true,
         writable: true,
       });
       const sid = await getOrCreateSessionId();
       expect(sid).toMatch(UUID_RE);
+      expect(getRandomValues).toHaveBeenCalledTimes(1);
     });
 
-    it("returns a valid v4 UUID when crypto exists but lacks randomUUID", async () => {
+    it("falls back to Math.random when crypto is completely absent", async () => {
       Object.defineProperty(globalThis, "crypto", {
-        value: {},
+        value: undefined,
         configurable: true,
         writable: true,
       });

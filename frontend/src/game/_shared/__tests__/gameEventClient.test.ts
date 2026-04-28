@@ -217,9 +217,24 @@ describe("GameEventClient", () => {
       expect(id).toMatch(UUID_RE);
     });
 
-    it("returns a valid v4 UUID when crypto exists but lacks randomUUID", () => {
+    it("uses crypto.getRandomValues when randomUUID is absent", () => {
+      const getRandomValues = jest.fn((buf: Uint8Array) => {
+        buf.fill(0xab);
+        return buf;
+      });
       Object.defineProperty(globalThis, "crypto", {
-        value: {},
+        value: { getRandomValues },
+        configurable: true,
+        writable: true,
+      });
+      const id = client.startGame("yacht");
+      expect(id).toMatch(UUID_RE);
+      expect(getRandomValues).toHaveBeenCalledTimes(1);
+    });
+
+    it("falls back to Math.random when crypto is completely absent", () => {
+      Object.defineProperty(globalThis, "crypto", {
+        value: undefined,
         configurable: true,
         writable: true,
       });
