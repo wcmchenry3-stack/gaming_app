@@ -28,7 +28,7 @@ test.describe("Yacht — error paths and navigation", () => {
     // Navigate home via URL (Lobby tab pop-to-root not reliable on web)
     await page.goto("/");
 
-    await expect(page.getByText("Gaming App").first()).toBeVisible();
+    await expect(page.getByText("BC Arcade").first()).toBeVisible();
   });
 
   test("cannot roll a 4th time in the same turn", async ({ page }) => {
@@ -308,7 +308,7 @@ test.describe("Yacht — Play Again reset regression (GH #225)", () => {
     await page.getByRole("button", { name: /dismiss/i }).click();
 
     // After dismiss the user lands on HomeScreen
-    await expect(page.getByText("Gaming App").first()).toBeVisible({
+    await expect(page.getByText("BC Arcade").first()).toBeVisible({
       timeout: 10000,
     });
   });

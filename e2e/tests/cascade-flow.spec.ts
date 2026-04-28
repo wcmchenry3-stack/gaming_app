@@ -29,7 +29,7 @@ test.describe("Cascade — navigation and smoke tests", () => {
 
   test("navigates from Home to Cascade screen", async ({ page }) => {
     await page.goto("/");
-    await expect(page.getByText("Gaming App").first()).toBeVisible();
+    await expect(page.getByText("BC Arcade").first()).toBeVisible();
 
     await page.getByRole("button", { name: "Play Cascade" }).click();
 
@@ -108,7 +108,7 @@ test.describe("Cascade — navigation and smoke tests", () => {
     // Navigate home via URL (Lobby tab pop-to-root not reliable on web)
     await page.goto("/");
 
-    await expect(page.getByText("Gaming App").first()).toBeVisible({
+    await expect(page.getByText("BC Arcade").first()).toBeVisible({
       timeout: 5000,
     });
   });

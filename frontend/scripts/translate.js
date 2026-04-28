@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * OpenAI-powered translation script for the Gaming App i18n workflow.
+ * OpenAI-powered translation script for the BC Arcade i18n workflow.
  *
  * Usage:
  *   node scripts/translate.js --locale fr-CA --namespace common [--model gpt-4o] [--dry-run] [--force]

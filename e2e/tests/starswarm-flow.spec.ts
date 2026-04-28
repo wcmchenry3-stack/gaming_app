@@ -127,7 +127,7 @@ test.describe("Star Swarm — navigation and smoke tests", () => {
 
     await page.goto("/");
 
-    await expect(page.getByText("Gaming App").first()).toBeVisible({
+    await expect(page.getByText("BC Arcade").first()).toBeVisible({
       timeout: 5_000,
     });
   });
