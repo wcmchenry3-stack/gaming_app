@@ -199,4 +199,69 @@ describe("logstore testHooks", () => {
       expect(v).toBeGreaterThanOrEqual(0);
     });
   });
+
+  // -------------------------------------------------------------------------
+  // generateSeedId — crypto fallback (regression for Sentry issue: "Property
+  // 'crypto' doesn't exist")
+  // -------------------------------------------------------------------------
+
+  describe("generateSeedId crypto fallback", () => {
+    const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+    let cleanup: () => void;
+    let savedCrypto: typeof globalThis.crypto | undefined;
+
+    beforeEach(async () => {
+      await AsyncStorage.clear();
+      resetLogConfig();
+      process.env.EXPO_PUBLIC_TEST_HOOKS = "1";
+      cleanup = registerLogstoreTestHooks();
+      savedCrypto = globalThis.crypto;
+    });
+
+    afterEach(() => {
+      cleanup();
+      Object.defineProperty(globalThis, "crypto", {
+        value: savedCrypto,
+        configurable: true,
+        writable: true,
+      });
+    });
+
+    it("seedEvents produces UUID-formatted row IDs when crypto is absent", async () => {
+      Object.defineProperty(globalThis, "crypto", {
+        value: undefined,
+        configurable: true,
+        writable: true,
+      });
+      const g = globalThis as unknown as {
+        __gameEventClient_seedEvents: (spec: { count: number }) => Promise<void>;
+      };
+      await g.__gameEventClient_seedEvents({ count: 3 });
+      const rows = await eventStore.peek(10);
+      expect(rows).toHaveLength(3);
+      for (const row of rows) {
+        expect(row.id).toMatch(UUID_RE);
+      }
+    });
+
+    it("seedBugLogs produces UUID-formatted row and bug_uuid IDs when crypto is absent", async () => {
+      Object.defineProperty(globalThis, "crypto", {
+        value: undefined,
+        configurable: true,
+        writable: true,
+      });
+      const g = globalThis as unknown as {
+        __gameEventClient_seedBugLogs: (spec: { count: number }) => Promise<void>;
+      };
+      await g.__gameEventClient_seedBugLogs({ count: 2 });
+      const rows = await eventStore.peek(10);
+      expect(rows).toHaveLength(2);
+      for (const row of rows) {
+        expect(row.id).toMatch(UUID_RE);
+        if (row.log_type === "bug_log") {
+          expect(row.bug_uuid).toMatch(UUID_RE);
+        }
+      }
+    });
+  });
 });

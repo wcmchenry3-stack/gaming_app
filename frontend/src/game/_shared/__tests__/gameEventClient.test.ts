@@ -185,4 +185,57 @@ describe("GameEventClient", () => {
     const rows = await store.peek(10);
     expect(rows.length).toBe(1);
   });
+
+  // -------------------------------------------------------------------------
+  // generateUUID — crypto fallback (regression for Sentry issue: "Property
+  // 'crypto' doesn't exist")
+  // -------------------------------------------------------------------------
+
+  describe("generateUUID crypto fallback", () => {
+    const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+    let savedCrypto: typeof globalThis.crypto | undefined;
+
+    beforeEach(() => {
+      savedCrypto = globalThis.crypto;
+    });
+
+    afterEach(() => {
+      Object.defineProperty(globalThis, "crypto", {
+        value: savedCrypto,
+        configurable: true,
+        writable: true,
+      });
+    });
+
+    it("returns a valid v4 UUID when crypto is completely absent", () => {
+      Object.defineProperty(globalThis, "crypto", {
+        value: undefined,
+        configurable: true,
+        writable: true,
+      });
+      const id = client.startGame("yacht");
+      expect(id).toMatch(UUID_RE);
+    });
+
+    it("returns a valid v4 UUID when crypto exists but lacks randomUUID", () => {
+      Object.defineProperty(globalThis, "crypto", {
+        value: {},
+        configurable: true,
+        writable: true,
+      });
+      const id = client.startGame("yacht");
+      expect(id).toMatch(UUID_RE);
+    });
+
+    it("uses crypto.randomUUID when available", () => {
+      const mockUUID = "aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee";
+      Object.defineProperty(globalThis, "crypto", {
+        value: { randomUUID: () => mockUUID },
+        configurable: true,
+        writable: true,
+      });
+      const id = client.startGame("yacht");
+      expect(id).toBe(mockUUID);
+    });
+  });
 });
