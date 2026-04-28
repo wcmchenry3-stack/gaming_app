@@ -1,10 +1,11 @@
 export type EnemyTier = "Grunt" | "Elite" | "Boss";
 
-/** Four-state AI machine + SwoopIn entry animation. */
+/** Five-state AI machine + SwoopIn entry animation. */
 export type EnemyPhase =
   | "SwoopIn" // following Bézier path onto screen into formation slot
   | "Formation" // holding grid position
-  | "Diving" // heading toward player's captured X
+  | "Wiggling" // pre-dive telegraph: oscillates ±6px for ~350ms (#975)
+  | "Diving" // following Bézier arc toward player (#977)
   | "Circling" // looping around a fixed center point
   | "Returning"; // following Bézier path back to formation slot
 
@@ -38,7 +39,7 @@ export interface Enemy {
   /** Target formation grid center. */
   readonly formationX: number;
   readonly formationY: number;
-  /** Active Bézier path (SwoopIn / Returning phases). */
+  /** Active Bézier path (SwoopIn / Diving / Returning phases). */
   readonly path: CubicBezier | null;
   /**
    * Progress along `path` (0–1).
@@ -47,7 +48,7 @@ export interface Enemy {
   readonly pathT: number;
   /** Duration (ms) to traverse `path` from t=0 to t=1. */
   readonly pathDuration: number;
-  /** Velocity vector used in Diving phase (px/ms). */
+  /** Velocity vector (unused for Bézier-driven phases; kept for Circling tangent). */
   readonly vel: Vec2;
   /** Circle center (Circling phase). */
   readonly circleCx: number;
@@ -57,14 +58,18 @@ export interface Enemy {
   readonly circleAngle: number;
   /** Angular speed rad/ms (Circling phase). */
   readonly circleSpeed: number;
-  /** ms until this enemy fires next (Formation phase only). */
+  /** ms until this enemy fires next. */
   readonly shootTimer: number;
-  /** Player X captured when dive was initiated. */
+  /** Player X captured when dive was initiated (used as Bézier P3 target). */
   readonly diveTargetX: number;
   readonly hp: number;
   readonly isAlive: boolean;
   /** ms remaining for white hit-flash; 0 when not flashing. */
   readonly hitFlashTimer: number;
+  /** Countdown ms for Wiggling phase; 0 otherwise (#975). */
+  readonly wiggleTimer: number;
+  /** Shots remaining in the active Boss burst; 0 = start a new burst (#979). */
+  readonly burstShotsLeft: number;
 }
 
 export interface Bullet {
@@ -126,6 +131,8 @@ export interface StarSwarmState {
   readonly formationSwayDir: 1 | -1;
   /** How many bonus lives have been awarded so far (prevents re-awarding at same threshold). */
   readonly bonusLivesAwarded: number;
+  /** Non-Boss enemy count at wave start; used for Boss dive eligibility (#978). */
+  readonly startingNonBossCount: number;
 }
 
 /** Input snapshot consumed by each `tick` call. */

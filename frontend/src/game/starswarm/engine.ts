@@ -43,10 +43,27 @@ const FORMATION_TOP = 90;
 const SWOOP_DURATION = 1400; // ms per enemy traversal
 const SWOOP_STAGGER = 55; // ms delay between successive enemies
 
-const DIVE_SPEED = 0.27; // px/ms
+const DIVE_SPEED = 0.27; // px/ms (kept for reference; Bézier path duration derived below)
 const CIRCLE_RADIUS = 42;
 const CIRCLE_SPEED = 0.0032; // rad/ms
 const RETURN_DURATION = 1900; // ms for return path
+
+// #975: pre-dive wiggle telegraph
+export const WIGGLE_DURATION = 350; // ms
+const WIGGLE_AMPLITUDE = 6; // px horizontal oscillation
+
+// #977: Bézier arc dive paths
+export const DIVE_PATH_DURATION = 1800; // ms (non-Boss)
+const BOSS_DIVE_PATH_DURATION = Math.round(DIVE_PATH_DURATION * (DIVE_SPEED / 0.22)); // ~2210ms
+
+// #978: Boss dive eligibility threshold
+export const BOSS_DIVE_THRESHOLD = 0.35; // boss unlocked when ≤35% non-boss remain
+
+// #979: Boss burst-fire
+export const BURST_INTERVAL = 200; // ms between shots within a burst
+export const BURST_PAUSE_BASE = 3000; // ms cooldown after burst completes
+const BURST_PAUSE_JITTER = 1000; // ms random addend to pause
+const BOSS_MAX_SWAY = 20; // px — Boss sways ±20px vs ±40px for other tiers
 
 const DIVE_INTERVAL_BASE = 3200; // ms between dive triggers
 const DIVE_INTERVAL_MIN = 900; // floor regardless of wave
@@ -239,6 +256,18 @@ function returnPath(ex: number, ey: number, fx: number, fy: number): CubicBezier
   };
 }
 
+// #977: wide Bézier arc for Diving phase — sweeps outward before descending
+function divePath(enemy: Enemy, targetX: number, canvasH: number): CubicBezier {
+  const sweepDir = enemy.formationX < CANVAS_W / 2 ? -1 : 1;
+  const jitter = (rng() - 0.5) * 40; // ±20px horizontal scatter on P2
+  return {
+    p0: { x: enemy.x, y: enemy.y },
+    p1: { x: enemy.formationX + sweepDir * 80, y: enemy.formationY + 80 },
+    p2: { x: targetX + jitter, y: canvasH * 0.7 },
+    p3: { x: targetX, y: canvasH * 0.9 },
+  };
+}
+
 function challengePath(idx: number, total: number, canvasW: number, canvasH: number): CubicBezier {
   const col = idx % FORMATION_COLS;
   const startX = (canvasW / FORMATION_COLS) * col + canvasW / (FORMATION_COLS * 2);
@@ -287,6 +316,8 @@ function makeEnemy(idx: number, slot: SlotDef, canvasW: number): Enemy {
     hp: TIER_HP[slot.tier],
     isAlive: true,
     hitFlashTimer: 0,
+    wiggleTimer: 0,
+    burstShotsLeft: 0,
   };
 }
 
@@ -321,6 +352,8 @@ function makeChallengeEnemy(idx: number, total: number, canvasW: number, canvasH
     hp: TIER_HP[tier],
     isAlive: true,
     hitFlashTimer: 0,
+    wiggleTimer: 0,
+    burstShotsLeft: 0,
   };
 }
 
@@ -406,6 +439,8 @@ function buildWaveState(
     phase = "SwoopIn";
   }
 
+  const startingNonBossCount = enemies.filter((e) => e.tier !== "Boss").length;
+
   return {
     phase,
     wave,
@@ -423,6 +458,7 @@ function buildWaveState(
     formationSwayX: 0,
     formationSwayDir: 1,
     bonusLivesAwarded,
+    startingNonBossCount,
   };
 }
 
@@ -553,6 +589,8 @@ function tickSingleEnemy(
       return tickSwoopIn(enemy, dtMs);
     case "Formation":
       return tickFormation(enemy, dtMs, playerX, shouldDive, wave);
+    case "Wiggling":
+      return tickWiggling(enemy, dtMs, canvasH);
     case "Diving":
       return tickDiving(enemy, dtMs, canvasH, playerX);
     case "Circling":
@@ -596,86 +634,152 @@ function tickFormation(
   shouldDive: boolean,
   wave: number
 ): EnemyTickResult {
-  const shootTimer = enemy.shootTimer - dtMs;
-  let bullet: Bullet | null = null;
-
+  // #975: transition to Wiggling (not directly to Diving) — gives player a reaction window
   if (shouldDive) {
     return {
       enemy: {
         ...enemy,
-        phase: "Diving",
-        diveTargetX: playerX,
-        vel: { x: 0, y: DIVE_SPEED },
-        shootTimer: rng() * DIVE_SHOOT_INTERVAL, // #944: reset timer so enemy fires during dive
+        phase: "Wiggling",
+        wiggleTimer: WIGGLE_DURATION,
+        diveTargetX: playerX, // capture player X at trigger time
       },
       bullet: null,
     };
   }
 
-  if (shootTimer <= 0) {
-    bullet = {
-      id: nextId(),
-      x: enemy.x,
-      y: enemy.y + enemy.height / 2,
-      vx: aimedBulletVx(enemy.x, playerX, wave),
-      vy: BULLET_E_VY,
-      owner: "enemy",
-      width: BULLET_E_W,
-      height: BULLET_E_H,
-      damage: 1,
-    };
+  const shootTimer = enemy.shootTimer - dtMs;
+  if (shootTimer > 0) {
+    return { enemy: { ...enemy, shootTimer }, bullet: null };
+  }
+
+  // #979: Boss fires in bursts; other tiers use random single-shot interval
+  if (enemy.tier === "Boss") {
+    const { enemy: e, bullet } = bossBurstFire(enemy, playerX);
+    return { enemy: e, bullet };
+  }
+
+  const bullet: Bullet = {
+    id: nextId(),
+    x: enemy.x,
+    y: enemy.y + enemy.height / 2,
+    vx: aimedBulletVx(enemy.x, playerX, wave),
+    vy: BULLET_E_VY,
+    owner: "enemy",
+    width: BULLET_E_W,
+    height: BULLET_E_H,
+    damage: 1,
+  };
+  return {
+    enemy: { ...enemy, shootTimer: SHOOT_INTERVAL_BASE + rng() * SHOOT_INTERVAL_JITTER },
+    bullet,
+  };
+}
+
+// #979: shared burst-fire logic for Boss in Formation and Diving phases
+function bossBurstFire(enemy: Enemy, playerX: number): EnemyTickResult {
+  const newBurstShotsLeft =
+    enemy.burstShotsLeft === 0
+      ? 2 + Math.floor(rng() * 2) - 1 // start new burst: pick 2 or 3, return remaining
+      : enemy.burstShotsLeft - 1;
+  const newShootTimer =
+    newBurstShotsLeft > 0 ? BURST_INTERVAL : BURST_PAUSE_BASE + rng() * BURST_PAUSE_JITTER;
+
+  const bullet: Bullet = {
+    id: nextId(),
+    x: enemy.x,
+    y: enemy.y + enemy.height / 2,
+    vx: Math.sign(playerX - enemy.x) * BULLET_E_VY * 0.5,
+    vy: BULLET_E_VY,
+    owner: "enemy",
+    width: BULLET_E_W,
+    height: BULLET_E_H,
+    damage: 1,
+  };
+  return {
+    enemy: { ...enemy, shootTimer: newShootTimer, burstShotsLeft: newBurstShotsLeft },
+    bullet,
+  };
+}
+
+// #975: oscillate ±WIGGLE_AMPLITUDE px for WIGGLE_DURATION ms, then launch Bézier dive
+function tickWiggling(enemy: Enemy, dtMs: number, canvasH: number): EnemyTickResult {
+  const newTimer = enemy.wiggleTimer - dtMs;
+
+  if (newTimer <= 0) {
+    const path = divePath(enemy, enemy.diveTargetX, canvasH);
+    const duration = enemy.tier === "Boss" ? BOSS_DIVE_PATH_DURATION : DIVE_PATH_DURATION;
     return {
       enemy: {
         ...enemy,
-        shootTimer: SHOOT_INTERVAL_BASE + rng() * SHOOT_INTERVAL_JITTER,
+        phase: "Diving",
+        wiggleTimer: 0,
+        path,
+        pathT: 0,
+        pathDuration: duration,
+        vel: { x: 0, y: 0 },
+        burstShotsLeft: 0,
+        shootTimer: rng() * DIVE_SHOOT_INTERVAL,
       },
-      bullet,
+      bullet: null,
     };
   }
 
-  return { enemy: { ...enemy, shootTimer }, bullet: null };
+  const elapsed = WIGGLE_DURATION - newTimer;
+  const wiggleOffset = Math.sin((4 * Math.PI * elapsed) / WIGGLE_DURATION) * WIGGLE_AMPLITUDE;
+  return {
+    enemy: { ...enemy, x: enemy.formationX + wiggleOffset, wiggleTimer: newTimer },
+    bullet: null,
+  };
 }
 
+// #977: Bézier arc dive — advances pathT each tick, transitions to Circling at 85% canvas height
 function tickDiving(enemy: Enemy, dtMs: number, canvasH: number, playerX: number): EnemyTickResult {
-  // Steer toward diveTargetX
-  const dx = enemy.diveTargetX - enemy.x;
-  const dist = Math.abs(dx);
-  const hSpeed = dist > 2 ? (dx / dist) * DIVE_SPEED * 0.6 : 0;
+  const newT = enemy.pathT + dtMs / enemy.pathDuration;
+  const pos = evalCubic(enemy.path!, Math.min(newT, 1));
 
-  const newX = enemy.x + hSpeed * dtMs;
-  const newY = enemy.y + DIVE_SPEED * dtMs;
-
-  // #944: tick shoot timer and fire aimed bullet if ready
+  // Tick shoot timer; Boss uses burst fire (#979), others use single aimed shot
   const shootTimer = enemy.shootTimer - dtMs;
   let bullet: Bullet | null = null;
-  if (shootTimer <= 0) {
-    bullet = {
-      id: nextId(),
-      x: enemy.x,
-      y: enemy.y + enemy.height / 2,
-      vx: Math.sign(playerX - enemy.x) * BULLET_E_VY * 0.5,
-      vy: BULLET_E_VY,
-      owner: "enemy",
-      width: BULLET_E_W,
-      height: BULLET_E_H,
-      damage: 1,
-    };
-  }
-  const nextShootTimer = shootTimer <= 0 ? DIVE_SHOOT_INTERVAL : shootTimer;
+  let nextShootTimer = shootTimer;
+  let nextBurstShotsLeft = enemy.burstShotsLeft;
 
-  // Transition to Circling when past 85% of canvas height (#951: was 0.6 — enemy looped 184 px above player)
-  if (newY > canvasH * 0.85) {
+  if (shootTimer <= 0) {
+    if (enemy.tier === "Boss") {
+      const result = bossBurstFire(enemy, playerX);
+      bullet = result.bullet;
+      nextShootTimer = result.enemy.shootTimer;
+      nextBurstShotsLeft = result.enemy.burstShotsLeft;
+    } else {
+      bullet = {
+        id: nextId(),
+        x: enemy.x,
+        y: enemy.y + enemy.height / 2,
+        vx: Math.sign(playerX - enemy.x) * BULLET_E_VY * 0.5,
+        vy: BULLET_E_VY,
+        owner: "enemy",
+        width: BULLET_E_W,
+        height: BULLET_E_H,
+        damage: 1,
+      };
+      nextShootTimer = DIVE_SHOOT_INTERVAL;
+    }
+  }
+
+  // Transition to Circling when past 85% canvas height or path complete
+  if (pos.y > canvasH * 0.85 || newT >= 1) {
     return {
       enemy: {
         ...enemy,
         phase: "Circling",
-        x: newX,
-        y: newY,
-        circleCx: newX,
-        circleCy: newY,
-        circleAngle: Math.PI / 2, // start at bottom of circle
-        vel: { x: hSpeed, y: DIVE_SPEED },
+        x: pos.x,
+        y: pos.y,
+        pathT: Math.min(newT, 1),
+        circleCx: pos.x,
+        circleCy: pos.y,
+        circleAngle: Math.PI / 2,
+        vel: { x: 0, y: 0 },
         shootTimer: nextShootTimer,
+        burstShotsLeft: nextBurstShotsLeft,
       },
       bullet,
     };
@@ -684,10 +788,12 @@ function tickDiving(enemy: Enemy, dtMs: number, canvasH: number, playerX: number
   return {
     enemy: {
       ...enemy,
-      x: newX,
-      y: newY,
-      vel: { x: hSpeed, y: DIVE_SPEED },
+      x: pos.x,
+      y: pos.y,
+      pathT: newT,
+      vel: { x: 0, y: 0 },
       shootTimer: nextShootTimer,
+      burstShotsLeft: nextBurstShotsLeft,
     },
     bullet,
   };
@@ -772,10 +878,17 @@ function tickEnemies(state: StarSwarmState, dtMs: number): StarSwarmState {
     nextDiveTimer -= dtMs;
     if (nextDiveTimer <= 0) {
       nextDiveTimer = diveInterval(state.wave);
+      // #978: Boss only eligible once ≤BOSS_DIVE_THRESHOLD of non-boss enemies remain
+      const aliveNonBoss = state.enemies.filter((e) => e.isAlive && e.tier !== "Boss").length;
+      const bossUnlocked =
+        state.startingNonBossCount === 0 ||
+        aliveNonBoss / state.startingNonBossCount <= BOSS_DIVE_THRESHOLD;
       const candidates = state.enemies
         .map((e, i) => ({ e, i }))
-        .filter(({ e }) => e.isAlive && e.phase === "Formation");
-      // Only launch enough new divers to reach the cap — don't ignore enemies already diving.
+        .filter(
+          ({ e }) => e.isAlive && e.phase === "Formation" && (e.tier !== "Boss" || bossUnlocked)
+        );
+      // Only launch enough new divers to reach the cap; Wiggling enemies are NOT counted (#975)
       const currentDivers = state.enemies.filter((e) => e.isAlive && e.phase === "Diving").length;
       const allowedNew = Math.max(0, maxDivers(state.wave) - currentDivers);
       for (let k = 0; k < allowedNew && candidates.length > 0; k++) {
@@ -811,8 +924,11 @@ function tickEnemies(state: StarSwarmState, dtMs: number): StarSwarmState {
     );
     let e = result.enemy;
     // Apply sway offset to enemies holding Formation position
+    // #979: Boss sways ±BOSS_MAX_SWAY (20px) vs ±MAX_SWAY (40px) for other tiers
     if (e.isAlive && e.phase === "Formation") {
-      e = { ...e, x: e.formationX + swayX };
+      const appliedSway =
+        e.tier === "Boss" ? Math.max(-BOSS_MAX_SWAY, Math.min(BOSS_MAX_SWAY, swayX)) : swayX;
+      e = { ...e, x: e.formationX + appliedSway };
     }
     // Decrement hit-flash timer (#976)
     if (e.isAlive && e.hitFlashTimer > 0) {
