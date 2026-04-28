@@ -63,11 +63,17 @@ export function DraggableCard({
     startDrag(dragSource, dragCards);
   }, [dragSource, dragCards, startDrag]);
 
+  // Tracks whether the pan actually activated so onFinalize knows whether
+  // snap-back is needed. Shared value so worklets can read/write it without
+  // crossing the JS thread.
+  const panActivated = useSharedValue(false);
+
   const pan = Gesture.Pan()
     .minDistance(8)
     .enabled(draggable)
     .onStart(() => {
       "worklet";
+      panActivated.value = true;
       // Convert window position to container-local coordinates.
       const localX = cachedPageX.value - containerOffsetX.value;
       const localY = cachedPageY.value - containerOffsetY.value;
@@ -88,15 +94,22 @@ export function DraggableCard({
     })
     .onFinalize((_e, success) => {
       "worklet";
-      if (!success) runOnJS(snapBackAndClear)();
+      if (!success && panActivated.value) runOnJS(snapBackAndClear)();
+      panActivated.value = false;
     });
 
-  const tap = Gesture.Tap().onEnd(() => {
-    "worklet";
-    if (onTap) runOnJS(onTap)();
-  });
+  // maxDistance matches pan's minDistance so the two don't overlap: a touch
+  // that moves < 8 px is a tap; >= 8 px activates pan and fails the tap.
+  // Gesture.Simultaneous instead of Race avoids the iOS quirk where the pan
+  // recognizer's pending state blocks the tap from ever firing.
+  const tap = Gesture.Tap()
+    .maxDistance(8)
+    .onEnd((_e, success) => {
+      "worklet";
+      if (success && onTap) runOnJS(onTap)();
+    });
 
-  const gesture = draggable ? Gesture.Race(pan, tap) : tap;
+  const gesture = draggable ? Gesture.Simultaneous(pan, tap) : tap;
 
   // Hide this card when it (or a card above it in the same run) is being dragged —
   // the DragOverlay renders the visual at the finger position instead.
