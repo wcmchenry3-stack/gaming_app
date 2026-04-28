@@ -13,7 +13,17 @@
  *   - Win condition: isComplete only when all 4 foundations have 13 cards
  */
 
-import { applyMove, createSeededRng, dealGame, setRng, undoMove, validateMove } from "../engine";
+import {
+  applyHint,
+  applyMove,
+  createSeededRng,
+  dealGame,
+  getHintMoves,
+  hasLegalMoves,
+  setRng,
+  undoMove,
+  validateMove,
+} from "../engine";
 import type { Card, Foundations, FreeCellState, Rank, Suit } from "../types";
 import { SUITS } from "../types";
 import type { GameEvent } from "../types";
@@ -545,8 +555,9 @@ describe("game events", () => {
   });
 
   it("emits cardPlace for tableau → free cell", () => {
+    // col 1 has a 6♥ so after 5♠ parks in the free cell, freecell→tableau is still legal
     const state = mkState({
-      tableau: [[c("spades", 5)], [], [], [], [], [], [], []],
+      tableau: [[c("spades", 5)], [c("hearts", 6)], [], [], [], [], [], []],
     });
     const next = applyMove(state, { type: "tableau-to-freecell", fromCol: 0, toCell: 0 });
     expect(next.events).toEqual<readonly GameEvent[]>([{ type: "cardPlace" }]);
@@ -562,8 +573,9 @@ describe("game events", () => {
   });
 
   it("emits only cardPlace for a non-completing tableau → foundation move", () => {
+    // col 1 has 2♠ so after A♠ reaches the foundation, 2♠→foundation is still legal
     const state = mkState({
-      tableau: [[c("spades", 1)], [], [], [], [], [], [], []],
+      tableau: [[c("spades", 1)], [c("spades", 2)], [], [], [], [], [], []],
     });
     const next = applyMove(state, { type: "tableau-to-foundation", fromCol: 0 });
     expect(next.events).toEqual<readonly GameEvent[]>([{ type: "cardPlace" }]);
@@ -576,9 +588,10 @@ describe("game events", () => {
       diamonds: [],
       clubs: [],
     };
+    // A♥ in col 1 → hearts foundation is legal after K♠ completes spades
     const state = mkState({
       foundations,
-      tableau: [[c("spades", 13)], [], [], [], [], [], [], []],
+      tableau: [[c("spades", 13)], [c("hearts", 1)], [], [], [], [], [], []],
     });
     const next = applyMove(state, { type: "tableau-to-foundation", fromCol: 0 });
     expect(next.events).toEqual<readonly GameEvent[]>([
@@ -594,15 +607,44 @@ describe("game events", () => {
       hearts: [],
       diamonds: [],
     };
+    // A♠ in tableau → spades foundation is legal after K♣ completes clubs
     const state = mkState({
       freeCells: [c("clubs", 13), null, null, null],
       foundations,
+      tableau: [[c("spades", 1)], [], [], [], [], [], [], []],
     });
     const next = applyMove(state, { type: "freecell-to-foundation", fromCell: 0 });
     expect(next.events).toEqual<readonly GameEvent[]>([
       { type: "cardPlace" },
       { type: "foundationComplete", suit: "clubs" },
     ]);
+  });
+
+  it("emits noMovesAvailable when no legal move exists after a move", () => {
+    // Only one card, nowhere to go after it parks in the free cell
+    const state = mkState({
+      tableau: [[c("spades", 5)], [], [], [], [], [], [], []],
+    });
+    const next = applyMove(state, { type: "tableau-to-freecell", fromCol: 0, toCell: 0 });
+    expect(next.events).toEqual<readonly GameEvent[]>([
+      { type: "cardPlace" },
+      { type: "noMovesAvailable" },
+    ]);
+  });
+
+  it("does not emit noMovesAvailable on a gameWin", () => {
+    const foundations: Foundations = {
+      spades: Array.from({ length: 13 }, (_, i) => c("spades", (i + 1) as Rank)),
+      hearts: Array.from({ length: 13 }, (_, i) => c("hearts", (i + 1) as Rank)),
+      diamonds: Array.from({ length: 13 }, (_, i) => c("diamonds", (i + 1) as Rank)),
+      clubs: Array.from({ length: 12 }, (_, i) => c("clubs", (i + 1) as Rank)),
+    };
+    const state = mkState({
+      foundations,
+      tableau: [[c("clubs", 13)], [], [], [], [], [], [], []],
+    });
+    const next = applyMove(state, { type: "tableau-to-foundation", fromCol: 0 });
+    expect(next.events).not.toContainEqual({ type: "noMovesAvailable" });
   });
 
   it("emits gameWin as the final event when all 52 cards reach foundations", () => {
@@ -623,5 +665,99 @@ describe("game events", () => {
       { type: "gameWin" },
     ]);
     expect(next.isComplete).toBe(true);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Hint system
+// ---------------------------------------------------------------------------
+
+describe("getHintMoves", () => {
+  it("returns foundation moves first when available", () => {
+    const state = mkState({
+      tableau: [[c("spades", 1)], [c("hearts", 6)], [], [], [], [], [], []],
+    });
+    const hints = getHintMoves(state);
+    expect(hints[0]).toEqual({ type: "tableau-to-foundation", fromCol: 0 });
+  });
+
+  it("returns tableau-to-tableau moves when no foundation move exists", () => {
+    const state = mkState({
+      tableau: [[c("spades", 5)], [c("hearts", 6)], [], [], [], [], [], []],
+    });
+    const hints = getHintMoves(state);
+    expect(hints.some((m) => m.type === "tableau-to-tableau")).toBe(true);
+  });
+
+  it("returns empty array when no legal moves exist", () => {
+    // Single card parked in freecell with no valid destination
+    const state = mkState({
+      freeCells: [c("spades", 5), null, null, null],
+    });
+    expect(getHintMoves(state)).toHaveLength(0);
+  });
+});
+
+describe("hasLegalMoves", () => {
+  it("returns true when at least one legal move exists", () => {
+    const state = mkState({
+      tableau: [[c("spades", 5)], [c("hearts", 6)], [], [], [], [], [], []],
+    });
+    expect(hasLegalMoves(state)).toBe(true);
+  });
+
+  it("returns false when no legal moves exist", () => {
+    const state = mkState({
+      freeCells: [c("spades", 5), null, null, null],
+    });
+    expect(hasLegalMoves(state)).toBe(false);
+  });
+
+  it("returns true when a freecell card can reach the foundation", () => {
+    const state = mkState({
+      freeCells: [c("spades", 1), null, null, null],
+    });
+    expect(hasLegalMoves(state)).toBe(true);
+  });
+});
+
+describe("applyHint", () => {
+  it("sets state.hint to the first legal move", () => {
+    const state = mkState({
+      tableau: [[c("spades", 1)], [c("hearts", 6)], [], [], [], [], [], []],
+    });
+    const next = applyHint(state);
+    expect(next.hint).toEqual({ type: "tableau-to-foundation", fromCol: 0 });
+  });
+
+  it("sets hint to undefined when no legal moves exist", () => {
+    const state = mkState({
+      freeCells: [c("spades", 5), null, null, null],
+    });
+    const next = applyHint(state);
+    expect(next.hint).toBeUndefined();
+  });
+
+  it("does not increment moveCount", () => {
+    const state = mkState({
+      tableau: [[c("spades", 5)], [c("hearts", 6)], [], [], [], [], [], []],
+      moveCount: 3,
+    });
+    expect(applyHint(state).moveCount).toBe(3);
+  });
+
+  it("clears hint after the next real move", () => {
+    const state = mkState({
+      tableau: [[c("spades", 5)], [c("hearts", 6)], [], [], [], [], [], []],
+    });
+    const withHint = applyHint(state);
+    expect(withHint.hint).toBeDefined();
+    const afterMove = applyMove(withHint, {
+      type: "tableau-to-tableau",
+      fromCol: 0,
+      fromIndex: 0,
+      toCol: 1,
+    });
+    expect(afterMove.hint).toBeUndefined();
   });
 });

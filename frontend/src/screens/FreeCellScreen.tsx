@@ -23,7 +23,7 @@ import FreeCellBoard from "../components/freecell/FreeCellBoard";
 import { CARD_WIDTH, CARD_HEIGHT } from "../components/freecell/FreeCellSlot";
 import { FreeCellFoundationAnimation } from "../components/freecell/FreeCellFoundationAnimation";
 import { FreeCellGameWinAnimation } from "../components/freecell/FreeCellGameWinAnimation";
-import { dealGame, applyMove, undoMove } from "../game/freecell/engine";
+import { dealGame, applyMove, undoMove, applyHint, getHintMoves } from "../game/freecell/engine";
 import type { FreeCellState, Move } from "../game/freecell/types";
 import { clearGame, loadGame, saveGame } from "../game/freecell/storage";
 import { useGameEvents } from "../game/_shared/useGameEvents";
@@ -51,6 +51,7 @@ export default function FreeCellScreen() {
 
   const [showFoundation, setShowFoundation] = useState(false);
   const [showGameWin, setShowGameWin] = useState(false);
+  const [showNoMovesBanner, setShowNoMovesBanner] = useState(false);
 
   const { play: playCardPlace } = useSound("freecell.cardPlace");
   const { play: playSupermove } = useSound("freecell.supermove");
@@ -81,16 +82,25 @@ export default function FreeCellScreen() {
   useGameEvents(
     state?.events,
     {
-      cardPlace: () => playCardPlace(),
-      supermove: () => playSupermove(),
+      cardPlace: () => {
+        playCardPlace();
+        setShowNoMovesBanner(false);
+      },
+      supermove: () => {
+        playSupermove();
+        setShowNoMovesBanner(false);
+      },
       foundationComplete: () => {
         playFoundationComplete();
         setShowFoundation(true);
+        setShowNoMovesBanner(false);
       },
       gameWin: () => {
         playGameWin();
         setShowGameWin(true);
+        setShowNoMovesBanner(false);
       },
+      noMovesAvailable: () => setShowNoMovesBanner(true),
     },
     () => setState((prev) => (prev === null ? null : { ...prev, events: [] }))
   );
@@ -118,7 +128,17 @@ export default function FreeCellScreen() {
 
   const handleUndo = useCallback(() => {
     if (state === null || state.undoStack.length === 0) return;
+    setShowNoMovesBanner(false);
     setState(undoMove(state));
+  }, [state]);
+
+  const handleHint = useCallback(() => {
+    if (state === null || state.isComplete) return;
+    if (getHintMoves(state).length === 0) {
+      setShowNoMovesBanner(true);
+      return;
+    }
+    setState(applyHint(state));
   }, [state]);
 
   const handleNewGame = useCallback(() => {
@@ -131,6 +151,7 @@ export default function FreeCellScreen() {
   }, []);
 
   const undoDisabled = state === null || state.undoStack.length === 0 || state.isComplete;
+  const hintDisabled = state === null || state.isComplete;
   const scale = outerWidth > 0 ? Math.min(1, outerWidth / BOARD_WIDTH) : 1;
 
   return (
@@ -146,21 +167,38 @@ export default function FreeCellScreen() {
       }}
       onNewGame={handleNewGame}
       rightSlot={
-        <Pressable
-          onPress={handleUndo}
-          disabled={undoDisabled}
-          style={[
-            styles.headerBtn,
-            { borderColor: colors.accent, opacity: undoDisabled ? 0.4 : 1 },
-          ]}
-          accessibilityRole="button"
-          accessibilityLabel={t("freecell:action.undo")}
-          accessibilityState={{ disabled: undoDisabled }}
-        >
-          <Text style={[styles.headerBtnText, { color: colors.accent }]}>
-            {t("freecell:action.undo")}
-          </Text>
-        </Pressable>
+        <View style={styles.headerBtnRow}>
+          <Pressable
+            onPress={handleHint}
+            disabled={hintDisabled}
+            style={[
+              styles.headerBtn,
+              { borderColor: colors.bonus, opacity: hintDisabled ? 0.4 : 1 },
+            ]}
+            accessibilityRole="button"
+            accessibilityLabel={t("freecell:action.hint")}
+            accessibilityState={{ disabled: hintDisabled }}
+          >
+            <Text style={[styles.headerBtnText, { color: colors.bonus }]}>
+              {t("freecell:action.hint")}
+            </Text>
+          </Pressable>
+          <Pressable
+            onPress={handleUndo}
+            disabled={undoDisabled}
+            style={[
+              styles.headerBtn,
+              { borderColor: colors.accent, opacity: undoDisabled ? 0.4 : 1 },
+            ]}
+            accessibilityRole="button"
+            accessibilityLabel={t("freecell:action.undo")}
+            accessibilityState={{ disabled: undoDisabled }}
+          >
+            <Text style={[styles.headerBtnText, { color: colors.accent }]}>
+              {t("freecell:action.undo")}
+            </Text>
+          </Pressable>
+        </View>
       }
     >
       {state !== null && (
@@ -190,6 +228,35 @@ export default function FreeCellScreen() {
               <FreeCellBoard state={state} onMove={handleMove} />
             </View>
           </View>
+
+          {showNoMovesBanner && (
+            <View
+              style={[
+                styles.noMovesBanner,
+                { backgroundColor: colors.surfaceHigh, borderColor: colors.border },
+              ]}
+              accessibilityRole="alert"
+              accessibilityLiveRegion="assertive"
+            >
+              <Text style={[styles.noMovesText, { color: colors.text }]}>
+                {t("freecell:noMoves.message")}
+              </Text>
+              <Pressable
+                onPress={handleUndo}
+                disabled={undoDisabled}
+                style={[
+                  styles.noMovesUndoBtn,
+                  { borderColor: colors.accent, opacity: undoDisabled ? 0.4 : 1 },
+                ]}
+                accessibilityRole="button"
+                accessibilityLabel={t("freecell:action.undo")}
+              >
+                <Text style={[styles.headerBtnText, { color: colors.accent }]}>
+                  {t("freecell:action.undo")}
+                </Text>
+              </Pressable>
+            </View>
+          )}
 
           <Animated.View
             pointerEvents="none"
@@ -295,6 +362,10 @@ const styles = StyleSheet.create({
   body: {
     flex: 1,
   },
+  headerBtnRow: {
+    flexDirection: "row",
+    gap: 6,
+  },
   headerBtn: {
     paddingHorizontal: 10,
     paddingVertical: 5,
@@ -308,6 +379,29 @@ const styles = StyleSheet.create({
     fontWeight: "800",
     letterSpacing: 0.8,
     textTransform: "uppercase",
+  },
+  noMovesBanner: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginTop: 8,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderRadius: 12,
+    borderWidth: 1,
+    gap: 12,
+  },
+  noMovesText: {
+    flex: 1,
+    fontSize: 13,
+    fontWeight: "600",
+  },
+  noMovesUndoBtn: {
+    paddingHorizontal: 12,
+    paddingVertical: 5,
+    borderRadius: 999,
+    borderWidth: 1,
+    justifyContent: "center",
   },
   hudRow: {
     flexDirection: "row",

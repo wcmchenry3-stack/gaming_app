@@ -31,7 +31,8 @@ export type GameEvent =
   | { readonly type: "supermove"; readonly cardCount: number }
   | { readonly type: "foundationComplete"; readonly suit: Suit }
   | { readonly type: "gameWin" }
-  | { readonly type: "invalidMove" };
+  | { readonly type: "invalidMove" }
+  | { readonly type: "noMovesAvailable" };
 
 /** Immutable snapshot of the full game. `_v` is a schema version. */
 export interface FreeCellState {
@@ -46,6 +47,8 @@ export interface FreeCellState {
   readonly isComplete: boolean;
   readonly moveCount: number;
   readonly events?: readonly GameEvent[];
+  /** Active hint move. Set by applyHint(), cleared after any real move. */
+  readonly hint?: Move;
 }
 
 export type Move =

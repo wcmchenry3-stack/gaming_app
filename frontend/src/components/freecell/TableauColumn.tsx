@@ -18,6 +18,7 @@ export interface TableauColumnProps {
   readonly pile: readonly Card[];
   readonly colIndex: number;
   readonly selectedIndex?: number;
+  readonly hintIndex?: number;
   readonly onCardPress?: (colIndex: number, cardIndex: number) => void;
   readonly onEmptyPress?: (colIndex: number) => void;
   readonly dropId?: string;
@@ -28,6 +29,7 @@ export default function TableauColumn({
   pile,
   colIndex,
   selectedIndex,
+  hintIndex,
   onCardPress,
   onEmptyPress,
   dropId,
@@ -75,6 +77,7 @@ export default function TableauColumn({
 
   const cards = pile.map((card, cardIndex) => {
     const isSelected = selectedIndex !== undefined && cardIndex >= selectedIndex;
+    const isHint = hintIndex !== undefined && cardIndex >= hintIndex;
     const rl = rankLabel(card.rank);
     const suitName = t(`suit.${card.suit}` as const);
     const label = isSelected
@@ -104,6 +107,7 @@ export default function TableauColumn({
           width={CARD_WIDTH}
           height={CARD_HEIGHT}
           highlighted={isSelected}
+          hintHighlighted={isHint}
           accessibilityLabel={label}
         />
       </DraggableCard>
