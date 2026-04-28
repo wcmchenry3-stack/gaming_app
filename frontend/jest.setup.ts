@@ -108,6 +108,7 @@ import cascade from "./src/i18n/locales/en/cascade.json";
 import errors from "./src/i18n/locales/en/errors.json";
 import blackjack from "./src/i18n/locales/en/blackjack.json";
 import twenty48 from "./src/i18n/locales/en/twenty48.json";
+import freecell from "./src/i18n/locales/en/freecell.json";
 import solitaire from "./src/i18n/locales/en/solitaire.json";
 import hearts from "./src/i18n/locales/en/hearts.json";
 import sudoku from "./src/i18n/locales/en/sudoku.json";
@@ -124,6 +125,7 @@ i18n.use(initReactI18next).init({
     "errors",
     "blackjack",
     "twenty48",
+    "freecell",
     "solitaire",
     "hearts",
     "sudoku",
@@ -139,6 +141,7 @@ i18n.use(initReactI18next).init({
       errors,
       blackjack,
       twenty48,
+      freecell,
       solitaire,
       hearts,
       sudoku,
