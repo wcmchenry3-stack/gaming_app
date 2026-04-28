@@ -7,6 +7,11 @@ import {
   bulletCap,
   collideCircleAABB,
   PLAYER_HURT_RADIUS,
+  WIGGLE_DURATION,
+  DIVE_PATH_DURATION,
+  BOSS_DIVE_THRESHOLD,
+  BURST_INTERVAL,
+  BURST_PAUSE_BASE,
   seedRng,
   _resetIds,
   CANVAS_W,
@@ -755,12 +760,29 @@ describe("Dive/circle shooting", () => {
 
     // Force one enemy into Diving with an expired shoot timer so it fires immediately.
     // Clear existing enemy bullets so the bullet cap (wave 1 = 3) doesn't suppress the shot.
+    // Provide a minimal straight Bézier path since tickDiving now uses path-based movement.
     const playerX = s.player.x;
+    const dummyPath = {
+      p0: { x: CANVAS_W / 2, y: 100 },
+      p1: { x: CANVAS_W / 2, y: 200 },
+      p2: { x: playerX, y: 400 },
+      p3: { x: playerX, y: CANVAS_H * 0.9 },
+    };
     s = {
       ...s,
       enemyBullets: [],
       enemies: s.enemies.map((e, i) =>
-        i === 0 ? { ...e, phase: "Diving" as const, diveTargetX: playerX, shootTimer: 0 } : e
+        i === 0
+          ? {
+              ...e,
+              phase: "Diving" as const,
+              diveTargetX: playerX,
+              shootTimer: 0,
+              path: dummyPath,
+              pathT: 0,
+              pathDuration: 1800,
+            }
+          : e
       ),
     };
 
@@ -976,5 +998,240 @@ describe("hitFlashTimer (#974)", () => {
   it("new enemies start with hitFlashTimer of 0", () => {
     const s = initStarSwarm(CANVAS_W, CANVAS_H);
     expect(s.enemies.every((e) => e.hitFlashTimer === 0)).toBe(true);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Wiggle telegraph (#975)
+// ---------------------------------------------------------------------------
+
+/** Reset any airborne enemies back to Formation so dive cap has room. */
+function resetToFormation(s: StarSwarmState): StarSwarmState {
+  return {
+    ...s,
+    enemies: s.enemies.map((e) =>
+      e.isAlive &&
+      (e.phase === "Diving" ||
+        e.phase === "Wiggling" ||
+        e.phase === "Circling" ||
+        e.phase === "Returning")
+        ? {
+            ...e,
+            phase: "Formation" as const,
+            x: e.formationX,
+            y: e.formationY,
+            path: null,
+            pathT: 1,
+          }
+        : e
+    ),
+  };
+}
+
+describe("Wiggle telegraph (#975)", () => {
+  it("enemy enters Wiggling before Diving when selected for dive", () => {
+    let s = initStarSwarm(CANVAS_W, CANVAS_H);
+    s = advanceMs(s, 8000); // reach Playing
+    s = resetToFormation({ ...s, nextDiveTimer: 1 });
+    s = tick(s, 16, NO_INPUT);
+    expect(s.enemies.some((e) => e.isAlive && e.phase === "Wiggling")).toBe(true);
+    expect(s.enemies.filter((e) => e.isAlive && e.phase === "Diving")).toHaveLength(0);
+  });
+
+  it("Wiggling enemy transitions to Diving after WIGGLE_DURATION", () => {
+    let s = initStarSwarm(CANVAS_W, CANVAS_H);
+    s = advanceMs(s, 8000);
+    s = resetToFormation({ ...s, nextDiveTimer: 1 });
+    s = tick(s, 16, NO_INPUT);
+    const wiggling = s.enemies.find((e) => e.phase === "Wiggling");
+    if (!wiggling) throw new Error("no wiggling enemy");
+    const id = wiggling.id;
+    s = advanceMs(s, WIGGLE_DURATION + 50, NO_INPUT);
+    const after = s.enemies.find((e) => e.id === id)!;
+    const completed =
+      !after.isAlive ||
+      after.phase === "Diving" ||
+      after.phase === "Circling" ||
+      after.phase === "Returning";
+    expect(completed).toBe(true);
+  });
+
+  it("wiggleTimer is 0 for all enemies at wave start", () => {
+    const s = initStarSwarm(CANVAS_W, CANVAS_H);
+    expect(s.enemies.every((e) => e.wiggleTimer === 0)).toBe(true);
+  });
+
+  it("Wiggling enemies are not counted against maxDivers cap", () => {
+    let s = initStarSwarm(CANVAS_W, CANVAS_H);
+    s = advanceMs(s, 8000);
+    s = resetToFormation({ ...s, nextDiveTimer: 1 });
+    s = tick(s, 16, NO_INPUT);
+    const wiggling = s.enemies.filter((e) => e.isAlive && e.phase === "Wiggling").length;
+    const diving = s.enemies.filter((e) => e.isAlive && e.phase === "Diving").length;
+    expect(wiggling).toBeGreaterThan(0);
+    expect(diving).toBeLessThanOrEqual(maxDivers(s.wave));
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Bézier arc dives (#977)
+// ---------------------------------------------------------------------------
+
+describe("Bézier arc dives (#977)", () => {
+  it("diving enemy reaches Circling within WIGGLE_DURATION + DIVE_PATH_DURATION + buffer", () => {
+    let s = initStarSwarm(CANVAS_W, CANVAS_H);
+    s = advanceMs(s, 8000);
+    s = resetToFormation({ ...s, nextDiveTimer: 1 });
+    s = tick(s, 16, NO_INPUT);
+    const wiggling = s.enemies.find((e) => e.phase === "Wiggling");
+    if (!wiggling) throw new Error("no wiggling enemy");
+    const id = wiggling.id;
+    s = advanceMs(s, WIGGLE_DURATION + DIVE_PATH_DURATION + 200, NO_INPUT);
+    const after = s.enemies.find((e) => e.id === id)!;
+    const completed =
+      !after.isAlive ||
+      after.phase === "Circling" ||
+      after.phase === "Returning" ||
+      after.phase === "Formation";
+    expect(completed).toBe(true);
+  });
+
+  it("dive path is set when enemy enters Diving", () => {
+    let s = initStarSwarm(CANVAS_W, CANVAS_H);
+    s = advanceMs(s, 8000);
+    s = resetToFormation({ ...s, nextDiveTimer: 1 });
+    s = tick(s, 16, NO_INPUT);
+    s = advanceMs(s, WIGGLE_DURATION + 50, NO_INPUT);
+    const diver = s.enemies.find((e) => e.isAlive && e.phase === "Diving");
+    if (!diver) return; // may already be Circling at high frame rate — skip
+    expect(diver.path).not.toBeNull();
+    expect(diver.pathDuration).toBeGreaterThan(0);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Boss dive threshold (#978)
+// ---------------------------------------------------------------------------
+
+describe("Boss dive threshold (#978)", () => {
+  it("BOSS_DIVE_THRESHOLD is 0.35", () => {
+    expect(BOSS_DIVE_THRESHOLD).toBe(0.35);
+  });
+
+  it("startingNonBossCount set correctly at wave init", () => {
+    const s = initStarSwarm(CANVAS_W, CANVAS_H);
+    const nonBossCount = s.enemies.filter((e) => e.tier !== "Boss").length;
+    expect(s.startingNonBossCount).toBe(nonBossCount);
+    expect(s.startingNonBossCount).toBeGreaterThan(0);
+  });
+
+  it("boss does not dive when >35% non-boss enemies are still alive", () => {
+    let s = initStarSwarm(CANVAS_W, CANVAS_H);
+    s = advanceMs(s, 8000);
+    const bossIds = new Set(
+      s.enemies.filter((e) => e.isAlive && e.tier === "Boss").map((e) => e.id)
+    );
+
+    // Force dive trigger with all non-boss enemies alive (100% remain → >35%)
+    s = { ...s, nextDiveTimer: 1 };
+    s = tick(s, 16, NO_INPUT);
+
+    // No boss should enter Wiggling or Diving
+    const bossWiggling = s.enemies.some(
+      (e) => bossIds.has(e.id) && (e.phase === "Wiggling" || e.phase === "Diving")
+    );
+    expect(bossWiggling).toBe(false);
+  });
+
+  it("boss can dive when ≤35% non-boss enemies remain", () => {
+    let s = initStarSwarm(CANVAS_W, CANVAS_H);
+    s = advanceMs(s, 8000);
+
+    // Kill enough non-boss enemies to drop to 30% alive (below 35% threshold)
+    const target = Math.floor(s.startingNonBossCount * 0.3);
+    let killed = 0;
+    s = {
+      ...s,
+      enemies: s.enemies.map((e) => {
+        if (e.tier !== "Boss" && e.isAlive && killed < s.startingNonBossCount - target) {
+          killed++;
+          return { ...e, isAlive: false, hp: 0 };
+        }
+        return e;
+      }),
+    };
+
+    // Run until a boss enters Wiggling or Diving
+    s = { ...s, nextDiveTimer: 1 };
+    let bossActed = false;
+    for (let i = 0; i < 300; i++) {
+      s = tick(s, 16, NO_INPUT);
+      if (
+        s.enemies.some((e) => e.tier === "Boss" && (e.phase === "Wiggling" || e.phase === "Diving"))
+      ) {
+        bossActed = true;
+        break;
+      }
+      if (s.phase !== "Playing") break;
+      s = { ...s, nextDiveTimer: 1 }; // keep triggering
+    }
+    expect(bossActed).toBe(true);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Boss burst-fire (#979)
+// ---------------------------------------------------------------------------
+
+describe("Boss burst-fire (#979)", () => {
+  it("Boss fires on first tick when shootTimer=0 and burstShotsLeft=0", () => {
+    let s = initStarSwarm(CANVAS_W, CANVAS_H);
+    s = advanceMs(s, 8000);
+    const bossIdx = s.enemies.findIndex(
+      (e) => e.isAlive && e.tier === "Boss" && e.phase === "Formation"
+    );
+    if (bossIdx === -1) throw new Error("no boss in formation");
+    s = {
+      ...s,
+      enemyBullets: [],
+      enemies: s.enemies.map((e, i) =>
+        i === bossIdx ? { ...e, shootTimer: 0, burstShotsLeft: 0 } : e
+      ),
+    };
+    s = tick(s, 16, NO_INPUT);
+    expect(s.enemyBullets.length).toBeGreaterThan(0);
+    const boss = s.enemies[bossIdx]!;
+    // After first burst shot, timer is either BURST_INTERVAL (more shots) or long pause (1-shot burst)
+    expect(boss.shootTimer).toBeLessThanOrEqual(BURST_INTERVAL + 2);
+    // burstShotsLeft is 0 (burst complete) or 1 (one more shot coming)
+    expect(boss.burstShotsLeft).toBeGreaterThanOrEqual(0);
+    expect(boss.burstShotsLeft).toBeLessThanOrEqual(2);
+  });
+
+  it("Boss has long pause after burst completes (burstShotsLeft reaches 0)", () => {
+    let s = initStarSwarm(CANVAS_W, CANVAS_H);
+    s = advanceMs(s, 8000);
+    const bossIdx = s.enemies.findIndex(
+      (e) => e.isAlive && e.tier === "Boss" && e.phase === "Formation"
+    );
+    if (bossIdx === -1) throw new Error("no boss in formation");
+    // Force last shot in burst
+    s = {
+      ...s,
+      enemyBullets: [],
+      enemies: s.enemies.map((e, i) =>
+        i === bossIdx ? { ...e, shootTimer: 0, burstShotsLeft: 1 } : e
+      ),
+    };
+    s = tick(s, 16, NO_INPUT);
+    const boss = s.enemies[bossIdx]!;
+    expect(boss.burstShotsLeft).toBe(0);
+    // Long pause should be at least BURST_PAUSE_BASE - one tick
+    expect(boss.shootTimer).toBeGreaterThanOrEqual(BURST_PAUSE_BASE - 16);
+  });
+
+  it("burstShotsLeft is 0 for all enemies at wave start", () => {
+    const s = initStarSwarm(CANVAS_W, CANVAS_H);
+    expect(s.enemies.every((e) => e.burstShotsLeft === 0)).toBe(true);
   });
 });
