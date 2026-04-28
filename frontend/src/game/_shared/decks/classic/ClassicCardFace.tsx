@@ -18,7 +18,7 @@ export default function ClassicCardFace({
   textColor,
   redSuitColor,
 }: CardFaceProps) {
-  const r = 8; // border radius
+  const r = 6; // border radius
 
   if (faceDown) {
     return (

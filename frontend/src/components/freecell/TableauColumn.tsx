@@ -12,7 +12,7 @@ import { DraggableCard } from "../../game/_shared/drag/DraggableCard";
 import { DropTarget } from "../../game/_shared/drag/DropTarget";
 import type { DropHandler } from "../../game/_shared/drag/DragContext";
 
-const FACE_UP_OFFSET = 24;
+const FACE_UP_OFFSET = 36;
 
 export interface TableauColumnProps {
   readonly pile: readonly Card[];
@@ -38,7 +38,7 @@ export default function TableauColumn({
   const { colors } = useTheme();
   const { t } = useTranslation("freecell");
 
-  const highlightStyle: ViewStyle = { borderColor: colors.accent, borderWidth: 2, borderRadius: 8 };
+  const highlightStyle: ViewStyle = { borderColor: colors.accent, borderWidth: 2, borderRadius: 6 };
   const dimStyle: ViewStyle = { opacity: 0.4 };
   const hasDrop = dropId !== undefined && onDrop !== undefined;
 
@@ -147,7 +147,7 @@ const styles = StyleSheet.create({
   empty: {
     width: CARD_WIDTH,
     height: CARD_HEIGHT,
-    borderRadius: 8,
+    borderRadius: 6,
     borderWidth: 1,
     borderStyle: "dashed",
   },
