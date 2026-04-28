@@ -58,6 +58,8 @@ export const SOUND_REGISTRY: Partial<Record<SoundKey, number>> = {
   // eslint-disable-next-line @typescript-eslint/no-require-imports
   "yacht.yacht": require("../../../assets/sounds/hearts-moon-shot.mp3"),
   // eslint-disable-next-line @typescript-eslint/no-require-imports
+  "yacht.joker": require("../../../assets/sounds/hearts-moon-shot.mp3"),
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
   "yacht.straight": require("../../../assets/sounds/yacht-straight.ogg"),
   // eslint-disable-next-line @typescript-eslint/no-require-imports
   "yacht.upperBonus": require("../../../assets/sounds/yacht-upper-bonus.ogg"),

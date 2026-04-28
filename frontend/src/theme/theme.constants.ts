@@ -9,3 +9,27 @@
 
 /** Semi-transparent black backdrop behind modal cards. */
 export const MODAL_SCRIM = "rgba(0,0,0,0.5)";
+
+/** Yacht celebration badge — gold, matching the original badge colour. */
+export const BADGE_YACHT_BG = "rgba(255,215,0,0.95)";
+
+/** Joker celebration badge — purple, for the joker variant. */
+export const BADGE_JOKER_BG = "rgba(138,43,226,0.95)";
+
+/** Dev-panel accent colour (orange). */
+export const DEV_ACCENT = "rgba(255,128,0,1)";
+
+/** Dev-panel accent colour at reduced opacity — for buttons/badges. */
+export const DEV_ACCENT_DIM = "rgba(255,128,0,0.85)";
+
+/** Dev-panel accent border. */
+export const DEV_ACCENT_BORDER = "rgba(255,128,0,0.5)";
+
+/** Semi-transparent black backdrop for the dev-panel modal. */
+export const DEV_OVERLAY_BG = "rgba(0,0,0,0.7)";
+
+/** Subtle white surface for dev-panel secondary buttons. */
+export const DEV_SURFACE_SUBTLE = "rgba(255,255,255,0.08)";
+
+/** Slightly more opaque white surface for dev-panel step buttons. */
+export const DEV_SURFACE_DIM = "rgba(255,255,255,0.1)";

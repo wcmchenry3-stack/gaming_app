@@ -9,10 +9,12 @@ import Animated, {
   withTiming,
 } from "react-native-reanimated";
 import { AnimationOverlay } from "../shared/AnimationOverlay";
+import { BADGE_JOKER_BG, BADGE_YACHT_BG } from "../../theme/theme.constants";
 
 interface Props {
   visible: boolean;
   onDismiss: () => void;
+  variant?: "yacht" | "joker";
 }
 
 // Die face characters scattered around the badge
@@ -28,7 +30,7 @@ const FACE_OFFSETS = [
   { x: 20, y: 140 },
 ] as const;
 
-export function YachtCelebrationAnimation({ visible, onDismiss }: Props) {
+export function YachtCelebrationAnimation({ visible, onDismiss, variant = "yacht" }: Props) {
   const timersRef = useRef<ReturnType<typeof setTimeout>[]>([]);
 
   const badgeScale = useSharedValue(0);
@@ -114,13 +116,19 @@ export function YachtCelebrationAnimation({ visible, onDismiss }: Props) {
             {DIE_FACES[i]}
           </Animated.Text>
         ))}
-        <Animated.View style={[styles.badge, badgeStyle]}>
+        <Animated.View
+          style={[
+            styles.badge,
+            variant === "joker" ? styles.badgeJoker : styles.badgeYacht,
+            badgeStyle,
+          ]}
+        >
           <Text
             style={styles.badgeText}
             accessibilityRole="text"
             accessibilityLiveRegion="assertive"
           >
-            YACHT!
+            {variant === "joker" ? "JOKER!" : "YACHT!"}
           </Text>
         </Animated.View>
       </View>
@@ -134,10 +142,15 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   badge: {
-    backgroundColor: "rgba(255,215,0,0.95)",
     borderRadius: 20,
     paddingHorizontal: 40,
     paddingVertical: 18,
+  },
+  badgeYacht: {
+    backgroundColor: BADGE_YACHT_BG,
+  },
+  badgeJoker: {
+    backgroundColor: BADGE_JOKER_BG,
   },
   badgeText: {
     fontSize: 42,
