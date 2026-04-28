@@ -102,9 +102,12 @@ const MAX_LIVES = 5;
 const POWERUP_W = 24;
 const POWERUP_H = 24;
 const POWERUP_VY = 0.08; // px/ms fall speed
-const POWERUP_DESPAWN = 6000; // ms before auto-despawn
-const CHALLENGING_POWERUP_DESPAWN = 8000; // ms (longer despawn during Challenging Stage)
 export const POWERUP_DURATION = 5000; // ms of super state
+// Time for a powerup to fall from spawn (y = POWERUP_H/2) to just past the player, plus a
+// 2-second collection window. Computed per-canvas so it works at any screen height.
+function powerUpDespawnMs(canvasH: number): number {
+  return Math.ceil((canvasH - PLAYER_Y_FROM_BOTTOM - POWERUP_H / 2) / POWERUP_VY) + 2000;
+}
 const SUPER_SHOOT_COOLDOWN = 70; // ms (4× fire rate during super)
 const SUPER_DAMAGE = 4;
 
@@ -463,7 +466,7 @@ function buildWaveState(
     vy: POWERUP_VY,
     width: POWERUP_W,
     height: POWERUP_H,
-    despawnTimer: CHALLENGING_POWERUP_DESPAWN,
+    despawnTimer: powerUpDespawnMs(canvasH),
   };
   const powerUps: PowerUp[] = isChallengingWave(wave) ? [challengingPowerUp] : [];
   const dropJitterTarget = triggerKills(wave) + Math.floor(rng() * 5) - 2;
@@ -1078,7 +1081,7 @@ function tickCollisions(state: StarSwarmState): StarSwarmState {
         vy: POWERUP_VY,
         width: POWERUP_W,
         height: POWERUP_H,
-        despawnTimer: POWERUP_DESPAWN,
+        despawnTimer: powerUpDespawnMs(state.canvasH),
       },
     ];
     killsSinceLastDrop = 0;

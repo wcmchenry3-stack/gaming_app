@@ -1360,6 +1360,38 @@ describe("Power-up engine (#980)", () => {
     expect(s.powerUps.length).toBe(0); // removed on collection
   });
 
+  it("spawned powerup despawnTimer exceeds travel time to player (regression #1004)", () => {
+    // Pre-fix: POWERUP_DESPAWN=6000ms → 480px travel → despawned 76px above ship.
+    // Fix: despawnTimer is now canvas-height-derived so the powerup always reaches the ship.
+    let s = initStarSwarm(CANVAS_W, CANVAS_H);
+    s = advanceMs(s, 8000); // reach Playing phase
+    expect(s.phase).toBe("Playing");
+    // Force a kill-triggered drop on the next tick
+    s = { ...s, killsSinceLastDrop: s.dropJitterTarget - 1, powerUps: [] };
+    const target = s.enemies.find((e) => e.isAlive);
+    if (!target) throw new Error("no alive enemy");
+    const killBullet: Bullet = {
+      id: 99001,
+      x: target.x,
+      y: target.y,
+      vx: 0,
+      vy: 0,
+      owner: "player",
+      width: target.width,
+      height: target.height,
+      damage: 999,
+    };
+    s = { ...s, playerBullets: [killBullet] };
+    s = tick(s, 16, NO_INPUT);
+    expect(s.powerUps.length).toBe(1);
+    const pu = s.powerUps[0]!;
+    // Physics: player sits at canvasH - 72 (PLAYER_Y_FROM_BOTTOM), powerup spawns at y≈12.
+    // Verify the despawn timer outlasts the fall so collection can happen.
+    const playerY = CANVAS_H - 72;
+    const msToReachPlayer = (playerY - pu.y) / 0.08; // POWERUP_VY = 0.08 px/ms
+    expect(pu.despawnTimer).toBeGreaterThan(msToReachPlayer);
+  });
+
   it("super state applies damage=4, piercing=true, fast cooldown to player bullets", () => {
     let s = initStarSwarm(CANVAS_W, CANVAS_H);
     s = advanceMs(s, 8000);
@@ -1387,6 +1419,6 @@ describe("Power-up engine (#980)", () => {
     expect(s.phase).toBe("ChallengingStage");
     expect(s.powerUps.length).toBe(1);
     expect(s.powerUps[0]!.x).toBe(CANVAS_W / 2);
-    expect(s.powerUps[0]!.despawnTimer).toBeGreaterThan(6000); // 8000ms
+    expect(s.powerUps[0]!.despawnTimer).toBeGreaterThan(6000); // canvas-height-derived (~8950ms at CANVAS_H=640)
   });
 });
