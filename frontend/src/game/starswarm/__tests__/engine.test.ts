@@ -12,6 +12,8 @@ import {
   BOSS_DIVE_THRESHOLD,
   BURST_INTERVAL,
   BURST_PAUSE_BASE,
+  POWERUP_DURATION,
+  triggerKills,
   seedRng,
   _resetIds,
   CANVAS_W,
@@ -19,8 +21,8 @@ import {
 } from "../engine";
 import type { Bullet, StarSwarmInput, StarSwarmState } from "../types";
 
-const NO_INPUT: StarSwarmInput = { playerX: CANVAS_W / 2, fire: false, chargeShot: false };
-const FIRE_INPUT: StarSwarmInput = { playerX: CANVAS_W / 2, fire: true, chargeShot: false };
+const NO_INPUT: StarSwarmInput = { playerX: CANVAS_W / 2, fire: false };
+const FIRE_INPUT: StarSwarmInput = { playerX: CANVAS_W / 2, fire: true };
 
 function advanceMs(state: StarSwarmState, ms: number, input = NO_INPUT): StarSwarmState {
   const step = 16;
@@ -199,7 +201,7 @@ describe("Collision: player bullets vs enemies", () => {
     const target = s.enemies.find((e) => e.isAlive && e.tier === "Grunt");
     if (!target) return; // no grunt on this wave config, skip
 
-    const aim: StarSwarmInput = { playerX: target.x, fire: true, chargeShot: false };
+    const aim: StarSwarmInput = { playerX: target.x, fire: true };
     s = advanceMs(s, 3000, aim);
     expect(s.score).toBeGreaterThan(scoreBefore);
   });
@@ -211,7 +213,7 @@ describe("Collision: player bullets vs enemies", () => {
     const target = s.enemies.find((e) => e.isAlive);
     if (!target) return;
 
-    const aim: StarSwarmInput = { playerX: target.x, fire: true, chargeShot: false };
+    const aim: StarSwarmInput = { playerX: target.x, fire: true };
     s = tick(s, 16, aim); // fire one bullet
     const bulletsBefore = s.playerBullets.length;
 
@@ -1233,5 +1235,158 @@ describe("Boss burst-fire (#979)", () => {
   it("burstShotsLeft is 0 for all enemies at wave start", () => {
     const s = initStarSwarm(CANVAS_W, CANVAS_H);
     expect(s.enemies.every((e) => e.burstShotsLeft === 0)).toBe(true);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Lightning power-up engine (#980)
+// ---------------------------------------------------------------------------
+
+describe("Power-up engine (#980)", () => {
+  it("triggerKills returns 12 at wave 1 and caps at 20", () => {
+    expect(triggerKills(1)).toBe(12);
+    expect(triggerKills(2)).toBe(13);
+    expect(triggerKills(8)).toBe(20);
+    expect(triggerKills(100)).toBe(20);
+  });
+
+  it("killsSinceLastDrop and dropJitterTarget initialised at wave start", () => {
+    const s = initStarSwarm(CANVAS_W, CANVAS_H);
+    expect(s.killsSinceLastDrop).toBe(0);
+    expect(s.dropJitterTarget).toBeGreaterThan(0);
+  });
+
+  it("activePowerUp is null at wave start", () => {
+    const s = initStarSwarm(CANVAS_W, CANVAS_H);
+    expect(s.activePowerUp).toBeNull();
+  });
+
+  it("kill counter only increments during Playing phase", () => {
+    // ChallengingStage wave — kills should NOT increment counter
+    let s = initStarSwarm(CANVAS_W, CANVAS_H, 3);
+    expect(s.phase).toBe("ChallengingStage");
+    const target = s.enemies.find((e) => e.isAlive);
+    if (!target) throw new Error("no enemy");
+    const bullet: Bullet = {
+      id: 88001,
+      x: target.x,
+      y: target.y,
+      vx: 0,
+      vy: 0,
+      owner: "player",
+      width: target.width,
+      height: target.height,
+      damage: 10,
+    };
+    s = { ...s, playerBullets: [bullet] };
+    s = tick(s, 16, NO_INPUT);
+    expect(s.killsSinceLastDrop).toBe(0);
+  });
+
+  it("power-up spawns when killsSinceLastDrop reaches dropJitterTarget during Playing", () => {
+    let s = initStarSwarm(CANVAS_W, CANVAS_H);
+    s = advanceMs(s, 8000);
+    expect(s.phase).toBe("Playing");
+    // Force counter to be one kill away from the target
+    s = { ...s, killsSinceLastDrop: s.dropJitterTarget - 1, powerUps: [] };
+    const target = s.enemies.find((e) => e.isAlive);
+    if (!target) throw new Error("no enemy");
+    const bullet: Bullet = {
+      id: 88002,
+      x: target.x,
+      y: target.y,
+      vx: 0,
+      vy: 0,
+      owner: "player",
+      width: target.width,
+      height: target.height,
+      damage: 10,
+    };
+    s = { ...s, playerBullets: [bullet] };
+    s = tick(s, 16, NO_INPUT);
+    expect(s.powerUps.length).toBe(1);
+    expect(s.killsSinceLastDrop).toBe(0); // reset after spawn
+  });
+
+  it("does not spawn a second power-up if one is already on screen", () => {
+    let s = initStarSwarm(CANVAS_W, CANVAS_H);
+    s = advanceMs(s, 8000);
+    const existing = {
+      id: 9999,
+      x: 100,
+      y: 100,
+      vy: 0.08,
+      width: 24,
+      height: 24,
+      despawnTimer: 5000,
+    };
+    s = { ...s, killsSinceLastDrop: s.dropJitterTarget - 1, powerUps: [existing] };
+    const target = s.enemies.find((e) => e.isAlive);
+    if (!target) throw new Error("no enemy");
+    const bullet: Bullet = {
+      id: 88003,
+      x: target.x,
+      y: target.y,
+      vx: 0,
+      vy: 0,
+      owner: "player",
+      width: target.width,
+      height: target.height,
+      damage: 10,
+    };
+    s = { ...s, playerBullets: [bullet] };
+    s = tick(s, 16, NO_INPUT);
+    // Still 1 (the existing one, not spawning a second)
+    expect(s.powerUps.length).toBe(1);
+  });
+
+  it("collecting power-up sets activePowerUp with POWERUP_DURATION remainingMs", () => {
+    let s = initStarSwarm(CANVAS_W, CANVAS_H);
+    s = advanceMs(s, 8000);
+    // Place a power-up directly on the player
+    const pu = {
+      id: 8001,
+      x: s.player.x,
+      y: s.player.y,
+      vy: 0,
+      width: 24,
+      height: 24,
+      despawnTimer: 6000,
+    };
+    s = { ...s, powerUps: [pu] };
+    s = tick(s, 16, NO_INPUT);
+    expect(s.activePowerUp).not.toBeNull();
+    expect(s.activePowerUp!.remainingMs).toBeGreaterThan(POWERUP_DURATION - 50);
+    expect(s.powerUps.length).toBe(0); // removed on collection
+  });
+
+  it("super state applies damage=4, piercing=true, fast cooldown to player bullets", () => {
+    let s = initStarSwarm(CANVAS_W, CANVAS_H);
+    s = advanceMs(s, 8000);
+    s = { ...s, activePowerUp: { remainingMs: 3000 }, player: { ...s.player, shootCooldown: 0 } };
+    s = tick(s, 16, FIRE_INPUT);
+    const bullet = s.playerBullets[s.playerBullets.length - 1];
+    expect(bullet).toBeDefined();
+    expect(bullet!.damage).toBe(4);
+    expect(bullet!.piercing).toBe(true);
+    // Cooldown should be the super cooldown (70ms), well below normal 280ms
+    expect(s.player.shootCooldown).toBeGreaterThan(0);
+    expect(s.player.shootCooldown).toBeLessThan(280);
+  });
+
+  it("activePowerUp expires after POWERUP_DURATION ms", () => {
+    let s = initStarSwarm(CANVAS_W, CANVAS_H);
+    s = advanceMs(s, 8000);
+    s = { ...s, activePowerUp: { remainingMs: 100 } };
+    s = advanceMs(s, 200, NO_INPUT);
+    expect(s.activePowerUp).toBeNull();
+  });
+
+  it("Challenging Stage spawns one power-up at wave start (X = canvasW/2)", () => {
+    const s = initStarSwarm(CANVAS_W, CANVAS_H, 3);
+    expect(s.phase).toBe("ChallengingStage");
+    expect(s.powerUps.length).toBe(1);
+    expect(s.powerUps[0]!.x).toBe(CANVAS_W / 2);
+    expect(s.powerUps[0]!.despawnTimer).toBeGreaterThan(6000); // 8000ms
   });
 });

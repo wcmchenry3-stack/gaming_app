@@ -108,6 +108,18 @@ export interface Explosion {
   readonly frameTimer: number;
 }
 
+export interface PowerUp {
+  readonly id: number;
+  readonly x: number;
+  readonly y: number;
+  /** Fall speed in px/ms. */
+  readonly vy: number;
+  readonly width: number;
+  readonly height: number;
+  /** ms until auto-despawn (if not collected). */
+  readonly despawnTimer: number;
+}
+
 export interface StarSwarmState {
   readonly phase: GamePhase;
   readonly wave: number;
@@ -117,6 +129,7 @@ export interface StarSwarmState {
   readonly playerBullets: readonly Bullet[];
   readonly enemyBullets: readonly Bullet[];
   readonly explosions: readonly Explosion[];
+  readonly powerUps: readonly PowerUp[];
   /** General-purpose countdown timer (WaveClear pause, etc.). */
   readonly phaseTimer: number;
   readonly canvasW: number;
@@ -133,6 +146,12 @@ export interface StarSwarmState {
   readonly bonusLivesAwarded: number;
   /** Non-Boss enemy count at wave start; used for Boss dive eligibility (#978). */
   readonly startingNonBossCount: number;
+  /** Enemy kills since last power-up drop (Playing phase only). */
+  readonly killsSinceLastDrop: number;
+  /** Kill count target to trigger the next drop (includes ±2 jitter). */
+  readonly dropJitterTarget: number;
+  /** Non-null while the lightning super state is active. */
+  readonly activePowerUp: { readonly remainingMs: number } | null;
 }
 
 /** Input snapshot consumed by each `tick` call. */
@@ -141,6 +160,4 @@ export interface StarSwarmInput {
   readonly playerX: number;
   /** true while auto-fire is active. */
   readonly fire: boolean;
-  /** One-shot: fire a charge bullet this tick (Controls resets to false after one frame). */
-  readonly chargeShot: boolean;
 }

@@ -57,7 +57,7 @@ export default function StarSwarmScreen() {
 
   const {
     playLaser,
-    playChargeShot,
+    playPowerUpCollect,
     playExplosion,
     playPlayerHit,
     playWaveClear,
@@ -159,7 +159,7 @@ export default function StarSwarmScreen() {
               onPlayerHit={handlePlayerHit}
               onWaveClear={handleWaveClear}
               onLaserFire={playLaser}
-              onChargeShotFire={playChargeShot}
+              onPowerUpCollect={playPowerUpCollect}
               onExplosion={playExplosion}
               onChallengingStage={playChallengingStage}
               onBonusLife={handleBonusLife}
@@ -231,7 +231,7 @@ export default function StarSwarmScreen() {
                   {(
                     [
                       ["Laser", "laser"],
-                      ["Charge shot", "chargeshot"],
+                      ["Power-up", "powerupcollect"],
                       ["Explosion", "explosion"],
                       ["Player hit", "playerhit"],
                       ["Wave clear", "waveclear"],

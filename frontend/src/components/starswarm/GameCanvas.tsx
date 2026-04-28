@@ -1,9 +1,17 @@
 import React, { forwardRef, useEffect, useImperativeHandle, useRef, useState } from "react";
 import { StyleSheet, Text, View } from "react-native";
-import { Canvas, Circle, Fill, Group, Image as SkiaImage, Rect } from "@shopify/react-native-skia";
+import {
+  Canvas,
+  Circle,
+  Fill,
+  Group,
+  Image as SkiaImage,
+  Path,
+  Rect,
+} from "@shopify/react-native-skia";
 import { useTranslation } from "react-i18next";
 import * as Sentry from "@sentry/react-native";
-import { initStarSwarm, tick, BULLET_C_W } from "../../game/starswarm/engine";
+import { initStarSwarm, tick, BULLET_C_W, POWERUP_DURATION } from "../../game/starswarm/engine";
 import { initStarfield, tickStarfield } from "../../game/starswarm/starfield";
 import type { StarfieldState } from "../../game/starswarm/starfield";
 import { useStarSwarmImages } from "../../game/starswarm/assets";
@@ -21,7 +29,6 @@ export interface DevOptions {
 export interface GameCanvasHandle {
   setPlayerX: (x: number) => void;
   setFire: (fire: boolean) => void;
-  setChargeShot: (fire: boolean) => void;
 }
 
 interface Props {
@@ -31,10 +38,10 @@ interface Props {
   onPlayerHit?: () => void;
   onWaveClear?: () => void;
   onLaserFire?: () => void;
-  onChargeShotFire?: () => void;
   onExplosion?: () => void;
   onChallengingStage?: () => void;
   onBonusLife?: () => void;
+  onPowerUpCollect?: () => void;
   isPaused?: boolean;
   width: number;
   height: number;
@@ -60,10 +67,10 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
       onPlayerHit,
       onWaveClear,
       onLaserFire,
-      onChargeShotFire,
       onExplosion,
       onChallengingStage,
       onBonusLife,
+      onPowerUpCollect,
       isPaused = false,
       width,
       height,
@@ -78,7 +85,7 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
 
     const gameRef = useRef<StarSwarmState>(initStarSwarm(width, height));
     const sfRef = useRef<StarfieldState>(initStarfield(width, height));
-    const inputRef = useRef({ playerX: width / 2, fire: true, chargeShot: false });
+    const inputRef = useRef({ playerX: width / 2, fire: true });
     const infiniteLivesRef = useRef(false);
     // Assign during render (not via effect) so the reset effect always reads the
     // latest devOptions even though devOptions is not in its dependency array.
@@ -94,10 +101,11 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
     const onPlayerHitRef = useRef(onPlayerHit);
     const onWaveClearRef = useRef(onWaveClear);
     const onLaserFireRef = useRef(onLaserFire);
-    const onChargeShotFireRef = useRef(onChargeShotFire);
     const onExplosionRef = useRef(onExplosion);
     const onChallengingStageRef = useRef(onChallengingStage);
     const onBonusLifeRef = useRef(onBonusLife);
+    const onPowerUpCollectRef = useRef(onPowerUpCollect);
+    const prevActivePowerUpRef = useRef(false); // tracks whether buff was active last frame
     const prevBonusLivesRef = useRef(gameRef.current.bonusLivesAwarded);
     const bonusFlashEndRef = useRef(0); // ms timestamp when 1UP flash expires
 
@@ -122,9 +130,6 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
       onLaserFireRef.current = onLaserFire;
     }, [onLaserFire]);
     useEffect(() => {
-      onChargeShotFireRef.current = onChargeShotFire;
-    }, [onChargeShotFire]);
-    useEffect(() => {
       onExplosionRef.current = onExplosion;
     }, [onExplosion]);
     useEffect(() => {
@@ -133,6 +138,9 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
     useEffect(() => {
       onBonusLifeRef.current = onBonusLife;
     }, [onBonusLife]);
+    useEffect(() => {
+      onPowerUpCollectRef.current = onPowerUpCollect;
+    }, [onPowerUpCollect]);
 
     const [renderState, setRenderState] = useState<RenderState>({
       game: gameRef.current,
@@ -147,9 +155,6 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
         },
         setFire(fire) {
           inputRef.current.fire = fire;
-        },
-        setChargeShot(fire) {
-          inputRef.current.chargeShot = fire;
         },
       }),
       []
@@ -166,7 +171,6 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
       lastFrameTimeRef.current = 0;
       inputRef.current.playerX = width / 2;
       inputRef.current.fire = true;
-      inputRef.current.chargeShot = false;
       prevScoreRef.current = 0;
       prevLivesRef.current = gameRef.current.player.lives;
       prevPhaseRef.current = gameRef.current.phase;
@@ -187,12 +191,10 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
         const prev = gameRef.current;
         if (prev.phase !== "GameOver" && !isPausedRef.current) {
           try {
-            const chargeShotRequested = inputRef.current.chargeShot;
             const prevCooldown = prev.player.shootCooldown;
             const next = tick(prev, dtMs, {
               playerX: inputRef.current.playerX,
               fire: inputRef.current.fire,
-              chargeShot: inputRef.current.chargeShot,
             });
 
             // Dev: when infinite lives is on, intercept any lives decrement and
@@ -206,22 +208,13 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
               };
             }
 
-            // Only clear chargeShot when the engine actually consumed it (cooldown advanced)
-            if (chargeShotRequested && applied.player.shootCooldown > prevCooldown) {
-              inputRef.current.chargeShot = false;
-            }
-
             gameRef.current = applied;
             if (applied.score !== prevScoreRef.current) {
               prevScoreRef.current = applied.score;
               onScoreChangeRef.current?.(applied.score);
             }
             if (applied.player.shootCooldown > prevCooldown) {
-              if (chargeShotRequested) {
-                onChargeShotFireRef.current?.();
-              } else {
-                onLaserFireRef.current?.();
-              }
+              onLaserFireRef.current?.();
             }
             if (applied.explosions.length > prev.explosions.length) {
               onExplosionRef.current?.();
@@ -235,6 +228,11 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
               bonusFlashEndRef.current = Date.now() + 1500;
             }
             prevBonusLivesRef.current = applied.bonusLivesAwarded;
+            const isNowActive = applied.activePowerUp !== null;
+            if (!prevActivePowerUpRef.current && isNowActive) {
+              onPowerUpCollectRef.current?.();
+            }
+            prevActivePowerUpRef.current = isNowActive;
             if (applied.phase === "WaveClear" && prevPhaseRef.current !== "WaveClear") {
               onWaveClearRef.current?.();
             }
@@ -405,6 +403,33 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
                 />
               ))}
 
+            {/* Super-state electric tint on player ship */}
+            {!blink && state.activePowerUp !== null && (
+              <Rect
+                x={player.x - player.width / 2}
+                y={player.y - player.height / 2}
+                width={player.width}
+                height={player.height}
+                color="rgba(255,238,0,0.45)"
+              />
+            )}
+
+            {/* Power-ups — falling lightning bolt */}
+            {state.powerUps.map((pu) => {
+              const lx = pu.x - pu.width / 2;
+              const ly = pu.y - pu.height / 2;
+              const pw = pu.width;
+              const ph = pu.height;
+              const boltPath =
+                `M${lx + pw * 0.625},${ly} ` +
+                `L${lx + pw * 0.125},${ly + ph * 0.542} ` +
+                `L${lx + pw * 0.458},${ly + ph * 0.542} ` +
+                `L${lx + pw * 0.375},${ly + ph} ` +
+                `L${lx + pw * 0.875},${ly + ph * 0.458} ` +
+                `L${lx + pw * 0.542},${ly + ph * 0.458} Z`;
+              return <Path key={pu.id} path={boltPath} color="#ffee00" />;
+            })}
+
             {/* Explosions */}
             {state.explosions.map((exp) => {
               const frameImg = images.explosionFrames[exp.frame] ?? null;
@@ -449,6 +474,16 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
             {Array.from({ length: player.lives }, (_, i) => (
               <View key={i} style={styles.lifeIndicator} />
             ))}
+            {state.activePowerUp !== null && (
+              <View style={styles.powerUpBarWrap}>
+                <View
+                  style={[
+                    styles.powerUpBar,
+                    { width: 60 * (state.activePowerUp.remainingMs / POWERUP_DURATION) },
+                  ]}
+                />
+              </View>
+            )}
           </View>
 
           {showBonusFlash && (
@@ -522,6 +557,21 @@ const styles = StyleSheet.create({
     width: 10,
     height: 14,
     backgroundColor: "#00ffcc",
+  },
+  powerUpBarWrap: {
+    position: "absolute",
+    bottom: 20,
+    left: 0,
+    width: 60,
+    height: 4,
+    backgroundColor: "rgba(255,255,255,0.18)",
+    borderRadius: 2,
+    overflow: "hidden",
+  },
+  powerUpBar: {
+    height: 4,
+    backgroundColor: "#ffee00",
+    borderRadius: 2,
   },
   phaseOverlay: {
     ...StyleSheet.absoluteFillObject,
