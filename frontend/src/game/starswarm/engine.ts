@@ -677,16 +677,11 @@ function tickFormation(
 
 // #979: shared burst-fire logic for Boss in Formation and Diving phases
 function bossBurstFire(enemy: Enemy, playerX: number): EnemyTickResult {
-  let newBurstShotsLeft: number;
-  let newShootTimer: number;
-
-  if (enemy.burstShotsLeft === 0) {
-    const burstSize = 2 + Math.floor(rng() * 2); // 2 or 3 shots
-    newBurstShotsLeft = burstSize - 1;
-  } else {
-    newBurstShotsLeft = enemy.burstShotsLeft - 1;
-  }
-  newShootTimer =
+  const newBurstShotsLeft =
+    enemy.burstShotsLeft === 0
+      ? 2 + Math.floor(rng() * 2) - 1 // start new burst: pick 2 or 3, return remaining
+      : enemy.burstShotsLeft - 1;
+  const newShootTimer =
     newBurstShotsLeft > 0 ? BURST_INTERVAL : BURST_PAUSE_BASE + rng() * BURST_PAUSE_JITTER;
 
   const bullet: Bullet = {
