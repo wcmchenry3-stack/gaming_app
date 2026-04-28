@@ -531,7 +531,17 @@ describe("Boss HP (#970)", () => {
       s = {
         ...s,
         playerBullets: [
-          { id: hit, x: b.x, y: b.y, vx: 0, vy: -0.5, owner: "player", width: 5, height: 14, damage: 1 },
+          {
+            id: hit,
+            x: b.x,
+            y: b.y,
+            vx: 0,
+            vy: -0.5,
+            owner: "player",
+            width: 5,
+            height: 14,
+            damage: 1,
+          },
         ],
       };
       s = tick(s, 16, NO_INPUT);
@@ -557,7 +567,17 @@ describe("Boss HP (#970)", () => {
       s = {
         ...s,
         playerBullets: [
-          { id: hit, x: b.x, y: b.y, vx: 0, vy: -0.5, owner: "player", width: 5, height: 14, damage: 1 },
+          {
+            id: hit,
+            x: b.x,
+            y: b.y,
+            vx: 0,
+            vy: -0.5,
+            owner: "player",
+            width: 5,
+            height: 14,
+            damage: 1,
+          },
         ],
       };
       s = tick(s, 16, NO_INPUT);
