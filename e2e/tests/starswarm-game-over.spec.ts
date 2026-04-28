@@ -45,7 +45,7 @@ test.describe("Star Swarm — game-over state and score API", () => {
     });
   });
 
-  test("charge shot button visible before game over (active play)", async ({
+  test("charge-shot button is absent during active play (#981 removal)", async ({
     page,
   }) => {
     await page.goto("/");
@@ -54,13 +54,15 @@ test.describe("Star Swarm — game-over state and score API", () => {
       page.getByRole("img", { name: /Star Swarm game/i }),
     ).toBeVisible({ timeout: 10_000 });
 
-    // During SwoopIn / Playing phase the charge shot button should be present
+    // Charge-shot button was removed in #981 — power-up now grants super state
     await expect(
       page.getByRole("button", { name: /Charge shot/i }),
-    ).toBeVisible({ timeout: 5_000 });
+    ).not.toBeAttached();
   });
 
-  test("score submission POST request is correctly shaped", async ({ page }) => {
+  test("score submission POST request is correctly shaped", async ({
+    page,
+  }) => {
     const capturedBodies: unknown[] = [];
 
     await page.route(`${API_BASE}/starswarm/score`, async (route) => {
