@@ -67,11 +67,109 @@ const SUIT_COLOR: Record<string, string> = {
 };
 
 // ---------------------------------------------------------------------------
-// SVG face art
+// SVG preloader — must live OUTSIDE the Skia Canvas reconciler so React's
+// standard scheduler propagates async useSVG state updates correctly.
+// 42 explicit calls (hooks rules: fixed count, no conditionals).
+// ---------------------------------------------------------------------------
+
+type TileSVG = ReturnType<typeof useSVG>;
+
+function useAllTileSVGs(): ReadonlyArray<TileSVG> {
+  const s00 = useSVG(TILE_REQUIRES[0]);
+  const s01 = useSVG(TILE_REQUIRES[1]);
+  const s02 = useSVG(TILE_REQUIRES[2]);
+  const s03 = useSVG(TILE_REQUIRES[3]);
+  const s04 = useSVG(TILE_REQUIRES[4]);
+  const s05 = useSVG(TILE_REQUIRES[5]);
+  const s06 = useSVG(TILE_REQUIRES[6]);
+  const s07 = useSVG(TILE_REQUIRES[7]);
+  const s08 = useSVG(TILE_REQUIRES[8]);
+  const s09 = useSVG(TILE_REQUIRES[9]);
+  const s10 = useSVG(TILE_REQUIRES[10]);
+  const s11 = useSVG(TILE_REQUIRES[11]);
+  const s12 = useSVG(TILE_REQUIRES[12]);
+  const s13 = useSVG(TILE_REQUIRES[13]);
+  const s14 = useSVG(TILE_REQUIRES[14]);
+  const s15 = useSVG(TILE_REQUIRES[15]);
+  const s16 = useSVG(TILE_REQUIRES[16]);
+  const s17 = useSVG(TILE_REQUIRES[17]);
+  const s18 = useSVG(TILE_REQUIRES[18]);
+  const s19 = useSVG(TILE_REQUIRES[19]);
+  const s20 = useSVG(TILE_REQUIRES[20]);
+  const s21 = useSVG(TILE_REQUIRES[21]);
+  const s22 = useSVG(TILE_REQUIRES[22]);
+  const s23 = useSVG(TILE_REQUIRES[23]);
+  const s24 = useSVG(TILE_REQUIRES[24]);
+  const s25 = useSVG(TILE_REQUIRES[25]);
+  const s26 = useSVG(TILE_REQUIRES[26]);
+  const s27 = useSVG(TILE_REQUIRES[27]);
+  const s28 = useSVG(TILE_REQUIRES[28]);
+  const s29 = useSVG(TILE_REQUIRES[29]);
+  const s30 = useSVG(TILE_REQUIRES[30]);
+  const s31 = useSVG(TILE_REQUIRES[31]);
+  const s32 = useSVG(TILE_REQUIRES[32]);
+  const s33 = useSVG(TILE_REQUIRES[33]);
+  const s34 = useSVG(TILE_REQUIRES[34]);
+  const s35 = useSVG(TILE_REQUIRES[35]);
+  const s36 = useSVG(TILE_REQUIRES[36]);
+  const s37 = useSVG(TILE_REQUIRES[37]);
+  const s38 = useSVG(TILE_REQUIRES[38]);
+  const s39 = useSVG(TILE_REQUIRES[39]);
+  const s40 = useSVG(TILE_REQUIRES[40]);
+  const s41 = useSVG(TILE_REQUIRES[41]);
+  return [
+    s00,
+    s01,
+    s02,
+    s03,
+    s04,
+    s05,
+    s06,
+    s07,
+    s08,
+    s09,
+    s10,
+    s11,
+    s12,
+    s13,
+    s14,
+    s15,
+    s16,
+    s17,
+    s18,
+    s19,
+    s20,
+    s21,
+    s22,
+    s23,
+    s24,
+    s25,
+    s26,
+    s27,
+    s28,
+    s29,
+    s30,
+    s31,
+    s32,
+    s33,
+    s34,
+    s35,
+    s36,
+    s37,
+    s38,
+    s39,
+    s40,
+    s41,
+  ];
+}
+
+// ---------------------------------------------------------------------------
+// SVG face art — receives the pre-loaded SkSVG object as a prop so the
+// component can be rendered safely inside the Skia Canvas tree.
 // ---------------------------------------------------------------------------
 
 function TileFaceLayer({
-  faceId,
+  svg,
   suit,
   x,
   y,
@@ -79,7 +177,7 @@ function TileFaceLayer({
   h,
   opacity,
 }: {
-  faceId: number;
+  svg: TileSVG;
   suit: string;
   x: number;
   y: number;
@@ -87,7 +185,6 @@ function TileFaceLayer({
   h: number;
   opacity: number;
 }) {
-  const svg = useSVG(TILE_REQUIRES[faceId - 1]);
   if (!svg) {
     // SVG not yet loaded or failed to parse — render a suit-color placeholder
     // so the tile face is never silently blank.
@@ -138,6 +235,7 @@ interface Props {
 
 export default function GameCanvas({ state, onTilePress, onShufflePress, onNewGamePress }: Props) {
   const { t } = useTranslation("mahjong");
+  const tileSvgs = useAllTileSVGs();
 
   const freeTiles = useMemo(() => {
     const s = new Set<number>();
@@ -215,7 +313,7 @@ export default function GameCanvas({ state, onTilePress, onShufflePress, onNewGa
               <Rect x={x + 1} y={y + 1} width={fw - 2} height={fh - 2} color={faceColor} />
               {/* SVG face art */}
               <TileFaceLayer
-                faceId={tile.faceId}
+                svg={tileSvgs[tile.faceId - 1] ?? null}
                 suit={tile.suit}
                 x={x + 2}
                 y={y + 2}
