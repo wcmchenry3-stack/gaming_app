@@ -59,8 +59,7 @@ export default function SudokuGrid({
                 key={`${r}-${c}`}
                 style={{
                   flex: 1,
-                  borderRightWidth:
-                    c === size - 1 ? 0 : isBoxRight ? 2 : StyleSheet.hairlineWidth,
+                  borderRightWidth: c === size - 1 ? 0 : isBoxRight ? 2 : StyleSheet.hairlineWidth,
                   borderRightColor: isBoxRight ? strongColor : colors.border,
                   borderBottomWidth:
                     r === size - 1 ? 0 : isBoxBottom ? 2 : StyleSheet.hairlineWidth,

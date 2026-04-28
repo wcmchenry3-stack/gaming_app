@@ -437,10 +437,7 @@ export default function SudokuScreen() {
       <Pressable
         onPress={handleUndo}
         disabled={undoDisabled}
-        style={[
-          styles.headerBtn,
-          { borderColor: colors.accent, opacity: undoDisabled ? 0.4 : 1 },
-        ]}
+        style={[styles.headerBtn, { borderColor: colors.accent, opacity: undoDisabled ? 0.4 : 1 }]}
         accessibilityRole="button"
         accessibilityLabel={t("action.undo")}
         accessibilityState={{ disabled: undoDisabled }}
