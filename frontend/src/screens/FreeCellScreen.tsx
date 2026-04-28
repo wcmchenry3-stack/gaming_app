@@ -231,7 +231,10 @@ export default function FreeCellScreen() {
 
           {showNoMovesBanner && (
             <View
-              style={[styles.noMovesBanner, { backgroundColor: colors.surfaceHigh, borderColor: colors.border }]}
+              style={[
+                styles.noMovesBanner,
+                { backgroundColor: colors.surfaceHigh, borderColor: colors.border },
+              ]}
               accessibilityRole="alert"
               accessibilityLiveRegion="assertive"
             >
@@ -241,7 +244,10 @@ export default function FreeCellScreen() {
               <Pressable
                 onPress={handleUndo}
                 disabled={undoDisabled}
-                style={[styles.noMovesUndoBtn, { borderColor: colors.accent, opacity: undoDisabled ? 0.4 : 1 }]}
+                style={[
+                  styles.noMovesUndoBtn,
+                  { borderColor: colors.accent, opacity: undoDisabled ? 0.4 : 1 },
+                ]}
                 accessibilityRole="button"
                 accessibilityLabel={t("freecell:action.undo")}
               >

@@ -233,8 +233,8 @@ export default function FreeCellBoard({ state, onMove }: FreeCellBoardProps) {
                   cellIndex={i}
                   selected={selection?.kind === "freecell" && selection.cell === i}
                   hintSource={
-                    state.hint?.type === "freecell-to-tableau" && state.hint.fromCell === i ||
-                    state.hint?.type === "freecell-to-foundation" && state.hint.fromCell === i
+                    (state.hint?.type === "freecell-to-tableau" && state.hint.fromCell === i) ||
+                    (state.hint?.type === "freecell-to-foundation" && state.hint.fromCell === i)
                   }
                   onPress={handleFreeCellPress}
                   dropId={`freecell-slot-${i}`}
