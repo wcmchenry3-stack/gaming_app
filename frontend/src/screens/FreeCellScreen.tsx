@@ -53,8 +53,8 @@ export default function FreeCellScreen() {
   const [showGameWin, setShowGameWin] = useState(false);
   const [showNoMovesBanner, setShowNoMovesBanner] = useState(false);
 
-  const { play: playCardPlace } = useSound("freecell.cardPlace");
-  const { play: playSupermove } = useSound("freecell.supermove");
+  const { play: playCardPlace } = useSound("freecell.cardPlace", 0.4);
+  const { play: playSupermove } = useSound("freecell.supermove", 0.5);
   const { play: playFoundationComplete } = useSound("freecell.foundationComplete");
   const { play: playGameWin } = useSound("freecell.gameWin");
   const { play: playInvalidMove } = useSound("freecell.invalidMove");
