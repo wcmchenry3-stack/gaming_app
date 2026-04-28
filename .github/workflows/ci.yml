@@ -11,6 +11,9 @@ concurrency:
   group: ci-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
+permissions:
+  contents: read
+
 jobs:
   # === Tier 0: Hygiene gates (run immediately, must pass before tier 1) ====
 
