@@ -9,6 +9,7 @@ import Animated, {
   withTiming,
 } from "react-native-reanimated";
 import { AnimationOverlay } from "../shared/AnimationOverlay";
+import { BADGE_JOKER_BG, BADGE_YACHT_BG } from "../../theme/theme.constants";
 
 interface Props {
   visible: boolean;
@@ -146,10 +147,10 @@ const styles = StyleSheet.create({
     paddingVertical: 18,
   },
   badgeYacht: {
-    backgroundColor: "rgba(255,215,0,0.95)",
+    backgroundColor: BADGE_YACHT_BG,
   },
   badgeJoker: {
-    backgroundColor: "rgba(138,43,226,0.95)",
+    backgroundColor: BADGE_JOKER_BG,
   },
   badgeText: {
     fontSize: 42,
