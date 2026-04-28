@@ -42,6 +42,9 @@ export default function Controls({
 
   const playerXRef = useRef(CANVAS_W / 2);
   const activeDragRef = useRef(false);
+  // Ship X captured at each touch-start — used to compute delta from gesture start,
+  // avoiding cumulative drift from per-event changeX accumulation.
+  const shipXAtDragStartRef = useRef(CANVAS_W / 2);
 
   const [isCharging, setIsCharging] = useState(false);
   const [isOnCooldown, setIsOnCooldown] = useState(false);
@@ -77,11 +80,16 @@ export default function Controls({
     .minDistance(0)
     .onBegin((e) => {
       activeDragRef.current = e.y > dragZoneY;
+      if (activeDragRef.current) {
+        // Capture ship X at gesture start so we use total translation (not
+        // per-event changeX accumulation) — avoids drift over long gestures.
+        shipXAtDragStartRef.current = playerXRef.current;
+      }
     })
     .onChange((e) => {
       if (!activeDragRef.current) return;
-      const logicalDx = e.changeX / scale;
-      const newX = clamp(playerXRef.current + logicalDx, 0, CANVAS_W);
+      // newX = shipX_at_touch_start + (currentTouchX - touchStartX)
+      const newX = clamp(shipXAtDragStartRef.current + e.translationX / scale, 0, CANVAS_W);
       playerXRef.current = newX;
       canvasRef.current?.setPlayerX(newX);
     })
