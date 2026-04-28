@@ -28,7 +28,7 @@ test.describe("Blackjack — full happy-path game journey", () => {
     page,
   }) => {
     const bj = new BlackjackPage(page);
-    await expect(page.getByText("Gaming App").first()).toBeVisible();
+    await expect(page.getByText("BC Arcade").first()).toBeVisible();
     await page.getByRole("button", { name: "Play Blackjack" }).click();
     await expect(bj.dealButton()).toBeVisible();
   });
@@ -141,7 +141,7 @@ test.describe("Blackjack — full happy-path game journey", () => {
     await expect(page.getByText("Next Hand")).toBeVisible();
     await page.getByRole("button", { name: /quit/i }).click();
 
-    await expect(page.getByText("Gaming App").first()).toBeVisible({
+    await expect(page.getByText("BC Arcade").first()).toBeVisible({
       timeout: 10000,
     });
   });

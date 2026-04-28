@@ -166,7 +166,7 @@ test.describe("2048 — win-state + keep-playing flow", () => {
       .first()
       .click();
 
-    await expect(page.getByText("Gaming App").first()).toBeVisible({
+    await expect(page.getByText("BC Arcade").first()).toBeVisible({
       timeout: 10000,
     });
   });

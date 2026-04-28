@@ -126,7 +126,7 @@ test.describe("2048 — game-over detection and flow", () => {
       .getByRole("button", { name: "Quit and return to home screen" })
       .click();
 
-    await expect(page.getByText("Gaming App").first()).toBeVisible({
+    await expect(page.getByText("BC Arcade").first()).toBeVisible({
       timeout: 10000,
     });
   });

@@ -50,7 +50,7 @@ if _sentry_dsn:
 # App
 # ---------------------------------------------------------------------------
 
-app = FastAPI(title="Gaming App API")
+app = FastAPI(title="BC Arcade API")
 app.include_router(cascade_router, prefix="/cascade")
 app.include_router(freecell_router, prefix="/freecell")
 app.include_router(hearts_router, prefix="/hearts")

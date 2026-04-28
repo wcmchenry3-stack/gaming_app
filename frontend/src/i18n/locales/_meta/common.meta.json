@@ -5,7 +5,7 @@
     "tone": "neutral",
     "characterLimit": 20,
     "placeholders": [],
-    "doNotTranslate": ["Gaming App"],
+    "doNotTranslate": ["BC Arcade"],
     "notes": "Do not translate the app name."
   },
   "app.subtitle": {

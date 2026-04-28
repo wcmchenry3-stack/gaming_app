@@ -66,7 +66,7 @@ test.describe("2048 — state persistence", () => {
 
     // Navigate home via URL (Lobby tab pop-to-root not reliable on web)
     await page.goto("/");
-    await page.getByText("Gaming App").first().waitFor();
+    await page.getByText("BC Arcade").first().waitFor();
 
     // Return to 2048
     await page.getByRole("button", { name: "Play 2048" }).click();

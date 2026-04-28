@@ -2,7 +2,7 @@ appId: com.buffingchi.games
 ---
 - launchApp
 - assertVisible:
-    text: "Gaming App"
+    text: "BC Arcade"
     timeout: 15000
 - assertVisible:
     text: "Choose a game"
