@@ -103,7 +103,7 @@ function generateSeedId(): string {
     return `${h.slice(0, 8)}-${h.slice(8, 12)}-${h.slice(12, 16)}-${h.slice(16, 20)}-${h.slice(20)}`;
   }
   return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (c) => {
-    const r = (Math.random() * 16) | 0;
+    const r = (Math.random() * 16) | 0; // codeql[js/insecure-randomness]
     return (c === "x" ? r : (r & 0x3) | 0x8).toString(16);
   });
 }

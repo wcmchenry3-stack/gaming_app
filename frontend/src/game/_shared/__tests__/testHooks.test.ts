@@ -229,7 +229,12 @@ describe("logstore testHooks", () => {
 
     it("seedEvents produces UUID-formatted row IDs via getRandomValues", async () => {
       Object.defineProperty(globalThis, "crypto", {
-        value: { getRandomValues: (buf: Uint8Array) => { buf.fill(0xcd); return buf; } },
+        value: {
+          getRandomValues: (buf: Uint8Array) => {
+            buf.fill(0xcd);
+            return buf;
+          },
+        },
         configurable: true,
         writable: true,
       });
@@ -263,7 +268,12 @@ describe("logstore testHooks", () => {
 
     it("seedBugLogs produces UUID-formatted row and bug_uuid IDs via getRandomValues", async () => {
       Object.defineProperty(globalThis, "crypto", {
-        value: { getRandomValues: (buf: Uint8Array) => { buf.fill(0xcd); return buf; } },
+        value: {
+          getRandomValues: (buf: Uint8Array) => {
+            buf.fill(0xcd);
+            return buf;
+          },
+        },
         configurable: true,
         writable: true,
       });
