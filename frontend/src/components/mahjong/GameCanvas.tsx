@@ -92,7 +92,16 @@ function TileFaceLayer({
     // SVG not yet loaded or failed to parse — render a suit-color placeholder
     // so the tile face is never silently blank.
     const fallbackColor = SUIT_COLOR[suit] ?? "#888888";
-    return <Rect x={x + 6} y={y + 8} width={w - 12} height={h - 16} color={fallbackColor} opacity={opacity} />;
+    return (
+      <Rect
+        x={x + 6}
+        y={y + 8}
+        width={w - 12}
+        height={h - 16}
+        color={fallbackColor}
+        opacity={opacity}
+      />
+    );
   }
   return <ImageSVG svg={svg} x={x} y={y} width={w} height={h} opacity={opacity} />;
 }
