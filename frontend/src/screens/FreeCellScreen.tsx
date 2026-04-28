@@ -29,12 +29,12 @@ import { clearGame, loadGame, saveGame } from "../game/freecell/storage";
 import { useGameEvents } from "../game/_shared/useGameEvents";
 import { useSound } from "../game/_shared/useSound";
 
-// 8 columns × 40px + 7 gaps × 4px
+// 8 columns × 40px + 7 gaps × 2px
 const TABLEAU_COLS = 8;
-const COL_GAP = 4;
+const COL_GAP = 2;
 const BOARD_WIDTH = TABLEAU_COLS * CARD_WIDTH + (TABLEAU_COLS - 1) * COL_GAP;
-// Top row (free cells + foundations) + gap + tableau worst case (12 cards stacked at 24px offset)
-const BOARD_HEIGHT = CARD_HEIGHT * 2 + 8 + 12 * 24 + CARD_HEIGHT;
+// Top row (free cells + foundations) + gap + tableau worst case (12 cards stacked at 36px offset)
+const BOARD_HEIGHT = CARD_HEIGHT * 2 + 8 + 12 * 36 + CARD_HEIGHT;
 
 export default function FreeCellScreen() {
   const { t } = useTranslation("freecell");
@@ -204,6 +204,9 @@ export default function FreeCellScreen() {
       {state !== null && (
         <View style={styles.body} onLayout={onOuterLayout}>
           <View style={styles.hudRow} accessibilityRole="summary">
+            <Text style={[styles.hudTitle, { color: colors.text }]}>
+              {t("freecell:game.title")}
+            </Text>
             <Text
               style={[styles.hudText, { color: colors.textMuted }]}
               accessibilityLabel={t("freecell:score.moves", { moves: state.moveCount })}
@@ -405,13 +408,19 @@ const styles = StyleSheet.create({
   },
   hudRow: {
     flexDirection: "row",
-    justifyContent: "flex-end",
+    justifyContent: "space-between",
     paddingHorizontal: 4,
     paddingVertical: 8,
   },
-  hudText: {
+  hudTitle: {
     fontFamily: typography.heading,
-    fontSize: 16,
+    fontSize: 14,
+    fontWeight: "700",
+    letterSpacing: 0.5,
+  },
+  hudText: {
+    fontFamily: typography.body,
+    fontSize: 12,
     letterSpacing: 0.5,
   },
   boardWrap: {

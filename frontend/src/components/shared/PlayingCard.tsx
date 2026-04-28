@@ -56,12 +56,12 @@ export default function PlayingCard({
       width={width}
       height={height}
       faceDown={faceDown}
-      cardBg={colors.surface}
+      cardBg="#fff"
       cardBgBack={colors.surfaceAlt}
       border={hintHighlighted ? colors.bonus : highlighted ? colors.accent : colors.border}
       borderHighlight={colors.accent}
-      textColor={colors.text}
-      redSuitColor={colors.error}
+      textColor="#0e0e13"
+      redSuitColor="#ff716c"
     />
   );
 
@@ -69,7 +69,18 @@ export default function PlayingCard({
   // than by lowering the wrapper's opacity. In overlapping hand layouts (e.g.
   // Hearts) translucent cards let the card underneath bleed through — the
   // overlay keeps the card itself opaque. Radius matches CardFace.
-  const wrapperStyle = [{ width, height }, rotateStyle];
+  const wrapperStyle = [
+    {
+      width,
+      height,
+      shadowColor: "#000",
+      shadowOffset: { width: 0, height: 1 },
+      shadowOpacity: 0.2,
+      shadowRadius: 4,
+      elevation: 2,
+    },
+    rotateStyle,
+  ];
   const disabledOverlay = disabled ? (
     <View
       pointerEvents="none"
@@ -79,7 +90,7 @@ export default function PlayingCard({
         left: 0,
         width,
         height,
-        borderRadius: 8,
+        borderRadius: 6,
         backgroundColor: "rgba(0,0,0,0.5)",
       }}
     />

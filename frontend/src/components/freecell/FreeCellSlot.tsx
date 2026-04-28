@@ -1,8 +1,9 @@
 import React from "react";
-import { Pressable, StyleSheet, View } from "react-native";
+import { Pressable, StyleSheet, Text, View } from "react-native";
 import { useTranslation } from "react-i18next";
 
 import { useTheme } from "../../theme/ThemeContext";
+import { typography } from "../../theme/typography";
 import SharedPlayingCard from "../shared/PlayingCard";
 import { rankLabel } from "../../game/_shared/decks/cardId";
 import type { CanonicalSuit } from "../../game/_shared/decks/types";
@@ -81,7 +82,7 @@ export default function FreeCellSlot({
         <DropTarget
           id={dropId!}
           onDrop={onDrop!}
-          highlightStyle={{ borderColor: colors.accent, borderWidth: 2, borderRadius: 8 }}
+          highlightStyle={{ borderColor: colors.accent, borderWidth: 2, borderRadius: 6 }}
           dimStyle={{ opacity: 0.4 }}
         >
           {draggable}
@@ -102,15 +103,23 @@ export default function FreeCellSlot({
     },
   ];
 
+  const freeLabel = (
+    <Text style={[styles.freeLabel, { color: colors.textFilled }]}>free</Text>
+  );
+
   const emptyEl = handlePress ? (
     <Pressable
       onPress={handlePress}
       style={slotStyle}
       accessibilityRole="button"
       accessibilityLabel={emptyLabel}
-    />
+    >
+      {freeLabel}
+    </Pressable>
   ) : (
-    <View style={slotStyle} accessibilityRole="image" accessibilityLabel={emptyLabel} />
+    <View style={slotStyle} accessibilityRole="image" accessibilityLabel={emptyLabel}>
+      {freeLabel}
+    </View>
   );
 
   if (hasDrop) {
@@ -118,7 +127,7 @@ export default function FreeCellSlot({
       <DropTarget
         id={dropId!}
         onDrop={onDrop!}
-        highlightStyle={{ borderColor: colors.accent, borderWidth: 2, borderRadius: 8 }}
+        highlightStyle={{ borderColor: colors.accent, borderWidth: 2, borderRadius: 6 }}
         dimStyle={{ opacity: 0.4 }}
       >
         {emptyEl}
@@ -132,7 +141,15 @@ const styles = StyleSheet.create({
   empty: {
     width: CARD_WIDTH,
     height: CARD_HEIGHT,
-    borderRadius: 8,
+    borderRadius: 6,
     borderStyle: "dashed",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  freeLabel: {
+    fontFamily: typography.label,
+    fontSize: 8,
+    letterSpacing: 1,
+    textTransform: "uppercase",
   },
 });

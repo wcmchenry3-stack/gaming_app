@@ -38,6 +38,8 @@ export default function FoundationPile({
   const { colors } = useTheme();
   const { t } = useTranslation("freecell");
   const hasDrop = dropId !== undefined && onDrop !== undefined;
+  const RED_SUITS = new Set(["hearts", "diamonds"]);
+  const suitSymbolColor = RED_SUITS.has(suit) ? "#ff716c" : colors.textFilled;
 
   const inner = (() => {
     if (pile.length > 0) {
@@ -72,7 +74,7 @@ export default function FoundationPile({
       },
     ];
     const content = (
-      <Text style={[styles.suit, { color: colors.textMuted }]}>{SUIT_SYMBOL[suit]}</Text>
+      <Text style={[styles.suit, { color: suitSymbolColor }]}>{SUIT_SYMBOL[suit]}</Text>
     );
 
     if (onPress) {
@@ -99,7 +101,7 @@ export default function FoundationPile({
       <DropTarget
         id={dropId!}
         onDrop={onDrop!}
-        highlightStyle={{ borderColor: colors.accent, borderWidth: 2, borderRadius: 8 }}
+        highlightStyle={{ borderColor: colors.accent, borderWidth: 2, borderRadius: 6 }}
         dimStyle={{ opacity: 0.4 }}
       >
         {inner}
@@ -113,12 +115,13 @@ const styles = StyleSheet.create({
   empty: {
     width: CARD_WIDTH,
     height: CARD_HEIGHT,
-    borderRadius: 8,
+    borderRadius: 6,
     alignItems: "center",
     justifyContent: "center",
   },
   suit: {
-    fontSize: 24,
-    lineHeight: 28,
+    fontSize: 18,
+    lineHeight: 22,
+    opacity: 0.75,
   },
 });

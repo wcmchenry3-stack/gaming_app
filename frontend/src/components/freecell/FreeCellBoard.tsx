@@ -2,6 +2,8 @@ import React, { useCallback, useState } from "react";
 import { StyleSheet, View } from "react-native";
 import { useTranslation } from "react-i18next";
 
+import { useTheme } from "../../theme/ThemeContext";
+
 import { SUITS } from "../../game/freecell/types";
 import { validateMove } from "../../game/freecell/engine";
 import type { FreeCellState, Move } from "../../game/freecell/types";
@@ -13,8 +15,8 @@ import { DragContainer } from "../../game/_shared/drag/DragContainer";
 import type { DragSource, DragCard } from "../../game/_shared/drag/DragContext";
 
 const TABLEAU_COLS = 8;
-const COL_GAP = 4;
-const SLOT_GAP = 6;
+const COL_GAP = 2;
+const SLOT_GAP = 4;
 const ROW_GAP = 8;
 
 const BOARD_WIDTH = TABLEAU_COLS * CARD_WIDTH + (TABLEAU_COLS - 1) * COL_GAP;
@@ -31,6 +33,7 @@ export interface FreeCellBoardProps {
 
 export default function FreeCellBoard({ state, onMove }: FreeCellBoardProps) {
   const { t } = useTranslation("freecell");
+  const { colors } = useTheme();
   const [selection, setSelection] = useState<Selection>(null);
 
   function tryMove(move: Move) {
@@ -224,7 +227,18 @@ export default function FreeCellBoard({ state, onMove }: FreeCellBoardProps) {
           accessibilityRole="none"
           accessibilityLabel={t("a11y.boardRegion")}
         >
-          <View style={styles.topRow}>
+          <View
+            style={[
+              styles.topRow,
+              {
+                borderBottomWidth: 1,
+                borderBottomColor: colors.border,
+                paddingTop: 6,
+                paddingHorizontal: 4,
+                paddingBottom: 8,
+              },
+            ]}
+          >
             <View style={styles.slotGroup}>
               {state.freeCells.map((card, i) => (
                 <FreeCellSlot
