@@ -238,11 +238,11 @@ describe("SudokuGrid", () => {
       const cells = getAllByRole("button");
       // Row 4, col 0 = index 4*9+0 = 36; check backgroundColor via style.
       // We verify the selected cell itself is NOT a peer by confirming it has
-      // surfaceHigh background, not surfacePeer.
+      // the translucent accent selected tint, not the peer tint.
       const selectedCell = cells[4 * 9 + 4]!;
       expect(selectedCell.props.style).toEqual(
         expect.arrayContaining([
-          expect.objectContaining({ backgroundColor: "#25252c" }), // dark surfaceHigh
+          expect.objectContaining({ backgroundColor: "#8ff5ffAA" }), // accent+AA selected tint
         ])
       );
     });
@@ -261,7 +261,7 @@ describe("SudokuGrid", () => {
       const selectedCell = cells[2 * 9 + 2]!;
       expect(selectedCell.props.style).toEqual(
         expect.arrayContaining([
-          expect.objectContaining({ backgroundColor: "#25252c" }), // surfaceHigh, not surfacePeer
+          expect.objectContaining({ backgroundColor: "#8ff5ffAA" }), // selected tint, not peer tint
         ])
       );
     });
@@ -281,7 +281,7 @@ describe("SudokuGrid", () => {
       const boxPeer = cells[1 * 9 + 1]!;
       expect(boxPeer.props.style).toEqual(
         expect.arrayContaining([
-          expect.objectContaining({ backgroundColor: "#1c1c23" }), // dark surfacePeer
+          expect.objectContaining({ backgroundColor: "#8ff5ff22" }), // accent+22 peer tint
         ])
       );
     });
@@ -313,7 +313,7 @@ describe("SudokuGrid", () => {
 // ---------------------------------------------------------------------------
 
 describe("NumberPad", () => {
-  it("renders 9 digits + erase + notes actions", () => {
+  it("renders 9 digits + erase + notes + hint actions", () => {
     const { getAllByRole, getByLabelText } = wrap(
       <NumberPad
         variant="classic"
@@ -322,12 +322,14 @@ describe("NumberPad", () => {
         onDigit={() => {}}
         onErase={() => {}}
         onToggleNotes={() => {}}
+        onHint={() => {}}
       />
     );
     const buttons = getAllByRole("button");
-    expect(buttons.length).toBe(11);
+    expect(buttons.length).toBe(12);
     expect(getByLabelText(/erase/i)).toBeTruthy();
     expect(getByLabelText(/pencil/i)).toBeTruthy();
+    expect(getByLabelText(/hint/i)).toBeTruthy();
   });
 
   it("fires onDigit with the placed digit", () => {
@@ -340,6 +342,7 @@ describe("NumberPad", () => {
         onDigit={onDigit}
         onErase={() => {}}
         onToggleNotes={() => {}}
+        onHint={() => {}}
       />
     );
     fireEvent.press(getByLabelText(/enter digit 5/i));
@@ -357,6 +360,7 @@ describe("NumberPad", () => {
         onDigit={() => {}}
         onErase={onErase}
         onToggleNotes={onToggleNotes}
+        onHint={() => {}}
       />
     );
     fireEvent.press(getByLabelText(/erase/i));
@@ -391,6 +395,7 @@ describe("NumberPad", () => {
         onDigit={onDigit}
         onErase={() => {}}
         onToggleNotes={() => {}}
+        onHint={() => {}}
       />
     );
     const btn = getByLabelText(/enter digit 4/i);
@@ -409,6 +414,7 @@ describe("NumberPad", () => {
         onDigit={() => {}}
         onErase={() => {}}
         onToggleNotes={() => {}}
+        onHint={() => {}}
       />
     ).toJSON();
     expect(tree).toMatchSnapshot();

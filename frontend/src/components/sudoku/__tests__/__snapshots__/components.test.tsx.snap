@@ -213,688 +213,34 @@ exports[`NumberPad matches snapshot — notes mode active 1`] = `
     {
       "alignItems": "center",
       "gap": 12,
+      "width": "100%",
     }
   }
 >
   <View
     style={
-      {
-        "gap": 8,
-      }
+      [
+        {
+          "flexDirection": "row",
+          "gap": 4,
+          "width": "100%",
+        },
+        {
+          "maxWidth": 360,
+        },
+      ]
     }
   >
     <View
-      style={
-        {
-          "flexDirection": "row",
-          "gap": 8,
-          "justifyContent": "center",
-        }
-      }
-    >
-      <View
-        accessibilityLabel="Enter digit 1"
-        accessibilityRole="button"
-        accessibilityState={
-          {
-            "busy": undefined,
-            "checked": undefined,
-            "disabled": false,
-            "expanded": undefined,
-            "selected": undefined,
-          }
-        }
-        accessibilityValue={
-          {
-            "max": undefined,
-            "min": undefined,
-            "now": undefined,
-            "text": undefined,
-          }
-        }
-        accessible={true}
-        collapsable={false}
-        focusable={true}
-        onBlur={[Function]}
-        onClick={[Function]}
-        onFocus={[Function]}
-        onResponderGrant={[Function]}
-        onResponderMove={[Function]}
-        onResponderRelease={[Function]}
-        onResponderTerminate={[Function]}
-        onResponderTerminationRequest={[Function]}
-        onStartShouldSetResponder={[Function]}
-        style={
-          [
-            {
-              "alignItems": "center",
-              "borderRadius": 8,
-              "borderWidth": 1,
-              "height": 56,
-              "justifyContent": "center",
-              "width": 64,
-            },
-            {
-              "backgroundColor": "#19191f",
-              "borderColor": "#2e2e38",
-              "opacity": 1,
-            },
-          ]
-        }
-      >
-        <Text
-          style={
-            [
-              {
-                "fontSize": 22,
-                "fontWeight": "600",
-                "lineHeight": 22,
-                "textAlign": "center",
-                "textAlignVertical": "center",
-              },
-              {
-                "color": "#e8e8f0",
-              },
-            ]
-          }
-        >
-          1
-        </Text>
-      </View>
-      <View
-        accessibilityLabel="Enter digit 2"
-        accessibilityRole="button"
-        accessibilityState={
-          {
-            "busy": undefined,
-            "checked": undefined,
-            "disabled": false,
-            "expanded": undefined,
-            "selected": undefined,
-          }
-        }
-        accessibilityValue={
-          {
-            "max": undefined,
-            "min": undefined,
-            "now": undefined,
-            "text": undefined,
-          }
-        }
-        accessible={true}
-        collapsable={false}
-        focusable={true}
-        onBlur={[Function]}
-        onClick={[Function]}
-        onFocus={[Function]}
-        onResponderGrant={[Function]}
-        onResponderMove={[Function]}
-        onResponderRelease={[Function]}
-        onResponderTerminate={[Function]}
-        onResponderTerminationRequest={[Function]}
-        onStartShouldSetResponder={[Function]}
-        style={
-          [
-            {
-              "alignItems": "center",
-              "borderRadius": 8,
-              "borderWidth": 1,
-              "height": 56,
-              "justifyContent": "center",
-              "width": 64,
-            },
-            {
-              "backgroundColor": "#19191f",
-              "borderColor": "#2e2e38",
-              "opacity": 1,
-            },
-          ]
-        }
-      >
-        <Text
-          style={
-            [
-              {
-                "fontSize": 22,
-                "fontWeight": "600",
-                "lineHeight": 22,
-                "textAlign": "center",
-                "textAlignVertical": "center",
-              },
-              {
-                "color": "#e8e8f0",
-              },
-            ]
-          }
-        >
-          2
-        </Text>
-      </View>
-      <View
-        accessibilityLabel="Enter digit 3"
-        accessibilityRole="button"
-        accessibilityState={
-          {
-            "busy": undefined,
-            "checked": undefined,
-            "disabled": false,
-            "expanded": undefined,
-            "selected": undefined,
-          }
-        }
-        accessibilityValue={
-          {
-            "max": undefined,
-            "min": undefined,
-            "now": undefined,
-            "text": undefined,
-          }
-        }
-        accessible={true}
-        collapsable={false}
-        focusable={true}
-        onBlur={[Function]}
-        onClick={[Function]}
-        onFocus={[Function]}
-        onResponderGrant={[Function]}
-        onResponderMove={[Function]}
-        onResponderRelease={[Function]}
-        onResponderTerminate={[Function]}
-        onResponderTerminationRequest={[Function]}
-        onStartShouldSetResponder={[Function]}
-        style={
-          [
-            {
-              "alignItems": "center",
-              "borderRadius": 8,
-              "borderWidth": 1,
-              "height": 56,
-              "justifyContent": "center",
-              "width": 64,
-            },
-            {
-              "backgroundColor": "#19191f",
-              "borderColor": "#2e2e38",
-              "opacity": 1,
-            },
-          ]
-        }
-      >
-        <Text
-          style={
-            [
-              {
-                "fontSize": 22,
-                "fontWeight": "600",
-                "lineHeight": 22,
-                "textAlign": "center",
-                "textAlignVertical": "center",
-              },
-              {
-                "color": "#e8e8f0",
-              },
-            ]
-          }
-        >
-          3
-        </Text>
-      </View>
-    </View>
-    <View
-      style={
-        {
-          "flexDirection": "row",
-          "gap": 8,
-          "justifyContent": "center",
-        }
-      }
-    >
-      <View
-        accessibilityLabel="Enter digit 4"
-        accessibilityRole="button"
-        accessibilityState={
-          {
-            "busy": undefined,
-            "checked": undefined,
-            "disabled": false,
-            "expanded": undefined,
-            "selected": undefined,
-          }
-        }
-        accessibilityValue={
-          {
-            "max": undefined,
-            "min": undefined,
-            "now": undefined,
-            "text": undefined,
-          }
-        }
-        accessible={true}
-        collapsable={false}
-        focusable={true}
-        onBlur={[Function]}
-        onClick={[Function]}
-        onFocus={[Function]}
-        onResponderGrant={[Function]}
-        onResponderMove={[Function]}
-        onResponderRelease={[Function]}
-        onResponderTerminate={[Function]}
-        onResponderTerminationRequest={[Function]}
-        onStartShouldSetResponder={[Function]}
-        style={
-          [
-            {
-              "alignItems": "center",
-              "borderRadius": 8,
-              "borderWidth": 1,
-              "height": 56,
-              "justifyContent": "center",
-              "width": 64,
-            },
-            {
-              "backgroundColor": "#19191f",
-              "borderColor": "#2e2e38",
-              "opacity": 1,
-            },
-          ]
-        }
-      >
-        <Text
-          style={
-            [
-              {
-                "fontSize": 22,
-                "fontWeight": "600",
-                "lineHeight": 22,
-                "textAlign": "center",
-                "textAlignVertical": "center",
-              },
-              {
-                "color": "#e8e8f0",
-              },
-            ]
-          }
-        >
-          4
-        </Text>
-      </View>
-      <View
-        accessibilityLabel="Enter digit 5"
-        accessibilityRole="button"
-        accessibilityState={
-          {
-            "busy": undefined,
-            "checked": undefined,
-            "disabled": false,
-            "expanded": undefined,
-            "selected": undefined,
-          }
-        }
-        accessibilityValue={
-          {
-            "max": undefined,
-            "min": undefined,
-            "now": undefined,
-            "text": undefined,
-          }
-        }
-        accessible={true}
-        collapsable={false}
-        focusable={true}
-        onBlur={[Function]}
-        onClick={[Function]}
-        onFocus={[Function]}
-        onResponderGrant={[Function]}
-        onResponderMove={[Function]}
-        onResponderRelease={[Function]}
-        onResponderTerminate={[Function]}
-        onResponderTerminationRequest={[Function]}
-        onStartShouldSetResponder={[Function]}
-        style={
-          [
-            {
-              "alignItems": "center",
-              "borderRadius": 8,
-              "borderWidth": 1,
-              "height": 56,
-              "justifyContent": "center",
-              "width": 64,
-            },
-            {
-              "backgroundColor": "#19191f",
-              "borderColor": "#2e2e38",
-              "opacity": 1,
-            },
-          ]
-        }
-      >
-        <Text
-          style={
-            [
-              {
-                "fontSize": 22,
-                "fontWeight": "600",
-                "lineHeight": 22,
-                "textAlign": "center",
-                "textAlignVertical": "center",
-              },
-              {
-                "color": "#e8e8f0",
-              },
-            ]
-          }
-        >
-          5
-        </Text>
-      </View>
-      <View
-        accessibilityLabel="Enter digit 6"
-        accessibilityRole="button"
-        accessibilityState={
-          {
-            "busy": undefined,
-            "checked": undefined,
-            "disabled": false,
-            "expanded": undefined,
-            "selected": undefined,
-          }
-        }
-        accessibilityValue={
-          {
-            "max": undefined,
-            "min": undefined,
-            "now": undefined,
-            "text": undefined,
-          }
-        }
-        accessible={true}
-        collapsable={false}
-        focusable={true}
-        onBlur={[Function]}
-        onClick={[Function]}
-        onFocus={[Function]}
-        onResponderGrant={[Function]}
-        onResponderMove={[Function]}
-        onResponderRelease={[Function]}
-        onResponderTerminate={[Function]}
-        onResponderTerminationRequest={[Function]}
-        onStartShouldSetResponder={[Function]}
-        style={
-          [
-            {
-              "alignItems": "center",
-              "borderRadius": 8,
-              "borderWidth": 1,
-              "height": 56,
-              "justifyContent": "center",
-              "width": 64,
-            },
-            {
-              "backgroundColor": "#19191f",
-              "borderColor": "#2e2e38",
-              "opacity": 1,
-            },
-          ]
-        }
-      >
-        <Text
-          style={
-            [
-              {
-                "fontSize": 22,
-                "fontWeight": "600",
-                "lineHeight": 22,
-                "textAlign": "center",
-                "textAlignVertical": "center",
-              },
-              {
-                "color": "#e8e8f0",
-              },
-            ]
-          }
-        >
-          6
-        </Text>
-      </View>
-    </View>
-    <View
-      style={
-        {
-          "flexDirection": "row",
-          "gap": 8,
-          "justifyContent": "center",
-        }
-      }
-    >
-      <View
-        accessibilityLabel="Enter digit 7"
-        accessibilityRole="button"
-        accessibilityState={
-          {
-            "busy": undefined,
-            "checked": undefined,
-            "disabled": false,
-            "expanded": undefined,
-            "selected": undefined,
-          }
-        }
-        accessibilityValue={
-          {
-            "max": undefined,
-            "min": undefined,
-            "now": undefined,
-            "text": undefined,
-          }
-        }
-        accessible={true}
-        collapsable={false}
-        focusable={true}
-        onBlur={[Function]}
-        onClick={[Function]}
-        onFocus={[Function]}
-        onResponderGrant={[Function]}
-        onResponderMove={[Function]}
-        onResponderRelease={[Function]}
-        onResponderTerminate={[Function]}
-        onResponderTerminationRequest={[Function]}
-        onStartShouldSetResponder={[Function]}
-        style={
-          [
-            {
-              "alignItems": "center",
-              "borderRadius": 8,
-              "borderWidth": 1,
-              "height": 56,
-              "justifyContent": "center",
-              "width": 64,
-            },
-            {
-              "backgroundColor": "#19191f",
-              "borderColor": "#2e2e38",
-              "opacity": 1,
-            },
-          ]
-        }
-      >
-        <Text
-          style={
-            [
-              {
-                "fontSize": 22,
-                "fontWeight": "600",
-                "lineHeight": 22,
-                "textAlign": "center",
-                "textAlignVertical": "center",
-              },
-              {
-                "color": "#e8e8f0",
-              },
-            ]
-          }
-        >
-          7
-        </Text>
-      </View>
-      <View
-        accessibilityLabel="Enter digit 8"
-        accessibilityRole="button"
-        accessibilityState={
-          {
-            "busy": undefined,
-            "checked": undefined,
-            "disabled": false,
-            "expanded": undefined,
-            "selected": undefined,
-          }
-        }
-        accessibilityValue={
-          {
-            "max": undefined,
-            "min": undefined,
-            "now": undefined,
-            "text": undefined,
-          }
-        }
-        accessible={true}
-        collapsable={false}
-        focusable={true}
-        onBlur={[Function]}
-        onClick={[Function]}
-        onFocus={[Function]}
-        onResponderGrant={[Function]}
-        onResponderMove={[Function]}
-        onResponderRelease={[Function]}
-        onResponderTerminate={[Function]}
-        onResponderTerminationRequest={[Function]}
-        onStartShouldSetResponder={[Function]}
-        style={
-          [
-            {
-              "alignItems": "center",
-              "borderRadius": 8,
-              "borderWidth": 1,
-              "height": 56,
-              "justifyContent": "center",
-              "width": 64,
-            },
-            {
-              "backgroundColor": "#19191f",
-              "borderColor": "#2e2e38",
-              "opacity": 1,
-            },
-          ]
-        }
-      >
-        <Text
-          style={
-            [
-              {
-                "fontSize": 22,
-                "fontWeight": "600",
-                "lineHeight": 22,
-                "textAlign": "center",
-                "textAlignVertical": "center",
-              },
-              {
-                "color": "#e8e8f0",
-              },
-            ]
-          }
-        >
-          8
-        </Text>
-      </View>
-      <View
-        accessibilityLabel="Enter digit 9"
-        accessibilityRole="button"
-        accessibilityState={
-          {
-            "busy": undefined,
-            "checked": undefined,
-            "disabled": false,
-            "expanded": undefined,
-            "selected": undefined,
-          }
-        }
-        accessibilityValue={
-          {
-            "max": undefined,
-            "min": undefined,
-            "now": undefined,
-            "text": undefined,
-          }
-        }
-        accessible={true}
-        collapsable={false}
-        focusable={true}
-        onBlur={[Function]}
-        onClick={[Function]}
-        onFocus={[Function]}
-        onResponderGrant={[Function]}
-        onResponderMove={[Function]}
-        onResponderRelease={[Function]}
-        onResponderTerminate={[Function]}
-        onResponderTerminationRequest={[Function]}
-        onStartShouldSetResponder={[Function]}
-        style={
-          [
-            {
-              "alignItems": "center",
-              "borderRadius": 8,
-              "borderWidth": 1,
-              "height": 56,
-              "justifyContent": "center",
-              "width": 64,
-            },
-            {
-              "backgroundColor": "#19191f",
-              "borderColor": "#2e2e38",
-              "opacity": 1,
-            },
-          ]
-        }
-      >
-        <Text
-          style={
-            [
-              {
-                "fontSize": 22,
-                "fontWeight": "600",
-                "lineHeight": 22,
-                "textAlign": "center",
-                "textAlignVertical": "center",
-              },
-              {
-                "color": "#e8e8f0",
-              },
-            ]
-          }
-        >
-          9
-        </Text>
-      </View>
-    </View>
-  </View>
-  <View
-    style={
-      {
-        "alignSelf": "stretch",
-        "flexDirection": "row",
-        "gap": 8,
-        "maxWidth": 280,
-      }
-    }
-  >
-    <View
-      accessibilityLabel="Toggle pencil marks"
+      accessibilityLabel="Enter digit 1"
       accessibilityRole="button"
       accessibilityState={
         {
           "busy": undefined,
           "checked": undefined,
-          "disabled": undefined,
+          "disabled": false,
           "expanded": undefined,
-          "selected": true,
+          "selected": undefined,
         }
       }
       accessibilityValue={
@@ -921,15 +267,17 @@ exports[`NumberPad matches snapshot — notes mode active 1`] = `
         [
           {
             "alignItems": "center",
+            "aspectRatio": 0.85,
             "borderRadius": 8,
             "borderWidth": 1,
             "flex": 1,
+            "gap": 2,
             "justifyContent": "center",
-            "paddingVertical": 10,
           },
           {
-            "backgroundColor": "#8ff5ff",
+            "backgroundColor": "#25252c",
             "borderColor": "#2e2e38",
+            "opacity": 1,
           },
         ]
       }
@@ -938,18 +286,726 @@ exports[`NumberPad matches snapshot — notes mode active 1`] = `
         style={
           [
             {
-              "fontSize": 15,
-              "fontWeight": "600",
+              "fontFamily": "SpaceGrotesk",
+              "fontSize": 20,
+              "fontWeight": "700",
+              "textAlign": "center",
             },
             {
-              "color": "#0e0e13",
+              "color": "#e8e8f0",
             },
           ]
         }
       >
-        Notes
+        1
+      </Text>
+      <Text
+        style={
+          [
+            {
+              "fontSize": 9,
+              "fontWeight": "600",
+              "textAlign": "center",
+            },
+            {
+              "color": "#a0a0ac",
+            },
+          ]
+        }
+      >
+        9
       </Text>
     </View>
+    <View
+      accessibilityLabel="Enter digit 2"
+      accessibilityRole="button"
+      accessibilityState={
+        {
+          "busy": undefined,
+          "checked": undefined,
+          "disabled": false,
+          "expanded": undefined,
+          "selected": undefined,
+        }
+      }
+      accessibilityValue={
+        {
+          "max": undefined,
+          "min": undefined,
+          "now": undefined,
+          "text": undefined,
+        }
+      }
+      accessible={true}
+      collapsable={false}
+      focusable={true}
+      onBlur={[Function]}
+      onClick={[Function]}
+      onFocus={[Function]}
+      onResponderGrant={[Function]}
+      onResponderMove={[Function]}
+      onResponderRelease={[Function]}
+      onResponderTerminate={[Function]}
+      onResponderTerminationRequest={[Function]}
+      onStartShouldSetResponder={[Function]}
+      style={
+        [
+          {
+            "alignItems": "center",
+            "aspectRatio": 0.85,
+            "borderRadius": 8,
+            "borderWidth": 1,
+            "flex": 1,
+            "gap": 2,
+            "justifyContent": "center",
+          },
+          {
+            "backgroundColor": "#25252c",
+            "borderColor": "#2e2e38",
+            "opacity": 1,
+          },
+        ]
+      }
+    >
+      <Text
+        style={
+          [
+            {
+              "fontFamily": "SpaceGrotesk",
+              "fontSize": 20,
+              "fontWeight": "700",
+              "textAlign": "center",
+            },
+            {
+              "color": "#e8e8f0",
+            },
+          ]
+        }
+      >
+        2
+      </Text>
+      <Text
+        style={
+          [
+            {
+              "fontSize": 9,
+              "fontWeight": "600",
+              "textAlign": "center",
+            },
+            {
+              "color": "#a0a0ac",
+            },
+          ]
+        }
+      >
+        9
+      </Text>
+    </View>
+    <View
+      accessibilityLabel="Enter digit 3"
+      accessibilityRole="button"
+      accessibilityState={
+        {
+          "busy": undefined,
+          "checked": undefined,
+          "disabled": false,
+          "expanded": undefined,
+          "selected": undefined,
+        }
+      }
+      accessibilityValue={
+        {
+          "max": undefined,
+          "min": undefined,
+          "now": undefined,
+          "text": undefined,
+        }
+      }
+      accessible={true}
+      collapsable={false}
+      focusable={true}
+      onBlur={[Function]}
+      onClick={[Function]}
+      onFocus={[Function]}
+      onResponderGrant={[Function]}
+      onResponderMove={[Function]}
+      onResponderRelease={[Function]}
+      onResponderTerminate={[Function]}
+      onResponderTerminationRequest={[Function]}
+      onStartShouldSetResponder={[Function]}
+      style={
+        [
+          {
+            "alignItems": "center",
+            "aspectRatio": 0.85,
+            "borderRadius": 8,
+            "borderWidth": 1,
+            "flex": 1,
+            "gap": 2,
+            "justifyContent": "center",
+          },
+          {
+            "backgroundColor": "#25252c",
+            "borderColor": "#2e2e38",
+            "opacity": 1,
+          },
+        ]
+      }
+    >
+      <Text
+        style={
+          [
+            {
+              "fontFamily": "SpaceGrotesk",
+              "fontSize": 20,
+              "fontWeight": "700",
+              "textAlign": "center",
+            },
+            {
+              "color": "#e8e8f0",
+            },
+          ]
+        }
+      >
+        3
+      </Text>
+      <Text
+        style={
+          [
+            {
+              "fontSize": 9,
+              "fontWeight": "600",
+              "textAlign": "center",
+            },
+            {
+              "color": "#a0a0ac",
+            },
+          ]
+        }
+      >
+        9
+      </Text>
+    </View>
+    <View
+      accessibilityLabel="Enter digit 4"
+      accessibilityRole="button"
+      accessibilityState={
+        {
+          "busy": undefined,
+          "checked": undefined,
+          "disabled": false,
+          "expanded": undefined,
+          "selected": undefined,
+        }
+      }
+      accessibilityValue={
+        {
+          "max": undefined,
+          "min": undefined,
+          "now": undefined,
+          "text": undefined,
+        }
+      }
+      accessible={true}
+      collapsable={false}
+      focusable={true}
+      onBlur={[Function]}
+      onClick={[Function]}
+      onFocus={[Function]}
+      onResponderGrant={[Function]}
+      onResponderMove={[Function]}
+      onResponderRelease={[Function]}
+      onResponderTerminate={[Function]}
+      onResponderTerminationRequest={[Function]}
+      onStartShouldSetResponder={[Function]}
+      style={
+        [
+          {
+            "alignItems": "center",
+            "aspectRatio": 0.85,
+            "borderRadius": 8,
+            "borderWidth": 1,
+            "flex": 1,
+            "gap": 2,
+            "justifyContent": "center",
+          },
+          {
+            "backgroundColor": "#25252c",
+            "borderColor": "#2e2e38",
+            "opacity": 1,
+          },
+        ]
+      }
+    >
+      <Text
+        style={
+          [
+            {
+              "fontFamily": "SpaceGrotesk",
+              "fontSize": 20,
+              "fontWeight": "700",
+              "textAlign": "center",
+            },
+            {
+              "color": "#e8e8f0",
+            },
+          ]
+        }
+      >
+        4
+      </Text>
+      <Text
+        style={
+          [
+            {
+              "fontSize": 9,
+              "fontWeight": "600",
+              "textAlign": "center",
+            },
+            {
+              "color": "#a0a0ac",
+            },
+          ]
+        }
+      >
+        9
+      </Text>
+    </View>
+    <View
+      accessibilityLabel="Enter digit 5"
+      accessibilityRole="button"
+      accessibilityState={
+        {
+          "busy": undefined,
+          "checked": undefined,
+          "disabled": false,
+          "expanded": undefined,
+          "selected": undefined,
+        }
+      }
+      accessibilityValue={
+        {
+          "max": undefined,
+          "min": undefined,
+          "now": undefined,
+          "text": undefined,
+        }
+      }
+      accessible={true}
+      collapsable={false}
+      focusable={true}
+      onBlur={[Function]}
+      onClick={[Function]}
+      onFocus={[Function]}
+      onResponderGrant={[Function]}
+      onResponderMove={[Function]}
+      onResponderRelease={[Function]}
+      onResponderTerminate={[Function]}
+      onResponderTerminationRequest={[Function]}
+      onStartShouldSetResponder={[Function]}
+      style={
+        [
+          {
+            "alignItems": "center",
+            "aspectRatio": 0.85,
+            "borderRadius": 8,
+            "borderWidth": 1,
+            "flex": 1,
+            "gap": 2,
+            "justifyContent": "center",
+          },
+          {
+            "backgroundColor": "#25252c",
+            "borderColor": "#2e2e38",
+            "opacity": 1,
+          },
+        ]
+      }
+    >
+      <Text
+        style={
+          [
+            {
+              "fontFamily": "SpaceGrotesk",
+              "fontSize": 20,
+              "fontWeight": "700",
+              "textAlign": "center",
+            },
+            {
+              "color": "#e8e8f0",
+            },
+          ]
+        }
+      >
+        5
+      </Text>
+      <Text
+        style={
+          [
+            {
+              "fontSize": 9,
+              "fontWeight": "600",
+              "textAlign": "center",
+            },
+            {
+              "color": "#a0a0ac",
+            },
+          ]
+        }
+      >
+        9
+      </Text>
+    </View>
+    <View
+      accessibilityLabel="Enter digit 6"
+      accessibilityRole="button"
+      accessibilityState={
+        {
+          "busy": undefined,
+          "checked": undefined,
+          "disabled": false,
+          "expanded": undefined,
+          "selected": undefined,
+        }
+      }
+      accessibilityValue={
+        {
+          "max": undefined,
+          "min": undefined,
+          "now": undefined,
+          "text": undefined,
+        }
+      }
+      accessible={true}
+      collapsable={false}
+      focusable={true}
+      onBlur={[Function]}
+      onClick={[Function]}
+      onFocus={[Function]}
+      onResponderGrant={[Function]}
+      onResponderMove={[Function]}
+      onResponderRelease={[Function]}
+      onResponderTerminate={[Function]}
+      onResponderTerminationRequest={[Function]}
+      onStartShouldSetResponder={[Function]}
+      style={
+        [
+          {
+            "alignItems": "center",
+            "aspectRatio": 0.85,
+            "borderRadius": 8,
+            "borderWidth": 1,
+            "flex": 1,
+            "gap": 2,
+            "justifyContent": "center",
+          },
+          {
+            "backgroundColor": "#25252c",
+            "borderColor": "#2e2e38",
+            "opacity": 1,
+          },
+        ]
+      }
+    >
+      <Text
+        style={
+          [
+            {
+              "fontFamily": "SpaceGrotesk",
+              "fontSize": 20,
+              "fontWeight": "700",
+              "textAlign": "center",
+            },
+            {
+              "color": "#e8e8f0",
+            },
+          ]
+        }
+      >
+        6
+      </Text>
+      <Text
+        style={
+          [
+            {
+              "fontSize": 9,
+              "fontWeight": "600",
+              "textAlign": "center",
+            },
+            {
+              "color": "#a0a0ac",
+            },
+          ]
+        }
+      >
+        9
+      </Text>
+    </View>
+    <View
+      accessibilityLabel="Enter digit 7"
+      accessibilityRole="button"
+      accessibilityState={
+        {
+          "busy": undefined,
+          "checked": undefined,
+          "disabled": false,
+          "expanded": undefined,
+          "selected": undefined,
+        }
+      }
+      accessibilityValue={
+        {
+          "max": undefined,
+          "min": undefined,
+          "now": undefined,
+          "text": undefined,
+        }
+      }
+      accessible={true}
+      collapsable={false}
+      focusable={true}
+      onBlur={[Function]}
+      onClick={[Function]}
+      onFocus={[Function]}
+      onResponderGrant={[Function]}
+      onResponderMove={[Function]}
+      onResponderRelease={[Function]}
+      onResponderTerminate={[Function]}
+      onResponderTerminationRequest={[Function]}
+      onStartShouldSetResponder={[Function]}
+      style={
+        [
+          {
+            "alignItems": "center",
+            "aspectRatio": 0.85,
+            "borderRadius": 8,
+            "borderWidth": 1,
+            "flex": 1,
+            "gap": 2,
+            "justifyContent": "center",
+          },
+          {
+            "backgroundColor": "#25252c",
+            "borderColor": "#2e2e38",
+            "opacity": 1,
+          },
+        ]
+      }
+    >
+      <Text
+        style={
+          [
+            {
+              "fontFamily": "SpaceGrotesk",
+              "fontSize": 20,
+              "fontWeight": "700",
+              "textAlign": "center",
+            },
+            {
+              "color": "#e8e8f0",
+            },
+          ]
+        }
+      >
+        7
+      </Text>
+      <Text
+        style={
+          [
+            {
+              "fontSize": 9,
+              "fontWeight": "600",
+              "textAlign": "center",
+            },
+            {
+              "color": "#a0a0ac",
+            },
+          ]
+        }
+      >
+        9
+      </Text>
+    </View>
+    <View
+      accessibilityLabel="Enter digit 8"
+      accessibilityRole="button"
+      accessibilityState={
+        {
+          "busy": undefined,
+          "checked": undefined,
+          "disabled": false,
+          "expanded": undefined,
+          "selected": undefined,
+        }
+      }
+      accessibilityValue={
+        {
+          "max": undefined,
+          "min": undefined,
+          "now": undefined,
+          "text": undefined,
+        }
+      }
+      accessible={true}
+      collapsable={false}
+      focusable={true}
+      onBlur={[Function]}
+      onClick={[Function]}
+      onFocus={[Function]}
+      onResponderGrant={[Function]}
+      onResponderMove={[Function]}
+      onResponderRelease={[Function]}
+      onResponderTerminate={[Function]}
+      onResponderTerminationRequest={[Function]}
+      onStartShouldSetResponder={[Function]}
+      style={
+        [
+          {
+            "alignItems": "center",
+            "aspectRatio": 0.85,
+            "borderRadius": 8,
+            "borderWidth": 1,
+            "flex": 1,
+            "gap": 2,
+            "justifyContent": "center",
+          },
+          {
+            "backgroundColor": "#25252c",
+            "borderColor": "#2e2e38",
+            "opacity": 1,
+          },
+        ]
+      }
+    >
+      <Text
+        style={
+          [
+            {
+              "fontFamily": "SpaceGrotesk",
+              "fontSize": 20,
+              "fontWeight": "700",
+              "textAlign": "center",
+            },
+            {
+              "color": "#e8e8f0",
+            },
+          ]
+        }
+      >
+        8
+      </Text>
+      <Text
+        style={
+          [
+            {
+              "fontSize": 9,
+              "fontWeight": "600",
+              "textAlign": "center",
+            },
+            {
+              "color": "#a0a0ac",
+            },
+          ]
+        }
+      >
+        9
+      </Text>
+    </View>
+    <View
+      accessibilityLabel="Enter digit 9"
+      accessibilityRole="button"
+      accessibilityState={
+        {
+          "busy": undefined,
+          "checked": undefined,
+          "disabled": false,
+          "expanded": undefined,
+          "selected": undefined,
+        }
+      }
+      accessibilityValue={
+        {
+          "max": undefined,
+          "min": undefined,
+          "now": undefined,
+          "text": undefined,
+        }
+      }
+      accessible={true}
+      collapsable={false}
+      focusable={true}
+      onBlur={[Function]}
+      onClick={[Function]}
+      onFocus={[Function]}
+      onResponderGrant={[Function]}
+      onResponderMove={[Function]}
+      onResponderRelease={[Function]}
+      onResponderTerminate={[Function]}
+      onResponderTerminationRequest={[Function]}
+      onStartShouldSetResponder={[Function]}
+      style={
+        [
+          {
+            "alignItems": "center",
+            "aspectRatio": 0.85,
+            "borderRadius": 8,
+            "borderWidth": 1,
+            "flex": 1,
+            "gap": 2,
+            "justifyContent": "center",
+          },
+          {
+            "backgroundColor": "#25252c",
+            "borderColor": "#2e2e38",
+            "opacity": 1,
+          },
+        ]
+      }
+    >
+      <Text
+        style={
+          [
+            {
+              "fontFamily": "SpaceGrotesk",
+              "fontSize": 20,
+              "fontWeight": "700",
+              "textAlign": "center",
+            },
+            {
+              "color": "#e8e8f0",
+            },
+          ]
+        }
+      >
+        9
+      </Text>
+      <Text
+        style={
+          [
+            {
+              "fontSize": 9,
+              "fontWeight": "600",
+              "textAlign": "center",
+            },
+            {
+              "color": "#a0a0ac",
+            },
+          ]
+        }
+      >
+        9
+      </Text>
+    </View>
+  </View>
+  <View
+    style={
+      {
+        "flexDirection": "row",
+        "gap": 8,
+        "justifyContent": "center",
+      }
+    }
+  >
     <View
       accessibilityLabel="Erase cell"
       accessibilityRole="button"
@@ -986,15 +1042,14 @@ exports[`NumberPad matches snapshot — notes mode active 1`] = `
         [
           {
             "alignItems": "center",
-            "borderRadius": 8,
+            "borderRadius": 999,
             "borderWidth": 1,
-            "flex": 1,
             "justifyContent": "center",
-            "paddingVertical": 10,
+            "paddingHorizontal": 16,
+            "paddingVertical": 8,
           },
           {
-            "backgroundColor": "#19191f",
-            "borderColor": "#2e2e38",
+            "borderColor": "#8ff5ff",
           },
         ]
       }
@@ -1003,16 +1058,151 @@ exports[`NumberPad matches snapshot — notes mode active 1`] = `
         style={
           [
             {
-              "fontSize": 15,
-              "fontWeight": "600",
+              "fontSize": 11,
+              "fontWeight": "800",
+              "letterSpacing": 0.8,
+              "textTransform": "uppercase",
             },
             {
-              "color": "#e8e8f0",
+              "color": "#8ff5ff",
             },
           ]
         }
       >
         Erase
+      </Text>
+    </View>
+    <View
+      accessibilityLabel="Toggle pencil marks"
+      accessibilityRole="button"
+      accessibilityState={
+        {
+          "busy": undefined,
+          "checked": undefined,
+          "disabled": undefined,
+          "expanded": undefined,
+          "selected": true,
+        }
+      }
+      accessibilityValue={
+        {
+          "max": undefined,
+          "min": undefined,
+          "now": undefined,
+          "text": undefined,
+        }
+      }
+      accessible={true}
+      collapsable={false}
+      focusable={true}
+      onBlur={[Function]}
+      onClick={[Function]}
+      onFocus={[Function]}
+      onResponderGrant={[Function]}
+      onResponderMove={[Function]}
+      onResponderRelease={[Function]}
+      onResponderTerminate={[Function]}
+      onResponderTerminationRequest={[Function]}
+      onStartShouldSetResponder={[Function]}
+      style={
+        [
+          {
+            "alignItems": "center",
+            "borderRadius": 999,
+            "borderWidth": 1,
+            "justifyContent": "center",
+            "paddingHorizontal": 16,
+            "paddingVertical": 8,
+          },
+          {
+            "backgroundColor": "#8ff5ff",
+            "borderColor": "#8ff5ff",
+          },
+        ]
+      }
+    >
+      <Text
+        style={
+          [
+            {
+              "fontSize": 11,
+              "fontWeight": "800",
+              "letterSpacing": 0.8,
+              "textTransform": "uppercase",
+            },
+            {
+              "color": "#0e0e13",
+            },
+          ]
+        }
+      >
+        Notes
+      </Text>
+    </View>
+    <View
+      accessibilityLabel="Hint"
+      accessibilityRole="button"
+      accessibilityState={
+        {
+          "busy": undefined,
+          "checked": undefined,
+          "disabled": undefined,
+          "expanded": undefined,
+          "selected": undefined,
+        }
+      }
+      accessibilityValue={
+        {
+          "max": undefined,
+          "min": undefined,
+          "now": undefined,
+          "text": undefined,
+        }
+      }
+      accessible={true}
+      collapsable={false}
+      focusable={true}
+      onBlur={[Function]}
+      onClick={[Function]}
+      onFocus={[Function]}
+      onResponderGrant={[Function]}
+      onResponderMove={[Function]}
+      onResponderRelease={[Function]}
+      onResponderTerminate={[Function]}
+      onResponderTerminationRequest={[Function]}
+      onStartShouldSetResponder={[Function]}
+      style={
+        [
+          {
+            "alignItems": "center",
+            "borderRadius": 999,
+            "borderWidth": 1,
+            "justifyContent": "center",
+            "paddingHorizontal": 16,
+            "paddingVertical": 8,
+          },
+          {
+            "borderColor": "#8ff5ff",
+          },
+        ]
+      }
+    >
+      <Text
+        style={
+          [
+            {
+              "fontSize": 11,
+              "fontWeight": "800",
+              "letterSpacing": 0.8,
+              "textTransform": "uppercase",
+            },
+            {
+              "color": "#8ff5ff",
+            },
+          ]
+        }
+      >
+        Hint
       </Text>
     </View>
   </View>
@@ -1062,8 +1252,6 @@ exports[`SudokuCell matches snapshot — given value 1`] = `
       },
       {
         "backgroundColor": "#19191f",
-        "borderColor": "#2e2e38",
-        "borderWidth": 0.5,
       },
     ]
   }
@@ -1072,7 +1260,9 @@ exports[`SudokuCell matches snapshot — given value 1`] = `
     style={
       [
         {
-          "fontSize": 22,
+          "fontSize": 18,
+          "fontVariantNumeric": "tabular-nums",
+          "lineHeight": 18,
         },
         {
           "color": "#e8e8f0",
@@ -1128,9 +1318,7 @@ exports[`SudokuCell matches snapshot — peer cell 1`] = `
         "justifyContent": "center",
       },
       {
-        "backgroundColor": "#1c1c23",
-        "borderColor": "#2e2e38",
-        "borderWidth": 0.5,
+        "backgroundColor": "#8ff5ff22",
       },
     ]
   }
@@ -1139,7 +1327,9 @@ exports[`SudokuCell matches snapshot — peer cell 1`] = `
     style={
       [
         {
-          "fontSize": 22,
+          "fontSize": 18,
+          "fontVariantNumeric": "tabular-nums",
+          "lineHeight": 18,
         },
         {
           "color": "#8ff5ff",
@@ -1195,9 +1385,7 @@ exports[`SudokuCell matches snapshot — selected error cell 1`] = `
         "justifyContent": "center",
       },
       {
-        "backgroundColor": "#25252c",
-        "borderColor": "#8ff5ff",
-        "borderWidth": 2,
+        "backgroundColor": "#8ff5ffAA",
       },
     ]
   }
@@ -1206,7 +1394,9 @@ exports[`SudokuCell matches snapshot — selected error cell 1`] = `
     style={
       [
         {
-          "fontSize": 22,
+          "fontSize": 18,
+          "fontVariantNumeric": "tabular-nums",
+          "lineHeight": 18,
         },
         {
           "color": "#ff716c",
@@ -1231,7 +1421,10 @@ exports[`SudokuGrid matches snapshot with a typical mid-game state 1`] = `
         "width": "100%",
       },
       {
-        "backgroundColor": "#2e2e38",
+        "borderColor": "#4a4a56",
+        "borderRadius": 4,
+        "borderWidth": 2,
+        "overflow": "hidden",
       },
     ]
   }
@@ -1247,9 +1440,11 @@ exports[`SudokuGrid matches snapshot with a typical mid-game state 1`] = `
     <View
       style={
         {
+          "borderBottomColor": "#2e2e38",
+          "borderBottomWidth": 0.5,
+          "borderRightColor": "#2e2e38",
+          "borderRightWidth": 0.5,
           "flex": 1,
-          "marginBottom": 0.5,
-          "marginRight": 0.5,
         }
       }
     >
@@ -1295,8 +1490,6 @@ exports[`SudokuGrid matches snapshot with a typical mid-game state 1`] = `
             },
             {
               "backgroundColor": "#19191f",
-              "borderColor": "#2e2e38",
-              "borderWidth": 0.5,
             },
           ]
         }
@@ -1305,7 +1498,9 @@ exports[`SudokuGrid matches snapshot with a typical mid-game state 1`] = `
           style={
             [
               {
-                "fontSize": 22,
+                "fontSize": 18,
+                "fontVariantNumeric": "tabular-nums",
+                "lineHeight": 18,
               },
               {
                 "color": "#e8e8f0",
@@ -1321,9 +1516,11 @@ exports[`SudokuGrid matches snapshot with a typical mid-game state 1`] = `
     <View
       style={
         {
+          "borderBottomColor": "#2e2e38",
+          "borderBottomWidth": 0.5,
+          "borderRightColor": "#2e2e38",
+          "borderRightWidth": 0.5,
           "flex": 1,
-          "marginBottom": 0.5,
-          "marginRight": 0.5,
         }
       }
     >
@@ -1369,8 +1566,6 @@ exports[`SudokuGrid matches snapshot with a typical mid-game state 1`] = `
             },
             {
               "backgroundColor": "#19191f",
-              "borderColor": "#2e2e38",
-              "borderWidth": 0.5,
             },
           ]
         }
@@ -1379,9 +1574,11 @@ exports[`SudokuGrid matches snapshot with a typical mid-game state 1`] = `
     <View
       style={
         {
+          "borderBottomColor": "#2e2e38",
+          "borderBottomWidth": 0.5,
+          "borderRightColor": "#4a4a56",
+          "borderRightWidth": 2,
           "flex": 1,
-          "marginBottom": 0.5,
-          "marginRight": 2,
         }
       }
     >
@@ -1427,8 +1624,6 @@ exports[`SudokuGrid matches snapshot with a typical mid-game state 1`] = `
             },
             {
               "backgroundColor": "#19191f",
-              "borderColor": "#2e2e38",
-              "borderWidth": 0.5,
             },
           ]
         }
@@ -1437,9 +1632,11 @@ exports[`SudokuGrid matches snapshot with a typical mid-game state 1`] = `
     <View
       style={
         {
+          "borderBottomColor": "#2e2e38",
+          "borderBottomWidth": 0.5,
+          "borderRightColor": "#2e2e38",
+          "borderRightWidth": 0.5,
           "flex": 1,
-          "marginBottom": 0.5,
-          "marginRight": 0.5,
         }
       }
     >
@@ -1485,8 +1682,6 @@ exports[`SudokuGrid matches snapshot with a typical mid-game state 1`] = `
             },
             {
               "backgroundColor": "#19191f",
-              "borderColor": "#2e2e38",
-              "borderWidth": 0.5,
             },
           ]
         }
@@ -1495,9 +1690,11 @@ exports[`SudokuGrid matches snapshot with a typical mid-game state 1`] = `
     <View
       style={
         {
+          "borderBottomColor": "#2e2e38",
+          "borderBottomWidth": 0.5,
+          "borderRightColor": "#2e2e38",
+          "borderRightWidth": 0.5,
           "flex": 1,
-          "marginBottom": 0.5,
-          "marginRight": 0.5,
         }
       }
     >
@@ -1542,9 +1739,7 @@ exports[`SudokuGrid matches snapshot with a typical mid-game state 1`] = `
               "justifyContent": "center",
             },
             {
-              "backgroundColor": "#1c1c23",
-              "borderColor": "#2e2e38",
-              "borderWidth": 0.5,
+              "backgroundColor": "#8ff5ff22",
             },
           ]
         }
@@ -1553,9 +1748,11 @@ exports[`SudokuGrid matches snapshot with a typical mid-game state 1`] = `
     <View
       style={
         {
+          "borderBottomColor": "#2e2e38",
+          "borderBottomWidth": 0.5,
+          "borderRightColor": "#4a4a56",
+          "borderRightWidth": 2,
           "flex": 1,
-          "marginBottom": 0.5,
-          "marginRight": 2,
         }
       }
     >
@@ -1601,8 +1798,6 @@ exports[`SudokuGrid matches snapshot with a typical mid-game state 1`] = `
             },
             {
               "backgroundColor": "#19191f",
-              "borderColor": "#2e2e38",
-              "borderWidth": 0.5,
             },
           ]
         }
@@ -1611,9 +1806,11 @@ exports[`SudokuGrid matches snapshot with a typical mid-game state 1`] = `
     <View
       style={
         {
+          "borderBottomColor": "#2e2e38",
+          "borderBottomWidth": 0.5,
+          "borderRightColor": "#2e2e38",
+          "borderRightWidth": 0.5,
           "flex": 1,
-          "marginBottom": 0.5,
-          "marginRight": 0.5,
         }
       }
     >
@@ -1659,8 +1856,6 @@ exports[`SudokuGrid matches snapshot with a typical mid-game state 1`] = `
             },
             {
               "backgroundColor": "#19191f",
-              "borderColor": "#2e2e38",
-              "borderWidth": 0.5,
             },
           ]
         }
@@ -1669,9 +1864,11 @@ exports[`SudokuGrid matches snapshot with a typical mid-game state 1`] = `
     <View
       style={
         {
+          "borderBottomColor": "#2e2e38",
+          "borderBottomWidth": 0.5,
+          "borderRightColor": "#2e2e38",
+          "borderRightWidth": 0.5,
           "flex": 1,
-          "marginBottom": 0.5,
-          "marginRight": 0.5,
         }
       }
     >
@@ -1717,8 +1914,6 @@ exports[`SudokuGrid matches snapshot with a typical mid-game state 1`] = `
             },
             {
               "backgroundColor": "#19191f",
-              "borderColor": "#2e2e38",
-              "borderWidth": 0.5,
             },
           ]
         }
@@ -1727,9 +1922,11 @@ exports[`SudokuGrid matches snapshot with a typical mid-game state 1`] = `
     <View
       style={
         {
+          "borderBottomColor": "#2e2e38",
+          "borderBottomWidth": 0.5,
+          "borderRightColor": "#4a4a56",
+          "borderRightWidth": 0,
           "flex": 1,
-          "marginBottom": 0.5,
-          "marginRight": 0,
         }
       }
     >
@@ -1775,8 +1972,6 @@ exports[`SudokuGrid matches snapshot with a typical mid-game state 1`] = `
             },
             {
               "backgroundColor": "#19191f",
-              "borderColor": "#2e2e38",
-              "borderWidth": 0.5,
             },
           ]
         }
@@ -1794,9 +1989,11 @@ exports[`SudokuGrid matches snapshot with a typical mid-game state 1`] = `
     <View
       style={
         {
+          "borderBottomColor": "#2e2e38",
+          "borderBottomWidth": 0.5,
+          "borderRightColor": "#2e2e38",
+          "borderRightWidth": 0.5,
           "flex": 1,
-          "marginBottom": 0.5,
-          "marginRight": 0.5,
         }
       }
     >
@@ -1842,8 +2039,6 @@ exports[`SudokuGrid matches snapshot with a typical mid-game state 1`] = `
             },
             {
               "backgroundColor": "#19191f",
-              "borderColor": "#2e2e38",
-              "borderWidth": 0.5,
             },
           ]
         }
@@ -1852,9 +2047,11 @@ exports[`SudokuGrid matches snapshot with a typical mid-game state 1`] = `
     <View
       style={
         {
+          "borderBottomColor": "#2e2e38",
+          "borderBottomWidth": 0.5,
+          "borderRightColor": "#2e2e38",
+          "borderRightWidth": 0.5,
           "flex": 1,
-          "marginBottom": 0.5,
-          "marginRight": 0.5,
         }
       }
     >
@@ -1900,8 +2097,6 @@ exports[`SudokuGrid matches snapshot with a typical mid-game state 1`] = `
             },
             {
               "backgroundColor": "#19191f",
-              "borderColor": "#2e2e38",
-              "borderWidth": 0.5,
             },
           ]
         }
@@ -1910,9 +2105,11 @@ exports[`SudokuGrid matches snapshot with a typical mid-game state 1`] = `
     <View
       style={
         {
+          "borderBottomColor": "#2e2e38",
+          "borderBottomWidth": 0.5,
+          "borderRightColor": "#4a4a56",
+          "borderRightWidth": 2,
           "flex": 1,
-          "marginBottom": 0.5,
-          "marginRight": 2,
         }
       }
     >
@@ -1958,8 +2155,6 @@ exports[`SudokuGrid matches snapshot with a typical mid-game state 1`] = `
             },
             {
               "backgroundColor": "#19191f",
-              "borderColor": "#2e2e38",
-              "borderWidth": 0.5,
             },
           ]
         }
@@ -1968,9 +2163,11 @@ exports[`SudokuGrid matches snapshot with a typical mid-game state 1`] = `
     <View
       style={
         {
+          "borderBottomColor": "#2e2e38",
+          "borderBottomWidth": 0.5,
+          "borderRightColor": "#2e2e38",
+          "borderRightWidth": 0.5,
           "flex": 1,
-          "marginBottom": 0.5,
-          "marginRight": 0.5,
         }
       }
     >
@@ -2016,8 +2213,6 @@ exports[`SudokuGrid matches snapshot with a typical mid-game state 1`] = `
             },
             {
               "backgroundColor": "#19191f",
-              "borderColor": "#2e2e38",
-              "borderWidth": 0.5,
             },
           ]
         }
@@ -2026,9 +2221,11 @@ exports[`SudokuGrid matches snapshot with a typical mid-game state 1`] = `
     <View
       style={
         {
+          "borderBottomColor": "#2e2e38",
+          "borderBottomWidth": 0.5,
+          "borderRightColor": "#2e2e38",
+          "borderRightWidth": 0.5,
           "flex": 1,
-          "marginBottom": 0.5,
-          "marginRight": 0.5,
         }
       }
     >
@@ -2073,9 +2270,7 @@ exports[`SudokuGrid matches snapshot with a typical mid-game state 1`] = `
               "justifyContent": "center",
             },
             {
-              "backgroundColor": "#1c1c23",
-              "borderColor": "#2e2e38",
-              "borderWidth": 0.5,
+              "backgroundColor": "#8ff5ff22",
             },
           ]
         }
@@ -2084,9 +2279,11 @@ exports[`SudokuGrid matches snapshot with a typical mid-game state 1`] = `
     <View
       style={
         {
+          "borderBottomColor": "#2e2e38",
+          "borderBottomWidth": 0.5,
+          "borderRightColor": "#4a4a56",
+          "borderRightWidth": 2,
           "flex": 1,
-          "marginBottom": 0.5,
-          "marginRight": 2,
         }
       }
     >
@@ -2132,8 +2329,6 @@ exports[`SudokuGrid matches snapshot with a typical mid-game state 1`] = `
             },
             {
               "backgroundColor": "#19191f",
-              "borderColor": "#2e2e38",
-              "borderWidth": 0.5,
             },
           ]
         }
@@ -2142,9 +2337,11 @@ exports[`SudokuGrid matches snapshot with a typical mid-game state 1`] = `
     <View
       style={
         {
+          "borderBottomColor": "#2e2e38",
+          "borderBottomWidth": 0.5,
+          "borderRightColor": "#2e2e38",
+          "borderRightWidth": 0.5,
           "flex": 1,
-          "marginBottom": 0.5,
-          "marginRight": 0.5,
         }
       }
     >
@@ -2190,8 +2387,6 @@ exports[`SudokuGrid matches snapshot with a typical mid-game state 1`] = `
             },
             {
               "backgroundColor": "#19191f",
-              "borderColor": "#2e2e38",
-              "borderWidth": 0.5,
             },
           ]
         }
@@ -2200,9 +2395,11 @@ exports[`SudokuGrid matches snapshot with a typical mid-game state 1`] = `
     <View
       style={
         {
+          "borderBottomColor": "#2e2e38",
+          "borderBottomWidth": 0.5,
+          "borderRightColor": "#2e2e38",
+          "borderRightWidth": 0.5,
           "flex": 1,
-          "marginBottom": 0.5,
-          "marginRight": 0.5,
         }
       }
     >
@@ -2248,8 +2445,6 @@ exports[`SudokuGrid matches snapshot with a typical mid-game state 1`] = `
             },
             {
               "backgroundColor": "#19191f",
-              "borderColor": "#2e2e38",
-              "borderWidth": 0.5,
             },
           ]
         }
@@ -2258,9 +2453,11 @@ exports[`SudokuGrid matches snapshot with a typical mid-game state 1`] = `
     <View
       style={
         {
+          "borderBottomColor": "#2e2e38",
+          "borderBottomWidth": 0.5,
+          "borderRightColor": "#4a4a56",
+          "borderRightWidth": 0,
           "flex": 1,
-          "marginBottom": 0.5,
-          "marginRight": 0,
         }
       }
     >
@@ -2306,8 +2503,6 @@ exports[`SudokuGrid matches snapshot with a typical mid-game state 1`] = `
             },
             {
               "backgroundColor": "#19191f",
-              "borderColor": "#2e2e38",
-              "borderWidth": 0.5,
             },
           ]
         }
@@ -2325,9 +2520,11 @@ exports[`SudokuGrid matches snapshot with a typical mid-game state 1`] = `
     <View
       style={
         {
+          "borderBottomColor": "#4a4a56",
+          "borderBottomWidth": 2,
+          "borderRightColor": "#2e2e38",
+          "borderRightWidth": 0.5,
           "flex": 1,
-          "marginBottom": 2,
-          "marginRight": 0.5,
         }
       }
     >
@@ -2373,8 +2570,6 @@ exports[`SudokuGrid matches snapshot with a typical mid-game state 1`] = `
             },
             {
               "backgroundColor": "#19191f",
-              "borderColor": "#2e2e38",
-              "borderWidth": 0.5,
             },
           ]
         }
@@ -2383,9 +2578,11 @@ exports[`SudokuGrid matches snapshot with a typical mid-game state 1`] = `
     <View
       style={
         {
+          "borderBottomColor": "#4a4a56",
+          "borderBottomWidth": 2,
+          "borderRightColor": "#2e2e38",
+          "borderRightWidth": 0.5,
           "flex": 1,
-          "marginBottom": 2,
-          "marginRight": 0.5,
         }
       }
     >
@@ -2431,8 +2628,6 @@ exports[`SudokuGrid matches snapshot with a typical mid-game state 1`] = `
             },
             {
               "backgroundColor": "#19191f",
-              "borderColor": "#2e2e38",
-              "borderWidth": 0.5,
             },
           ]
         }
@@ -2441,9 +2636,11 @@ exports[`SudokuGrid matches snapshot with a typical mid-game state 1`] = `
     <View
       style={
         {
+          "borderBottomColor": "#4a4a56",
+          "borderBottomWidth": 2,
+          "borderRightColor": "#4a4a56",
+          "borderRightWidth": 2,
           "flex": 1,
-          "marginBottom": 2,
-          "marginRight": 2,
         }
       }
     >
@@ -2489,8 +2686,6 @@ exports[`SudokuGrid matches snapshot with a typical mid-game state 1`] = `
             },
             {
               "backgroundColor": "#19191f",
-              "borderColor": "#2e2e38",
-              "borderWidth": 0.5,
             },
           ]
         }
@@ -2499,9 +2694,11 @@ exports[`SudokuGrid matches snapshot with a typical mid-game state 1`] = `
     <View
       style={
         {
+          "borderBottomColor": "#4a4a56",
+          "borderBottomWidth": 2,
+          "borderRightColor": "#2e2e38",
+          "borderRightWidth": 0.5,
           "flex": 1,
-          "marginBottom": 2,
-          "marginRight": 0.5,
         }
       }
     >
@@ -2547,8 +2744,6 @@ exports[`SudokuGrid matches snapshot with a typical mid-game state 1`] = `
             },
             {
               "backgroundColor": "#19191f",
-              "borderColor": "#2e2e38",
-              "borderWidth": 0.5,
             },
           ]
         }
@@ -2557,9 +2752,11 @@ exports[`SudokuGrid matches snapshot with a typical mid-game state 1`] = `
     <View
       style={
         {
+          "borderBottomColor": "#4a4a56",
+          "borderBottomWidth": 2,
+          "borderRightColor": "#2e2e38",
+          "borderRightWidth": 0.5,
           "flex": 1,
-          "marginBottom": 2,
-          "marginRight": 0.5,
         }
       }
     >
@@ -2604,9 +2801,7 @@ exports[`SudokuGrid matches snapshot with a typical mid-game state 1`] = `
               "justifyContent": "center",
             },
             {
-              "backgroundColor": "#1c1c23",
-              "borderColor": "#2e2e38",
-              "borderWidth": 0.5,
+              "backgroundColor": "#8ff5ff22",
             },
           ]
         }
@@ -2615,9 +2810,11 @@ exports[`SudokuGrid matches snapshot with a typical mid-game state 1`] = `
     <View
       style={
         {
+          "borderBottomColor": "#4a4a56",
+          "borderBottomWidth": 2,
+          "borderRightColor": "#4a4a56",
+          "borderRightWidth": 2,
           "flex": 1,
-          "marginBottom": 2,
-          "marginRight": 2,
         }
       }
     >
@@ -2663,8 +2860,6 @@ exports[`SudokuGrid matches snapshot with a typical mid-game state 1`] = `
             },
             {
               "backgroundColor": "#19191f",
-              "borderColor": "#2e2e38",
-              "borderWidth": 0.5,
             },
           ]
         }
@@ -2673,9 +2868,11 @@ exports[`SudokuGrid matches snapshot with a typical mid-game state 1`] = `
     <View
       style={
         {
+          "borderBottomColor": "#4a4a56",
+          "borderBottomWidth": 2,
+          "borderRightColor": "#2e2e38",
+          "borderRightWidth": 0.5,
           "flex": 1,
-          "marginBottom": 2,
-          "marginRight": 0.5,
         }
       }
     >
@@ -2721,8 +2918,6 @@ exports[`SudokuGrid matches snapshot with a typical mid-game state 1`] = `
             },
             {
               "backgroundColor": "#19191f",
-              "borderColor": "#2e2e38",
-              "borderWidth": 0.5,
             },
           ]
         }
@@ -2731,9 +2926,11 @@ exports[`SudokuGrid matches snapshot with a typical mid-game state 1`] = `
     <View
       style={
         {
+          "borderBottomColor": "#4a4a56",
+          "borderBottomWidth": 2,
+          "borderRightColor": "#2e2e38",
+          "borderRightWidth": 0.5,
           "flex": 1,
-          "marginBottom": 2,
-          "marginRight": 0.5,
         }
       }
     >
@@ -2779,8 +2976,6 @@ exports[`SudokuGrid matches snapshot with a typical mid-game state 1`] = `
             },
             {
               "backgroundColor": "#19191f",
-              "borderColor": "#2e2e38",
-              "borderWidth": 0.5,
             },
           ]
         }
@@ -2789,9 +2984,11 @@ exports[`SudokuGrid matches snapshot with a typical mid-game state 1`] = `
     <View
       style={
         {
+          "borderBottomColor": "#4a4a56",
+          "borderBottomWidth": 2,
+          "borderRightColor": "#4a4a56",
+          "borderRightWidth": 0,
           "flex": 1,
-          "marginBottom": 2,
-          "marginRight": 0,
         }
       }
     >
@@ -2837,8 +3034,6 @@ exports[`SudokuGrid matches snapshot with a typical mid-game state 1`] = `
             },
             {
               "backgroundColor": "#19191f",
-              "borderColor": "#2e2e38",
-              "borderWidth": 0.5,
             },
           ]
         }
@@ -2856,9 +3051,11 @@ exports[`SudokuGrid matches snapshot with a typical mid-game state 1`] = `
     <View
       style={
         {
+          "borderBottomColor": "#2e2e38",
+          "borderBottomWidth": 0.5,
+          "borderRightColor": "#2e2e38",
+          "borderRightWidth": 0.5,
           "flex": 1,
-          "marginBottom": 0.5,
-          "marginRight": 0.5,
         }
       }
     >
@@ -2904,8 +3101,6 @@ exports[`SudokuGrid matches snapshot with a typical mid-game state 1`] = `
             },
             {
               "backgroundColor": "#19191f",
-              "borderColor": "#2e2e38",
-              "borderWidth": 0.5,
             },
           ]
         }
@@ -2914,9 +3109,11 @@ exports[`SudokuGrid matches snapshot with a typical mid-game state 1`] = `
     <View
       style={
         {
+          "borderBottomColor": "#2e2e38",
+          "borderBottomWidth": 0.5,
+          "borderRightColor": "#2e2e38",
+          "borderRightWidth": 0.5,
           "flex": 1,
-          "marginBottom": 0.5,
-          "marginRight": 0.5,
         }
       }
     >
@@ -2962,8 +3159,6 @@ exports[`SudokuGrid matches snapshot with a typical mid-game state 1`] = `
             },
             {
               "backgroundColor": "#19191f",
-              "borderColor": "#2e2e38",
-              "borderWidth": 0.5,
             },
           ]
         }
@@ -2972,9 +3167,11 @@ exports[`SudokuGrid matches snapshot with a typical mid-game state 1`] = `
     <View
       style={
         {
+          "borderBottomColor": "#2e2e38",
+          "borderBottomWidth": 0.5,
+          "borderRightColor": "#4a4a56",
+          "borderRightWidth": 2,
           "flex": 1,
-          "marginBottom": 0.5,
-          "marginRight": 2,
         }
       }
     >
@@ -3020,8 +3217,6 @@ exports[`SudokuGrid matches snapshot with a typical mid-game state 1`] = `
             },
             {
               "backgroundColor": "#19191f",
-              "borderColor": "#2e2e38",
-              "borderWidth": 0.5,
             },
           ]
         }
@@ -3030,9 +3225,11 @@ exports[`SudokuGrid matches snapshot with a typical mid-game state 1`] = `
     <View
       style={
         {
+          "borderBottomColor": "#2e2e38",
+          "borderBottomWidth": 0.5,
+          "borderRightColor": "#2e2e38",
+          "borderRightWidth": 0.5,
           "flex": 1,
-          "marginBottom": 0.5,
-          "marginRight": 0.5,
         }
       }
     >
@@ -3077,9 +3274,7 @@ exports[`SudokuGrid matches snapshot with a typical mid-game state 1`] = `
               "justifyContent": "center",
             },
             {
-              "backgroundColor": "#1c1c23",
-              "borderColor": "#2e2e38",
-              "borderWidth": 0.5,
+              "backgroundColor": "#8ff5ff22",
             },
           ]
         }
@@ -3088,9 +3283,11 @@ exports[`SudokuGrid matches snapshot with a typical mid-game state 1`] = `
     <View
       style={
         {
+          "borderBottomColor": "#2e2e38",
+          "borderBottomWidth": 0.5,
+          "borderRightColor": "#2e2e38",
+          "borderRightWidth": 0.5,
           "flex": 1,
-          "marginBottom": 0.5,
-          "marginRight": 0.5,
         }
       }
     >
@@ -3135,9 +3332,7 @@ exports[`SudokuGrid matches snapshot with a typical mid-game state 1`] = `
               "justifyContent": "center",
             },
             {
-              "backgroundColor": "#1c1c23",
-              "borderColor": "#2e2e38",
-              "borderWidth": 0.5,
+              "backgroundColor": "#8ff5ff22",
             },
           ]
         }
@@ -3146,9 +3341,11 @@ exports[`SudokuGrid matches snapshot with a typical mid-game state 1`] = `
     <View
       style={
         {
+          "borderBottomColor": "#2e2e38",
+          "borderBottomWidth": 0.5,
+          "borderRightColor": "#4a4a56",
+          "borderRightWidth": 2,
           "flex": 1,
-          "marginBottom": 0.5,
-          "marginRight": 2,
         }
       }
     >
@@ -3193,9 +3390,7 @@ exports[`SudokuGrid matches snapshot with a typical mid-game state 1`] = `
               "justifyContent": "center",
             },
             {
-              "backgroundColor": "#1c1c23",
-              "borderColor": "#2e2e38",
-              "borderWidth": 0.5,
+              "backgroundColor": "#8ff5ff22",
             },
           ]
         }
@@ -3204,9 +3399,11 @@ exports[`SudokuGrid matches snapshot with a typical mid-game state 1`] = `
     <View
       style={
         {
+          "borderBottomColor": "#2e2e38",
+          "borderBottomWidth": 0.5,
+          "borderRightColor": "#2e2e38",
+          "borderRightWidth": 0.5,
           "flex": 1,
-          "marginBottom": 0.5,
-          "marginRight": 0.5,
         }
       }
     >
@@ -3252,8 +3449,6 @@ exports[`SudokuGrid matches snapshot with a typical mid-game state 1`] = `
             },
             {
               "backgroundColor": "#19191f",
-              "borderColor": "#2e2e38",
-              "borderWidth": 0.5,
             },
           ]
         }
@@ -3262,9 +3457,11 @@ exports[`SudokuGrid matches snapshot with a typical mid-game state 1`] = `
     <View
       style={
         {
+          "borderBottomColor": "#2e2e38",
+          "borderBottomWidth": 0.5,
+          "borderRightColor": "#2e2e38",
+          "borderRightWidth": 0.5,
           "flex": 1,
-          "marginBottom": 0.5,
-          "marginRight": 0.5,
         }
       }
     >
@@ -3310,8 +3507,6 @@ exports[`SudokuGrid matches snapshot with a typical mid-game state 1`] = `
             },
             {
               "backgroundColor": "#19191f",
-              "borderColor": "#2e2e38",
-              "borderWidth": 0.5,
             },
           ]
         }
@@ -3320,9 +3515,11 @@ exports[`SudokuGrid matches snapshot with a typical mid-game state 1`] = `
     <View
       style={
         {
+          "borderBottomColor": "#2e2e38",
+          "borderBottomWidth": 0.5,
+          "borderRightColor": "#4a4a56",
+          "borderRightWidth": 0,
           "flex": 1,
-          "marginBottom": 0.5,
-          "marginRight": 0,
         }
       }
     >
@@ -3368,8 +3565,6 @@ exports[`SudokuGrid matches snapshot with a typical mid-game state 1`] = `
             },
             {
               "backgroundColor": "#19191f",
-              "borderColor": "#2e2e38",
-              "borderWidth": 0.5,
             },
           ]
         }
@@ -3387,9 +3582,11 @@ exports[`SudokuGrid matches snapshot with a typical mid-game state 1`] = `
     <View
       style={
         {
+          "borderBottomColor": "#2e2e38",
+          "borderBottomWidth": 0.5,
+          "borderRightColor": "#2e2e38",
+          "borderRightWidth": 0.5,
           "flex": 1,
-          "marginBottom": 0.5,
-          "marginRight": 0.5,
         }
       }
     >
@@ -3434,9 +3631,7 @@ exports[`SudokuGrid matches snapshot with a typical mid-game state 1`] = `
               "justifyContent": "center",
             },
             {
-              "backgroundColor": "#1c1c23",
-              "borderColor": "#2e2e38",
-              "borderWidth": 0.5,
+              "backgroundColor": "#8ff5ff22",
             },
           ]
         }
@@ -3445,9 +3640,11 @@ exports[`SudokuGrid matches snapshot with a typical mid-game state 1`] = `
     <View
       style={
         {
+          "borderBottomColor": "#2e2e38",
+          "borderBottomWidth": 0.5,
+          "borderRightColor": "#2e2e38",
+          "borderRightWidth": 0.5,
           "flex": 1,
-          "marginBottom": 0.5,
-          "marginRight": 0.5,
         }
       }
     >
@@ -3492,9 +3689,7 @@ exports[`SudokuGrid matches snapshot with a typical mid-game state 1`] = `
               "justifyContent": "center",
             },
             {
-              "backgroundColor": "#1c1c23",
-              "borderColor": "#2e2e38",
-              "borderWidth": 0.5,
+              "backgroundColor": "#8ff5ff22",
             },
           ]
         }
@@ -3503,9 +3698,11 @@ exports[`SudokuGrid matches snapshot with a typical mid-game state 1`] = `
     <View
       style={
         {
+          "borderBottomColor": "#2e2e38",
+          "borderBottomWidth": 0.5,
+          "borderRightColor": "#4a4a56",
+          "borderRightWidth": 2,
           "flex": 1,
-          "marginBottom": 0.5,
-          "marginRight": 2,
         }
       }
     >
@@ -3550,9 +3747,7 @@ exports[`SudokuGrid matches snapshot with a typical mid-game state 1`] = `
               "justifyContent": "center",
             },
             {
-              "backgroundColor": "#1c1c23",
-              "borderColor": "#2e2e38",
-              "borderWidth": 0.5,
+              "backgroundColor": "#8ff5ff22",
             },
           ]
         }
@@ -3561,9 +3756,11 @@ exports[`SudokuGrid matches snapshot with a typical mid-game state 1`] = `
     <View
       style={
         {
+          "borderBottomColor": "#2e2e38",
+          "borderBottomWidth": 0.5,
+          "borderRightColor": "#2e2e38",
+          "borderRightWidth": 0.5,
           "flex": 1,
-          "marginBottom": 0.5,
-          "marginRight": 0.5,
         }
       }
     >
@@ -3608,9 +3805,7 @@ exports[`SudokuGrid matches snapshot with a typical mid-game state 1`] = `
               "justifyContent": "center",
             },
             {
-              "backgroundColor": "#1c1c23",
-              "borderColor": "#2e2e38",
-              "borderWidth": 0.5,
+              "backgroundColor": "#8ff5ff22",
             },
           ]
         }
@@ -3619,9 +3814,11 @@ exports[`SudokuGrid matches snapshot with a typical mid-game state 1`] = `
     <View
       style={
         {
+          "borderBottomColor": "#2e2e38",
+          "borderBottomWidth": 0.5,
+          "borderRightColor": "#2e2e38",
+          "borderRightWidth": 0.5,
           "flex": 1,
-          "marginBottom": 0.5,
-          "marginRight": 0.5,
         }
       }
     >
@@ -3666,9 +3863,7 @@ exports[`SudokuGrid matches snapshot with a typical mid-game state 1`] = `
               "justifyContent": "center",
             },
             {
-              "backgroundColor": "#25252c",
-              "borderColor": "#8ff5ff",
-              "borderWidth": 2,
+              "backgroundColor": "#8ff5ffAA",
             },
           ]
         }
@@ -3677,7 +3872,9 @@ exports[`SudokuGrid matches snapshot with a typical mid-game state 1`] = `
           style={
             [
               {
-                "fontSize": 22,
+                "fontSize": 18,
+                "fontVariantNumeric": "tabular-nums",
+                "lineHeight": 18,
               },
               {
                 "color": "#8ff5ff",
@@ -3693,9 +3890,11 @@ exports[`SudokuGrid matches snapshot with a typical mid-game state 1`] = `
     <View
       style={
         {
+          "borderBottomColor": "#2e2e38",
+          "borderBottomWidth": 0.5,
+          "borderRightColor": "#4a4a56",
+          "borderRightWidth": 2,
           "flex": 1,
-          "marginBottom": 0.5,
-          "marginRight": 2,
         }
       }
     >
@@ -3740,9 +3939,7 @@ exports[`SudokuGrid matches snapshot with a typical mid-game state 1`] = `
               "justifyContent": "center",
             },
             {
-              "backgroundColor": "#1c1c23",
-              "borderColor": "#2e2e38",
-              "borderWidth": 0.5,
+              "backgroundColor": "#8ff5ff22",
             },
           ]
         }
@@ -3751,9 +3948,11 @@ exports[`SudokuGrid matches snapshot with a typical mid-game state 1`] = `
     <View
       style={
         {
+          "borderBottomColor": "#2e2e38",
+          "borderBottomWidth": 0.5,
+          "borderRightColor": "#2e2e38",
+          "borderRightWidth": 0.5,
           "flex": 1,
-          "marginBottom": 0.5,
-          "marginRight": 0.5,
         }
       }
     >
@@ -3798,9 +3997,7 @@ exports[`SudokuGrid matches snapshot with a typical mid-game state 1`] = `
               "justifyContent": "center",
             },
             {
-              "backgroundColor": "#1c1c23",
-              "borderColor": "#2e2e38",
-              "borderWidth": 0.5,
+              "backgroundColor": "#8ff5ff22",
             },
           ]
         }
@@ -3809,9 +4006,11 @@ exports[`SudokuGrid matches snapshot with a typical mid-game state 1`] = `
     <View
       style={
         {
+          "borderBottomColor": "#2e2e38",
+          "borderBottomWidth": 0.5,
+          "borderRightColor": "#2e2e38",
+          "borderRightWidth": 0.5,
           "flex": 1,
-          "marginBottom": 0.5,
-          "marginRight": 0.5,
         }
       }
     >
@@ -3856,9 +4055,7 @@ exports[`SudokuGrid matches snapshot with a typical mid-game state 1`] = `
               "justifyContent": "center",
             },
             {
-              "backgroundColor": "#1c1c23",
-              "borderColor": "#2e2e38",
-              "borderWidth": 0.5,
+              "backgroundColor": "#8ff5ff22",
             },
           ]
         }
@@ -3867,9 +4064,11 @@ exports[`SudokuGrid matches snapshot with a typical mid-game state 1`] = `
     <View
       style={
         {
+          "borderBottomColor": "#2e2e38",
+          "borderBottomWidth": 0.5,
+          "borderRightColor": "#4a4a56",
+          "borderRightWidth": 0,
           "flex": 1,
-          "marginBottom": 0.5,
-          "marginRight": 0,
         }
       }
     >
@@ -3914,9 +4113,7 @@ exports[`SudokuGrid matches snapshot with a typical mid-game state 1`] = `
               "justifyContent": "center",
             },
             {
-              "backgroundColor": "#1c1c23",
-              "borderColor": "#2e2e38",
-              "borderWidth": 0.5,
+              "backgroundColor": "#8ff5ff22",
             },
           ]
         }
@@ -3934,9 +4131,11 @@ exports[`SudokuGrid matches snapshot with a typical mid-game state 1`] = `
     <View
       style={
         {
+          "borderBottomColor": "#4a4a56",
+          "borderBottomWidth": 2,
+          "borderRightColor": "#2e2e38",
+          "borderRightWidth": 0.5,
           "flex": 1,
-          "marginBottom": 2,
-          "marginRight": 0.5,
         }
       }
     >
@@ -3982,8 +4181,6 @@ exports[`SudokuGrid matches snapshot with a typical mid-game state 1`] = `
             },
             {
               "backgroundColor": "#19191f",
-              "borderColor": "#2e2e38",
-              "borderWidth": 0.5,
             },
           ]
         }
@@ -3992,9 +4189,11 @@ exports[`SudokuGrid matches snapshot with a typical mid-game state 1`] = `
     <View
       style={
         {
+          "borderBottomColor": "#4a4a56",
+          "borderBottomWidth": 2,
+          "borderRightColor": "#2e2e38",
+          "borderRightWidth": 0.5,
           "flex": 1,
-          "marginBottom": 2,
-          "marginRight": 0.5,
         }
       }
     >
@@ -4040,8 +4239,6 @@ exports[`SudokuGrid matches snapshot with a typical mid-game state 1`] = `
             },
             {
               "backgroundColor": "#19191f",
-              "borderColor": "#2e2e38",
-              "borderWidth": 0.5,
             },
           ]
         }
@@ -4050,9 +4247,11 @@ exports[`SudokuGrid matches snapshot with a typical mid-game state 1`] = `
     <View
       style={
         {
+          "borderBottomColor": "#4a4a56",
+          "borderBottomWidth": 2,
+          "borderRightColor": "#4a4a56",
+          "borderRightWidth": 2,
           "flex": 1,
-          "marginBottom": 2,
-          "marginRight": 2,
         }
       }
     >
@@ -4098,8 +4297,6 @@ exports[`SudokuGrid matches snapshot with a typical mid-game state 1`] = `
             },
             {
               "backgroundColor": "#19191f",
-              "borderColor": "#2e2e38",
-              "borderWidth": 0.5,
             },
           ]
         }
@@ -4108,9 +4305,11 @@ exports[`SudokuGrid matches snapshot with a typical mid-game state 1`] = `
     <View
       style={
         {
+          "borderBottomColor": "#4a4a56",
+          "borderBottomWidth": 2,
+          "borderRightColor": "#2e2e38",
+          "borderRightWidth": 0.5,
           "flex": 1,
-          "marginBottom": 2,
-          "marginRight": 0.5,
         }
       }
     >
@@ -4155,9 +4354,7 @@ exports[`SudokuGrid matches snapshot with a typical mid-game state 1`] = `
               "justifyContent": "center",
             },
             {
-              "backgroundColor": "#1c1c23",
-              "borderColor": "#2e2e38",
-              "borderWidth": 0.5,
+              "backgroundColor": "#8ff5ff22",
             },
           ]
         }
@@ -4166,9 +4363,11 @@ exports[`SudokuGrid matches snapshot with a typical mid-game state 1`] = `
     <View
       style={
         {
+          "borderBottomColor": "#4a4a56",
+          "borderBottomWidth": 2,
+          "borderRightColor": "#2e2e38",
+          "borderRightWidth": 0.5,
           "flex": 1,
-          "marginBottom": 2,
-          "marginRight": 0.5,
         }
       }
     >
@@ -4213,9 +4412,7 @@ exports[`SudokuGrid matches snapshot with a typical mid-game state 1`] = `
               "justifyContent": "center",
             },
             {
-              "backgroundColor": "#1c1c23",
-              "borderColor": "#2e2e38",
-              "borderWidth": 0.5,
+              "backgroundColor": "#8ff5ff22",
             },
           ]
         }
@@ -4224,9 +4421,11 @@ exports[`SudokuGrid matches snapshot with a typical mid-game state 1`] = `
     <View
       style={
         {
+          "borderBottomColor": "#4a4a56",
+          "borderBottomWidth": 2,
+          "borderRightColor": "#4a4a56",
+          "borderRightWidth": 2,
           "flex": 1,
-          "marginBottom": 2,
-          "marginRight": 2,
         }
       }
     >
@@ -4271,9 +4470,7 @@ exports[`SudokuGrid matches snapshot with a typical mid-game state 1`] = `
               "justifyContent": "center",
             },
             {
-              "backgroundColor": "#1c1c23",
-              "borderColor": "#2e2e38",
-              "borderWidth": 0.5,
+              "backgroundColor": "#8ff5ff22",
             },
           ]
         }
@@ -4282,9 +4479,11 @@ exports[`SudokuGrid matches snapshot with a typical mid-game state 1`] = `
     <View
       style={
         {
+          "borderBottomColor": "#4a4a56",
+          "borderBottomWidth": 2,
+          "borderRightColor": "#2e2e38",
+          "borderRightWidth": 0.5,
           "flex": 1,
-          "marginBottom": 2,
-          "marginRight": 0.5,
         }
       }
     >
@@ -4330,8 +4529,6 @@ exports[`SudokuGrid matches snapshot with a typical mid-game state 1`] = `
             },
             {
               "backgroundColor": "#19191f",
-              "borderColor": "#2e2e38",
-              "borderWidth": 0.5,
             },
           ]
         }
@@ -4340,9 +4537,11 @@ exports[`SudokuGrid matches snapshot with a typical mid-game state 1`] = `
     <View
       style={
         {
+          "borderBottomColor": "#4a4a56",
+          "borderBottomWidth": 2,
+          "borderRightColor": "#2e2e38",
+          "borderRightWidth": 0.5,
           "flex": 1,
-          "marginBottom": 2,
-          "marginRight": 0.5,
         }
       }
     >
@@ -4388,8 +4587,6 @@ exports[`SudokuGrid matches snapshot with a typical mid-game state 1`] = `
             },
             {
               "backgroundColor": "#19191f",
-              "borderColor": "#2e2e38",
-              "borderWidth": 0.5,
             },
           ]
         }
@@ -4398,9 +4595,11 @@ exports[`SudokuGrid matches snapshot with a typical mid-game state 1`] = `
     <View
       style={
         {
+          "borderBottomColor": "#4a4a56",
+          "borderBottomWidth": 2,
+          "borderRightColor": "#4a4a56",
+          "borderRightWidth": 0,
           "flex": 1,
-          "marginBottom": 2,
-          "marginRight": 0,
         }
       }
     >
@@ -4446,8 +4645,6 @@ exports[`SudokuGrid matches snapshot with a typical mid-game state 1`] = `
             },
             {
               "backgroundColor": "#19191f",
-              "borderColor": "#2e2e38",
-              "borderWidth": 0.5,
             },
           ]
         }
@@ -4465,9 +4662,11 @@ exports[`SudokuGrid matches snapshot with a typical mid-game state 1`] = `
     <View
       style={
         {
+          "borderBottomColor": "#2e2e38",
+          "borderBottomWidth": 0.5,
+          "borderRightColor": "#2e2e38",
+          "borderRightWidth": 0.5,
           "flex": 1,
-          "marginBottom": 0.5,
-          "marginRight": 0.5,
         }
       }
     >
@@ -4513,8 +4712,6 @@ exports[`SudokuGrid matches snapshot with a typical mid-game state 1`] = `
             },
             {
               "backgroundColor": "#19191f",
-              "borderColor": "#2e2e38",
-              "borderWidth": 0.5,
             },
           ]
         }
@@ -4523,9 +4720,11 @@ exports[`SudokuGrid matches snapshot with a typical mid-game state 1`] = `
     <View
       style={
         {
+          "borderBottomColor": "#2e2e38",
+          "borderBottomWidth": 0.5,
+          "borderRightColor": "#2e2e38",
+          "borderRightWidth": 0.5,
           "flex": 1,
-          "marginBottom": 0.5,
-          "marginRight": 0.5,
         }
       }
     >
@@ -4571,8 +4770,6 @@ exports[`SudokuGrid matches snapshot with a typical mid-game state 1`] = `
             },
             {
               "backgroundColor": "#19191f",
-              "borderColor": "#2e2e38",
-              "borderWidth": 0.5,
             },
           ]
         }
@@ -4581,9 +4778,11 @@ exports[`SudokuGrid matches snapshot with a typical mid-game state 1`] = `
     <View
       style={
         {
+          "borderBottomColor": "#2e2e38",
+          "borderBottomWidth": 0.5,
+          "borderRightColor": "#4a4a56",
+          "borderRightWidth": 2,
           "flex": 1,
-          "marginBottom": 0.5,
-          "marginRight": 2,
         }
       }
     >
@@ -4629,8 +4828,6 @@ exports[`SudokuGrid matches snapshot with a typical mid-game state 1`] = `
             },
             {
               "backgroundColor": "#19191f",
-              "borderColor": "#2e2e38",
-              "borderWidth": 0.5,
             },
           ]
         }
@@ -4639,9 +4836,11 @@ exports[`SudokuGrid matches snapshot with a typical mid-game state 1`] = `
     <View
       style={
         {
+          "borderBottomColor": "#2e2e38",
+          "borderBottomWidth": 0.5,
+          "borderRightColor": "#2e2e38",
+          "borderRightWidth": 0.5,
           "flex": 1,
-          "marginBottom": 0.5,
-          "marginRight": 0.5,
         }
       }
     >
@@ -4687,8 +4886,6 @@ exports[`SudokuGrid matches snapshot with a typical mid-game state 1`] = `
             },
             {
               "backgroundColor": "#19191f",
-              "borderColor": "#2e2e38",
-              "borderWidth": 0.5,
             },
           ]
         }
@@ -4697,9 +4894,11 @@ exports[`SudokuGrid matches snapshot with a typical mid-game state 1`] = `
     <View
       style={
         {
+          "borderBottomColor": "#2e2e38",
+          "borderBottomWidth": 0.5,
+          "borderRightColor": "#2e2e38",
+          "borderRightWidth": 0.5,
           "flex": 1,
-          "marginBottom": 0.5,
-          "marginRight": 0.5,
         }
       }
     >
@@ -4744,9 +4943,7 @@ exports[`SudokuGrid matches snapshot with a typical mid-game state 1`] = `
               "justifyContent": "center",
             },
             {
-              "backgroundColor": "#1c1c23",
-              "borderColor": "#2e2e38",
-              "borderWidth": 0.5,
+              "backgroundColor": "#8ff5ff22",
             },
           ]
         }
@@ -4755,9 +4952,11 @@ exports[`SudokuGrid matches snapshot with a typical mid-game state 1`] = `
     <View
       style={
         {
+          "borderBottomColor": "#2e2e38",
+          "borderBottomWidth": 0.5,
+          "borderRightColor": "#4a4a56",
+          "borderRightWidth": 2,
           "flex": 1,
-          "marginBottom": 0.5,
-          "marginRight": 2,
         }
       }
     >
@@ -4803,8 +5002,6 @@ exports[`SudokuGrid matches snapshot with a typical mid-game state 1`] = `
             },
             {
               "backgroundColor": "#19191f",
-              "borderColor": "#2e2e38",
-              "borderWidth": 0.5,
             },
           ]
         }
@@ -4813,9 +5010,11 @@ exports[`SudokuGrid matches snapshot with a typical mid-game state 1`] = `
     <View
       style={
         {
+          "borderBottomColor": "#2e2e38",
+          "borderBottomWidth": 0.5,
+          "borderRightColor": "#2e2e38",
+          "borderRightWidth": 0.5,
           "flex": 1,
-          "marginBottom": 0.5,
-          "marginRight": 0.5,
         }
       }
     >
@@ -4861,8 +5060,6 @@ exports[`SudokuGrid matches snapshot with a typical mid-game state 1`] = `
             },
             {
               "backgroundColor": "#19191f",
-              "borderColor": "#2e2e38",
-              "borderWidth": 0.5,
             },
           ]
         }
@@ -4871,9 +5068,11 @@ exports[`SudokuGrid matches snapshot with a typical mid-game state 1`] = `
     <View
       style={
         {
+          "borderBottomColor": "#2e2e38",
+          "borderBottomWidth": 0.5,
+          "borderRightColor": "#2e2e38",
+          "borderRightWidth": 0.5,
           "flex": 1,
-          "marginBottom": 0.5,
-          "marginRight": 0.5,
         }
       }
     >
@@ -4919,8 +5118,6 @@ exports[`SudokuGrid matches snapshot with a typical mid-game state 1`] = `
             },
             {
               "backgroundColor": "#19191f",
-              "borderColor": "#2e2e38",
-              "borderWidth": 0.5,
             },
           ]
         }
@@ -4929,9 +5126,11 @@ exports[`SudokuGrid matches snapshot with a typical mid-game state 1`] = `
     <View
       style={
         {
+          "borderBottomColor": "#2e2e38",
+          "borderBottomWidth": 0.5,
+          "borderRightColor": "#4a4a56",
+          "borderRightWidth": 0,
           "flex": 1,
-          "marginBottom": 0.5,
-          "marginRight": 0,
         }
       }
     >
@@ -4977,8 +5176,6 @@ exports[`SudokuGrid matches snapshot with a typical mid-game state 1`] = `
             },
             {
               "backgroundColor": "#19191f",
-              "borderColor": "#2e2e38",
-              "borderWidth": 0.5,
             },
           ]
         }
@@ -4996,9 +5193,11 @@ exports[`SudokuGrid matches snapshot with a typical mid-game state 1`] = `
     <View
       style={
         {
+          "borderBottomColor": "#2e2e38",
+          "borderBottomWidth": 0.5,
+          "borderRightColor": "#2e2e38",
+          "borderRightWidth": 0.5,
           "flex": 1,
-          "marginBottom": 0.5,
-          "marginRight": 0.5,
         }
       }
     >
@@ -5044,8 +5243,6 @@ exports[`SudokuGrid matches snapshot with a typical mid-game state 1`] = `
             },
             {
               "backgroundColor": "#19191f",
-              "borderColor": "#2e2e38",
-              "borderWidth": 0.5,
             },
           ]
         }
@@ -5054,9 +5251,11 @@ exports[`SudokuGrid matches snapshot with a typical mid-game state 1`] = `
     <View
       style={
         {
+          "borderBottomColor": "#2e2e38",
+          "borderBottomWidth": 0.5,
+          "borderRightColor": "#2e2e38",
+          "borderRightWidth": 0.5,
           "flex": 1,
-          "marginBottom": 0.5,
-          "marginRight": 0.5,
         }
       }
     >
@@ -5102,8 +5301,6 @@ exports[`SudokuGrid matches snapshot with a typical mid-game state 1`] = `
             },
             {
               "backgroundColor": "#19191f",
-              "borderColor": "#2e2e38",
-              "borderWidth": 0.5,
             },
           ]
         }
@@ -5112,9 +5309,11 @@ exports[`SudokuGrid matches snapshot with a typical mid-game state 1`] = `
     <View
       style={
         {
+          "borderBottomColor": "#2e2e38",
+          "borderBottomWidth": 0.5,
+          "borderRightColor": "#4a4a56",
+          "borderRightWidth": 2,
           "flex": 1,
-          "marginBottom": 0.5,
-          "marginRight": 2,
         }
       }
     >
@@ -5160,8 +5359,6 @@ exports[`SudokuGrid matches snapshot with a typical mid-game state 1`] = `
             },
             {
               "backgroundColor": "#19191f",
-              "borderColor": "#2e2e38",
-              "borderWidth": 0.5,
             },
           ]
         }
@@ -5170,9 +5367,11 @@ exports[`SudokuGrid matches snapshot with a typical mid-game state 1`] = `
     <View
       style={
         {
+          "borderBottomColor": "#2e2e38",
+          "borderBottomWidth": 0.5,
+          "borderRightColor": "#2e2e38",
+          "borderRightWidth": 0.5,
           "flex": 1,
-          "marginBottom": 0.5,
-          "marginRight": 0.5,
         }
       }
     >
@@ -5218,8 +5417,6 @@ exports[`SudokuGrid matches snapshot with a typical mid-game state 1`] = `
             },
             {
               "backgroundColor": "#19191f",
-              "borderColor": "#2e2e38",
-              "borderWidth": 0.5,
             },
           ]
         }
@@ -5228,9 +5425,11 @@ exports[`SudokuGrid matches snapshot with a typical mid-game state 1`] = `
     <View
       style={
         {
+          "borderBottomColor": "#2e2e38",
+          "borderBottomWidth": 0.5,
+          "borderRightColor": "#2e2e38",
+          "borderRightWidth": 0.5,
           "flex": 1,
-          "marginBottom": 0.5,
-          "marginRight": 0.5,
         }
       }
     >
@@ -5275,9 +5474,7 @@ exports[`SudokuGrid matches snapshot with a typical mid-game state 1`] = `
               "justifyContent": "center",
             },
             {
-              "backgroundColor": "#1c1c23",
-              "borderColor": "#2e2e38",
-              "borderWidth": 0.5,
+              "backgroundColor": "#8ff5ff22",
             },
           ]
         }
@@ -5286,9 +5483,11 @@ exports[`SudokuGrid matches snapshot with a typical mid-game state 1`] = `
     <View
       style={
         {
+          "borderBottomColor": "#2e2e38",
+          "borderBottomWidth": 0.5,
+          "borderRightColor": "#4a4a56",
+          "borderRightWidth": 2,
           "flex": 1,
-          "marginBottom": 0.5,
-          "marginRight": 2,
         }
       }
     >
@@ -5334,8 +5533,6 @@ exports[`SudokuGrid matches snapshot with a typical mid-game state 1`] = `
             },
             {
               "backgroundColor": "#19191f",
-              "borderColor": "#2e2e38",
-              "borderWidth": 0.5,
             },
           ]
         }
@@ -5344,9 +5541,11 @@ exports[`SudokuGrid matches snapshot with a typical mid-game state 1`] = `
     <View
       style={
         {
+          "borderBottomColor": "#2e2e38",
+          "borderBottomWidth": 0.5,
+          "borderRightColor": "#2e2e38",
+          "borderRightWidth": 0.5,
           "flex": 1,
-          "marginBottom": 0.5,
-          "marginRight": 0.5,
         }
       }
     >
@@ -5392,8 +5591,6 @@ exports[`SudokuGrid matches snapshot with a typical mid-game state 1`] = `
             },
             {
               "backgroundColor": "#19191f",
-              "borderColor": "#2e2e38",
-              "borderWidth": 0.5,
             },
           ]
         }
@@ -5402,9 +5599,11 @@ exports[`SudokuGrid matches snapshot with a typical mid-game state 1`] = `
     <View
       style={
         {
+          "borderBottomColor": "#2e2e38",
+          "borderBottomWidth": 0.5,
+          "borderRightColor": "#2e2e38",
+          "borderRightWidth": 0.5,
           "flex": 1,
-          "marginBottom": 0.5,
-          "marginRight": 0.5,
         }
       }
     >
@@ -5450,8 +5649,6 @@ exports[`SudokuGrid matches snapshot with a typical mid-game state 1`] = `
             },
             {
               "backgroundColor": "#19191f",
-              "borderColor": "#2e2e38",
-              "borderWidth": 0.5,
             },
           ]
         }
@@ -5460,9 +5657,11 @@ exports[`SudokuGrid matches snapshot with a typical mid-game state 1`] = `
     <View
       style={
         {
+          "borderBottomColor": "#2e2e38",
+          "borderBottomWidth": 0.5,
+          "borderRightColor": "#4a4a56",
+          "borderRightWidth": 0,
           "flex": 1,
-          "marginBottom": 0.5,
-          "marginRight": 0,
         }
       }
     >
@@ -5508,8 +5707,6 @@ exports[`SudokuGrid matches snapshot with a typical mid-game state 1`] = `
             },
             {
               "backgroundColor": "#19191f",
-              "borderColor": "#2e2e38",
-              "borderWidth": 0.5,
             },
           ]
         }
@@ -5527,9 +5724,11 @@ exports[`SudokuGrid matches snapshot with a typical mid-game state 1`] = `
     <View
       style={
         {
+          "borderBottomColor": "#4a4a56",
+          "borderBottomWidth": 0,
+          "borderRightColor": "#2e2e38",
+          "borderRightWidth": 0.5,
           "flex": 1,
-          "marginBottom": 0,
-          "marginRight": 0.5,
         }
       }
     >
@@ -5575,8 +5774,6 @@ exports[`SudokuGrid matches snapshot with a typical mid-game state 1`] = `
             },
             {
               "backgroundColor": "#19191f",
-              "borderColor": "#2e2e38",
-              "borderWidth": 0.5,
             },
           ]
         }
@@ -5585,9 +5782,11 @@ exports[`SudokuGrid matches snapshot with a typical mid-game state 1`] = `
     <View
       style={
         {
+          "borderBottomColor": "#4a4a56",
+          "borderBottomWidth": 0,
+          "borderRightColor": "#2e2e38",
+          "borderRightWidth": 0.5,
           "flex": 1,
-          "marginBottom": 0,
-          "marginRight": 0.5,
         }
       }
     >
@@ -5633,8 +5832,6 @@ exports[`SudokuGrid matches snapshot with a typical mid-game state 1`] = `
             },
             {
               "backgroundColor": "#19191f",
-              "borderColor": "#2e2e38",
-              "borderWidth": 0.5,
             },
           ]
         }
@@ -5643,9 +5840,11 @@ exports[`SudokuGrid matches snapshot with a typical mid-game state 1`] = `
     <View
       style={
         {
+          "borderBottomColor": "#4a4a56",
+          "borderBottomWidth": 0,
+          "borderRightColor": "#4a4a56",
+          "borderRightWidth": 2,
           "flex": 1,
-          "marginBottom": 0,
-          "marginRight": 2,
         }
       }
     >
@@ -5691,8 +5890,6 @@ exports[`SudokuGrid matches snapshot with a typical mid-game state 1`] = `
             },
             {
               "backgroundColor": "#19191f",
-              "borderColor": "#2e2e38",
-              "borderWidth": 0.5,
             },
           ]
         }
@@ -5701,9 +5898,11 @@ exports[`SudokuGrid matches snapshot with a typical mid-game state 1`] = `
     <View
       style={
         {
+          "borderBottomColor": "#4a4a56",
+          "borderBottomWidth": 0,
+          "borderRightColor": "#2e2e38",
+          "borderRightWidth": 0.5,
           "flex": 1,
-          "marginBottom": 0,
-          "marginRight": 0.5,
         }
       }
     >
@@ -5749,8 +5948,6 @@ exports[`SudokuGrid matches snapshot with a typical mid-game state 1`] = `
             },
             {
               "backgroundColor": "#19191f",
-              "borderColor": "#2e2e38",
-              "borderWidth": 0.5,
             },
           ]
         }
@@ -5759,9 +5956,11 @@ exports[`SudokuGrid matches snapshot with a typical mid-game state 1`] = `
     <View
       style={
         {
+          "borderBottomColor": "#4a4a56",
+          "borderBottomWidth": 0,
+          "borderRightColor": "#2e2e38",
+          "borderRightWidth": 0.5,
           "flex": 1,
-          "marginBottom": 0,
-          "marginRight": 0.5,
         }
       }
     >
@@ -5806,9 +6005,7 @@ exports[`SudokuGrid matches snapshot with a typical mid-game state 1`] = `
               "justifyContent": "center",
             },
             {
-              "backgroundColor": "#1c1c23",
-              "borderColor": "#2e2e38",
-              "borderWidth": 0.5,
+              "backgroundColor": "#8ff5ff22",
             },
           ]
         }
@@ -5817,9 +6014,11 @@ exports[`SudokuGrid matches snapshot with a typical mid-game state 1`] = `
     <View
       style={
         {
+          "borderBottomColor": "#4a4a56",
+          "borderBottomWidth": 0,
+          "borderRightColor": "#4a4a56",
+          "borderRightWidth": 2,
           "flex": 1,
-          "marginBottom": 0,
-          "marginRight": 2,
         }
       }
     >
@@ -5865,8 +6064,6 @@ exports[`SudokuGrid matches snapshot with a typical mid-game state 1`] = `
             },
             {
               "backgroundColor": "#19191f",
-              "borderColor": "#2e2e38",
-              "borderWidth": 0.5,
             },
           ]
         }
@@ -5875,9 +6072,11 @@ exports[`SudokuGrid matches snapshot with a typical mid-game state 1`] = `
     <View
       style={
         {
+          "borderBottomColor": "#4a4a56",
+          "borderBottomWidth": 0,
+          "borderRightColor": "#2e2e38",
+          "borderRightWidth": 0.5,
           "flex": 1,
-          "marginBottom": 0,
-          "marginRight": 0.5,
         }
       }
     >
@@ -5923,8 +6122,6 @@ exports[`SudokuGrid matches snapshot with a typical mid-game state 1`] = `
             },
             {
               "backgroundColor": "#19191f",
-              "borderColor": "#2e2e38",
-              "borderWidth": 0.5,
             },
           ]
         }
@@ -5933,9 +6130,11 @@ exports[`SudokuGrid matches snapshot with a typical mid-game state 1`] = `
     <View
       style={
         {
+          "borderBottomColor": "#4a4a56",
+          "borderBottomWidth": 0,
+          "borderRightColor": "#2e2e38",
+          "borderRightWidth": 0.5,
           "flex": 1,
-          "marginBottom": 0,
-          "marginRight": 0.5,
         }
       }
     >
@@ -5981,8 +6180,6 @@ exports[`SudokuGrid matches snapshot with a typical mid-game state 1`] = `
             },
             {
               "backgroundColor": "#19191f",
-              "borderColor": "#2e2e38",
-              "borderWidth": 0.5,
             },
           ]
         }
@@ -5991,9 +6188,11 @@ exports[`SudokuGrid matches snapshot with a typical mid-game state 1`] = `
     <View
       style={
         {
+          "borderBottomColor": "#4a4a56",
+          "borderBottomWidth": 0,
+          "borderRightColor": "#4a4a56",
+          "borderRightWidth": 0,
           "flex": 1,
-          "marginBottom": 0,
-          "marginRight": 0,
         }
       }
     >
@@ -6039,8 +6238,6 @@ exports[`SudokuGrid matches snapshot with a typical mid-game state 1`] = `
             },
             {
               "backgroundColor": "#19191f",
-              "borderColor": "#2e2e38",
-              "borderWidth": 0.5,
             },
           ]
         }
@@ -6049,7 +6246,9 @@ exports[`SudokuGrid matches snapshot with a typical mid-game state 1`] = `
           style={
             [
               {
-                "fontSize": 22,
+                "fontSize": 18,
+                "fontVariantNumeric": "tabular-nums",
+                "lineHeight": 18,
               },
               {
                 "color": "#ff716c",

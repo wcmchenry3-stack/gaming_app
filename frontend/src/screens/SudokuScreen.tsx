@@ -51,7 +51,7 @@ import {
   undo,
 } from "../game/sudoku/engine";
 import type { CellValue, Difficulty, SudokuState, Variant } from "../game/sudoku/types";
-import { VARIANTS } from "../game/sudoku/types";
+import { VARIANTS, variantConfig } from "../game/sudoku/types";
 import { useSound } from "../game/_shared/useSound";
 import {
   clearGame,
@@ -415,51 +415,40 @@ export default function SudokuScreen() {
     pausedAtRef.current = null;
   }, []);
 
+  const handleHint = useCallback(() => {
+    setState((s) => {
+      if (!s || s.selectedRow === null || s.selectedCol === null) return s;
+      const cell = s.grid[s.selectedRow][s.selectedCol];
+      if (cell.given || cell.value !== 0) return s;
+      const { size } = variantConfig(s.variant);
+      const idx = s.selectedRow * size + s.selectedCol;
+      const hintDigit = (s.solution.charCodeAt(idx) - 48) as CellValue;
+      if (startMsRef.current === null) startMsRef.current = Date.now();
+      digitCountRef.current += 1;
+      ensureSyncStarted(s);
+      return enterDigit(s, hintDigit);
+    });
+  }, [ensureSyncStarted]);
+
   const headerRight = useMemo(() => {
     if (!state) return null;
     const undoDisabled = state.undoStack.length === 0;
     return (
-      <View style={styles.headerRow}>
-        <Pressable
-          onPress={handleUndo}
-          disabled={undoDisabled}
-          style={[
-            styles.headerBtn,
-            { borderColor: colors.accent, opacity: undoDisabled ? 0.4 : 1 },
-          ]}
-          accessibilityRole="button"
-          accessibilityLabel={t("action.undo")}
-          accessibilityState={{ disabled: undoDisabled }}
-        >
-          <Text style={[styles.headerBtnText, { color: colors.accent }]}>{t("action.undo")}</Text>
-        </Pressable>
-        <Pressable
-          onPress={handleToggleNotes}
-          style={[
-            styles.headerBtn,
-            {
-              borderColor: colors.accent,
-              backgroundColor: state.notesMode ? colors.accent : "transparent",
-            },
-          ]}
-          accessibilityRole="button"
-          accessibilityLabel={t("numberPad.toggleNotes")}
-          accessibilityState={{ selected: state.notesMode }}
-        >
-          <Text
-            style={[
-              styles.headerBtnText,
-              {
-                color: state.notesMode ? colors.textOnAccent : colors.accent,
-              },
-            ]}
-          >
-            {t("numberPad.notes")}
-          </Text>
-        </Pressable>
-      </View>
+      <Pressable
+        onPress={handleUndo}
+        disabled={undoDisabled}
+        style={[
+          styles.headerBtn,
+          { borderColor: colors.accent, opacity: undoDisabled ? 0.4 : 1 },
+        ]}
+        accessibilityRole="button"
+        accessibilityLabel={t("action.undo")}
+        accessibilityState={{ disabled: undoDisabled }}
+      >
+        <Text style={[styles.headerBtnText, { color: colors.accent }]}>{t("action.undo")}</Text>
+      </Pressable>
     );
-  }, [state, colors, handleUndo, handleToggleNotes, t]);
+  }, [state, colors, handleUndo, t]);
 
   return (
     <GameShell
@@ -529,6 +518,7 @@ export default function SudokuScreen() {
               onDigit={handleDigit}
               onErase={handleErase}
               onToggleNotes={handleToggleNotes}
+              onHint={handleHint}
             />
           </View>
 

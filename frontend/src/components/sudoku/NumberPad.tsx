@@ -13,6 +13,7 @@ interface Props {
   onDigit: (digit: CellValue) => void;
   onErase: () => void;
   onToggleNotes: () => void;
+  onHint: () => void;
 }
 
 function countValue(grid: Grid, digit: CellValue): number {
@@ -28,66 +29,67 @@ export default function NumberPad({
   onDigit,
   onErase,
   onToggleNotes,
+  onHint,
 }: Props) {
   const { t } = useTranslation("sudoku");
   const { colors } = useTheme();
   const { size } = variantConfig(variant);
 
-  // Build digits 1–size in rows of 3.
   const digits = useMemo<readonly CellValue[]>(
     () => Array.from({ length: size }, (_, i) => (i + 1) as CellValue),
     [size]
   );
-  const digitRows = useMemo<readonly (readonly CellValue[])[]>(() => {
-    const rows: CellValue[][] = [];
-    for (let i = 0; i < digits.length; i += 3) {
-      rows.push(digits.slice(i, i + 3) as CellValue[]);
-    }
-    return rows;
-  }, [digits]);
 
-  // Dim digits where all `size` instances are already placed.
-  const completed = useMemo<ReadonlySet<CellValue>>(() => {
-    const done = new Set<CellValue>();
-    for (const d of digits) if (countValue(grid, d) === size) done.add(d);
-    return done;
-  }, [grid, digits, size]);
+  const counts = useMemo<ReadonlyMap<CellValue, number>>(() => {
+    const m = new Map<CellValue, number>();
+    for (const d of digits) m.set(d, countValue(grid, d));
+    return m;
+  }, [grid, digits]);
 
   return (
     <View style={styles.pad}>
-      <View style={styles.digitGrid}>
-        {digitRows.map((row, ri) => (
-          <View key={ri} style={styles.digitRow}>
-            {row.map((d) => {
-              const disabled = completed.has(d);
-              return (
-                <Pressable
-                  key={d}
-                  onPress={() => onDigit(d)}
-                  disabled={disabled}
-                  accessibilityRole="button"
-                  accessibilityLabel={t("numberPad.digit", {
-                    digit: d,
-                    defaultValue: `Enter digit ${d}`,
-                  })}
-                  accessibilityState={{ disabled }}
-                  style={[
-                    styles.digitBtn,
-                    {
-                      backgroundColor: colors.surface,
-                      borderColor: colors.border,
-                      opacity: disabled ? 0.35 : 1,
-                    },
-                  ]}
-                >
-                  <Text style={[styles.digitText, { color: colors.text }]}>{d}</Text>
-                </Pressable>
-              );
-            })}
-          </View>
-        ))}
+      <View style={[styles.digitRow, { maxWidth: 360 }]}>
+        {digits.map((d) => {
+          const placed = counts.get(d) ?? 0;
+          const remaining = size - placed;
+          const disabled = remaining <= 0;
+          return (
+            <Pressable
+              key={d}
+              onPress={() => onDigit(d)}
+              disabled={disabled}
+              accessibilityRole="button"
+              accessibilityLabel={t("numberPad.digit", {
+                digit: d,
+                defaultValue: `Enter digit ${d}`,
+              })}
+              accessibilityState={{ disabled }}
+              style={[
+                styles.digitBtn,
+                {
+                  backgroundColor: colors.surfaceHigh,
+                  borderColor: colors.border,
+                  opacity: disabled ? 0.35 : 1,
+                },
+              ]}
+            >
+              <Text style={[styles.digitText, { color: colors.text }]}>{d}</Text>
+              <Text style={[styles.remainingText, { color: colors.textMuted }]}>{remaining}</Text>
+            </Pressable>
+          );
+        })}
       </View>
-      <View style={styles.actionRow}>
+      <View style={styles.toolRow}>
+        <Pressable
+          onPress={onErase}
+          accessibilityRole="button"
+          accessibilityLabel={t("numberPad.erase", { defaultValue: "Erase cell" })}
+          style={[styles.toolBtn, { borderColor: colors.accent }]}
+        >
+          <Text style={[styles.toolText, { color: colors.accent }]}>
+            {t("numberPad.eraseShort", { defaultValue: "Erase" })}
+          </Text>
+        </Pressable>
         <Pressable
           onPress={onToggleNotes}
           accessibilityRole="button"
@@ -96,32 +98,27 @@ export default function NumberPad({
           })}
           accessibilityState={{ selected: notesMode }}
           style={[
-            styles.actionBtn,
+            styles.toolBtn,
             {
-              backgroundColor: notesMode ? colors.accent : colors.surface,
-              borderColor: colors.border,
+              borderColor: colors.accent,
+              backgroundColor: notesMode ? colors.accent : "transparent",
             },
           ]}
         >
           <Text
-            style={[styles.actionText, { color: notesMode ? colors.textOnAccent : colors.text }]}
+            style={[styles.toolText, { color: notesMode ? colors.textOnAccent : colors.accent }]}
           >
             {t("numberPad.notes", { defaultValue: "Notes" })}
           </Text>
         </Pressable>
         <Pressable
-          onPress={onErase}
+          onPress={onHint}
           accessibilityRole="button"
-          accessibilityLabel={t("numberPad.erase", {
-            defaultValue: "Erase cell",
-          })}
-          style={[
-            styles.actionBtn,
-            { backgroundColor: colors.surface, borderColor: colors.border },
-          ]}
+          accessibilityLabel={t("action.hint", { defaultValue: "Hint" })}
+          style={[styles.toolBtn, { borderColor: colors.accent }]}
         >
-          <Text style={[styles.actionText, { color: colors.text }]}>
-            {t("numberPad.eraseShort", { defaultValue: "Erase" })}
+          <Text style={[styles.toolText, { color: colors.accent }]}>
+            {t("action.hint", { defaultValue: "Hint" })}
           </Text>
         </Pressable>
       </View>
@@ -133,46 +130,50 @@ const styles = StyleSheet.create({
   pad: {
     alignItems: "center",
     gap: 12,
-  },
-  digitGrid: {
-    gap: 8,
+    width: "100%",
   },
   digitRow: {
     flexDirection: "row",
-    justifyContent: "center",
-    gap: 8,
+    gap: 4,
+    width: "100%",
   },
   digitBtn: {
-    width: 64,
-    height: 56,
+    flex: 1,
+    aspectRatio: 0.85,
     borderRadius: 8,
     borderWidth: 1,
     alignItems: "center",
     justifyContent: "center",
+    gap: 2,
   },
   digitText: {
-    fontSize: 22,
+    fontSize: 20,
+    fontWeight: "700",
+    fontFamily: "SpaceGrotesk",
+    textAlign: "center",
+  },
+  remainingText: {
+    fontSize: 9,
     fontWeight: "600",
     textAlign: "center",
-    textAlignVertical: "center",
-    lineHeight: 22,
   },
-  actionRow: {
+  toolRow: {
     flexDirection: "row",
     gap: 8,
-    alignSelf: "stretch",
-    maxWidth: 280,
+    justifyContent: "center",
   },
-  actionBtn: {
-    flex: 1,
-    paddingVertical: 10,
-    borderRadius: 8,
+  toolBtn: {
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 999,
     borderWidth: 1,
     alignItems: "center",
     justifyContent: "center",
   },
-  actionText: {
-    fontSize: 15,
-    fontWeight: "600",
+  toolText: {
+    fontSize: 11,
+    fontWeight: "800",
+    letterSpacing: 0.8,
+    textTransform: "uppercase",
   },
 });
