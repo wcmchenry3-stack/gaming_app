@@ -3,6 +3,8 @@ import {
   tick,
   isSwooping,
   diverCount,
+  maxDivers,
+  bulletCap,
   seedRng,
   _resetIds,
   CANVAS_W,
@@ -505,6 +507,181 @@ describe("Player firing", () => {
 });
 
 // ---------------------------------------------------------------------------
+// Boss HP 4 (#970)
+// ---------------------------------------------------------------------------
+
+describe("Boss HP (#970)", () => {
+  it("Boss starts with 4 HP", () => {
+    let s = initStarSwarm(CANVAS_W, CANVAS_H);
+    s = advanceMs(s, 8000);
+    const boss = s.enemies.find((e) => e.isAlive && e.tier === "Boss");
+    if (!boss) throw new Error("no boss");
+    expect(boss.hp).toBe(4);
+  });
+
+  it("Boss requires exactly 4 hits of damage=1 to die", () => {
+    let s = initStarSwarm(CANVAS_W, CANVAS_H);
+    s = advanceMs(s, 8000);
+    const bossId = s.enemies.find((e) => e.isAlive && e.tier === "Boss")?.id;
+    if (!bossId) throw new Error("no boss");
+    const getBoss = () => s.enemies.find((e) => e.id === bossId)!;
+
+    for (let hit = 1; hit <= 4; hit++) {
+      const b = getBoss();
+      s = {
+        ...s,
+        playerBullets: [
+          { id: hit, x: b.x, y: b.y, vx: 0, vy: -0.5, owner: "player", width: 5, height: 14, damage: 1 },
+        ],
+      };
+      s = tick(s, 16, NO_INPUT);
+      if (hit < 4) {
+        expect(getBoss().isAlive).toBe(true);
+        expect(getBoss().hp).toBe(4 - hit);
+      } else {
+        expect(getBoss().isAlive).toBe(false);
+      }
+    }
+  });
+
+  it("Boss is still worth 400 points on kill", () => {
+    let s = initStarSwarm(CANVAS_W, CANVAS_H);
+    s = advanceMs(s, 8000);
+    const bossId = s.enemies.find((e) => e.isAlive && e.tier === "Boss")?.id;
+    if (!bossId) throw new Error("no boss");
+    const getBoss = () => s.enemies.find((e) => e.id === bossId)!;
+    const scoreBefore = s.score;
+
+    for (let hit = 1; hit <= 4; hit++) {
+      const b = getBoss();
+      s = {
+        ...s,
+        playerBullets: [
+          { id: hit, x: b.x, y: b.y, vx: 0, vy: -0.5, owner: "player", width: 5, height: 14, damage: 1 },
+        ],
+      };
+      s = tick(s, 16, NO_INPUT);
+    }
+
+    expect(s.score - scoreBefore).toBe(400);
+  });
+
+  it("Grunt and Elite HP are unchanged", () => {
+    let s = initStarSwarm(CANVAS_W, CANVAS_H);
+    s = advanceMs(s, 8000);
+    expect(s.enemies.find((e) => e.isAlive && e.tier === "Grunt")?.hp).toBe(1);
+    expect(s.enemies.find((e) => e.isAlive && e.tier === "Elite")?.hp).toBe(2);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// maxDivers cap (#969)
+// ---------------------------------------------------------------------------
+
+describe("maxDivers cap (#969)", () => {
+  it("returns 1 for waves 1 and 2", () => {
+    expect(maxDivers(1)).toBe(1);
+    expect(maxDivers(2)).toBe(1);
+  });
+
+  it("returns 2 for waves 3 and 4", () => {
+    expect(maxDivers(3)).toBe(2);
+    expect(maxDivers(4)).toBe(2);
+  });
+
+  it("never exceeds 1 simultaneous Diving enemy on wave 1", () => {
+    let s = initStarSwarm(CANVAS_W, CANVAS_H, 1);
+    s = advanceMs(s, 8000);
+    expect(s.phase).toBe("Playing");
+
+    for (let i = 0; i < 2000; i++) {
+      s = tick(s, 16, NO_INPUT);
+      if (s.phase !== "Playing") break;
+      const divers = s.enemies.filter((e) => e.isAlive && e.phase === "Diving").length;
+      expect(divers).toBeLessThanOrEqual(maxDivers(1));
+    }
+  });
+
+  it("never exceeds 2 simultaneous Diving enemies on wave 4", () => {
+    let s = initStarSwarm(CANVAS_W, CANVAS_H, 4);
+    s = advanceMs(s, 8000);
+    expect(s.phase).toBe("Playing");
+
+    for (let i = 0; i < 2000; i++) {
+      s = tick(s, 16, NO_INPUT);
+      if (s.phase !== "Playing") break;
+      const divers = s.enemies.filter((e) => e.isAlive && e.phase === "Diving").length;
+      expect(divers).toBeLessThanOrEqual(maxDivers(4));
+    }
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Enemy bullet cap (#972)
+// ---------------------------------------------------------------------------
+
+describe("Enemy bullet cap (#972)", () => {
+  it("bulletCap returns correct values for each wave pair", () => {
+    expect(bulletCap(1)).toBe(3);
+    expect(bulletCap(2)).toBe(3);
+    expect(bulletCap(3)).toBe(4);
+    expect(bulletCap(5)).toBe(5);
+    expect(bulletCap(7)).toBe(6);
+  });
+
+  it("no new enemy bullet fired when cap is already reached", () => {
+    let s = initStarSwarm(CANVAS_W, CANVAS_H);
+    s = advanceMs(s, 8000);
+    expect(s.phase).toBe("Playing");
+
+    // Fill to the wave-1 cap (3 bullets), placed safely mid-screen
+    const fillerBullets: Bullet[] = Array.from({ length: 3 }, (_, i) => ({
+      id: 10000 + i,
+      x: 100,
+      y: 200 + i * 20,
+      vx: 0,
+      vy: 0.35,
+      owner: "enemy" as const,
+      width: 5,
+      height: 10,
+      damage: 1,
+    }));
+
+    // Force one Formation enemy's shoot timer to fire immediately
+    s = {
+      ...s,
+      enemyBullets: fillerBullets,
+      enemies: s.enemies.map((e, i) =>
+        i === 0 && e.phase === "Formation" ? { ...e, shootTimer: 0 } : e
+      ),
+    };
+
+    s = tick(s, 16, NO_INPUT);
+
+    // The 3 filler bullets are still on-screen (y ≈ 205) — no 4th bullet allowed
+    expect(s.enemyBullets.length).toBeLessThanOrEqual(bulletCap(1));
+  });
+
+  it("enemy fires normally when bullet count is below cap", () => {
+    let s = initStarSwarm(CANVAS_W, CANVAS_H);
+    s = advanceMs(s, 8000);
+    expect(s.phase).toBe("Playing");
+
+    // Start with 0 enemy bullets and force an immediate shot
+    s = {
+      ...s,
+      enemyBullets: [],
+      enemies: s.enemies.map((e, i) =>
+        i === 0 && e.phase === "Formation" ? { ...e, shootTimer: 0 } : e
+      ),
+    };
+
+    s = tick(s, 16, NO_INPUT);
+    expect(s.enemyBullets.length).toBeGreaterThan(0);
+  });
+});
+
+// ---------------------------------------------------------------------------
 // GameOver is terminal
 // ---------------------------------------------------------------------------
 
@@ -555,10 +732,12 @@ describe("Dive/circle shooting", () => {
     s = advanceMs(s, 8000); // reach Playing
     expect(s.phase).toBe("Playing");
 
-    // Force one enemy into Diving with an expired shoot timer so it fires immediately
+    // Force one enemy into Diving with an expired shoot timer so it fires immediately.
+    // Clear existing enemy bullets so the bullet cap (wave 1 = 3) doesn't suppress the shot.
     const playerX = s.player.x;
     s = {
       ...s,
+      enemyBullets: [],
       enemies: s.enemies.map((e, i) =>
         i === 0 ? { ...e, phase: "Diving" as const, diveTargetX: playerX, shootTimer: 0 } : e
       ),

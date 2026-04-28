@@ -82,7 +82,7 @@ const BONUS_LIFE_THRESHOLDS = [30_000, 70_000];
 const MAX_LIVES = 5;
 
 const TIER_SCORE: Record<EnemyTier, number> = { Grunt: 100, Elite: 200, Boss: 400 };
-const TIER_HP: Record<EnemyTier, number> = { Grunt: 1, Elite: 2, Boss: 3 };
+const TIER_HP: Record<EnemyTier, number> = { Grunt: 1, Elite: 2, Boss: 4 };
 const TIER_SIZE: Record<EnemyTier, { w: number; h: number }> = {
   Grunt: { w: 24, h: 24 },
   Elite: { w: 28, h: 28 },
@@ -315,11 +315,16 @@ function isChallengingWave(wave: number): boolean {
 }
 
 // #926: how many enemies may dive simultaneously at a given wave
-function maxDivers(wave: number): number {
+export function maxDivers(wave: number): number {
   if (wave <= 2) return 1;
   if (wave <= 4) return 2;
   if (wave <= 6) return 3;
   return 4;
+}
+
+// #972: max enemy bullets on screen — 3 at wave 1, +1 every 2 waves
+export function bulletCap(wave: number): number {
+  return 3 + Math.floor((wave - 1) / 2);
 }
 
 // #924: compute vx for an enemy bullet — non-zero only at wave 4+
@@ -748,8 +753,10 @@ function tickEnemies(state: StarSwarmState, dtMs: number): StarSwarmState {
       const candidates = state.enemies
         .map((e, i) => ({ e, i }))
         .filter(({ e }) => e.isAlive && e.phase === "Formation");
-      const max = maxDivers(state.wave);
-      for (let k = 0; k < max && candidates.length > 0; k++) {
+      // Only launch enough new divers to reach the cap — don't ignore enemies already diving.
+      const currentDivers = state.enemies.filter((e) => e.isAlive && e.phase === "Diving").length;
+      const allowedNew = Math.max(0, maxDivers(state.wave) - currentDivers);
+      for (let k = 0; k < allowedNew && candidates.length > 0; k++) {
         const pick = Math.floor(rng() * candidates.length);
         diveIndices.add(candidates[pick]!.i);
         candidates.splice(pick, 1);
@@ -785,7 +792,9 @@ function tickEnemies(state: StarSwarmState, dtMs: number): StarSwarmState {
     if (e.isAlive && e.phase === "Formation") {
       e = { ...e, x: e.formationX + swayX };
     }
-    if (result.bullet) newEnemyBullets.push(result.bullet);
+    if (result.bullet && newEnemyBullets.length < bulletCap(state.wave)) {
+      newEnemyBullets.push(result.bullet);
+    }
     return e;
   });
 
