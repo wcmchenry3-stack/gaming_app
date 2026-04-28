@@ -15,6 +15,7 @@ import {
   isInProgress,
   setRng,
   createSeededRng,
+  setDiceOverride,
   Category,
   CATEGORIES,
 } from "../engine";
@@ -803,5 +804,53 @@ describe("score — upperBonus event", () => {
     const withDice = { ...already, dice: [1, 2, 3, 4, 5], rolls_used: 1 };
     const next = score(withDice, "chance");
     expect(next.events ?? []).not.toContainEqual({ type: "upperBonus" });
+  });
+});
+
+describe("score — joker event", () => {
+  function stateWithYachtScored(): GameState {
+    const base = newGame();
+    return computeDerived({ ...base, scores: { ...base.scores, yacht: 50 }, yacht_bonus_count: 0 });
+  }
+
+  it("emits joker event when scoring a second yacht (joker bonus)", () => {
+    const withYachtScored = stateWithYachtScored();
+    const withDice = { ...withYachtScored, dice: [4, 4, 4, 4, 4], rolls_used: 1 };
+    const next = score(withDice, "fours");
+    expect(next.yacht_bonus_count).toBe(1);
+    expect(next.events ?? []).toContainEqual({ type: "joker" });
+  });
+
+  it("does not emit joker event when scoring normally (no joker)", () => {
+    const base = makeGame([1, 2, 3, 4, 5]);
+    const next = score(base, "chance");
+    expect(next.events ?? []).not.toContainEqual({ type: "joker" });
+  });
+});
+
+describe("setDiceOverride", () => {
+  it("applies override values to unheld dice on the next roll then clears", () => {
+    setDiceOverride([6, 6, 6, 6, 6]);
+    const state = newGame();
+    const next = roll(state, [false, false, false, false, false]);
+    expect(next.dice).toEqual([6, 6, 6, 6, 6]);
+    // Override consumed — subsequent roll uses RNG (not all-6)
+    setRng(createSeededRng(42));
+    const next2 = roll({ ...next, rolls_used: 1 }, [false, false, false, false, false]);
+    expect(next2.dice).not.toEqual([6, 6, 6, 6, 6]);
+  });
+
+  it("respects held dice when applying override", () => {
+    setDiceOverride([1, 1, 1, 1, 1]);
+    const base = newGame();
+    // First roll to get a held state
+    setRng(createSeededRng(7));
+    const after1 = roll(base, [false, false, false, false, false]);
+    const die0 = after1.dice[0];
+    // Hold die 0, override rest to 1
+    setDiceOverride([99, 1, 1, 1, 1]);
+    const after2 = roll(after1, [true, false, false, false, false]);
+    expect(after2.dice[0]).toBe(die0); // held — unchanged
+    expect(after2.dice[1]).toBe(1); // override applied
   });
 });

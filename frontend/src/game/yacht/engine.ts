@@ -96,6 +96,12 @@ export function createSeededRng(seed: number): RandomSource {
 // for Playwright/Maestro flows that need deterministic dice against a
 // production-shaped bundle. Call `globalThis.__yacht_setSeed(n)` before
 // the next `newGame()` to pin the roll sequence.
+let _diceOverride: number[] | null = null;
+
+export function setDiceOverride(values: number[]): void {
+  _diceOverride = [...values];
+}
+
 const _devHook = typeof __DEV__ !== "undefined" && __DEV__;
 const _testHook = process.env.EXPO_PUBLIC_TEST_HOOKS === "1";
 if ((_devHook || _testHook) && typeof globalThis !== "undefined") {
@@ -104,6 +110,8 @@ if ((_devHook || _testHook) && typeof globalThis !== "undefined") {
   ) => {
     setRng(createSeededRng(seed));
   };
+  (globalThis as unknown as { __yacht_setDice?: (values: number[]) => void }).__yacht_setDice =
+    setDiceOverride;
 }
 
 // ---------------------------------------------------------------------------
@@ -317,9 +325,11 @@ export function roll(state: GameState, heldInput: readonly boolean[]): GameState
 
   const nextDice = [...state.dice];
   const rolledIndices: number[] = [];
+  const override = _diceOverride;
+  _diceOverride = null;
   for (let i = 0; i < 5; i++) {
     if (!held[i]) {
-      nextDice[i] = 1 + Math.floor(_rng() * 6);
+      nextDice[i] = override != null ? override[i] : 1 + Math.floor(_rng() * 6);
       rolledIndices.push(i);
     }
   }
@@ -399,6 +409,7 @@ export function score(state: GameState, category: Category): GameState {
   // Collect score events for this action.
   const scoreEvents: GameEvent[] = [];
   if (category === "yacht" && scoreValue === 50) scoreEvents.push({ type: "yacht" });
+  if (nextYachtBonusCount > state.yacht_bonus_count) scoreEvents.push({ type: "joker" });
   if (category === "large_straight" && scoreValue > 0) scoreEvents.push({ type: "largeStraight" });
   if (category === "small_straight" && scoreValue > 0) scoreEvents.push({ type: "smallStraight" });
   // upperBonus fires exactly once: when the upper total first reaches ≥ 63.

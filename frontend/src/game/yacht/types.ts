@@ -9,6 +9,7 @@ export type GameEvent =
   | { readonly type: "dieHold"; readonly index: number }
   | { readonly type: "dieRelease"; readonly index: number }
   | { readonly type: "yacht" }
+  | { readonly type: "joker" }
   | { readonly type: "largeStraight" }
   | { readonly type: "smallStraight" }
   | { readonly type: "upperBonus" };
