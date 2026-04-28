@@ -152,7 +152,7 @@ export default function FreeCellScreen() {
 
   const undoDisabled = state === null || state.undoStack.length === 0 || state.isComplete;
   const hintDisabled = state === null || state.isComplete;
-  const scale = outerWidth > 0 ? Math.min(1, outerWidth / BOARD_WIDTH) : 1;
+  const scale = outerWidth > 0 ? outerWidth / BOARD_WIDTH : 1;
 
   return (
     <GameShell
@@ -425,12 +425,12 @@ const styles = StyleSheet.create({
   },
   boardWrap: {
     alignSelf: "stretch",
-    alignItems: "flex-start",
+    alignItems: "center",
     overflow: "hidden",
   },
   board: {
-    alignSelf: "flex-start",
-    transformOrigin: "top left",
+    alignSelf: "center",
+    transformOrigin: "top center",
   } as ViewStyle,
   modalOverlay: {
     flex: 1,
