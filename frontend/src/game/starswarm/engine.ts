@@ -954,7 +954,15 @@ function tickCollisions(state: StarSwarmState): StarSwarmState {
       const enemyBullets = hitByBullet
         ? state.enemyBullets.filter(
             (b) =>
-              !collideCircleAABB(player.x, player.y, PLAYER_HURT_RADIUS, b.x, b.y, b.width, b.height)
+              !collideCircleAABB(
+                player.x,
+                player.y,
+                PLAYER_HURT_RADIUS,
+                b.x,
+                b.y,
+                b.width,
+                b.height
+              )
           )
         : state.enemyBullets;
 
