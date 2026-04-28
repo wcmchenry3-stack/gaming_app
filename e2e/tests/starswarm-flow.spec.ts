@@ -44,9 +44,7 @@ test.describe("Star Swarm — navigation and smoke tests", () => {
     ).toBeVisible({ timeout: 10_000 });
   });
 
-  test("charge shot button is accessible during active play", async ({
-    page,
-  }) => {
+  test("charge-shot button is absent from active play UI", async ({ page }) => {
     await page.goto("/");
     await page.getByRole("button", { name: "Play Star Swarm" }).click();
     await expect(
@@ -54,7 +52,7 @@ test.describe("Star Swarm — navigation and smoke tests", () => {
     ).toBeVisible({ timeout: 10_000 });
     await expect(
       page.getByRole("button", { name: /Charge shot/i }),
-    ).toBeVisible({ timeout: 5_000 });
+    ).not.toBeAttached();
   });
 
   test("drag interaction on canvas does not crash the game", async ({

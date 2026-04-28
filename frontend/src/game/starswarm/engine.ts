@@ -4,6 +4,7 @@ import type {
   Bullet,
   Explosion,
   Player,
+  PowerUp,
   Vec2,
   CubicBezier,
   EnemyTier,
@@ -27,9 +28,8 @@ const BULLET_P_W = 5;
 const BULLET_P_H = 14;
 const BULLET_P_VY = -0.56; // px/ms upward
 
-export const BULLET_C_W = 12; // charge shot — wider
+export const BULLET_C_W = 12; // super-state bullet — wider
 const BULLET_C_H = 22;
-export const CHARGE_SHOOT_COOLDOWN = 900; // ms; longer cooldown than auto-fire
 
 const BULLET_E_W = 5;
 const BULLET_E_H = 10;
@@ -97,6 +97,16 @@ const AIMED_SHOT_FRACTION = 0.1; // 10% aimed at wave 1, +5% per wave, cap 60%
 // #945 Bonus lives
 const BONUS_LIFE_THRESHOLDS = [30_000, 70_000];
 const MAX_LIVES = 5;
+
+// #980: power-up entity
+const POWERUP_W = 24;
+const POWERUP_H = 24;
+const POWERUP_VY = 0.08; // px/ms fall speed
+const POWERUP_DESPAWN = 6000; // ms before auto-despawn
+const CHALLENGING_POWERUP_DESPAWN = 8000; // ms (longer despawn during Challenging Stage)
+export const POWERUP_DURATION = 5000; // ms of super state
+const SUPER_SHOOT_COOLDOWN = 70; // ms (4× fire rate during super)
+const SUPER_DAMAGE = 4;
 
 // #974: small circle around the player sprite centre — forgiveness hitbox
 export const PLAYER_HURT_RADIUS = 7; // px
@@ -369,6 +379,11 @@ function isChallengingWave(wave: number): boolean {
   return wave % 3 === 0;
 }
 
+// #980: kills needed to trigger a power-up drop (before jitter is applied)
+export function triggerKills(wave: number): number {
+  return Math.min(12 + Math.floor((wave - 1) * 1.5), 20);
+}
+
 // #926: how many enemies may dive simultaneously at a given wave
 export function maxDivers(wave: number): number {
   if (wave <= 2) return 1;
@@ -441,6 +456,18 @@ function buildWaveState(
 
   const startingNonBossCount = enemies.filter((e) => e.tier !== "Boss").length;
 
+  const challengingPowerUp: PowerUp = {
+    id: nextId(),
+    x: canvasW / 2,
+    y: POWERUP_H / 2,
+    vy: POWERUP_VY,
+    width: POWERUP_W,
+    height: POWERUP_H,
+    despawnTimer: CHALLENGING_POWERUP_DESPAWN,
+  };
+  const powerUps: PowerUp[] = isChallengingWave(wave) ? [challengingPowerUp] : [];
+  const dropJitterTarget = triggerKills(wave) + Math.floor(rng() * 5) - 2;
+
   return {
     phase,
     wave,
@@ -450,6 +477,7 @@ function buildWaveState(
     playerBullets: [],
     enemyBullets: [],
     explosions: [],
+    powerUps,
     phaseTimer: 0,
     canvasW,
     canvasH,
@@ -459,6 +487,9 @@ function buildWaveState(
     formationSwayDir: 1,
     bonusLivesAwarded,
     startingNonBossCount,
+    killsSinceLastDrop: 0,
+    dropJitterTarget,
+    activePowerUp: null,
   };
 }
 
@@ -478,6 +509,7 @@ export function tick(state: StarSwarmState, dtMs: number, input: StarSwarmInput)
   let s = tickPlayer(state, dtMs, input);
   s = tickEnemies(s, dtMs);
   s = tickBullets(s, dtMs);
+  s = tickPowerUps(s, dtMs);
   s = tickCollisions(s);
   s = tickBonusLives(state, s);
   s = tickExplosions(s, dtMs);
@@ -522,44 +554,26 @@ function tickPlayer(state: StarSwarmState, dtMs: number, input: StarSwarmInput):
 
   const player: Player = { ...p, x: newX, invincibleTimer, shootCooldown };
 
-  if (shootCooldown === 0) {
-    if (input.chargeShot) {
-      const bullet: Bullet = {
-        id: nextId(),
-        x: newX,
-        y: p.y - p.height / 2,
-        vx: 0,
-        vy: BULLET_P_VY,
-        owner: "player",
-        width: BULLET_C_W,
-        height: BULLET_C_H,
-        damage: 4,
-        piercing: true,
-      };
-      return {
-        ...state,
-        player: { ...player, shootCooldown: CHARGE_SHOOT_COOLDOWN },
-        playerBullets: [...state.playerBullets, bullet],
-      };
-    }
-    if (input.fire) {
-      const bullet: Bullet = {
-        id: nextId(),
-        x: newX,
-        y: p.y - p.height / 2,
-        vx: 0,
-        vy: BULLET_P_VY,
-        owner: "player",
-        width: BULLET_P_W,
-        height: BULLET_P_H,
-        damage: 1,
-      };
-      return {
-        ...state,
-        player: { ...player, shootCooldown: PLAYER_SHOOT_COOLDOWN },
-        playerBullets: [...state.playerBullets, bullet],
-      };
-    }
+  const isSuper = state.activePowerUp !== null;
+
+  if (shootCooldown === 0 && input.fire) {
+    const bullet: Bullet = {
+      id: nextId(),
+      x: newX,
+      y: p.y - p.height / 2,
+      vx: 0,
+      vy: BULLET_P_VY,
+      owner: "player",
+      width: isSuper ? BULLET_C_W : BULLET_P_W,
+      height: isSuper ? BULLET_C_H : BULLET_P_H,
+      damage: isSuper ? SUPER_DAMAGE : 1,
+      piercing: isSuper ? true : undefined,
+    };
+    return {
+      ...state,
+      player: { ...player, shootCooldown: isSuper ? SUPER_SHOOT_COOLDOWN : PLAYER_SHOOT_COOLDOWN },
+      playerBullets: [...state.playerBullets, bullet],
+    };
   }
 
   return { ...state, player };
@@ -959,6 +973,24 @@ function tickEnemies(state: StarSwarmState, dtMs: number): StarSwarmState {
 }
 
 // ---------------------------------------------------------------------------
+// Power-ups (#980)
+// ---------------------------------------------------------------------------
+
+function tickPowerUps(state: StarSwarmState, dtMs: number): StarSwarmState {
+  const powerUps = state.powerUps
+    .map((pu) => ({ ...pu, y: pu.y + pu.vy * dtMs, despawnTimer: pu.despawnTimer - dtMs }))
+    .filter((pu) => pu.despawnTimer > 0 && pu.y - pu.height / 2 < state.canvasH);
+
+  let activePowerUp = state.activePowerUp;
+  if (activePowerUp !== null) {
+    const newMs = activePowerUp.remainingMs - dtMs;
+    activePowerUp = newMs <= 0 ? null : { remainingMs: newMs };
+  }
+
+  return { ...state, powerUps, activePowerUp };
+}
+
+// ---------------------------------------------------------------------------
 // Bullets
 // ---------------------------------------------------------------------------
 
@@ -988,6 +1020,9 @@ function tickCollisions(state: StarSwarmState): StarSwarmState {
   const { player } = state;
   let { score, challengingHits } = state;
   const newExplosions: Explosion[] = [...state.explosions];
+  let killsSinceLastDrop = state.killsSinceLastDrop;
+  let dropJitterTarget = state.dropJitterTarget;
+  let powerUps: PowerUp[] = [...state.powerUps];
 
   // ── Player bullets ↔ enemies ──────────────────────────────────────────────
   const hitBulletIds = new Set<number>(); // non-piercing bullets consumed this tick
@@ -1015,6 +1050,7 @@ function tickCollisions(state: StarSwarmState): StarSwarmState {
         const bonus = state.phase === "ChallengingStage" ? 1 : mult;
         score += base * bonus;
         if (state.phase === "ChallengingStage") challengingHits += 1;
+        if (state.phase === "Playing") killsSinceLastDrop++;
         return { ...enemy, hp: 0, isAlive: false, hitFlashTimer: 0 };
       }
 
@@ -1026,6 +1062,38 @@ function tickCollisions(state: StarSwarmState): StarSwarmState {
 
   // Piercing bullets are removed by the off-screen filter in tickBullets, not here
   const playerBullets = state.playerBullets.filter((b) => !hitBulletIds.has(b.id));
+
+  // ── Power-up drop check (Playing only, max 1 on screen) ────────────────────
+  if (
+    state.phase === "Playing" &&
+    killsSinceLastDrop >= dropJitterTarget &&
+    powerUps.length === 0
+  ) {
+    const spawnX = POWERUP_W / 2 + rng() * (state.canvasW - POWERUP_W);
+    powerUps = [
+      {
+        id: nextId(),
+        x: spawnX,
+        y: POWERUP_H / 2,
+        vy: POWERUP_VY,
+        width: POWERUP_W,
+        height: POWERUP_H,
+        despawnTimer: POWERUP_DESPAWN,
+      },
+    ];
+    killsSinceLastDrop = 0;
+    dropJitterTarget = triggerKills(state.wave) + Math.floor(rng() * 5) - 2;
+  }
+
+  // ── Player ↔ power-up collection ────────────────────────────────────────
+  let activePowerUp = state.activePowerUp;
+  const collectedIdx = powerUps.findIndex((pu) =>
+    aabb(player.x, player.y, player.width, player.height, pu.x, pu.y, pu.width, pu.height)
+  );
+  if (collectedIdx !== -1) {
+    powerUps = powerUps.filter((_, i) => i !== collectedIdx);
+    activePowerUp = { remainingMs: POWERUP_DURATION };
+  }
 
   // ── Enemy contact ↔ player (bullets + #925 diving/circling ships) ──────────
   // #974: player uses a small forgiveness circle (PLAYER_HURT_RADIUS) instead of full AABB
@@ -1091,6 +1159,10 @@ function tickCollisions(state: StarSwarmState): StarSwarmState {
           explosions: newExplosions,
           score,
           challengingHits,
+          powerUps,
+          killsSinceLastDrop,
+          dropJitterTarget,
+          activePowerUp,
           player: { ...player, lives: 0 },
           phase: "GameOver",
         };
@@ -1104,12 +1176,27 @@ function tickCollisions(state: StarSwarmState): StarSwarmState {
         explosions: newExplosions,
         score,
         challengingHits,
+        powerUps,
+        killsSinceLastDrop,
+        dropJitterTarget,
+        activePowerUp,
         player: { ...player, lives: newLives, invincibleTimer: PLAYER_INVINCIBLE_MS },
       };
     }
   }
 
-  return { ...state, enemies, playerBullets, score, challengingHits, explosions: newExplosions };
+  return {
+    ...state,
+    enemies,
+    playerBullets,
+    score,
+    challengingHits,
+    explosions: newExplosions,
+    powerUps,
+    killsSinceLastDrop,
+    dropJitterTarget,
+    activePowerUp,
+  };
 }
 
 // ---------------------------------------------------------------------------

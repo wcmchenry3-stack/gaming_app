@@ -1,15 +1,13 @@
-import React, { useCallback, useEffect, useRef, useState } from "react";
-import { Animated, Platform, Pressable, StyleSheet, Text, View } from "react-native";
+import React, { useCallback, useEffect, useRef } from "react";
+import { Platform, Pressable, StyleSheet, Text, View } from "react-native";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import * as Haptics from "expo-haptics";
 import { useTranslation } from "react-i18next";
 import type { GameCanvasHandle } from "./GameCanvas";
 import type { GamePhase } from "../../game/starswarm/types";
-import { CANVAS_W, CANVAS_H, CHARGE_SHOOT_COOLDOWN } from "../../game/starswarm/engine";
+import { CANVAS_W, CANVAS_H } from "../../game/starswarm/engine";
 
 const DRAG_ZONE_Y_RATIO = 0.6; // bottom 40% is the drag zone
-const CHARGE_BTN_SIZE = 56;
-const CHARGE_BTN_HIT_SLOP = 12;
 
 interface Props {
   canvasRef: React.RefObject<GameCanvasHandle | null>;
@@ -45,25 +43,6 @@ export default function Controls({
   // Ship X captured at each touch-start — used to compute delta from gesture start,
   // avoiding cumulative drift from per-event changeX accumulation.
   const shipXAtDragStartRef = useRef(CANVAS_W / 2);
-
-  const [isCharging, setIsCharging] = useState(false);
-  const [isOnCooldown, setIsOnCooldown] = useState(false);
-  const cooldownTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const pulseAnim = useRef(new Animated.Value(1)).current;
-
-  useEffect(() => {
-    if (isCharging) {
-      Animated.loop(
-        Animated.sequence([
-          Animated.timing(pulseAnim, { toValue: 1.22, duration: 280, useNativeDriver: true }),
-          Animated.timing(pulseAnim, { toValue: 1, duration: 280, useNativeDriver: true }),
-        ])
-      ).start();
-    } else {
-      pulseAnim.stopAnimation();
-      Animated.spring(pulseAnim, { toValue: 1, useNativeDriver: true, bounciness: 0 }).start();
-    }
-  }, [isCharging, pulseAnim]);
 
   const resetPlayerX = useCallback(() => {
     playerXRef.current = CANVAS_W / 2;
@@ -143,51 +122,10 @@ export default function Controls({
   }, [canvasRef]);
 
   const isGameOver = phase === "GameOver";
-  const gameActive = !isGameOver && !isPaused;
 
   return (
     <GestureDetector gesture={panGesture}>
       <View style={[styles.overlay, { width: displayW, height: displayH }]}>
-        {/* Charge shot button — bottom-right corner, only during active play */}
-        {gameActive && (
-          <Animated.View
-            style={[
-              styles.chargeBtnWrap,
-              {
-                bottom: Platform.OS === "web" ? 20 : 28,
-                right: 12,
-                transform: [{ scale: pulseAnim }],
-              },
-            ]}
-          >
-            <Pressable
-              style={[
-                styles.chargeBtn,
-                isCharging && styles.chargeBtnActive,
-                isOnCooldown && !isCharging && styles.chargeBtnCooldown,
-              ]}
-              hitSlop={CHARGE_BTN_HIT_SLOP}
-              accessibilityLabel={t("controls.chargeShotLabel")}
-              accessibilityRole="button"
-              onPressIn={() => setIsCharging(true)}
-              onPressOut={() => {
-                setIsCharging(false);
-                setIsOnCooldown(true);
-                canvasRef.current?.setChargeShot(true);
-                if (cooldownTimerRef.current) clearTimeout(cooldownTimerRef.current);
-                cooldownTimerRef.current = setTimeout(
-                  () => setIsOnCooldown(false),
-                  CHARGE_SHOOT_COOLDOWN
-                );
-              }}
-            >
-              <Text style={styles.chargeBtnIcon} aria-hidden>
-                ⚡
-              </Text>
-            </Pressable>
-          </Animated.View>
-        )}
-
         {/* Pause overlay */}
         {isPaused && !isGameOver && (
           <Pressable
@@ -239,31 +177,6 @@ const styles = StyleSheet.create({
     position: "absolute",
     top: 0,
     left: 0,
-  },
-  chargeBtnWrap: {
-    position: "absolute",
-    width: CHARGE_BTN_SIZE,
-    height: CHARGE_BTN_SIZE,
-  },
-  chargeBtn: {
-    width: CHARGE_BTN_SIZE,
-    height: CHARGE_BTN_SIZE,
-    borderRadius: CHARGE_BTN_SIZE / 2,
-    backgroundColor: "rgba(0, 200, 255, 0.18)",
-    borderWidth: 2,
-    borderColor: "rgba(0, 200, 255, 0.55)",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  chargeBtnActive: {
-    backgroundColor: "rgba(0, 200, 255, 0.42)",
-    borderColor: "#00ffcc",
-  },
-  chargeBtnCooldown: {
-    opacity: 0.35,
-  },
-  chargeBtnIcon: {
-    fontSize: 26,
   },
   pauseOverlay: {
     ...StyleSheet.absoluteFillObject,

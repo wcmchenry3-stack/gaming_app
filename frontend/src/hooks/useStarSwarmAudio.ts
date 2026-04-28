@@ -5,7 +5,7 @@ const BG_KEYS = ["starswarm.bg1", "starswarm.bg2", "starswarm.bg3", "starswarm.b
 
 export interface SfxVolumes {
   laser: number;
-  chargeshot: number;
+  powerupcollect: number;
   explosion: number;
   playerhit: number;
   waveclear: number;
@@ -16,7 +16,7 @@ export interface SfxVolumes {
 
 export const DEFAULT_SFX_VOLUMES: SfxVolumes = {
   laser: 0,
-  chargeshot: 0.6,
+  powerupcollect: 0.8,
   explosion: 0.45,
   playerhit: 0.7,
   waveclear: 0.8,
@@ -32,7 +32,7 @@ export function useStarSwarmAudio(bgMusicActive: boolean, volumes?: Partial<SfxV
   const v = { ...DEFAULT_SFX_VOLUMES, ...volumes };
 
   const { play: playLaser } = useSound("starswarm.laser", v.laser);
-  const { play: playChargeShot } = useSound("starswarm.chargeshot", v.chargeshot);
+  const { play: playPowerUpCollect } = useSound("starswarm.powerupcollect", v.powerupcollect);
   const { play: playExplosion } = useSound("starswarm.explosion", v.explosion);
   const { play: playPlayerHit } = useSound("starswarm.playerhit", v.playerhit);
   const { play: playWaveClear } = useSound("starswarm.waveclear", v.waveclear);
@@ -42,7 +42,7 @@ export function useStarSwarmAudio(bgMusicActive: boolean, volumes?: Partial<SfxV
 
   return {
     playLaser,
-    playChargeShot,
+    playPowerUpCollect,
     playExplosion,
     playPlayerHit,
     playWaveClear,

@@ -3,7 +3,7 @@ import { View } from "react-native";
 import { Asset } from "expo-asset";
 import { useTranslation } from "react-i18next";
 import * as Sentry from "@sentry/react-native";
-import { initStarSwarm, tick } from "../../game/starswarm/engine";
+import { initStarSwarm, tick, POWERUP_DURATION } from "../../game/starswarm/engine";
 import { initStarfield, tickStarfield } from "../../game/starswarm/starfield";
 import type { StarfieldState } from "../../game/starswarm/starfield";
 import type { StarSwarmState } from "../../game/starswarm/types";
@@ -80,7 +80,6 @@ export interface DevOptions {
 export interface GameCanvasHandle {
   setPlayerX: (x: number) => void;
   setFire: (fire: boolean) => void;
-  setChargeShot: (fire: boolean) => void;
 }
 
 interface Props {
@@ -90,9 +89,9 @@ interface Props {
   onPlayerHit?: () => void;
   onWaveClear?: () => void;
   onLaserFire?: () => void;
-  onChargeShotFire?: () => void;
   onExplosion?: () => void;
   onChallengingStage?: () => void;
+  onPowerUpCollect?: () => void;
   isPaused?: boolean;
   width: number;
   height: number;
@@ -110,9 +109,9 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
       onPlayerHit,
       onWaveClear,
       onLaserFire,
-      onChargeShotFire,
       onExplosion,
       onChallengingStage,
+      onPowerUpCollect,
       isPaused = false,
       width,
       height,
@@ -132,7 +131,7 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
     const scaleRef = useRef(scale);
     const stateRef = useRef<StarSwarmState>(initStarSwarm(width, height));
     const sfRef = useRef<StarfieldState>(initStarfield(width, height));
-    const inputRef = useRef({ playerX: width / 2, fire: true, chargeShot: false });
+    const inputRef = useRef({ playerX: width / 2, fire: true });
     const infiniteLivesRef = useRef(false);
     const devOptionsRef = useRef<DevOptions | undefined>(devOptions);
     devOptionsRef.current = devOptions;
@@ -143,9 +142,10 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
     const onPlayerHitRef = useRef(onPlayerHit);
     const onWaveClearRef = useRef(onWaveClear);
     const onLaserFireRef = useRef(onLaserFire);
-    const onChargeShotFireRef = useRef(onChargeShotFire);
     const onExplosionRef = useRef(onExplosion);
     const onChallengingStageRef = useRef(onChallengingStage);
+    const onPowerUpCollectRef = useRef(onPowerUpCollect);
+    const prevActivePowerUpRef = useRef(false);
     const isPausedRef = useRef(isPaused);
     const prevScoreRef = useRef(0);
     const prevLivesRef = useRef(stateRef.current.player.lives);
@@ -182,8 +182,8 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
       onLaserFireRef.current = onLaserFire;
     }, [onLaserFire]);
     useEffect(() => {
-      onChargeShotFireRef.current = onChargeShotFire;
-    }, [onChargeShotFire]);
+      onPowerUpCollectRef.current = onPowerUpCollect;
+    }, [onPowerUpCollect]);
     useEffect(() => {
       onExplosionRef.current = onExplosion;
     }, [onExplosion]);
@@ -262,9 +262,6 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
         setFire(fire) {
           inputRef.current.fire = fire;
         },
-        setChargeShot(fire) {
-          inputRef.current.chargeShot = fire;
-        },
       }),
       []
     );
@@ -278,10 +275,10 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
       lastFrameTimeRef.current = 0;
       inputRef.current.playerX = width / 2;
       inputRef.current.fire = true;
-      inputRef.current.chargeShot = false;
       prevScoreRef.current = 0;
       prevLivesRef.current = stateRef.current.player.lives;
       prevPhaseRef.current = stateRef.current.phase;
+      prevActivePowerUpRef.current = false;
     }, [resetTick, width, height]);
 
     const draw = useCallback(() => {
@@ -398,6 +395,36 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
           ctx.closePath();
           ctx.fill();
         }
+        // Super-state electric tint
+        if (state.activePowerUp !== null) {
+          ctx.globalAlpha = 0.45;
+          ctx.fillStyle = "#ffee00";
+          ctx.fillRect(
+            player.x - player.width / 2,
+            player.y - player.height / 2,
+            player.width,
+            player.height
+          );
+          ctx.globalAlpha = 1;
+        }
+      }
+
+      // Power-ups — falling lightning bolt
+      ctx.fillStyle = "#ffee00";
+      for (const pu of state.powerUps) {
+        const lx = pu.x - pu.width / 2;
+        const ly = pu.y - pu.height / 2;
+        const pw = pu.width;
+        const ph = pu.height;
+        ctx.beginPath();
+        ctx.moveTo(lx + pw * 0.625, ly);
+        ctx.lineTo(lx + pw * 0.125, ly + ph * 0.542);
+        ctx.lineTo(lx + pw * 0.458, ly + ph * 0.542);
+        ctx.lineTo(lx + pw * 0.375, ly + ph);
+        ctx.lineTo(lx + pw * 0.875, ly + ph * 0.458);
+        ctx.lineTo(lx + pw * 0.542, ly + ph * 0.458);
+        ctx.closePath();
+        ctx.fill();
       }
 
       // Explosions
@@ -438,6 +465,15 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
       for (let i = 0; i < player.lives; i++) {
         ctx.fillStyle = "#00ffcc";
         ctx.fillRect(10 + i * 16, height - 18, 10, 14);
+      }
+
+      // Power-up countdown bar — above lives
+      if (state.activePowerUp !== null) {
+        const ratio = state.activePowerUp.remainingMs / POWERUP_DURATION;
+        ctx.fillStyle = "rgba(255,255,255,0.18)";
+        ctx.fillRect(10, height - 26, 60, 4);
+        ctx.fillStyle = "#ffee00";
+        ctx.fillRect(10, height - 26, 60 * ratio, 4);
       }
 
       // Phase overlays
@@ -490,14 +526,11 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
         const prev = stateRef.current;
         if (prev.phase !== "GameOver" && !isPausedRef.current) {
           try {
-            const chargeShotRequested = inputRef.current.chargeShot;
             const prevCooldown = prev.player.shootCooldown;
             const next = tick(prev, dtMs, {
               playerX: inputRef.current.playerX,
               fire: inputRef.current.fire,
-              chargeShot: inputRef.current.chargeShot,
             });
-            if (inputRef.current.chargeShot) inputRef.current.chargeShot = false;
             let applied = next;
             if (infiniteLivesRef.current && next.player.lives < prevLivesRef.current) {
               applied = {
@@ -512,12 +545,13 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
               onScoreChangeRef.current?.(applied.score);
             }
             if (applied.player.shootCooldown > prevCooldown) {
-              if (chargeShotRequested) {
-                onChargeShotFireRef.current?.();
-              } else {
-                onLaserFireRef.current?.();
-              }
+              onLaserFireRef.current?.();
             }
+            const isNowActive = applied.activePowerUp !== null;
+            if (!prevActivePowerUpRef.current && isNowActive) {
+              onPowerUpCollectRef.current?.();
+            }
+            prevActivePowerUpRef.current = isNowActive;
             if (applied.explosions.length > prev.explosions.length) {
               onExplosionRef.current?.();
             }
