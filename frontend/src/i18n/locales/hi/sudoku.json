@@ -1,4 +1,4 @@
-{
+﻿{
   "game.title": "Sudoku",
   "game.description": "क्लासिक 9x9 नंबर पज़ल, तीन लेवल्स में।",
   "game.playLabel": "Sudoku खेलें",
@@ -17,6 +17,7 @@
   "variant.classic": "Classic 9×9",
   "variant.mini": "Mini 6×6",
   "action.undo": "वापस",
+  "action.hint": "संकेत",
   "action.newGame": "नया पज़ल",
   "action.changeDifficulty": "मुश्किल स्तर बदलें",
   "action.start": "शुरू करें",

@@ -1,4 +1,4 @@
-{
+﻿{
   "game.title": "سودوكو",
   "game.description": "لغز أرقام 9x9 بثلاث مستويات صعوبة.",
   "game.playLabel": "ابدأ سودوكو",
@@ -17,6 +17,7 @@
   "variant.classic": "Classic 9×9",
   "variant.mini": "Mini 6×6",
   "action.undo": "تراجع",
+  "action.hint": "تلميح",
   "action.newGame": "لغز جديد",
   "action.changeDifficulty": "تغيير الصعوبة",
   "action.start": "ابدأ",
