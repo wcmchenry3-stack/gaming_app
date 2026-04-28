@@ -35,14 +35,12 @@ export default function SudokuCell({
   const noteDigits = Array.from({ length: size }, (_, i) => (i + 1) as NoteDigit);
 
   const background = selected
-    ? colors.surfaceHigh
+    ? colors.accent + "AA"
     : highlighted
-      ? colors.surfaceAlt
+      ? colors.accent + "55"
       : peer
-        ? colors.surfacePeer
+        ? colors.accent + "22"
         : colors.surface;
-
-  const borderColor = selected ? colors.accent : colors.border;
 
   const valueColor = cell.given ? colors.text : cell.isError ? colors.error : colors.accent;
 
@@ -59,14 +57,7 @@ export default function SudokuCell({
       accessibilityRole="button"
       accessibilityLabel={label}
       accessibilityState={{ selected }}
-      style={[
-        styles.cell,
-        {
-          backgroundColor: background,
-          borderColor,
-          borderWidth: selected ? 2 : StyleSheet.hairlineWidth,
-        },
-      ]}
+      style={[styles.cell, { backgroundColor: background }]}
     >
       {cell.value !== 0 ? (
         <Text style={[styles.value, { color: valueColor, fontWeight: cell.given ? "700" : "600" }]}>
@@ -96,7 +87,9 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   value: {
-    fontSize: 22,
+    fontSize: 18,
+    fontVariantNumeric: "tabular-nums",
+    lineHeight: 18,
   },
   notesGrid: {
     width: "100%",

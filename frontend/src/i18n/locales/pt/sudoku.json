@@ -17,6 +17,7 @@
   "variant.classic": "Classic 9×9",
   "variant.mini": "Mini 6×6",
   "action.undo": "Desfazer",
+  "action.hint": "Dica",
   "action.newGame": "Novo Jogo",
   "action.changeDifficulty": "Alterar Dificuldade",
   "action.start": "Começar",

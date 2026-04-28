@@ -17,6 +17,7 @@
   "variant.classic": "Classic 9×9",
   "variant.mini": "Mini 6×6",
   "action.undo": "Rückgängig",
+  "action.hint": "Tipp",
   "action.newGame": "Neues Rätsel",
   "action.changeDifficulty": "Schwierigkeit ändern",
   "action.start": "Start",

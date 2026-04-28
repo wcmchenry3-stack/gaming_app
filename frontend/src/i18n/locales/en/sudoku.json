@@ -18,6 +18,7 @@
   "difficulty.hard": "Hard",
 
   "action.undo": "Undo",
+  "action.hint": "Hint",
   "action.newGame": "New Puzzle",
   "action.changeDifficulty": "Change Difficulty",
   "action.start": "Start",

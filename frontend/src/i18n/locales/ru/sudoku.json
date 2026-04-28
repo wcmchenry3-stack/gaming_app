@@ -17,6 +17,7 @@
   "variant.classic": "Classic 9×9",
   "variant.mini": "Mini 6×6",
   "action.undo": "Отмена",
+  "action.hint": "Подсказка",
   "action.newGame": "Новая игра",
   "action.changeDifficulty": "Сменить сложность",
   "action.start": "Начать",

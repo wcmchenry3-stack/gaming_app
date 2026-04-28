@@ -17,6 +17,7 @@
   "variant.classic": "Classic 9×9",
   "variant.mini": "Mini 6×6",
   "action.undo": "되돌리기",
+  "action.hint": "힌트",
   "action.newGame": "새 퍼즐",
   "action.changeDifficulty": "난이도 변경",
   "action.start": "시작",

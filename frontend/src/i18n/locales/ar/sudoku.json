@@ -17,6 +17,7 @@
   "variant.classic": "Classic 9×9",
   "variant.mini": "Mini 6×6",
   "action.undo": "تراجع",
+  "action.hint": "تلميح",
   "action.newGame": "لغز جديد",
   "action.changeDifficulty": "تغيير الصعوبة",
   "action.start": "ابدأ",

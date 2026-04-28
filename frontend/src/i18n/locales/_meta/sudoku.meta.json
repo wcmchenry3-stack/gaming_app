@@ -166,6 +166,15 @@
     "doNotTranslate": [],
     "notes": null
   },
+  "action.hint": {
+    "component": "NumberPad tool row",
+    "description": "Label for the Hint button — reveals the correct digit for the selected empty cell.",
+    "tone": "casual",
+    "characterLimit": 8,
+    "placeholders": [],
+    "doNotTranslate": [],
+    "notes": null
+  },
   "action.newGame": {
     "component": "Win modal",
     "description": "Label for the 'New Puzzle' button (starts a fresh puzzle at the same difficulty).",

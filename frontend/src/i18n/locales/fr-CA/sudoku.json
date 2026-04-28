@@ -17,6 +17,7 @@
   "variant.classic": "Classic 9×9",
   "variant.mini": "Mini 6×6",
   "action.undo": "Annuler",
+  "action.hint": "Indice",
   "action.newGame": "Nouveau puzzle",
   "action.changeDifficulty": "Changer difficulté",
   "action.start": "Commencer",

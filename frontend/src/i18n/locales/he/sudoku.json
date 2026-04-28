@@ -17,6 +17,7 @@
   "variant.classic": "Classic 9×9",
   "variant.mini": "Mini 6×6",
   "action.undo": "בטל",
+  "action.hint": "רמז",
   "action.newGame": "פאזל חדש",
   "action.changeDifficulty": "שנה רמת קושי",
   "action.start": "התחל",

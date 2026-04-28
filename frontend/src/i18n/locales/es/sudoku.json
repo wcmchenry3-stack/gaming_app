@@ -17,6 +17,7 @@
   "variant.classic": "Classic 9×9",
   "variant.mini": "Mini 6×6",
   "action.undo": "Deshacer",
+  "action.hint": "Pista",
   "action.newGame": "Nuevo Puzzle",
   "action.changeDifficulty": "Cambiar Dificultad",
   "action.start": "Comenzar",
