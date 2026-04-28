@@ -18,6 +18,7 @@ export interface FreeCellSlotProps {
   readonly card: Card | null;
   readonly cellIndex: number;
   readonly selected?: boolean;
+  readonly hintSource?: boolean;
   readonly onPress?: (cellIndex: number) => void;
   readonly dropId?: string;
   readonly onDrop?: DropHandler;
@@ -27,6 +28,7 @@ export default function FreeCellSlot({
   card,
   cellIndex,
   selected = false,
+  hintSource = false,
   onPress,
   dropId,
   onDrop,
@@ -51,6 +53,7 @@ export default function FreeCellSlot({
         width={CARD_WIDTH}
         height={CARD_HEIGHT}
         highlighted={selected}
+        hintHighlighted={hintSource}
         accessibilityLabel={label}
       />
     );

@@ -115,5 +115,23 @@
     "placeholders": [],
     "doNotTranslate": [],
     "notes": null
+  },
+  "action.hint": {
+    "component": "FreeCellScreen",
+    "description": "Label for the Hint button in the game header — tapping it highlights a valid move.",
+    "tone": "neutral",
+    "characterLimit": 8,
+    "placeholders": [],
+    "doNotTranslate": [],
+    "notes": null
+  },
+  "noMoves.message": {
+    "component": "FreeCellScreen",
+    "description": "Non-blocking banner shown when no legal moves remain, prompting the player to undo.",
+    "tone": "casual, helpful",
+    "characterLimit": 50,
+    "placeholders": [],
+    "doNotTranslate": [],
+    "notes": null
   }
 }

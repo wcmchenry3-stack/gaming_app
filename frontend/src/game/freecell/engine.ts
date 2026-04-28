@@ -250,12 +250,17 @@ function withUndo(prev: FreeCellState, next: Omit<FreeCellState, "undoStack">): 
 
 function finalizeAfterMove(
   prev: FreeCellState,
-  next: Omit<FreeCellState, "undoStack" | "isComplete" | "events">,
+  next: Omit<FreeCellState, "undoStack" | "isComplete" | "events" | "hint">,
   events: readonly GameEvent[]
 ): FreeCellState {
   const win = isWin(next.foundations);
-  const allEvents: readonly GameEvent[] = win ? [...events, { type: "gameWin" } as const] : events;
-  return withUndo(prev, { ...next, isComplete: win, events: allEvents });
+  const baseEvents: readonly GameEvent[] = win ? [...events, { type: "gameWin" } as const] : events;
+  // Hint is always cleared after a real move.
+  const result = withUndo(prev, { ...next, hint: undefined, isComplete: win, events: baseEvents });
+  if (!win && !hasLegalMoves(result)) {
+    return { ...result, events: [...(result.events ?? []), { type: "noMovesAvailable" } as const] };
+  }
+  return result;
 }
 
 // ---------------------------------------------------------------------------
@@ -364,6 +369,120 @@ export function applyMove(state: FreeCellState, move: Move): FreeCellState {
       );
     }
   }
+}
+
+// ---------------------------------------------------------------------------
+// Hint / legal-move enumeration
+// ---------------------------------------------------------------------------
+
+/**
+ * Returns all legal moves from the current state, ordered by desirability:
+ * foundation moves first (always progress), then tableau runs, then freecell
+ * moves, then parking a card to an empty freecell as a last resort.
+ *
+ * Used by the hint system (#988) and the no-moves detector (#989).
+ */
+export function getHintMoves(state: FreeCellState): Move[] {
+  const moves: Move[] = [];
+
+  // Foundation moves — always good progress
+  for (let col = 0; col < TABLEAU_COLUMNS; col++) {
+    const m: Move = { type: "tableau-to-foundation", fromCol: col };
+    if (validateMove(state, m)) moves.push(m);
+  }
+  for (let cell = 0; cell < FREE_CELL_COUNT; cell++) {
+    const m: Move = { type: "freecell-to-foundation", fromCell: cell };
+    if (validateMove(state, m)) moves.push(m);
+  }
+
+  // Tableau-to-tableau runs (deepest valid fromIndex per column pair)
+  for (let fromCol = 0; fromCol < TABLEAU_COLUMNS; fromCol++) {
+    const src = state.tableau[fromCol];
+    if (!src || src.length === 0) continue;
+    for (let fromIndex = src.length - 1; fromIndex >= 0; fromIndex--) {
+      for (let toCol = 0; toCol < TABLEAU_COLUMNS; toCol++) {
+        if (toCol === fromCol) continue;
+        const m: Move = { type: "tableau-to-tableau", fromCol, fromIndex, toCol };
+        if (validateMove(state, m)) {
+          moves.push(m);
+          break;
+        }
+      }
+    }
+  }
+
+  // Freecell-to-tableau
+  for (let cell = 0; cell < FREE_CELL_COUNT; cell++) {
+    if (state.freeCells[cell] === null) continue;
+    for (let toCol = 0; toCol < TABLEAU_COLUMNS; toCol++) {
+      const m: Move = { type: "freecell-to-tableau", fromCell: cell, toCol };
+      if (validateMove(state, m)) {
+        moves.push(m);
+        break;
+      }
+    }
+  }
+
+  // Tableau-to-freecell (parking — last resort)
+  for (let col = 0; col < TABLEAU_COLUMNS; col++) {
+    const src = state.tableau[col];
+    if (!src || src.length === 0) continue;
+    for (let cell = 0; cell < FREE_CELL_COUNT; cell++) {
+      const m: Move = { type: "tableau-to-freecell", fromCol: col, toCell: cell };
+      if (validateMove(state, m)) {
+        moves.push(m);
+        break;
+      }
+    }
+  }
+
+  return moves;
+}
+
+/** True when at least one legal move exists. Early-exits at the first hit. */
+export function hasLegalMoves(state: FreeCellState): boolean {
+  for (let col = 0; col < TABLEAU_COLUMNS; col++) {
+    if (validateMove(state, { type: "tableau-to-foundation", fromCol: col })) return true;
+  }
+  for (let cell = 0; cell < FREE_CELL_COUNT; cell++) {
+    if (validateMove(state, { type: "freecell-to-foundation", fromCell: cell })) return true;
+  }
+  for (let fromCol = 0; fromCol < TABLEAU_COLUMNS; fromCol++) {
+    const src = state.tableau[fromCol];
+    if (!src || src.length === 0) continue;
+    for (let fromIndex = src.length - 1; fromIndex >= 0; fromIndex--) {
+      for (let toCol = 0; toCol < TABLEAU_COLUMNS; toCol++) {
+        if (toCol === fromCol) continue;
+        if (validateMove(state, { type: "tableau-to-tableau", fromCol, fromIndex, toCol }))
+          return true;
+      }
+    }
+  }
+  for (let cell = 0; cell < FREE_CELL_COUNT; cell++) {
+    if (state.freeCells[cell] === null) continue;
+    for (let toCol = 0; toCol < TABLEAU_COLUMNS; toCol++) {
+      if (validateMove(state, { type: "freecell-to-tableau", fromCell: cell, toCol })) return true;
+    }
+  }
+  for (let col = 0; col < TABLEAU_COLUMNS; col++) {
+    const src = state.tableau[col];
+    if (!src || src.length === 0) continue;
+    for (let cell = 0; cell < FREE_CELL_COUNT; cell++) {
+      if (validateMove(state, { type: "tableau-to-freecell", fromCol: col, toCell: cell }))
+        return true;
+    }
+  }
+  return false;
+}
+
+/**
+ * Sets state.hint to the first legal move (for the hint UI to highlight).
+ * Returns state unchanged if there are no legal moves — caller should check
+ * state.hint to decide whether to surface a "no moves" message instead.
+ */
+export function applyHint(state: FreeCellState): FreeCellState {
+  const moves = getHintMoves(state);
+  return { ...state, hint: moves[0] };
 }
 
 // ---------------------------------------------------------------------------

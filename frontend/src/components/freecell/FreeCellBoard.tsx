@@ -232,6 +232,10 @@ export default function FreeCellBoard({ state, onMove }: FreeCellBoardProps) {
                   card={card}
                   cellIndex={i}
                   selected={selection?.kind === "freecell" && selection.cell === i}
+                  hintSource={
+                    state.hint?.type === "freecell-to-tableau" && state.hint.fromCell === i ||
+                    state.hint?.type === "freecell-to-foundation" && state.hint.fromCell === i
+                  }
                   onPress={handleFreeCellPress}
                   dropId={`freecell-slot-${i}`}
                   onDrop={(source) => handleDropToFreeCell(source, i)}
@@ -262,6 +266,16 @@ export default function FreeCellBoard({ state, onMove }: FreeCellBoardProps) {
                 selectedIndex={
                   selection?.kind === "tableau" && selection.col === col
                     ? selection.index
+                    : undefined
+                }
+                hintIndex={
+                  (state.hint?.type === "tableau-to-tableau" ||
+                    state.hint?.type === "tableau-to-freecell" ||
+                    state.hint?.type === "tableau-to-foundation") &&
+                  state.hint.fromCol === col
+                    ? state.hint.type === "tableau-to-tableau"
+                      ? state.hint.fromIndex
+                      : pile.length - 1
                     : undefined
                 }
                 onCardPress={handleTableauCardPress}

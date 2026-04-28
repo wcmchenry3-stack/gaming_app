@@ -24,6 +24,8 @@ export interface PlayingCardProps {
   rotation?: number;
   /** Accent border (Hearts: valid play, Solitaire: selected card). */
   highlighted?: boolean;
+  /** Hint border — green, distinct from the blue selection highlight. */
+  hintHighlighted?: boolean;
   disabled?: boolean;
   onPress?: () => void;
   accessibilityLabel?: string;
@@ -37,6 +39,7 @@ export default function PlayingCard({
   height = 74,
   rotation = 0,
   highlighted = false,
+  hintHighlighted = false,
   disabled = false,
   onPress,
   accessibilityLabel,
@@ -55,7 +58,7 @@ export default function PlayingCard({
       faceDown={faceDown}
       cardBg={colors.surface}
       cardBgBack={colors.surfaceAlt}
-      border={highlighted ? colors.accent : colors.border}
+      border={hintHighlighted ? colors.bonus : highlighted ? colors.accent : colors.border}
       borderHighlight={colors.accent}
       textColor={colors.text}
       redSuitColor={colors.error}
