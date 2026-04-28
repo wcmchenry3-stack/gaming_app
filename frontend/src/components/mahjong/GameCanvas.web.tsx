@@ -103,6 +103,8 @@ function drawBoard(
   const sorted = [...state.tiles].sort((a, b) => a.layer - b.layer || a.row - b.row);
 
   for (const tile of sorted) {
+    ctx.save();
+
     const x = tileX(tile.col, tile.layer);
     const y = tileY(tile.row, tile.layer);
     const isSelected = tile.id === selectedId;
@@ -147,7 +149,8 @@ function drawBoard(
       ctx.fillStyle = suitColor;
       ctx.fillRect(x + 8, y + 10, fw - 16, fh - 20);
     }
-    ctx.globalAlpha = 1;
+
+    ctx.restore();
   }
 }
 

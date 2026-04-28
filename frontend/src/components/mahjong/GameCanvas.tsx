@@ -56,12 +56,23 @@ const SIDE_R = "#a89070";
 const SIDE_B = "#987860";
 const SHADOW = "rgba(0,0,0,0.35)";
 
+const SUIT_COLOR: Record<string, string> = {
+  characters: "#cc0000",
+  circles: "#006633",
+  bamboos: "#003322",
+  winds: "#334455",
+  dragons: "#880011",
+  flowers: "#aa2299",
+  seasons: "#0044aa",
+};
+
 // ---------------------------------------------------------------------------
 // SVG face art
 // ---------------------------------------------------------------------------
 
 function TileFaceLayer({
   faceId,
+  suit,
   x,
   y,
   w,
@@ -69,6 +80,7 @@ function TileFaceLayer({
   opacity,
 }: {
   faceId: number;
+  suit: string;
   x: number;
   y: number;
   w: number;
@@ -76,7 +88,21 @@ function TileFaceLayer({
   opacity: number;
 }) {
   const svg = useSVG(TILE_REQUIRES[faceId - 1]);
-  if (!svg) return null;
+  if (!svg) {
+    // SVG not yet loaded or failed to parse — render a suit-color placeholder
+    // so the tile face is never silently blank.
+    const fallbackColor = SUIT_COLOR[suit] ?? "#888888";
+    return (
+      <Rect
+        x={x + 6}
+        y={y + 8}
+        width={w - 12}
+        height={h - 16}
+        color={fallbackColor}
+        opacity={opacity}
+      />
+    );
+  }
   return <ImageSVG svg={svg} x={x} y={y} width={w} height={h} opacity={opacity} />;
 }
 
@@ -190,6 +216,7 @@ export default function GameCanvas({ state, onTilePress, onShufflePress, onNewGa
               {/* SVG face art */}
               <TileFaceLayer
                 faceId={tile.faceId}
+                suit={tile.suit}
                 x={x + 2}
                 y={y + 2}
                 w={fw - 4}
