@@ -16,7 +16,6 @@ import type { DragSource, DragCard } from "../../game/_shared/drag/DragContext";
 
 const TABLEAU_COLS = 8;
 const COL_GAP = 2;
-const SLOT_GAP = 4;
 const ROW_GAP = 8;
 
 const BOARD_WIDTH = TABLEAU_COLS * CARD_WIDTH + (TABLEAU_COLS - 1) * COL_GAP;
@@ -234,41 +233,36 @@ export default function FreeCellBoard({ state, onMove }: FreeCellBoardProps) {
                 borderBottomWidth: 1,
                 borderBottomColor: colors.border,
                 paddingTop: 6,
-                paddingHorizontal: 4,
                 paddingBottom: 8,
               },
             ]}
           >
-            <View style={styles.slotGroup}>
-              {state.freeCells.map((card, i) => (
-                <FreeCellSlot
-                  key={i}
-                  card={card}
-                  cellIndex={i}
-                  selected={selection?.kind === "freecell" && selection.cell === i}
-                  hintSource={
-                    (state.hint?.type === "freecell-to-tableau" && state.hint.fromCell === i) ||
-                    (state.hint?.type === "freecell-to-foundation" && state.hint.fromCell === i)
-                  }
-                  onPress={handleFreeCellPress}
-                  dropId={`freecell-slot-${i}`}
-                  onDrop={(source) => handleDropToFreeCell(source, i)}
-                />
-              ))}
-            </View>
-            <View style={styles.slotGroup}>
-              {SUITS.map((suit) => (
-                <FoundationPile
-                  key={suit}
-                  pile={state.foundations[suit]}
-                  suit={suit}
-                  selected={false}
-                  onPress={() => handleFoundationPress()}
-                  dropId={`freecell-foundation-${suit}`}
-                  onDrop={(source) => handleDropToFoundation(source)}
-                />
-              ))}
-            </View>
+            {state.freeCells.map((card, i) => (
+              <FreeCellSlot
+                key={i}
+                card={card}
+                cellIndex={i}
+                selected={selection?.kind === "freecell" && selection.cell === i}
+                hintSource={
+                  (state.hint?.type === "freecell-to-tableau" && state.hint.fromCell === i) ||
+                  (state.hint?.type === "freecell-to-foundation" && state.hint.fromCell === i)
+                }
+                onPress={handleFreeCellPress}
+                dropId={`freecell-slot-${i}`}
+                onDrop={(source) => handleDropToFreeCell(source, i)}
+              />
+            ))}
+            {SUITS.map((suit) => (
+              <FoundationPile
+                key={suit}
+                pile={state.foundations[suit]}
+                suit={suit}
+                selected={false}
+                onPress={() => handleFoundationPress()}
+                dropId={`freecell-foundation-${suit}`}
+                onDrop={(source) => handleDropToFoundation(source)}
+              />
+            ))}
           </View>
 
           <View style={styles.tableau}>
@@ -312,12 +306,8 @@ const styles = StyleSheet.create({
   },
   topRow: {
     flexDirection: "row",
-    justifyContent: "space-between",
+    gap: COL_GAP,
     width: BOARD_WIDTH,
-  },
-  slotGroup: {
-    flexDirection: "row",
-    gap: SLOT_GAP,
   },
   tableau: {
     flexDirection: "row",
