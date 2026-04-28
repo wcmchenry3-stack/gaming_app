@@ -28,6 +28,14 @@ import GameOverModal from "../components/yacht/GameOverModal";
 import { YachtCelebrationAnimation } from "../components/yacht/YachtCelebrationAnimation";
 import NewGameConfirmModal from "../components/shared/NewGameConfirmModal";
 import { useTheme } from "../theme/ThemeContext";
+import {
+  DEV_ACCENT,
+  DEV_ACCENT_DIM,
+  DEV_ACCENT_BORDER,
+  DEV_OVERLAY_BG,
+  DEV_SURFACE_SUBTLE,
+  DEV_SURFACE_DIM,
+} from "../theme/theme.constants";
 import { GameShell } from "../components/shared/GameShell";
 
 type Props = {
@@ -420,7 +428,7 @@ export default function GameScreen({ navigation, route }: Props) {
                 ))}
 
                 <Pressable
-                  style={[styles.devActionBtn, { backgroundColor: "rgba(255,128,0,1)" }]}
+                  style={[styles.devActionBtn, { backgroundColor: DEV_ACCENT }]}
                   onPress={() => {
                     setDiceOverride([...devDice]);
                     setDevPanelOpen(false);
@@ -430,7 +438,7 @@ export default function GameScreen({ navigation, route }: Props) {
                 </Pressable>
 
                 <Pressable
-                  style={[styles.devActionBtn, { backgroundColor: "rgba(255,255,255,0.08)" }]}
+                  style={[styles.devActionBtn, { backgroundColor: DEV_SURFACE_SUBTLE }]}
                   onPress={() => setDevPanelOpen(false)}
                 >
                   <Text style={[styles.devActionText, { color: colors.textMuted }]}>Close</Text>
@@ -491,7 +499,7 @@ const styles = StyleSheet.create({
     position: "absolute",
     bottom: 8,
     right: 8,
-    backgroundColor: "rgba(255,128,0,0.85)",
+    backgroundColor: DEV_ACCENT_DIM,
     paddingHorizontal: 6,
     paddingVertical: 2,
     borderRadius: 4,
@@ -505,7 +513,7 @@ const styles = StyleSheet.create({
   },
   devOverlay: {
     flex: 1,
-    backgroundColor: "rgba(0,0,0,0.7)",
+    backgroundColor: DEV_OVERLAY_BG,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -515,13 +523,13 @@ const styles = StyleSheet.create({
     width: 320,
     maxHeight: "85%",
     borderWidth: 1,
-    borderColor: "rgba(255,128,0,0.5)",
+    borderColor: DEV_ACCENT_BORDER,
   },
   devScrollContent: {
     gap: 12,
   },
   devTitle: {
-    color: "rgba(255,128,0,1)",
+    color: DEV_ACCENT,
     fontSize: 14,
     fontWeight: "700",
     letterSpacing: 2,
@@ -549,7 +557,7 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   devStepBtn: {
-    backgroundColor: "rgba(255,255,255,0.1)",
+    backgroundColor: DEV_SURFACE_DIM,
     width: 32,
     height: 32,
     borderRadius: 6,
@@ -569,7 +577,7 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
   devPresetBtn: {
-    backgroundColor: "rgba(255,255,255,0.08)",
+    backgroundColor: DEV_SURFACE_SUBTLE,
     borderRadius: 6,
     paddingVertical: 6,
     paddingHorizontal: 10,
