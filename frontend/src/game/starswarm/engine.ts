@@ -81,6 +81,9 @@ const AIMED_SHOT_FRACTION = 0.1; // 10% aimed at wave 1, +5% per wave, cap 60%
 const BONUS_LIFE_THRESHOLDS = [30_000, 70_000];
 const MAX_LIVES = 5;
 
+// #974: small circle around the player sprite centre — forgiveness hitbox
+export const PLAYER_HURT_RADIUS = 7; // px
+
 const TIER_SCORE: Record<EnemyTier, number> = { Grunt: 100, Elite: 200, Boss: 400 };
 const TIER_HP: Record<EnemyTier, number> = { Grunt: 1, Elite: 2, Boss: 4 };
 const TIER_SIZE: Record<EnemyTier, { w: number; h: number }> = {
@@ -152,6 +155,23 @@ function aabb(
     ay - ah / 2 < by + bh / 2 &&
     ay + ah / 2 > by - bh / 2
   );
+}
+
+// #974: circle (player hurt area) vs AABB — positions are centers, w/h are full extents
+export function collideCircleAABB(
+  cx: number,
+  cy: number,
+  cr: number,
+  bx: number,
+  by: number,
+  bw: number,
+  bh: number
+): boolean {
+  const nearX = Math.max(bx - bw / 2, Math.min(bx + bw / 2, cx));
+  const nearY = Math.max(by - bh / 2, Math.min(by + bh / 2, cy));
+  const dx = cx - nearX;
+  const dy = cy - nearY;
+  return dx * dx + dy * dy <= cr * cr;
 }
 
 // ---------------------------------------------------------------------------
@@ -266,6 +286,7 @@ function makeEnemy(idx: number, slot: SlotDef, canvasW: number): Enemy {
     diveTargetX: 0,
     hp: TIER_HP[slot.tier],
     isAlive: true,
+    hitFlashTimer: 0,
   };
 }
 
@@ -299,6 +320,7 @@ function makeChallengeEnemy(idx: number, total: number, canvasW: number, canvasH
     diveTargetX: 0,
     hp: TIER_HP[tier],
     isAlive: true,
+    hitFlashTimer: 0,
   };
 }
 
@@ -792,6 +814,10 @@ function tickEnemies(state: StarSwarmState, dtMs: number): StarSwarmState {
     if (e.isAlive && e.phase === "Formation") {
       e = { ...e, x: e.formationX + swayX };
     }
+    // Decrement hit-flash timer (#976)
+    if (e.isAlive && e.hitFlashTimer > 0) {
+      e = { ...e, hitFlashTimer: Math.max(0, e.hitFlashTimer - dtMs) };
+    }
     if (result.bullet && newEnemyBullets.length < bulletCap(state.wave)) {
       newEnemyBullets.push(result.bullet);
     }
@@ -873,10 +899,11 @@ function tickCollisions(state: StarSwarmState): StarSwarmState {
         const bonus = state.phase === "ChallengingStage" ? 1 : mult;
         score += base * bonus;
         if (state.phase === "ChallengingStage") challengingHits += 1;
-        return { ...enemy, hp: 0, isAlive: false };
+        return { ...enemy, hp: 0, isAlive: false, hitFlashTimer: 0 };
       }
 
-      return { ...enemy, hp: newHp };
+      // Non-lethal hit — flash (#976); killing blow skips flash (explosion takes over)
+      return { ...enemy, hp: newHp, hitFlashTimer: 120 };
     }
     return enemy;
   });
@@ -885,9 +912,10 @@ function tickCollisions(state: StarSwarmState): StarSwarmState {
   const playerBullets = state.playerBullets.filter((b) => !hitBulletIds.has(b.id));
 
   // ── Enemy contact ↔ player (bullets + #925 diving/circling ships) ──────────
+  // #974: player uses a small forgiveness circle (PLAYER_HURT_RADIUS) instead of full AABB
   if (player.invincibleTimer <= 0) {
     const hitByBullet = state.enemyBullets.some((b) =>
-      aabb(b.x, b.y, b.width, b.height, player.x, player.y, player.width, player.height)
+      collideCircleAABB(player.x, player.y, PLAYER_HURT_RADIUS, b.x, b.y, b.width, b.height)
     );
 
     // #956: capture the ramming enemy so we can destroy it on collision
@@ -898,7 +926,7 @@ function tickCollisions(state: StarSwarmState): StarSwarmState {
         if (
           e.isAlive &&
           (e.phase === "Diving" || e.phase === "Circling") &&
-          aabb(e.x, e.y, e.width, e.height, player.x, player.y, player.width, player.height)
+          collideCircleAABB(player.x, player.y, PLAYER_HURT_RADIUS, e.x, e.y, e.width, e.height)
         ) {
           rammingEnemyId = e.id;
           return true;
@@ -926,7 +954,15 @@ function tickCollisions(state: StarSwarmState): StarSwarmState {
       const enemyBullets = hitByBullet
         ? state.enemyBullets.filter(
             (b) =>
-              !aabb(b.x, b.y, b.width, b.height, player.x, player.y, player.width, player.height)
+              !collideCircleAABB(
+                player.x,
+                player.y,
+                PLAYER_HURT_RADIUS,
+                b.x,
+                b.y,
+                b.width,
+                b.height
+              )
           )
         : state.enemyBullets;
 

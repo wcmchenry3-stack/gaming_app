@@ -351,25 +351,36 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
                     : images.enemyBoss;
               const fallbackColor =
                 enemy.tier === "Grunt" ? "#8888ff" : enemy.tier === "Elite" ? "#ff88ff" : "#ffff44";
-              return img ? (
-                <SkiaImage
-                  key={enemy.id}
-                  image={img}
-                  x={enemy.x - enemy.width / 2}
-                  y={enemy.y - enemy.height / 2}
-                  width={enemy.width}
-                  height={enemy.height}
-                  fit="fill"
-                />
-              ) : (
-                <Rect
-                  key={enemy.id}
-                  x={enemy.x - enemy.width / 2}
-                  y={enemy.y - enemy.height / 2}
-                  width={enemy.width}
-                  height={enemy.height}
-                  color={fallbackColor}
-                />
+              return (
+                <Group key={enemy.id}>
+                  {img ? (
+                    <SkiaImage
+                      image={img}
+                      x={enemy.x - enemy.width / 2}
+                      y={enemy.y - enemy.height / 2}
+                      width={enemy.width}
+                      height={enemy.height}
+                      fit="fill"
+                    />
+                  ) : (
+                    <Rect
+                      x={enemy.x - enemy.width / 2}
+                      y={enemy.y - enemy.height / 2}
+                      width={enemy.width}
+                      height={enemy.height}
+                      color={fallbackColor}
+                    />
+                  )}
+                  {enemy.hitFlashTimer > 0 && (
+                    <Rect
+                      x={enemy.x - enemy.width / 2}
+                      y={enemy.y - enemy.height / 2}
+                      width={enemy.width}
+                      height={enemy.height}
+                      color="rgba(255,255,255,0.7)"
+                    />
+                  )}
+                </Group>
               );
             })}
 

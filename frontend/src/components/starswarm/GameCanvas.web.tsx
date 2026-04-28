@@ -362,6 +362,17 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
             enemy.height
           );
         }
+        if (enemy.hitFlashTimer > 0) {
+          ctx.globalAlpha = 0.7;
+          ctx.fillStyle = "#ffffff";
+          ctx.fillRect(
+            enemy.x - enemy.width / 2,
+            enemy.y - enemy.height / 2,
+            enemy.width,
+            enemy.height
+          );
+          ctx.globalAlpha = 1;
+        }
       }
 
       // Player (blink during invincibility)
