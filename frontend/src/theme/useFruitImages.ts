@@ -11,31 +11,7 @@
 import { useImage } from "@shopify/react-native-skia";
 import type { SkImage } from "@shopify/react-native-skia";
 
-// --- Baked fruit icons (pre-composited, clipped — for game canvas rendering) ---
-import cherryIcon from "../../assets/fruits-baked/cherry.png";
-import blueberryIcon from "../../assets/fruits-baked/blueberry.png";
-import lemonIcon from "../../assets/fruits-baked/lemon.png";
-import grapesIcon from "../../assets/fruits-baked/grapes.png";
-import orangeIcon from "../../assets/fruits-baked/orange.png";
-import appleIcon from "../../assets/fruits-baked/apple.png";
-import peachIcon from "../../assets/fruits-baked/peach.png";
-import coconutIcon from "../../assets/fruits-baked/coconut.png";
-import dragonfruitIcon from "../../assets/fruits-baked/dragonfruit.png";
-import pineappleIcon from "../../assets/fruits-baked/pineapple.png";
-import watermelonIcon from "../../assets/fruits-baked/watermelon.png";
-
-// --- Baked celestial icons ---
-import moonIcon from "../../assets/cosmos-baked/moon.png";
-import plutoIcon from "../../assets/cosmos-baked/pluto.png";
-import mercuryIcon from "../../assets/cosmos-baked/mercury.png";
-import marsIcon from "../../assets/cosmos-baked/mars.png";
-import venusIcon from "../../assets/cosmos-baked/venus.png";
-import earthIcon from "../../assets/cosmos-baked/earth.png";
-import neptuneIcon from "../../assets/cosmos-baked/neptune.png";
-import uranusIcon from "../../assets/cosmos-baked/uranus.png";
-import saturnIcon from "../../assets/cosmos-baked/saturn.png";
-import jupiterIcon from "../../assets/cosmos-baked/jupiter.png";
-import sunIcon from "../../assets/cosmos-baked/sun.png";
+import { COSMOS_BAKED, FRUIT_BAKED } from "../game/_shared/images";
 
 export interface FruitSetImages {
   /** Images indexed by tier (0–10). null = not yet loaded. */
@@ -46,31 +22,31 @@ export interface FruitSetImages {
 export function useFruitImages(): FruitSetImages {
   // Fruit tier order: cherry, blueberry, lemon, grape, orange, apple,
   //                   peach, coconut, dragonfruit, pineapple, watermelon
-  const cherry = useImage(cherryIcon);
-  const blueberry = useImage(blueberryIcon);
-  const lemon = useImage(lemonIcon);
-  const grape = useImage(grapesIcon);
-  const orange = useImage(orangeIcon);
-  const apple = useImage(appleIcon);
-  const peach = useImage(peachIcon);
-  const coconut = useImage(coconutIcon);
-  const dragonfruit = useImage(dragonfruitIcon);
-  const pineapple = useImage(pineappleIcon);
-  const watermelon = useImage(watermelonIcon);
+  const cherry = useImage(FRUIT_BAKED.cherry);
+  const blueberry = useImage(FRUIT_BAKED.blueberry);
+  const lemon = useImage(FRUIT_BAKED.lemon);
+  const grape = useImage(FRUIT_BAKED.grape);
+  const orange = useImage(FRUIT_BAKED.orange);
+  const apple = useImage(FRUIT_BAKED.apple);
+  const peach = useImage(FRUIT_BAKED.peach);
+  const coconut = useImage(FRUIT_BAKED.coconut);
+  const dragonfruit = useImage(FRUIT_BAKED.dragonfruit);
+  const pineapple = useImage(FRUIT_BAKED.pineapple);
+  const watermelon = useImage(FRUIT_BAKED.watermelon);
 
   // Cosmos tier order: moon, pluto, mercury, mars, venus, earth,
   //                    neptune, uranus, saturn, jupiter, sun
-  const moon = useImage(moonIcon);
-  const pluto = useImage(plutoIcon);
-  const mercury = useImage(mercuryIcon);
-  const mars = useImage(marsIcon);
-  const venus = useImage(venusIcon);
-  const earth = useImage(earthIcon);
-  const neptune = useImage(neptuneIcon);
-  const uranus = useImage(uranusIcon);
-  const saturn = useImage(saturnIcon);
-  const jupiter = useImage(jupiterIcon);
-  const sun = useImage(sunIcon);
+  const moon = useImage(COSMOS_BAKED.moon);
+  const pluto = useImage(COSMOS_BAKED.pluto);
+  const mercury = useImage(COSMOS_BAKED.mercury);
+  const mars = useImage(COSMOS_BAKED.mars);
+  const venus = useImage(COSMOS_BAKED.venus);
+  const earth = useImage(COSMOS_BAKED.earth);
+  const neptune = useImage(COSMOS_BAKED.neptune);
+  const uranus = useImage(COSMOS_BAKED.uranus);
+  const saturn = useImage(COSMOS_BAKED.saturn);
+  const jupiter = useImage(COSMOS_BAKED.jupiter);
+  const sun = useImage(COSMOS_BAKED.sun);
 
   return {
     fruits: [

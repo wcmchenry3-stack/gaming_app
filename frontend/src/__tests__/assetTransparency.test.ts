@@ -74,7 +74,7 @@ const ASSET_DIRS = [
 
 describe("No raw PNGs in icon asset directories", () => {
   const ASSETS_ROOT = path.join(FRONTEND_ROOT, "assets");
-  const EXEMPT_DIRS = new Set(["source-icons"]);
+  const EXEMPT_DIRS = new Set<string>();
 
   const subdirs = fs
     .readdirSync(ASSETS_ROOT, { withFileTypes: true })

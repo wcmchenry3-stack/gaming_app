@@ -1,55 +1,6 @@
 import { ImageSourcePropType } from "react-native";
 
-import cherryIcon from "../../assets/fruit-icons/cherry.webp";
-import blueberryIcon from "../../assets/fruit-icons/blueberry.webp";
-import lemonIcon from "../../assets/fruit-icons/lemon.webp";
-import grapesIcon from "../../assets/fruit-icons/grapes.webp";
-import orangeIcon from "../../assets/fruit-icons/orange.webp";
-import appleIcon from "../../assets/fruit-icons/apple.webp";
-import peachIcon from "../../assets/fruit-icons/peach.webp";
-import coconutIcon from "../../assets/fruit-icons/coconut.webp";
-import dragonfruitIcon from "../../assets/fruit-icons/dragonfruit.webp";
-import pineappleIcon from "../../assets/fruit-icons/pineapple.webp";
-import watermelonIcon from "../../assets/fruit-icons/watermelon.webp";
-import pumpkinIcon from "../../assets/fruit-icons/pumpkin.webp"; // reserved for future use
-import moonIcon from "../../assets/celestial-icons/moon.webp";
-import plutoIcon from "../../assets/celestial-icons/pluto.webp";
-import mercuryIcon from "../../assets/celestial-icons/mercury.webp";
-import marsIcon from "../../assets/celestial-icons/mars.webp";
-import venusIcon from "../../assets/celestial-icons/venus.webp";
-import earthIcon from "../../assets/celestial-icons/earth.webp";
-import neptuneIcon from "../../assets/celestial-icons/neptune.webp";
-import uranusIcon from "../../assets/celestial-icons/uranus.webp";
-import saturnIcon from "../../assets/celestial-icons/saturn.webp";
-import jupiterIcon from "../../assets/celestial-icons/jupiter.webp";
-import sunIcon from "../../assets/celestial-icons/sun.webp";
-import milkyWayIcon from "../../assets/celestial-icons/milkyway.webp"; // reserved for future use
-
-// Pre-baked game canvas icons — composited, clipped, ready for single drawImage
-import cherryBaked from "../../assets/fruits-baked/cherry.png";
-import blueberryBaked from "../../assets/fruits-baked/blueberry.png";
-import lemonBaked from "../../assets/fruits-baked/lemon.png";
-import grapesBaked from "../../assets/fruits-baked/grapes.png";
-import orangeBaked from "../../assets/fruits-baked/orange.png";
-import appleBaked from "../../assets/fruits-baked/apple.png";
-import peachBaked from "../../assets/fruits-baked/peach.png";
-import coconutBaked from "../../assets/fruits-baked/coconut.png";
-import dragonfruitBaked from "../../assets/fruits-baked/dragonfruit.png";
-import pineappleBaked from "../../assets/fruits-baked/pineapple.png";
-import watermelonBaked from "../../assets/fruits-baked/watermelon.png";
-import pumpkinBaked from "../../assets/fruits-baked/pumpkin.png"; // reserved for future use
-import moonBaked from "../../assets/cosmos-baked/moon.png";
-import plutoBaked from "../../assets/cosmos-baked/pluto.png";
-import mercuryBaked from "../../assets/cosmos-baked/mercury.png";
-import marsBaked from "../../assets/cosmos-baked/mars.png";
-import venusBaked from "../../assets/cosmos-baked/venus.png";
-import earthBaked from "../../assets/cosmos-baked/earth.png";
-import neptuneBaked from "../../assets/cosmos-baked/neptune.png";
-import uranusBaked from "../../assets/cosmos-baked/uranus.png";
-import saturnBaked from "../../assets/cosmos-baked/saturn.png";
-import jupiterBaked from "../../assets/cosmos-baked/jupiter.png";
-import sunBaked from "../../assets/cosmos-baked/sun.png";
-import milkyWayBaked from "../../assets/cosmos-baked/milkyway.png"; // reserved for future use
+import { COSMOS_BAKED, COSMOS_ICONS, FRUIT_BAKED, FRUIT_ICONS } from "../game/_shared/images";
 
 export type FruitTier = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10;
 
@@ -107,67 +58,6 @@ const SCORE_VALUES: Record<FruitTier, number> = {
   9: 512,
   10: 1024,
 };
-
-const FRUIT_ICONS = {
-  cherry: cherryIcon,
-  blueberry: blueberryIcon,
-  lemon: lemonIcon,
-  grape: grapesIcon,
-  orange: orangeIcon,
-  apple: appleIcon,
-  peach: peachIcon,
-  coconut: coconutIcon,
-  dragonfruit: dragonfruitIcon,
-  pineapple: pineappleIcon,
-  watermelon: watermelonIcon,
-  pumpkin: pumpkinIcon,
-} as const;
-
-const COSMOS_ICONS = {
-  moon: moonIcon,
-  pluto: plutoIcon,
-  mercury: mercuryIcon,
-  mars: marsIcon,
-  venus: venusIcon,
-  earth: earthIcon,
-  neptune: neptuneIcon,
-  uranus: uranusIcon,
-  saturn: saturnIcon,
-  jupiter: jupiterIcon,
-  sun: sunIcon,
-  milkyWay: milkyWayIcon,
-} as const;
-
-// Baked game-canvas icons (produced by scripts/bake_sprites.py)
-const FRUIT_BAKED = {
-  cherry: cherryBaked,
-  blueberry: blueberryBaked,
-  lemon: lemonBaked,
-  grape: grapesBaked,
-  orange: orangeBaked,
-  apple: appleBaked,
-  peach: peachBaked,
-  coconut: coconutBaked,
-  dragonfruit: dragonfruitBaked,
-  pineapple: pineappleBaked,
-  watermelon: watermelonBaked,
-  pumpkin: pumpkinBaked,
-} as const;
-
-const COSMOS_BAKED = {
-  moon: moonBaked,
-  pluto: plutoBaked,
-  mercury: mercuryBaked,
-  mars: marsBaked,
-  venus: venusBaked,
-  earth: earthBaked,
-  neptune: neptuneBaked,
-  uranus: uranusBaked,
-  saturn: saturnBaked,
-  jupiter: jupiterBaked,
-  sun: sunBaked,
-  milkyWay: milkyWayBaked,
-} as const;
 
 export const FRUIT_SETS: Record<string, FruitSet> = {
   fruits: {
