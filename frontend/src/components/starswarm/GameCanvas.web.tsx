@@ -75,6 +75,7 @@ interface Images {
 export interface DevOptions {
   wave?: number;
   infiniteLives?: boolean;
+  stragglerEnabled?: boolean;
 }
 
 export interface GameCanvasHandle {
@@ -270,7 +271,7 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
       if (!resetTick) return;
       const opts = devOptionsRef.current;
       infiniteLivesRef.current = opts?.infiniteLives ?? false;
-      stateRef.current = initStarSwarm(width, height, opts?.wave ?? 1);
+      stateRef.current = initStarSwarm(width, height, opts?.wave ?? 1, 42, opts?.stragglerEnabled ?? false);
       sfRef.current = initStarfield(width, height);
       lastFrameTimeRef.current = 0;
       inputRef.current.playerX = width / 2;
@@ -360,8 +361,8 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
           );
         }
         if (enemy.hitFlashTimer > 0) {
-          ctx.globalAlpha = 0.7;
-          ctx.fillStyle = "#ffffff";
+          ctx.globalAlpha = 0.55;
+          ctx.fillStyle = "#ff2200";
           ctx.fillRect(
             enemy.x - enemy.width / 2,
             enemy.y - enemy.height / 2,
@@ -369,6 +370,21 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
             enemy.height
           );
           ctx.globalAlpha = 1;
+        }
+
+        // HP pips — Elite (2) and Boss (4); Grunt always has 1 HP so pips are omitted
+        if (enemy.tier !== "Grunt") {
+          const totalPips = enemy.tier === "Elite" ? 2 : 4;
+          const pipW = 4;
+          const pipH = 4;
+          const pipGap = 2;
+          const rowW = totalPips * pipW + (totalPips - 1) * pipGap;
+          const rowX = enemy.x - rowW / 2;
+          const rowY = enemy.y - enemy.height / 2 - 8;
+          for (let p = 0; p < totalPips; p++) {
+            ctx.fillStyle = p < enemy.hp ? "#ffffff" : "rgba(255,255,255,0.2)";
+            ctx.fillRect(rowX + p * (pipW + pipGap), rowY, pipW, pipH);
+          }
         }
       }
 

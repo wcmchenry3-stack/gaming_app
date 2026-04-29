@@ -152,6 +152,10 @@ export interface StarSwarmState {
   readonly dropJitterTarget: number;
   /** Non-null while the lightning super state is active. */
   readonly activePowerUp: { readonly remainingMs: number } | null;
+  /** True once ≤35% non-boss enemies remain; latches true and never resets mid-wave. */
+  readonly bossThresholdCrossed: boolean;
+  /** When true, ≤3 surviving enemies immediately break formation and go fully aggressive. */
+  readonly stragglerEnabled: boolean;
 }
 
 /** Input snapshot consumed by each `tick` call. */
