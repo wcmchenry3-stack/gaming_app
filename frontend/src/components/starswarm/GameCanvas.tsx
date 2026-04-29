@@ -17,11 +17,13 @@ import {
   applyPowerUp,
   BULLET_C_W,
   POWERUP_DURATION,
+  difficultyLabel,
+  difficultyMultiplier,
 } from "../../game/starswarm/engine";
 import { initStarfield, tickStarfield } from "../../game/starswarm/starfield";
 import type { StarfieldState } from "../../game/starswarm/starfield";
 import { useStarSwarmImages } from "../../game/starswarm/assets";
-import type { StarSwarmState, PowerUpType } from "../../game/starswarm/types";
+import type { StarSwarmState, PowerUpType, DifficultyTier } from "../../game/starswarm/types";
 
 const EXPLOSION_DRAW_SIZE = 48;
 const DT_CAP_MS = 33;
@@ -33,6 +35,8 @@ export interface DevOptions {
   stragglerEnabled?: boolean;
   /** Suppress straggler aggression for easier wave-end testing (#1039). */
   pauseStraggler?: boolean;
+  /** Override difficulty tier for this game (#1037). */
+  difficulty?: DifficultyTier;
 }
 
 export interface GameCanvasHandle {
@@ -59,6 +63,8 @@ interface Props {
   scale: number;
   /** Increments each time a new game is requested — triggers an internal reset. */
   resetTick?: number;
+  /** Active difficulty tier — passed from the pre-game selector (#1037). */
+  difficulty?: DifficultyTier;
   /** Dev options applied on each reset (wave, infiniteLives). Passed as prop so reset
    *  is reactive and doesn't depend on the imperative ref being non-null. */
   devOptions?: DevOptions;
@@ -87,6 +93,7 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
       height,
       scale,
       resetTick,
+      difficulty: difficultyProp = "LieutenantJG",
       devOptions,
     },
     ref
@@ -94,7 +101,7 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
     const { t } = useTranslation("starswarm");
     const images = useStarSwarmImages();
 
-    const gameRef = useRef<StarSwarmState>(initStarSwarm(width, height));
+    const gameRef = useRef<StarSwarmState>(initStarSwarm(width, height, 1, 42, difficultyProp));
     const sfRef = useRef<StarfieldState>(initStarfield(width, height));
     const inputRef = useRef({ playerX: width / 2, fire: true });
     const infiniteLivesRef = useRef(false);
@@ -102,6 +109,8 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
     // latest devOptions even though devOptions is not in its dependency array.
     const devOptionsRef = useRef<DevOptions | undefined>(devOptions);
     devOptionsRef.current = devOptions;
+    const difficultyRef = useRef<DifficultyTier>(difficultyProp);
+    difficultyRef.current = difficultyProp;
     const lastFrameTimeRef = useRef(0);
     const prevScoreRef = useRef(0);
     const prevLivesRef = useRef(gameRef.current.player.lives);
@@ -186,7 +195,7 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
         height,
         opts?.wave ?? 1,
         42,
-        opts?.stragglerEnabled ?? false
+        opts?.difficulty ?? difficultyRef.current
       );
       sfRef.current = initStarfield(width, height);
       lastFrameTimeRef.current = 0;
@@ -600,6 +609,11 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
             <Text style={styles.hudText}>{`${t("hud.best")} ${hs}`}</Text>
             <Text style={styles.hudText}>{`${t("hud.wave")} ${state.wave}`}</Text>
           </View>
+          <View style={styles.hudDifficulty}>
+            <Text style={styles.hudDifficultyText}>
+              {`${difficultyLabel(state.difficulty)} ×${difficultyMultiplier(state.difficulty)}`}
+            </Text>
+          </View>
 
           <View style={styles.hudBottom}>
             {Array.from({ length: player.lives }, (_, i) => (
@@ -756,5 +770,15 @@ const styles = StyleSheet.create({
     textShadowColor: "#ff8800",
     textShadowOffset: { width: 0, height: 0 },
     textShadowRadius: 8,
+  },
+  hudDifficulty: {
+    alignSelf: "center",
+    marginTop: 2,
+  },
+  hudDifficultyText: {
+    color: "#aaffee",
+    fontSize: 10,
+    fontWeight: "bold",
+    textAlign: "center",
   },
 });

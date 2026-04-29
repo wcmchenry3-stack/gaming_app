@@ -19,8 +19,12 @@ import {
   CANVAS_W,
   CANVAS_H,
   applyPowerUp,
+  DIFFICULTY_TIERS,
+  difficultyMultiplier,
+  difficultyParamScale,
+  difficultyLabel,
 } from "../engine";
-import type { Bullet, StarSwarmInput, StarSwarmState } from "../types";
+import type { Bullet, DifficultyTier, StarSwarmInput, StarSwarmState } from "../types";
 
 const NO_INPUT: StarSwarmInput = { playerX: CANVAS_W / 2, fire: false };
 const FIRE_INPUT: StarSwarmInput = { playerX: CANVAS_W / 2, fire: true };
@@ -329,8 +333,8 @@ describe("Collision: enemy bullets vs player", () => {
 // ---------------------------------------------------------------------------
 
 describe("Scoring", () => {
-  it("Grunt is worth 100 points", () => {
-    let s = initStarSwarm(CANVAS_W, CANVAS_H);
+  it("Grunt is worth 100 points (Ensign ×1 baseline)", () => {
+    let s = initStarSwarm(CANVAS_W, CANVAS_H, 1, 42, "Ensign");
     s = advanceMs(s, 8000);
     const grunt = s.enemies.find((e) => e.isAlive && e.tier === "Grunt");
     if (!grunt) return;
@@ -353,8 +357,8 @@ describe("Scoring", () => {
     expect(s.score - scoreBeforeKill).toBe(100);
   });
 
-  it("Elite is worth 200 points", () => {
-    let s = initStarSwarm(CANVAS_W, CANVAS_H);
+  it("Elite is worth 200 points (Ensign ×1 baseline)", () => {
+    let s = initStarSwarm(CANVAS_W, CANVAS_H, 1, 42, "Ensign");
     s = advanceMs(s, 8000);
     // Elite has 2 HP — need to hit twice
     const elite = s.enemies.find((e) => e.isAlive && e.tier === "Elite");
@@ -563,8 +567,8 @@ describe("Boss HP (#970)", () => {
     }
   });
 
-  it("Boss is still worth 400 points on kill", () => {
-    let s = initStarSwarm(CANVAS_W, CANVAS_H);
+  it("Boss is still worth 400 points on kill (Ensign ×1 baseline)", () => {
+    let s = initStarSwarm(CANVAS_W, CANVAS_H, 1, 42, "Ensign");
     s = advanceMs(s, 8000);
     const bossId = s.enemies.find((e) => e.isAlive && e.tier === "Boss")?.id;
     if (!bossId) throw new Error("no boss");
@@ -1695,18 +1699,18 @@ describe("#1030 Elite phase system & Boss passive start", () => {
 // ---------------------------------------------------------------------------
 
 describe("#1031 Straggler aggression", () => {
-  it("stragglerEnabled is false by default", () => {
-    const s = initStarSwarm(CANVAS_W, CANVAS_H);
+  it("stragglerEnabled is false on Ensign difficulty", () => {
+    const s = initStarSwarm(CANVAS_W, CANVAS_H, 1, 42, "Ensign");
     expect(s.stragglerEnabled).toBe(false);
   });
 
-  it("stragglerEnabled=true passed through initStarSwarm", () => {
-    const s = initStarSwarm(CANVAS_W, CANVAS_H, 1, 42, true);
+  it("stragglerEnabled is true on LieutenantJG (default) difficulty", () => {
+    const s = initStarSwarm(CANVAS_W, CANVAS_H);
     expect(s.stragglerEnabled).toBe(true);
   });
 
   it("when ≤3 enemies remain and stragglerEnabled, Formation enemies immediately wiggle", () => {
-    let s = initStarSwarm(CANVAS_W, CANVAS_H, 1, 42, true);
+    let s = initStarSwarm(CANVAS_W, CANVAS_H, 1, 42, "LieutenantJG");
     s = advanceMs(s, 8000);
     expect(s.phase).toBe("Playing");
 
@@ -1725,8 +1729,8 @@ describe("#1031 Straggler aggression", () => {
     expect(formationCount).toBe(0); // all should have entered Wiggling
   });
 
-  it("straggler does not trigger when stragglerEnabled=false", () => {
-    let s = initStarSwarm(CANVAS_W, CANVAS_H, 1, 42, false);
+  it("straggler does not trigger on Ensign difficulty", () => {
+    let s = initStarSwarm(CANVAS_W, CANVAS_H, 1, 42, "Ensign");
     s = advanceMs(s, 8000);
     expect(s.phase).toBe("Playing");
 
@@ -1745,7 +1749,7 @@ describe("#1031 Straggler aggression", () => {
   });
 
   it("straggler does not apply during ChallengingStage", () => {
-    let s = initStarSwarm(CANVAS_W, CANVAS_H, 3, 42, true);
+    let s = initStarSwarm(CANVAS_W, CANVAS_H, 3, 42, "LieutenantJG");
     expect(s.phase).toBe("ChallengingStage");
     s = advanceMs(s, 500, NO_INPUT);
     // Kill all but 2
@@ -1765,7 +1769,7 @@ describe("#1031 Straggler aggression", () => {
   });
 
   it("stragglerEnabled carries over to next wave", () => {
-    let s = initStarSwarm(CANVAS_W, CANVAS_H, 1, 42, true);
+    let s = initStarSwarm(CANVAS_W, CANVAS_H, 1, 42, "LieutenantJG");
     s = advanceMs(s, 8000);
     s = { ...s, enemies: s.enemies.map((e) => ({ ...e, isAlive: false, hp: 0 })) };
     s = tick(s, 16, NO_INPUT); // WaveClear
@@ -2010,5 +2014,119 @@ describe("#1035 Buddy Ship", () => {
     // At some point during the 4000ms window bullets were generated; final count may be lower
     // due to off-screen removal. We just verify buddy removed cleanly.
     expect(bulletsAfter).toBeGreaterThanOrEqual(0); // always true — buddy removal is the key check
+  });
+});
+
+// ---------------------------------------------------------------------------
+// #1037 — Difficulty tiers
+// ---------------------------------------------------------------------------
+
+describe("#1037 Difficulty tiers", () => {
+  it("DIFFICULTY_TIERS has 10 entries ordered Ensign→FleetAdmiral", () => {
+    expect(DIFFICULTY_TIERS.length).toBe(10);
+    expect(DIFFICULTY_TIERS[0]).toBe("Ensign");
+    expect(DIFFICULTY_TIERS[9]).toBe("FleetAdmiral");
+  });
+
+  it("difficultyMultiplier returns 1 for Ensign and 10 for FleetAdmiral", () => {
+    expect(difficultyMultiplier("Ensign")).toBe(1);
+    expect(difficultyMultiplier("FleetAdmiral")).toBe(10);
+  });
+
+  it("difficultyMultiplier returns a positive number for every tier", () => {
+    for (const tier of DIFFICULTY_TIERS) {
+      expect(difficultyMultiplier(tier)).toBeGreaterThan(0);
+    }
+  });
+
+  it("difficultyParamScale returns 0.7 for Ensign and 3.0 for FleetAdmiral", () => {
+    expect(difficultyParamScale("Ensign")).toBeCloseTo(0.7);
+    expect(difficultyParamScale("FleetAdmiral")).toBeCloseTo(3.0);
+  });
+
+  it("difficultyLabel returns a non-empty string for every tier", () => {
+    for (const tier of DIFFICULTY_TIERS) {
+      expect(difficultyLabel(tier).length).toBeGreaterThan(0);
+    }
+  });
+
+  it("initStarSwarm stores difficulty in state", () => {
+    const tiers: DifficultyTier[] = ["Ensign", "Captain", "FleetAdmiral"];
+    for (const tier of tiers) {
+      const s = initStarSwarm(CANVAS_W, CANVAS_H, 1, 42, tier);
+      expect(s.difficulty).toBe(tier);
+    }
+  });
+
+  it("Ensign disables straggler; all other tiers enable it", () => {
+    const ensign = initStarSwarm(CANVAS_W, CANVAS_H, 1, 42, "Ensign");
+    expect(ensign.stragglerEnabled).toBe(false);
+    for (const tier of DIFFICULTY_TIERS.filter((t) => t !== "Ensign")) {
+      const s = initStarSwarm(CANVAS_W, CANVAS_H, 1, 42, tier);
+      expect(s.stragglerEnabled).toBe(true);
+    }
+  });
+
+  it("score multiplier is applied: FleetAdmiral kill worth 10× base", () => {
+    let base = initStarSwarm(CANVAS_W, CANVAS_H, 1, 42, "Ensign");
+    let hard = initStarSwarm(CANVAS_W, CANVAS_H, 1, 42, "FleetAdmiral");
+    base = advanceMs(base, 8000);
+    hard = advanceMs(hard, 8000);
+    expect(base.phase).toBe("Playing");
+    expect(hard.phase).toBe("Playing");
+
+    const gruntBase = base.enemies.find((e) => e.isAlive && e.tier === "Grunt");
+    const gruntHard = hard.enemies.find((e) => e.isAlive && e.tier === "Grunt");
+    if (!gruntBase || !gruntHard) throw new Error("no grunt found");
+
+    const kill = (s: StarSwarmState, id: number): StarSwarmState => {
+      const e = s.enemies.find((en) => en.id === id)!;
+      const b: Bullet = {
+        id: 55500 + id,
+        x: e.x,
+        y: e.y,
+        vx: 0,
+        vy: 0,
+        owner: "player",
+        width: e.width,
+        height: e.height,
+        damage: 999,
+      };
+      return tick({ ...s, playerBullets: [b] }, 16, NO_INPUT);
+    };
+
+    const scoreBase = kill(base, gruntBase.id).score;
+    const scoreHard = kill(hard, gruntHard.id).score;
+    expect(scoreHard).toBe(scoreBase * 10);
+  });
+
+  it("difficulty carries over to next wave", () => {
+    let s = initStarSwarm(CANVAS_W, CANVAS_H, 1, 42, "Admiral");
+    s = advanceMs(s, 8000);
+    s = { ...s, enemies: s.enemies.map((e) => ({ ...e, isAlive: false, hp: 0 })) };
+    s = tick(s, 16, NO_INPUT);
+    s = advanceMs(s, 3000);
+    expect(s.wave).toBe(2);
+    expect(s.difficulty).toBe("Admiral");
+  });
+
+  it("wave clear bonus is multiplied by difficulty", () => {
+    let base = initStarSwarm(CANVAS_W, CANVAS_H, 1, 42, "Ensign");
+    let hard = initStarSwarm(CANVAS_W, CANVAS_H, 1, 42, "Captain"); // ×4
+    base = advanceMs(base, 8000);
+    hard = advanceMs(hard, 8000);
+
+    // Kill all enemies to trigger wave clear bonus
+    const wipeAll = (s: StarSwarmState): StarSwarmState => ({
+      ...s,
+      enemies: s.enemies.map((e) => ({ ...e, isAlive: false, hp: 0 })),
+    });
+    base = tick(wipeAll(base), 16, NO_INPUT);
+    hard = tick(wipeAll(hard), 16, NO_INPUT);
+
+    // Both should be in WaveClear and hard score should be ≥ 4× base score
+    expect(base.phase).toBe("WaveClear");
+    expect(hard.phase).toBe("WaveClear");
+    expect(hard.score).toBeGreaterThanOrEqual(base.score * 4);
   });
 });

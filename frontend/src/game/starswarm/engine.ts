@@ -11,6 +11,7 @@ import type {
   CubicBezier,
   EnemyTier,
   StarSwarmInput,
+  DifficultyTier,
 } from "./types";
 
 // ---------------------------------------------------------------------------
@@ -128,6 +129,79 @@ export const PLAYER_HURT_RADIUS = 7; // px
 
 const TIER_SCORE: Record<EnemyTier, number> = { Grunt: 100, Elite: 200, Boss: 400 };
 const TIER_HP: Record<EnemyTier, number> = { Grunt: 1, Elite: 2, Boss: 4 };
+
+// ---------------------------------------------------------------------------
+// Difficulty tier system (#1037)
+// ---------------------------------------------------------------------------
+
+const DIFFICULTY_SCORE_MULT: Record<DifficultyTier, number> = {
+  Ensign: 1,
+  LieutenantJG: 1.5,
+  Lieutenant: 2,
+  LieutenantCommander: 2.5,
+  Commander: 3,
+  Captain: 4,
+  RearAdmiral: 5,
+  ViceAdmiral: 6,
+  Admiral: 8,
+  FleetAdmiral: 10,
+};
+
+// Scales AI aggression: dive interval floor, bullet cap, aimed-shot cap, sway speed.
+const DIFFICULTY_PARAM_SCALE: Record<DifficultyTier, number> = {
+  Ensign: 0.7,
+  LieutenantJG: 1.0,
+  Lieutenant: 1.15,
+  LieutenantCommander: 1.3,
+  Commander: 1.5,
+  Captain: 1.7,
+  RearAdmiral: 1.9,
+  ViceAdmiral: 2.15,
+  Admiral: 2.5,
+  FleetAdmiral: 3.0,
+};
+
+const DIFFICULTY_LABEL: Record<DifficultyTier, string> = {
+  Ensign: "Ensign",
+  LieutenantJG: "Lieutenant J.G.",
+  Lieutenant: "Lieutenant",
+  LieutenantCommander: "Lieutenant Cmdr",
+  Commander: "Commander",
+  Captain: "Captain",
+  RearAdmiral: "Rear Admiral",
+  ViceAdmiral: "Vice Admiral",
+  Admiral: "Admiral",
+  FleetAdmiral: "Fleet Admiral",
+};
+
+/** All tiers from easiest to hardest — use for UI selector ordering. */
+export const DIFFICULTY_TIERS: readonly DifficultyTier[] = [
+  "Ensign",
+  "LieutenantJG",
+  "Lieutenant",
+  "LieutenantCommander",
+  "Commander",
+  "Captain",
+  "RearAdmiral",
+  "ViceAdmiral",
+  "Admiral",
+  "FleetAdmiral",
+];
+
+/** Score multiplier applied to every point award for this tier. */
+export function difficultyMultiplier(tier: DifficultyTier): number {
+  return DIFFICULTY_SCORE_MULT[tier];
+}
+
+/** AI parameter scale factor (dive rate, bullet density, aimed-shot fraction). */
+export function difficultyParamScale(tier: DifficultyTier): number {
+  return DIFFICULTY_PARAM_SCALE[tier];
+}
+
+/** Human-readable display label for a difficulty tier. */
+export function difficultyLabel(tier: DifficultyTier): string {
+  return DIFFICULTY_LABEL[tier];
+}
 const TIER_SIZE: Record<EnemyTier, { w: number; h: number }> = {
   Grunt: { w: 24, h: 24 },
   Elite: { w: 28, h: 28 },
@@ -432,8 +506,11 @@ function makeChallengeEnemy(idx: number, total: number, canvasW: number, canvasH
 // Wave helpers
 // ---------------------------------------------------------------------------
 
-function diveInterval(wave: number): number {
-  return Math.max(DIVE_INTERVAL_MIN, DIVE_INTERVAL_BASE * Math.pow(0.88, wave - 1));
+function diveInterval(wave: number, paramScale = 1): number {
+  const base = DIVE_INTERVAL_BASE * Math.pow(0.88, wave - 1);
+  // Higher difficulty → lower floor → more frequent dives
+  const floor = Math.max(300, Math.round(DIVE_INTERVAL_MIN / paramScale));
+  return Math.max(floor, base);
 }
 
 function isChallengingWave(wave: number): boolean {
@@ -453,15 +530,16 @@ export function maxDivers(wave: number): number {
   return 4;
 }
 
-// #972: max enemy bullets on screen — 3 at wave 1, +1 every 2 waves
-export function bulletCap(wave: number): number {
-  return 3 + Math.floor((wave - 1) / 2);
+// #972: max enemy bullets on screen — 3 at wave 1, +1 every 2 waves; scaled by difficulty
+export function bulletCap(wave: number, paramScale = 1): number {
+  return Math.min(24, Math.round((3 + Math.floor((wave - 1) / 2)) * paramScale));
 }
 
-// #924: compute vx for an enemy bullet — non-zero only at wave 4+
-function aimedBulletVx(enemyX: number, playerX: number, wave: number): number {
+// #924: compute vx for an enemy bullet — non-zero only at wave 4+; cap raised by difficulty
+function aimedBulletVx(enemyX: number, playerX: number, wave: number, paramScale = 1): number {
   if (wave < AIMED_SHOT_WAVE_START) return 0;
-  const fraction = Math.min(0.6, AIMED_SHOT_FRACTION + (wave - AIMED_SHOT_WAVE_START) * 0.05);
+  const cap = Math.min(0.9, 0.6 * paramScale);
+  const fraction = Math.min(cap, AIMED_SHOT_FRACTION + (wave - AIMED_SHOT_WAVE_START) * 0.05);
   if (rng() > fraction) return 0;
   return Math.sign(playerX - enemyX) * BULLET_E_VY * 0.5;
 }
@@ -475,7 +553,7 @@ export function initStarSwarm(
   canvasH: number,
   wave = 1,
   seed = 42,
-  stragglerEnabled = false
+  difficulty: DifficultyTier = "LieutenantJG"
 ): StarSwarmState {
   seedRng(seed);
   _resetIds();
@@ -490,7 +568,7 @@ export function initStarSwarm(
     shootCooldown: 0,
   };
 
-  return buildWaveState(canvasW, canvasH, wave, player, 0, 0, stragglerEnabled);
+  return buildWaveState(canvasW, canvasH, wave, player, 0, 0, difficulty);
 }
 
 function buildWaveState(
@@ -500,7 +578,7 @@ function buildWaveState(
   player: Player,
   score: number,
   bonusLivesAwarded = 0,
-  stragglerEnabled = false
+  difficulty: DifficultyTier = "LieutenantJG"
 ): StarSwarmState {
   let enemies: Enemy[];
   let phase: StarSwarmState["phase"];
@@ -532,6 +610,9 @@ function buildWaveState(
   };
   const powerUps: PowerUp[] = isChallengingWave(wave) ? [challengingPowerUp] : [];
   const dropJitterTarget = triggerKills(wave) + Math.floor(rng() * 5) - 2;
+  const paramScale = difficultyParamScale(difficulty);
+  // Ensign gets gentler AI; every tier above gets straggler aggression
+  const stragglerEnabled = difficulty !== "Ensign";
 
   return {
     phase,
@@ -548,7 +629,7 @@ function buildWaveState(
     canvasW,
     canvasH,
     challengingHits: 0,
-    nextDiveTimer: diveInterval(wave),
+    nextDiveTimer: diveInterval(wave, paramScale),
     formationSwayX: 0,
     formationSwayDir: 1,
     bonusLivesAwarded,
@@ -560,6 +641,7 @@ function buildWaveState(
     stragglerEnabled,
     pauseStraggler: false,
     bombFlashTimer: 0,
+    difficulty,
   };
 }
 
@@ -666,7 +748,8 @@ function tickSingleEnemy(
   canvasH: number,
   shouldDive: boolean,
   wave: number,
-  bossThresholdCrossed: boolean
+  bossThresholdCrossed: boolean,
+  paramScale = 1
 ): EnemyTickResult {
   if (!enemy.isAlive) return { enemy, bullet: null };
 
@@ -674,7 +757,15 @@ function tickSingleEnemy(
     case "SwoopIn":
       return tickSwoopIn(enemy, dtMs);
     case "Formation":
-      return tickFormation(enemy, dtMs, playerX, shouldDive, wave, bossThresholdCrossed);
+      return tickFormation(
+        enemy,
+        dtMs,
+        playerX,
+        shouldDive,
+        wave,
+        bossThresholdCrossed,
+        paramScale
+      );
     case "Wiggling":
       return tickWiggling(enemy, dtMs, canvasH, bossThresholdCrossed);
     case "Diving":
@@ -719,7 +810,8 @@ function tickFormation(
   playerX: number,
   shouldDive: boolean,
   wave: number,
-  bossThresholdCrossed: boolean
+  bossThresholdCrossed: boolean,
+  paramScale = 1
 ): EnemyTickResult {
   // Boss is passive until threshold crossed: no firing, no diving
   if (enemy.tier === "Boss" && !bossThresholdCrossed) {
@@ -754,7 +846,7 @@ function tickFormation(
   const vx =
     enemy.tier === "Elite"
       ? Math.sign(playerX - enemy.x) * BULLET_E_VY * 0.5
-      : aimedBulletVx(enemy.x, playerX, wave);
+      : aimedBulletVx(enemy.x, playerX, wave, paramScale);
 
   const bullet: Bullet = {
     id: nextId(),
@@ -1021,7 +1113,7 @@ function tickEnemies(state: StarSwarmState, dtMs: number): StarSwarmState {
   if (state.phase === "Playing") {
     nextDiveTimer -= dtMs;
     if (nextDiveTimer <= 0) {
-      nextDiveTimer = diveInterval(state.wave);
+      nextDiveTimer = diveInterval(state.wave, difficultyParamScale(state.difficulty));
       // #978/#1030: Boss only eligible once bossThresholdCrossed
       const candidates = state.enemies
         .map((e, i) => ({ e, i }))
@@ -1041,7 +1133,8 @@ function tickEnemies(state: StarSwarmState, dtMs: number): StarSwarmState {
   }
 
   // #923 Formation sway: advance offset, bounce at ±MAX_SWAY
-  const swaySpeed = SWAY_SPEED_BASE + (state.wave - 1) * SWAY_SPEED_PER_WAVE;
+  const _ps = difficultyParamScale(state.difficulty);
+  const swaySpeed = (SWAY_SPEED_BASE + (state.wave - 1) * SWAY_SPEED_PER_WAVE) * _ps;
   let swayX = state.formationSwayX + state.formationSwayDir * swaySpeed * dtMs;
   let swayDir = state.formationSwayDir;
   if (swayX >= MAX_SWAY) {
@@ -1062,7 +1155,8 @@ function tickEnemies(state: StarSwarmState, dtMs: number): StarSwarmState {
       state.canvasH,
       shouldDive,
       state.wave,
-      bossThresholdCrossed
+      bossThresholdCrossed,
+      _ps
     );
     let e = result.enemy;
     // Apply sway offset to enemies holding Formation position
@@ -1076,7 +1170,7 @@ function tickEnemies(state: StarSwarmState, dtMs: number): StarSwarmState {
     if (e.isAlive && e.hitFlashTimer > 0) {
       e = { ...e, hitFlashTimer: Math.max(0, e.hitFlashTimer - dtMs) };
     }
-    if (result.bullet && newEnemyBullets.length < bulletCap(state.wave)) {
+    if (result.bullet && newEnemyBullets.length < bulletCap(state.wave, _ps)) {
       newEnemyBullets.push(result.bullet);
     }
     return e;
@@ -1246,6 +1340,7 @@ function tickCollisions(state: StarSwarmState): StarSwarmState {
   let killsSinceLastDrop = state.killsSinceLastDrop;
   let dropJitterTarget = state.dropJitterTarget;
   let powerUps: PowerUp[] = [...state.powerUps];
+  const scoreMult = difficultyMultiplier(state.difficulty);
 
   // ── Player bullets ↔ enemies ──────────────────────────────────────────────
   const hitBulletIds = new Set<number>(); // non-piercing bullets consumed this tick
@@ -1271,7 +1366,7 @@ function tickCollisions(state: StarSwarmState): StarSwarmState {
         const base = TIER_SCORE[enemy.tier];
         const mult = enemy.phase === "Diving" || enemy.phase === "Circling" ? DIVE_SCORE_MULT : 1;
         const bonus = state.phase === "ChallengingStage" ? 1 : mult;
-        score += base * bonus;
+        score += Math.round(base * bonus * scoreMult);
         if (state.phase === "ChallengingStage") challengingHits += 1;
         if (state.phase === "Playing") killsSinceLastDrop++;
         return { ...enemy, hp: 0, isAlive: false, hitFlashTimer: 0 };
@@ -1341,7 +1436,7 @@ function tickCollisions(state: StarSwarmState): StarSwarmState {
         const newHp = e.hp - 1;
         if (newHp <= 0) {
           newExplosions.push(spawnExplosion(e.x, e.y));
-          score += TIER_SCORE[e.tier]; // no dive multiplier for bomb kills
+          score += Math.round(TIER_SCORE[e.tier] * scoreMult); // no dive multiplier for bomb kills
           if (state.phase === "Playing") killsSinceLastDrop++;
           return { ...e, hp: 0, isAlive: false, hitFlashTimer: 0 };
         }
@@ -1434,7 +1529,7 @@ function tickCollisions(state: StarSwarmState): StarSwarmState {
             ? enemies.map((e) => {
                 if (e.id === rammingEnemyId) {
                   newExplosions.push(spawnExplosion(e.x, e.y));
-                  score += TIER_SCORE[e.tier] * DIVE_SCORE_MULT;
+                  score += Math.round(TIER_SCORE[e.tier] * DIVE_SCORE_MULT * scoreMult);
                   return { ...e, hp: 0, isAlive: false };
                 }
                 return e;
@@ -1550,10 +1645,11 @@ function checkPhaseTransitions(state: StarSwarmState): StarSwarmState {
     // Enemies exit when their path completes (they reach formationY which is off-screen bottom)
     const anyAlive = liveEnemies.length > 0;
     if (!anyAlive) {
-      const waveClearBonus = state.wave * WAVE_CLEAR_BONUS_BASE;
+      const sm = difficultyMultiplier(state.difficulty);
+      const waveClearBonus = Math.round(state.wave * WAVE_CLEAR_BONUS_BASE * sm);
       return {
         ...state,
-        score: state.score + waveClearBonus + state.challengingHits * 50,
+        score: state.score + waveClearBonus + Math.round(state.challengingHits * 50 * sm),
         phase: "WaveClear",
         phaseTimer: CHALLENGING_CLEAR_PAUSE,
       };
@@ -1564,7 +1660,8 @@ function checkPhaseTransitions(state: StarSwarmState): StarSwarmState {
   // Playing → WaveClear once all enemies dead
   if (state.phase === "Playing") {
     if (liveEnemies.length === 0) {
-      const waveClearBonus = state.wave * WAVE_CLEAR_BONUS_BASE;
+      const sm = difficultyMultiplier(state.difficulty);
+      const waveClearBonus = Math.round(state.wave * WAVE_CLEAR_BONUS_BASE * sm);
       return {
         ...state,
         score: state.score + waveClearBonus,
@@ -1587,7 +1684,7 @@ function startNextWave(state: StarSwarmState): StarSwarmState {
     state.player,
     state.score,
     state.bonusLivesAwarded,
-    state.stragglerEnabled
+    state.difficulty
   );
 }
 
@@ -1600,6 +1697,7 @@ export function applyPowerUp(state: StarSwarmState, type: PowerUpType): StarSwar
 
   if (type === "bomb") {
     const newExplosions: Explosion[] = [...state.explosions];
+    const sm = difficultyMultiplier(state.difficulty);
     let score = state.score;
     let killsSinceLastDrop = state.killsSinceLastDrop;
     const enemies = state.enemies.map((e) => {
@@ -1613,7 +1711,7 @@ export function applyPowerUp(state: StarSwarmState, type: PowerUpType): StarSwar
           frame: 0,
           frameTimer: EXPLOSION_FRAME_MS,
         });
-        score += TIER_SCORE[e.tier];
+        score += Math.round(TIER_SCORE[e.tier] * sm);
         killsSinceLastDrop++;
         return { ...e, hp: 0, isAlive: false, hitFlashTimer: 0 };
       }

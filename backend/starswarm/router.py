@@ -28,12 +28,14 @@ class ScoreRequest(BaseModel):
     player_id: str = Field(..., min_length=1, max_length=64)
     score: int = Field(..., ge=0)
     wave_reached: int = Field(..., ge=1)
+    difficulty_tier: str = Field(default="LieutenantJG", max_length=32)
 
 
 class LeaderboardEntry(BaseModel):
     player_id: str
     score: int
     wave_reached: int
+    difficulty_tier: str
     timestamp: str
     rank: int
 
@@ -79,6 +81,7 @@ async def _top10(db: AsyncSession) -> list[LeaderboardEntry]:
                 player_id=str(meta.get("player_name") or "anon"),
                 score=int(g.final_score or 0),
                 wave_reached=int(meta.get("wave_reached") or 1),
+                difficulty_tier=str(meta.get("difficulty_tier") or "LieutenantJG"),
                 timestamp=g.completed_at.isoformat() if g.completed_at else "",
                 rank=i + 1,
             )
@@ -98,7 +101,11 @@ async def submit_score(request: Request, body: ScoreRequest) -> LeaderboardRespo
             final_score=body.score,
             outcome="completed",
             completed_at=datetime.now(timezone.utc),
-            game_metadata={"player_name": body.player_id, "wave_reached": body.wave_reached},
+            game_metadata={
+                "player_name": body.player_id,
+                "wave_reached": body.wave_reached,
+                "difficulty_tier": body.difficulty_tier,
+            },
         )
         db.add(game)
         await db.commit()

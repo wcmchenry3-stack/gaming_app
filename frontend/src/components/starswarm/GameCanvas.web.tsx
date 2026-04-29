@@ -3,10 +3,17 @@ import { View } from "react-native";
 import { Asset } from "expo-asset";
 import { useTranslation } from "react-i18next";
 import * as Sentry from "@sentry/react-native";
-import { initStarSwarm, tick, applyPowerUp, POWERUP_DURATION } from "../../game/starswarm/engine";
+import {
+  initStarSwarm,
+  tick,
+  applyPowerUp,
+  POWERUP_DURATION,
+  difficultyLabel,
+  difficultyMultiplier,
+} from "../../game/starswarm/engine";
 import { initStarfield, tickStarfield } from "../../game/starswarm/starfield";
 import type { StarfieldState } from "../../game/starswarm/starfield";
-import type { StarSwarmState, PowerUpType } from "../../game/starswarm/types";
+import type { StarSwarmState, PowerUpType, DifficultyTier } from "../../game/starswarm/types";
 
 import playerShipSrc from "../../../assets/starswarm/player-ship.webp";
 import enemyGruntSrc from "../../../assets/starswarm/enemy-grunt.webp";
@@ -86,6 +93,7 @@ const C = {
   explosionHot: "#ffcc00",
   explosionCool: "#ff4400",
   hudText: "#ffffff",
+  hudDiff: "#aaffee",
   lives: "#00ffcc",
   powerBarBg: "rgba(255,255,255,0.18)",
   powerBarFill: "#ffee00",
@@ -110,6 +118,8 @@ export interface DevOptions {
   infiniteLives?: boolean;
   stragglerEnabled?: boolean;
   pauseStraggler?: boolean;
+  /** Override difficulty tier for this game (#1037). */
+  difficulty?: DifficultyTier;
 }
 
 export interface GameCanvasHandle {
@@ -133,6 +143,8 @@ interface Props {
   height: number;
   scale: number;
   resetTick?: number;
+  /** Active difficulty tier — passed from the pre-game selector (#1037). */
+  difficulty?: DifficultyTier;
   devOptions?: DevOptions;
 }
 
@@ -153,6 +165,7 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
       height,
       scale,
       resetTick,
+      difficulty: difficultyProp = "LieutenantJG",
       devOptions,
     },
     ref
@@ -165,7 +178,8 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
 
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const scaleRef = useRef(scale);
-    const stateRef = useRef<StarSwarmState>(initStarSwarm(width, height));
+    const difficultyRef = useRef<DifficultyTier>(difficultyProp);
+    const stateRef = useRef<StarSwarmState>(initStarSwarm(width, height, 1, 42, difficultyProp));
     const sfRef = useRef<StarfieldState>(initStarfield(width, height));
     const inputRef = useRef({ playerX: width / 2, fire: true });
     const infiniteLivesRef = useRef(false);
@@ -200,6 +214,9 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
     useEffect(() => {
       scaleRef.current = scale;
     }, [scale]);
+    useEffect(() => {
+      difficultyRef.current = difficultyProp;
+    }, [difficultyProp]);
     useEffect(() => {
       highScoreRef.current = highScore;
     }, [highScore]);
@@ -315,7 +332,7 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
         height,
         opts?.wave ?? 1,
         42,
-        opts?.stragglerEnabled ?? false
+        opts?.difficulty ?? difficultyRef.current
       );
       sfRef.current = initStarfield(width, height);
       lastFrameTimeRef.current = 0;
@@ -589,6 +606,16 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
       ctx.fillText(`${t("hud.best")} ${hs}`, width / 2, 8);
       ctx.textAlign = "right";
       ctx.fillText(`${t("hud.wave")} ${state.wave}`, width - 10, 8);
+
+      // Difficulty tier — centered below score row
+      ctx.font = "bold 10px 'Courier New', monospace";
+      ctx.textAlign = "center";
+      ctx.fillStyle = C.hudDiff;
+      ctx.fillText(
+        `${difficultyLabel(state.difficulty)} ×${difficultyMultiplier(state.difficulty)}`,
+        width / 2,
+        26
+      );
 
       // Lives — small cyan rectangles at bottom-left
       for (let i = 0; i < player.lives; i++) {
