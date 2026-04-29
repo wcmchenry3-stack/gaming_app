@@ -61,7 +61,9 @@ describe("useBackgroundMusic — unmount cleanup", () => {
       ({ active }: { active: boolean }) => useBackgroundMusic([TEST_KEY], active),
       { wrapper, initialProps: { active: true } }
     );
-    act(() => { rerender({ active: false }); });
+    act(() => {
+      rerender({ active: false });
+    });
     unmount();
 
     expect(callOrder).toEqual(["pause", "pause", "remove"]);
@@ -79,7 +81,9 @@ describe("useBackgroundMusic — active flag", () => {
       ({ active }: { active: boolean }) => useBackgroundMusic([TEST_KEY], active),
       { wrapper, initialProps: { active: true } }
     );
-    act(() => { rerender({ active: false }); });
+    act(() => {
+      rerender({ active: false });
+    });
     expect(mockPause).toHaveBeenCalledTimes(1);
   });
 
