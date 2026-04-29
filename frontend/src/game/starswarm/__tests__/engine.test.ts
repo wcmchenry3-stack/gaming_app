@@ -1576,11 +1576,23 @@ describe("#1030 Elite phase system & Boss passive start", () => {
     expect(s.bossThresholdCrossed).toBe(false);
 
     // Force an Elite to dive
-    const eliteIdx = s.enemies.findIndex((e) => e.isAlive && e.tier === "Elite" && e.phase === "Formation");
+    const eliteIdx = s.enemies.findIndex(
+      (e) => e.isAlive && e.tier === "Elite" && e.phase === "Formation"
+    );
     if (eliteIdx === -1) throw new Error("no elite in formation");
-    s = { ...s, enemies: s.enemies.map((e, i) =>
-      i === eliteIdx ? { ...e, phase: "Wiggling" as const, wiggleTimer: WIGGLE_DURATION, diveTargetX: s.player.x } : e
-    )};
+    s = {
+      ...s,
+      enemies: s.enemies.map((e, i) =>
+        i === eliteIdx
+          ? {
+              ...e,
+              phase: "Wiggling" as const,
+              wiggleTimer: WIGGLE_DURATION,
+              diveTargetX: s.player.x,
+            }
+          : e
+      ),
+    };
 
     const eliteId = s.enemies[eliteIdx]!.id;
     const maxY60 = CANVAS_H * 0.6;
@@ -1588,7 +1600,8 @@ describe("#1030 Elite phase system & Boss passive start", () => {
     for (let i = 0; i < 500; i++) {
       s = tick(s, 16, NO_INPUT);
       const elite = s.enemies.find((e) => e.id === eliteId);
-      if (!elite || !elite.isAlive || elite.phase === "Returning" || elite.phase === "Formation") break;
+      if (!elite || !elite.isAlive || elite.phase === "Returning" || elite.phase === "Formation")
+        break;
       if (elite.phase === "Diving") {
         expect(elite.y).toBeLessThan(maxY60 + 5); // allow 1-frame overshoot tolerance
       }
@@ -1713,9 +1726,7 @@ describe("#1031 Straggler aggression", () => {
     };
     s = tick(s, 16, NO_INPUT);
     // Formation enemies should still be in Formation (no straggler kick)
-    const wiggling = s.enemies.filter(
-      (e) => e.isAlive && e.phase === "Wiggling"
-    );
+    const wiggling = s.enemies.filter((e) => e.isAlive && e.phase === "Wiggling");
     expect(wiggling.length).toBe(0);
   });
 

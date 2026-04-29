@@ -297,7 +297,13 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
       if (!resetTick) return;
       const opts = devOptionsRef.current;
       infiniteLivesRef.current = opts?.infiniteLives ?? false;
-      stateRef.current = initStarSwarm(width, height, opts?.wave ?? 1, 42, opts?.stragglerEnabled ?? false);
+      stateRef.current = initStarSwarm(
+        width,
+        height,
+        opts?.wave ?? 1,
+        42,
+        opts?.stragglerEnabled ?? false
+      );
       sfRef.current = initStarfield(width, height);
       lastFrameTimeRef.current = 0;
       inputRef.current.playerX = width / 2;
@@ -378,7 +384,11 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
           );
         } else {
           ctx.fillStyle =
-            enemy.tier === "Grunt" ? C.enemyGrunt : enemy.tier === "Elite" ? C.enemyElite : C.enemyBoss;
+            enemy.tier === "Grunt"
+              ? C.enemyGrunt
+              : enemy.tier === "Elite"
+                ? C.enemyElite
+                : C.enemyBoss;
           ctx.fillRect(
             enemy.x - enemy.width / 2,
             enemy.y - enemy.height / 2,

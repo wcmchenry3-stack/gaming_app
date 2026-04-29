@@ -972,9 +972,7 @@ function tickEnemies(state: StarSwarmState, dtMs: number): StarSwarmState {
         .map((e, i) => ({ e, i }))
         .filter(
           ({ e }) =>
-            e.isAlive &&
-            e.phase === "Formation" &&
-            (e.tier !== "Boss" || bossThresholdCrossed)
+            e.isAlive && e.phase === "Formation" && (e.tier !== "Boss" || bossThresholdCrossed)
         );
       // Only launch enough new divers to reach the cap; Wiggling enemies are NOT counted (#975)
       const currentDivers = state.enemies.filter((e) => e.isAlive && e.phase === "Diving").length;
