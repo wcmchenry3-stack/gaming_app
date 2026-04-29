@@ -64,6 +64,7 @@ jest.mock("react-native-reanimated", () => {
 jest.mock("expo-audio", () => ({
   createAudioPlayer: jest.fn(() => ({
     play: jest.fn(),
+    pause: jest.fn(),
     seekTo: jest.fn(),
     remove: jest.fn(),
   })),
