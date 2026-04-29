@@ -35,6 +35,7 @@ import { eventStore, GameEventRow, BugLogRow, QueueStats } from "./eventStore";
 import { logConfig, resetLogConfig, LogConfig, Priority } from "./eventQueueConfig";
 import { gameEventClient } from "./gameEventClient";
 import { syncWorker, FlushResult } from "./syncWorker";
+import { generateUUID } from "./uuid";
 
 interface SeedEventSpec {
   /** Number of rows to seed. */
@@ -90,18 +91,6 @@ interface LogstoreTestHooks {
   __logstoreHooks_ready: true;
 }
 
-function generateSeedId(): string {
-  if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
-    return crypto.randomUUID();
-  }
-  const b = new Uint8Array(16);
-  crypto.getRandomValues(b);
-  b[6] = (b[6] & 0x0f) | 0x40;
-  b[8] = (b[8] & 0x3f) | 0x80;
-  const h = Array.from(b, (x) => x.toString(16).padStart(2, "0")).join("");
-  return `${h.slice(0, 8)}-${h.slice(8, 12)}-${h.slice(12, 16)}-${h.slice(16, 20)}-${h.slice(20)}`;
-}
-
 // When no explicit createdAt is provided, anchor the seeded batch so the
 // newest row equals Date.now() and older rows recede into the past by
 // their per-row offset. Seeded rows must never be "in the future"
@@ -129,7 +118,7 @@ function buildSeedGameEvents(spec: SeedEventSpec): GameEventRow[] {
   const rows: GameEventRow[] = [];
   for (let i = 0; i < count; i += 1) {
     rows.push({
-      id: generateSeedId(),
+      id: generateUUID(),
       log_type: "game_event",
       game_id: gameId,
       event_index: startIndex + i,
@@ -151,9 +140,9 @@ function buildSeedBugLogs(spec: SeedBugLogSpec): BugLogRow[] {
   const rows: BugLogRow[] = [];
   for (let i = 0; i < count; i += 1) {
     rows.push({
-      id: generateSeedId(),
+      id: generateUUID(),
       log_type: "bug_log",
-      bug_uuid: generateSeedId(),
+      bug_uuid: generateUUID(),
       bug_level: level,
       bug_source: source,
       payload: { message, i },
