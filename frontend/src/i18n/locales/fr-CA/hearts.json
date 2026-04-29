@@ -38,6 +38,7 @@
   "hand_end.moon": "{{label}} a raflé la mise! +26 aux autres.",
   "hand_end.next": "Prochaine manche",
   "game_over.title": "Fin de partie",
+  "game_over.you_win": "Vous gagnez!",
   "game_over.winner": "{{label}} gagne!",
   "game_over.submit": "Envoyer score",
   "game_over.name_placeholder": "Entrez votre nom",

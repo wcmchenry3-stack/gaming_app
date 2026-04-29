@@ -38,6 +38,7 @@
   "hand_end.moon": "{{label}} fez a limpa! +26 para os outros.",
   "hand_end.next": "Próxima Rodada",
   "game_over.title": "Fim de Jogo",
+  "game_over.you_win": "Você venceu!",
   "game_over.winner": "{{label}} venceu!",
   "game_over.submit": "Enviar Pontos",
   "game_over.name_placeholder": "Digite seu nome",

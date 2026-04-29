@@ -38,6 +38,7 @@
   "hand_end.moon": "¡{{label}} hizo luna! +26 a los demás.",
   "hand_end.next": "Siguiente Mano",
   "game_over.title": "Fin del Juego",
+  "game_over.you_win": "¡Tú ganas!",
   "game_over.winner": "¡{{label}} gana!",
   "game_over.submit": "Enviar puntaje",
   "game_over.name_placeholder": "Escribe tu nombre",
