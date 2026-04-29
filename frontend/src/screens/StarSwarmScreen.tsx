@@ -31,6 +31,7 @@ import {
   difficultyMultiplier,
 } from "../game/starswarm/engine";
 import type { GamePhase, PowerUpType, DifficultyTier } from "../game/starswarm/types";
+import { starSwarmApi } from "../game/starswarm/api";
 import { useStarSwarmAudio, DEFAULT_SFX_VOLUMES } from "../hooks/useStarSwarmAudio";
 import type { SfxVolumes } from "../hooks/useStarSwarmAudio";
 
@@ -77,6 +78,7 @@ export default function StarSwarmScreen() {
     playGameOver,
     playChallengingStage,
     playBonusLife,
+    playPerfect,
   } = useStarSwarmAudio(phase !== "GameOver", devVolumes);
 
   const scoreRef = useRef(0);
@@ -98,7 +100,7 @@ export default function StarSwarmScreen() {
   }, []);
 
   const handleGameOver = useCallback(
-    (finalScore: number) => {
+    (finalScore: number, wave: number) => {
       setPhase("GameOver");
       playGameOver();
       hapticPlayerDeath();
@@ -106,9 +108,14 @@ export default function StarSwarmScreen() {
         highScoreRef.current = finalScore;
         setHighScore(finalScore);
       }
+      starSwarmApi.submitScore(finalScore, wave, difficulty).catch(() => {});
     },
-    [playGameOver]
+    [playGameOver, difficulty]
   );
+
+  const handleChallengingPerfect = useCallback(() => {
+    playPerfect();
+  }, [playPerfect]);
 
   const handlePlayerHit = useCallback(() => {
     playPlayerHit();
@@ -193,6 +200,7 @@ export default function StarSwarmScreen() {
               onPowerUpCollect={playPowerUpCollect}
               onExplosion={playExplosion}
               onChallengingStage={playChallengingStage}
+              onChallengingPerfect={handleChallengingPerfect}
               onBonusLife={handleBonusLife}
               isPaused={isPaused}
               width={CANVAS_W}
@@ -378,6 +386,7 @@ export default function StarSwarmScreen() {
                       ["Wave clear", "waveclear"],
                       ["Game over", "gameover"],
                       ["Challenging", "challengingstage"],
+                      ["Perfect bonus", "perfectbonus"],
                     ] as [string, keyof SfxVolumes][]
                   ).map(([label, key]) => (
                     <View key={key} style={styles.devRow}>

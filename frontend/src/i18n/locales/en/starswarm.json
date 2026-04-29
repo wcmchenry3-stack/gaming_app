@@ -18,5 +18,15 @@
   "controls.newGame": "NEW GAME",
   "controls.newGameLabel": "Start a new game",
   "difficulty.selectTitle": "Select Difficulty",
-  "difficulty.start": "Start Game"
+  "difficulty.start": "Start Game",
+  "phase.perfect": "PERFECT!",
+  "leaderboard.title": "Star Swarm — Top Scores",
+  "leaderboard.colRank": "#",
+  "leaderboard.colScore": "Score",
+  "leaderboard.colWave": "Wave",
+  "leaderboard.colDifficulty": "Tier",
+  "leaderboard.colDate": "Date",
+  "leaderboard.empty": "No scores yet — be the first!",
+  "leaderboard.error": "Could not load scores",
+  "leaderboard.retry": "Retry"
 }

@@ -73,6 +73,8 @@ const DIVE_INTERVAL_MIN = 900; // floor regardless of wave
 
 const WAVE_CLEAR_PAUSE = 1600; // ms
 const CHALLENGING_CLEAR_PAUSE = 2200; // ms
+const CHALLENGING_ENEMY_COUNT = 40; // classic 40-enemy Challenging Stage (#1022)
+const PERFECT_BONUS = 10_000; // flat bonus for hitting all challenge enemies (#1022)
 
 const SHOOT_INTERVAL_BASE = 2600; // ms base
 const SHOOT_INTERVAL_JITTER = 1400; // ms random addend
@@ -513,8 +515,11 @@ function diveInterval(wave: number, paramScale = 1): number {
   return Math.max(floor, base);
 }
 
+// Classic Galaga cadence: wave 3, then every 4th wave (3, 7, 11, 15 …) (#1022)
 function isChallengingWave(wave: number): boolean {
-  return wave % 3 === 0;
+  if (wave === 3) return true;
+  if (wave < 3) return false;
+  return (wave - 3) % 4 === 0;
 }
 
 // #980: kills needed to trigger a power-up drop (before jitter is applied)
@@ -584,9 +589,8 @@ function buildWaveState(
   let phase: StarSwarmState["phase"];
 
   if (isChallengingWave(wave)) {
-    const total = FORMATION_COLS * 3;
-    enemies = Array.from({ length: total }, (_, i) =>
-      makeChallengeEnemy(i, total, canvasW, canvasH)
+    enemies = Array.from({ length: CHALLENGING_ENEMY_COUNT }, (_, i) =>
+      makeChallengeEnemy(i, CHALLENGING_ENEMY_COUNT, canvasW, canvasH)
     );
     phase = "ChallengingStage";
   } else {
@@ -642,6 +646,7 @@ function buildWaveState(
     pauseStraggler: false,
     bombFlashTimer: 0,
     difficulty,
+    challengingPerfect: false,
   };
 }
 
@@ -1647,11 +1652,14 @@ function checkPhaseTransitions(state: StarSwarmState): StarSwarmState {
     if (!anyAlive) {
       const sm = difficultyMultiplier(state.difficulty);
       const waveClearBonus = Math.round(state.wave * WAVE_CLEAR_BONUS_BASE * sm);
+      const perfect = state.challengingHits === CHALLENGING_ENEMY_COUNT;
+      const perfectBonus = perfect ? Math.round(PERFECT_BONUS * sm) : 0;
       return {
         ...state,
-        score: state.score + waveClearBonus + Math.round(state.challengingHits * 50 * sm),
+        score: state.score + waveClearBonus + Math.round(state.challengingHits * 50 * sm) + perfectBonus,
         phase: "WaveClear",
         phaseTimer: CHALLENGING_CLEAR_PAUSE,
+        challengingPerfect: perfect,
       };
     }
     return state;

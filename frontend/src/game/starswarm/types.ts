@@ -205,6 +205,8 @@ export interface StarSwarmState {
   readonly bombFlashTimer: number;
   /** Active difficulty tier; drives score multiplier and AI param scaling (#1037). */
   readonly difficulty: DifficultyTier;
+  /** True when the player hit all enemies in a Challenging Stage (#1022). */
+  readonly challengingPerfect: boolean;
 }
 
 /** Input snapshot consumed by each `tick` call. */

@@ -17,6 +17,7 @@ export interface SfxVolumes {
   gameover: number;
   challengingstage: number;
   bonuslife: number;
+  perfectbonus: number;
 }
 
 export const DEFAULT_SFX_VOLUMES: SfxVolumes = {
@@ -31,6 +32,7 @@ export const DEFAULT_SFX_VOLUMES: SfxVolumes = {
   gameover: 0.8,
   challengingstage: 0.8,
   bonuslife: 0.9,
+  perfectbonus: 1.0,
 };
 
 // bgMusicActive should be false when the game is over so the track stops.
@@ -50,6 +52,7 @@ export function useStarSwarmAudio(bgMusicActive: boolean, volumes?: Partial<SfxV
   const { play: playGameOver } = useSound("starswarm.gameover", v.gameover);
   const { play: playChallengingStage } = useSound("starswarm.challengingstage", v.challengingstage);
   const { play: playBonusLife } = useSound("starswarm.bonuslife", v.bonuslife);
+  const { play: playPerfect } = useSound("blackjack.blackjack", v.perfectbonus);
 
   const playPowerUpCollect = useCallback(
     (type: PowerUpType) => {
@@ -70,5 +73,6 @@ export function useStarSwarmAudio(bgMusicActive: boolean, volumes?: Partial<SfxV
     playGameOver,
     playChallengingStage,
     playBonusLife,
+    playPerfect,
   };
 }

@@ -130,13 +130,15 @@ export interface GameCanvasHandle {
 
 interface Props {
   highScore?: number;
-  onGameOver?: (finalScore: number) => void;
+  onGameOver?: (finalScore: number, wave: number) => void;
   onScoreChange?: (score: number) => void;
   onPlayerHit?: () => void;
   onWaveClear?: () => void;
   onLaserFire?: () => void;
   onExplosion?: () => void;
   onChallengingStage?: () => void;
+  /** Called once when all enemies in a Challenging Stage are hit (#1022). */
+  onChallengingPerfect?: () => void;
   onPowerUpCollect?: (type: PowerUpType) => void;
   isPaused?: boolean;
   width: number;
@@ -159,6 +161,7 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
       onLaserFire,
       onExplosion,
       onChallengingStage,
+      onChallengingPerfect,
       onPowerUpCollect,
       isPaused = false,
       width,
@@ -194,6 +197,7 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
     const onLaserFireRef = useRef(onLaserFire);
     const onExplosionRef = useRef(onExplosion);
     const onChallengingStageRef = useRef(onChallengingStage);
+    const onChallengingPerfectRef = useRef(onChallengingPerfect);
     const onPowerUpCollectRef = useRef(onPowerUpCollect);
     const prevActivePowerUpRef = useRef<string | null>(null);
     const triggerPowerUpRef = useRef<PowerUpType | null>(null);
@@ -244,6 +248,9 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
     useEffect(() => {
       onChallengingStageRef.current = onChallengingStage;
     }, [onChallengingStage]);
+    useEffect(() => {
+      onChallengingPerfectRef.current = onChallengingPerfect;
+    }, [onChallengingPerfect]);
     useEffect(() => {
       const wasPaused = isPausedRef.current;
       isPausedRef.current = isPaused;
@@ -640,6 +647,14 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
         ctx.font = "bold 22px 'Courier New', monospace";
         ctx.fillStyle = C.waveClear;
         ctx.fillText(t("phase.waveClear"), width / 2, height / 2);
+        if (state.challengingPerfect) {
+          ctx.font = "bold 18px 'Courier New', monospace";
+          ctx.fillStyle = "#ffdd00";
+          ctx.shadowColor = "#ff8800";
+          ctx.shadowBlur = 8;
+          ctx.fillText(t("phase.perfect"), width / 2, height / 2 + 30);
+          ctx.shadowBlur = 0;
+        }
       }
 
       if (state.phase === "ChallengingStage") {
@@ -727,6 +742,7 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
             prevLivesRef.current = applied.player.lives;
             if (applied.phase === "WaveClear" && prevPhaseRef.current !== "WaveClear") {
               onWaveClearRef.current?.();
+              if (applied.challengingPerfect) onChallengingPerfectRef.current?.();
             }
             if (
               applied.phase === "ChallengingStage" &&
@@ -736,7 +752,7 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
             }
             prevPhaseRef.current = applied.phase;
             if (applied.phase === "GameOver") {
-              onGameOverRef.current?.(applied.score);
+              onGameOverRef.current?.(applied.score, applied.wave);
             }
           } catch (e) {
             Sentry.captureException(e, { tags: { subsystem: "starswarm.loop" } });
