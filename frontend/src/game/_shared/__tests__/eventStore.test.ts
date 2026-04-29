@@ -546,4 +546,112 @@ describe("EventStore", () => {
       expect(stats.byPriority[Priority.GRANULAR]).toBe(5);
     });
   });
+
+  // -------------------------------------------------------------------------
+  // generateUUID — crypto fallback (regression for Sentry issue: "Property
+  // 'crypto' doesn't exist")
+  // -------------------------------------------------------------------------
+
+  describe("generateUUID crypto fallback", () => {
+    const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+    let savedCrypto: typeof globalThis.crypto | undefined;
+
+    beforeEach(() => {
+      savedCrypto = globalThis.crypto;
+    });
+
+    afterEach(() => {
+      Object.defineProperty(globalThis, "crypto", {
+        value: savedCrypto,
+        configurable: true,
+        writable: true,
+      });
+    });
+
+    it("enqueueEvent assigns a valid UUID via crypto.getRandomValues when randomUUID is absent", async () => {
+      Object.defineProperty(globalThis, "crypto", {
+        value: {
+          getRandomValues: (buf: Uint8Array) => {
+            buf.fill(0xab);
+            return buf;
+          },
+        },
+        configurable: true,
+        writable: true,
+      });
+      const row = await store.enqueueEvent({
+        game_id: "g1",
+        event_index: 0,
+        event_type: "move",
+        payload: {},
+      });
+      expect(row.id).toMatch(UUID_RE);
+    });
+
+    it("enqueueEvent assigns a valid UUID via Math.random when crypto is completely absent", async () => {
+      Object.defineProperty(globalThis, "crypto", {
+        value: undefined,
+        configurable: true,
+        writable: true,
+      });
+      const row = await store.enqueueEvent({
+        game_id: "g1",
+        event_index: 0,
+        event_type: "move",
+        payload: {},
+      });
+      expect(row.id).toMatch(UUID_RE);
+    });
+
+    it("enqueueEvent assigns a valid UUID via crypto.randomUUID when available", async () => {
+      const mockUUID = "aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee";
+      Object.defineProperty(globalThis, "crypto", {
+        value: { randomUUID: () => mockUUID },
+        configurable: true,
+        writable: true,
+      });
+      const row = await store.enqueueEvent({
+        game_id: "g1",
+        event_index: 0,
+        event_type: "move",
+        payload: {},
+      });
+      expect(row.id).toBe(mockUUID);
+    });
+
+    it("enqueueBugLog assigns a valid UUID via crypto.getRandomValues when randomUUID is absent", async () => {
+      Object.defineProperty(globalThis, "crypto", {
+        value: {
+          getRandomValues: (buf: Uint8Array) => {
+            buf.fill(0xcd);
+            return buf;
+          },
+        },
+        configurable: true,
+        writable: true,
+      });
+      const row = await store.enqueueBugLog({
+        bug_uuid: "test-bug",
+        bug_level: "warn",
+        bug_source: "test",
+        payload: {},
+      });
+      expect(row.id).toMatch(UUID_RE);
+    });
+
+    it("enqueueBugLog assigns a valid UUID via Math.random when crypto is completely absent", async () => {
+      Object.defineProperty(globalThis, "crypto", {
+        value: undefined,
+        configurable: true,
+        writable: true,
+      });
+      const row = await store.enqueueBugLog({
+        bug_uuid: "test-bug",
+        bug_level: "warn",
+        bug_source: "test",
+        payload: {},
+      });
+      expect(row.id).toMatch(UUID_RE);
+    });
+  });
 });

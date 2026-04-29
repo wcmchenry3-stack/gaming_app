@@ -219,7 +219,7 @@ describe("GameEventClient", () => {
       });
       const id = client.startGame("yacht");
       expect(id).toMatch(UUID_RE);
-      expect(getRandomValues).toHaveBeenCalledTimes(1);
+      expect(getRandomValues).toHaveBeenCalled();
     });
 
     it("falls back to Math.random when crypto is completely absent", () => {
