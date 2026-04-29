@@ -523,12 +523,25 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
               )
             )}
 
-            {/* Power-ups — type-specific icons */}
+            {/* Power-ups — Kenney CC0 sprites with procedural fallback */}
             {state.powerUps.map((pu) => {
               const lx = pu.x - pu.width / 2;
               const ly = pu.y - pu.height / 2;
               const pw = pu.width;
               const ph = pu.height;
+              const spriteMap = {
+                shield: images.puShield,
+                bomb: images.puBomb,
+                buddy: images.puBuddy,
+                lightning: images.puLightning,
+              } as const;
+              const sprite = spriteMap[pu.type] ?? null;
+              if (sprite) {
+                return (
+                  <SkiaImage key={pu.id} image={sprite} x={lx} y={ly} width={pw} height={ph} />
+                );
+              }
+              // fallback procedural shapes when sprite not yet loaded
               if (pu.type === "shield") {
                 return (
                   <Circle
@@ -557,7 +570,6 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
                   />
                 );
               }
-              // lightning bolt (default)
               const boltPath =
                 `M${lx + pw * 0.625},${ly} ` +
                 `L${lx + pw * 0.125},${ly + ph * 0.542} ` +

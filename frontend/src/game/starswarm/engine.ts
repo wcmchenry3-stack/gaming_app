@@ -91,8 +91,7 @@ const DIVE_SCORE_MULT = 2;
 const DIVE_SHOOT_INTERVAL = 1500; // ms between shots while Diving or Circling
 
 // #923 Formation sway
-const SWAY_SPEED_BASE = 0.03; // px/ms at wave 1
-const SWAY_SPEED_PER_WAVE = 0.008; // px/ms added per wave
+const SWAY_SPEED_BASE = 0.03; // px/ms
 const MAX_SWAY = 40; // max offset from center in px
 
 // #924 Aimed shots — start gentle from wave 1, ramp +5%/wave, cap 60%
@@ -1139,7 +1138,7 @@ function tickEnemies(state: StarSwarmState, dtMs: number): StarSwarmState {
 
   // #923 Formation sway: advance offset, bounce at ±MAX_SWAY
   const _ps = difficultyParamScale(state.difficulty);
-  const swaySpeed = (SWAY_SPEED_BASE + (state.wave - 1) * SWAY_SPEED_PER_WAVE) * _ps;
+  const swaySpeed = SWAY_SPEED_BASE * _ps;
   let swayX = state.formationSwayX + state.formationSwayDir * swaySpeed * dtMs;
   let swayDir = state.formationSwayDir;
   if (swayX >= MAX_SWAY) {

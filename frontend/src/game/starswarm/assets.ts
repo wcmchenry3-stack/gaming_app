@@ -8,6 +8,10 @@ import enemyBossSrc from "../../../assets/starswarm/enemy-boss.webp";
 import bulletPlayerSrc from "../../../assets/starswarm/bullet-player.webp";
 import bulletEnemySrc from "../../../assets/starswarm/bullet-enemy.webp";
 import bulletChargeSrc from "../../../assets/starswarm/bullet-charge.webp";
+import puShieldSrc from "../../../assets/starswarm/powerups/shield_gold.png";
+import puBombSrc from "../../../assets/starswarm/powerups/space-missiles-018.png";
+import puBuddySrc from "../../../assets/starswarm/powerups/player-life.png";
+import puLightningSrc from "../../../assets/starswarm/powerups/bolt_gold.png";
 import explosionFrame00 from "../../../assets/starswarm/explosion/frame00.png";
 import explosionFrame01 from "../../../assets/starswarm/explosion/frame01.png";
 import explosionFrame02 from "../../../assets/starswarm/explosion/frame02.png";
@@ -39,6 +43,10 @@ export interface StarSwarmImages {
   bulletCharge: SkImage | null;
   /** 20-frame fire explosion strip; null slots fall back to procedural particle burst. */
   explosionFrames: (SkImage | null)[];
+  puShield: SkImage | null;
+  puBomb: SkImage | null;
+  puBuddy: SkImage | null;
+  puLightning: SkImage | null;
 }
 
 export function useStarSwarmImages(): StarSwarmImages {
@@ -49,6 +57,10 @@ export function useStarSwarmImages(): StarSwarmImages {
   const bulletPlayer = useImage(bulletPlayerSrc);
   const bulletEnemy = useImage(bulletEnemySrc);
   const bulletCharge = useImage(bulletChargeSrc);
+  const puShield = useImage(puShieldSrc);
+  const puBomb = useImage(puBombSrc);
+  const puBuddy = useImage(puBuddySrc);
+  const puLightning = useImage(puLightningSrc);
   const f00 = useImage(explosionFrame00);
   const f01 = useImage(explosionFrame01);
   const f02 = useImage(explosionFrame02);
@@ -78,6 +90,10 @@ export function useStarSwarmImages(): StarSwarmImages {
     bulletPlayer,
     bulletEnemy,
     bulletCharge,
+    puShield,
+    puBomb,
+    puBuddy,
+    puLightning,
     explosionFrames: [
       f00,
       f01,

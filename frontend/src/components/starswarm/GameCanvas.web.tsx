@@ -21,6 +21,10 @@ import enemyEliteSrc from "../../../assets/starswarm/enemy-elite.webp";
 import enemyBossSrc from "../../../assets/starswarm/enemy-boss.webp";
 import bulletPlayerSrc from "../../../assets/starswarm/bullet-player.webp";
 import bulletEnemySrc from "../../../assets/starswarm/bullet-enemy.webp";
+import puShieldSrc from "../../../assets/starswarm/powerups/shield_gold.png";
+import puBombSrc from "../../../assets/starswarm/powerups/space-missiles-018.png";
+import puBuddySrc from "../../../assets/starswarm/powerups/player-life.png";
+import puLightningSrc from "../../../assets/starswarm/powerups/bolt_gold.png";
 import ef00 from "../../../assets/starswarm/explosion/frame00.png";
 import ef01 from "../../../assets/starswarm/explosion/frame01.png";
 import ef02 from "../../../assets/starswarm/explosion/frame02.png";
@@ -111,6 +115,10 @@ interface Images {
   bulletPlayer: HTMLImageElement | null;
   bulletEnemy: HTMLImageElement | null;
   explosionFrames: (HTMLImageElement | null)[];
+  puShield: HTMLImageElement | null;
+  puBomb: HTMLImageElement | null;
+  puBuddy: HTMLImageElement | null;
+  puLightning: HTMLImageElement | null;
 }
 
 export interface DevOptions {
@@ -213,6 +221,10 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
       bulletPlayer: null,
       bulletEnemy: null,
       explosionFrames: Array(20).fill(null) as null[],
+      puShield: null,
+      puBomb: null,
+      puBuddy: null,
+      puLightning: null,
     });
 
     useEffect(() => {
@@ -286,6 +298,10 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
           loadImg(enemyBossSrc as number),
           loadImg(bulletPlayerSrc as number),
           loadImg(bulletEnemySrc as number),
+          loadImg(puShieldSrc as number),
+          loadImg(puBombSrc as number),
+          loadImg(puBuddySrc as number),
+          loadImg(puLightningSrc as number),
           ...EXPLOSION_SRCS.map((s) => loadImg(s as number)),
         ]);
         if (cancelled) return;
@@ -296,6 +312,10 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
           enemyBoss,
           bulletPlayer,
           bulletEnemy,
+          puShield,
+          puBomb,
+          puBuddy,
+          puLightning,
           ...frames
         ] = results;
         imagesRef.current = {
@@ -306,6 +326,10 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
           bulletPlayer: bulletPlayer ?? null,
           bulletEnemy: bulletEnemy ?? null,
           explosionFrames: frames.map((f) => f ?? null),
+          puShield: puShield ?? null,
+          puBomb: puBomb ?? null,
+          puBuddy: puBuddy ?? null,
+          puLightning: puLightning ?? null,
         };
       })();
 
@@ -538,13 +562,22 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
         ctx.restore();
       }
 
-      // Power-ups — type-specific icons
+      // Power-ups — Kenney CC0 sprites with procedural fallback
       for (const pu of state.powerUps) {
         const lx = pu.x - pu.width / 2;
         const ly = pu.y - pu.height / 2;
         const pw = pu.width;
         const ph = pu.height;
-        if (pu.type === "shield") {
+        const spriteMap: Record<string, HTMLImageElement | null> = {
+          shield: imgs.puShield,
+          bomb: imgs.puBomb,
+          buddy: imgs.puBuddy,
+          lightning: imgs.puLightning,
+        };
+        const sprite = spriteMap[pu.type] ?? null;
+        if (sprite) {
+          ctx.drawImage(sprite, lx, ly, pw, ph);
+        } else if (pu.type === "shield") {
           ctx.fillStyle = C.powerUpShield;
           ctx.beginPath();
           ctx.arc(pu.x, pu.y, pw * 0.4, 0, Math.PI * 2);
@@ -558,7 +591,6 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
           ctx.fillStyle = C.powerUpBuddy;
           ctx.fillRect(lx + pw * 0.2, ly + ph * 0.2, pw * 0.6, ph * 0.6);
         } else {
-          // lightning bolt
           ctx.fillStyle = C.powerUpLightning;
           ctx.beginPath();
           ctx.moveTo(lx + pw * 0.625, ly);
