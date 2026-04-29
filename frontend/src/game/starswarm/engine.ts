@@ -1656,7 +1656,8 @@ function checkPhaseTransitions(state: StarSwarmState): StarSwarmState {
       const perfectBonus = perfect ? Math.round(PERFECT_BONUS * sm) : 0;
       return {
         ...state,
-        score: state.score + waveClearBonus + Math.round(state.challengingHits * 50 * sm) + perfectBonus,
+        score:
+          state.score + waveClearBonus + Math.round(state.challengingHits * 50 * sm) + perfectBonus,
         phase: "WaveClear",
         phaseTimer: CHALLENGING_CLEAR_PAUSE,
         challengingPerfect: perfect,
