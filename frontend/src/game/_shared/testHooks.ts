@@ -91,7 +91,6 @@ interface LogstoreTestHooks {
   __logstoreHooks_ready: true;
 }
 
-
 // When no explicit createdAt is provided, anchor the seeded batch so the
 // newest row equals Date.now() and older rows recede into the past by
 // their per-row offset. Seeded rows must never be "in the future"

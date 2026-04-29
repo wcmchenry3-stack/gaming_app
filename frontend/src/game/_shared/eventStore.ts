@@ -111,7 +111,6 @@ export interface QueueStats {
 // Helpers
 // ---------------------------------------------------------------------------
 
-
 function rowBytes(row: Row): number {
   // Approximate — JSON.stringify length is UTF-16 char count, and we treat
   // it as a size proxy. For ASCII payloads this matches byte count; for
