@@ -37,3 +37,6 @@ frontend/android/app/upload-keystore.jks
 
 # Claude Code local overrides (personal, not shared)
 .claude/settings.local.json
+
+# High-res source art — stored in Google Drive (bc-arcade folder), not the repo
+frontend/assets/source-icons/
