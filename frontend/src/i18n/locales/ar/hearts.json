@@ -38,6 +38,7 @@
   "hand_end.moon": "{{label}} سيطر على الجولة! +26 للآخرين.",
   "hand_end.next": "الجولة التالية",
   "game_over.title": "النهاية",
+  "game_over.you_win": "أنت فزت!",
   "game_over.winner": "{{label}} فاز!",
   "game_over.submit": "أرسل النتيجة",
   "game_over.name_placeholder": "أدخل اسمك",

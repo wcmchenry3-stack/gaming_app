@@ -38,6 +38,7 @@
   "hand_end.moon": "{{label}}が月を射抜いた！他全員に+26点！",
   "hand_end.next": "次の手札",
   "game_over.title": "ゲーム終了",
+  "game_over.you_win": "あなたの勝利！",
   "game_over.winner": "{{label}}の勝利！",
   "game_over.submit": "スコア送信",
   "game_over.name_placeholder": "名前を入力してください",

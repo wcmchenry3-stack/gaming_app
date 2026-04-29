@@ -38,6 +38,7 @@
   "hand_end.moon": "{{label}} ging voor de volle maan! +26 voor de rest.",
   "hand_end.next": "Volgende Beurt",
   "game_over.title": "Einde Spel",
+  "game_over.you_win": "Jij wint!",
   "game_over.winner": "{{label}} wint!",
   "game_over.submit": "Score indienen",
   "game_over.name_placeholder": "Voer je naam in",

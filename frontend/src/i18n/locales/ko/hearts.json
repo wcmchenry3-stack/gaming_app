@@ -38,6 +38,7 @@
   "hand_end.moon": "{{label}}이(가) 올킬 성공! +26점 추가!",
   "hand_end.next": "다음 라운드",
   "game_over.title": "게임 종료",
+  "game_over.you_win": "내가 승리!",
   "game_over.winner": "{{label}} 승리!",
   "game_over.submit": "점수 제출",
   "game_over.name_placeholder": "이름을 입력하세요",
