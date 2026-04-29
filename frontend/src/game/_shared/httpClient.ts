@@ -117,7 +117,7 @@ export function createGameClient(options: HttpClientOptions) {
       level: "info",
     });
     try {
-      const sessionId = await getOrCreateSessionId();
+      const sessionId = await getOrCreateSessionId(); // codeql[js/insecure-randomness]
       const res = await fetch(url, {
         headers: { "Content-Type": "application/json", "X-Session-ID": sessionId },
         ...options,

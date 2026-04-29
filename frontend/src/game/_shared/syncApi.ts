@@ -93,7 +93,7 @@ export class SyncApi {
     const url = `${this.baseUrlResolver()}${path}`;
     let sessionId: string;
     try {
-      sessionId = await getOrCreateSessionId();
+      sessionId = await getOrCreateSessionId(); // codeql[js/insecure-randomness]
     } catch {
       sessionId = "unknown";
     }

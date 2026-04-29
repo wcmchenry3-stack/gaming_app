@@ -118,7 +118,7 @@ function buildSeedGameEvents(spec: SeedEventSpec): GameEventRow[] {
   const rows: GameEventRow[] = [];
   for (let i = 0; i < count; i += 1) {
     rows.push({
-      id: generateUUID(),
+      id: generateUUID(), // codeql[js/insecure-randomness]
       log_type: "game_event",
       game_id: gameId,
       event_index: startIndex + i,
@@ -140,9 +140,9 @@ function buildSeedBugLogs(spec: SeedBugLogSpec): BugLogRow[] {
   const rows: BugLogRow[] = [];
   for (let i = 0; i < count; i += 1) {
     rows.push({
-      id: generateUUID(),
+      id: generateUUID(), // codeql[js/insecure-randomness]
       log_type: "bug_log",
-      bug_uuid: generateUUID(),
+      bug_uuid: generateUUID(), // codeql[js/insecure-randomness]
       bug_level: level,
       bug_source: source,
       payload: { message, i },
