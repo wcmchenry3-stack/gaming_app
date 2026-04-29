@@ -48,13 +48,15 @@ export interface GameCanvasHandle {
 
 interface Props {
   highScore?: number;
-  onGameOver?: (finalScore: number) => void;
+  onGameOver?: (finalScore: number, wave: number) => void;
   onScoreChange?: (score: number) => void;
   onPlayerHit?: () => void;
   onWaveClear?: () => void;
   onLaserFire?: () => void;
   onExplosion?: () => void;
   onChallengingStage?: () => void;
+  /** Called once when all enemies in a Challenging Stage are hit (#1022). */
+  onChallengingPerfect?: () => void;
   onBonusLife?: () => void;
   onPowerUpCollect?: (type: PowerUpType) => void;
   isPaused?: boolean;
@@ -86,6 +88,7 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
       onLaserFire,
       onExplosion,
       onChallengingStage,
+      onChallengingPerfect,
       onBonusLife,
       onPowerUpCollect,
       isPaused = false,
@@ -123,6 +126,7 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
     const onLaserFireRef = useRef(onLaserFire);
     const onExplosionRef = useRef(onExplosion);
     const onChallengingStageRef = useRef(onChallengingStage);
+    const onChallengingPerfectRef = useRef(onChallengingPerfect);
     const onBonusLifeRef = useRef(onBonusLife);
     const onPowerUpCollectRef = useRef(onPowerUpCollect);
     const prevActivePowerUpRef = useRef<string | null>(null); // type of active power-up last frame
@@ -156,6 +160,9 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
     useEffect(() => {
       onChallengingStageRef.current = onChallengingStage;
     }, [onChallengingStage]);
+    useEffect(() => {
+      onChallengingPerfectRef.current = onChallengingPerfect;
+    }, [onChallengingPerfect]);
     useEffect(() => {
       onBonusLifeRef.current = onBonusLife;
     }, [onBonusLife]);
@@ -276,6 +283,7 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
             prevActivePowerUpRef.current = nowType;
             if (applied.phase === "WaveClear" && prevPhaseRef.current !== "WaveClear") {
               onWaveClearRef.current?.();
+              if (applied.challengingPerfect) onChallengingPerfectRef.current?.();
             }
             if (
               applied.phase === "ChallengingStage" &&
@@ -285,7 +293,7 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
             }
             prevPhaseRef.current = applied.phase;
             if (applied.phase === "GameOver") {
-              onGameOverRef.current?.(applied.score);
+              onGameOverRef.current?.(applied.score, applied.wave);
             }
           } catch (e) {
             Sentry.captureException(e, { tags: { subsystem: "starswarm.loop" } });
@@ -644,6 +652,9 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
           {state.phase === "WaveClear" && (
             <View style={styles.phaseOverlay}>
               <Text style={styles.overlayTitle}>{t("phase.waveClear")}</Text>
+              {state.challengingPerfect && (
+                <Text style={styles.perfectBanner}>{t("phase.perfect")}</Text>
+              )}
             </View>
           )}
 
@@ -741,6 +752,16 @@ const styles = StyleSheet.create({
     fontSize: 14,
     textAlign: "center",
     marginTop: 8,
+  },
+  perfectBanner: {
+    color: "#ffdd00",
+    fontSize: 20,
+    fontWeight: "bold",
+    textAlign: "center",
+    marginTop: 6,
+    textShadowColor: "#ff8800",
+    textShadowOffset: { width: 0, height: 0 },
+    textShadowRadius: 8,
   },
   gameOverOverlay: {
     backgroundColor: "rgba(0,0,0,0.65)",

@@ -738,10 +738,10 @@ describe("ChallengingStage off-screen cleanup", () => {
     let s = initStarSwarm(CANVAS_W, CANVAS_H, 3);
     expect(s.phase).toBe("ChallengingStage");
 
-    // Last enemy (idx 23) starts with pathT = -(23*80/3200) ≈ -0.575
-    // It exits the canvas after (1 + 0.575) * 3200 ≈ 5040 ms.
+    // With 40 enemies, last enemy (idx 39) has delay = 39*80/3200 = 0.975.
+    // It exits the canvas after (1 + 0.975) * 3200 ≈ 6320 ms.
     // Advance past that with no firing so enemies scroll off instead of being shot.
-    s = advanceMs(s, 6000, NO_INPUT);
+    s = advanceMs(s, 7000, NO_INPUT);
     expect(s.phase).toBe("WaveClear");
   });
 
@@ -2128,5 +2128,77 @@ describe("#1037 Difficulty tiers", () => {
     expect(base.phase).toBe("WaveClear");
     expect(hard.phase).toBe("WaveClear");
     expect(hard.score).toBeGreaterThanOrEqual(base.score * 4);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// #1022 — Challenging Stage cadence (3, 7, 11, 15), 40 enemies, PERFECT bonus
+// ---------------------------------------------------------------------------
+
+describe("#1022 Challenging Stage cadence & PERFECT bonus", () => {
+  it("waves 3, 7, 11, 15 start as ChallengingStage (classic Galaga cadence)", () => {
+    for (const wave of [3, 7, 11, 15]) {
+      const s = initStarSwarm(CANVAS_W, CANVAS_H, wave);
+      expect(s.phase).toBe("ChallengingStage");
+    }
+  });
+
+  it("waves 4, 5, 6, 8, 9, 10 do NOT start as ChallengingStage", () => {
+    for (const wave of [4, 5, 6, 8, 9, 10]) {
+      const s = initStarSwarm(CANVAS_W, CANVAS_H, wave);
+      expect(s.phase).not.toBe("ChallengingStage");
+    }
+  });
+
+  it("ChallengingStage spawns exactly 40 enemies", () => {
+    const s = initStarSwarm(CANVAS_W, CANVAS_H, 3);
+    expect(s.phase).toBe("ChallengingStage");
+    expect(s.enemies.length).toBe(40);
+  });
+
+  it("challengingPerfect is false at ChallengingStage start", () => {
+    const s = initStarSwarm(CANVAS_W, CANVAS_H, 3);
+    expect(s.challengingPerfect).toBe(false);
+  });
+
+  it("challengingPerfect is true on WaveClear when all 40 enemies were hit", () => {
+    let s = initStarSwarm(CANVAS_W, CANVAS_H, 3, 42, "Ensign");
+    // Force all 40 hits and kill every enemy in one tick
+    s = {
+      ...s,
+      challengingHits: 40,
+      enemies: s.enemies.map((e) => ({ ...e, isAlive: false, hp: 0 })),
+    };
+    s = tick(s, 16, NO_INPUT);
+    expect(s.phase).toBe("WaveClear");
+    expect(s.challengingPerfect).toBe(true);
+  });
+
+  it("challengingPerfect is false on WaveClear when enemies scroll off without being shot", () => {
+    let s = initStarSwarm(CANVAS_W, CANVAS_H, 3, 42, "Ensign");
+    // 40 enemies; last one (idx 39) exits at ≈6320ms — advance past with no firing
+    s = advanceMs(s, 7000, NO_INPUT);
+    expect(s.phase).toBe("WaveClear");
+    expect(s.challengingPerfect).toBe(false);
+  });
+
+  it("PERFECT clears add 10,000 pts bonus at Ensign ×1 (plus 40×50 hit bonus)", () => {
+    // Zero-hit path: enemies scroll off — only waveClearBonus (wave 3 × 500 × 1 = 1500)
+    let noPerfect = initStarSwarm(CANVAS_W, CANVAS_H, 3, 42, "Ensign");
+    noPerfect = advanceMs(noPerfect, 7000, NO_INPUT);
+    expect(noPerfect.phase).toBe("WaveClear");
+
+    // Full-hit path: all 40 hit + perfect → 1500 + 2000 + 10000 = 13500
+    let perfect = initStarSwarm(CANVAS_W, CANVAS_H, 3, 42, "Ensign");
+    perfect = {
+      ...perfect,
+      challengingHits: 40,
+      enemies: perfect.enemies.map((e) => ({ ...e, isAlive: false, hp: 0 })),
+    };
+    perfect = tick(perfect, 16, NO_INPUT);
+    expect(perfect.phase).toBe("WaveClear");
+
+    // Δ = 40 hits × 50 + 10,000 perfect bonus = 12,000
+    expect(perfect.score - noPerfect.score).toBe(40 * 50 + 10_000);
   });
 });
