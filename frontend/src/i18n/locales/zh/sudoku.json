@@ -37,5 +37,7 @@
   "scoreboard.easyBestTime": "Easy Best",
   "scoreboard.mediumBestTime": "Medium Best",
   "scoreboard.hardBestTime": "Hard Best",
-  "scoreboard.gamesSolved": "Games Solved"
+  "scoreboard.gamesSolved": "Games Solved",
+  "action.quickRestart": "快速重玩",
+  "newGame.title": "新游戏"
 }

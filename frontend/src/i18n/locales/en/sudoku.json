@@ -22,7 +22,10 @@
   "action.newGame": "New Puzzle",
   "action.changeDifficulty": "Change Difficulty",
   "action.start": "Start",
+  "action.quickRestart": "Quick Restart",
   "action.submitScore": "Submit Score",
+
+  "newGame.title": "New Game",
 
   "variant.groupLabel": "Variant",
   "variant.classic": "Classic 9×9",

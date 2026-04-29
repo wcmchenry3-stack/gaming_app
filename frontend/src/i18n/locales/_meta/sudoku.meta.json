@@ -184,6 +184,15 @@
     "doNotTranslate": [],
     "notes": null
   },
+  "action.quickRestart": {
+    "component": "New Game modal",
+    "description": "Secondary button in the New Game modal that immediately restarts with the same difficulty and variant, bypassing the selectors.",
+    "tone": "casual",
+    "characterLimit": 20,
+    "placeholders": [],
+    "doNotTranslate": [],
+    "notes": null
+  },
   "action.changeDifficulty": {
     "component": "Win modal",
     "description": "Label for the 'Change Difficulty' button (returns to the difficulty picker).",
@@ -205,6 +214,16 @@
   "action.submitScore": {
     "component": "Win modal",
     "description": "Primary CTA to submit the score to the leaderboard.",
+    "tone": "casual",
+    "characterLimit": 20,
+    "placeholders": [],
+    "doNotTranslate": [],
+    "notes": null
+  },
+
+  "newGame.title": {
+    "component": "New Game modal",
+    "description": "Headline for the New Game settings modal shown after the player confirms abandoning their current game.",
     "tone": "casual",
     "characterLimit": 20,
     "placeholders": [],
