@@ -62,6 +62,32 @@ const EXPLOSION_DRAW_SIZE = 48;
 const DT_CAP_MS = 33;
 const INVINCIBLE_BLINK_INTERVAL = 120; // ms
 
+const C = {
+  bg: "#000010",
+  star: "#ffffff",
+  bulletEnemy: "#ff4422",
+  bulletPlayer: "#00ffcc",
+  enemyGrunt: "#8888ff",
+  enemyElite: "#ff88ff",
+  enemyBoss: "#ffff44",
+  hitFlash: "#ff2200",
+  pipFilled: "#ffffff",
+  pipEmpty: "rgba(255,255,255,0.2)",
+  player: "#00ffcc",
+  superTint: "#ffee00",
+  powerUp: "#ffee00",
+  explosionHot: "#ffcc00",
+  explosionCool: "#ff4400",
+  hudText: "#ffffff",
+  lives: "#00ffcc",
+  powerBarBg: "rgba(255,255,255,0.18)",
+  powerBarFill: "#ffee00",
+  waveClear: "#00ffcc",
+  challengingStage: "#ffdd00",
+  gameOverText: "#ff4422",
+  gameOverOverlay: "rgba(0,0,0,0.65)",
+} as const;
+
 interface Images {
   playerShip: HTMLImageElement | null;
   enemyGrunt: HTMLImageElement | null;
@@ -75,6 +101,7 @@ interface Images {
 export interface DevOptions {
   wave?: number;
   infiniteLives?: boolean;
+  stragglerEnabled?: boolean;
 }
 
 export interface GameCanvasHandle {
@@ -270,7 +297,13 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
       if (!resetTick) return;
       const opts = devOptionsRef.current;
       infiniteLivesRef.current = opts?.infiniteLives ?? false;
-      stateRef.current = initStarSwarm(width, height, opts?.wave ?? 1);
+      stateRef.current = initStarSwarm(
+        width,
+        height,
+        opts?.wave ?? 1,
+        42,
+        opts?.stragglerEnabled ?? false
+      );
       sfRef.current = initStarfield(width, height);
       lastFrameTimeRef.current = 0;
       inputRef.current.playerX = width / 2;
@@ -302,13 +335,13 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
       ctx.scale(s, s);
 
       // Background
-      ctx.fillStyle = "#000010";
+      ctx.fillStyle = C.bg;
       ctx.fillRect(0, 0, width, height);
 
       // Starfield
       for (const star of sf.stars) {
         ctx.globalAlpha = star.opacity;
-        ctx.fillStyle = "#ffffff";
+        ctx.fillStyle = C.star;
         ctx.beginPath();
         ctx.arc(star.x, star.y, star.r, 0, Math.PI * 2);
         ctx.fill();
@@ -316,7 +349,7 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
       ctx.globalAlpha = 1;
 
       // Enemy bullets
-      ctx.fillStyle = "#ff4422";
+      ctx.fillStyle = C.bulletEnemy;
       for (const b of state.enemyBullets) {
         ctx.fillRect(b.x - b.width / 2, b.y - b.height / 2, b.width, b.height);
       }
@@ -327,7 +360,7 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
         if (img) {
           ctx.drawImage(img, b.x - b.width / 2, b.y - b.height / 2, b.width, b.height);
         } else {
-          ctx.fillStyle = "#00ffcc";
+          ctx.fillStyle = C.bulletPlayer;
           ctx.fillRect(b.x - b.width / 2, b.y - b.height / 2, b.width, b.height);
         }
       }
@@ -351,7 +384,11 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
           );
         } else {
           ctx.fillStyle =
-            enemy.tier === "Grunt" ? "#8888ff" : enemy.tier === "Elite" ? "#ff88ff" : "#ffff44";
+            enemy.tier === "Grunt"
+              ? C.enemyGrunt
+              : enemy.tier === "Elite"
+                ? C.enemyElite
+                : C.enemyBoss;
           ctx.fillRect(
             enemy.x - enemy.width / 2,
             enemy.y - enemy.height / 2,
@@ -360,8 +397,8 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
           );
         }
         if (enemy.hitFlashTimer > 0) {
-          ctx.globalAlpha = 0.7;
-          ctx.fillStyle = "#ffffff";
+          ctx.globalAlpha = 0.55;
+          ctx.fillStyle = C.hitFlash;
           ctx.fillRect(
             enemy.x - enemy.width / 2,
             enemy.y - enemy.height / 2,
@@ -369,6 +406,21 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
             enemy.height
           );
           ctx.globalAlpha = 1;
+        }
+
+        // HP pips — Elite (2) and Boss (4); Grunt always has 1 HP so pips are omitted
+        if (enemy.tier !== "Grunt") {
+          const totalPips = enemy.tier === "Elite" ? 2 : 4;
+          const pipW = 4;
+          const pipH = 4;
+          const pipGap = 2;
+          const rowW = totalPips * pipW + (totalPips - 1) * pipGap;
+          const rowX = enemy.x - rowW / 2;
+          const rowY = enemy.y - enemy.height / 2 - 8;
+          for (let p = 0; p < totalPips; p++) {
+            ctx.fillStyle = p < enemy.hp ? C.pipFilled : C.pipEmpty;
+            ctx.fillRect(rowX + p * (pipW + pipGap), rowY, pipW, pipH);
+          }
         }
       }
 
@@ -387,7 +439,7 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
             player.height
           );
         } else {
-          ctx.fillStyle = "#00ffcc";
+          ctx.fillStyle = C.player;
           ctx.beginPath();
           ctx.moveTo(player.x, player.y - player.height / 2);
           ctx.lineTo(player.x - player.width / 2, player.y + player.height / 2);
@@ -398,7 +450,7 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
         // Super-state electric tint
         if (state.activePowerUp !== null) {
           ctx.globalAlpha = 0.45;
-          ctx.fillStyle = "#ffee00";
+          ctx.fillStyle = C.superTint;
           ctx.fillRect(
             player.x - player.width / 2,
             player.y - player.height / 2,
@@ -410,7 +462,7 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
       }
 
       // Power-ups — falling lightning bolt
-      ctx.fillStyle = "#ffee00";
+      ctx.fillStyle = C.powerUp;
       for (const pu of state.powerUps) {
         const lx = pu.x - pu.width / 2;
         const ly = pu.y - pu.height / 2;
@@ -442,7 +494,7 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
         } else {
           const progress = exp.frame / 20;
           ctx.globalAlpha = 1 - progress;
-          ctx.fillStyle = progress < 0.4 ? "#ffcc00" : "#ff4400";
+          ctx.fillStyle = progress < 0.4 ? C.explosionHot : C.explosionCool;
           ctx.beginPath();
           ctx.arc(exp.x, exp.y, 6 + progress * 18, 0, Math.PI * 2);
           ctx.fill();
@@ -453,7 +505,7 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
       // HUD
       ctx.font = "bold 13px 'Courier New', monospace";
       ctx.textBaseline = "top";
-      ctx.fillStyle = "#ffffff";
+      ctx.fillStyle = C.hudText;
       ctx.textAlign = "left";
       ctx.fillText(`${t("hud.score")} ${state.score}`, 10, 8);
       ctx.textAlign = "center";
@@ -463,16 +515,16 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
 
       // Lives — small cyan rectangles at bottom-left
       for (let i = 0; i < player.lives; i++) {
-        ctx.fillStyle = "#00ffcc";
+        ctx.fillStyle = C.lives;
         ctx.fillRect(10 + i * 16, height - 18, 10, 14);
       }
 
       // Power-up countdown bar — above lives
       if (state.activePowerUp !== null) {
         const ratio = state.activePowerUp.remainingMs / POWERUP_DURATION;
-        ctx.fillStyle = "rgba(255,255,255,0.18)";
+        ctx.fillStyle = C.powerBarBg;
         ctx.fillRect(10, height - 26, 60, 4);
-        ctx.fillStyle = "#ffee00";
+        ctx.fillStyle = C.powerBarFill;
         ctx.fillRect(10, height - 26, 60 * ratio, 4);
       }
 
@@ -482,27 +534,27 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
 
       if (state.phase === "WaveClear") {
         ctx.font = "bold 22px 'Courier New', monospace";
-        ctx.fillStyle = "#00ffcc";
+        ctx.fillStyle = C.waveClear;
         ctx.fillText(t("phase.waveClear"), width / 2, height / 2);
       }
 
       if (state.phase === "ChallengingStage") {
         ctx.font = "bold 20px 'Courier New', monospace";
-        ctx.fillStyle = "#ffdd00";
+        ctx.fillStyle = C.challengingStage;
         ctx.fillText(t("phase.challengingStage"), width / 2, height / 2 - 18);
         ctx.font = "14px 'Courier New', monospace";
-        ctx.fillStyle = "#ffffff";
+        ctx.fillStyle = C.hudText;
         ctx.fillText(t("phase.hits", { count: state.challengingHits }), width / 2, height / 2 + 12);
       }
 
       if (state.phase === "GameOver") {
-        ctx.fillStyle = "rgba(0,0,0,0.65)";
+        ctx.fillStyle = C.gameOverOverlay;
         ctx.fillRect(0, 0, width, height);
         ctx.font = "bold 28px 'Courier New', monospace";
-        ctx.fillStyle = "#ff4422";
+        ctx.fillStyle = C.gameOverText;
         ctx.fillText(t("phase.gameOver"), width / 2, height / 2 - 22);
         ctx.font = "16px 'Courier New', monospace";
-        ctx.fillStyle = "#ffffff";
+        ctx.fillStyle = C.hudText;
         ctx.fillText(`${t("hud.score")} ${state.score}`, width / 2, height / 2 + 18);
       }
 

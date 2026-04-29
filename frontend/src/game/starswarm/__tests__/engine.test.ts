@@ -695,13 +695,14 @@ describe("Enemy bullet cap (#972)", () => {
     s = advanceMs(s, 8000);
     expect(s.phase).toBe("Playing");
 
-    // Start with 0 enemy bullets and force an immediate shot
+    // Force the first non-Boss formation enemy to fire immediately
+    // (Bosses are passive until bossThresholdCrossed, so use a Grunt or Elite)
+    const targetIdx = s.enemies.findIndex((e) => e.phase === "Formation" && e.tier !== "Boss");
+    if (targetIdx === -1) return;
     s = {
       ...s,
       enemyBullets: [],
-      enemies: s.enemies.map((e, i) =>
-        i === 0 && e.phase === "Formation" ? { ...e, shootTimer: 0 } : e
-      ),
+      enemies: s.enemies.map((e, i) => (i === targetIdx ? { ...e, shootTimer: 0 } : e)),
     };
 
     s = tick(s, 16, NO_INPUT);
@@ -1195,6 +1196,7 @@ describe("Boss burst-fire (#979)", () => {
     if (bossIdx === -1) throw new Error("no boss in formation");
     s = {
       ...s,
+      bossThresholdCrossed: true, // Boss must be active to fire
       enemyBullets: [],
       enemies: s.enemies.map((e, i) =>
         i === bossIdx ? { ...e, shootTimer: 0, burstShotsLeft: 0 } : e
@@ -1217,9 +1219,10 @@ describe("Boss burst-fire (#979)", () => {
       (e) => e.isAlive && e.tier === "Boss" && e.phase === "Formation"
     );
     if (bossIdx === -1) throw new Error("no boss in formation");
-    // Force last shot in burst
+    // Force last shot in burst (Boss must be active to fire)
     s = {
       ...s,
+      bossThresholdCrossed: true,
       enemyBullets: [],
       enemies: s.enemies.map((e, i) =>
         i === bossIdx ? { ...e, shootTimer: 0, burstShotsLeft: 1 } : e
@@ -1420,5 +1423,340 @@ describe("Power-up engine (#980)", () => {
     expect(s.powerUps.length).toBe(1);
     expect(s.powerUps[0]!.x).toBe(CANVAS_W / 2);
     expect(s.powerUps[0]!.despawnTimer).toBeGreaterThan(6000); // canvas-height-derived (~8950ms at CANVAS_H=640)
+  });
+});
+
+// ---------------------------------------------------------------------------
+// #1029 — Grunt & Boss collision redesign
+// ---------------------------------------------------------------------------
+
+describe("#1029 Grunt & Boss collision redesign", () => {
+  it("Grunt never enters Circling phase", () => {
+    let s = initStarSwarm(CANVAS_W, CANVAS_H);
+    s = advanceMs(s, 8000);
+    expect(s.phase).toBe("Playing");
+
+    for (let i = 0; i < 3000; i++) {
+      s = tick(s, 16, NO_INPUT);
+      if (s.phase !== "Playing") break;
+      const gruntCircling = s.enemies.some(
+        (e) => e.isAlive && e.tier === "Grunt" && e.phase === "Circling"
+      );
+      expect(gruntCircling).toBe(false);
+    }
+  });
+
+  it("Grunt returns to Formation after dive without entering Circling", () => {
+    let s = initStarSwarm(CANVAS_W, CANVAS_H);
+    s = advanceMs(s, 8000);
+    s = resetToFormation({ ...s, nextDiveTimer: 1 });
+    s = tick(s, 16, NO_INPUT);
+
+    const wiggling = s.enemies.find((e) => e.phase === "Wiggling" && e.tier === "Grunt");
+    if (!wiggling) return; // wave may have no Grunts in formation — skip
+    const id = wiggling.id;
+
+    // Wait for the full dive + return cycle
+    s = advanceMs(s, WIGGLE_DURATION + 4000, NO_INPUT);
+    const after = s.enemies.find((e) => e.id === id);
+    if (!after || !after.isAlive) return;
+    expect(after.phase === "Circling").toBe(false);
+  });
+
+  it("Boss never body-collides with player", () => {
+    let s = initStarSwarm(CANVAS_W, CANVAS_H);
+    s = advanceMs(s, 8000);
+    s = { ...s, bossThresholdCrossed: true, player: { ...s.player, invincibleTimer: 0 } };
+
+    const bossId = s.enemies.find((e) => e.isAlive && e.tier === "Boss")?.id;
+    if (!bossId) throw new Error("no boss");
+
+    // Teleport Boss directly onto the player and give it a diving phase
+    const { player } = s;
+    s = {
+      ...s,
+      player: { ...player, lives: 3, invincibleTimer: 0 },
+      enemies: s.enemies.map((e) =>
+        e.id === bossId
+          ? {
+              ...e,
+              phase: "Diving" as const,
+              x: player.x,
+              y: player.y,
+              path: {
+                p0: { x: player.x, y: player.y },
+                p1: { x: player.x, y: player.y + 10 },
+                p2: { x: player.x, y: player.y + 20 },
+                p3: { x: player.x, y: player.y + 30 },
+              },
+              pathT: 0,
+              pathDuration: 1000,
+            }
+          : e
+      ),
+    };
+
+    s = tick(s, 16, NO_INPUT);
+    // Player should NOT have lost a life despite Boss being on same position
+    expect(s.player.lives).toBe(3);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// #1030 — Elite phase system & Boss passive start
+// ---------------------------------------------------------------------------
+
+describe("#1030 Elite phase system & Boss passive start", () => {
+  it("bossThresholdCrossed initialises to false", () => {
+    const s = initStarSwarm(CANVAS_W, CANVAS_H);
+    expect(s.bossThresholdCrossed).toBe(false);
+  });
+
+  it("bossThresholdCrossed flips to true once ≤35% non-boss enemies remain and stays true", () => {
+    let s = initStarSwarm(CANVAS_W, CANVAS_H);
+    s = advanceMs(s, 8000);
+    expect(s.bossThresholdCrossed).toBe(false);
+
+    const target = Math.floor(s.startingNonBossCount * 0.3);
+    let killed = 0;
+    s = {
+      ...s,
+      enemies: s.enemies.map((e) => {
+        if (e.tier !== "Boss" && e.isAlive && killed < s.startingNonBossCount - target) {
+          killed++;
+          return { ...e, isAlive: false, hp: 0 };
+        }
+        return e;
+      }),
+    };
+    s = tick(s, 16, NO_INPUT);
+    expect(s.bossThresholdCrossed).toBe(true);
+
+    // Stays true after further ticks
+    s = advanceMs(s, 1000, NO_INPUT);
+    expect(s.bossThresholdCrossed).toBe(true);
+  });
+
+  it("Boss does not fire while bossThresholdCrossed is false", () => {
+    let s = initStarSwarm(CANVAS_W, CANVAS_H);
+    s = advanceMs(s, 8000);
+    expect(s.bossThresholdCrossed).toBe(false);
+
+    const bossIdx = s.enemies.findIndex((e) => e.isAlive && e.tier === "Boss");
+    if (bossIdx === -1) throw new Error("no boss");
+    s = {
+      ...s,
+      enemyBullets: [],
+      enemies: s.enemies.map((e, i) =>
+        i === bossIdx ? { ...e, shootTimer: 0, burstShotsLeft: 0 } : e
+      ),
+    };
+    s = tick(s, 16, NO_INPUT);
+    // Boss should not fire while passive
+    expect(s.enemyBullets.length).toBe(0);
+  });
+
+  it("Boss does not dive while bossThresholdCrossed is false", () => {
+    let s = initStarSwarm(CANVAS_W, CANVAS_H);
+    s = advanceMs(s, 8000);
+    expect(s.bossThresholdCrossed).toBe(false);
+
+    const bossIds = new Set(s.enemies.filter((e) => e.tier === "Boss").map((e) => e.id));
+    s = { ...s, nextDiveTimer: 1 };
+    s = tick(s, 16, NO_INPUT);
+    const bossActed = s.enemies.some(
+      (e) => bossIds.has(e.id) && (e.phase === "Wiggling" || e.phase === "Diving")
+    );
+    expect(bossActed).toBe(false);
+  });
+
+  it("Elite Phase 1 dive stays above 60% canvas height", () => {
+    let s = initStarSwarm(CANVAS_W, CANVAS_H);
+    s = advanceMs(s, 8000);
+    expect(s.bossThresholdCrossed).toBe(false);
+
+    // Force an Elite to dive
+    const eliteIdx = s.enemies.findIndex(
+      (e) => e.isAlive && e.tier === "Elite" && e.phase === "Formation"
+    );
+    if (eliteIdx === -1) throw new Error("no elite in formation");
+    s = {
+      ...s,
+      enemies: s.enemies.map((e, i) =>
+        i === eliteIdx
+          ? {
+              ...e,
+              phase: "Wiggling" as const,
+              wiggleTimer: WIGGLE_DURATION,
+              diveTargetX: s.player.x,
+            }
+          : e
+      ),
+    };
+
+    const eliteId = s.enemies[eliteIdx]!.id;
+    const maxY60 = CANVAS_H * 0.6;
+
+    for (let i = 0; i < 500; i++) {
+      s = tick(s, 16, NO_INPUT);
+      const elite = s.enemies.find((e) => e.id === eliteId);
+      if (!elite || !elite.isAlive || elite.phase === "Returning" || elite.phase === "Formation")
+        break;
+      if (elite.phase === "Diving") {
+        expect(elite.y).toBeLessThan(maxY60 + 5); // allow 1-frame overshoot tolerance
+      }
+    }
+  });
+
+  it("Elite Phase 1 has no body collision", () => {
+    let s = initStarSwarm(CANVAS_W, CANVAS_H);
+    s = advanceMs(s, 8000);
+    expect(s.bossThresholdCrossed).toBe(false);
+    s = { ...s, player: { ...s.player, lives: 3, invincibleTimer: 0 } };
+
+    const eliteId = s.enemies.find((e) => e.isAlive && e.tier === "Elite")?.id;
+    if (!eliteId) throw new Error("no elite");
+    const { player } = s;
+    s = {
+      ...s,
+      enemies: s.enemies.map((e) =>
+        e.id === eliteId
+          ? {
+              ...e,
+              phase: "Diving" as const,
+              x: player.x,
+              y: player.y,
+              path: {
+                p0: { x: player.x, y: player.y },
+                p1: { x: player.x, y: player.y + 5 },
+                p2: { x: player.x, y: player.y + 10 },
+                p3: { x: player.x, y: player.y + 15 },
+              },
+              pathT: 0,
+              pathDuration: 1000,
+            }
+          : e
+      ),
+    };
+    s = tick(s, 16, NO_INPUT);
+    expect(s.player.lives).toBe(3);
+  });
+
+  it("Elite Phase 2 (bossThresholdCrossed=true) can body-collide", () => {
+    let s = initStarSwarm(CANVAS_W, CANVAS_H);
+    s = advanceMs(s, 8000);
+    s = { ...s, bossThresholdCrossed: true, player: { ...s.player, lives: 3, invincibleTimer: 0 } };
+
+    const eliteId = s.enemies.find((e) => e.isAlive && e.tier === "Elite")?.id;
+    if (!eliteId) throw new Error("no elite");
+    const { player } = s;
+    s = {
+      ...s,
+      enemies: s.enemies.map((e) =>
+        e.id === eliteId
+          ? {
+              ...e,
+              phase: "Diving" as const,
+              x: player.x,
+              y: player.y,
+              path: {
+                p0: { x: player.x, y: player.y },
+                p1: { x: player.x, y: player.y + 5 },
+                p2: { x: player.x, y: player.y + 10 },
+                p3: { x: player.x, y: player.y + 15 },
+              },
+              pathT: 0,
+              pathDuration: 1000,
+            }
+          : e
+      ),
+    };
+    s = tick(s, 16, NO_INPUT);
+    expect(s.player.lives).toBeLessThan(3);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// #1031 — Straggler aggression
+// ---------------------------------------------------------------------------
+
+describe("#1031 Straggler aggression", () => {
+  it("stragglerEnabled is false by default", () => {
+    const s = initStarSwarm(CANVAS_W, CANVAS_H);
+    expect(s.stragglerEnabled).toBe(false);
+  });
+
+  it("stragglerEnabled=true passed through initStarSwarm", () => {
+    const s = initStarSwarm(CANVAS_W, CANVAS_H, 1, 42, true);
+    expect(s.stragglerEnabled).toBe(true);
+  });
+
+  it("when ≤3 enemies remain and stragglerEnabled, Formation enemies immediately wiggle", () => {
+    let s = initStarSwarm(CANVAS_W, CANVAS_H, 1, 42, true);
+    s = advanceMs(s, 8000);
+    expect(s.phase).toBe("Playing");
+
+    // Kill all but 2 enemies
+    const alive = s.enemies.filter((e) => e.isAlive);
+    const toKill = alive.slice(2);
+    s = {
+      ...s,
+      enemies: s.enemies.map((e) =>
+        toKill.some((k) => k.id === e.id) ? { ...e, isAlive: false, hp: 0 } : e
+      ),
+    };
+
+    s = tick(s, 16, NO_INPUT);
+    const formationCount = s.enemies.filter((e) => e.isAlive && e.phase === "Formation").length;
+    expect(formationCount).toBe(0); // all should have entered Wiggling
+  });
+
+  it("straggler does not trigger when stragglerEnabled=false", () => {
+    let s = initStarSwarm(CANVAS_W, CANVAS_H, 1, 42, false);
+    s = advanceMs(s, 8000);
+    expect(s.phase).toBe("Playing");
+
+    const alive = s.enemies.filter((e) => e.isAlive);
+    const toKill = alive.slice(2);
+    s = {
+      ...s,
+      enemies: s.enemies.map((e) =>
+        toKill.some((k) => k.id === e.id) ? { ...e, isAlive: false, hp: 0 } : e
+      ),
+    };
+    s = tick(s, 16, NO_INPUT);
+    // Formation enemies should still be in Formation (no straggler kick)
+    const wiggling = s.enemies.filter((e) => e.isAlive && e.phase === "Wiggling");
+    expect(wiggling.length).toBe(0);
+  });
+
+  it("straggler does not apply during ChallengingStage", () => {
+    let s = initStarSwarm(CANVAS_W, CANVAS_H, 3, 42, true);
+    expect(s.phase).toBe("ChallengingStage");
+    s = advanceMs(s, 500, NO_INPUT);
+    // Kill all but 2
+    const alive = s.enemies.filter((e) => e.isAlive);
+    const toKill = alive.slice(2);
+    s = {
+      ...s,
+      enemies: s.enemies.map((e) =>
+        toKill.some((k) => k.id === e.id) ? { ...e, isAlive: false, hp: 0 } : e
+      ),
+    };
+    s = tick(s, 16, NO_INPUT);
+    // Phase should move to WaveClear (all dead or exited), not get stuck
+    // Key assertion: no straggler-forced Wiggling in challenge stage
+    const wiggling = s.enemies.filter((e) => e.isAlive && e.phase === "Wiggling");
+    expect(wiggling.length).toBe(0);
+  });
+
+  it("stragglerEnabled carries over to next wave", () => {
+    let s = initStarSwarm(CANVAS_W, CANVAS_H, 1, 42, true);
+    s = advanceMs(s, 8000);
+    s = { ...s, enemies: s.enemies.map((e) => ({ ...e, isAlive: false, hp: 0 })) };
+    s = tick(s, 16, NO_INPUT); // WaveClear
+    s = advanceMs(s, 3000);
+    expect(s.wave).toBe(2);
+    expect(s.stragglerEnabled).toBe(true);
   });
 });

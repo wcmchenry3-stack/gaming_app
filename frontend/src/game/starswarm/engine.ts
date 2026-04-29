@@ -270,9 +270,18 @@ function returnPath(ex: number, ey: number, fx: number, fy: number): CubicBezier
 }
 
 // #977: wide Bézier arc for Diving phase — sweeps outward before descending
-function divePath(enemy: Enemy, targetX: number, canvasH: number): CubicBezier {
+// shallow=true produces an Elite Phase-1 dive that stays above 60% canvas height
+function divePath(enemy: Enemy, targetX: number, canvasH: number, shallow = false): CubicBezier {
   const sweepDir = enemy.formationX < CANVAS_W / 2 ? -1 : 1;
-  const jitter = (rng() - 0.5) * 40; // ±20px horizontal scatter on P2
+  const jitter = (rng() - 0.5) * 40;
+  if (shallow) {
+    return {
+      p0: { x: enemy.x, y: enemy.y },
+      p1: { x: enemy.formationX + sweepDir * 50, y: enemy.formationY + 50 },
+      p2: { x: targetX + jitter, y: canvasH * 0.4 },
+      p3: { x: targetX, y: canvasH * 0.55 },
+    };
+  }
   return {
     p0: { x: enemy.x, y: enemy.y },
     p1: { x: enemy.formationX + sweepDir * 80, y: enemy.formationY + 80 },
@@ -416,7 +425,8 @@ export function initStarSwarm(
   canvasW: number,
   canvasH: number,
   wave = 1,
-  seed = 42
+  seed = 42,
+  stragglerEnabled = false
 ): StarSwarmState {
   seedRng(seed);
   _resetIds();
@@ -431,7 +441,7 @@ export function initStarSwarm(
     shootCooldown: 0,
   };
 
-  return buildWaveState(canvasW, canvasH, wave, player, 0);
+  return buildWaveState(canvasW, canvasH, wave, player, 0, 0, stragglerEnabled);
 }
 
 function buildWaveState(
@@ -440,7 +450,8 @@ function buildWaveState(
   wave: number,
   player: Player,
   score: number,
-  bonusLivesAwarded = 0
+  bonusLivesAwarded = 0,
+  stragglerEnabled = false
 ): StarSwarmState {
   let enemies: Enemy[];
   let phase: StarSwarmState["phase"];
@@ -493,6 +504,8 @@ function buildWaveState(
     killsSinceLastDrop: 0,
     dropJitterTarget,
     activePowerUp: null,
+    bossThresholdCrossed: false,
+    stragglerEnabled,
   };
 }
 
@@ -597,7 +610,8 @@ function tickSingleEnemy(
   playerX: number,
   canvasH: number,
   shouldDive: boolean,
-  wave: number
+  wave: number,
+  bossThresholdCrossed: boolean
 ): EnemyTickResult {
   if (!enemy.isAlive) return { enemy, bullet: null };
 
@@ -605,11 +619,11 @@ function tickSingleEnemy(
     case "SwoopIn":
       return tickSwoopIn(enemy, dtMs);
     case "Formation":
-      return tickFormation(enemy, dtMs, playerX, shouldDive, wave);
+      return tickFormation(enemy, dtMs, playerX, shouldDive, wave, bossThresholdCrossed);
     case "Wiggling":
-      return tickWiggling(enemy, dtMs, canvasH);
+      return tickWiggling(enemy, dtMs, canvasH, bossThresholdCrossed);
     case "Diving":
-      return tickDiving(enemy, dtMs, canvasH, playerX);
+      return tickDiving(enemy, dtMs, canvasH, playerX, bossThresholdCrossed);
     case "Circling":
       return tickCircling(enemy, dtMs, playerX);
     case "Returning":
@@ -649,8 +663,14 @@ function tickFormation(
   dtMs: number,
   playerX: number,
   shouldDive: boolean,
-  wave: number
+  wave: number,
+  bossThresholdCrossed: boolean
 ): EnemyTickResult {
+  // Boss is passive until threshold crossed: no firing, no diving
+  if (enemy.tier === "Boss" && !bossThresholdCrossed) {
+    return { enemy, bullet: null };
+  }
+
   // #975: transition to Wiggling (not directly to Diving) — gives player a reaction window
   if (shouldDive) {
     return {
@@ -658,7 +678,7 @@ function tickFormation(
         ...enemy,
         phase: "Wiggling",
         wiggleTimer: WIGGLE_DURATION,
-        diveTargetX: playerX, // capture player X at trigger time
+        diveTargetX: playerX,
       },
       bullet: null,
     };
@@ -675,11 +695,17 @@ function tickFormation(
     return { enemy: e, bullet };
   }
 
+  // Elites always fire aimed shots; Grunts use wave-scaled probabilistic aim
+  const vx =
+    enemy.tier === "Elite"
+      ? Math.sign(playerX - enemy.x) * BULLET_E_VY * 0.5
+      : aimedBulletVx(enemy.x, playerX, wave);
+
   const bullet: Bullet = {
     id: nextId(),
     x: enemy.x,
     y: enemy.y + enemy.height / 2,
-    vx: aimedBulletVx(enemy.x, playerX, wave),
+    vx,
     vy: BULLET_E_VY,
     owner: "enemy",
     width: BULLET_E_W,
@@ -719,11 +745,18 @@ function bossBurstFire(enemy: Enemy, playerX: number): EnemyTickResult {
 }
 
 // #975: oscillate ±WIGGLE_AMPLITUDE px for WIGGLE_DURATION ms, then launch Bézier dive
-function tickWiggling(enemy: Enemy, dtMs: number, canvasH: number): EnemyTickResult {
+function tickWiggling(
+  enemy: Enemy,
+  dtMs: number,
+  canvasH: number,
+  bossThresholdCrossed: boolean
+): EnemyTickResult {
   const newTimer = enemy.wiggleTimer - dtMs;
 
   if (newTimer <= 0) {
-    const path = divePath(enemy, enemy.diveTargetX, canvasH);
+    // Elite Phase 1 uses a shallow dive arc (stays above 60% canvas height)
+    const shallow = enemy.tier === "Elite" && !bossThresholdCrossed;
+    const path = divePath(enemy, enemy.diveTargetX, canvasH, shallow);
     const duration = enemy.tier === "Boss" ? BOSS_DIVE_PATH_DURATION : DIVE_PATH_DURATION;
     return {
       enemy: {
@@ -749,8 +782,17 @@ function tickWiggling(enemy: Enemy, dtMs: number, canvasH: number): EnemyTickRes
   };
 }
 
-// #977: Bézier arc dive — advances pathT each tick, transitions to Circling at 85% canvas height
-function tickDiving(enemy: Enemy, dtMs: number, canvasH: number, playerX: number): EnemyTickResult {
+// #977/#1029/#1030: Bézier arc dive
+// - Grunts: skip Circling; go directly to Returning at 85%
+// - Elites Phase 1 (bossThresholdCrossed=false): shallow arc, Returning at 60%, no body collision
+// - Elites Phase 2 + Bosses: Circling at 85% (existing behaviour)
+function tickDiving(
+  enemy: Enemy,
+  dtMs: number,
+  canvasH: number,
+  playerX: number,
+  bossThresholdCrossed: boolean
+): EnemyTickResult {
   const newT = enemy.pathT + dtMs / enemy.pathDuration;
   const pos = evalCubic(enemy.path!, Math.min(newT, 1));
 
@@ -782,8 +824,31 @@ function tickDiving(enemy: Enemy, dtMs: number, canvasH: number, playerX: number
     }
   }
 
-  // Transition to Circling when past 85% canvas height or path complete
-  if (pos.y > canvasH * 0.85 || newT >= 1) {
+  const isElitePhase1 = enemy.tier === "Elite" && !bossThresholdCrossed;
+  const depthThreshold = isElitePhase1 ? canvasH * 0.6 : canvasH * 0.85;
+  const pathDone = pos.y > depthThreshold || newT >= 1;
+
+  if (pathDone) {
+    if (enemy.tier === "Grunt" || isElitePhase1) {
+      // No circling: return directly to formation
+      const path = returnPath(pos.x, pos.y, enemy.formationX, enemy.formationY);
+      return {
+        enemy: {
+          ...enemy,
+          phase: "Returning",
+          x: pos.x,
+          y: pos.y,
+          pathT: 0,
+          path,
+          pathDuration: RETURN_DURATION,
+          shootTimer: nextShootTimer,
+          burstShotsLeft: nextBurstShotsLeft,
+        },
+        bullet,
+      };
+    }
+
+    // Elite Phase 2 + Boss → Circling
     return {
       enemy: {
         ...enemy,
@@ -887,6 +952,13 @@ function tickReturning(enemy: Enemy, dtMs: number): EnemyTickResult {
 }
 
 function tickEnemies(state: StarSwarmState, dtMs: number): StarSwarmState {
+  // #1030: bossThresholdCrossed latches true once ≤35% non-boss enemies remain
+  const aliveNonBoss = state.enemies.filter((e) => e.isAlive && e.tier !== "Boss").length;
+  const bossThresholdCrossed =
+    state.bossThresholdCrossed ||
+    state.startingNonBossCount === 0 ||
+    aliveNonBoss / state.startingNonBossCount <= BOSS_DIVE_THRESHOLD;
+
   // #926 Dive AI: pick up to maxDivers(wave) formation enemies to send diving
   let nextDiveTimer = state.nextDiveTimer;
   const diveIndices = new Set<number>();
@@ -895,15 +967,12 @@ function tickEnemies(state: StarSwarmState, dtMs: number): StarSwarmState {
     nextDiveTimer -= dtMs;
     if (nextDiveTimer <= 0) {
       nextDiveTimer = diveInterval(state.wave);
-      // #978: Boss only eligible once ≤BOSS_DIVE_THRESHOLD of non-boss enemies remain
-      const aliveNonBoss = state.enemies.filter((e) => e.isAlive && e.tier !== "Boss").length;
-      const bossUnlocked =
-        state.startingNonBossCount === 0 ||
-        aliveNonBoss / state.startingNonBossCount <= BOSS_DIVE_THRESHOLD;
+      // #978/#1030: Boss only eligible once bossThresholdCrossed
       const candidates = state.enemies
         .map((e, i) => ({ e, i }))
         .filter(
-          ({ e }) => e.isAlive && e.phase === "Formation" && (e.tier !== "Boss" || bossUnlocked)
+          ({ e }) =>
+            e.isAlive && e.phase === "Formation" && (e.tier !== "Boss" || bossThresholdCrossed)
         );
       // Only launch enough new divers to reach the cap; Wiggling enemies are NOT counted (#975)
       const currentDivers = state.enemies.filter((e) => e.isAlive && e.phase === "Diving").length;
@@ -937,7 +1006,8 @@ function tickEnemies(state: StarSwarmState, dtMs: number): StarSwarmState {
       state.player.x,
       state.canvasH,
       shouldDive,
-      state.wave
+      state.wave,
+      bossThresholdCrossed
     );
     let e = result.enemy;
     // Apply sway offset to enemies holding Formation position
@@ -965,6 +1035,24 @@ function tickEnemies(state: StarSwarmState, dtMs: number): StarSwarmState {
     );
   }
 
+  // #1031: straggler aggression — when ≤3 enemies survive in a Playing wave,
+  // all Formation enemies immediately start wiggling
+  if (state.stragglerEnabled && state.phase === "Playing") {
+    const aliveCount = enemies.filter((e) => e.isAlive).length;
+    if (aliveCount > 0 && aliveCount <= 3) {
+      enemies = enemies.map((e) => {
+        if (!e.isAlive || e.phase !== "Formation") return e;
+        return {
+          ...e,
+          phase: "Wiggling" as const,
+          wiggleTimer: WIGGLE_DURATION,
+          diveTargetX: state.player.x,
+          shootTimer: Math.min(e.shootTimer, SHOOT_INTERVAL_BASE / 2),
+        };
+      });
+    }
+  }
+
   return {
     ...state,
     enemies,
@@ -972,6 +1060,7 @@ function tickEnemies(state: StarSwarmState, dtMs: number): StarSwarmState {
     nextDiveTimer,
     formationSwayX: swayX,
     formationSwayDir: swayDir,
+    bossThresholdCrossed,
   };
 }
 
@@ -1105,13 +1194,16 @@ function tickCollisions(state: StarSwarmState): StarSwarmState {
       collideCircleAABB(player.x, player.y, PLAYER_HURT_RADIUS, b.x, b.y, b.width, b.height)
     );
 
-    // #956: capture the ramming enemy so we can destroy it on collision
+    // #956/#1029/#1030: capture the ramming enemy so we can destroy it on collision
+    // Bosses never body-collide; Elite Phase 1 (bossThresholdCrossed=false) also exempt
     let rammingEnemyId: number | null = null;
     const hitByShip =
       !hitByBullet &&
       enemies.some((e) => {
         if (
           e.isAlive &&
+          e.tier !== "Boss" &&
+          !(e.tier === "Elite" && !state.bossThresholdCrossed) &&
           (e.phase === "Diving" || e.phase === "Circling") &&
           collideCircleAABB(player.x, player.y, PLAYER_HURT_RADIUS, e.x, e.y, e.width, e.height)
         ) {
@@ -1275,7 +1367,8 @@ function startNextWave(state: StarSwarmState): StarSwarmState {
     nextWave,
     state.player,
     state.score,
-    state.bonusLivesAwarded
+    state.bonusLivesAwarded,
+    state.stragglerEnabled
   );
 }
 
