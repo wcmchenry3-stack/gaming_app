@@ -1,5 +1,7 @@
 export type EnemyTier = "Grunt" | "Elite" | "Boss";
 
+export type PowerUpType = "lightning" | "shield" | "buddy" | "bomb";
+
 /** Five-state AI machine + SwoopIn entry animation. */
 export type EnemyPhase =
   | "SwoopIn" // following Bézier path onto screen into formation slot
@@ -110,6 +112,8 @@ export interface Explosion {
 
 export interface PowerUp {
   readonly id: number;
+  /** Which power-up variant this pickup activates (#1032). */
+  readonly type: PowerUpType;
   readonly x: number;
   readonly y: number;
   /** Fall speed in px/ms. */
@@ -118,6 +122,24 @@ export interface PowerUp {
   readonly height: number;
   /** ms until auto-despawn (if not collected). */
   readonly despawnTimer: number;
+}
+
+/** Companion ship that sweeps across the screen and fires a spread burst (#1035). */
+export interface BuddyShip {
+  readonly id: number;
+  readonly x: number;
+  readonly y: number;
+  readonly path: CubicBezier;
+  readonly pathT: number;
+  readonly pathDuration: number;
+  /** true once the spread burst has been fired (fires once at pathT ≥ 0.45). */
+  readonly hasFired: boolean;
+  /** Cluster center X captured at spawn time — burst aims here. */
+  readonly targetX: number;
+  /** Cluster center Y captured at spawn time — burst aims here. */
+  readonly targetY: number;
+  /** true = entered from left edge; false = entered from right. */
+  readonly fromLeft: boolean;
 }
 
 export interface StarSwarmState {
@@ -130,6 +152,7 @@ export interface StarSwarmState {
   readonly enemyBullets: readonly Bullet[];
   readonly explosions: readonly Explosion[];
   readonly powerUps: readonly PowerUp[];
+  readonly buddyShips: readonly BuddyShip[];
   /** General-purpose countdown timer (WaveClear pause, etc.). */
   readonly phaseTimer: number;
   readonly canvasW: number;
@@ -150,12 +173,23 @@ export interface StarSwarmState {
   readonly killsSinceLastDrop: number;
   /** Kill count target to trigger the next drop (includes ±2 jitter). */
   readonly dropJitterTarget: number;
-  /** Non-null while the lightning super state is active. */
-  readonly activePowerUp: { readonly remainingMs: number } | null;
+  /**
+   * Non-null while a duration power-up (lightning / shield) is active.
+   * shieldAbsorbed tracks bullets absorbed for analytics on expiry.
+   */
+  readonly activePowerUp: {
+    readonly remainingMs: number;
+    readonly type: PowerUpType;
+    readonly shieldAbsorbed: number;
+  } | null;
   /** True once ≤35% non-boss enemies remain; latches true and never resets mid-wave. */
   readonly bossThresholdCrossed: boolean;
   /** When true, ≤3 surviving enemies immediately break formation and go fully aggressive. */
   readonly stragglerEnabled: boolean;
+  /** When true (dev panel), straggler aggression is suppressed regardless of enemy count (#1039). */
+  readonly pauseStraggler: boolean;
+  /** ms remaining for the Smart Bomb full-screen flash overlay; 0 when inactive (#1034). */
+  readonly bombFlashTimer: number;
 }
 
 /** Input snapshot consumed by each `tick` call. */

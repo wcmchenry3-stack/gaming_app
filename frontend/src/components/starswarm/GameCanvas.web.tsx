@@ -3,10 +3,10 @@ import { View } from "react-native";
 import { Asset } from "expo-asset";
 import { useTranslation } from "react-i18next";
 import * as Sentry from "@sentry/react-native";
-import { initStarSwarm, tick, POWERUP_DURATION } from "../../game/starswarm/engine";
+import { initStarSwarm, tick, applyPowerUp, POWERUP_DURATION } from "../../game/starswarm/engine";
 import { initStarfield, tickStarfield } from "../../game/starswarm/starfield";
 import type { StarfieldState } from "../../game/starswarm/starfield";
-import type { StarSwarmState } from "../../game/starswarm/types";
+import type { StarSwarmState, PowerUpType } from "../../game/starswarm/types";
 
 import playerShipSrc from "../../../assets/starswarm/player-ship.webp";
 import enemyGruntSrc from "../../../assets/starswarm/enemy-grunt.webp";
@@ -75,7 +75,14 @@ const C = {
   pipEmpty: "rgba(255,255,255,0.2)",
   player: "#00ffcc",
   superTint: "#ffee00",
-  powerUp: "#ffee00",
+  shieldAura: "rgba(0,170,255,0.25)",
+  shieldRing: "rgba(0,170,255,0.8)",
+  powerUpLightning: "#ffee00",
+  powerUpShield: "rgba(0,170,255,0.9)",
+  powerUpBomb: "rgba(255,80,0,0.9)",
+  powerUpBuddy: "rgba(0,255,200,0.9)",
+  powerBarFillShield: "#00aaff",
+  buddyTint: "rgba(255,238,0,0.5)",
   explosionHot: "#ffcc00",
   explosionCool: "#ff4400",
   hudText: "#ffffff",
@@ -102,11 +109,13 @@ export interface DevOptions {
   wave?: number;
   infiniteLives?: boolean;
   stragglerEnabled?: boolean;
+  pauseStraggler?: boolean;
 }
 
 export interface GameCanvasHandle {
   setPlayerX: (x: number) => void;
   setFire: (fire: boolean) => void;
+  triggerPowerUp: (type: PowerUpType) => void;
 }
 
 interface Props {
@@ -118,7 +127,7 @@ interface Props {
   onLaserFire?: () => void;
   onExplosion?: () => void;
   onChallengingStage?: () => void;
-  onPowerUpCollect?: () => void;
+  onPowerUpCollect?: (type: PowerUpType) => void;
   isPaused?: boolean;
   width: number;
   height: number;
@@ -172,7 +181,8 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
     const onExplosionRef = useRef(onExplosion);
     const onChallengingStageRef = useRef(onChallengingStage);
     const onPowerUpCollectRef = useRef(onPowerUpCollect);
-    const prevActivePowerUpRef = useRef(false);
+    const prevActivePowerUpRef = useRef<string | null>(null);
+    const triggerPowerUpRef = useRef<PowerUpType | null>(null);
     const isPausedRef = useRef(isPaused);
     const prevScoreRef = useRef(0);
     const prevLivesRef = useRef(stateRef.current.player.lives);
@@ -289,6 +299,9 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
         setFire(fire) {
           inputRef.current.fire = fire;
         },
+        triggerPowerUp(type) {
+          triggerPowerUpRef.current = type;
+        },
       }),
       []
     );
@@ -311,7 +324,8 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
       prevScoreRef.current = 0;
       prevLivesRef.current = stateRef.current.player.lives;
       prevPhaseRef.current = stateRef.current.phase;
-      prevActivePowerUpRef.current = false;
+      prevActivePowerUpRef.current = null;
+      triggerPowerUpRef.current = null;
     }, [resetTick, width, height]);
 
     const draw = useCallback(() => {
@@ -447,8 +461,25 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
           ctx.closePath();
           ctx.fill();
         }
-        // Super-state electric tint
-        if (state.activePowerUp !== null) {
+        // #1033 Shield aura — glowing ring
+        if (state.activePowerUp?.type === "shield") {
+          ctx.globalAlpha = 0.25;
+          ctx.fillStyle = C.shieldAura;
+          ctx.beginPath();
+          ctx.arc(player.x, player.y, player.width * 0.8, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.globalAlpha = 0.8;
+          ctx.strokeStyle = C.shieldRing;
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.arc(player.x, player.y, player.width * 0.8, 0, Math.PI * 2);
+          ctx.stroke();
+          ctx.globalAlpha = 1;
+          ctx.lineWidth = 1;
+        }
+
+        // Lightning super-state electric tint
+        if (state.activePowerUp?.type === "lightning") {
           ctx.globalAlpha = 0.45;
           ctx.fillStyle = C.superTint;
           ctx.fillRect(
@@ -461,22 +492,68 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
         }
       }
 
-      // Power-ups — falling lightning bolt
-      ctx.fillStyle = C.powerUp;
+      // #1035 Buddy ships — player-ship sprite tinted yellow; flip for right-entry
+      for (const buddy of state.buddyShips) {
+        const img = imgs.playerShip;
+        ctx.save();
+        if (!buddy.fromLeft) {
+          ctx.translate(buddy.x, 0);
+          ctx.scale(-1, 1);
+          ctx.translate(-buddy.x, 0);
+        }
+        if (img) {
+          ctx.drawImage(img, buddy.x - 17, buddy.y - 17, 34, 34);
+        } else {
+          ctx.fillStyle = C.powerBarFill;
+          ctx.fillRect(buddy.x - 17, buddy.y - 17, 34, 34);
+        }
+        ctx.globalAlpha = 0.5;
+        ctx.fillStyle = C.superTint;
+        ctx.fillRect(buddy.x - 17, buddy.y - 17, 34, 34);
+        ctx.globalAlpha = 1;
+        ctx.restore();
+      }
+
+      // Power-ups — type-specific icons
       for (const pu of state.powerUps) {
         const lx = pu.x - pu.width / 2;
         const ly = pu.y - pu.height / 2;
         const pw = pu.width;
         const ph = pu.height;
-        ctx.beginPath();
-        ctx.moveTo(lx + pw * 0.625, ly);
-        ctx.lineTo(lx + pw * 0.125, ly + ph * 0.542);
-        ctx.lineTo(lx + pw * 0.458, ly + ph * 0.542);
-        ctx.lineTo(lx + pw * 0.375, ly + ph);
-        ctx.lineTo(lx + pw * 0.875, ly + ph * 0.458);
-        ctx.lineTo(lx + pw * 0.542, ly + ph * 0.458);
-        ctx.closePath();
-        ctx.fill();
+        if (pu.type === "shield") {
+          ctx.fillStyle = C.powerUpShield;
+          ctx.beginPath();
+          ctx.arc(pu.x, pu.y, pw * 0.4, 0, Math.PI * 2);
+          ctx.fill();
+        } else if (pu.type === "bomb") {
+          ctx.fillStyle = C.powerUpBomb;
+          ctx.beginPath();
+          ctx.arc(pu.x, pu.y, pw * 0.4, 0, Math.PI * 2);
+          ctx.fill();
+        } else if (pu.type === "buddy") {
+          ctx.fillStyle = C.powerUpBuddy;
+          ctx.fillRect(lx + pw * 0.2, ly + ph * 0.2, pw * 0.6, ph * 0.6);
+        } else {
+          // lightning bolt
+          ctx.fillStyle = C.powerUpLightning;
+          ctx.beginPath();
+          ctx.moveTo(lx + pw * 0.625, ly);
+          ctx.lineTo(lx + pw * 0.125, ly + ph * 0.542);
+          ctx.lineTo(lx + pw * 0.458, ly + ph * 0.542);
+          ctx.lineTo(lx + pw * 0.375, ly + ph);
+          ctx.lineTo(lx + pw * 0.875, ly + ph * 0.458);
+          ctx.lineTo(lx + pw * 0.542, ly + ph * 0.458);
+          ctx.closePath();
+          ctx.fill();
+        }
+      }
+
+      // #1034 Bomb flash — full-screen white overlay fading out
+      if (state.bombFlashTimer > 0) {
+        ctx.globalAlpha = (state.bombFlashTimer / 300) * 0.75;
+        ctx.fillStyle = "#ffffff";
+        ctx.fillRect(0, 0, width, height);
+        ctx.globalAlpha = 1;
       }
 
       // Explosions
@@ -575,11 +652,22 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
         const dtMs = Math.min(timestamp - lastFrameTimeRef.current, DT_CAP_MS);
         lastFrameTimeRef.current = timestamp;
 
+        // #1039: apply dev-panel power-up injection before regular tick
+        if (triggerPowerUpRef.current) {
+          const type = triggerPowerUpRef.current;
+          triggerPowerUpRef.current = null;
+          stateRef.current = applyPowerUp(stateRef.current, type);
+        }
+
         const prev = stateRef.current;
         if (prev.phase !== "GameOver" && !isPausedRef.current) {
           try {
             const prevCooldown = prev.player.shootCooldown;
-            const next = tick(prev, dtMs, {
+            const pauseStraggler = devOptionsRef.current?.pauseStraggler ?? false;
+            const tickInput = prev.pauseStraggler !== pauseStraggler
+              ? { ...prev, pauseStraggler }
+              : prev;
+            const next = tick(tickInput, dtMs, {
               playerX: inputRef.current.playerX,
               fire: inputRef.current.fire,
             });
@@ -599,11 +687,11 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
             if (applied.player.shootCooldown > prevCooldown) {
               onLaserFireRef.current?.();
             }
-            const isNowActive = applied.activePowerUp !== null;
-            if (!prevActivePowerUpRef.current && isNowActive) {
-              onPowerUpCollectRef.current?.();
+            const nowType = applied.activePowerUp?.type ?? null;
+            if (prevActivePowerUpRef.current === null && nowType !== null) {
+              onPowerUpCollectRef.current?.(nowType);
             }
-            prevActivePowerUpRef.current = isNowActive;
+            prevActivePowerUpRef.current = nowType;
             if (applied.explosions.length > prev.explosions.length) {
               onExplosionRef.current?.();
             }

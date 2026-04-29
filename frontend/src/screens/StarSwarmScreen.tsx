@@ -24,7 +24,7 @@ import Controls, {
   hapticWaveClear,
 } from "../components/starswarm/Controls";
 import { CANVAS_W, CANVAS_H } from "../game/starswarm/engine";
-import type { GamePhase } from "../game/starswarm/types";
+import type { GamePhase, PowerUpType } from "../game/starswarm/types";
 import { useStarSwarmAudio, DEFAULT_SFX_VOLUMES } from "../hooks/useStarSwarmAudio";
 import type { SfxVolumes } from "../hooks/useStarSwarmAudio";
 
@@ -46,6 +46,8 @@ export default function StarSwarmScreen() {
   const [devPanelOpen, setDevPanelOpen] = useState(false);
   const [devWave, setDevWave] = useState(1);
   const [devInfiniteLives, setDevInfiniteLives] = useState(false);
+  const [devStragglerEnabled, setDevStragglerEnabled] = useState(true);
+  const [devPauseStraggler, setDevPauseStraggler] = useState(false);
   const [devVolumes, setDevVolumes] = useState<SfxVolumes>(DEFAULT_SFX_VOLUMES);
 
   const adjustVolume = useCallback((key: keyof SfxVolumes, delta: number) => {
@@ -111,6 +113,10 @@ export default function StarSwarmScreen() {
   const handleBonusLife = useCallback(() => {
     playBonusLife();
   }, [playBonusLife]);
+
+  const handleTriggerPowerUp = useCallback((type: PowerUpType) => {
+    canvasRef.current?.triggerPowerUp(type);
+  }, []);
 
   const handleNewGame = useCallback((opts?: DevOptions) => {
     if (__DEV__ && opts !== undefined) lastDevOptsRef.current = opts;
@@ -226,12 +232,40 @@ export default function StarSwarmScreen() {
                     <Switch value={devInfiniteLives} onValueChange={setDevInfiniteLives} />
                   </View>
 
+                  <View style={styles.devRow}>
+                    <Text style={dynamicStyles.devLabel}>Straggler AI</Text>
+                    <Switch value={devStragglerEnabled} onValueChange={setDevStragglerEnabled} />
+                  </View>
+
+                  <View style={styles.devRow}>
+                    <Text style={dynamicStyles.devLabel}>Pause straggler</Text>
+                    <Switch value={devPauseStraggler} onValueChange={setDevPauseStraggler} />
+                  </View>
+
+                  <Text style={dynamicStyles.devSectionHeader}>── Power-ups ──</Text>
+
+                  <View style={styles.devPowerUpRow}>
+                    {(["lightning", "shield", "buddy", "bomb"] as PowerUpType[]).map((type) => (
+                      <Pressable
+                        key={type}
+                        style={styles.devPowerUpBtn}
+                        onPress={() => handleTriggerPowerUp(type)}
+                        accessibilityLabel={`Trigger ${type} power-up`}
+                      >
+                        <Text style={styles.devPowerUpText}>{type}</Text>
+                      </Pressable>
+                    ))}
+                  </View>
+
                   <Text style={dynamicStyles.devSectionHeader}>── Sound Mixer ──</Text>
 
                   {(
                     [
                       ["Laser", "laser"],
-                      ["Power-up", "powerupcollect"],
+                      ["PU: Lightning", "poweruplightning"],
+                      ["PU: Shield", "powerupshield"],
+                      ["PU: Buddy", "powerupbuddy"],
+                      ["PU: Bomb", "powerupbomb"],
                       ["Explosion", "explosion"],
                       ["Player hit", "playerhit"],
                       ["Wave clear", "waveclear"],
@@ -263,7 +297,12 @@ export default function StarSwarmScreen() {
                     style={[styles.devActionBtn, dynamicStyles.devPrimary]}
                     onPress={() => {
                       setDevPanelOpen(false);
-                      handleNewGame({ wave: devWave, infiniteLives: devInfiniteLives });
+                      handleNewGame({
+                        wave: devWave,
+                        infiniteLives: devInfiniteLives,
+                        stragglerEnabled: devStragglerEnabled,
+                        pauseStraggler: devPauseStraggler,
+                      });
                     }}
                   >
                     <Text style={styles.devPrimaryText}>New Game</Text>
@@ -332,6 +371,26 @@ const baseStyles = StyleSheet.create({
   devMixerLabel: {
     fontSize: 11,
     minWidth: 80,
+  },
+  devPowerUpRow: {
+    flexDirection: "row",
+    gap: 6,
+    flexWrap: "wrap",
+  },
+  devPowerUpBtn: {
+    flex: 1,
+    paddingVertical: 8,
+    borderRadius: 6,
+    alignItems: "center",
+    backgroundColor: "rgba(255,200,0,0.15)",
+    borderWidth: 1,
+    borderColor: "rgba(255,200,0,0.4)",
+  },
+  devPowerUpText: {
+    color: "#ffc800",
+    fontSize: 10,
+    fontWeight: "700",
+    textTransform: "capitalize",
   },
   devActionBtn: {
     paddingVertical: 10,

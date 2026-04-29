@@ -48,6 +48,15 @@ export const SOUND_REGISTRY: Partial<Record<SoundKey, number>> = {
   "starswarm.waveclear": require("../../../assets/sounds/starswarm-waveclear.ogg"),
   // eslint-disable-next-line @typescript-eslint/no-require-imports
   "starswarm.bonuslife": require("../../../assets/sounds/starswarm-waveclear.ogg"),
+  // Power-up type sounds (#1038)
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  "starswarm.poweruplightning": require("../../../assets/sounds/starswarm-powerup-lightning.ogg"),
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  "starswarm.powerupshield": require("../../../assets/sounds/starswarm-powerup-shield.ogg"),
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  "starswarm.powerupbuddy": require("../../../assets/sounds/starswarm-powerup-buddy.ogg"),
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  "starswarm.powerupbomb": require("../../../assets/sounds/starswarm-powerup-bomb.ogg"),
   // eslint-disable-next-line @typescript-eslint/no-require-imports
   "starswarm.bg1": require("../../../assets/sounds/starswarm-bg-1.mp3"),
   // eslint-disable-next-line @typescript-eslint/no-require-imports
