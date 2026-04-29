@@ -63,7 +63,7 @@ export class GameEventClientImpl implements GameEventClient {
     metadata: Record<string, unknown> = {},
     eventData?: Record<string, unknown>
   ): string {
-    const gameId = generateUUID(); // codeql[js/insecure-randomness]
+    const gameId = generateUUID();
     // Persist pending-game state synchronously in-memory, async to disk.
     // The event below grabs event_index 0 and we rely on the in-memory
     // counter being correct the moment startGame returns.
@@ -108,7 +108,7 @@ export class GameEventClientImpl implements GameEventClient {
       });
       return;
     }
-    const bugUuid = generateUUID(); // codeql[js/insecure-randomness]
+    const bugUuid = generateUUID();
     this.fireAndForget(
       this.store.enqueueBugLog({
         bug_uuid: bugUuid,

@@ -1,7 +1,0 @@
-paths-ignore:
-  # The Math.random() fallback in uuid.ts is intentional — it runs only when
-  # crypto.randomUUID() and crypto.getRandomValues() are unavailable (e.g. older
-  # Hermes/JSC environments). Excluding the file breaks the inter-file data-flow
-  # path that produces false-positive js/insecure-randomness alerts at call sites
-  # in other files, where inline suppression does not work for cross-file paths.
-  - frontend/src/game/_shared/uuid.ts

@@ -20,7 +20,7 @@ const SESSION_KEY = "game_session_id";
 export async function getOrCreateSessionId(): Promise<string> {
   let sid = await AsyncStorage.getItem(SESSION_KEY);
   if (!sid) {
-    sid = generateUUID(); // codeql[js/insecure-randomness]
+    sid = generateUUID();
     await AsyncStorage.setItem(SESSION_KEY, sid);
   }
   return sid;

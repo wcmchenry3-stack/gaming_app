@@ -204,7 +204,7 @@ export class EventStore {
       await this.maybeDelay();
       const priority = logConfig.priorityForEvent("game_event", input.event_type);
       const row: GameEventRow = {
-        id: generateUUID(), // codeql[js/insecure-randomness]
+        id: generateUUID(),
         log_type: "game_event",
         game_id: input.game_id,
         event_index: input.event_index,
@@ -232,7 +232,7 @@ export class EventStore {
     return this.withLock(async () => {
       await this.maybeDelay();
       const row: BugLogRow = {
-        id: generateUUID(), // codeql[js/insecure-randomness]
+        id: generateUUID(),
         log_type: "bug_log",
         bug_uuid: input.bug_uuid,
         bug_level: input.bug_level,

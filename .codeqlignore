@@ -1,6 +1,0 @@
-# The Math.random() fallback in uuid.ts is intentional — it runs only when
-# the Crypto API is unavailable (e.g. older Hermes/JSC environments on iOS).
-# Excluding the file prevents false-positive js/insecure-randomness path
-# alerts that trace Math.random() from this source to call-site sinks across
-# multiple files, where inline suppression does not work for inter-file flows.
-frontend/src/game/_shared/uuid.ts

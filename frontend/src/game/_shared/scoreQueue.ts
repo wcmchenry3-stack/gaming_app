@@ -72,7 +72,7 @@ export class ScoreQueue {
     playedAt: Date = new Date()
   ): Promise<PendingSubmission> {
     const item: PendingSubmission = {
-      id: generateUUID(), // codeql[js/insecure-randomness]
+      id: generateUUID(),
       game_type: gameType,
       payload,
       played_at: playedAt.toISOString(),
