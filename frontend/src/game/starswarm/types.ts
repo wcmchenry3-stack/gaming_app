@@ -2,6 +2,19 @@ export type EnemyTier = "Grunt" | "Elite" | "Boss";
 
 export type PowerUpType = "lightning" | "shield" | "buddy" | "bomb";
 
+/** Starfleet difficulty tiers (#1037) — ordered easiest to hardest. */
+export type DifficultyTier =
+  | "Ensign"
+  | "LieutenantJG"
+  | "Lieutenant"
+  | "LieutenantCommander"
+  | "Commander"
+  | "Captain"
+  | "RearAdmiral"
+  | "ViceAdmiral"
+  | "Admiral"
+  | "FleetAdmiral";
+
 /** Five-state AI machine + SwoopIn entry animation. */
 export type EnemyPhase =
   | "SwoopIn" // following Bézier path onto screen into formation slot
@@ -190,6 +203,8 @@ export interface StarSwarmState {
   readonly pauseStraggler: boolean;
   /** ms remaining for the Smart Bomb full-screen flash overlay; 0 when inactive (#1034). */
   readonly bombFlashTimer: number;
+  /** Active difficulty tier; drives score multiplier and AI param scaling (#1037). */
+  readonly difficulty: DifficultyTier;
 }
 
 /** Input snapshot consumed by each `tick` call. */

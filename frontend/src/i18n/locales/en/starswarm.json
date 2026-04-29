@@ -16,5 +16,7 @@
   "controls.tapToResume": "Tap to resume",
   "controls.resumeLabel": "Resume game",
   "controls.newGame": "NEW GAME",
-  "controls.newGameLabel": "Start a new game"
+  "controls.newGameLabel": "Start a new game",
+  "difficulty.selectTitle": "Select Difficulty",
+  "difficulty.start": "Start Game"
 }
