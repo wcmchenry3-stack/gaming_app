@@ -84,10 +84,14 @@ export function useBackgroundMusic(keys: SoundKey[], active: boolean): void {
     }
   }, [muted]);
 
-  // Cleanup on unmount.
+  // Cleanup on unmount — pause first so native audio stops before the player
+  // is freed; remove() alone does not halt playback on all platforms.
   useEffect(() => {
     return () => {
-      playerRef.current?.remove();
+      if (playerRef.current) {
+        playerRef.current.pause();
+        playerRef.current.remove();
+      }
       playerRef.current = null;
     };
   }, []);
