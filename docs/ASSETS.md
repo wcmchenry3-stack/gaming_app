@@ -11,13 +11,17 @@ Download and place at `frontend/assets/source-icons/` if you need to re-export a
 
 ## Asset conventions
 
-See `CLAUDE.md` for the full conventions. Summary:
+| Directory | Format | Purpose | Registry |
+|---|---|---|---|
+| `assets/sounds/` | MP3 / OGG | All game audio | `_shared/sounds.ts` |
+| `assets/fruit-icons/` | WebP | Fruit art for React Native UI (menus, pickers) | `_shared/images.ts` → `FRUIT_ICONS` |
+| `assets/fruits-baked/` | PNG | Pre-composited fruit sprites for Skia canvas | `_shared/images.ts` → `FRUIT_BAKED` |
+| `assets/celestial-icons/` | WebP | Cosmos art for React Native UI | `_shared/images.ts` → `COSMOS_ICONS` |
+| `assets/cosmos-baked/` | PNG | Pre-composited cosmos sprites for Skia canvas | `_shared/images.ts` → `COSMOS_BAKED` |
+| `assets/<game>/` | WebP / PNG | Game-specific sprites (e.g. `starswarm/`) | Per-game `assets.ts` |
 
-| Directory | Format | Purpose |
-|---|---|---|
-| `assets/sounds/` | MP3 / OGG | All game audio — registered in `_shared/sounds.ts` |
-| `assets/images/shared/` | WebP | Art reused across ≥2 games (fruit icons, celestial icons) |
-| `assets/images/<game>/` | WebP / PNG | Game-specific sprites |
-| `assets/<game>/` (legacy) | mixed | Existing per-game dirs — migrate on next touch |
+**Why two formats per theme?** `icons` (WebP) are transparent-background images used in React Native `<Image>` components. `baked` (PNG) are pre-composited, clipped sprites for single-call Skia `drawImage` — produced by `scripts/bake_sprites.py`. They are different assets, not duplicates.
 
-New games: add sounds to `_shared/sounds.ts` and images to `assets/images/<game>/`.
+**Adding a new shared image set:** add imports + export object to `_shared/images.ts`; import the registry object wherever needed.
+
+**Adding a new game's sprites:** create `assets/<game>/` and a `src/game/<game>/assets.ts` loader (see `starswarm/assets.ts` as the pattern).
