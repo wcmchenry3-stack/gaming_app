@@ -664,9 +664,8 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
           try {
             const prevCooldown = prev.player.shootCooldown;
             const pauseStraggler = devOptionsRef.current?.pauseStraggler ?? false;
-            const tickInput = prev.pauseStraggler !== pauseStraggler
-              ? { ...prev, pauseStraggler }
-              : prev;
+            const tickInput =
+              prev.pauseStraggler !== pauseStraggler ? { ...prev, pauseStraggler } : prev;
             const next = tick(tickInput, dtMs, {
               playerX: inputRef.current.playerX,
               fire: inputRef.current.fire,

@@ -1136,7 +1136,11 @@ function tickPowerUps(state: StarSwarmState, dtMs: number): StarSwarmState {
       if (__DEV__) {
         const evt =
           activePowerUp.type === "shield"
-            ? { event: "powerup_expired", type: "shield", bulletsAbsorbed: activePowerUp.shieldAbsorbed }
+            ? {
+                event: "powerup_expired",
+                type: "shield",
+                bulletsAbsorbed: activePowerUp.shieldAbsorbed,
+              }
             : { event: "powerup_expired", type: activePowerUp.type };
         // eslint-disable-next-line no-console
         console.log("[StarSwarm analytics]", evt);
@@ -1394,7 +1398,8 @@ function tickCollisions(state: StarSwarmState): StarSwarmState {
     if (hitByBullet && shieldActive) {
       // Shield absorbs the bullets — no damage
       currentEnemyBullets = currentEnemyBullets.filter(
-        (b) => !collideCircleAABB(player.x, player.y, PLAYER_HURT_RADIUS, b.x, b.y, b.width, b.height)
+        (b) =>
+          !collideCircleAABB(player.x, player.y, PLAYER_HURT_RADIUS, b.x, b.y, b.width, b.height)
       );
       activePowerUp = {
         ...activePowerUp!,
@@ -1601,7 +1606,13 @@ export function applyPowerUp(state: StarSwarmState, type: PowerUpType): StarSwar
       if (!e.isAlive) return e;
       const newHp = e.hp - 1;
       if (newHp <= 0) {
-        newExplosions.push({ id: nextId(), x: e.x, y: e.y, frame: 0, frameTimer: EXPLOSION_FRAME_MS });
+        newExplosions.push({
+          id: nextId(),
+          x: e.x,
+          y: e.y,
+          frame: 0,
+          frameTimer: EXPLOSION_FRAME_MS,
+        });
         score += TIER_SCORE[e.tier];
         killsSinceLastDrop++;
         return { ...e, hp: 0, isAlive: false, hitFlashTimer: 0 };
