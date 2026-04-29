@@ -11,7 +11,13 @@ import {
 } from "@shopify/react-native-skia";
 import { useTranslation } from "react-i18next";
 import * as Sentry from "@sentry/react-native";
-import { initStarSwarm, tick, applyPowerUp, BULLET_C_W, POWERUP_DURATION } from "../../game/starswarm/engine";
+import {
+  initStarSwarm,
+  tick,
+  applyPowerUp,
+  BULLET_C_W,
+  POWERUP_DURATION,
+} from "../../game/starswarm/engine";
 import { initStarfield, tickStarfield } from "../../game/starswarm/starfield";
 import type { StarfieldState } from "../../game/starswarm/starfield";
 import { useStarSwarmImages } from "../../game/starswarm/assets";
@@ -175,7 +181,13 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
       if (!resetTick) return;
       const opts = devOptionsRef.current;
       infiniteLivesRef.current = opts?.infiniteLives ?? false;
-      gameRef.current = initStarSwarm(width, height, opts?.wave ?? 1, 42, opts?.stragglerEnabled ?? false);
+      gameRef.current = initStarSwarm(
+        width,
+        height,
+        opts?.wave ?? 1,
+        42,
+        opts?.stragglerEnabled ?? false
+      );
       sfRef.current = initStarfield(width, height);
       lastFrameTimeRef.current = 0;
       inputRef.current.playerX = width / 2;
@@ -210,9 +222,8 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
             const prevCooldown = prev.player.shootCooldown;
             // #1039: apply pauseStraggler from devOptions each tick
             const pauseStraggler = devOptionsRef.current?.pauseStraggler ?? false;
-            const tickInput = prev.pauseStraggler !== pauseStraggler
-              ? { ...prev, pauseStraggler }
-              : prev;
+            const tickInput =
+              prev.pauseStraggler !== pauseStraggler ? { ...prev, pauseStraggler } : prev;
             const next = tick(tickInput, dtMs, {
               playerX: inputRef.current.playerX,
               fire: inputRef.current.fire,
@@ -249,7 +260,6 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
               bonusFlashEndRef.current = Date.now() + 1500;
             }
             prevBonusLivesRef.current = applied.bonusLivesAwarded;
-            const isNowActive = applied.activePowerUp !== null;
             const nowType = applied.activePowerUp?.type ?? null;
             if (prevActivePowerUpRef.current === null && nowType !== null) {
               onPowerUpCollectRef.current?.(nowType);
@@ -465,11 +475,7 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
                   transform={
                     buddy.fromLeft
                       ? []
-                      : [
-                          { translateX: buddy.x },
-                          { scaleX: -1 },
-                          { translateX: -buddy.x },
-                        ]
+                      : [{ translateX: buddy.x }, { scaleX: -1 }, { translateX: -buddy.x }]
                   }
                 >
                   <SkiaImage
@@ -507,13 +513,32 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
               const pw = pu.width;
               const ph = pu.height;
               if (pu.type === "shield") {
-                return <Circle key={pu.id} cx={pu.x} cy={pu.y} r={pw * 0.4} color="rgba(0,170,255,0.9)" />;
+                return (
+                  <Circle
+                    key={pu.id}
+                    cx={pu.x}
+                    cy={pu.y}
+                    r={pw * 0.4}
+                    color="rgba(0,170,255,0.9)"
+                  />
+                );
               }
               if (pu.type === "bomb") {
-                return <Circle key={pu.id} cx={pu.x} cy={pu.y} r={pw * 0.4} color="rgba(255,80,0,0.9)" />;
+                return (
+                  <Circle key={pu.id} cx={pu.x} cy={pu.y} r={pw * 0.4} color="rgba(255,80,0,0.9)" />
+                );
               }
               if (pu.type === "buddy") {
-                return <Rect key={pu.id} x={lx + pw * 0.2} y={ly + ph * 0.2} width={pw * 0.6} height={ph * 0.6} color="rgba(0,255,200,0.9)" />;
+                return (
+                  <Rect
+                    key={pu.id}
+                    x={lx + pw * 0.2}
+                    y={ly + ph * 0.2}
+                    width={pw * 0.6}
+                    height={ph * 0.6}
+                    color="rgba(0,255,200,0.9)"
+                  />
+                );
               }
               // lightning bolt (default)
               const boltPath =
@@ -587,7 +612,8 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
                     styles.powerUpBar,
                     {
                       width: 60 * (state.activePowerUp.remainingMs / POWERUP_DURATION),
-                      backgroundColor: state.activePowerUp.type === "shield" ? "#00aaff" : "#ffee00",
+                      backgroundColor:
+                        state.activePowerUp.type === "shield" ? "#00aaff" : "#ffee00",
                     },
                   ]}
                 />

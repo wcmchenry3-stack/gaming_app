@@ -1999,7 +1999,6 @@ describe("#1035 Buddy Ship", () => {
     expect(s.buddyShips.length).toBe(1);
 
     // Advance until the buddy has fired (pathT >= 0.45) and completed (pathT > 1.2)
-    const bulletsBefore = s.playerBullets.length;
     s = advanceMs(s, 4000, NO_INPUT);
 
     // Buddy should be gone after full traversal
