@@ -3,6 +3,12 @@
 // SoundKey is a string union — add new keys here when wiring a game's sounds.
 // The corresponding require() goes in SOUND_REGISTRY.
 // Hearts keys (moonShot, heartsBroken, queenOfSpades) are added in #773–#775.
+//
+// Shared audio (#1025): some keys intentionally point at the same file.
+//   blackjack-win.ogg      → blackjack.win, solitaire.foundationComplete
+//   cascade-game-over.ogg  → cascade.gameOver, mahjong.deadlock, twenty48.gameOver
+//   starswarm-waveclear.ogg → starswarm.waveclear, starswarm.bonuslife, cascade.cascadeCombo
+//   solitaire-invalid-move.ogg → solitaire.invalidMove, sudoku.errorEntered
 export type SoundKey = string;
 
 // Metro resolves require() at bundle time so assets must be static literals.
@@ -71,14 +77,14 @@ export const SOUND_REGISTRY: Partial<Record<SoundKey, number>> = {
   // eslint-disable-next-line @typescript-eslint/no-require-imports
   "twenty48.win2048": require("../../../assets/sounds/hearts-moon-shot.mp3"),
   // eslint-disable-next-line @typescript-eslint/no-require-imports
-  "twenty48.gameOver": require("../../../assets/sounds/twenty48-game-over.ogg"),
+  "twenty48.gameOver": require("../../../assets/sounds/cascade-game-over.ogg"),
   // Solitaire (#831)
   // eslint-disable-next-line @typescript-eslint/no-require-imports
   "solitaire.cardFlip": require("../../../assets/sounds/solitaire-card-flip.ogg"),
   // eslint-disable-next-line @typescript-eslint/no-require-imports
   "solitaire.cardPlace": require("../../../assets/sounds/solitaire-card-place.ogg"),
   // eslint-disable-next-line @typescript-eslint/no-require-imports
-  "solitaire.foundationComplete": require("../../../assets/sounds/solitaire-foundation-complete.ogg"),
+  "solitaire.foundationComplete": require("../../../assets/sounds/blackjack-win.ogg"),
   // eslint-disable-next-line @typescript-eslint/no-require-imports
   "solitaire.invalidMove": require("../../../assets/sounds/solitaire-invalid-move.ogg"),
   // eslint-disable-next-line @typescript-eslint/no-require-imports
@@ -87,7 +93,7 @@ export const SOUND_REGISTRY: Partial<Record<SoundKey, number>> = {
   // eslint-disable-next-line @typescript-eslint/no-require-imports
   "sudoku.digitPlace": require("../../../assets/sounds/sudoku-digit-place.ogg"),
   // eslint-disable-next-line @typescript-eslint/no-require-imports
-  "sudoku.errorEntered": require("../../../assets/sounds/sudoku-error-entered.ogg"),
+  "sudoku.errorEntered": require("../../../assets/sounds/solitaire-invalid-move.ogg"),
   // eslint-disable-next-line @typescript-eslint/no-require-imports
   "sudoku.unitComplete": require("../../../assets/sounds/sudoku-unit-complete.ogg"),
   // eslint-disable-next-line @typescript-eslint/no-require-imports
@@ -96,7 +102,7 @@ export const SOUND_REGISTRY: Partial<Record<SoundKey, number>> = {
   // eslint-disable-next-line @typescript-eslint/no-require-imports
   "cascade.fruitMerge": require("../../../assets/sounds/cascade-fruit-merge.ogg"),
   // eslint-disable-next-line @typescript-eslint/no-require-imports
-  "cascade.cascadeCombo": require("../../../assets/sounds/cascade-cascade-combo.ogg"),
+  "cascade.cascadeCombo": require("../../../assets/sounds/starswarm-waveclear.ogg"),
   // eslint-disable-next-line @typescript-eslint/no-require-imports
   "cascade.gameOver": require("../../../assets/sounds/cascade-game-over.ogg"),
   // FreeCell (#844)
