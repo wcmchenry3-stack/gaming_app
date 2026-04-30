@@ -711,7 +711,7 @@ function tickPlayer(state: StarSwarmState, dtMs: number, input: StarSwarmInput):
 
   const player: Player = { ...p, x: newX, invincibleTimer, shootCooldown };
 
-  const isSuper = state.activePowerUp !== null;
+  const isSuper = state.activePowerUp?.type === "lightning";
 
   if (shootCooldown === 0 && input.fire) {
     const bullet: Bullet = {
@@ -919,7 +919,7 @@ function tickWiggling(
         pathDuration: duration,
         vel: { x: 0, y: 0 },
         burstShotsLeft: 0,
-        shootTimer: rng() * DIVE_SHOOT_INTERVAL,
+        shootTimer: 0,
       },
       bullet: null,
     };
