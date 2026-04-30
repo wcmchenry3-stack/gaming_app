@@ -1,5 +1,7 @@
-import React, { useCallback, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
+  AppState,
+  AppStateStatus,
   LayoutChangeEvent,
   Modal,
   Pressable,
@@ -166,6 +168,15 @@ export default function StarSwarmScreen() {
     setIsPaused(false);
   }, []);
 
+  useEffect(() => {
+    const sub = AppState.addEventListener("change", (next: AppStateStatus) => {
+      if ((next === "background" || next === "inactive") && phase === "Playing") {
+        handlePause();
+      }
+    });
+    return () => sub.remove();
+  }, [phase, handlePause]);
+
   const dynamicStyles = getStyles(colors);
 
   const scale =
@@ -203,6 +214,7 @@ export default function StarSwarmScreen() {
               onChallengingPerfect={handleChallengingPerfect}
               onBonusLife={handleBonusLife}
               isPaused={isPaused}
+              onPause={handlePause}
               width={CANVAS_W}
               height={CANVAS_H}
               scale={scale}
