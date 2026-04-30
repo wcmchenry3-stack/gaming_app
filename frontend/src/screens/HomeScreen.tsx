@@ -239,14 +239,18 @@ export default function HomeScreen() {
         ]}
       >
         {numColumns === 1
-          ? games.map((item, index) => renderCard({ item, index }))
+          ? games.map((item, index) => (
+              <React.Fragment key={item.key}>{renderCard({ item, index })}</React.Fragment>
+            ))
           : Array.from({ length: Math.ceil(games.length / numColumns) }, (_, rowIndex) => (
               <View key={rowIndex} style={styles.row}>
                 {games
                   .slice(rowIndex * numColumns, rowIndex * numColumns + numColumns)
-                  .map((item, colIndex) =>
-                    renderCard({ item, index: rowIndex * numColumns + colIndex })
-                  )}
+                  .map((item, colIndex) => (
+                    <React.Fragment key={item.key}>
+                      {renderCard({ item, index: rowIndex * numColumns + colIndex })}
+                    </React.Fragment>
+                  ))}
               </View>
             ))}
       </ScrollView>

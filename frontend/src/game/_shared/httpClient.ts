@@ -54,17 +54,24 @@ function resolveBaseUrl(): string {
   if (raw) {
     const resolved = raw.startsWith("http") ? raw : `https://${raw}`;
     const isTestBuild = process.env.EXPO_PUBLIC_TEST_HOOKS === "1";
-    if (!__DEV__ && !isTestBuild && isLocalhost(resolved)) {
-      const msg =
-        "EXPO_PUBLIC_API_URL resolves to localhost in a non-dev build. " +
-        "This means the env var was set to a local address at bundle time. " +
-        "Set EXPO_PUBLIC_API_URL to the production API URL on the Render service.";
+    if (!__DEV__ && isLocalhost(resolved)) {
+      const msg = isTestBuild
+        ? "EXPO_PUBLIC_TEST_HOOKS=1 is set and EXPO_PUBLIC_API_URL resolves to localhost. " +
+          "If this is a production or staging build, remove EXPO_PUBLIC_TEST_HOOKS from the Render service env vars."
+        : "EXPO_PUBLIC_API_URL resolves to localhost in a non-dev build. " +
+          "This means the env var was set to a local address at bundle time. " +
+          "Set EXPO_PUBLIC_API_URL to the production API URL on the Render service.";
       Sentry.captureMessage(msg, {
-        level: "fatal",
-        tags: { subsystem: "httpClient", issue: "localhost-in-prod" },
-        extra: { raw },
+        level: isTestBuild ? "warning" : "fatal",
+        tags: {
+          subsystem: "httpClient",
+          issue: isTestBuild ? "test-hooks-localhost" : "localhost-in-prod",
+        },
+        extra: { raw, isTestBuild },
       });
-      throw new Error(msg);
+      if (!isTestBuild) {
+        throw new Error(msg);
+      }
     }
     return resolved;
   }
