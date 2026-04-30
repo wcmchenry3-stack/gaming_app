@@ -38,8 +38,9 @@ export function DropTarget({
   const getMeasurement = useCallback(() => boundsRef.current, []);
 
   const onLayout = useCallback(() => {
-    viewRef.current?.measure((_x, _y, w, h, pageX, pageY) => {
-      boundsRef.current = { x: pageX, y: pageY, width: w, height: h };
+    // measureInWindow is more reliable than measure on iOS for absolute window coordinates.
+    viewRef.current?.measureInWindow((x, y, w, h) => {
+      boundsRef.current = { x, y, width: w, height: h };
     });
   }, []);
 

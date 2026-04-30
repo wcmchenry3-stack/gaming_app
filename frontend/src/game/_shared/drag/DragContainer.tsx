@@ -1,17 +1,9 @@
-import React, { useCallback, useRef } from "react";
-import { View } from "react-native";
+import React, { useCallback } from "react";
 import type { LayoutChangeEvent, ViewStyle } from "react-native";
+import Animated from "react-native-reanimated";
 import { useDragContext } from "./DragContext";
 import { DragOverlay } from "./DragOverlay";
 
-/**
- * Drop-in replacement for a plain View that:
- *   1. Measures its own position and keeps the context's containerOffset shared
- *      values up to date so DraggableCard worklets can compute container-local
- *      card positions.
- *   2. Renders the DragOverlay as a sibling of its children (so the overlay
- *      is not clipped by any overflow:hidden descendant).
- */
 export interface DragContainerProps {
   children: React.ReactNode;
   style?: ViewStyle | ViewStyle[];
@@ -19,24 +11,28 @@ export interface DragContainerProps {
 }
 
 export function DragContainer({ children, style, onLayout: externalOnLayout }: DragContainerProps) {
-  const viewRef = useRef<View>(null);
-  const { containerOffsetX, containerOffsetY } = useDragContext();
+  const { containerRef, containerOffsetX, containerOffsetY } = useDragContext();
 
   const onLayout = useCallback(
     (e: LayoutChangeEvent) => {
-      viewRef.current?.measure((_x, _y, _w, _h, pageX, pageY) => {
-        containerOffsetX.value = pageX;
-        containerOffsetY.value = pageY;
+      // measureInWindow is more reliable than measure on iOS for first-render window coords.
+      (
+        containerRef.current as unknown as {
+          measureInWindow?: (cb: (x: number, y: number) => void) => void;
+        }
+      )?.measureInWindow?.((x, y) => {
+        containerOffsetX.value = x;
+        containerOffsetY.value = y;
       });
       externalOnLayout?.(e);
     },
-    [containerOffsetX, containerOffsetY, externalOnLayout]
+    [containerRef, containerOffsetX, containerOffsetY, externalOnLayout]
   );
 
   return (
-    <View ref={viewRef} style={style} onLayout={onLayout}>
+    <Animated.View ref={containerRef} style={style} onLayout={onLayout}>
       {children}
       <DragOverlay />
-    </View>
+    </Animated.View>
   );
 }
