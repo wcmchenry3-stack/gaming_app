@@ -31,11 +31,15 @@ if (!raw) {
 }
 
 if (raw && isLocalhost(raw)) {
-  errors.push(`EXPO_PUBLIC_API_URL resolves to localhost (${raw}). Set it to the production API URL.`);
+  errors.push(
+    `EXPO_PUBLIC_API_URL resolves to localhost (${raw}). Set it to the production API URL.`
+  );
 }
 
 if (process.env.EXPO_PUBLIC_TEST_HOOKS === "1") {
-  errors.push("EXPO_PUBLIC_TEST_HOOKS=1 is set in a production/staging build. Remove it from Render env vars.");
+  errors.push(
+    "EXPO_PUBLIC_TEST_HOOKS=1 is set in a production/staging build. Remove it from Render env vars."
+  );
 }
 
 if (errors.length > 0) {
