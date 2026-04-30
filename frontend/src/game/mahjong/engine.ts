@@ -215,8 +215,12 @@ function accessibleInUnplaced(slots: readonly Slot[], unplaced: Set<number>): nu
 
     let hasAbove = false;
     for (const j of unplaced) {
-      if (j !== i && slots[j]!.layer === s.layer + 1 &&
-          slots[j]!.col === s.col && slots[j]!.row === s.row) {
+      if (
+        j !== i &&
+        slots[j]!.layer === s.layer + 1 &&
+        slots[j]!.col === s.col &&
+        slots[j]!.row === s.row
+      ) {
         hasAbove = true;
         break;
       }
@@ -270,7 +274,7 @@ function tryBuildBoard(
 
     result.push(
       { ...pair[0], id: nextId++, col: slotA.col, row: slotA.row, layer: slotA.layer },
-      { ...pair[1], id: nextId++, col: slotB.col, row: slotB.row, layer: slotB.layer },
+      { ...pair[1], id: nextId++, col: slotB.col, row: slotB.row, layer: slotB.layer }
     );
     unplaced.delete(idxA);
     unplaced.delete(idxB);
@@ -317,7 +321,7 @@ function buildBoardLegacy(
         const pair = shuffledPairs[pairIdx++]!;
         result.push(
           { ...pair[0], id: nextId++, col: slotA.col, row: slotA.row, layer: slotA.layer },
-          { ...pair[1], id: nextId++, col: slotB.col, row: slotB.row, layer: slotB.layer },
+          { ...pair[1], id: nextId++, col: slotB.col, row: slotB.row, layer: slotB.layer }
         );
       }
     }
