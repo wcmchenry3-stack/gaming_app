@@ -814,17 +814,11 @@ describe("Dive/circle shooting", () => {
 // ---------------------------------------------------------------------------
 
 describe("Bonus lives", () => {
-  it("awards +1 life when score crosses 30,000", () => {
-    let s = initStarSwarm(CANVAS_W, CANVAS_H);
-    s = advanceMs(s, 8000); // reach Playing
-    const startLives = s.player.lives;
-    // Inject score just below threshold, then cross it via a kill
-    s = { ...s, score: 29_999 };
-    // Force enemy to be in formation at a known position and kill it with a bullet
+  function killEnemy(s: StarSwarmState, bulletId: number): StarSwarmState {
     const enemy = s.enemies.find((e) => e.isAlive);
-    if (!enemy) throw new Error("no enemy");
+    if (!enemy) throw new Error("no alive enemy");
     const bullet: Bullet = {
-      id: 99999,
+      id: bulletId,
       x: enemy.x,
       y: enemy.y,
       vx: 0,
@@ -834,44 +828,77 @@ describe("Bonus lives", () => {
       height: enemy.height,
       damage: 10,
     };
-    s = { ...s, playerBullets: [bullet] };
-    s = tick(s, 16, NO_INPUT);
+    return tick({ ...s, playerBullets: [bullet] }, 16, NO_INPUT);
+  }
+
+  it("awards +1 life when score crosses the Ensign threshold (30k)", () => {
+    let s = initStarSwarm(CANVAS_W, CANVAS_H, 1, 42, "Ensign");
+    s = advanceMs(s, 8000); // reach Playing
+    const startLives = s.player.lives;
+    s = { ...s, score: 29_999 };
+    s = killEnemy(s, 99999);
     expect(s.player.lives).toBe(startLives + 1);
     expect(s.bonusLivesAwarded).toBe(1);
   });
 
-  it("does not re-award bonus life on the same threshold", () => {
-    let s = initStarSwarm(CANVAS_W, CANVAS_H);
+  it("does not re-award bonus life on the same multiple", () => {
+    let s = initStarSwarm(CANVAS_W, CANVAS_H, 1, 42, "Ensign");
     s = advanceMs(s, 8000);
     s = { ...s, score: 29_999, bonusLivesAwarded: 0 };
-    const enemy = s.enemies.find((e) => e.isAlive);
-    if (!enemy) throw new Error("no enemy");
-    const bullet: Bullet = {
-      id: 99998,
-      x: enemy.x,
-      y: enemy.y,
-      vx: 0,
-      vy: 0,
-      owner: "player",
-      width: enemy.width,
-      height: enemy.height,
-      damage: 10,
-    };
-    s = tick({ ...s, playerBullets: [bullet] }, 16, NO_INPUT);
+    s = killEnemy(s, 99998);
     const livesAfterFirst = s.player.lives;
-    // Tick again from same score — threshold already crossed, bonusLivesAwarded=1
+    // Tick again from same score — multiple already counted, bonusLivesAwarded=1
     s = tick(s, 16, NO_INPUT);
     expect(s.player.lives).toBe(livesAfterFirst);
   });
 
   it("caps lives at MAX_LIVES (5)", () => {
-    let s = initStarSwarm(CANVAS_W, CANVAS_H);
+    let s = initStarSwarm(CANVAS_W, CANVAS_H, 1, 42, "Ensign");
     s = advanceMs(s, 8000);
     s = { ...s, score: 29_999, player: { ...s.player, lives: 5 } };
+    s = killEnemy(s, 99997);
+    expect(s.player.lives).toBe(5);
+  });
+
+  // #1079: repeating threshold
+  it("awards a second bonus life at 60k on Ensign", () => {
+    let s = initStarSwarm(CANVAS_W, CANVAS_H, 1, 42, "Ensign");
+    s = advanceMs(s, 8000);
+    // Already awarded 1 life at 30k — now cross 60k
+    s = { ...s, score: 59_999, bonusLivesAwarded: 1, player: { ...s.player, lives: 3 } };
+    s = killEnemy(s, 88881);
+    expect(s.player.lives).toBe(4);
+    expect(s.bonusLivesAwarded).toBe(2);
+  });
+
+  it("threshold scales by difficulty: Lieutenant (2×) awards life at 60k not 30k", () => {
+    let s = initStarSwarm(CANVAS_W, CANVAS_H, 1, 42, "Lieutenant");
+    s = advanceMs(s, 8000);
+    // Score crosses 30k — no life yet (threshold is 60k for Lieutenant)
+    s = { ...s, score: 29_999, bonusLivesAwarded: 0 };
+    s = killEnemy(s, 88882);
+    const livesAt30k = s.player.lives;
+    const awardedAt30k = s.bonusLivesAwarded;
+    expect(awardedAt30k).toBe(0); // no life at 30k
+
+    // Now cross 60k
+    s = { ...s, score: 59_999, bonusLivesAwarded: 0 };
+    s = killEnemy(s, 88883);
+    expect(s.bonusLivesAwarded).toBe(1);
+    expect(s.player.lives).toBe(livesAt30k + 1);
+  });
+
+  // #1078: race condition — same-tick lethal hit + threshold crossing
+  it("player survives when bonus life threshold is crossed in the same tick as a lethal hit", () => {
+    let s = initStarSwarm(CANVAS_W, CANVAS_H, 1, 42, "Ensign");
+    s = advanceMs(s, 8000);
+    // Player at 1 life, score just below threshold
+    s = { ...s, score: 29_999, player: { ...s.player, lives: 1, invincibleTimer: 0 } };
     const enemy = s.enemies.find((e) => e.isAlive);
-    if (!enemy) throw new Error("no enemy");
-    const bullet: Bullet = {
-      id: 99997,
+    if (!enemy) throw new Error("no alive enemy");
+    // Kill bullet at enemy position
+    const killBullet: Bullet = {
+      id: 77771,
       x: enemy.x,
       y: enemy.y,
       vx: 0,
@@ -881,8 +908,44 @@ describe("Bonus lives", () => {
       height: enemy.height,
       damage: 10,
     };
-    s = tick({ ...s, playerBullets: [bullet] }, 16, NO_INPUT);
-    expect(s.player.lives).toBe(5);
+    // Enemy bullet on top of player (lethal hit same tick)
+    const enemyBullet: Bullet = {
+      id: 77772,
+      x: s.player.x,
+      y: s.player.y,
+      vx: 0,
+      vy: 0,
+      owner: "enemy",
+      width: 8,
+      height: 8,
+      damage: 1,
+    };
+    s = tick({ ...s, playerBullets: [killBullet], enemyBullets: [enemyBullet] }, 16, NO_INPUT);
+    // Bonus life awarded before lethal hit resolves — player should survive
+    expect(s.phase).not.toBe("GameOver");
+    expect(s.player.lives).toBeGreaterThan(0);
+  });
+
+  // #1078: slow-mo timer and invincibility
+  it("sets bonusLifeSlowMoTimer and invincibleTimer after bonus life award", () => {
+    let s = initStarSwarm(CANVAS_W, CANVAS_H, 1, 42, "Ensign");
+    s = advanceMs(s, 8000);
+    s = { ...s, score: 29_999 };
+    s = killEnemy(s, 88884);
+    expect(s.bonusLifeSlowMoTimer).toBeGreaterThan(0);
+    expect(s.player.invincibleTimer).toBeGreaterThan(0);
+  });
+
+  it("bonusLifeSlowMoTimer decrements over time and does not go negative", () => {
+    let s = initStarSwarm(CANVAS_W, CANVAS_H, 1, 42, "Ensign");
+    s = advanceMs(s, 8000);
+    s = { ...s, score: 29_999 };
+    s = killEnemy(s, 88885);
+    const timerAfterAward = s.bonusLifeSlowMoTimer;
+    expect(timerAfterAward).toBeGreaterThan(0);
+    // Advance enough to exhaust the timer
+    s = advanceMs(s, 1000);
+    expect(s.bonusLifeSlowMoTimer).toBe(0);
   });
 });
 
