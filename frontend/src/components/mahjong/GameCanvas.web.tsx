@@ -21,8 +21,8 @@ import { TILE_REQUIRES } from "./tileAssets";
 // Layout constants (mirror GameCanvas.tsx exactly)
 // ---------------------------------------------------------------------------
 
-const TILE_W = 44;
-const TILE_H = 56;
+export const TILE_W = 44;
+export const TILE_H = 56;
 const SIDE_W = 5;
 const LAYER_DX = 6;
 const LAYER_DY = 5;
@@ -140,10 +140,12 @@ function drawBoard(
     ctx.fillStyle = faceColor;
     ctx.fillRect(x + 1, y + 1, fw - 2, fh - 2);
 
-    // SVG face art — fall back to suit-color rect while image is loading
+    // SVG face art — fall back to suit-color rect while image is loading.
+    // SVGs with width="100%" have naturalWidth=0 even when loaded; check for
+    // null instead (images[i] is only set in onload, so non-null means ready).
     const img = tileImages[tile.faceId - 1];
     ctx.globalAlpha = isFree ? 1 : 0.35;
-    if (img?.complete && img.naturalWidth > 0) {
+    if (img !== null) {
       ctx.drawImage(img, x + 2, y + 2, fw - 4, fh - 4);
     } else {
       ctx.fillStyle = suitColor;
