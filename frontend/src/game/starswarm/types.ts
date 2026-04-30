@@ -199,6 +199,8 @@ export interface StarSwarmState {
   } | null;
   /** True once ≤35% non-boss enemies remain; latches true and never resets mid-wave. */
   readonly bossThresholdCrossed: boolean;
+  /** True once ≤3 enemies remain (Stage 3); enables boss deep dive + body collision. */
+  readonly bossDeepThresholdCrossed: boolean;
   /** When true, ≤3 surviving enemies immediately break formation and go fully aggressive. */
   readonly stragglerEnabled: boolean;
   /** When true (dev panel), straggler aggression is suppressed regardless of enemy count (#1039). */

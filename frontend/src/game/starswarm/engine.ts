@@ -650,6 +650,7 @@ function buildWaveState(
     dropJitterTarget,
     activePowerUp: null,
     bossThresholdCrossed: false,
+    bossDeepThresholdCrossed: false,
     stragglerEnabled,
     pauseStraggler: false,
     bombFlashTimer: 0,
@@ -777,6 +778,7 @@ function tickSingleEnemy(
   shouldDive: boolean,
   wave: number,
   bossThresholdCrossed: boolean,
+  bossDeepThresholdCrossed: boolean,
   paramScale = 1
 ): EnemyTickResult {
   if (!enemy.isAlive) return { enemy, bullet: null };
@@ -795,9 +797,9 @@ function tickSingleEnemy(
         paramScale
       );
     case "Wiggling":
-      return tickWiggling(enemy, dtMs, canvasH, bossThresholdCrossed);
+      return tickWiggling(enemy, dtMs, canvasH, bossThresholdCrossed, bossDeepThresholdCrossed);
     case "Diving":
-      return tickDiving(enemy, dtMs, canvasH, playerX, bossThresholdCrossed);
+      return tickDiving(enemy, dtMs, canvasH, playerX, bossThresholdCrossed, bossDeepThresholdCrossed);
     case "Circling":
       return tickCircling(enemy, dtMs, playerX);
     case "Returning":
@@ -924,13 +926,15 @@ function tickWiggling(
   enemy: Enemy,
   dtMs: number,
   canvasH: number,
-  bossThresholdCrossed: boolean
+  bossThresholdCrossed: boolean,
+  bossDeepThresholdCrossed: boolean
 ): EnemyTickResult {
   const newTimer = enemy.wiggleTimer - dtMs;
 
   if (newTimer <= 0) {
-    // Elite Phase 1 uses a shallow dive arc (stays above 60% canvas height)
-    const shallow = enemy.tier === "Elite" && !bossThresholdCrossed;
+    // Stage 1 Elites: shallow arc; Stage 2 Bosses: shallow arc (like Stage 1 Elites)
+    const isBossStage2 = enemy.tier === "Boss" && bossThresholdCrossed && !bossDeepThresholdCrossed;
+    const shallow = (enemy.tier === "Elite" && !bossThresholdCrossed) || isBossStage2;
     const path = divePath(enemy, enemy.diveTargetX, canvasH, shallow);
     const duration = enemy.tier === "Boss" ? BOSS_DIVE_PATH_DURATION : DIVE_PATH_DURATION;
     return {
@@ -966,7 +970,8 @@ function tickDiving(
   dtMs: number,
   canvasH: number,
   playerX: number,
-  bossThresholdCrossed: boolean
+  bossThresholdCrossed: boolean,
+  bossDeepThresholdCrossed: boolean
 ): EnemyTickResult {
   const newT = enemy.pathT + dtMs / enemy.pathDuration;
   const pos = evalCubic(enemy.path!, Math.min(newT, 1));
@@ -1000,11 +1005,13 @@ function tickDiving(
   }
 
   const isElitePhase1 = enemy.tier === "Elite" && !bossThresholdCrossed;
-  const depthThreshold = isElitePhase1 ? canvasH * 0.6 : canvasH * 0.85;
+  // #1077: Stage 2 Boss uses shallow arc — return to formation like Elite Phase 1, no Circling
+  const isBossStage2 = enemy.tier === "Boss" && bossThresholdCrossed && !bossDeepThresholdCrossed;
+  const depthThreshold = isElitePhase1 || isBossStage2 ? canvasH * 0.6 : canvasH * 0.85;
   const pathDone = pos.y > depthThreshold || newT >= 1;
 
   if (pathDone) {
-    if (enemy.tier === "Grunt" || isElitePhase1) {
+    if (enemy.tier === "Grunt" || isElitePhase1 || isBossStage2) {
       // No circling: return directly to formation
       const path = returnPath(pos.x, pos.y, enemy.formationX, enemy.formationY);
       return {
@@ -1134,6 +1141,16 @@ function tickEnemies(state: StarSwarmState, dtMs: number): StarSwarmState {
     state.startingNonBossCount === 0 ||
     aliveNonBoss / state.startingNonBossCount <= BOSS_DIVE_THRESHOLD;
 
+  // #1077: bossDeepThresholdCrossed latches true at Stage 3 (≤3 enemies alive)
+  const aliveAll = state.enemies.filter((e) => e.isAlive).length;
+  const bossDeepThresholdCrossed =
+    state.bossDeepThresholdCrossed ||
+    (state.stragglerEnabled &&
+      !state.pauseStraggler &&
+      state.phase === "Playing" &&
+      aliveAll > 0 &&
+      aliveAll <= 3);
+
   // #926 Dive AI: pick up to maxDivers(wave) formation enemies to send diving
   let nextDiveTimer = state.nextDiveTimer;
   const diveIndices = new Set<number>();
@@ -1184,6 +1201,7 @@ function tickEnemies(state: StarSwarmState, dtMs: number): StarSwarmState {
       shouldDive,
       state.wave,
       bossThresholdCrossed,
+      bossDeepThresholdCrossed,
       _ps
     );
     let e = result.enemy;
@@ -1239,6 +1257,7 @@ function tickEnemies(state: StarSwarmState, dtMs: number): StarSwarmState {
     formationSwayX: swayX,
     formationSwayDir: swayDir,
     bossThresholdCrossed,
+    bossDeepThresholdCrossed,
   };
 }
 
@@ -1536,23 +1555,19 @@ function tickCollisions(state: StarSwarmState): StarSwarmState {
         shieldAbsorbed: activePowerUp!.shieldAbsorbed + bulletHits.length,
       };
     } else {
-      // #956/#1029/#1030: capture the ramming enemy so we can destroy it on collision
-      // Bosses never body-collide; Elite Phase 1 (bossThresholdCrossed=false) also exempt
+      // #956/#1029/#1030/#1077: capture the ramming enemy so we can destroy it on collision
+      // Bosses collidable only in Stage 3 (bossDeepThresholdCrossed); Elite Phase 1 always exempt
       let rammingEnemyId: number | null = null;
       const hitByShip =
         !hitByBullet &&
         enemies.some((e) => {
-          if (
-            e.isAlive &&
-            e.tier !== "Boss" &&
-            !(e.tier === "Elite" && !state.bossThresholdCrossed) &&
-            (e.phase === "Diving" || e.phase === "Circling") &&
-            collideCircleAABB(player.x, player.y, PLAYER_HURT_RADIUS, e.x, e.y, e.width, e.height)
-          ) {
-            rammingEnemyId = e.id;
-            return true;
-          }
-          return false;
+          if (!e.isAlive) return false;
+          if (e.tier === "Boss" && !state.bossDeepThresholdCrossed) return false;
+          if (e.tier === "Elite" && !state.bossThresholdCrossed) return false;
+          if (e.phase !== "Diving" && e.phase !== "Circling") return false;
+          if (!collideCircleAABB(player.x, player.y, PLAYER_HURT_RADIUS, e.x, e.y, e.width, e.height)) return false;
+          rammingEnemyId = e.id;
+          return true;
         });
 
       if (hitByBullet || hitByShip) {
