@@ -16,7 +16,11 @@ export function DragContainer({ children, style, onLayout: externalOnLayout }: D
   const onLayout = useCallback(
     (e: LayoutChangeEvent) => {
       // measureInWindow is more reliable than measure on iOS for first-render window coords.
-      (containerRef.current as unknown as { measureInWindow?: (cb: (x: number, y: number) => void) => void })?.measureInWindow?.((x, y) => {
+      (
+        containerRef.current as unknown as {
+          measureInWindow?: (cb: (x: number, y: number) => void) => void;
+        }
+      )?.measureInWindow?.((x, y) => {
         containerOffsetX.value = x;
         containerOffsetY.value = y;
       });
