@@ -35,7 +35,9 @@ import Animated, {
   withTiming,
   withSpring,
   withSequence,
+  withDelay,
   runOnJS,
+  Easing,
 } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTranslation } from "react-i18next";
@@ -76,6 +78,7 @@ const LAYER_DX = 6;
 const LAYER_DY = 5;
 const PAD_X = 10;
 const PAD_Y = 30;
+const SIDE_W = 5;
 
 function tileCenter(tile: SlotTile): { cx: number; cy: number } {
   return {
@@ -85,48 +88,105 @@ function tileCenter(tile: SlotTile): { cx: number; cy: number } {
 }
 
 // ---------------------------------------------------------------------------
-// MatchBurst — overlay flash at matched tile positions
+// FlyingPair — two matched tiles slide toward each other then burst and fade
 // ---------------------------------------------------------------------------
 
-interface MatchBurstData {
+interface FlyingPairData {
   id: string;
-  cx: number;
-  cy: number;
+  tile1: SlotTile;
+  tile2: SlotTile;
 }
 
 const BURST_R = 22;
 
-function MatchBurst({
-  cx,
-  cy,
+function FlyingPair({
+  tile1,
+  tile2,
   scale,
   color,
   onDone,
-}: MatchBurstData & { scale: number; color: string; onDone: () => void }) {
-  const scaleVal = useSharedValue(0.1);
-  const opacity = useSharedValue(0.8);
+}: FlyingPairData & { scale: number; color: string; onDone: () => void }) {
+  const { cx: c1x, cy: c1y } = tileCenter(tile1);
+  const { cx: c2x, cy: c2y } = tileCenter(tile2);
+  const midX = ((c1x + c2x) / 2) * scale;
+  const midY = ((c1y + c2y) / 2) * scale;
+
+  const t1cx = useSharedValue(c1x * scale);
+  const t1cy = useSharedValue(c1y * scale);
+  const t2cx = useSharedValue(c2x * scale);
+  const t2cy = useSharedValue(c2y * scale);
+  const pairOpacity = useSharedValue(1);
+  const burstScaleVal = useSharedValue(0);
+  const burstOpacity = useSharedValue(0);
 
   useEffect(() => {
-    scaleVal.value = withSpring(1.5, { damping: 8, stiffness: 60 });
-    opacity.value = withTiming(0, { duration: 350 }, (finished) => {
-      if (finished) runOnJS(onDone)();
-    });
+    const moveCfg = { duration: 220, easing: Easing.out(Easing.quad) };
+    t1cx.value = withTiming(midX, moveCfg);
+    t1cy.value = withTiming(midY, moveCfg);
+    t2cx.value = withTiming(midX, moveCfg);
+    t2cy.value = withTiming(midY, moveCfg);
+    pairOpacity.value = withSequence(
+      withTiming(1, { duration: 180 }),
+      withTiming(0, { duration: 100 }, (finished) => {
+        if (finished) runOnJS(onDone)();
+      })
+    );
+    burstScaleVal.value = withDelay(180, withSpring(1.5, { damping: 8, stiffness: 60 }));
+    burstOpacity.value = withSequence(
+      withDelay(180, withTiming(0.85, { duration: 40 })),
+      withTiming(0, { duration: 80 })
+    );
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const animStyle = useAnimatedStyle(() => ({
+  const tw = (TILE_W - SIDE_W) * scale;
+  const th = (TILE_H - SIDE_W) * scale;
+
+  const tile1Style = useAnimatedStyle(() => ({
     position: "absolute",
-    left: cx * scale - BURST_R,
-    top: cy * scale - BURST_R,
+    left: t1cx.value - tw / 2,
+    top: t1cy.value - th / 2,
+    width: tw,
+    height: th,
+    borderRadius: 2,
+    backgroundColor: color,
+    borderWidth: 1.5,
+    borderColor: "#ffd700",
+    opacity: pairOpacity.value,
+  }));
+
+  const tile2Style = useAnimatedStyle(() => ({
+    position: "absolute",
+    left: t2cx.value - tw / 2,
+    top: t2cy.value - th / 2,
+    width: tw,
+    height: th,
+    borderRadius: 2,
+    backgroundColor: color,
+    borderWidth: 1.5,
+    borderColor: "#ffd700",
+    opacity: pairOpacity.value,
+  }));
+
+  const burstStyle = useAnimatedStyle(() => ({
+    position: "absolute",
+    left: midX - BURST_R,
+    top: midY - BURST_R,
     width: BURST_R * 2,
     height: BURST_R * 2,
     borderRadius: BURST_R,
     backgroundColor: color,
-    transform: [{ scale: scaleVal.value }],
-    opacity: opacity.value,
+    transform: [{ scale: burstScaleVal.value }],
+    opacity: burstOpacity.value,
   }));
 
-  return <Animated.View pointerEvents="none" style={animStyle} />;
+  return (
+    <>
+      <Animated.View pointerEvents="none" style={tile1Style} />
+      <Animated.View pointerEvents="none" style={tile2Style} />
+      <Animated.View pointerEvents="none" style={burstStyle} />
+    </>
+  );
 }
 
 // ---------------------------------------------------------------------------
@@ -150,7 +210,7 @@ export default function MahjongScreen() {
   });
 
   // Animation state
-  const [matchBursts, setMatchBursts] = useState<MatchBurstData[]>([]);
+  const [flyingPairs, setFlyingPairs] = useState<FlyingPairData[]>([]);
   const [reduceMotion, setReduceMotion] = useState(false);
   const boardShakeX = useSharedValue(0);
   const boardOpacity = useSharedValue(1);
@@ -272,10 +332,12 @@ export default function MahjongScreen() {
       pMatch();
       if (!reduceMotion) {
         const removed = prev.tiles.filter((t) => !state.tiles.some((nt) => nt.id === t.id));
-        setMatchBursts((existing) => [
-          ...existing,
-          ...removed.map((t) => ({ id: `${Date.now()}-${t.id}`, ...tileCenter(t) })),
-        ]);
+        if (removed.length >= 2) {
+          setFlyingPairs((existing) => [
+            ...existing,
+            { id: `${Date.now()}`, tile1: removed[0]!, tile2: removed[1]! },
+          ]);
+        }
       }
     } else if (state.selected !== null) {
       pSelect();
@@ -429,10 +491,6 @@ export default function MahjongScreen() {
 
   const undoDisabled = !state || state.undoStack.length === 0 || state.isComplete;
 
-  const removeBurst = useCallback((id: string) => {
-    setMatchBursts((prev) => prev.filter((b) => b.id !== id));
-  }, []);
-
   return (
     <GameShell
       title={t("game.title")}
@@ -499,13 +557,13 @@ export default function MahjongScreen() {
                   />
                 </View>
               </Animated.View>
-              {matchBursts.map((burst) => (
-                <MatchBurst
-                  key={burst.id}
-                  {...burst}
+              {flyingPairs.map((pair) => (
+                <FlyingPair
+                  key={pair.id}
+                  {...pair}
                   scale={scale}
-                  color={colors.accent + "80"}
-                  onDone={() => removeBurst(burst.id)}
+                  color={colors.accent + "99"}
+                  onDone={() => setFlyingPairs((prev) => prev.filter((p) => p.id !== pair.id))}
                 />
               ))}
             </View>
