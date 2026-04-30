@@ -291,9 +291,26 @@ describe("deal variety", () => {
   });
 
   it("matched tile pairs are solvable after face-assignment shuffle", () => {
-    for (let seed = 0; seed < 10; seed++) {
+    for (let seed = 0; seed < 100; seed++) {
       expect(hasFreePairs(createGame(TURTLE_LAYOUT, seed).tiles)).toBe(true);
     }
+  });
+
+  it("positional tile pairs span multiple rows and layers (not just same-row symmetric)", () => {
+    // In the old symmetric algorithm, tiles[2k] and tiles[2k+1] were always in
+    // the same row AND same layer. The new random accessible-pair algorithm
+    // regularly pairs tiles across rows and layers — this test catches regression.
+    const state = createGame(TURTLE_LAYOUT, 0);
+    let foundCrossRowOrLayer = false;
+    for (let i = 0; i < state.tiles.length - 1; i += 2) {
+      const a = state.tiles[i]!;
+      const b = state.tiles[i + 1]!;
+      if (a.row !== b.row || a.layer !== b.layer) {
+        foundCrossRowOrLayer = true;
+        break;
+      }
+    }
+    expect(foundCrossRowOrLayer).toBe(true);
   });
 });
 
