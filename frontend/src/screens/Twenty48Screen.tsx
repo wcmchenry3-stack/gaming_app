@@ -206,7 +206,7 @@ export default function Twenty48Screen({ navigation }: Props) {
         return;
       }
       setState(next);
-      saveGame(next);
+      saveGame({ ...next, events: undefined });
       moveCountRef.current += 1;
       syncMarkStarted();
       // Track all-time best tile and first win per session.

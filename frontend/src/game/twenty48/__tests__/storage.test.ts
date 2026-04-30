@@ -76,6 +76,16 @@ describe("twenty48 storage", () => {
     expect(await AsyncStorage.getItem(GAME_KEY)).toBeNull();
   });
 
+  // #1094: rawPayload must be included in the Sentry extra so engineers can
+  // see what the malformed JSON looked like without unfiltering PII fields.
+  it("includes rawPayload in Sentry extra for corrupt payload (#1094)", async () => {
+    const corrupt = "truncated{json";
+    await AsyncStorage.setItem(GAME_KEY, corrupt);
+    await loadGame();
+    const call = (Sentry.captureMessage as jest.Mock).mock.calls[0];
+    expect(call[1].extra.rawPayload).toBe(corrupt);
+  });
+
   it("returns null when saved data has a different shape", async () => {
     await AsyncStorage.setItem("twenty48_game_v2", JSON.stringify({ foo: "bar" }));
     const loaded = await loadGame();
@@ -91,6 +101,16 @@ describe("twenty48 storage", () => {
     expect(loaded!.scoreDelta).toBe(0);
     expect(loaded!.startedAt).toBeNull();
     expect(loaded!.accumulatedMs).toBe(0);
+  });
+
+  // Events are transient — they must not survive a save/load round-trip so
+  // sounds don't replay and the screen doesn't re-emit stale game events on reload.
+  it("strips transient events on load even if saveGame received them", async () => {
+    const withEvents: Twenty48State = { ...sample, events: ["win2048"] };
+    await saveGame(withEvents);
+    const loaded = await loadGame();
+    expect(loaded).not.toBeNull();
+    expect(loaded!.events).toBeUndefined();
   });
 
   it("clearGame removes the saved state", async () => {
