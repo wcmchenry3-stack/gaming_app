@@ -16,9 +16,10 @@ import React, { useEffect, useMemo, useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { Canvas, Fill, Group, ImageSVG, Rect, useSVG } from "@shopify/react-native-skia";
 import { useTranslation } from "react-i18next";
-import { hasFreePairs, isFreeTile } from "../../game/mahjong/engine";
+import { hasFreePairs, isFreeTile, tilesMatch } from "../../game/mahjong/engine";
 import type { MahjongState, SlotTile } from "../../game/mahjong/types";
 import { TILE_REQUIRES } from "./tileAssets";
+import { MAHJONG_TILE_FACE_SELECTED, MAHJONG_GLOW_BG } from "../../theme/theme.constants";
 
 // ---------------------------------------------------------------------------
 // Layout constants
@@ -48,6 +49,7 @@ function tileY(row: number, layer: number): number {
 
 const BG = "#1a3a1a";
 const TILE_FACE = "#f5f0e8";
+const TILE_FACE_SELECTED = MAHJONG_TILE_FACE_SELECTED;
 const TILE_FACE_LOCKED = "#d0c8b8";
 const BORDER_NORMAL = "#8b7355";
 const BORDER_SELECTED = "#ffd700";
@@ -290,33 +292,73 @@ export default function GameCanvas({ state, onTilePress, onShufflePress, onNewGa
           const y = tileY(tile.row, tile.layer);
           const isSelected = tile.id === selectedId;
           const isFree = freeTiles.has(tile.id);
-          const borderColor = isSelected
-            ? BORDER_SELECTED
-            : isFree && hasSelection
-              ? BORDER_HINT
-              : BORDER_NORMAL;
-          const faceColor = isFree ? TILE_FACE : TILE_FACE_LOCKED;
           const fw = TILE_W - SIDE_W;
           const fh = TILE_H - SIDE_W;
+
+          // Lift selected tile upward/outward for a "picked up" cue.
+          const liftX = isSelected ? 4 : 0;
+          const liftY = isSelected ? -5 : 0;
+          // 2 px border on selected for visibility at small tile sizes.
+          const borderInset = isSelected ? 2 : 1;
+
+          // Hints only on tiles that actually match the selection.
+          const isHint =
+            isFree && hasSelection && state.selected !== null && tilesMatch(tile, state.selected);
+          const borderColor = isSelected ? BORDER_SELECTED : isHint ? BORDER_HINT : BORDER_NORMAL;
+          const faceColor = isSelected ? TILE_FACE_SELECTED : isFree ? TILE_FACE : TILE_FACE_LOCKED;
 
           return (
             <Group key={tile.id}>
               {/* Drop shadow */}
-              <Rect x={x + SIDE_W + 2} y={y + SIDE_W + 2} width={fw} height={fh} color={SHADOW} />
+              <Rect
+                x={x + SIDE_W + 2 + liftX}
+                y={y + SIDE_W + 2 + liftY}
+                width={fw}
+                height={fh}
+                color={SHADOW}
+              />
+              {/* Gold glow behind selected tile */}
+              {isSelected && (
+                <Rect
+                  x={x + liftX - 3}
+                  y={y + liftY - 3}
+                  width={fw + 6}
+                  height={fh + 6}
+                  color={MAHJONG_GLOW_BG}
+                />
+              )}
               {/* Right 3-D side */}
-              <Rect x={x + fw} y={y + SIDE_W} width={SIDE_W} height={fh} color={SIDE_R} />
+              <Rect
+                x={x + fw + liftX}
+                y={y + SIDE_W + liftY}
+                width={SIDE_W}
+                height={fh}
+                color={SIDE_R}
+              />
               {/* Bottom 3-D side */}
-              <Rect x={x + SIDE_W} y={y + fh} width={fw} height={SIDE_W} color={SIDE_B} />
+              <Rect
+                x={x + SIDE_W + liftX}
+                y={y + fh + liftY}
+                width={fw}
+                height={SIDE_W}
+                color={SIDE_B}
+              />
               {/* Border */}
-              <Rect x={x} y={y} width={fw} height={fh} color={borderColor} />
+              <Rect x={x + liftX} y={y + liftY} width={fw} height={fh} color={borderColor} />
               {/* Face */}
-              <Rect x={x + 1} y={y + 1} width={fw - 2} height={fh - 2} color={faceColor} />
+              <Rect
+                x={x + borderInset + liftX}
+                y={y + borderInset + liftY}
+                width={fw - 2 * borderInset}
+                height={fh - 2 * borderInset}
+                color={faceColor}
+              />
               {/* SVG face art */}
               <TileFaceLayer
                 svg={tileSvgs[tile.faceId - 1] ?? null}
                 suit={tile.suit}
-                x={x + 2}
-                y={y + 2}
+                x={x + 2 + liftX}
+                y={y + 2 + liftY}
                 w={fw - 4}
                 h={fh - 4}
                 opacity={isFree ? 1 : 0.35}
