@@ -1275,8 +1275,15 @@ function tickBuddyShips(state: StarSwarmState, dtMs: number): StarSwarmState {
       const bulletCount =
         BUDDY_BULLET_COUNT_MIN +
         Math.floor(Math.random() * (BUDDY_BULLET_COUNT_MAX - BUDDY_BULLET_COUNT_MIN + 1));
-      const dx = buddy.targetX - pos.x;
-      const dy = buddy.targetY - pos.y;
+      const aliveEnemies = state.enemies.filter((e) => e.isAlive);
+      let aimX = pos.x;
+      let aimY = pos.y + 1;
+      if (aliveEnemies.length > 0) {
+        aimX = aliveEnemies.reduce((s, e) => s + e.x, 0) / aliveEnemies.length;
+        aimY = aliveEnemies.reduce((s, e) => s + e.y, 0) / aliveEnemies.length;
+      }
+      const dx = aimX - pos.x;
+      const dy = aimY - pos.y;
       const dist = Math.sqrt(dx * dx + dy * dy);
       const baseDirX = dist > 1 ? dx / dist : 0;
       const baseDirY = dist > 1 ? dy / dist : 1;
