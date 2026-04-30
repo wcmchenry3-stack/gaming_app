@@ -32,8 +32,9 @@ export async function saveGame(state: Twenty48State): Promise<void> {
 }
 
 export async function loadGame(): Promise<Twenty48State | null> {
+  let raw: string | null = null;
   try {
-    const raw = await AsyncStorage.getItem(GAME_KEY);
+    raw = await AsyncStorage.getItem(GAME_KEY);
     if (!raw) return null;
     const parsed = JSON.parse(raw) as Twenty48State;
     // Minimum viability check — only discard if the core fields are missing.
@@ -83,6 +84,10 @@ export async function loadGame(): Promise<Twenty48State | null> {
     // subsequent spawns/merges don't collide with surviving tiles (#698).
     const maxId = parsed.tiles.reduce((m, t) => (t.id > m ? t.id : m), 0);
     seedNextTileId(maxId + 1);
+    // Events are transient (one-shot per move) and must never be replayed on
+    // reload. Strip any that slipped into storage from saves written before
+    // Twenty48Screen stripped them at the call site.
+    parsed.events = undefined;
     return parsed;
   } catch (e) {
     // Corrupt payload: recovery is complete (we remove the bad entry and
@@ -92,7 +97,7 @@ export async function loadGame(): Promise<Twenty48State | null> {
     Sentry.captureMessage("twenty48.storage: corrupt game payload, discarding", {
       level: "warning",
       tags: { subsystem: "twenty48.storage", op: "load" },
-      extra: { error: String(e), key: GAME_KEY },
+      extra: { error: String(e), key: GAME_KEY, rawPayload: raw?.slice(0, 500) },
     });
     // Remove corrupted entry so it doesn't fail on every subsequent load.
     await AsyncStorage.removeItem(GAME_KEY).catch(() => {});
