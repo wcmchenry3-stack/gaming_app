@@ -41,8 +41,9 @@ import Animated, {
 } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTranslation } from "react-i18next";
-import { useNavigation } from "@react-navigation/native";
+import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import * as ScreenOrientation from "expo-screen-orientation";
 
 import { HomeStackParamList } from "../../App";
 import { useTheme } from "../theme/ThemeContext";
@@ -218,6 +219,19 @@ export default function MahjongScreen() {
     transform: [{ translateX: boardShakeX.value }],
     opacity: boardOpacity.value,
   }));
+
+  useFocusEffect(
+    useCallback(() => {
+      if (Platform.OS !== "web") {
+        ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.LANDSCAPE);
+      }
+      return () => {
+        if (Platform.OS !== "web") {
+          ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT_UP);
+        }
+      };
+    }, [])
+  );
 
   const hasLoadedRef = useRef(false);
   const stateRef = useRef<MahjongState | null>(null);
@@ -480,9 +494,7 @@ export default function MahjongScreen() {
     syncMarkStarted();
   }, [syncGetGameId, syncComplete, syncStart, syncMarkStarted]);
 
-  // Allow upscaling up to a 72 px effective tile on large/landscape screens,
-  // while still shrinking to fit on narrow portrait screens.
-  const MAX_TILE_W = 72;
+  const MAX_TILE_W = 100;
   const scale = outerWidth > 0 ? Math.min(MAX_TILE_W / TILE_W, outerWidth / BOARD_W) : 1;
 
   const onOuterLayout = useCallback((e: LayoutChangeEvent) => {
