@@ -1,7 +1,5 @@
 from unittest.mock import MagicMock
 
-import pytest
-
 from limiter import _real_ip, session_key
 
 
