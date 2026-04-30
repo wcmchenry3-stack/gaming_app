@@ -67,6 +67,19 @@ jest.mock("@react-navigation/native", () => ({
     navigate: jest.fn(),
     addListener: mockAddListener,
   }),
+  useFocusEffect: (cb: () => () => void) => {
+    // Run the effect once synchronously in tests (simulates screen focus).
+    const cleanup = cb();
+    return cleanup;
+  },
+}));
+
+jest.mock("expo-screen-orientation", () => ({
+  lockAsync: jest.fn().mockResolvedValue(undefined),
+  OrientationLock: {
+    LANDSCAPE: "LANDSCAPE",
+    PORTRAIT_UP: "PORTRAIT_UP",
+  },
 }));
 
 jest.mock("@sentry/react-native", () => ({
