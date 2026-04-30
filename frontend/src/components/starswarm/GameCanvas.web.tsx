@@ -149,6 +149,7 @@ interface Props {
   onChallengingPerfect?: () => void;
   onPowerUpCollect?: (type: PowerUpType) => void;
   isPaused?: boolean;
+  onPause?: () => void;
   width: number;
   height: number;
   scale: number;
@@ -172,6 +173,7 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
       onChallengingPerfect,
       onPowerUpCollect,
       isPaused = false,
+      onPause,
       width,
       height,
       scale,
@@ -207,6 +209,7 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
     const onChallengingStageRef = useRef(onChallengingStage);
     const onChallengingPerfectRef = useRef(onChallengingPerfect);
     const onPowerUpCollectRef = useRef(onPowerUpCollect);
+    const onPauseRef = useRef(onPause);
     const prevActivePowerUpRef = useRef<string | null>(null);
     const triggerPowerUpRef = useRef<PowerUpType | null>(null);
     const isPausedRef = useRef(isPaused);
@@ -254,6 +257,9 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
     useEffect(() => {
       onPowerUpCollectRef.current = onPowerUpCollect;
     }, [onPowerUpCollect]);
+    useEffect(() => {
+      onPauseRef.current = onPause;
+    }, [onPause]);
     useEffect(() => {
       onExplosionRef.current = onExplosion;
     }, [onExplosion]);
@@ -798,7 +804,11 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
       }
 
       function handleVisibilityChange() {
-        if (!document.hidden) lastFrameTimeRef.current = 0;
+        if (!document.hidden) {
+          lastFrameTimeRef.current = 0;
+        } else if (stateRef.current.phase === "Playing" && !isPausedRef.current) {
+          onPauseRef.current?.();
+        }
       }
       document.addEventListener("visibilitychange", handleVisibilityChange);
       id = requestAnimationFrame(loop);

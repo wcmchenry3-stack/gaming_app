@@ -60,6 +60,7 @@ interface Props {
   onBonusLife?: () => void;
   onPowerUpCollect?: (type: PowerUpType) => void;
   isPaused?: boolean;
+  onPause?: () => void;
   width: number;
   height: number;
   scale: number;
