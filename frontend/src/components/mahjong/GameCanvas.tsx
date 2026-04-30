@@ -19,10 +19,7 @@ import { useTranslation } from "react-i18next";
 import { hasFreePairs, isFreeTile, tilesMatch } from "../../game/mahjong/engine";
 import type { MahjongState, SlotTile } from "../../game/mahjong/types";
 import { TILE_REQUIRES } from "./tileAssets";
-import {
-  MAHJONG_TILE_FACE_SELECTED,
-  MAHJONG_GLOW_BG,
-} from "../../theme/theme.constants";
+import { MAHJONG_TILE_FACE_SELECTED, MAHJONG_GLOW_BG } from "../../theme/theme.constants";
 
 // ---------------------------------------------------------------------------
 // Layout constants
