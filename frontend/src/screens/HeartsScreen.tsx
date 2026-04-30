@@ -515,7 +515,9 @@ export default function HeartsScreen() {
               <Text style={[styles.winnerText, { color: colors.accent }]}>
                 {gameState.winnerIndex === 0
                   ? t("game_over.you_win")
-                  : t("game_over.winner", { label: playerLabels[gameState.winnerIndex ?? 0] ?? "" })}
+                  : t("game_over.winner", {
+                      label: playerLabels[gameState.winnerIndex ?? 0] ?? "",
+                    })}
               </Text>
               <HeartsScoreboard
                 playerLabels={playerLabels}
