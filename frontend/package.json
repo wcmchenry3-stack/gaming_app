@@ -14,7 +14,8 @@
     "check-i18n": "node scripts/check-i18n-strings.js",
     "process-assets": "python scripts/remove_backgrounds.py",
     "extract-vertices": "python scripts/extract_vertices.py",
-    "bundlesize": "bundlesize"
+    "bundlesize": "bundlesize",
+    "check-build-env": "node scripts/check-build-env.js"
   },
   "jest": {
     "preset": "jest-expo",
