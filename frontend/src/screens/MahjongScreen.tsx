@@ -47,7 +47,7 @@ import { useTheme } from "../theme/ThemeContext";
 import { typography } from "../theme/typography";
 import { GameShell } from "../components/shared/GameShell";
 import { OfflineBanner } from "../components/shared/OfflineBanner";
-import GameCanvas, { BOARD_W, BOARD_H } from "../components/mahjong/GameCanvas";
+import GameCanvas, { BOARD_W, BOARD_H, TILE_W, TILE_H } from "../components/mahjong/GameCanvas";
 import { createGame, elapsedMs, selectTile, shuffleBoard, undoMove } from "../game/mahjong/engine";
 import { TURTLE_LAYOUT } from "../game/mahjong/layouts/turtle";
 import type { MahjongState, SlotTile } from "../game/mahjong/types";
@@ -68,11 +68,10 @@ import { useNetwork } from "../game/_shared/NetworkContext";
 const MAX_NAME_LENGTH = 32;
 
 // ---------------------------------------------------------------------------
-// Tile layout constants (mirrors GameCanvas internals — must stay in sync)
+// Tile layout constants — imported from GameCanvas (single source of truth)
 // ---------------------------------------------------------------------------
 
-const TILE_W = 44;
-const TILE_H = 56;
+// TILE_W and TILE_H are imported from GameCanvas above.
 const LAYER_DX = 6;
 const LAYER_DY = 5;
 const PAD_X = 10;
@@ -419,7 +418,10 @@ export default function MahjongScreen() {
     syncMarkStarted();
   }, [syncGetGameId, syncComplete, syncStart, syncMarkStarted]);
 
-  const scale = outerWidth > 0 ? Math.min(1, outerWidth / BOARD_W) : 1;
+  // Allow upscaling up to a 72 px effective tile on large/landscape screens,
+  // while still shrinking to fit on narrow portrait screens.
+  const MAX_TILE_W = 72;
+  const scale = outerWidth > 0 ? Math.min(MAX_TILE_W / TILE_W, outerWidth / BOARD_W) : 1;
 
   const onOuterLayout = useCallback((e: LayoutChangeEvent) => {
     setOuterWidth(Math.floor(e.nativeEvent.layout.width));

@@ -24,8 +24,8 @@ import { TILE_REQUIRES } from "./tileAssets";
 // Layout constants
 // ---------------------------------------------------------------------------
 
-const TILE_W = 44; // face width
-const TILE_H = 56; // face height
+export const TILE_W = 44; // face width
+export const TILE_H = 56; // face height
 const SIDE_W = 5; // 3-D side strip width (right + bottom)
 const LAYER_DX = 6; // rightward offset per layer
 const LAYER_DY = 5; // upward offset per layer

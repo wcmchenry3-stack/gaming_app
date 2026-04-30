@@ -36,7 +36,14 @@ jest.mock("../../components/mahjong/GameCanvas", () => {
     );
   }
   MockGameCanvas.displayName = "MockGameCanvas";
-  return { __esModule: true, default: MockGameCanvas, BOARD_W: 572, BOARD_H: 508 };
+  return {
+    __esModule: true,
+    default: MockGameCanvas,
+    BOARD_W: 572,
+    BOARD_H: 508,
+    TILE_W: 44,
+    TILE_H: 56,
+  };
 });
 
 const mockNavListeners = new Map<string, Array<() => void>>();
