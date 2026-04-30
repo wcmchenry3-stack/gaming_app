@@ -799,7 +799,14 @@ function tickSingleEnemy(
     case "Wiggling":
       return tickWiggling(enemy, dtMs, canvasH, bossThresholdCrossed, bossDeepThresholdCrossed);
     case "Diving":
-      return tickDiving(enemy, dtMs, canvasH, playerX, bossThresholdCrossed, bossDeepThresholdCrossed);
+      return tickDiving(
+        enemy,
+        dtMs,
+        canvasH,
+        playerX,
+        bossThresholdCrossed,
+        bossDeepThresholdCrossed
+      );
     case "Circling":
       return tickCircling(enemy, dtMs, playerX);
     case "Returning":
@@ -1565,7 +1572,10 @@ function tickCollisions(state: StarSwarmState): StarSwarmState {
           if (e.tier === "Boss" && !state.bossDeepThresholdCrossed) return false;
           if (e.tier === "Elite" && !state.bossThresholdCrossed) return false;
           if (e.phase !== "Diving" && e.phase !== "Circling") return false;
-          if (!collideCircleAABB(player.x, player.y, PLAYER_HURT_RADIUS, e.x, e.y, e.width, e.height)) return false;
+          if (
+            !collideCircleAABB(player.x, player.y, PLAYER_HURT_RADIUS, e.x, e.y, e.width, e.height)
+          )
+            return false;
           rammingEnemyId = e.id;
           return true;
         });
