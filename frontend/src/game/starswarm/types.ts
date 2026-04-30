@@ -178,8 +178,10 @@ export interface StarSwarmState {
   readonly formationSwayX: number;
   /** Direction the formation is currently travelling: +1 = right, -1 = left. */
   readonly formationSwayDir: 1 | -1;
-  /** How many bonus lives have been awarded so far (prevents re-awarding at same threshold). */
+  /** How many bonus lives have been awarded so far (prevents re-awarding at same multiple). */
   readonly bonusLivesAwarded: number;
+  /** ms remaining for the slow-motion window after a bonus life is awarded (#1078); 0 when inactive. */
+  readonly bonusLifeSlowMoTimer: number;
   /** Non-Boss enemy count at wave start; used for Boss dive eligibility (#978). */
   readonly startingNonBossCount: number;
   /** Enemy kills since last power-up drop (Playing phase only). */

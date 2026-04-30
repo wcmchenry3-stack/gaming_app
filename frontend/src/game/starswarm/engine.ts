@@ -98,9 +98,12 @@ const MAX_SWAY = 40; // max offset from center in px
 const AIMED_SHOT_WAVE_START = 1;
 const AIMED_SHOT_FRACTION = 0.1; // 10% aimed at wave 1, +5% per wave, cap 60%
 
-// #945 Bonus lives
-const BONUS_LIFE_THRESHOLDS = [30_000, 70_000];
+// #945 Bonus lives (#1078 #1079)
+const BONUS_LIFE_BASE = 30_000;
 const MAX_LIVES = 5;
+const BONUS_LIFE_SLOW_MO_SCALE = 0.35; // #1078: time scale during slow-mo window
+const BONUS_LIFE_SLOW_MO_DURATION = 800; // ms of slow-mo after bonus life
+const BONUS_LIFE_INVINCIBLE_MS = 600; // ms of invincibility after bonus life
 
 // #980: power-up entity
 const POWERUP_W = 24;
@@ -202,6 +205,11 @@ export function difficultyParamScale(tier: DifficultyTier): number {
 /** Human-readable display label for a difficulty tier. */
 export function difficultyLabel(tier: DifficultyTier): string {
   return DIFFICULTY_LABEL[tier];
+}
+
+/** Points per bonus life at the given difficulty (scales with score multiplier). */
+function bonusLifeThreshold(difficulty: DifficultyTier): number {
+  return BONUS_LIFE_BASE * difficultyMultiplier(difficulty);
 }
 const TIER_SIZE: Record<EnemyTier, { w: number; h: number }> = {
   Grunt: { w: 24, h: 24 },
@@ -636,6 +644,7 @@ function buildWaveState(
     formationSwayX: 0,
     formationSwayDir: 1,
     bonusLivesAwarded,
+    bonusLifeSlowMoTimer: 0,
     startingNonBossCount,
     killsSinceLastDrop: 0,
     dropJitterTarget,
@@ -662,14 +671,20 @@ export function tick(state: StarSwarmState, dtMs: number, input: StarSwarmInput)
     return { ...state, phaseTimer: timer };
   }
 
-  let s = tickPlayer(state, dtMs, input);
-  s = tickEnemies(s, dtMs);
-  s = tickBullets(s, dtMs);
-  s = tickPowerUps(s, dtMs);
-  s = tickBuddyShips(s, dtMs);
-  s = tickCollisions(s);
-  s = tickBonusLives(state, s);
-  s = tickExplosions(s, dtMs);
+  // #1078: decrement slow-mo timer with real time; scale all gameplay by BONUS_LIFE_SLOW_MO_SCALE
+  const slowMoActive = state.bonusLifeSlowMoTimer > 0;
+  const bonusLifeSlowMoTimer = Math.max(0, state.bonusLifeSlowMoTimer - dtMs);
+  const scaledDt = slowMoActive ? dtMs * BONUS_LIFE_SLOW_MO_SCALE : dtMs;
+
+  let s: StarSwarmState = { ...state, bonusLifeSlowMoTimer };
+  s = tickPlayer(s, scaledDt, input);
+  s = tickEnemies(s, scaledDt);
+  s = tickBullets(s, scaledDt);
+  s = tickPowerUps(s, scaledDt);
+  s = tickBuddyShips(s, scaledDt);
+  s = tickCollisions(s); // score updated by kills here
+  s = tickBonusLives(state, s); // #1078: after score updated; un-GameOvers if bonus life rescues player
+  s = tickExplosions(s, scaledDt);
   s = checkPhaseTransitions(s);
   return s;
 }
@@ -678,24 +693,33 @@ export function tick(state: StarSwarmState, dtMs: number, input: StarSwarmInput)
 // Bonus lives (#945)
 // ---------------------------------------------------------------------------
 
-function tickBonusLives(prev: StarSwarmState, next: StarSwarmState): StarSwarmState {
-  if (next.phase === "GameOver") return next;
+// #1078 #1079: repeating threshold scaled by difficulty; slow-mo + invincibility on award
+// No early exit on GameOver — if the threshold was just crossed in the same tick the player died,
+// the bonus life is still awarded and GameOver is reverted (race condition fix).
+function tickBonusLives(_prev: StarSwarmState, next: StarSwarmState): StarSwarmState {
+  const threshold = bonusLifeThreshold(next.difficulty);
+  const livesEarnable = Math.floor(next.score / threshold);
+  const livesToAward = Math.max(0, livesEarnable - next.bonusLivesAwarded);
 
-  let { player, bonusLivesAwarded } = next;
+  if (livesToAward === 0 || next.player.lives >= MAX_LIVES) return next;
 
-  for (const [i, threshold] of BONUS_LIFE_THRESHOLDS.entries()) {
-    if (
-      next.score >= threshold &&
-      prev.score < threshold &&
-      bonusLivesAwarded < i + 1 &&
-      player.lives < MAX_LIVES
-    ) {
-      player = { ...player, lives: player.lives + 1 };
-      bonusLivesAwarded++;
-    }
-  }
+  const awarded = Math.min(livesToAward, MAX_LIVES - next.player.lives);
+  const newLives = next.player.lives + awarded;
 
-  return { ...next, player, bonusLivesAwarded };
+  // #1078: if the bonus life rescued the player from a same-tick lethal hit, revert GameOver
+  const phase = next.phase === "GameOver" && newLives > 0 ? "Playing" : next.phase;
+
+  return {
+    ...next,
+    phase,
+    player: {
+      ...next.player,
+      lives: newLives,
+      invincibleTimer: Math.max(next.player.invincibleTimer, BONUS_LIFE_INVINCIBLE_MS),
+    },
+    bonusLivesAwarded: next.bonusLivesAwarded + awarded,
+    bonusLifeSlowMoTimer: BONUS_LIFE_SLOW_MO_DURATION,
+  };
 }
 
 // ---------------------------------------------------------------------------
