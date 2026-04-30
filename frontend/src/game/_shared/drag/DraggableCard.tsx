@@ -107,10 +107,7 @@ export function DraggableCard({
   // explicitly — tap waits for pan to fail before it can fire, letting pan run
   // freely without the recogniser deadlock that bare Simultaneous caused.
   const gesture = draggable
-    ? Gesture.Simultaneous(
-        pan,
-        Platform.OS === "ios" ? tap.requireExternalGestureToFail(pan) : tap
-      )
+    ? Gesture.Simultaneous(pan, Platform.OS === "ios" ? tap.requireExternalGestureToFail(pan) : tap)
     : tap;
 
   const beingDragged = dragState !== null && isCardInDragStack(dragState.source, dragSource);
