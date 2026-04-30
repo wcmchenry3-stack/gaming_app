@@ -101,13 +101,13 @@ export function DraggableCard({
       if (success && onTap) runOnJS(onTap)();
     });
 
-  // iOS RNGH 2.30.0 regression: Gesture.Simultaneous prevents the pan from exceeding
-  // minDistance on iOS. Use Race on iOS so the faster recognizer wins cleanly.
-  // Android/web keep Simultaneous to avoid the older iOS pan-pending-blocks-tap quirk.
+  // iOS RNGH 2.30.0: Gesture.Race blocked tap because the native recogniser
+  // kept tap in "possible" while pan was also possible, preventing tap from
+  // ever activating. requireExternalGestureToFail(pan) declares the direction
+  // explicitly — tap waits for pan to fail before it can fire, letting pan run
+  // freely without the recogniser deadlock that bare Simultaneous caused.
   const gesture = draggable
-    ? Platform.OS === "ios"
-      ? Gesture.Race(pan, tap)
-      : Gesture.Simultaneous(pan, tap)
+    ? Gesture.Simultaneous(pan, Platform.OS === "ios" ? tap.requireExternalGestureToFail(pan) : tap)
     : tap;
 
   const beingDragged = dragState !== null && isCardInDragStack(dragState.source, dragSource);
