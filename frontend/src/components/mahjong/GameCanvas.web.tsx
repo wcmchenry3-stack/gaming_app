@@ -13,9 +13,14 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { Asset } from "expo-asset";
 import { useTranslation } from "react-i18next";
-import { hasFreePairs, isFreeTile } from "../../game/mahjong/engine";
+import { hasFreePairs, isFreeTile, tilesMatch } from "../../game/mahjong/engine";
 import type { MahjongState, SlotTile } from "../../game/mahjong/types";
 import { TILE_REQUIRES } from "./tileAssets";
+import {
+  MAHJONG_TILE_FACE_SELECTED,
+  MAHJONG_GLOW_BG,
+  MAHJONG_GLOW_SHADOW,
+} from "../../theme/theme.constants";
 
 // ---------------------------------------------------------------------------
 // Layout constants (mirror GameCanvas.tsx exactly)
@@ -45,6 +50,7 @@ function tileY(row: number, layer: number): number {
 
 const BG = "#1a3a1a";
 const TILE_FACE = "#f5f0e8";
+const TILE_FACE_SELECTED = MAHJONG_TILE_FACE_SELECTED;
 const TILE_FACE_LOCKED = "#d0c8b8";
 const BORDER_NORMAL = "#8b7355";
 const BORDER_SELECTED = "#ffd700";
@@ -112,33 +118,52 @@ function drawBoard(
     const fw = TILE_W - SIDE_W;
     const fh = TILE_H - SIDE_W;
 
-    const borderColor = isSelected
-      ? BORDER_SELECTED
-      : isFree && hasSelection
-        ? BORDER_HINT
-        : BORDER_NORMAL;
-    const faceColor = isFree ? TILE_FACE : TILE_FACE_LOCKED;
+    // Lift selected tile upward/outward for a "picked up" cue.
+    const liftX = isSelected ? 4 : 0;
+    const liftY = isSelected ? -5 : 0;
+    // 2 px border on selected for visibility at small tile sizes.
+    const borderInset = isSelected ? 2 : 1;
+
+    // Hints only on tiles that actually match the selection, not all free tiles.
+    const isHint =
+      isFree && hasSelection && state.selected !== null && tilesMatch(tile, state.selected);
+    const borderColor = isSelected ? BORDER_SELECTED : isHint ? BORDER_HINT : BORDER_NORMAL;
+    const faceColor = isSelected ? TILE_FACE_SELECTED : isFree ? TILE_FACE : TILE_FACE_LOCKED;
     const suitColor = SUIT_COLOR[tile.suit] ?? "#888888";
 
     // Drop shadow
     ctx.fillStyle = "rgba(0,0,0,0.35)";
-    ctx.fillRect(x + SIDE_W + 2, y + SIDE_W + 2, fw, fh);
+    ctx.fillRect(x + SIDE_W + 2 + liftX, y + SIDE_W + 2 + liftY, fw, fh);
 
     // Right 3-D side
     ctx.fillStyle = SIDE_R;
-    ctx.fillRect(x + fw, y + SIDE_W, SIDE_W, fh);
+    ctx.fillRect(x + fw + liftX, y + SIDE_W + liftY, SIDE_W, fh);
 
     // Bottom 3-D side
     ctx.fillStyle = SIDE_B;
-    ctx.fillRect(x + SIDE_W, y + fh, fw, SIDE_W);
+    ctx.fillRect(x + SIDE_W + liftX, y + fh + liftY, fw, SIDE_W);
+
+    // Gold glow behind selected tile — applied to the border rect only.
+    if (isSelected) {
+      ctx.shadowColor = MAHJONG_GLOW_SHADOW;
+      ctx.shadowBlur = 10;
+    }
 
     // Border
     ctx.fillStyle = borderColor;
-    ctx.fillRect(x, y, fw, fh);
+    ctx.fillRect(x + liftX, y + liftY, fw, fh);
+
+    // Clear glow before drawing face so inner fills stay crisp.
+    ctx.shadowBlur = 0;
 
     // Face
     ctx.fillStyle = faceColor;
-    ctx.fillRect(x + 1, y + 1, fw - 2, fh - 2);
+    ctx.fillRect(
+      x + borderInset + liftX,
+      y + borderInset + liftY,
+      fw - 2 * borderInset,
+      fh - 2 * borderInset
+    );
 
     // SVG face art — fall back to suit-color rect while image is loading.
     // SVGs with width="100%" have naturalWidth=0 even when loaded; check for
@@ -146,10 +171,10 @@ function drawBoard(
     const img = tileImages[tile.faceId - 1];
     ctx.globalAlpha = isFree ? 1 : 0.35;
     if (img !== null) {
-      ctx.drawImage(img, x + 2, y + 2, fw - 4, fh - 4);
+      ctx.drawImage(img, x + 2 + liftX, y + 2 + liftY, fw - 4, fh - 4);
     } else {
       ctx.fillStyle = suitColor;
-      ctx.fillRect(x + 8, y + 10, fw - 16, fh - 20);
+      ctx.fillRect(x + 8 + liftX, y + 10 + liftY, fw - 16, fh - 20);
     }
 
     ctx.restore();
