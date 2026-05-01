@@ -11,6 +11,7 @@ type AnyProps = Record<string, any>;
 export interface DraggableCardProps {
   children: React.ReactNode;
   style?: object;
+  testID?: string;
   /** Tap fallback — same behavior as the old onPress. */
   onTap?: () => void;
   /** The card(s) that will be dragged. For a tableau run, pass all cards
@@ -25,6 +26,7 @@ export interface DraggableCardProps {
 export function DraggableCard({
   children,
   style,
+  testID,
   onTap,
   dragCards,
   dragSource,
@@ -112,7 +114,7 @@ export function DraggableCard({
   const innerEl = onTap ? React.cloneElement(child, { onPress: onTap }) : child;
 
   return (
-    <Animated.View ref={viewRef} style={[style, beingDragged && { opacity: 0 }]}>
+    <Animated.View ref={viewRef} testID={testID} style={[style, beingDragged && { opacity: 0 }]}>
       <GestureDetector gesture={gesture}>{innerEl}</GestureDetector>
     </Animated.View>
   );
