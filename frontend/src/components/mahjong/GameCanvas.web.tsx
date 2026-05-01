@@ -271,8 +271,12 @@ export default function GameCanvas({ state, onTilePress, onShufflePress, onNewGa
       const canvas = canvasRef.current;
       if (!canvas) return;
       const rect = canvas.getBoundingClientRect();
-      const tapX = e.clientX - rect.left;
-      const tapY = e.clientY - rect.top;
+      // getBoundingClientRect reflects the parent's CSS scale transform, so
+      // divide by the visual/native ratio to get canvas drawing coordinates.
+      const scaleX = rect.width / BOARD_W;
+      const scaleY = rect.height / BOARD_H;
+      const tapX = (e.clientX - rect.left) / scaleX;
+      const tapY = (e.clientY - rect.top) / scaleY;
       const tileId = hitTest(state.tiles, tapX, tapY);
       if (tileId !== null) onTilePress(tileId);
     },
