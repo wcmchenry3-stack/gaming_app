@@ -23,16 +23,7 @@ const BONUS_COLOR = "#4ade80";
 
 const BASE: FreeCellState = {
   _v: 1,
-  tableau: [
-    [{ suit: "clubs", rank: 2 }],
-    [{ suit: "hearts", rank: 3 }],
-    [],
-    [],
-    [],
-    [],
-    [],
-    [],
-  ],
+  tableau: [[{ suit: "clubs", rank: 2 }], [{ suit: "hearts", rank: 3 }], [], [], [], [], [], []],
   freeCells: [{ suit: "spades", rank: 1 }, null, null, null],
   foundations: { spades: [], hearts: [], diamonds: [], clubs: [] },
   undoStack: [],
