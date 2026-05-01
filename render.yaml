@@ -1,8 +1,69 @@
+databases:
+  # --- BC Arcade Postgres (prod) ---
+  # Managed by render.yaml; do not manually edit in the dashboard.
+  # New services reference this via fromDatabase.
+  - name: bc-arcade-db
+    databaseName: bc_arcade
+    user: bc_arcade_user
+    region: oregon
+    plan: basic_256mb
+    version: "18"
+    ipAllowList: []
+
 services:
+  # --- BC Arcade FastAPI backend (prod) ---
+  - type: web
+    name: bc-arcade-api
+    runtime: python
+    branch: main
+    rootDir: backend
+    autoDeploy: true
+    buildCommand: pip install -r requirements.txt
+    startCommand: alembic upgrade head && uvicorn main:app --host 0.0.0.0 --port $PORT --timeout-keep-alive 5 --limit-max-requests 10000
+    healthCheckPath: /health
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.0
+      - key: ALLOWED_ORIGINS
+        value: "https://games.buffingchi.com,https://games-api.buffingchi.com"
+      - key: DATABASE_URL
+        fromDatabase:
+          name: bc-arcade-db
+          property: connectionString
+      - key: SENTRY_DSN
+        sync: false
+
+  # --- BC Arcade Expo Web static frontend (prod) ---
+  - type: web
+    name: bc-arcade-frontend
+    runtime: static
+    branch: main
+    rootDir: frontend
+    autoDeploy: true
+    buildCommand: npm ci && node scripts/fetch-render-env.js && npx expo export --platform web
+    staticPublishPath: dist
+    envVars:
+      - key: EXPO_PUBLIC_API_URL
+        value: "https://games-api.buffingchi.com"
+      - key: EXPO_PUBLIC_SENTRY_DSN
+        sync: false
+      - key: SKIP_SKIA_DOWNLOAD
+        value: "1"
+    headers:
+      - path: /*
+        name: Content-Security-Policy
+        value: "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; connect-src 'self' https://games-api.buffingchi.com https://games.buffingchi.com; img-src 'self' data: blob:; font-src 'self' data:; frame-ancestors 'none'"
+      - path: /*
+        name: X-Content-Type-Options
+        value: nosniff
+      - path: /*
+        name: X-Frame-Options
+        value: DENY
+      - path: /*
+        name: Referrer-Policy
+        value: strict-origin-when-cross-origin
+
   # --- Python FastAPI backend (dev environment) ---
-  # The -dev suffix is explicit: this service tracks the `dev` branch.
-  # A future prod environment should be a separate service (e.g.
-  # `gaming-app-api`) pinned to `main`, with its own Postgres.
   - type: web
     name: gaming-app-api-dev
     runtime: python
