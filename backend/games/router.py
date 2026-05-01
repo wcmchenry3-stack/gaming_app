@@ -15,6 +15,7 @@ from . import service
 from .schemas import (
     AppendEventsRequest,
     AppendEventsResponse,
+    CatalogResponse,
     CompleteGameRequest,
     CreateGameRequest,
     CreateGameResponse,
@@ -23,6 +24,8 @@ from .schemas import (
     GameHistoryResponse,
     GameRowResponse,
     GameStateResponse,
+    GameTypeOut,
+    PatchGameTypeRequest,
 )
 
 router = APIRouter()
@@ -39,6 +42,53 @@ def _to_state(game) -> GameStateResponse:
         outcome=game.outcome,
         duration_ms=game.duration_ms,
     )
+
+
+# ---------------------------------------------------------------------------
+# Catalog (#1049) — registered before /{game_id} so literal path wins
+# ---------------------------------------------------------------------------
+
+
+def _gt_to_out(gt) -> GameTypeOut:
+    return GameTypeOut(
+        id=gt.id,
+        name=gt.name,
+        display_name=gt.display_name,
+        icon_emoji=gt.icon_emoji,
+        sort_order=gt.sort_order,
+        is_active=gt.is_active,
+        is_premium=gt.is_premium,
+        category=gt.category,
+    )
+
+
+@router.get("/catalog", response_model=CatalogResponse)
+async def get_catalog() -> CatalogResponse:
+    factory = get_session_factory()
+    async with factory() as db:
+        game_types = await service.get_catalog(db)
+    return CatalogResponse(items=[_gt_to_out(gt) for gt in game_types])
+
+
+@router.patch("/catalog/{game_type_id}", response_model=GameTypeOut)
+@limiter.limit("30/minute", key_func=session_key)
+async def patch_game_type(
+    request: Request,
+    game_type_id: int,
+    body: PatchGameTypeRequest,
+) -> GameTypeOut:
+    factory = get_session_factory()
+    async with factory() as db:
+        try:
+            gt = await service.patch_game_type(
+                db,
+                game_type_id=game_type_id,
+                is_premium=body.is_premium,
+                category=body.category,
+            )
+        except service.GameServiceError as e:
+            raise HTTPException(status_code=e.status_code, detail=e.detail)
+    return _gt_to_out(gt)
 
 
 # ---------------------------------------------------------------------------

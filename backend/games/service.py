@@ -468,3 +468,41 @@ async def complete_game(
     await session.commit()
     await session.refresh(game)
     return game
+
+
+# ---------------------------------------------------------------------------
+# Catalog (#1049)
+# ---------------------------------------------------------------------------
+
+
+async def get_catalog(session: AsyncSession) -> list[GameType]:
+    return list(
+        (
+            await session.execute(
+                select(GameType).where(GameType.is_active.is_(True)).order_by(GameType.sort_order)
+            )
+        )
+        .scalars()
+        .all()
+    )
+
+
+async def patch_game_type(
+    session: AsyncSession,
+    *,
+    game_type_id: int,
+    is_premium: bool | None,
+    category: str | None,
+) -> GameType:
+    gt = (
+        await session.execute(select(GameType).where(GameType.id == game_type_id))
+    ).scalar_one_or_none()
+    if gt is None:
+        raise GameServiceError(404, "Game type not found.")
+    if is_premium is not None:
+        gt.is_premium = is_premium
+    if category is not None:
+        gt.category = category
+    await session.commit()
+    await session.refresh(gt)
+    return gt
