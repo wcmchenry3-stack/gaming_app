@@ -16,6 +16,7 @@ import type { StarfieldState } from "../../game/starswarm/starfield";
 import type { StarSwarmState, PowerUpType, DifficultyTier } from "../../game/starswarm/types";
 
 import playerShipSrc from "../../../assets/starswarm/player-ship.webp";
+import buddyShipSrc from "../../../assets/starswarm/buddy-ship.webp";
 import enemyGruntSrc from "../../../assets/starswarm/enemy-grunt.webp";
 import enemyEliteSrc from "../../../assets/starswarm/enemy-elite.webp";
 import enemyBossSrc from "../../../assets/starswarm/enemy-boss.webp";
@@ -88,6 +89,7 @@ const C = {
   superTint: "#ffee00",
   shieldAura: "rgba(0,170,255,0.25)",
   shieldRing: "rgba(0,170,255,0.8)",
+  buddyShip: "rgba(0,120,255,0.8)",
   powerUpLightning: "#ffee00",
   powerUpShield: "rgba(0,170,255,0.9)",
   powerUpBomb: "rgba(255,80,0,0.9)",
@@ -109,6 +111,7 @@ const C = {
 
 interface Images {
   playerShip: HTMLImageElement | null;
+  buddyShip: HTMLImageElement | null;
   enemyGrunt: HTMLImageElement | null;
   enemyElite: HTMLImageElement | null;
   enemyBoss: HTMLImageElement | null;
@@ -218,6 +221,7 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
     const prevPhaseRef = useRef(stateRef.current.phase);
     const imagesRef = useRef<Images>({
       playerShip: null,
+      buddyShip: null,
       enemyGrunt: null,
       enemyElite: null,
       enemyBoss: null,
@@ -299,6 +303,7 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
       (async () => {
         const results = await Promise.all([
           loadImg(playerShipSrc as number),
+          loadImg(buddyShipSrc as number),
           loadImg(enemyGruntSrc as number),
           loadImg(enemyEliteSrc as number),
           loadImg(enemyBossSrc as number),
@@ -313,6 +318,7 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
         if (cancelled) return;
         const [
           playerShip,
+          buddyShip,
           enemyGrunt,
           enemyElite,
           enemyBoss,
@@ -326,6 +332,7 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
         ] = results;
         imagesRef.current = {
           playerShip: playerShip ?? null,
+          buddyShip: buddyShip ?? null,
           enemyGrunt: enemyGrunt ?? null,
           enemyElite: enemyElite ?? null,
           enemyBoss: enemyBoss ?? null,
@@ -546,9 +553,9 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
         }
       }
 
-      // #1035 Buddy ships — player-ship sprite tinted yellow; flip for right-entry
+      // #1035 Buddy ships — blue ship sprite; flip for right-entry
       for (const buddy of state.buddyShips) {
-        const img = imgs.playerShip;
+        const img = imgs.buddyShip;
         ctx.save();
         if (!buddy.fromLeft) {
           ctx.translate(buddy.x, 0);
@@ -558,13 +565,9 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
         if (img) {
           ctx.drawImage(img, buddy.x - 17, buddy.y - 17, 34, 34);
         } else {
-          ctx.fillStyle = C.powerBarFill;
+          ctx.fillStyle = C.buddyShip;
           ctx.fillRect(buddy.x - 17, buddy.y - 17, 34, 34);
         }
-        ctx.globalAlpha = 0.5;
-        ctx.fillStyle = C.superTint;
-        ctx.fillRect(buddy.x - 17, buddy.y - 17, 34, 34);
-        ctx.globalAlpha = 1;
         ctx.restore();
       }
 

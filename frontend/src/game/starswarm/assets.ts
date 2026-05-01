@@ -2,6 +2,7 @@ import { useImage } from "@shopify/react-native-skia";
 import type { SkImage } from "@shopify/react-native-skia";
 
 import playerShipSrc from "../../../assets/starswarm/player-ship.webp";
+import buddyShipSrc from "../../../assets/starswarm/buddy-ship.webp";
 import enemyGruntSrc from "../../../assets/starswarm/enemy-grunt.webp";
 import enemyEliteSrc from "../../../assets/starswarm/enemy-elite.webp";
 import enemyBossSrc from "../../../assets/starswarm/enemy-boss.webp";
@@ -35,6 +36,7 @@ import explosionFrame19 from "../../../assets/starswarm/explosion/frame19.png";
 
 export interface StarSwarmImages {
   playerShip: SkImage | null;
+  buddyShip: SkImage | null;
   enemyGrunt: SkImage | null;
   enemyElite: SkImage | null;
   enemyBoss: SkImage | null;
@@ -51,6 +53,7 @@ export interface StarSwarmImages {
 
 export function useStarSwarmImages(): StarSwarmImages {
   const playerShip = useImage(playerShipSrc);
+  const buddyShip = useImage(buddyShipSrc);
   const enemyGrunt = useImage(enemyGruntSrc);
   const enemyElite = useImage(enemyEliteSrc);
   const enemyBoss = useImage(enemyBossSrc);
@@ -84,6 +87,7 @@ export function useStarSwarmImages(): StarSwarmImages {
 
   return {
     playerShip,
+    buddyShip,
     enemyGrunt,
     enemyElite,
     enemyBoss,
