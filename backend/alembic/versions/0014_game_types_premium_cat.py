@@ -24,16 +24,16 @@ depends_on: Union[str, Sequence[str], None] = None
 _PREMIUM_IDS = (1, 4, 7, 8, 10)  # yacht, cascade, hearts, sudoku, starswarm
 
 _CATEGORIES = {
-    1: "dice",    # yacht
+    1: "dice",  # yacht
     2: "puzzle",  # twenty48
-    3: "card",    # blackjack
+    3: "card",  # blackjack
     4: "arcade",  # cascade
-    6: "card",    # solitaire
-    7: "card",    # hearts
+    6: "card",  # solitaire
+    7: "card",  # hearts
     8: "puzzle",  # sudoku
     9: "puzzle",  # mahjong
-    10: "arcade", # starswarm
-    11: "card",   # freecell
+    10: "arcade",  # starswarm
+    11: "card",  # freecell
 }
 
 
@@ -50,14 +50,10 @@ def upgrade() -> None:
     # Explicitly reset existing rows to integer 0/1 — server_default only
     # controls future inserts; existing rows need an explicit UPDATE.
     op.execute("UPDATE game_types SET is_premium = 0")
-    op.execute(
-        f"UPDATE game_types SET is_premium = 1 WHERE id IN {_PREMIUM_IDS}"
-    )
+    op.execute(f"UPDATE game_types SET is_premium = 1 WHERE id IN {_PREMIUM_IDS}")
 
     for game_id, cat in _CATEGORIES.items():
-        op.execute(
-            f"UPDATE game_types SET category = '{cat}' WHERE id = {game_id}"
-        )
+        op.execute(f"UPDATE game_types SET category = '{cat}' WHERE id = {game_id}")
 
 
 def downgrade() -> None:

@@ -27,14 +27,34 @@ def test_catalog_returns_all_active_games(client: TestClient) -> None:
     body = r.json()
     assert "items" in body
     names = {g["name"] for g in body["items"]}
-    assert {"yacht", "blackjack", "cascade", "hearts", "sudoku", "mahjong", "starswarm", "freecell", "solitaire", "twenty48"}.issubset(names)
+    assert {
+        "yacht",
+        "blackjack",
+        "cascade",
+        "hearts",
+        "sudoku",
+        "mahjong",
+        "starswarm",
+        "freecell",
+        "solitaire",
+        "twenty48",
+    }.issubset(names)
 
 
 def test_catalog_fields_present(client: TestClient) -> None:
     r = client.get("/games/catalog")
     assert r.status_code == 200
     item = r.json()["items"][0]
-    for field in ("id", "name", "display_name", "icon_emoji", "sort_order", "is_active", "is_premium", "category"):
+    for field in (
+        "id",
+        "name",
+        "display_name",
+        "icon_emoji",
+        "sort_order",
+        "is_active",
+        "is_premium",
+        "category",
+    ):
         assert field in item, f"missing field: {field}"
 
 
