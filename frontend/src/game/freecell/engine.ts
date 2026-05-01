@@ -528,9 +528,7 @@ export function canAutoComplete(state: FreeCellState): boolean {
     }
   }
 
-  return (
-    counts.spades + counts.hearts + counts.diamonds + counts.clubs === DECK_SIZE
-  );
+  return counts.spades + counts.hearts + counts.diamonds + counts.clubs === DECK_SIZE;
 }
 
 /**

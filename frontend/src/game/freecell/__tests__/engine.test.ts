@@ -788,10 +788,10 @@ describe("canAutoComplete", () => {
   it("returns true when all remaining cards are directly playable to foundations", () => {
     // All suits at rank 12 (Queen) in foundations; Kings on tableau top
     const foundations: Foundations = {
-      spades: ([1,2,3,4,5,6,7,8,9,10,11,12] as const).map((r) => c("spades", r)),
-      hearts: ([1,2,3,4,5,6,7,8,9,10,11,12] as const).map((r) => c("hearts", r)),
-      diamonds: ([1,2,3,4,5,6,7,8,9,10,11,12] as const).map((r) => c("diamonds", r)),
-      clubs: ([1,2,3,4,5,6,7,8,9,10,11,12] as const).map((r) => c("clubs", r)),
+      spades: ([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12] as const).map((r) => c("spades", r)),
+      hearts: ([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12] as const).map((r) => c("hearts", r)),
+      diamonds: ([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12] as const).map((r) => c("diamonds", r)),
+      clubs: ([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12] as const).map((r) => c("clubs", r)),
     };
     const state = mkState({
       foundations,
@@ -800,7 +800,10 @@ describe("canAutoComplete", () => {
         [c("hearts", 13)],
         [c("diamonds", 13)],
         [c("clubs", 13)],
-        [], [], [], [],
+        [],
+        [],
+        [],
+        [],
       ],
     });
     expect(canAutoComplete(state)).toBe(true);
@@ -828,8 +831,14 @@ describe("canAutoComplete", () => {
     // foundations empty; 3♠ sits on top of 2♠ — 2♠ needs A♠ first but A♠ is buried
     const state = mkState({
       tableau: [
-        [c("spades", 3), c("spades", 2)],  // 2♠ on top but A♠ missing
-        [], [], [], [], [], [], [],
+        [c("spades", 3), c("spades", 2)], // 2♠ on top but A♠ missing
+        [],
+        [],
+        [],
+        [],
+        [],
+        [],
+        [],
       ],
     });
     expect(canAutoComplete(state)).toBe(false);
@@ -838,10 +847,7 @@ describe("canAutoComplete", () => {
   it("returns false when tableau still needs rearrangement", () => {
     // Aces buried mid-column
     const state = mkState({
-      tableau: [
-        [c("hearts", 5), c("spades", 1)],
-        [], [], [], [], [], [], [],
-      ],
+      tableau: [[c("hearts", 5), c("spades", 1)], [], [], [], [], [], [], []],
     });
     expect(canAutoComplete(state)).toBe(false);
   });
