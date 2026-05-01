@@ -1,5 +1,5 @@
 import Matter from "matter-js";
-import { FruitDefinition, FruitSet, FruitTier } from "../../theme/fruitSets";
+import { FruitDefinition, FruitSet, FruitTier } from "../../theme/fruitSets.engine";
 import { getVerticesForFruit } from "./fruitVertices";
 
 // Re-export shared types so imports from './engine' resolve correctly on native
