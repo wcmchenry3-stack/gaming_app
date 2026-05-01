@@ -19,6 +19,7 @@ export interface TableauColumnProps {
   readonly colIndex: number;
   readonly selectedIndex?: number;
   readonly hintIndex?: number;
+  readonly hintDestination?: boolean;
   readonly onCardPress?: (colIndex: number, cardIndex: number) => void;
   readonly onEmptyPress?: (colIndex: number) => void;
   readonly dropId?: string;
@@ -30,6 +31,7 @@ export default function TableauColumn({
   colIndex,
   selectedIndex,
   hintIndex,
+  hintDestination = false,
   onCardPress,
   onEmptyPress,
   dropId,
@@ -46,7 +48,14 @@ export default function TableauColumn({
     const empty = (
       <Pressable
         onPress={onEmptyPress ? () => onEmptyPress(colIndex) : undefined}
-        style={[styles.empty, { borderColor: colors.border, backgroundColor: colors.background }]}
+        style={[
+          styles.empty,
+          {
+            borderColor: hintDestination ? colors.bonus : colors.border,
+            borderWidth: hintDestination ? 2 : 1,
+            backgroundColor: colors.background,
+          },
+        ]}
         accessibilityRole="button"
         accessibilityLabel={t("pile.tableau.empty", { col: colIndex + 1 })}
       />
@@ -78,6 +87,7 @@ export default function TableauColumn({
   const cards = pile.map((card, cardIndex) => {
     const isSelected = selectedIndex !== undefined && cardIndex >= selectedIndex;
     const isHint = hintIndex !== undefined && cardIndex >= hintIndex;
+    const isHintDest = hintDestination && cardIndex === pile.length - 1;
     const rl = rankLabel(card.rank);
     const suitName = t(`suit.${card.suit}` as const);
     const label = isSelected
@@ -107,7 +117,7 @@ export default function TableauColumn({
           width={CARD_WIDTH}
           height={CARD_HEIGHT}
           highlighted={isSelected}
-          hintHighlighted={isHint}
+          hintHighlighted={isHint || isHintDest}
           accessibilityLabel={label}
         />
       </DraggableCard>
