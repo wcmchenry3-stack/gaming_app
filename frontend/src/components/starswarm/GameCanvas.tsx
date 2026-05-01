@@ -487,7 +487,7 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
 
             {/* #1035 Buddy ships */}
             {state.buddyShips.map((buddy) =>
-              images.playerShip ? (
+              images.buddyShip ? (
                 <Group
                   key={buddy.id}
                   transform={
@@ -497,19 +497,12 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
                   }
                 >
                   <SkiaImage
-                    image={images.playerShip}
+                    image={images.buddyShip}
                     x={buddy.x - 17}
                     y={buddy.y - 17}
                     width={34}
                     height={34}
                     fit="fill"
-                  />
-                  <Rect
-                    x={buddy.x - 17}
-                    y={buddy.y - 17}
-                    width={34}
-                    height={34}
-                    color="rgba(255,238,0,0.5)"
                   />
                 </Group>
               ) : (
@@ -519,7 +512,7 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
                   y={buddy.y - 17}
                   width={34}
                   height={34}
-                  color="rgba(255,238,0,0.8)"
+                  color="rgba(0,120,255,0.8)"
                 />
               )
             )}
