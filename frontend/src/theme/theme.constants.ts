@@ -33,3 +33,12 @@ export const DEV_SURFACE_SUBTLE = "rgba(255,255,255,0.08)";
 
 /** Slightly more opaque white surface for dev-panel step buttons. */
 export const DEV_SURFACE_DIM = "rgba(255,255,255,0.1)";
+
+/** Mahjong tile face when selected — soft yellow highlight. */
+export const MAHJONG_TILE_FACE_SELECTED = "#fff8c0";
+
+/** Mahjong selected tile glow — subtle gold background. */
+export const MAHJONG_GLOW_BG = "rgba(255,215,0,0.35)";
+
+/** Mahjong selected tile glow — stronger gold shadow effect. */
+export const MAHJONG_GLOW_SHADOW = "rgba(255,215,0,0.7)";

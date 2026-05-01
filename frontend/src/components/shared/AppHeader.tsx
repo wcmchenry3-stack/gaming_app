@@ -395,6 +395,8 @@ const styles = StyleSheet.create({
   logo: {
     width: 40,
     height: 40,
+    borderRadius: 8,
+    backgroundColor: "#1a0a2e",
   },
   backButton: {
     width: 80,

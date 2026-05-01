@@ -46,6 +46,7 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 import { LogType, Priority, logConfig } from "./eventQueueConfig";
+import { generateUUID } from "./uuid";
 
 const STORAGE_PREFIX = "event_queue_v1";
 const META_KEY = `${STORAGE_PREFIX}/meta`;
@@ -109,17 +110,6 @@ export interface QueueStats {
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
-
-function generateId(): string {
-  if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
-    return crypto.randomUUID();
-  }
-  // Fallback: same pattern as scoreQueue.generateUUID.
-  return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (c) => {
-    const r = (Math.random() * 16) | 0;
-    return (c === "x" ? r : (r & 0x3) | 0x8).toString(16);
-  });
-}
 
 function rowBytes(row: Row): number {
   // Approximate — JSON.stringify length is UTF-16 char count, and we treat
@@ -214,7 +204,7 @@ export class EventStore {
       await this.maybeDelay();
       const priority = logConfig.priorityForEvent("game_event", input.event_type);
       const row: GameEventRow = {
-        id: generateId(),
+        id: generateUUID(),
         log_type: "game_event",
         game_id: input.game_id,
         event_index: input.event_index,
@@ -242,7 +232,7 @@ export class EventStore {
     return this.withLock(async () => {
       await this.maybeDelay();
       const row: BugLogRow = {
-        id: generateId(),
+        id: generateUUID(),
         log_type: "bug_log",
         bug_uuid: input.bug_uuid,
         bug_level: input.bug_level,

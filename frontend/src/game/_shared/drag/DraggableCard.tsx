@@ -1,5 +1,5 @@
-import React, { useCallback, useRef } from "react";
-import { View } from "react-native";
+import React, { useCallback } from "react";
+import Animated, { useAnimatedRef, measure as rnMeasure } from "react-native-reanimated";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import { useSharedValue, runOnJS } from "react-native-reanimated";
 import { useDragContext, isCardInDragStack } from "./DragContext";
@@ -11,6 +11,7 @@ type AnyProps = Record<string, any>;
 export interface DraggableCardProps {
   children: React.ReactNode;
   style?: object;
+  testID?: string;
   /** Tap fallback — same behavior as the old onPress. */
   onTap?: () => void;
   /** The card(s) that will be dragged. For a tableau run, pass all cards
@@ -25,17 +26,14 @@ export interface DraggableCardProps {
 export function DraggableCard({
   children,
   style,
+  testID,
   onTap,
   dragCards,
   dragSource,
   draggable = true,
 }: DraggableCardProps) {
-  const viewRef = useRef<View>(null);
-
-  // Pre-measured card position in window coordinates, updated on every layout.
-  // Stored as shared values so the pan worklet can read them synchronously.
-  const cachedPageX = useSharedValue(0);
-  const cachedPageY = useSharedValue(0);
+  // useAnimatedRef lets worklets call rnMeasure(viewRef) for reliable iOS position reads.
+  const viewRef = useAnimatedRef<Animated.View>();
 
   const {
     dragState,
@@ -45,27 +43,16 @@ export function DraggableCard({
     originY,
     containerOffsetX,
     containerOffsetY,
+    containerRef,
     startDrag,
     endDrag,
     snapBackAndClear,
   } = useDragContext();
 
-  // Re-measure on every layout change (handles initial render + orientation).
-  const onLayout = useCallback(() => {
-    viewRef.current?.measure((_x, _y, _w, _h, pageX, pageY) => {
-      cachedPageX.value = pageX;
-      cachedPageY.value = pageY;
-    });
-  }, [cachedPageX, cachedPageY]);
-
-  // Called from worklet via runOnJS to update React state.
   const triggerStartDrag = useCallback(() => {
     startDrag(dragSource, dragCards);
   }, [dragSource, dragCards, startDrag]);
 
-  // Tracks whether the pan actually activated so onFinalize knows whether
-  // snap-back is needed. Shared value so worklets can read/write it without
-  // crossing the JS thread.
   const panActivated = useSharedValue(false);
 
   const pan = Gesture.Pan()
@@ -74,9 +61,18 @@ export function DraggableCard({
     .onStart(() => {
       "worklet";
       panActivated.value = true;
-      // Convert window position to container-local coordinates.
-      const localX = cachedPageX.value - containerOffsetX.value;
-      const localY = cachedPageY.value - containerOffsetY.value;
+      // Measure card and container fresh on every drag start — avoids stale/zero
+      // values that measure() can return on the first iOS layout pass.
+      const cardMeasured = rnMeasure(viewRef);
+      const containerMeasured = rnMeasure(containerRef);
+      if (!cardMeasured) return;
+      // Re-sync the container offset in case DragContainer.onLayout hasn't fired yet.
+      if (containerMeasured) {
+        containerOffsetX.value = containerMeasured.pageX;
+        containerOffsetY.value = containerMeasured.pageY;
+      }
+      const localX = cardMeasured.pageX - containerOffsetX.value;
+      const localY = cardMeasured.pageY - containerOffsetY.value;
       originX.value = localX;
       originY.value = localY;
       cardX.value = localX;
@@ -98,10 +94,11 @@ export function DraggableCard({
       panActivated.value = false;
     });
 
-  // maxDistance matches pan's minDistance so the two don't overlap: a touch
-  // that moves < 8 px is a tap; >= 8 px activates pan and fails the tap.
-  // Gesture.Simultaneous instead of Race avoids the iOS quirk where the pan
-  // recognizer's pending state blocks the tap from ever firing.
+  // For non-draggable (face-down) cards, RNGH tap works correctly and is unchanged.
+  // For draggable cards, pan-only in GestureDetector: when pan fails (< 8 px movement),
+  // the touch is released and the native onPress cloned onto the child below handles tap.
+  // This avoids the Simultaneous/requireExternalGestureToFail iOS UIGestureRecognizer
+  // deadlock that kept both tap and drag broken (#1101, #1102).
   const tap = Gesture.Tap()
     .maxDistance(8)
     .onEnd((_e, success) => {
@@ -109,23 +106,16 @@ export function DraggableCard({
       if (success && onTap) runOnJS(onTap)();
     });
 
-  const gesture = draggable ? Gesture.Simultaneous(pan, tap) : tap;
+  const gesture = draggable ? pan : tap;
 
-  // Hide this card when it (or a card above it in the same run) is being dragged —
-  // the DragOverlay renders the visual at the finger position instead.
   const beingDragged = dragState !== null && isCardInDragStack(dragState.source, dragSource);
 
-  // Clone the child to inject onPress so that:
-  //   • In production: GestureDetector (RNGH) intercepts touches before the inner
-  //     Pressable sees them — no double-firing.
-  //   • In tests: RNGH is mocked so GestureDetector does nothing; the inner
-  //     Pressable's onPress fires normally, keeping fireEvent.press working.
   const child = React.Children.only(children) as React.ReactElement<AnyProps>;
   const innerEl = onTap ? React.cloneElement(child, { onPress: onTap }) : child;
 
   return (
-    <View ref={viewRef} style={[style, beingDragged && { opacity: 0 }]} onLayout={onLayout}>
+    <Animated.View ref={viewRef} testID={testID} style={[style, beingDragged && { opacity: 0 }]}>
       <GestureDetector gesture={gesture}>{innerEl}</GestureDetector>
-    </View>
+    </Animated.View>
   );
 }

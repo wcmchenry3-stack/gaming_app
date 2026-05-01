@@ -178,22 +178,6 @@ function freshShuffledDeck(deckCount: number = 1): Card[] {
   return deck;
 }
 
-// E2E test hook — exposed only when __DEV__ is true OR EXPO_PUBLIC_TEST_HOOKS
-// is set (production e2e builds). Metro strips `if (__DEV__)` branches from
-// production bundles; the EXPO_PUBLIC_TEST_HOOKS env var opts in explicitly
-// for Playwright/Maestro flows that need deterministic deals against a
-// production-shaped bundle. Call `globalThis.__blackjack_setSeed(n)` before
-// the next `newGame()` (or after) — subsequent reshuffles will draw from
-// the seeded stream too, so the entire session is reproducible.
-const _devHook = typeof __DEV__ !== "undefined" && __DEV__;
-const _testHook = process.env.EXPO_PUBLIC_TEST_HOOKS === "1";
-if ((_devHook || _testHook) && typeof globalThis !== "undefined") {
-  (globalThis as unknown as { __blackjack_setSeed?: (seed: number) => void }).__blackjack_setSeed =
-    (seed: number) => {
-      setRng(createSeededRng(seed));
-    };
-}
-
 /**
  * Draw one card from a deck. Returns the new deck (with one fewer card)
  * and the drawn card. Auto-reshuffles if the deck runs dry mid-draw.

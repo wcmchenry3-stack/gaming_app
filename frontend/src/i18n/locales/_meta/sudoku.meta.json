@@ -166,11 +166,29 @@
     "doNotTranslate": [],
     "notes": null
   },
+  "action.hint": {
+    "component": "NumberPad tool row",
+    "description": "Label for the Hint button — reveals the correct digit for the selected empty cell.",
+    "tone": "casual",
+    "characterLimit": 8,
+    "placeholders": [],
+    "doNotTranslate": [],
+    "notes": null
+  },
   "action.newGame": {
     "component": "Win modal",
     "description": "Label for the 'New Puzzle' button (starts a fresh puzzle at the same difficulty).",
     "tone": "casual",
     "characterLimit": 18,
+    "placeholders": [],
+    "doNotTranslate": [],
+    "notes": null
+  },
+  "action.quickRestart": {
+    "component": "New Game modal",
+    "description": "Secondary button in the New Game modal that immediately restarts with the same difficulty and variant, bypassing the selectors.",
+    "tone": "casual",
+    "characterLimit": 20,
     "placeholders": [],
     "doNotTranslate": [],
     "notes": null
@@ -196,6 +214,16 @@
   "action.submitScore": {
     "component": "Win modal",
     "description": "Primary CTA to submit the score to the leaderboard.",
+    "tone": "casual",
+    "characterLimit": 20,
+    "placeholders": [],
+    "doNotTranslate": [],
+    "notes": null
+  },
+
+  "newGame.title": {
+    "component": "New Game modal",
+    "description": "Headline for the New Game settings modal shown after the player confirms abandoning their current game.",
     "tone": "casual",
     "characterLimit": 20,
     "placeholders": [],

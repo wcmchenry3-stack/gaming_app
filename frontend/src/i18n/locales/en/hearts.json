@@ -54,6 +54,7 @@
 
   "game_over.title": "Game Over",
   "game_over.winner": "{{label}} wins!",
+  "game_over.you_win": "You win!",
   "game_over.submit": "Submit Score",
   "game_over.name_placeholder": "Enter your name",
   "game_over.submitting": "Submitting…",

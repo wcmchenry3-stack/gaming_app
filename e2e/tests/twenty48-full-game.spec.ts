@@ -26,7 +26,7 @@ test.describe("2048 — full happy-path game journey", () => {
   });
 
   test("navigates from Home to 2048 on Play 2048 click", async ({ page }) => {
-    await expect(page.getByText("Gaming App").first()).toBeVisible();
+    await expect(page.getByText("BC Arcade").first()).toBeVisible();
     await page.getByRole("button", { name: "Play 2048" }).click();
     await expect(page.getByLabel("Game board")).toBeVisible();
   });
@@ -144,7 +144,7 @@ test.describe("2048 — full happy-path game journey", () => {
     await gotoTwenty48(page);
     // Navigate home via URL (Lobby tab pop-to-root not reliable on web)
     await page.goto("/");
-    await expect(page.getByText("Gaming App").first()).toBeVisible({
+    await expect(page.getByText("BC Arcade").first()).toBeVisible({
       timeout: 10000,
     });
   });

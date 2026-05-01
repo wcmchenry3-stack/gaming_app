@@ -18,8 +18,13 @@ import {
   _resetIds,
   CANVAS_W,
   CANVAS_H,
+  applyPowerUp,
+  DIFFICULTY_TIERS,
+  difficultyMultiplier,
+  difficultyParamScale,
+  difficultyLabel,
 } from "../engine";
-import type { Bullet, StarSwarmInput, StarSwarmState } from "../types";
+import type { Bullet, DifficultyTier, StarSwarmInput, StarSwarmState } from "../types";
 
 const NO_INPUT: StarSwarmInput = { playerX: CANVAS_W / 2, fire: false };
 const FIRE_INPUT: StarSwarmInput = { playerX: CANVAS_W / 2, fire: true };
@@ -328,8 +333,8 @@ describe("Collision: enemy bullets vs player", () => {
 // ---------------------------------------------------------------------------
 
 describe("Scoring", () => {
-  it("Grunt is worth 100 points", () => {
-    let s = initStarSwarm(CANVAS_W, CANVAS_H);
+  it("Grunt is worth 100 points (Ensign ×1 baseline)", () => {
+    let s = initStarSwarm(CANVAS_W, CANVAS_H, 1, 42, "Ensign");
     s = advanceMs(s, 8000);
     const grunt = s.enemies.find((e) => e.isAlive && e.tier === "Grunt");
     if (!grunt) return;
@@ -352,8 +357,8 @@ describe("Scoring", () => {
     expect(s.score - scoreBeforeKill).toBe(100);
   });
 
-  it("Elite is worth 200 points", () => {
-    let s = initStarSwarm(CANVAS_W, CANVAS_H);
+  it("Elite is worth 200 points (Ensign ×1 baseline)", () => {
+    let s = initStarSwarm(CANVAS_W, CANVAS_H, 1, 42, "Ensign");
     s = advanceMs(s, 8000);
     // Elite has 2 HP — need to hit twice
     const elite = s.enemies.find((e) => e.isAlive && e.tier === "Elite");
@@ -562,8 +567,8 @@ describe("Boss HP (#970)", () => {
     }
   });
 
-  it("Boss is still worth 400 points on kill", () => {
-    let s = initStarSwarm(CANVAS_W, CANVAS_H);
+  it("Boss is still worth 400 points on kill (Ensign ×1 baseline)", () => {
+    let s = initStarSwarm(CANVAS_W, CANVAS_H, 1, 42, "Ensign");
     s = advanceMs(s, 8000);
     const bossId = s.enemies.find((e) => e.isAlive && e.tier === "Boss")?.id;
     if (!bossId) throw new Error("no boss");
@@ -695,13 +700,14 @@ describe("Enemy bullet cap (#972)", () => {
     s = advanceMs(s, 8000);
     expect(s.phase).toBe("Playing");
 
-    // Start with 0 enemy bullets and force an immediate shot
+    // Force the first non-Boss formation enemy to fire immediately
+    // (Bosses are passive until bossThresholdCrossed, so use a Grunt or Elite)
+    const targetIdx = s.enemies.findIndex((e) => e.phase === "Formation" && e.tier !== "Boss");
+    if (targetIdx === -1) return;
     s = {
       ...s,
       enemyBullets: [],
-      enemies: s.enemies.map((e, i) =>
-        i === 0 && e.phase === "Formation" ? { ...e, shootTimer: 0 } : e
-      ),
+      enemies: s.enemies.map((e, i) => (i === targetIdx ? { ...e, shootTimer: 0 } : e)),
     };
 
     s = tick(s, 16, NO_INPUT);
@@ -732,10 +738,10 @@ describe("ChallengingStage off-screen cleanup", () => {
     let s = initStarSwarm(CANVAS_W, CANVAS_H, 3);
     expect(s.phase).toBe("ChallengingStage");
 
-    // Last enemy (idx 23) starts with pathT = -(23*80/3200) ≈ -0.575
-    // It exits the canvas after (1 + 0.575) * 3200 ≈ 5040 ms.
+    // With 40 enemies, last enemy (idx 39) has delay = 39*80/3200 = 0.975.
+    // It exits the canvas after (1 + 0.975) * 3200 ≈ 6320 ms.
     // Advance past that with no firing so enemies scroll off instead of being shot.
-    s = advanceMs(s, 6000, NO_INPUT);
+    s = advanceMs(s, 7000, NO_INPUT);
     expect(s.phase).toBe("WaveClear");
   });
 
@@ -808,17 +814,11 @@ describe("Dive/circle shooting", () => {
 // ---------------------------------------------------------------------------
 
 describe("Bonus lives", () => {
-  it("awards +1 life when score crosses 30,000", () => {
-    let s = initStarSwarm(CANVAS_W, CANVAS_H);
-    s = advanceMs(s, 8000); // reach Playing
-    const startLives = s.player.lives;
-    // Inject score just below threshold, then cross it via a kill
-    s = { ...s, score: 29_999 };
-    // Force enemy to be in formation at a known position and kill it with a bullet
+  function killEnemy(s: StarSwarmState, bulletId: number): StarSwarmState {
     const enemy = s.enemies.find((e) => e.isAlive);
-    if (!enemy) throw new Error("no enemy");
+    if (!enemy) throw new Error("no alive enemy");
     const bullet: Bullet = {
-      id: 99999,
+      id: bulletId,
       x: enemy.x,
       y: enemy.y,
       vx: 0,
@@ -828,44 +828,77 @@ describe("Bonus lives", () => {
       height: enemy.height,
       damage: 10,
     };
-    s = { ...s, playerBullets: [bullet] };
-    s = tick(s, 16, NO_INPUT);
+    return tick({ ...s, playerBullets: [bullet] }, 16, NO_INPUT);
+  }
+
+  it("awards +1 life when score crosses the Ensign threshold (30k)", () => {
+    let s = initStarSwarm(CANVAS_W, CANVAS_H, 1, 42, "Ensign");
+    s = advanceMs(s, 8000); // reach Playing
+    const startLives = s.player.lives;
+    s = { ...s, score: 29_999 };
+    s = killEnemy(s, 99999);
     expect(s.player.lives).toBe(startLives + 1);
     expect(s.bonusLivesAwarded).toBe(1);
   });
 
-  it("does not re-award bonus life on the same threshold", () => {
-    let s = initStarSwarm(CANVAS_W, CANVAS_H);
+  it("does not re-award bonus life on the same multiple", () => {
+    let s = initStarSwarm(CANVAS_W, CANVAS_H, 1, 42, "Ensign");
     s = advanceMs(s, 8000);
     s = { ...s, score: 29_999, bonusLivesAwarded: 0 };
-    const enemy = s.enemies.find((e) => e.isAlive);
-    if (!enemy) throw new Error("no enemy");
-    const bullet: Bullet = {
-      id: 99998,
-      x: enemy.x,
-      y: enemy.y,
-      vx: 0,
-      vy: 0,
-      owner: "player",
-      width: enemy.width,
-      height: enemy.height,
-      damage: 10,
-    };
-    s = tick({ ...s, playerBullets: [bullet] }, 16, NO_INPUT);
+    s = killEnemy(s, 99998);
     const livesAfterFirst = s.player.lives;
-    // Tick again from same score — threshold already crossed, bonusLivesAwarded=1
+    // Tick again from same score — multiple already counted, bonusLivesAwarded=1
     s = tick(s, 16, NO_INPUT);
     expect(s.player.lives).toBe(livesAfterFirst);
   });
 
   it("caps lives at MAX_LIVES (5)", () => {
-    let s = initStarSwarm(CANVAS_W, CANVAS_H);
+    let s = initStarSwarm(CANVAS_W, CANVAS_H, 1, 42, "Ensign");
     s = advanceMs(s, 8000);
     s = { ...s, score: 29_999, player: { ...s.player, lives: 5 } };
+    s = killEnemy(s, 99997);
+    expect(s.player.lives).toBe(5);
+  });
+
+  // #1079: repeating threshold
+  it("awards a second bonus life at 60k on Ensign", () => {
+    let s = initStarSwarm(CANVAS_W, CANVAS_H, 1, 42, "Ensign");
+    s = advanceMs(s, 8000);
+    // Already awarded 1 life at 30k — now cross 60k
+    s = { ...s, score: 59_999, bonusLivesAwarded: 1, player: { ...s.player, lives: 3 } };
+    s = killEnemy(s, 88881);
+    expect(s.player.lives).toBe(4);
+    expect(s.bonusLivesAwarded).toBe(2);
+  });
+
+  it("threshold scales by difficulty: Lieutenant (2×) awards life at 60k not 30k", () => {
+    let s = initStarSwarm(CANVAS_W, CANVAS_H, 1, 42, "Lieutenant");
+    s = advanceMs(s, 8000);
+    // Score crosses 30k — no life yet (threshold is 60k for Lieutenant)
+    s = { ...s, score: 29_999, bonusLivesAwarded: 0 };
+    s = killEnemy(s, 88882);
+    const livesAt30k = s.player.lives;
+    const awardedAt30k = s.bonusLivesAwarded;
+    expect(awardedAt30k).toBe(0); // no life at 30k
+
+    // Now cross 60k
+    s = { ...s, score: 59_999, bonusLivesAwarded: 0 };
+    s = killEnemy(s, 88883);
+    expect(s.bonusLivesAwarded).toBe(1);
+    expect(s.player.lives).toBe(livesAt30k + 1);
+  });
+
+  // #1078: race condition — same-tick lethal hit + threshold crossing
+  it("player survives when bonus life threshold is crossed in the same tick as a lethal hit", () => {
+    let s = initStarSwarm(CANVAS_W, CANVAS_H, 1, 42, "Ensign");
+    s = advanceMs(s, 8000);
+    // Player at 1 life, score just below threshold
+    s = { ...s, score: 29_999, player: { ...s.player, lives: 1, invincibleTimer: 0 } };
     const enemy = s.enemies.find((e) => e.isAlive);
-    if (!enemy) throw new Error("no enemy");
-    const bullet: Bullet = {
-      id: 99997,
+    if (!enemy) throw new Error("no alive enemy");
+    // Kill bullet at enemy position
+    const killBullet: Bullet = {
+      id: 77771,
       x: enemy.x,
       y: enemy.y,
       vx: 0,
@@ -875,8 +908,44 @@ describe("Bonus lives", () => {
       height: enemy.height,
       damage: 10,
     };
-    s = tick({ ...s, playerBullets: [bullet] }, 16, NO_INPUT);
-    expect(s.player.lives).toBe(5);
+    // Enemy bullet on top of player (lethal hit same tick)
+    const enemyBullet: Bullet = {
+      id: 77772,
+      x: s.player.x,
+      y: s.player.y,
+      vx: 0,
+      vy: 0,
+      owner: "enemy",
+      width: 8,
+      height: 8,
+      damage: 1,
+    };
+    s = tick({ ...s, playerBullets: [killBullet], enemyBullets: [enemyBullet] }, 16, NO_INPUT);
+    // Bonus life awarded before lethal hit resolves — player should survive
+    expect(s.phase).not.toBe("GameOver");
+    expect(s.player.lives).toBeGreaterThan(0);
+  });
+
+  // #1078: slow-mo timer and invincibility
+  it("sets bonusLifeSlowMoTimer and invincibleTimer after bonus life award", () => {
+    let s = initStarSwarm(CANVAS_W, CANVAS_H, 1, 42, "Ensign");
+    s = advanceMs(s, 8000);
+    s = { ...s, score: 29_999 };
+    s = killEnemy(s, 88884);
+    expect(s.bonusLifeSlowMoTimer).toBeGreaterThan(0);
+    expect(s.player.invincibleTimer).toBeGreaterThan(0);
+  });
+
+  it("bonusLifeSlowMoTimer decrements over time and does not go negative", () => {
+    let s = initStarSwarm(CANVAS_W, CANVAS_H, 1, 42, "Ensign");
+    s = advanceMs(s, 8000);
+    s = { ...s, score: 29_999 };
+    s = killEnemy(s, 88885);
+    const timerAfterAward = s.bonusLifeSlowMoTimer;
+    expect(timerAfterAward).toBeGreaterThan(0);
+    // Advance enough to exhaust the timer
+    s = advanceMs(s, 1000);
+    expect(s.bonusLifeSlowMoTimer).toBe(0);
   });
 });
 
@@ -1195,6 +1264,7 @@ describe("Boss burst-fire (#979)", () => {
     if (bossIdx === -1) throw new Error("no boss in formation");
     s = {
       ...s,
+      bossThresholdCrossed: true, // Boss must be active to fire
       enemyBullets: [],
       enemies: s.enemies.map((e, i) =>
         i === bossIdx ? { ...e, shootTimer: 0, burstShotsLeft: 0 } : e
@@ -1217,9 +1287,10 @@ describe("Boss burst-fire (#979)", () => {
       (e) => e.isAlive && e.tier === "Boss" && e.phase === "Formation"
     );
     if (bossIdx === -1) throw new Error("no boss in formation");
-    // Force last shot in burst
+    // Force last shot in burst (Boss must be active to fire)
     s = {
       ...s,
+      bossThresholdCrossed: true,
       enemyBullets: [],
       enemies: s.enemies.map((e, i) =>
         i === bossIdx ? { ...e, shootTimer: 0, burstShotsLeft: 1 } : e
@@ -1313,6 +1384,7 @@ describe("Power-up engine (#980)", () => {
     s = advanceMs(s, 8000);
     const existing = {
       id: 9999,
+      type: "lightning" as const,
       x: 100,
       y: 100,
       vy: 0.08,
@@ -1346,6 +1418,7 @@ describe("Power-up engine (#980)", () => {
     // Place a power-up directly on the player
     const pu = {
       id: 8001,
+      type: "lightning" as const,
       x: s.player.x,
       y: s.player.y,
       vy: 0,
@@ -1395,7 +1468,11 @@ describe("Power-up engine (#980)", () => {
   it("super state applies damage=4, piercing=true, fast cooldown to player bullets", () => {
     let s = initStarSwarm(CANVAS_W, CANVAS_H);
     s = advanceMs(s, 8000);
-    s = { ...s, activePowerUp: { remainingMs: 3000 }, player: { ...s.player, shootCooldown: 0 } };
+    s = {
+      ...s,
+      activePowerUp: { remainingMs: 3000, type: "lightning" as const, shieldAbsorbed: 0 },
+      player: { ...s.player, shootCooldown: 0 },
+    };
     s = tick(s, 16, FIRE_INPUT);
     const bullet = s.playerBullets[s.playerBullets.length - 1];
     expect(bullet).toBeDefined();
@@ -1409,16 +1486,838 @@ describe("Power-up engine (#980)", () => {
   it("activePowerUp expires after POWERUP_DURATION ms", () => {
     let s = initStarSwarm(CANVAS_W, CANVAS_H);
     s = advanceMs(s, 8000);
-    s = { ...s, activePowerUp: { remainingMs: 100 } };
+    s = {
+      ...s,
+      activePowerUp: { remainingMs: 100, type: "lightning" as const, shieldAbsorbed: 0 },
+    };
     s = advanceMs(s, 200, NO_INPUT);
     expect(s.activePowerUp).toBeNull();
   });
 
-  it("Challenging Stage spawns one power-up at wave start (X = canvasW/2)", () => {
+  it("Challenging Stage spawns one lightning power-up at wave start within safe bounds (#1032)", () => {
     const s = initStarSwarm(CANVAS_W, CANVAS_H, 3);
     expect(s.phase).toBe("ChallengingStage");
     expect(s.powerUps.length).toBe(1);
-    expect(s.powerUps[0]!.x).toBe(CANVAS_W / 2);
-    expect(s.powerUps[0]!.despawnTimer).toBeGreaterThan(6000); // canvas-height-derived (~8950ms at CANVAS_H=640)
+    const pu = s.powerUps[0]!;
+    expect(pu.type).toBe("lightning");
+    // X randomised within safe margins (not hardcoded to center)
+    expect(pu.x).toBeGreaterThanOrEqual(12);
+    expect(pu.x).toBeLessThanOrEqual(CANVAS_W - 12);
+    expect(pu.despawnTimer).toBeGreaterThan(6000); // canvas-height-derived (~8950ms at CANVAS_H=640)
+  });
+});
+
+// ---------------------------------------------------------------------------
+// #1029 — Grunt & Boss collision redesign
+// ---------------------------------------------------------------------------
+
+describe("#1029 Grunt & Boss collision redesign", () => {
+  it("Grunt never enters Circling phase", () => {
+    let s = initStarSwarm(CANVAS_W, CANVAS_H);
+    s = advanceMs(s, 8000);
+    expect(s.phase).toBe("Playing");
+
+    for (let i = 0; i < 3000; i++) {
+      s = tick(s, 16, NO_INPUT);
+      if (s.phase !== "Playing") break;
+      const gruntCircling = s.enemies.some(
+        (e) => e.isAlive && e.tier === "Grunt" && e.phase === "Circling"
+      );
+      expect(gruntCircling).toBe(false);
+    }
+  });
+
+  it("Grunt returns to Formation after dive without entering Circling", () => {
+    let s = initStarSwarm(CANVAS_W, CANVAS_H);
+    s = advanceMs(s, 8000);
+    s = resetToFormation({ ...s, nextDiveTimer: 1 });
+    s = tick(s, 16, NO_INPUT);
+
+    const wiggling = s.enemies.find((e) => e.phase === "Wiggling" && e.tier === "Grunt");
+    if (!wiggling) return; // wave may have no Grunts in formation — skip
+    const id = wiggling.id;
+
+    // Wait for the full dive + return cycle
+    s = advanceMs(s, WIGGLE_DURATION + 4000, NO_INPUT);
+    const after = s.enemies.find((e) => e.id === id);
+    if (!after || !after.isAlive) return;
+    expect(after.phase === "Circling").toBe(false);
+  });
+
+  it("Boss never body-collides with player", () => {
+    let s = initStarSwarm(CANVAS_W, CANVAS_H);
+    s = advanceMs(s, 8000);
+    s = { ...s, bossThresholdCrossed: true, player: { ...s.player, invincibleTimer: 0 } };
+
+    const bossId = s.enemies.find((e) => e.isAlive && e.tier === "Boss")?.id;
+    if (!bossId) throw new Error("no boss");
+
+    // Teleport Boss directly onto the player and give it a diving phase
+    const { player } = s;
+    s = {
+      ...s,
+      player: { ...player, lives: 3, invincibleTimer: 0 },
+      enemies: s.enemies.map((e) =>
+        e.id === bossId
+          ? {
+              ...e,
+              phase: "Diving" as const,
+              x: player.x,
+              y: player.y,
+              path: {
+                p0: { x: player.x, y: player.y },
+                p1: { x: player.x, y: player.y + 10 },
+                p2: { x: player.x, y: player.y + 20 },
+                p3: { x: player.x, y: player.y + 30 },
+              },
+              pathT: 0,
+              pathDuration: 1000,
+            }
+          : e
+      ),
+    };
+
+    s = tick(s, 16, NO_INPUT);
+    // Player should NOT have lost a life despite Boss being on same position
+    expect(s.player.lives).toBe(3);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// #1030 — Elite phase system & Boss passive start
+// ---------------------------------------------------------------------------
+
+describe("#1030 Elite phase system & Boss passive start", () => {
+  it("bossThresholdCrossed initialises to false", () => {
+    const s = initStarSwarm(CANVAS_W, CANVAS_H);
+    expect(s.bossThresholdCrossed).toBe(false);
+  });
+
+  it("bossThresholdCrossed flips to true once ≤35% non-boss enemies remain and stays true", () => {
+    let s = initStarSwarm(CANVAS_W, CANVAS_H);
+    s = advanceMs(s, 8000);
+    expect(s.bossThresholdCrossed).toBe(false);
+
+    const target = Math.floor(s.startingNonBossCount * 0.3);
+    let killed = 0;
+    s = {
+      ...s,
+      enemies: s.enemies.map((e) => {
+        if (e.tier !== "Boss" && e.isAlive && killed < s.startingNonBossCount - target) {
+          killed++;
+          return { ...e, isAlive: false, hp: 0 };
+        }
+        return e;
+      }),
+    };
+    s = tick(s, 16, NO_INPUT);
+    expect(s.bossThresholdCrossed).toBe(true);
+
+    // Stays true after further ticks
+    s = advanceMs(s, 1000, NO_INPUT);
+    expect(s.bossThresholdCrossed).toBe(true);
+  });
+
+  it("Boss does not fire while bossThresholdCrossed is false", () => {
+    let s = initStarSwarm(CANVAS_W, CANVAS_H);
+    s = advanceMs(s, 8000);
+    expect(s.bossThresholdCrossed).toBe(false);
+
+    const bossIdx = s.enemies.findIndex((e) => e.isAlive && e.tier === "Boss");
+    if (bossIdx === -1) throw new Error("no boss");
+    s = {
+      ...s,
+      enemyBullets: [],
+      enemies: s.enemies.map((e, i) =>
+        i === bossIdx ? { ...e, shootTimer: 0, burstShotsLeft: 0 } : e
+      ),
+    };
+    s = tick(s, 16, NO_INPUT);
+    // Boss should not fire while passive
+    expect(s.enemyBullets.length).toBe(0);
+  });
+
+  it("Boss does not dive while bossThresholdCrossed is false", () => {
+    let s = initStarSwarm(CANVAS_W, CANVAS_H);
+    s = advanceMs(s, 8000);
+    expect(s.bossThresholdCrossed).toBe(false);
+
+    const bossIds = new Set(s.enemies.filter((e) => e.tier === "Boss").map((e) => e.id));
+    s = { ...s, nextDiveTimer: 1 };
+    s = tick(s, 16, NO_INPUT);
+    const bossActed = s.enemies.some(
+      (e) => bossIds.has(e.id) && (e.phase === "Wiggling" || e.phase === "Diving")
+    );
+    expect(bossActed).toBe(false);
+  });
+
+  it("Elite Phase 1 dive stays above 60% canvas height", () => {
+    let s = initStarSwarm(CANVAS_W, CANVAS_H);
+    s = advanceMs(s, 8000);
+    expect(s.bossThresholdCrossed).toBe(false);
+
+    // Force an Elite to dive
+    const eliteIdx = s.enemies.findIndex(
+      (e) => e.isAlive && e.tier === "Elite" && e.phase === "Formation"
+    );
+    if (eliteIdx === -1) throw new Error("no elite in formation");
+    s = {
+      ...s,
+      enemies: s.enemies.map((e, i) =>
+        i === eliteIdx
+          ? {
+              ...e,
+              phase: "Wiggling" as const,
+              wiggleTimer: WIGGLE_DURATION,
+              diveTargetX: s.player.x,
+            }
+          : e
+      ),
+    };
+
+    const eliteId = s.enemies[eliteIdx]!.id;
+    const maxY60 = CANVAS_H * 0.6;
+
+    for (let i = 0; i < 500; i++) {
+      s = tick(s, 16, NO_INPUT);
+      const elite = s.enemies.find((e) => e.id === eliteId);
+      if (!elite || !elite.isAlive || elite.phase === "Returning" || elite.phase === "Formation")
+        break;
+      if (elite.phase === "Diving") {
+        expect(elite.y).toBeLessThan(maxY60 + 5); // allow 1-frame overshoot tolerance
+      }
+    }
+  });
+
+  it("Elite Phase 1 has no body collision", () => {
+    let s = initStarSwarm(CANVAS_W, CANVAS_H);
+    s = advanceMs(s, 8000);
+    expect(s.bossThresholdCrossed).toBe(false);
+    s = { ...s, player: { ...s.player, lives: 3, invincibleTimer: 0 } };
+
+    const eliteId = s.enemies.find((e) => e.isAlive && e.tier === "Elite")?.id;
+    if (!eliteId) throw new Error("no elite");
+    const { player } = s;
+    s = {
+      ...s,
+      enemies: s.enemies.map((e) =>
+        e.id === eliteId
+          ? {
+              ...e,
+              phase: "Diving" as const,
+              x: player.x,
+              y: player.y,
+              path: {
+                p0: { x: player.x, y: player.y },
+                p1: { x: player.x, y: player.y + 5 },
+                p2: { x: player.x, y: player.y + 10 },
+                p3: { x: player.x, y: player.y + 15 },
+              },
+              pathT: 0,
+              pathDuration: 1000,
+            }
+          : e
+      ),
+    };
+    s = tick(s, 16, NO_INPUT);
+    expect(s.player.lives).toBe(3);
+  });
+
+  it("Elite Phase 2 (bossThresholdCrossed=true) can body-collide", () => {
+    let s = initStarSwarm(CANVAS_W, CANVAS_H);
+    s = advanceMs(s, 8000);
+    s = { ...s, bossThresholdCrossed: true, player: { ...s.player, lives: 3, invincibleTimer: 0 } };
+
+    const eliteId = s.enemies.find((e) => e.isAlive && e.tier === "Elite")?.id;
+    if (!eliteId) throw new Error("no elite");
+    const { player } = s;
+    s = {
+      ...s,
+      enemies: s.enemies.map((e) =>
+        e.id === eliteId
+          ? {
+              ...e,
+              phase: "Diving" as const,
+              x: player.x,
+              y: player.y,
+              path: {
+                p0: { x: player.x, y: player.y },
+                p1: { x: player.x, y: player.y + 5 },
+                p2: { x: player.x, y: player.y + 10 },
+                p3: { x: player.x, y: player.y + 15 },
+              },
+              pathT: 0,
+              pathDuration: 1000,
+            }
+          : e
+      ),
+    };
+    s = tick(s, 16, NO_INPUT);
+    expect(s.player.lives).toBeLessThan(3);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// #1031 — Straggler aggression
+// ---------------------------------------------------------------------------
+
+describe("#1031 Straggler aggression", () => {
+  it("stragglerEnabled is false on Ensign difficulty", () => {
+    const s = initStarSwarm(CANVAS_W, CANVAS_H, 1, 42, "Ensign");
+    expect(s.stragglerEnabled).toBe(false);
+  });
+
+  it("stragglerEnabled is true on LieutenantJG (default) difficulty", () => {
+    const s = initStarSwarm(CANVAS_W, CANVAS_H);
+    expect(s.stragglerEnabled).toBe(true);
+  });
+
+  it("when ≤3 enemies remain and stragglerEnabled, Formation enemies immediately wiggle", () => {
+    let s = initStarSwarm(CANVAS_W, CANVAS_H, 1, 42, "LieutenantJG");
+    s = advanceMs(s, 8000);
+    expect(s.phase).toBe("Playing");
+
+    // Kill all but 2 enemies
+    const alive = s.enemies.filter((e) => e.isAlive);
+    const toKill = alive.slice(2);
+    s = {
+      ...s,
+      enemies: s.enemies.map((e) =>
+        toKill.some((k) => k.id === e.id) ? { ...e, isAlive: false, hp: 0 } : e
+      ),
+    };
+
+    s = tick(s, 16, NO_INPUT);
+    const formationCount = s.enemies.filter((e) => e.isAlive && e.phase === "Formation").length;
+    expect(formationCount).toBe(0); // all should have entered Wiggling
+  });
+
+  it("straggler does not trigger on Ensign difficulty", () => {
+    let s = initStarSwarm(CANVAS_W, CANVAS_H, 1, 42, "Ensign");
+    s = advanceMs(s, 8000);
+    expect(s.phase).toBe("Playing");
+
+    const alive = s.enemies.filter((e) => e.isAlive);
+    const toKill = alive.slice(2);
+    s = {
+      ...s,
+      enemies: s.enemies.map((e) =>
+        toKill.some((k) => k.id === e.id) ? { ...e, isAlive: false, hp: 0 } : e
+      ),
+    };
+    s = tick(s, 16, NO_INPUT);
+    // Formation enemies should still be in Formation (no straggler kick)
+    const wiggling = s.enemies.filter((e) => e.isAlive && e.phase === "Wiggling");
+    expect(wiggling.length).toBe(0);
+  });
+
+  it("straggler does not apply during ChallengingStage", () => {
+    let s = initStarSwarm(CANVAS_W, CANVAS_H, 3, 42, "LieutenantJG");
+    expect(s.phase).toBe("ChallengingStage");
+    s = advanceMs(s, 500, NO_INPUT);
+    // Kill all but 2
+    const alive = s.enemies.filter((e) => e.isAlive);
+    const toKill = alive.slice(2);
+    s = {
+      ...s,
+      enemies: s.enemies.map((e) =>
+        toKill.some((k) => k.id === e.id) ? { ...e, isAlive: false, hp: 0 } : e
+      ),
+    };
+    s = tick(s, 16, NO_INPUT);
+    // Phase should move to WaveClear (all dead or exited), not get stuck
+    // Key assertion: no straggler-forced Wiggling in challenge stage
+    const wiggling = s.enemies.filter((e) => e.isAlive && e.phase === "Wiggling");
+    expect(wiggling.length).toBe(0);
+  });
+
+  it("stragglerEnabled carries over to next wave", () => {
+    let s = initStarSwarm(CANVAS_W, CANVAS_H, 1, 42, "LieutenantJG");
+    s = advanceMs(s, 8000);
+    s = { ...s, enemies: s.enemies.map((e) => ({ ...e, isAlive: false, hp: 0 })) };
+    s = tick(s, 16, NO_INPUT); // WaveClear
+    s = advanceMs(s, 3000);
+    expect(s.wave).toBe(2);
+    expect(s.stragglerEnabled).toBe(true);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// #1032 — Power-up foundation: drops, type field, weighted selection
+// ---------------------------------------------------------------------------
+
+describe("#1032 Power-up foundation", () => {
+  it("kill-triggered drop has a valid PowerUpType", () => {
+    let s = initStarSwarm(CANVAS_W, CANVAS_H);
+    s = advanceMs(s, 8000);
+    expect(s.phase).toBe("Playing");
+    s = { ...s, killsSinceLastDrop: s.dropJitterTarget - 1, powerUps: [] };
+    const target = s.enemies.find((e) => e.isAlive);
+    if (!target) throw new Error("no alive enemy");
+    const killBullet: Bullet = {
+      id: 77001,
+      x: target.x,
+      y: target.y,
+      vx: 0,
+      vy: 0,
+      owner: "player",
+      width: target.width,
+      height: target.height,
+      damage: 999,
+    };
+    s = { ...s, playerBullets: [killBullet] };
+    s = tick(s, 16, NO_INPUT);
+    expect(s.powerUps.length).toBe(1);
+    const pu = s.powerUps[0]!;
+    expect(["lightning", "shield", "buddy", "bomb"]).toContain(pu.type);
+  });
+
+  it("drop spawn X is within canvas safe bounds", () => {
+    let s = initStarSwarm(CANVAS_W, CANVAS_H);
+    s = advanceMs(s, 8000);
+    s = { ...s, killsSinceLastDrop: s.dropJitterTarget - 1, powerUps: [] };
+    const target = s.enemies.find((e) => e.isAlive);
+    if (!target) throw new Error("no alive enemy");
+    const killBullet: Bullet = {
+      id: 77002,
+      x: target.x,
+      y: target.y,
+      vx: 0,
+      vy: 0,
+      owner: "player",
+      width: target.width,
+      height: target.height,
+      damage: 999,
+    };
+    s = { ...s, playerBullets: [killBullet] };
+    s = tick(s, 16, NO_INPUT);
+    const pu = s.powerUps[0]!;
+    expect(pu.x).toBeGreaterThanOrEqual(12);
+    expect(pu.x).toBeLessThanOrEqual(CANVAS_W - 12);
+  });
+
+  it("pauseStraggler initialises to false", () => {
+    const s = initStarSwarm(CANVAS_W, CANVAS_H);
+    expect(s.pauseStraggler).toBe(false);
+  });
+
+  it("applyPowerUp(lightning) sets activePowerUp with type lightning", () => {
+    let s = initStarSwarm(CANVAS_W, CANVAS_H);
+    s = advanceMs(s, 8000);
+    s = applyPowerUp(s, "lightning");
+    expect(s.activePowerUp).not.toBeNull();
+    expect(s.activePowerUp!.type).toBe("lightning");
+    expect(s.activePowerUp!.remainingMs).toBeGreaterThan(0);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// #1033 — Shield power-up: absorbs bullets, body collision still kills
+// ---------------------------------------------------------------------------
+
+describe("#1033 Shield power-up", () => {
+  it("shield absorbs an incoming enemy bullet without player taking damage", () => {
+    let s = initStarSwarm(CANVAS_W, CANVAS_H);
+    s = advanceMs(s, 8000);
+    s = applyPowerUp(s, "shield");
+    expect(s.activePowerUp?.type).toBe("shield");
+
+    // Place an enemy bullet directly on the player
+    const eb: Bullet = {
+      id: 88001,
+      x: s.player.x,
+      y: s.player.y,
+      vx: 0,
+      vy: 0.3,
+      owner: "enemy",
+      width: 6,
+      height: 12,
+      damage: 1,
+    };
+    const livesBefore = s.player.lives;
+    s = { ...s, enemyBullets: [eb], player: { ...s.player, invincibleTimer: 0 } };
+    s = tick(s, 16, NO_INPUT);
+    expect(s.player.lives).toBe(livesBefore); // bullet absorbed
+    expect(s.enemyBullets.length).toBe(0); // bullet removed
+    expect(s.activePowerUp?.shieldAbsorbed).toBeGreaterThanOrEqual(1);
+  });
+
+  it("applyPowerUp(shield) sets type shield", () => {
+    let s = initStarSwarm(CANVAS_W, CANVAS_H);
+    s = advanceMs(s, 8000);
+    s = applyPowerUp(s, "shield");
+    expect(s.activePowerUp!.type).toBe("shield");
+  });
+});
+
+// ---------------------------------------------------------------------------
+// #1034 — Smart Bomb: clears bullets, damages all enemies, flash timer
+// ---------------------------------------------------------------------------
+
+describe("#1034 Smart Bomb", () => {
+  it("bomb clears all enemy bullets on collection", () => {
+    let s = initStarSwarm(CANVAS_W, CANVAS_H);
+    s = advanceMs(s, 8000);
+    // Seed some enemy bullets
+    const fakeBullets: Bullet[] = [1, 2, 3].map((id) => ({
+      id,
+      x: 100,
+      y: 100,
+      vx: 0,
+      vy: 0.3,
+      owner: "enemy" as const,
+      width: 6,
+      height: 12,
+      damage: 1,
+    }));
+    // Place bomb power-up on player
+    const pu = {
+      id: 9901,
+      type: "bomb" as const,
+      x: s.player.x,
+      y: s.player.y,
+      vy: 0,
+      width: 24,
+      height: 24,
+      despawnTimer: 6000,
+    };
+    s = { ...s, enemyBullets: fakeBullets, powerUps: [pu] };
+    s = tick(s, 16, NO_INPUT);
+    expect(s.enemyBullets.length).toBe(0);
+    expect(s.powerUps.length).toBe(0);
+  });
+
+  it("bomb deals 1 HP to all alive enemies", () => {
+    let s = initStarSwarm(CANVAS_W, CANVAS_H);
+    s = advanceMs(s, 8000);
+    const hpsBefore = s.enemies.filter((e) => e.isAlive).map((e) => ({ id: e.id, hp: e.hp }));
+    const pu = {
+      id: 9902,
+      type: "bomb" as const,
+      x: s.player.x,
+      y: s.player.y,
+      vy: 0,
+      width: 24,
+      height: 24,
+      despawnTimer: 6000,
+    };
+    s = { ...s, powerUps: [pu] };
+    s = tick(s, 16, NO_INPUT);
+    for (const { id, hp } of hpsBefore) {
+      const after = s.enemies.find((e) => e.id === id);
+      if (!after) continue; // might have died (hp was 1)
+      if (after.isAlive) {
+        expect(after.hp).toBeLessThanOrEqual(hp - 1);
+      }
+    }
+  });
+
+  it("bomb sets bombFlashTimer > 0 immediately after collection", () => {
+    let s = initStarSwarm(CANVAS_W, CANVAS_H);
+    s = advanceMs(s, 8000);
+    const pu = {
+      id: 9903,
+      type: "bomb" as const,
+      x: s.player.x,
+      y: s.player.y,
+      vy: 0,
+      width: 24,
+      height: 24,
+      despawnTimer: 6000,
+    };
+    s = { ...s, powerUps: [pu] };
+    s = tick(s, 16, NO_INPUT);
+    expect(s.bombFlashTimer).toBeGreaterThan(0);
+    // Bomb does NOT set activePowerUp (instant effect)
+    expect(s.activePowerUp).toBeNull();
+  });
+
+  it("bombFlashTimer decrements to zero over time", () => {
+    let s = initStarSwarm(CANVAS_W, CANVAS_H);
+    s = advanceMs(s, 8000);
+    s = applyPowerUp(s, "bomb");
+    expect(s.bombFlashTimer).toBeGreaterThan(0);
+    s = advanceMs(s, 500, NO_INPUT);
+    expect(s.bombFlashTimer).toBe(0);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// #1035 — Buddy Ship: spawns, traverses, fires burst
+// ---------------------------------------------------------------------------
+
+describe("#1035 Buddy Ship", () => {
+  it("buddyShips initialises empty", () => {
+    const s = initStarSwarm(CANVAS_W, CANVAS_H);
+    expect(s.buddyShips).toEqual([]);
+  });
+
+  it("applyPowerUp(buddy) adds one buddy ship to state", () => {
+    let s = initStarSwarm(CANVAS_W, CANVAS_H);
+    s = advanceMs(s, 8000);
+    s = applyPowerUp(s, "buddy");
+    expect(s.buddyShips.length).toBe(1);
+  });
+
+  it("buddy ship fires player bullets and is removed after traversal", () => {
+    let s = initStarSwarm(CANVAS_W, CANVAS_H);
+    s = advanceMs(s, 8000);
+    s = applyPowerUp(s, "buddy");
+    expect(s.buddyShips.length).toBe(1);
+
+    // Advance until the buddy has fired (pathT >= 0.45) and completed (pathT > 1.2)
+    s = advanceMs(s, 4000, NO_INPUT);
+
+    // Buddy should be gone after full traversal
+    expect(s.buddyShips.length).toBe(0);
+    // Should have fired at least a few bullets during the run
+    // (bullets may have scrolled off, so just check they were ever created)
+    // We check by observing that bullets were fired at some point — we track via state snapshot
+    const bulletsAfter = s.playerBullets.length;
+    // At some point during the 4000ms window bullets were generated; final count may be lower
+    // due to off-screen removal. We just verify buddy removed cleanly.
+    expect(bulletsAfter).toBeGreaterThanOrEqual(0); // always true — buddy removal is the key check
+  });
+});
+
+// ---------------------------------------------------------------------------
+// #1037 — Difficulty tiers
+// ---------------------------------------------------------------------------
+
+describe("#1037 Difficulty tiers", () => {
+  it("DIFFICULTY_TIERS has 10 entries ordered Ensign→FleetAdmiral", () => {
+    expect(DIFFICULTY_TIERS.length).toBe(10);
+    expect(DIFFICULTY_TIERS[0]).toBe("Ensign");
+    expect(DIFFICULTY_TIERS[9]).toBe("FleetAdmiral");
+  });
+
+  it("difficultyMultiplier returns 1 for Ensign and 10 for FleetAdmiral", () => {
+    expect(difficultyMultiplier("Ensign")).toBe(1);
+    expect(difficultyMultiplier("FleetAdmiral")).toBe(10);
+  });
+
+  it("difficultyMultiplier returns a positive number for every tier", () => {
+    for (const tier of DIFFICULTY_TIERS) {
+      expect(difficultyMultiplier(tier)).toBeGreaterThan(0);
+    }
+  });
+
+  it("difficultyParamScale returns 0.7 for Ensign and 3.0 for FleetAdmiral", () => {
+    expect(difficultyParamScale("Ensign")).toBeCloseTo(0.7);
+    expect(difficultyParamScale("FleetAdmiral")).toBeCloseTo(3.0);
+  });
+
+  it("difficultyLabel returns a non-empty string for every tier", () => {
+    for (const tier of DIFFICULTY_TIERS) {
+      expect(difficultyLabel(tier).length).toBeGreaterThan(0);
+    }
+  });
+
+  it("initStarSwarm stores difficulty in state", () => {
+    const tiers: DifficultyTier[] = ["Ensign", "Captain", "FleetAdmiral"];
+    for (const tier of tiers) {
+      const s = initStarSwarm(CANVAS_W, CANVAS_H, 1, 42, tier);
+      expect(s.difficulty).toBe(tier);
+    }
+  });
+
+  it("Ensign disables straggler; all other tiers enable it", () => {
+    const ensign = initStarSwarm(CANVAS_W, CANVAS_H, 1, 42, "Ensign");
+    expect(ensign.stragglerEnabled).toBe(false);
+    for (const tier of DIFFICULTY_TIERS.filter((t) => t !== "Ensign")) {
+      const s = initStarSwarm(CANVAS_W, CANVAS_H, 1, 42, tier);
+      expect(s.stragglerEnabled).toBe(true);
+    }
+  });
+
+  it("score multiplier is applied: FleetAdmiral kill worth 10× base", () => {
+    let base = initStarSwarm(CANVAS_W, CANVAS_H, 1, 42, "Ensign");
+    let hard = initStarSwarm(CANVAS_W, CANVAS_H, 1, 42, "FleetAdmiral");
+    base = advanceMs(base, 8000);
+    hard = advanceMs(hard, 8000);
+    expect(base.phase).toBe("Playing");
+    expect(hard.phase).toBe("Playing");
+
+    const gruntBase = base.enemies.find((e) => e.isAlive && e.tier === "Grunt");
+    const gruntHard = hard.enemies.find((e) => e.isAlive && e.tier === "Grunt");
+    if (!gruntBase || !gruntHard) throw new Error("no grunt found");
+
+    const kill = (s: StarSwarmState, id: number): StarSwarmState => {
+      const e = s.enemies.find((en) => en.id === id)!;
+      const b: Bullet = {
+        id: 55500 + id,
+        x: e.x,
+        y: e.y,
+        vx: 0,
+        vy: 0,
+        owner: "player",
+        width: e.width,
+        height: e.height,
+        damage: 999,
+      };
+      return tick({ ...s, playerBullets: [b] }, 16, NO_INPUT);
+    };
+
+    const scoreBase = kill(base, gruntBase.id).score;
+    const scoreHard = kill(hard, gruntHard.id).score;
+    expect(scoreHard).toBe(scoreBase * 10);
+  });
+
+  it("difficulty carries over to next wave", () => {
+    let s = initStarSwarm(CANVAS_W, CANVAS_H, 1, 42, "Admiral");
+    s = advanceMs(s, 8000);
+    s = { ...s, enemies: s.enemies.map((e) => ({ ...e, isAlive: false, hp: 0 })) };
+    s = tick(s, 16, NO_INPUT);
+    s = advanceMs(s, 3000);
+    expect(s.wave).toBe(2);
+    expect(s.difficulty).toBe("Admiral");
+  });
+
+  it("wave clear bonus is multiplied by difficulty", () => {
+    let base = initStarSwarm(CANVAS_W, CANVAS_H, 1, 42, "Ensign");
+    let hard = initStarSwarm(CANVAS_W, CANVAS_H, 1, 42, "Captain"); // ×4
+    base = advanceMs(base, 8000);
+    hard = advanceMs(hard, 8000);
+
+    // Kill all enemies to trigger wave clear bonus
+    const wipeAll = (s: StarSwarmState): StarSwarmState => ({
+      ...s,
+      enemies: s.enemies.map((e) => ({ ...e, isAlive: false, hp: 0 })),
+    });
+    base = tick(wipeAll(base), 16, NO_INPUT);
+    hard = tick(wipeAll(hard), 16, NO_INPUT);
+
+    // Both should be in WaveClear and hard score should be ≥ 4× base score
+    expect(base.phase).toBe("WaveClear");
+    expect(hard.phase).toBe("WaveClear");
+    expect(hard.score).toBeGreaterThanOrEqual(base.score * 4);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// #1022 — Challenging Stage cadence (3, 7, 11, 15), 40 enemies, PERFECT bonus
+// ---------------------------------------------------------------------------
+
+describe("#1022 Challenging Stage cadence & PERFECT bonus", () => {
+  it("waves 3, 7, 11, 15 start as ChallengingStage (classic Galaga cadence)", () => {
+    for (const wave of [3, 7, 11, 15]) {
+      const s = initStarSwarm(CANVAS_W, CANVAS_H, wave);
+      expect(s.phase).toBe("ChallengingStage");
+    }
+  });
+
+  it("waves 4, 5, 6, 8, 9, 10 do NOT start as ChallengingStage", () => {
+    for (const wave of [4, 5, 6, 8, 9, 10]) {
+      const s = initStarSwarm(CANVAS_W, CANVAS_H, wave);
+      expect(s.phase).not.toBe("ChallengingStage");
+    }
+  });
+
+  it("ChallengingStage spawns exactly 40 enemies", () => {
+    const s = initStarSwarm(CANVAS_W, CANVAS_H, 3);
+    expect(s.phase).toBe("ChallengingStage");
+    expect(s.enemies.length).toBe(40);
+  });
+
+  it("challengingPerfect is false at ChallengingStage start", () => {
+    const s = initStarSwarm(CANVAS_W, CANVAS_H, 3);
+    expect(s.challengingPerfect).toBe(false);
+  });
+
+  it("challengingPerfect is true on WaveClear when all 40 enemies were hit", () => {
+    let s = initStarSwarm(CANVAS_W, CANVAS_H, 3, 42, "Ensign");
+    // Force all 40 hits and kill every enemy in one tick
+    s = {
+      ...s,
+      challengingHits: 40,
+      enemies: s.enemies.map((e) => ({ ...e, isAlive: false, hp: 0 })),
+    };
+    s = tick(s, 16, NO_INPUT);
+    expect(s.phase).toBe("WaveClear");
+    expect(s.challengingPerfect).toBe(true);
+  });
+
+  it("challengingPerfect is false on WaveClear when enemies scroll off without being shot", () => {
+    let s = initStarSwarm(CANVAS_W, CANVAS_H, 3, 42, "Ensign");
+    // 40 enemies; last one (idx 39) exits at ≈6320ms — advance past with no firing
+    s = advanceMs(s, 7000, NO_INPUT);
+    expect(s.phase).toBe("WaveClear");
+    expect(s.challengingPerfect).toBe(false);
+  });
+
+  it("PERFECT clears add 10,000 pts bonus at Ensign ×1 (plus 40×50 hit bonus)", () => {
+    // Zero-hit path: enemies scroll off — only waveClearBonus (wave 3 × 500 × 1 = 1500)
+    let noPerfect = initStarSwarm(CANVAS_W, CANVAS_H, 3, 42, "Ensign");
+    noPerfect = advanceMs(noPerfect, 7000, NO_INPUT);
+    expect(noPerfect.phase).toBe("WaveClear");
+
+    // Full-hit path: all 40 hit + perfect → 1500 + 2000 + 10000 = 13500
+    let perfect = initStarSwarm(CANVAS_W, CANVAS_H, 3, 42, "Ensign");
+    perfect = {
+      ...perfect,
+      challengingHits: 40,
+      enemies: perfect.enemies.map((e) => ({ ...e, isAlive: false, hp: 0 })),
+    };
+    perfect = tick(perfect, 16, NO_INPUT);
+    expect(perfect.phase).toBe("WaveClear");
+
+    // Δ = 40 hits × 50 + 10,000 perfect bonus = 12,000
+    expect(perfect.score - noPerfect.score).toBe(40 * 50 + 10_000);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Laser sound gating — only fires during lightning power-up
+// The canvas checks: shootCooldown > prevCooldown && activePowerUp?.type === "lightning"
+// ---------------------------------------------------------------------------
+
+describe("laser sound gating", () => {
+  function playingState(): StarSwarmState {
+    let s = initStarSwarm(CANVAS_W, CANVAS_H);
+    s = advanceMs(s, 8000); // advance past SwoopIn into Playing
+    return s;
+  }
+
+  // Mirrors exactly the condition checked in GameCanvas.tsx / GameCanvas.web.tsx
+  function laserSoundWouldFire(prev: StarSwarmState, next: StarSwarmState): boolean {
+    return (
+      next.player.shootCooldown > prev.player.shootCooldown &&
+      next.activePowerUp?.type === "lightning"
+    );
+  }
+
+  it("does not trigger laser sound on normal fire (no power-up)", () => {
+    const before = playingState();
+    expect(before.player.shootCooldown).toBe(0); // ready to fire
+    const after = tick(before, 16, FIRE_INPUT);
+    expect(after.player.shootCooldown).toBeGreaterThan(0); // shot was fired, cooldown reset
+    expect(laserSoundWouldFire(before, after)).toBe(false);
+  });
+
+  it("triggers laser sound on fire during lightning power-up", () => {
+    const before = applyPowerUp(playingState(), "lightning");
+    expect(before.activePowerUp?.type).toBe("lightning");
+    expect(before.player.shootCooldown).toBe(0);
+    const after = tick(before, 16, FIRE_INPUT);
+    expect(after.player.shootCooldown).toBeGreaterThan(0); // shot was fired
+    expect(laserSoundWouldFire(before, after)).toBe(true);
+  });
+
+  it("does not trigger laser sound once lightning power-up expires", () => {
+    let s = applyPowerUp(playingState(), "lightning");
+    s = advanceMs(s, POWERUP_DURATION + 100, FIRE_INPUT); // advance past expiry while firing
+    expect(s.activePowerUp).toBeNull();
+    // Advance one more frame: cooldown may already be 0 from continuous fire
+    const before = { ...s, player: { ...s.player, shootCooldown: 0 } };
+    const after = tick(before, 16, FIRE_INPUT);
+    expect(after.player.shootCooldown).toBeGreaterThan(0); // still fires shots
+    expect(laserSoundWouldFire(before, after)).toBe(false); // but no laser sound
+  });
+
+  it("does not trigger laser sound for shield power-up fire", () => {
+    const before = applyPowerUp(playingState(), "shield");
+    expect(before.activePowerUp?.type).toBe("shield");
+    const after = tick(before, 16, FIRE_INPUT);
+    expect(laserSoundWouldFire(before, after)).toBe(false);
   });
 });

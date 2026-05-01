@@ -1,4 +1,4 @@
-import { FruitDefinition, FruitTier } from "../../theme/fruitSets";
+import { FruitDefinition, FruitTier } from "../../theme/fruitSets.engine";
 import type { GameEvent } from "./types";
 
 // --- Canonical physics world dimensions (px) ---

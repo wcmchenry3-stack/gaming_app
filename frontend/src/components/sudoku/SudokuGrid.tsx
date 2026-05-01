@@ -20,8 +20,9 @@ export default function SudokuGrid({
   variant,
   onCellPress,
 }: Props) {
-  const { colors } = useTheme();
+  const { colors, theme } = useTheme();
   const { size, boxRows, boxCols } = variantConfig(variant);
+  const strongColor = theme === "dark" ? colors.textFilled : colors.text;
 
   // Digit of the currently-selected cell (0 = empty / nothing to match).
   const selectedValue =
@@ -43,22 +44,26 @@ export default function SudokuGrid({
   return (
     <View
       accessibilityLabel="Sudoku board"
-      style={[styles.grid, { backgroundColor: colors.border }]}
+      style={[
+        styles.grid,
+        { borderWidth: 2, borderColor: strongColor, borderRadius: 4, overflow: "hidden" },
+      ]}
     >
       {grid.map((row, r) => (
         <View key={r} style={styles.row}>
           {row.map((cell, c) => {
-            // Thick box borders at every internal box boundary.
-            const boxRight = (c + 1) % boxCols === 0 && c !== size - 1 ? 2 : 0;
-            const boxBottom = (r + 1) % boxRows === 0 && r !== size - 1 ? 2 : 0;
-            const hair = StyleSheet.hairlineWidth;
+            const isBoxRight = (c + 1) % boxCols === 0;
+            const isBoxBottom = (r + 1) % boxRows === 0;
             return (
               <View
                 key={`${r}-${c}`}
                 style={{
                   flex: 1,
-                  marginRight: c === size - 1 ? 0 : boxRight || hair,
-                  marginBottom: r === size - 1 ? 0 : boxBottom || hair,
+                  borderRightWidth: c === size - 1 ? 0 : isBoxRight ? 2 : StyleSheet.hairlineWidth,
+                  borderRightColor: isBoxRight ? strongColor : colors.border,
+                  borderBottomWidth:
+                    r === size - 1 ? 0 : isBoxBottom ? 2 : StyleSheet.hairlineWidth,
+                  borderBottomColor: isBoxBottom ? strongColor : colors.border,
                 }}
               >
                 <SudokuCell

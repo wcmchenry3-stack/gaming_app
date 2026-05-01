@@ -20,19 +20,10 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as Sentry from "@sentry/react-native";
 import { GameType, PendingSubmission, SubmitHandler } from "./types";
+import { generateUUID } from "./uuid";
 
 const STORAGE_KEY = "pending_score_queue_v1";
 const MAX_SCORE_ATTEMPTS = 5;
-
-function generateUUID(): string {
-  if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
-    return crypto.randomUUID();
-  }
-  return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (c) => {
-    const r = (Math.random() * 16) | 0;
-    return (c === "x" ? r : (r & 0x3) | 0x8).toString(16);
-  });
-}
 
 export interface FlushResult {
   attempted: number;

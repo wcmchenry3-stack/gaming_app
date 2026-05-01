@@ -36,7 +36,7 @@ test.describe("Blackjack — error paths and guardrails", () => {
     await gotoBlackjack(page);
     // Navigate home via URL (Lobby tab pop-to-root not reliable on web)
     await page.goto("/");
-    await expect(page.getByText("Gaming App").first()).toBeVisible({
+    await expect(page.getByText("BC Arcade").first()).toBeVisible({
       timeout: 10000,
     });
   });
@@ -50,7 +50,7 @@ test.describe("Blackjack — error paths and guardrails", () => {
 
     // Navigate home via URL (Lobby tab pop-to-root not reliable on web)
     await page.goto("/");
-    await expect(page.getByText("Gaming App").first()).toBeVisible({
+    await expect(page.getByText("BC Arcade").first()).toBeVisible({
       timeout: 10000,
     });
   });
@@ -163,7 +163,7 @@ test.describe("Blackjack — error paths and guardrails", () => {
       .getByRole("button", { name: "Return to home screen", exact: true })
       .click();
 
-    await expect(page.getByText("Gaming App").first()).toBeVisible({
+    await expect(page.getByText("BC Arcade").first()).toBeVisible({
       timeout: 10000,
     });
   });

@@ -1,9 +1,9 @@
 # OWASP ZAP Baseline Scan Configuration
-# Tuned for the Gaming App JSON API (no HTML pages to crawl).
+# Tuned for the BC Arcade JSON API (no HTML pages to crawl).
 # Referenced by deploy.yml via called-deploy-render.yml zap-target-url parameter.
 env:
   contexts:
-    - name: "Gaming App API"
+    - name: "BC Arcade API"
       urls:
         - "https://dev-games-api.buffingchi.com"
       includePaths:
@@ -25,7 +25,7 @@ jobs:
 
   - type: activeScan
     parameters:
-      context: "Gaming App API"
+      context: "BC Arcade API"
       maxRuleDurationInMins: 5
       maxScanDurationInMins: 20
       addQueryParam: false

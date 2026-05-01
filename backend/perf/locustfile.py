@@ -1,5 +1,5 @@
 """
-Gaming App — Locust performance test entry point.
+BC Arcade — Locust performance test entry point.
 
 User classes:
 

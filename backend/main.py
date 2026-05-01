@@ -23,6 +23,7 @@ from mahjong.router import router as mahjong_router
 from solitaire.router import router as solitaire_router
 from sudoku.router import router as sudoku_router
 from starswarm.router import router as starswarm_router
+from entitlements.router import router as entitlements_router
 from games.router import router as games_router
 from logs.router import router as logs_router
 from stats.router import router as stats_router
@@ -50,7 +51,8 @@ if _sentry_dsn:
 # App
 # ---------------------------------------------------------------------------
 
-app = FastAPI(title="Gaming App API")
+app = FastAPI(title="BC Arcade API")
+app.include_router(entitlements_router, prefix="/entitlements")
 app.include_router(cascade_router, prefix="/cascade")
 app.include_router(freecell_router, prefix="/freecell")
 app.include_router(hearts_router, prefix="/hearts")
@@ -143,7 +145,7 @@ app.add_middleware(
     allow_origins=_allowed_origins,
     allow_methods=["GET", "POST", "PATCH"],
     expose_headers=["Retry-After"],
-    allow_headers=["Content-Type", "X-Session-ID"],
+    allow_headers=["Content-Type", "X-Session-ID", "X-Admin-Token"],
 )
 app.add_middleware(MaxBodySizeMiddleware)
 app.add_middleware(SlowAPIMiddleware)

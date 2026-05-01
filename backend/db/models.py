@@ -32,6 +32,7 @@ from sqlalchemy import (
     Text,
     UniqueConstraint,
     Uuid,
+    false as sa_false,
     func,
 )
 from sqlalchemy.dialects.postgresql import JSONB
@@ -59,6 +60,8 @@ class GameType(Base):
     icon_emoji: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     sort_order: Mapped[int] = mapped_column(SmallInteger, nullable=False, server_default="0")
     is_active: Mapped[bool] = mapped_column(nullable=False, server_default="true")
+    is_premium: Mapped[bool] = mapped_column(nullable=False, server_default=sa_false())
+    category: Mapped[str] = mapped_column(Text, nullable=False, server_default="other")
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, server_default=func.now()
     )
@@ -156,6 +159,26 @@ class GameEvent(Base):
 
     game: Mapped[Game] = relationship(back_populates="events")
     event_type: Mapped[EventType] = relationship(back_populates="events")
+
+
+class GameEntitlement(Base):
+    """Session-scoped entitlements written by IAP receipt validation.
+
+    Stubbed empty until #822 ships — rows here drive entitled_games in JWTs.
+    """
+
+    __tablename__ = "game_entitlements"
+    __table_args__ = (
+        Index("game_entitlements_session_id_idx", "session_id"),
+        UniqueConstraint("session_id", "game_slug", name="uq_game_entitlements_session_slug"),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
+    session_id: Mapped[str] = mapped_column(Text, nullable=False)
+    game_slug: Mapped[str] = mapped_column(Text, nullable=False)
+    granted_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
+    )
 
 
 class BugLog(Base):

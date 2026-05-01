@@ -35,7 +35,7 @@ async function assertNoA11yViolations(
 test.describe("Accessibility — Home screen", () => {
   test("no critical/serious axe violations on Home", async ({ page }) => {
     await page.goto("/");
-    await expect(page.getByText("Gaming App").first()).toBeVisible();
+    await expect(page.getByText("BC Arcade").first()).toBeVisible();
 
     await assertNoA11yViolations(
       new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa", "wcag21aa"]),

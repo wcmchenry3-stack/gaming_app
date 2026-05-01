@@ -51,7 +51,7 @@ import {
   undo,
 } from "../game/sudoku/engine";
 import type { CellValue, Difficulty, SudokuState, Variant } from "../game/sudoku/types";
-import { VARIANTS } from "../game/sudoku/types";
+import { VARIANTS, variantConfig } from "../game/sudoku/types";
 import { useSound } from "../game/_shared/useSound";
 import {
   clearGame,
@@ -100,6 +100,7 @@ export default function SudokuScreen() {
   const [state, setState] = useState<SudokuState | null>(null);
   const [elapsed, setElapsed] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [newGameModalVisible, setNewGameModalVisible] = useState(false);
   // Game ID captured at completion time (before syncComplete clears it).
   const [completedGameId, setCompletedGameId] = useState<string | null>(null);
 
@@ -371,6 +372,23 @@ export default function SudokuScreen() {
     pausedAtRef.current = null;
   }, [difficulty, variant]);
 
+  const handleStartWithSettings = useCallback((d: Difficulty, v: Variant) => {
+    setNewGameModalVisible(false);
+    setDifficulty(d);
+    setVariant(v);
+    clearGame().catch(() => {});
+    digitCountRef.current = 0;
+    const fresh = loadPuzzle(d, v);
+    setState(fresh);
+    setElapsed(0);
+    startMsRef.current = null;
+    pausedAtRef.current = null;
+  }, []);
+
+  const handleNewGameRequest = useCallback(() => {
+    setNewGameModalVisible(true);
+  }, []);
+
   const handleCellPress = useCallback((row: number, col: number) => {
     setState((s) => (s ? selectCell(s, row, col) : s));
   }, []);
@@ -415,51 +433,37 @@ export default function SudokuScreen() {
     pausedAtRef.current = null;
   }, []);
 
+  const handleHint = useCallback(() => {
+    setState((s) => {
+      if (!s || s.selectedRow === null || s.selectedCol === null) return s;
+      const cell = s.grid[s.selectedRow][s.selectedCol];
+      if (cell.given || cell.value !== 0) return s;
+      const { size } = variantConfig(s.variant);
+      const idx = s.selectedRow * size + s.selectedCol;
+      const hintDigit = (s.solution.charCodeAt(idx) - 48) as CellValue;
+      if (startMsRef.current === null) startMsRef.current = Date.now();
+      digitCountRef.current += 1;
+      ensureSyncStarted(s);
+      return enterDigit(s, hintDigit);
+    });
+  }, [ensureSyncStarted]);
+
   const headerRight = useMemo(() => {
     if (!state) return null;
     const undoDisabled = state.undoStack.length === 0;
     return (
-      <View style={styles.headerRow}>
-        <Pressable
-          onPress={handleUndo}
-          disabled={undoDisabled}
-          style={[
-            styles.headerBtn,
-            { borderColor: colors.accent, opacity: undoDisabled ? 0.4 : 1 },
-          ]}
-          accessibilityRole="button"
-          accessibilityLabel={t("action.undo")}
-          accessibilityState={{ disabled: undoDisabled }}
-        >
-          <Text style={[styles.headerBtnText, { color: colors.accent }]}>{t("action.undo")}</Text>
-        </Pressable>
-        <Pressable
-          onPress={handleToggleNotes}
-          style={[
-            styles.headerBtn,
-            {
-              borderColor: colors.accent,
-              backgroundColor: state.notesMode ? colors.accent : "transparent",
-            },
-          ]}
-          accessibilityRole="button"
-          accessibilityLabel={t("numberPad.toggleNotes")}
-          accessibilityState={{ selected: state.notesMode }}
-        >
-          <Text
-            style={[
-              styles.headerBtnText,
-              {
-                color: state.notesMode ? colors.textOnAccent : colors.accent,
-              },
-            ]}
-          >
-            {t("numberPad.notes")}
-          </Text>
-        </Pressable>
-      </View>
+      <Pressable
+        onPress={handleUndo}
+        disabled={undoDisabled}
+        style={[styles.headerBtn, { borderColor: colors.accent, opacity: undoDisabled ? 0.4 : 1 }]}
+        accessibilityRole="button"
+        accessibilityLabel={t("action.undo")}
+        accessibilityState={{ disabled: undoDisabled }}
+      >
+        <Text style={[styles.headerBtnText, { color: colors.accent }]}>{t("action.undo")}</Text>
+      </Pressable>
     );
-  }, [state, colors, handleUndo, handleToggleNotes, t]);
+  }, [state, colors, handleUndo, t]);
 
   return (
     <GameShell
@@ -467,7 +471,7 @@ export default function SudokuScreen() {
       requireBack
       loading={loading}
       onBack={() => navigation.popToTop()}
-      onNewGame={handleStart}
+      onNewGame={state !== null ? handleNewGameRequest : undefined}
       onOpenScoreboard={() => navigation.navigate("Scoreboard", { gameKey: "sudoku" })}
       rightSlot={headerRight}
       style={{
@@ -529,6 +533,7 @@ export default function SudokuScreen() {
               onDigit={handleDigit}
               onErase={handleErase}
               onToggleNotes={handleToggleNotes}
+              onHint={handleHint}
             />
           </View>
 
@@ -564,6 +569,15 @@ export default function SudokuScreen() {
           gameId={completedGameId ?? undefined}
           onNewPuzzle={handleStart}
           onChangeDifficulty={handleChangeDifficulty}
+        />
+      ) : null}
+
+      {newGameModalVisible ? (
+        <NewGameModal
+          currentDifficulty={difficulty}
+          currentVariant={variant}
+          onQuickRestart={() => handleStartWithSettings(difficulty, variant)}
+          onStart={handleStartWithSettings}
         />
       ) : null}
     </GameShell>
@@ -855,6 +869,77 @@ function WinModal({
 }
 
 // ---------------------------------------------------------------------------
+// New Game modal — settings selection after abandon confirmation
+// ---------------------------------------------------------------------------
+
+function NewGameModal({
+  currentDifficulty,
+  currentVariant,
+  onQuickRestart,
+  onStart,
+}: {
+  readonly currentDifficulty: Difficulty;
+  readonly currentVariant: Variant;
+  readonly onQuickRestart: () => void;
+  readonly onStart: (d: Difficulty, v: Variant) => void;
+}) {
+  const { t } = useTranslation("sudoku");
+  const { colors } = useTheme();
+  const [pendingDifficulty, setPendingDifficulty] = useState(currentDifficulty);
+  const [pendingVariant, setPendingVariant] = useState(currentVariant);
+
+  const gradient: ViewStyle =
+    Platform.OS === "web"
+      ? ({
+          backgroundImage: `linear-gradient(135deg, ${colors.accent}, ${colors.accentBright})`,
+        } as ViewStyle)
+      : { backgroundColor: colors.accentBright };
+
+  return (
+    <Modal visible transparent animationType="fade" accessibilityViewIsModal>
+      <View style={styles.modalOverlay}>
+        <View
+          style={[
+            styles.modalCard,
+            { backgroundColor: colors.surfaceHigh, borderColor: colors.border },
+          ]}
+        >
+          <Text style={[styles.modalTitle, { color: colors.text }]} accessibilityRole="header">
+            {t("newGame.title")}
+          </Text>
+          <View style={styles.newGameSelector}>
+            <VariantSelector value={pendingVariant} onChange={setPendingVariant} />
+          </View>
+          <View style={[styles.newGameSelector, { marginTop: 8 }]}>
+            <DifficultySelector value={pendingDifficulty} onChange={setPendingDifficulty} />
+          </View>
+          <Pressable
+            style={[styles.modalPrimary, gradient]}
+            onPress={() => onStart(pendingDifficulty, pendingVariant)}
+            accessibilityRole="button"
+            accessibilityLabel={t("action.start")}
+          >
+            <Text style={[styles.modalPrimaryText, { color: colors.textOnAccent }]}>
+              {t("action.start")}
+            </Text>
+          </Pressable>
+          <Pressable
+            style={[styles.modalSecondary, { borderColor: colors.accent }]}
+            onPress={onQuickRestart}
+            accessibilityRole="button"
+            accessibilityLabel={t("action.quickRestart")}
+          >
+            <Text style={[styles.modalSecondaryText, { color: colors.accent }]}>
+              {t("action.quickRestart")}
+            </Text>
+          </Pressable>
+        </View>
+      </View>
+    </Modal>
+  );
+}
+
+// ---------------------------------------------------------------------------
 // Styles
 // ---------------------------------------------------------------------------
 
@@ -968,6 +1053,10 @@ const styles = StyleSheet.create({
     fontWeight: "800",
     letterSpacing: 1.2,
     textTransform: "uppercase",
+  },
+  newGameSelector: {
+    alignSelf: "stretch",
+    marginBottom: 4,
   },
   modalOverlay: {
     flex: 1,

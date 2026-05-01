@@ -17,6 +17,7 @@
   "variant.classic": "Classic 9×9",
   "variant.mini": "Mini 6×6",
   "action.undo": "撤销",
+  "action.hint": "提示",
   "action.newGame": "新谜题",
   "action.changeDifficulty": "更改难度",
   "action.start": "开始",
@@ -36,5 +37,7 @@
   "scoreboard.easyBestTime": "Easy Best",
   "scoreboard.mediumBestTime": "Medium Best",
   "scoreboard.hardBestTime": "Hard Best",
-  "scoreboard.gamesSolved": "Games Solved"
+  "scoreboard.gamesSolved": "Games Solved",
+  "action.quickRestart": "快速重玩",
+  "newGame.title": "新游戏"
 }

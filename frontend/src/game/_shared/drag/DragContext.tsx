@@ -1,6 +1,7 @@
 import React, { createContext, useCallback, useContext, useRef, useState } from "react";
-import { useSharedValue, runOnJS, withTiming } from "react-native-reanimated";
-import type { SharedValue } from "react-native-reanimated";
+import Animated from "react-native-reanimated";
+import { useSharedValue, useAnimatedRef, runOnJS, withTiming } from "react-native-reanimated";
+import type { SharedValue, AnimatedRef } from "react-native-reanimated";
 import type { CanonicalSuit } from "../decks/types";
 
 // ---------------------------------------------------------------------------
@@ -52,6 +53,9 @@ export interface DragContextValue {
   containerOffsetX: SharedValue<number>;
   containerOffsetY: SharedValue<number>;
 
+  // Animated ref for the DragContainer — allows worklets to re-measure it on drag start.
+  containerRef: AnimatedRef<Animated.View>;
+
   // JS-thread actions
   startDrag: (source: DragSource, cards: DragCard[]) => void;
   endDrag: (absoluteX: number, absoluteY: number) => void;
@@ -89,6 +93,7 @@ export function DragProvider({ children, getLegalDropIds }: DragProviderProps) {
   const originY = useSharedValue(0);
   const containerOffsetX = useSharedValue(0);
   const containerOffsetY = useSharedValue(0);
+  const containerRef = useAnimatedRef<Animated.View>();
 
   const dropZonesRef = useRef<Map<string, DropZoneEntry>>(new Map());
   const dragStateRef = useRef<DragState | null>(null);
@@ -162,6 +167,7 @@ export function DragProvider({ children, getLegalDropIds }: DragProviderProps) {
     originY,
     containerOffsetX,
     containerOffsetY,
+    containerRef,
     startDrag,
     endDrag,
     snapBackAndClear,

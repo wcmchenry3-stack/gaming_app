@@ -21,8 +21,9 @@ export async function saveGame(state: EngineState): Promise<void> {
 }
 
 export async function loadGame(): Promise<EngineState | null> {
+  let raw: string | null = null;
   try {
-    const raw = await AsyncStorage.getItem(STORAGE_KEY);
+    raw = await AsyncStorage.getItem(STORAGE_KEY);
     if (!raw) return null;
     const parsed = JSON.parse(raw) as EngineState;
     // Minimum viability check — only discard if the core fields are missing.
@@ -78,7 +79,7 @@ export async function loadGame(): Promise<EngineState | null> {
     Sentry.captureMessage("blackjack.storage: corrupt game payload, discarding", {
       level: "warning",
       tags: { subsystem: "blackjack.storage", op: "load" },
-      extra: { error: String(e), key: STORAGE_KEY },
+      extra: { error: String(e), key: STORAGE_KEY, rawPayload: raw?.slice(0, 500) },
     });
     await AsyncStorage.removeItem(STORAGE_KEY).catch(() => {});
     return null;

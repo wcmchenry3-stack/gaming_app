@@ -1,5 +1,5 @@
 /**
- * Term glossary for the Gaming App i18n workflow.
+ * Term glossary for the BC Arcade i18n workflow.
  *
  * Used by scripts/translate.js — injected into OpenAI system prompts
  * so protected terms are never translated or modified.
@@ -38,7 +38,7 @@ export const glossary = {
     notes: "Two words, both capitalized.",
   },
 
-  "Gaming App": {
+  "BC Arcade": {
     category: "brand",
     doNotTranslate: true,
     reason: "The app name. Translating would break app store identity.",

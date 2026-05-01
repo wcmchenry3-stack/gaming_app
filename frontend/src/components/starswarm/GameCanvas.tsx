@@ -11,43 +11,67 @@ import {
 } from "@shopify/react-native-skia";
 import { useTranslation } from "react-i18next";
 import * as Sentry from "@sentry/react-native";
-import { initStarSwarm, tick, BULLET_C_W, POWERUP_DURATION } from "../../game/starswarm/engine";
+import {
+  initStarSwarm,
+  tick,
+  applyPowerUp,
+  BULLET_C_W,
+  POWERUP_DURATION,
+  difficultyLabel,
+  difficultyMultiplier,
+} from "../../game/starswarm/engine";
 import { initStarfield, tickStarfield } from "../../game/starswarm/starfield";
 import type { StarfieldState } from "../../game/starswarm/starfield";
 import { useStarSwarmImages } from "../../game/starswarm/assets";
-import type { StarSwarmState } from "../../game/starswarm/types";
+import type { StarSwarmState, PowerUpType, DifficultyTier } from "../../game/starswarm/types";
 
 const EXPLOSION_DRAW_SIZE = 48;
 const DT_CAP_MS = 33;
 const INVINCIBLE_BLINK_INTERVAL = 120; // ms
 
+const C = {
+  buddyShip: "rgba(0,120,255,0.8)",
+} as const;
+
 export interface DevOptions {
   wave?: number;
   infiniteLives?: boolean;
+  stragglerEnabled?: boolean;
+  /** Suppress straggler aggression for easier wave-end testing (#1039). */
+  pauseStraggler?: boolean;
+  /** Override difficulty tier for this game (#1037). */
+  difficulty?: DifficultyTier;
 }
 
 export interface GameCanvasHandle {
   setPlayerX: (x: number) => void;
   setFire: (fire: boolean) => void;
+  /** Inject a power-up activation mid-game for dev-panel testing (#1039). */
+  triggerPowerUp: (type: PowerUpType) => void;
 }
 
 interface Props {
   highScore?: number;
-  onGameOver?: (finalScore: number) => void;
+  onGameOver?: (finalScore: number, wave: number) => void;
   onScoreChange?: (score: number) => void;
   onPlayerHit?: () => void;
   onWaveClear?: () => void;
   onLaserFire?: () => void;
   onExplosion?: () => void;
   onChallengingStage?: () => void;
+  /** Called once when all enemies in a Challenging Stage are hit (#1022). */
+  onChallengingPerfect?: () => void;
   onBonusLife?: () => void;
-  onPowerUpCollect?: () => void;
+  onPowerUpCollect?: (type: PowerUpType) => void;
   isPaused?: boolean;
+  onPause?: () => void;
   width: number;
   height: number;
   scale: number;
   /** Increments each time a new game is requested — triggers an internal reset. */
   resetTick?: number;
+  /** Active difficulty tier — passed from the pre-game selector (#1037). */
+  difficulty?: DifficultyTier;
   /** Dev options applied on each reset (wave, infiniteLives). Passed as prop so reset
    *  is reactive and doesn't depend on the imperative ref being non-null. */
   devOptions?: DevOptions;
@@ -69,6 +93,7 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
       onLaserFire,
       onExplosion,
       onChallengingStage,
+      onChallengingPerfect,
       onBonusLife,
       onPowerUpCollect,
       isPaused = false,
@@ -76,6 +101,7 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
       height,
       scale,
       resetTick,
+      difficulty: difficultyProp = "LieutenantJG",
       devOptions,
     },
     ref
@@ -83,7 +109,7 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
     const { t } = useTranslation("starswarm");
     const images = useStarSwarmImages();
 
-    const gameRef = useRef<StarSwarmState>(initStarSwarm(width, height));
+    const gameRef = useRef<StarSwarmState>(initStarSwarm(width, height, 1, 42, difficultyProp));
     const sfRef = useRef<StarfieldState>(initStarfield(width, height));
     const inputRef = useRef({ playerX: width / 2, fire: true });
     const infiniteLivesRef = useRef(false);
@@ -91,6 +117,8 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
     // latest devOptions even though devOptions is not in its dependency array.
     const devOptionsRef = useRef<DevOptions | undefined>(devOptions);
     devOptionsRef.current = devOptions;
+    const difficultyRef = useRef<DifficultyTier>(difficultyProp);
+    difficultyRef.current = difficultyProp;
     const lastFrameTimeRef = useRef(0);
     const prevScoreRef = useRef(0);
     const prevLivesRef = useRef(gameRef.current.player.lives);
@@ -103,9 +131,11 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
     const onLaserFireRef = useRef(onLaserFire);
     const onExplosionRef = useRef(onExplosion);
     const onChallengingStageRef = useRef(onChallengingStage);
+    const onChallengingPerfectRef = useRef(onChallengingPerfect);
     const onBonusLifeRef = useRef(onBonusLife);
     const onPowerUpCollectRef = useRef(onPowerUpCollect);
-    const prevActivePowerUpRef = useRef(false); // tracks whether buff was active last frame
+    const prevActivePowerUpRef = useRef<string | null>(null); // type of active power-up last frame
+    const triggerPowerUpRef = useRef<PowerUpType | null>(null);
     const prevBonusLivesRef = useRef(gameRef.current.bonusLivesAwarded);
     const bonusFlashEndRef = useRef(0); // ms timestamp when 1UP flash expires
 
@@ -136,6 +166,9 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
       onChallengingStageRef.current = onChallengingStage;
     }, [onChallengingStage]);
     useEffect(() => {
+      onChallengingPerfectRef.current = onChallengingPerfect;
+    }, [onChallengingPerfect]);
+    useEffect(() => {
       onBonusLifeRef.current = onBonusLife;
     }, [onBonusLife]);
     useEffect(() => {
@@ -156,6 +189,9 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
         setFire(fire) {
           inputRef.current.fire = fire;
         },
+        triggerPowerUp(type) {
+          triggerPowerUpRef.current = type;
+        },
       }),
       []
     );
@@ -166,7 +202,13 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
       if (!resetTick) return;
       const opts = devOptionsRef.current;
       infiniteLivesRef.current = opts?.infiniteLives ?? false;
-      gameRef.current = initStarSwarm(width, height, opts?.wave ?? 1);
+      gameRef.current = initStarSwarm(
+        width,
+        height,
+        opts?.wave ?? 1,
+        42,
+        opts?.difficulty ?? difficultyRef.current
+      );
       sfRef.current = initStarfield(width, height);
       lastFrameTimeRef.current = 0;
       inputRef.current.playerX = width / 2;
@@ -188,11 +230,22 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
         const dtMs = Math.min(timestamp - lastFrameTimeRef.current, DT_CAP_MS);
         lastFrameTimeRef.current = timestamp;
 
+        // #1039: apply dev-panel power-up injection before regular tick
+        if (triggerPowerUpRef.current) {
+          const type = triggerPowerUpRef.current;
+          triggerPowerUpRef.current = null;
+          gameRef.current = applyPowerUp(gameRef.current, type);
+        }
+
         const prev = gameRef.current;
         if (prev.phase !== "GameOver" && !isPausedRef.current) {
           try {
             const prevCooldown = prev.player.shootCooldown;
-            const next = tick(prev, dtMs, {
+            // #1039: apply pauseStraggler from devOptions each tick
+            const pauseStraggler = devOptionsRef.current?.pauseStraggler ?? false;
+            const tickInput =
+              prev.pauseStraggler !== pauseStraggler ? { ...prev, pauseStraggler } : prev;
+            const next = tick(tickInput, dtMs, {
               playerX: inputRef.current.playerX,
               fire: inputRef.current.fire,
             });
@@ -213,7 +266,10 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
               prevScoreRef.current = applied.score;
               onScoreChangeRef.current?.(applied.score);
             }
-            if (applied.player.shootCooldown > prevCooldown) {
+            if (
+              applied.player.shootCooldown > prevCooldown &&
+              applied.activePowerUp?.type === "lightning"
+            ) {
               onLaserFireRef.current?.();
             }
             if (applied.explosions.length > prev.explosions.length) {
@@ -228,13 +284,14 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
               bonusFlashEndRef.current = Date.now() + 1500;
             }
             prevBonusLivesRef.current = applied.bonusLivesAwarded;
-            const isNowActive = applied.activePowerUp !== null;
-            if (!prevActivePowerUpRef.current && isNowActive) {
-              onPowerUpCollectRef.current?.();
+            const nowType = applied.activePowerUp?.type ?? null;
+            if (prevActivePowerUpRef.current === null && nowType !== null) {
+              onPowerUpCollectRef.current?.(nowType);
             }
-            prevActivePowerUpRef.current = isNowActive;
+            prevActivePowerUpRef.current = nowType;
             if (applied.phase === "WaveClear" && prevPhaseRef.current !== "WaveClear") {
               onWaveClearRef.current?.();
+              if (applied.challengingPerfect) onChallengingPerfectRef.current?.();
             }
             if (
               applied.phase === "ChallengingStage" &&
@@ -244,7 +301,7 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
             }
             prevPhaseRef.current = applied.phase;
             if (applied.phase === "GameOver") {
-              onGameOverRef.current?.(applied.score);
+              onGameOverRef.current?.(applied.score, applied.wave);
             }
           } catch (e) {
             Sentry.captureException(e, { tags: { subsystem: "starswarm.loop" } });
@@ -403,8 +460,29 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
                 />
               ))}
 
-            {/* Super-state electric tint on player ship */}
-            {!blink && state.activePowerUp !== null && (
+            {/* #1033 Shield aura — glowing ring when shield is active */}
+            {!blink && state.activePowerUp?.type === "shield" && (
+              <Circle
+                cx={player.x}
+                cy={player.y}
+                r={player.width * 0.8}
+                color="rgba(0,170,255,0.25)"
+                style="fill"
+              />
+            )}
+            {!blink && state.activePowerUp?.type === "shield" && (
+              <Circle
+                cx={player.x}
+                cy={player.y}
+                r={player.width * 0.8}
+                color="rgba(0,170,255,0.75)"
+                style="stroke"
+                strokeWidth={2}
+              />
+            )}
+
+            {/* Lightning super-state electric tint on player ship */}
+            {!blink && state.activePowerUp?.type === "lightning" && (
               <Rect
                 x={player.x - player.width / 2}
                 y={player.y - player.height / 2}
@@ -414,12 +492,85 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
               />
             )}
 
-            {/* Power-ups — falling lightning bolt */}
+            {/* #1035 Buddy ships */}
+            {state.buddyShips.map((buddy) =>
+              images.buddyShip ? (
+                <Group
+                  key={buddy.id}
+                  transform={
+                    buddy.fromLeft
+                      ? []
+                      : [{ translateX: buddy.x }, { scaleX: -1 }, { translateX: -buddy.x }]
+                  }
+                >
+                  <SkiaImage
+                    image={images.buddyShip}
+                    x={buddy.x - 17}
+                    y={buddy.y - 17}
+                    width={34}
+                    height={34}
+                    fit="fill"
+                  />
+                </Group>
+              ) : (
+                <Rect
+                  key={buddy.id}
+                  x={buddy.x - 17}
+                  y={buddy.y - 17}
+                  width={34}
+                  height={34}
+                  color={C.buddyShip}
+                />
+              )
+            )}
+
+            {/* Power-ups — Kenney CC0 sprites with procedural fallback */}
             {state.powerUps.map((pu) => {
               const lx = pu.x - pu.width / 2;
               const ly = pu.y - pu.height / 2;
               const pw = pu.width;
               const ph = pu.height;
+              const spriteMap = {
+                shield: images.puShield,
+                bomb: images.puBomb,
+                buddy: images.puBuddy,
+                lightning: images.puLightning,
+              } as const;
+              const sprite = spriteMap[pu.type] ?? null;
+              if (sprite) {
+                return (
+                  <SkiaImage key={pu.id} image={sprite} x={lx} y={ly} width={pw} height={ph} />
+                );
+              }
+              // fallback procedural shapes when sprite not yet loaded
+              if (pu.type === "shield") {
+                return (
+                  <Circle
+                    key={pu.id}
+                    cx={pu.x}
+                    cy={pu.y}
+                    r={pw * 0.4}
+                    color="rgba(0,170,255,0.9)"
+                  />
+                );
+              }
+              if (pu.type === "bomb") {
+                return (
+                  <Circle key={pu.id} cx={pu.x} cy={pu.y} r={pw * 0.4} color="rgba(255,80,0,0.9)" />
+                );
+              }
+              if (pu.type === "buddy") {
+                return (
+                  <Rect
+                    key={pu.id}
+                    x={lx + pw * 0.2}
+                    y={ly + ph * 0.2}
+                    width={pw * 0.6}
+                    height={ph * 0.6}
+                    color="rgba(0,255,200,0.9)"
+                  />
+                );
+              }
               const boltPath =
                 `M${lx + pw * 0.625},${ly} ` +
                 `L${lx + pw * 0.125},${ly + ph * 0.542} ` +
@@ -459,6 +610,16 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
                 />
               );
             })}
+            {/* #1034 Bomb flash — full-screen white overlay fading out */}
+            {state.bombFlashTimer > 0 && (
+              <Rect
+                x={0}
+                y={0}
+                width={width}
+                height={height}
+                color={`rgba(255,255,255,${(state.bombFlashTimer / 300) * 0.75})`}
+              />
+            )}
           </Group>
         </Canvas>
 
@@ -468,6 +629,11 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
             <Text style={styles.hudText}>{`${t("hud.score")} ${state.score}`}</Text>
             <Text style={styles.hudText}>{`${t("hud.best")} ${hs}`}</Text>
             <Text style={styles.hudText}>{`${t("hud.wave")} ${state.wave}`}</Text>
+          </View>
+          <View style={styles.hudDifficulty}>
+            <Text style={styles.hudDifficultyText}>
+              {`${difficultyLabel(state.difficulty)} ×${difficultyMultiplier(state.difficulty)}`}
+            </Text>
           </View>
 
           <View style={styles.hudBottom}>
@@ -479,7 +645,11 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
                 <View
                   style={[
                     styles.powerUpBar,
-                    { width: 60 * (state.activePowerUp.remainingMs / POWERUP_DURATION) },
+                    {
+                      width: 60 * (state.activePowerUp.remainingMs / POWERUP_DURATION),
+                      backgroundColor:
+                        state.activePowerUp.type === "shield" ? "#00aaff" : "#ffee00",
+                    },
                   ]}
                 />
               </View>
@@ -495,6 +665,9 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
           {state.phase === "WaveClear" && (
             <View style={styles.phaseOverlay}>
               <Text style={styles.overlayTitle}>{t("phase.waveClear")}</Text>
+              {state.challengingPerfect && (
+                <Text style={styles.perfectBanner}>{t("phase.perfect")}</Text>
+              )}
             </View>
           )}
 
@@ -593,6 +766,16 @@ const styles = StyleSheet.create({
     textAlign: "center",
     marginTop: 8,
   },
+  perfectBanner: {
+    color: "#ffdd00",
+    fontSize: 20,
+    fontWeight: "bold",
+    textAlign: "center",
+    marginTop: 6,
+    textShadowColor: "#ff8800",
+    textShadowOffset: { width: 0, height: 0 },
+    textShadowRadius: 8,
+  },
   gameOverOverlay: {
     backgroundColor: "rgba(0,0,0,0.65)",
   },
@@ -621,5 +804,15 @@ const styles = StyleSheet.create({
     textShadowColor: "#ff8800",
     textShadowOffset: { width: 0, height: 0 },
     textShadowRadius: 8,
+  },
+  hudDifficulty: {
+    alignSelf: "center",
+    marginTop: 2,
+  },
+  hudDifficultyText: {
+    color: "#aaffee",
+    fontSize: 10,
+    fontWeight: "bold",
+    textAlign: "center",
   },
 });

@@ -16,16 +16,17 @@ import React, { useEffect, useMemo, useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { Canvas, Fill, Group, ImageSVG, Rect, useSVG } from "@shopify/react-native-skia";
 import { useTranslation } from "react-i18next";
-import { hasFreePairs, isFreeTile } from "../../game/mahjong/engine";
+import { hasFreePairs, isFreeTile, tilesMatch } from "../../game/mahjong/engine";
 import type { MahjongState, SlotTile } from "../../game/mahjong/types";
 import { TILE_REQUIRES } from "./tileAssets";
+import { MAHJONG_TILE_FACE_SELECTED, MAHJONG_GLOW_BG } from "../../theme/theme.constants";
 
 // ---------------------------------------------------------------------------
 // Layout constants
 // ---------------------------------------------------------------------------
 
-const TILE_W = 44; // face width
-const TILE_H = 56; // face height
+export const TILE_W = 44; // face width
+export const TILE_H = 56; // face height
 const SIDE_W = 5; // 3-D side strip width (right + bottom)
 const LAYER_DX = 6; // rightward offset per layer
 const LAYER_DY = 5; // upward offset per layer
@@ -48,6 +49,7 @@ function tileY(row: number, layer: number): number {
 
 const BG = "#1a3a1a";
 const TILE_FACE = "#f5f0e8";
+const TILE_FACE_SELECTED = MAHJONG_TILE_FACE_SELECTED;
 const TILE_FACE_LOCKED = "#d0c8b8";
 const BORDER_NORMAL = "#8b7355";
 const BORDER_SELECTED = "#ffd700";
@@ -67,11 +69,109 @@ const SUIT_COLOR: Record<string, string> = {
 };
 
 // ---------------------------------------------------------------------------
-// SVG face art
+// SVG preloader — must live OUTSIDE the Skia Canvas reconciler so React's
+// standard scheduler propagates async useSVG state updates correctly.
+// 42 explicit calls (hooks rules: fixed count, no conditionals).
+// ---------------------------------------------------------------------------
+
+type TileSVG = ReturnType<typeof useSVG>;
+
+function useAllTileSVGs(): ReadonlyArray<TileSVG> {
+  const s00 = useSVG(TILE_REQUIRES[0]);
+  const s01 = useSVG(TILE_REQUIRES[1]);
+  const s02 = useSVG(TILE_REQUIRES[2]);
+  const s03 = useSVG(TILE_REQUIRES[3]);
+  const s04 = useSVG(TILE_REQUIRES[4]);
+  const s05 = useSVG(TILE_REQUIRES[5]);
+  const s06 = useSVG(TILE_REQUIRES[6]);
+  const s07 = useSVG(TILE_REQUIRES[7]);
+  const s08 = useSVG(TILE_REQUIRES[8]);
+  const s09 = useSVG(TILE_REQUIRES[9]);
+  const s10 = useSVG(TILE_REQUIRES[10]);
+  const s11 = useSVG(TILE_REQUIRES[11]);
+  const s12 = useSVG(TILE_REQUIRES[12]);
+  const s13 = useSVG(TILE_REQUIRES[13]);
+  const s14 = useSVG(TILE_REQUIRES[14]);
+  const s15 = useSVG(TILE_REQUIRES[15]);
+  const s16 = useSVG(TILE_REQUIRES[16]);
+  const s17 = useSVG(TILE_REQUIRES[17]);
+  const s18 = useSVG(TILE_REQUIRES[18]);
+  const s19 = useSVG(TILE_REQUIRES[19]);
+  const s20 = useSVG(TILE_REQUIRES[20]);
+  const s21 = useSVG(TILE_REQUIRES[21]);
+  const s22 = useSVG(TILE_REQUIRES[22]);
+  const s23 = useSVG(TILE_REQUIRES[23]);
+  const s24 = useSVG(TILE_REQUIRES[24]);
+  const s25 = useSVG(TILE_REQUIRES[25]);
+  const s26 = useSVG(TILE_REQUIRES[26]);
+  const s27 = useSVG(TILE_REQUIRES[27]);
+  const s28 = useSVG(TILE_REQUIRES[28]);
+  const s29 = useSVG(TILE_REQUIRES[29]);
+  const s30 = useSVG(TILE_REQUIRES[30]);
+  const s31 = useSVG(TILE_REQUIRES[31]);
+  const s32 = useSVG(TILE_REQUIRES[32]);
+  const s33 = useSVG(TILE_REQUIRES[33]);
+  const s34 = useSVG(TILE_REQUIRES[34]);
+  const s35 = useSVG(TILE_REQUIRES[35]);
+  const s36 = useSVG(TILE_REQUIRES[36]);
+  const s37 = useSVG(TILE_REQUIRES[37]);
+  const s38 = useSVG(TILE_REQUIRES[38]);
+  const s39 = useSVG(TILE_REQUIRES[39]);
+  const s40 = useSVG(TILE_REQUIRES[40]);
+  const s41 = useSVG(TILE_REQUIRES[41]);
+  return [
+    s00,
+    s01,
+    s02,
+    s03,
+    s04,
+    s05,
+    s06,
+    s07,
+    s08,
+    s09,
+    s10,
+    s11,
+    s12,
+    s13,
+    s14,
+    s15,
+    s16,
+    s17,
+    s18,
+    s19,
+    s20,
+    s21,
+    s22,
+    s23,
+    s24,
+    s25,
+    s26,
+    s27,
+    s28,
+    s29,
+    s30,
+    s31,
+    s32,
+    s33,
+    s34,
+    s35,
+    s36,
+    s37,
+    s38,
+    s39,
+    s40,
+    s41,
+  ];
+}
+
+// ---------------------------------------------------------------------------
+// SVG face art — receives the pre-loaded SkSVG object as a prop so the
+// component can be rendered safely inside the Skia Canvas tree.
 // ---------------------------------------------------------------------------
 
 function TileFaceLayer({
-  faceId,
+  svg,
   suit,
   x,
   y,
@@ -79,7 +179,7 @@ function TileFaceLayer({
   h,
   opacity,
 }: {
-  faceId: number;
+  svg: TileSVG;
   suit: string;
   x: number;
   y: number;
@@ -87,7 +187,6 @@ function TileFaceLayer({
   h: number;
   opacity: number;
 }) {
-  const svg = useSVG(TILE_REQUIRES[faceId - 1]);
   if (!svg) {
     // SVG not yet loaded or failed to parse — render a suit-color placeholder
     // so the tile face is never silently blank.
@@ -138,6 +237,7 @@ interface Props {
 
 export default function GameCanvas({ state, onTilePress, onShufflePress, onNewGamePress }: Props) {
   const { t } = useTranslation("mahjong");
+  const tileSvgs = useAllTileSVGs();
 
   const freeTiles = useMemo(() => {
     const s = new Set<number>();
@@ -192,33 +292,73 @@ export default function GameCanvas({ state, onTilePress, onShufflePress, onNewGa
           const y = tileY(tile.row, tile.layer);
           const isSelected = tile.id === selectedId;
           const isFree = freeTiles.has(tile.id);
-          const borderColor = isSelected
-            ? BORDER_SELECTED
-            : isFree && hasSelection
-              ? BORDER_HINT
-              : BORDER_NORMAL;
-          const faceColor = isFree ? TILE_FACE : TILE_FACE_LOCKED;
           const fw = TILE_W - SIDE_W;
           const fh = TILE_H - SIDE_W;
+
+          // Lift selected tile upward/outward for a "picked up" cue.
+          const liftX = isSelected ? 4 : 0;
+          const liftY = isSelected ? -5 : 0;
+          // 2 px border on selected for visibility at small tile sizes.
+          const borderInset = isSelected ? 2 : 1;
+
+          // Hints only on tiles that actually match the selection.
+          const isHint =
+            isFree && hasSelection && state.selected !== null && tilesMatch(tile, state.selected);
+          const borderColor = isSelected ? BORDER_SELECTED : isHint ? BORDER_HINT : BORDER_NORMAL;
+          const faceColor = isSelected ? TILE_FACE_SELECTED : isFree ? TILE_FACE : TILE_FACE_LOCKED;
 
           return (
             <Group key={tile.id}>
               {/* Drop shadow */}
-              <Rect x={x + SIDE_W + 2} y={y + SIDE_W + 2} width={fw} height={fh} color={SHADOW} />
+              <Rect
+                x={x + SIDE_W + 2 + liftX}
+                y={y + SIDE_W + 2 + liftY}
+                width={fw}
+                height={fh}
+                color={SHADOW}
+              />
+              {/* Gold glow behind selected tile */}
+              {isSelected && (
+                <Rect
+                  x={x + liftX - 3}
+                  y={y + liftY - 3}
+                  width={fw + 6}
+                  height={fh + 6}
+                  color={MAHJONG_GLOW_BG}
+                />
+              )}
               {/* Right 3-D side */}
-              <Rect x={x + fw} y={y + SIDE_W} width={SIDE_W} height={fh} color={SIDE_R} />
+              <Rect
+                x={x + fw + liftX}
+                y={y + SIDE_W + liftY}
+                width={SIDE_W}
+                height={fh}
+                color={SIDE_R}
+              />
               {/* Bottom 3-D side */}
-              <Rect x={x + SIDE_W} y={y + fh} width={fw} height={SIDE_W} color={SIDE_B} />
+              <Rect
+                x={x + SIDE_W + liftX}
+                y={y + fh + liftY}
+                width={fw}
+                height={SIDE_W}
+                color={SIDE_B}
+              />
               {/* Border */}
-              <Rect x={x} y={y} width={fw} height={fh} color={borderColor} />
+              <Rect x={x + liftX} y={y + liftY} width={fw} height={fh} color={borderColor} />
               {/* Face */}
-              <Rect x={x + 1} y={y + 1} width={fw - 2} height={fh - 2} color={faceColor} />
+              <Rect
+                x={x + borderInset + liftX}
+                y={y + borderInset + liftY}
+                width={fw - 2 * borderInset}
+                height={fh - 2 * borderInset}
+                color={faceColor}
+              />
               {/* SVG face art */}
               <TileFaceLayer
-                faceId={tile.faceId}
+                svg={tileSvgs[tile.faceId - 1] ?? null}
                 suit={tile.suit}
-                x={x + 2}
-                y={y + 2}
+                x={x + 2 + liftX}
+                y={y + 2 + liftY}
                 w={fw - 4}
                 h={fh - 4}
                 opacity={isFree ? 1 : 0.35}

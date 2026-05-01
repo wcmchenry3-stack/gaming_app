@@ -20,6 +20,7 @@ export interface FreeCellSlotProps {
   readonly cellIndex: number;
   readonly selected?: boolean;
   readonly hintSource?: boolean;
+  readonly hintDestination?: boolean;
   readonly onPress?: (cellIndex: number) => void;
   readonly dropId?: string;
   readonly onDrop?: DropHandler;
@@ -30,6 +31,7 @@ export default function FreeCellSlot({
   cellIndex,
   selected = false,
   hintSource = false,
+  hintDestination = false,
   onPress,
   dropId,
   onDrop,
@@ -97,8 +99,8 @@ export default function FreeCellSlot({
   const slotStyle = [
     styles.empty,
     {
-      borderColor: selected ? colors.accent : colors.border,
-      borderWidth: selected ? 2 : 1,
+      borderColor: hintDestination ? colors.bonus : selected ? colors.accent : colors.border,
+      borderWidth: hintDestination || selected ? 2 : 1,
       backgroundColor: colors.background,
     },
   ];

@@ -76,7 +76,7 @@ test.describe("Lobby — responsive layout", () => {
   test("AppHeader visible on home screen", async ({ page }) => {
     await page.goto("/");
     await expect(
-      page.getByRole("heading", { name: "Gaming App", exact: true }),
+      page.getByRole("heading", { name: "BC Arcade", exact: true }),
     ).toBeVisible({
       timeout: 10000,
     });

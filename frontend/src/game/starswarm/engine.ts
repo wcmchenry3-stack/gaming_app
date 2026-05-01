@@ -2,13 +2,16 @@ import type {
   StarSwarmState,
   Enemy,
   Bullet,
+  BuddyShip,
   Explosion,
   Player,
   PowerUp,
+  PowerUpType,
   Vec2,
   CubicBezier,
   EnemyTier,
   StarSwarmInput,
+  DifficultyTier,
 } from "./types";
 
 // ---------------------------------------------------------------------------
@@ -70,6 +73,8 @@ const DIVE_INTERVAL_MIN = 900; // floor regardless of wave
 
 const WAVE_CLEAR_PAUSE = 1600; // ms
 const CHALLENGING_CLEAR_PAUSE = 2200; // ms
+const CHALLENGING_ENEMY_COUNT = 40; // classic 40-enemy Challenging Stage (#1022)
+const PERFECT_BONUS = 10_000; // flat bonus for hitting all challenge enemies (#1022)
 
 const SHOOT_INTERVAL_BASE = 2600; // ms base
 const SHOOT_INTERVAL_JITTER = 1400; // ms random addend
@@ -86,23 +91,35 @@ const DIVE_SCORE_MULT = 2;
 const DIVE_SHOOT_INTERVAL = 1500; // ms between shots while Diving or Circling
 
 // #923 Formation sway
-const SWAY_SPEED_BASE = 0.03; // px/ms at wave 1
-const SWAY_SPEED_PER_WAVE = 0.008; // px/ms added per wave
+const SWAY_SPEED_BASE = 0.03; // px/ms
 const MAX_SWAY = 40; // max offset from center in px
 
 // #924 Aimed shots — start gentle from wave 1, ramp +5%/wave, cap 60%
 const AIMED_SHOT_WAVE_START = 1;
 const AIMED_SHOT_FRACTION = 0.1; // 10% aimed at wave 1, +5% per wave, cap 60%
 
-// #945 Bonus lives
-const BONUS_LIFE_THRESHOLDS = [30_000, 70_000];
+// #945 Bonus lives (#1078 #1079)
+const BONUS_LIFE_BASE = 30_000;
 const MAX_LIVES = 5;
+const BONUS_LIFE_SLOW_MO_SCALE = 0.35; // #1078: time scale during slow-mo window
+const BONUS_LIFE_SLOW_MO_DURATION = 800; // ms of slow-mo after bonus life
+const BONUS_LIFE_INVINCIBLE_MS = 600; // ms of invincibility after bonus life
 
 // #980: power-up entity
 const POWERUP_W = 24;
 const POWERUP_H = 24;
 const POWERUP_VY = 0.08; // px/ms fall speed
-export const POWERUP_DURATION = 5000; // ms of super state
+export const POWERUP_DURATION = 5000; // ms of super state (lightning / shield)
+
+// #1034: Smart Bomb flash
+const BOMB_FLASH_DURATION = 300; // ms
+
+// #1035: Buddy Ship
+const BUDDY_SHIP_DURATION = 2500; // ms to cross the screen
+const BUDDY_BULLET_SPEED = 0.5; // px/ms
+const BUDDY_BULLET_COUNT_MIN = 5;
+const BUDDY_BULLET_COUNT_MAX = 7;
+const BUDDY_FIRE_AT_T = 0.45; // path progress when spread burst fires
 // Time for a powerup to fall from spawn (y = POWERUP_H/2) to just past the player, plus a
 // 2-second collection window. Computed per-canvas so it works at any screen height.
 function powerUpDespawnMs(canvasH: number): number {
@@ -116,6 +133,84 @@ export const PLAYER_HURT_RADIUS = 7; // px
 
 const TIER_SCORE: Record<EnemyTier, number> = { Grunt: 100, Elite: 200, Boss: 400 };
 const TIER_HP: Record<EnemyTier, number> = { Grunt: 1, Elite: 2, Boss: 4 };
+
+// ---------------------------------------------------------------------------
+// Difficulty tier system (#1037)
+// ---------------------------------------------------------------------------
+
+const DIFFICULTY_SCORE_MULT: Record<DifficultyTier, number> = {
+  Ensign: 1,
+  LieutenantJG: 1.5,
+  Lieutenant: 2,
+  LieutenantCommander: 2.5,
+  Commander: 3,
+  Captain: 4,
+  RearAdmiral: 5,
+  ViceAdmiral: 6,
+  Admiral: 8,
+  FleetAdmiral: 10,
+};
+
+// Scales AI aggression: dive interval floor, bullet cap, aimed-shot cap, sway speed.
+const DIFFICULTY_PARAM_SCALE: Record<DifficultyTier, number> = {
+  Ensign: 0.7,
+  LieutenantJG: 1.0,
+  Lieutenant: 1.15,
+  LieutenantCommander: 1.3,
+  Commander: 1.5,
+  Captain: 1.7,
+  RearAdmiral: 1.9,
+  ViceAdmiral: 2.15,
+  Admiral: 2.5,
+  FleetAdmiral: 3.0,
+};
+
+const DIFFICULTY_LABEL: Record<DifficultyTier, string> = {
+  Ensign: "Ensign",
+  LieutenantJG: "Lieutenant J.G.",
+  Lieutenant: "Lieutenant",
+  LieutenantCommander: "Lieutenant Cmdr",
+  Commander: "Commander",
+  Captain: "Captain",
+  RearAdmiral: "Rear Admiral",
+  ViceAdmiral: "Vice Admiral",
+  Admiral: "Admiral",
+  FleetAdmiral: "Fleet Admiral",
+};
+
+/** All tiers from easiest to hardest — use for UI selector ordering. */
+export const DIFFICULTY_TIERS: readonly DifficultyTier[] = [
+  "Ensign",
+  "LieutenantJG",
+  "Lieutenant",
+  "LieutenantCommander",
+  "Commander",
+  "Captain",
+  "RearAdmiral",
+  "ViceAdmiral",
+  "Admiral",
+  "FleetAdmiral",
+];
+
+/** Score multiplier applied to every point award for this tier. */
+export function difficultyMultiplier(tier: DifficultyTier): number {
+  return DIFFICULTY_SCORE_MULT[tier];
+}
+
+/** AI parameter scale factor (dive rate, bullet density, aimed-shot fraction). */
+export function difficultyParamScale(tier: DifficultyTier): number {
+  return DIFFICULTY_PARAM_SCALE[tier];
+}
+
+/** Human-readable display label for a difficulty tier. */
+export function difficultyLabel(tier: DifficultyTier): string {
+  return DIFFICULTY_LABEL[tier];
+}
+
+/** Points per bonus life at the given difficulty (scales with score multiplier). */
+function bonusLifeThreshold(difficulty: DifficultyTier): number {
+  return BONUS_LIFE_BASE * difficultyMultiplier(difficulty);
+}
 const TIER_SIZE: Record<EnemyTier, { w: number; h: number }> = {
   Grunt: { w: 24, h: 24 },
   Elite: { w: 28, h: 28 },
@@ -270,14 +365,60 @@ function returnPath(ex: number, ey: number, fx: number, fy: number): CubicBezier
 }
 
 // #977: wide Bézier arc for Diving phase — sweeps outward before descending
-function divePath(enemy: Enemy, targetX: number, canvasH: number): CubicBezier {
+// shallow=true produces an Elite Phase-1 dive that stays above 60% canvas height
+function divePath(enemy: Enemy, targetX: number, canvasH: number, shallow = false): CubicBezier {
   const sweepDir = enemy.formationX < CANVAS_W / 2 ? -1 : 1;
-  const jitter = (rng() - 0.5) * 40; // ±20px horizontal scatter on P2
+  const jitter = (rng() - 0.5) * 40;
+  if (shallow) {
+    return {
+      p0: { x: enemy.x, y: enemy.y },
+      p1: { x: enemy.formationX + sweepDir * 50, y: enemy.formationY + 50 },
+      p2: { x: targetX + jitter, y: canvasH * 0.4 },
+      p3: { x: targetX, y: canvasH * 0.55 },
+    };
+  }
   return {
     p0: { x: enemy.x, y: enemy.y },
     p1: { x: enemy.formationX + sweepDir * 80, y: enemy.formationY + 80 },
     p2: { x: targetX + jitter, y: canvasH * 0.7 },
     p3: { x: targetX, y: canvasH * 0.9 },
+  };
+}
+
+// #1032: weighted power-up type selection based on player lives
+// Uses Math.random() intentionally — cosmetic choice, should not affect determinism.
+function pickPowerUpType(lives: number): PowerUpType {
+  const r = Math.random();
+  if (lives <= 1) {
+    // Shield and Bomb each 33%, Lightning and Buddy each 17%
+    if (r < 0.33) return "shield";
+    if (r < 0.66) return "bomb";
+    if (r < 0.83) return "lightning";
+    return "buddy";
+  }
+  // lives >= 2: equal 25% each
+  if (r < 0.25) return "lightning";
+  if (r < 0.5) return "shield";
+  if (r < 0.75) return "buddy";
+  return "bomb";
+}
+
+// #1035: Bézier arc for a buddy ship crossing from one edge to the other
+function buddyShipPath(
+  fromLeft: boolean,
+  targetX: number,
+  targetY: number,
+  canvasW: number,
+  canvasH: number
+): CubicBezier {
+  const startX = fromLeft ? -40 : canvasW + 40;
+  const endX = fromLeft ? canvasW + 40 : -40;
+  const entryY = canvasH * 0.3;
+  return {
+    p0: { x: startX, y: entryY },
+    p1: { x: canvasW * (fromLeft ? 0.3 : 0.7), y: canvasH * 0.12 },
+    p2: { x: targetX, y: targetY },
+    p3: { x: endX, y: entryY },
   };
 }
 
@@ -374,12 +515,18 @@ function makeChallengeEnemy(idx: number, total: number, canvasW: number, canvasH
 // Wave helpers
 // ---------------------------------------------------------------------------
 
-function diveInterval(wave: number): number {
-  return Math.max(DIVE_INTERVAL_MIN, DIVE_INTERVAL_BASE * Math.pow(0.88, wave - 1));
+function diveInterval(wave: number, paramScale = 1): number {
+  const base = DIVE_INTERVAL_BASE * Math.pow(0.88, wave - 1);
+  // Higher difficulty → lower floor → more frequent dives
+  const floor = Math.max(300, Math.round(DIVE_INTERVAL_MIN / paramScale));
+  return Math.max(floor, base);
 }
 
+// Classic Galaga cadence: wave 3, then every 4th wave (3, 7, 11, 15 …) (#1022)
 function isChallengingWave(wave: number): boolean {
-  return wave % 3 === 0;
+  if (wave === 3) return true;
+  if (wave < 3) return false;
+  return (wave - 3) % 4 === 0;
 }
 
 // #980: kills needed to trigger a power-up drop (before jitter is applied)
@@ -395,15 +542,16 @@ export function maxDivers(wave: number): number {
   return 4;
 }
 
-// #972: max enemy bullets on screen — 3 at wave 1, +1 every 2 waves
-export function bulletCap(wave: number): number {
-  return 3 + Math.floor((wave - 1) / 2);
+// #972: max enemy bullets on screen — 3 at wave 1, +1 every 2 waves; scaled by difficulty
+export function bulletCap(wave: number, paramScale = 1): number {
+  return Math.min(24, Math.round((3 + Math.floor((wave - 1) / 2)) * paramScale));
 }
 
-// #924: compute vx for an enemy bullet — non-zero only at wave 4+
-function aimedBulletVx(enemyX: number, playerX: number, wave: number): number {
+// #924: compute vx for an enemy bullet — non-zero only at wave 4+; cap raised by difficulty
+function aimedBulletVx(enemyX: number, playerX: number, wave: number, paramScale = 1): number {
   if (wave < AIMED_SHOT_WAVE_START) return 0;
-  const fraction = Math.min(0.6, AIMED_SHOT_FRACTION + (wave - AIMED_SHOT_WAVE_START) * 0.05);
+  const cap = Math.min(0.9, 0.6 * paramScale);
+  const fraction = Math.min(cap, AIMED_SHOT_FRACTION + (wave - AIMED_SHOT_WAVE_START) * 0.05);
   if (rng() > fraction) return 0;
   return Math.sign(playerX - enemyX) * BULLET_E_VY * 0.5;
 }
@@ -416,7 +564,8 @@ export function initStarSwarm(
   canvasW: number,
   canvasH: number,
   wave = 1,
-  seed = 42
+  seed = 42,
+  difficulty: DifficultyTier = "LieutenantJG"
 ): StarSwarmState {
   seedRng(seed);
   _resetIds();
@@ -431,7 +580,7 @@ export function initStarSwarm(
     shootCooldown: 0,
   };
 
-  return buildWaveState(canvasW, canvasH, wave, player, 0);
+  return buildWaveState(canvasW, canvasH, wave, player, 0, 0, difficulty);
 }
 
 function buildWaveState(
@@ -440,15 +589,15 @@ function buildWaveState(
   wave: number,
   player: Player,
   score: number,
-  bonusLivesAwarded = 0
+  bonusLivesAwarded = 0,
+  difficulty: DifficultyTier = "LieutenantJG"
 ): StarSwarmState {
   let enemies: Enemy[];
   let phase: StarSwarmState["phase"];
 
   if (isChallengingWave(wave)) {
-    const total = FORMATION_COLS * 3;
-    enemies = Array.from({ length: total }, (_, i) =>
-      makeChallengeEnemy(i, total, canvasW, canvasH)
+    enemies = Array.from({ length: CHALLENGING_ENEMY_COUNT }, (_, i) =>
+      makeChallengeEnemy(i, CHALLENGING_ENEMY_COUNT, canvasW, canvasH)
     );
     phase = "ChallengingStage";
   } else {
@@ -459,9 +608,11 @@ function buildWaveState(
 
   const startingNonBossCount = enemies.filter((e) => e.tier !== "Boss").length;
 
+  // #1032: Challenging Stage power-up X is randomised (Math.random() — cosmetic, non-deterministic)
   const challengingPowerUp: PowerUp = {
     id: nextId(),
-    x: canvasW / 2,
+    type: "lightning",
+    x: POWERUP_W / 2 + Math.random() * (canvasW - POWERUP_W),
     y: POWERUP_H / 2,
     vy: POWERUP_VY,
     width: POWERUP_W,
@@ -470,6 +621,9 @@ function buildWaveState(
   };
   const powerUps: PowerUp[] = isChallengingWave(wave) ? [challengingPowerUp] : [];
   const dropJitterTarget = triggerKills(wave) + Math.floor(rng() * 5) - 2;
+  const paramScale = difficultyParamScale(difficulty);
+  // Ensign gets gentler AI; every tier above gets straggler aggression
+  const stragglerEnabled = difficulty !== "Ensign";
 
   return {
     phase,
@@ -481,18 +635,27 @@ function buildWaveState(
     enemyBullets: [],
     explosions: [],
     powerUps,
+    buddyShips: [],
     phaseTimer: 0,
     canvasW,
     canvasH,
     challengingHits: 0,
-    nextDiveTimer: diveInterval(wave),
+    nextDiveTimer: diveInterval(wave, paramScale),
     formationSwayX: 0,
     formationSwayDir: 1,
     bonusLivesAwarded,
+    bonusLifeSlowMoTimer: 0,
     startingNonBossCount,
     killsSinceLastDrop: 0,
     dropJitterTarget,
     activePowerUp: null,
+    bossThresholdCrossed: false,
+    bossDeepThresholdCrossed: false,
+    stragglerEnabled,
+    pauseStraggler: false,
+    bombFlashTimer: 0,
+    difficulty,
+    challengingPerfect: false,
   };
 }
 
@@ -509,13 +672,20 @@ export function tick(state: StarSwarmState, dtMs: number, input: StarSwarmInput)
     return { ...state, phaseTimer: timer };
   }
 
-  let s = tickPlayer(state, dtMs, input);
-  s = tickEnemies(s, dtMs);
-  s = tickBullets(s, dtMs);
-  s = tickPowerUps(s, dtMs);
-  s = tickCollisions(s);
-  s = tickBonusLives(state, s);
-  s = tickExplosions(s, dtMs);
+  // #1078: decrement slow-mo timer with real time; scale all gameplay by BONUS_LIFE_SLOW_MO_SCALE
+  const slowMoActive = state.bonusLifeSlowMoTimer > 0;
+  const bonusLifeSlowMoTimer = Math.max(0, state.bonusLifeSlowMoTimer - dtMs);
+  const scaledDt = slowMoActive ? dtMs * BONUS_LIFE_SLOW_MO_SCALE : dtMs;
+
+  let s: StarSwarmState = { ...state, bonusLifeSlowMoTimer };
+  s = tickPlayer(s, scaledDt, input);
+  s = tickEnemies(s, scaledDt);
+  s = tickBullets(s, scaledDt);
+  s = tickPowerUps(s, scaledDt);
+  s = tickBuddyShips(s, scaledDt);
+  s = tickCollisions(s); // score updated by kills here
+  s = tickBonusLives(state, s); // #1078: after score updated; un-GameOvers if bonus life rescues player
+  s = tickExplosions(s, scaledDt);
   s = checkPhaseTransitions(s);
   return s;
 }
@@ -524,24 +694,33 @@ export function tick(state: StarSwarmState, dtMs: number, input: StarSwarmInput)
 // Bonus lives (#945)
 // ---------------------------------------------------------------------------
 
-function tickBonusLives(prev: StarSwarmState, next: StarSwarmState): StarSwarmState {
-  if (next.phase === "GameOver") return next;
+// #1078 #1079: repeating threshold scaled by difficulty; slow-mo + invincibility on award
+// No early exit on GameOver — if the threshold was just crossed in the same tick the player died,
+// the bonus life is still awarded and GameOver is reverted (race condition fix).
+function tickBonusLives(_prev: StarSwarmState, next: StarSwarmState): StarSwarmState {
+  const threshold = bonusLifeThreshold(next.difficulty);
+  const livesEarnable = Math.floor(next.score / threshold);
+  const livesToAward = Math.max(0, livesEarnable - next.bonusLivesAwarded);
 
-  let { player, bonusLivesAwarded } = next;
+  if (livesToAward === 0 || next.player.lives >= MAX_LIVES) return next;
 
-  for (const [i, threshold] of BONUS_LIFE_THRESHOLDS.entries()) {
-    if (
-      next.score >= threshold &&
-      prev.score < threshold &&
-      bonusLivesAwarded < i + 1 &&
-      player.lives < MAX_LIVES
-    ) {
-      player = { ...player, lives: player.lives + 1 };
-      bonusLivesAwarded++;
-    }
-  }
+  const awarded = Math.min(livesToAward, MAX_LIVES - next.player.lives);
+  const newLives = next.player.lives + awarded;
 
-  return { ...next, player, bonusLivesAwarded };
+  // #1078: if the bonus life rescued the player from a same-tick lethal hit, revert GameOver
+  const phase = next.phase === "GameOver" && newLives > 0 ? "Playing" : next.phase;
+
+  return {
+    ...next,
+    phase,
+    player: {
+      ...next.player,
+      lives: newLives,
+      invincibleTimer: Math.max(next.player.invincibleTimer, BONUS_LIFE_INVINCIBLE_MS),
+    },
+    bonusLivesAwarded: next.bonusLivesAwarded + awarded,
+    bonusLifeSlowMoTimer: BONUS_LIFE_SLOW_MO_DURATION,
+  };
 }
 
 // ---------------------------------------------------------------------------
@@ -557,7 +736,7 @@ function tickPlayer(state: StarSwarmState, dtMs: number, input: StarSwarmInput):
 
   const player: Player = { ...p, x: newX, invincibleTimer, shootCooldown };
 
-  const isSuper = state.activePowerUp !== null;
+  const isSuper = state.activePowerUp?.type === "lightning";
 
   if (shootCooldown === 0 && input.fire) {
     const bullet: Bullet = {
@@ -597,7 +776,10 @@ function tickSingleEnemy(
   playerX: number,
   canvasH: number,
   shouldDive: boolean,
-  wave: number
+  wave: number,
+  bossThresholdCrossed: boolean,
+  bossDeepThresholdCrossed: boolean,
+  paramScale = 1
 ): EnemyTickResult {
   if (!enemy.isAlive) return { enemy, bullet: null };
 
@@ -605,11 +787,26 @@ function tickSingleEnemy(
     case "SwoopIn":
       return tickSwoopIn(enemy, dtMs);
     case "Formation":
-      return tickFormation(enemy, dtMs, playerX, shouldDive, wave);
+      return tickFormation(
+        enemy,
+        dtMs,
+        playerX,
+        shouldDive,
+        wave,
+        bossThresholdCrossed,
+        paramScale
+      );
     case "Wiggling":
-      return tickWiggling(enemy, dtMs, canvasH);
+      return tickWiggling(enemy, dtMs, canvasH, bossThresholdCrossed, bossDeepThresholdCrossed);
     case "Diving":
-      return tickDiving(enemy, dtMs, canvasH, playerX);
+      return tickDiving(
+        enemy,
+        dtMs,
+        canvasH,
+        playerX,
+        bossThresholdCrossed,
+        bossDeepThresholdCrossed
+      );
     case "Circling":
       return tickCircling(enemy, dtMs, playerX);
     case "Returning":
@@ -649,8 +846,15 @@ function tickFormation(
   dtMs: number,
   playerX: number,
   shouldDive: boolean,
-  wave: number
+  wave: number,
+  bossThresholdCrossed: boolean,
+  paramScale = 1
 ): EnemyTickResult {
+  // Boss is passive until threshold crossed: no firing, no diving
+  if (enemy.tier === "Boss" && !bossThresholdCrossed) {
+    return { enemy, bullet: null };
+  }
+
   // #975: transition to Wiggling (not directly to Diving) — gives player a reaction window
   if (shouldDive) {
     return {
@@ -658,7 +862,7 @@ function tickFormation(
         ...enemy,
         phase: "Wiggling",
         wiggleTimer: WIGGLE_DURATION,
-        diveTargetX: playerX, // capture player X at trigger time
+        diveTargetX: playerX,
       },
       bullet: null,
     };
@@ -675,11 +879,17 @@ function tickFormation(
     return { enemy: e, bullet };
   }
 
+  // Elites always fire aimed shots; Grunts use wave-scaled probabilistic aim
+  const vx =
+    enemy.tier === "Elite"
+      ? Math.sign(playerX - enemy.x) * BULLET_E_VY * 0.5
+      : aimedBulletVx(enemy.x, playerX, wave, paramScale);
+
   const bullet: Bullet = {
     id: nextId(),
     x: enemy.x,
     y: enemy.y + enemy.height / 2,
-    vx: aimedBulletVx(enemy.x, playerX, wave),
+    vx,
     vy: BULLET_E_VY,
     owner: "enemy",
     width: BULLET_E_W,
@@ -719,11 +929,20 @@ function bossBurstFire(enemy: Enemy, playerX: number): EnemyTickResult {
 }
 
 // #975: oscillate ±WIGGLE_AMPLITUDE px for WIGGLE_DURATION ms, then launch Bézier dive
-function tickWiggling(enemy: Enemy, dtMs: number, canvasH: number): EnemyTickResult {
+function tickWiggling(
+  enemy: Enemy,
+  dtMs: number,
+  canvasH: number,
+  bossThresholdCrossed: boolean,
+  bossDeepThresholdCrossed: boolean
+): EnemyTickResult {
   const newTimer = enemy.wiggleTimer - dtMs;
 
   if (newTimer <= 0) {
-    const path = divePath(enemy, enemy.diveTargetX, canvasH);
+    // Stage 1 Elites: shallow arc; Stage 2 Bosses: shallow arc (like Stage 1 Elites)
+    const isBossStage2 = enemy.tier === "Boss" && bossThresholdCrossed && !bossDeepThresholdCrossed;
+    const shallow = (enemy.tier === "Elite" && !bossThresholdCrossed) || isBossStage2;
+    const path = divePath(enemy, enemy.diveTargetX, canvasH, shallow);
     const duration = enemy.tier === "Boss" ? BOSS_DIVE_PATH_DURATION : DIVE_PATH_DURATION;
     return {
       enemy: {
@@ -735,7 +954,7 @@ function tickWiggling(enemy: Enemy, dtMs: number, canvasH: number): EnemyTickRes
         pathDuration: duration,
         vel: { x: 0, y: 0 },
         burstShotsLeft: 0,
-        shootTimer: rng() * DIVE_SHOOT_INTERVAL,
+        shootTimer: 0,
       },
       bullet: null,
     };
@@ -749,8 +968,18 @@ function tickWiggling(enemy: Enemy, dtMs: number, canvasH: number): EnemyTickRes
   };
 }
 
-// #977: Bézier arc dive — advances pathT each tick, transitions to Circling at 85% canvas height
-function tickDiving(enemy: Enemy, dtMs: number, canvasH: number, playerX: number): EnemyTickResult {
+// #977/#1029/#1030: Bézier arc dive
+// - Grunts: skip Circling; go directly to Returning at 85%
+// - Elites Phase 1 (bossThresholdCrossed=false): shallow arc, Returning at 60%, no body collision
+// - Elites Phase 2 + Bosses: Circling at 85% (existing behaviour)
+function tickDiving(
+  enemy: Enemy,
+  dtMs: number,
+  canvasH: number,
+  playerX: number,
+  bossThresholdCrossed: boolean,
+  bossDeepThresholdCrossed: boolean
+): EnemyTickResult {
   const newT = enemy.pathT + dtMs / enemy.pathDuration;
   const pos = evalCubic(enemy.path!, Math.min(newT, 1));
 
@@ -782,8 +1011,33 @@ function tickDiving(enemy: Enemy, dtMs: number, canvasH: number, playerX: number
     }
   }
 
-  // Transition to Circling when past 85% canvas height or path complete
-  if (pos.y > canvasH * 0.85 || newT >= 1) {
+  const isElitePhase1 = enemy.tier === "Elite" && !bossThresholdCrossed;
+  // #1077: Stage 2 Boss uses shallow arc — return to formation like Elite Phase 1, no Circling
+  const isBossStage2 = enemy.tier === "Boss" && bossThresholdCrossed && !bossDeepThresholdCrossed;
+  const depthThreshold = isElitePhase1 || isBossStage2 ? canvasH * 0.6 : canvasH * 0.85;
+  const pathDone = pos.y > depthThreshold || newT >= 1;
+
+  if (pathDone) {
+    if (enemy.tier === "Grunt" || isElitePhase1 || isBossStage2) {
+      // No circling: return directly to formation
+      const path = returnPath(pos.x, pos.y, enemy.formationX, enemy.formationY);
+      return {
+        enemy: {
+          ...enemy,
+          phase: "Returning",
+          x: pos.x,
+          y: pos.y,
+          pathT: 0,
+          path,
+          pathDuration: RETURN_DURATION,
+          shootTimer: nextShootTimer,
+          burstShotsLeft: nextBurstShotsLeft,
+        },
+        bullet,
+      };
+    }
+
+    // Elite Phase 2 + Boss → Circling
     return {
       enemy: {
         ...enemy,
@@ -887,6 +1141,23 @@ function tickReturning(enemy: Enemy, dtMs: number): EnemyTickResult {
 }
 
 function tickEnemies(state: StarSwarmState, dtMs: number): StarSwarmState {
+  // #1030: bossThresholdCrossed latches true once ≤35% non-boss enemies remain
+  const aliveNonBoss = state.enemies.filter((e) => e.isAlive && e.tier !== "Boss").length;
+  const bossThresholdCrossed =
+    state.bossThresholdCrossed ||
+    state.startingNonBossCount === 0 ||
+    aliveNonBoss / state.startingNonBossCount <= BOSS_DIVE_THRESHOLD;
+
+  // #1077: bossDeepThresholdCrossed latches true at Stage 3 (≤3 enemies alive)
+  const aliveAll = state.enemies.filter((e) => e.isAlive).length;
+  const bossDeepThresholdCrossed =
+    state.bossDeepThresholdCrossed ||
+    (state.stragglerEnabled &&
+      !state.pauseStraggler &&
+      state.phase === "Playing" &&
+      aliveAll > 0 &&
+      aliveAll <= 3);
+
   // #926 Dive AI: pick up to maxDivers(wave) formation enemies to send diving
   let nextDiveTimer = state.nextDiveTimer;
   const diveIndices = new Set<number>();
@@ -894,16 +1165,13 @@ function tickEnemies(state: StarSwarmState, dtMs: number): StarSwarmState {
   if (state.phase === "Playing") {
     nextDiveTimer -= dtMs;
     if (nextDiveTimer <= 0) {
-      nextDiveTimer = diveInterval(state.wave);
-      // #978: Boss only eligible once ≤BOSS_DIVE_THRESHOLD of non-boss enemies remain
-      const aliveNonBoss = state.enemies.filter((e) => e.isAlive && e.tier !== "Boss").length;
-      const bossUnlocked =
-        state.startingNonBossCount === 0 ||
-        aliveNonBoss / state.startingNonBossCount <= BOSS_DIVE_THRESHOLD;
+      nextDiveTimer = diveInterval(state.wave, difficultyParamScale(state.difficulty));
+      // #978/#1030: Boss only eligible once bossThresholdCrossed
       const candidates = state.enemies
         .map((e, i) => ({ e, i }))
         .filter(
-          ({ e }) => e.isAlive && e.phase === "Formation" && (e.tier !== "Boss" || bossUnlocked)
+          ({ e }) =>
+            e.isAlive && e.phase === "Formation" && (e.tier !== "Boss" || bossThresholdCrossed)
         );
       // Only launch enough new divers to reach the cap; Wiggling enemies are NOT counted (#975)
       const currentDivers = state.enemies.filter((e) => e.isAlive && e.phase === "Diving").length;
@@ -917,7 +1185,8 @@ function tickEnemies(state: StarSwarmState, dtMs: number): StarSwarmState {
   }
 
   // #923 Formation sway: advance offset, bounce at ±MAX_SWAY
-  const swaySpeed = SWAY_SPEED_BASE + (state.wave - 1) * SWAY_SPEED_PER_WAVE;
+  const _ps = difficultyParamScale(state.difficulty);
+  const swaySpeed = SWAY_SPEED_BASE * _ps;
   let swayX = state.formationSwayX + state.formationSwayDir * swaySpeed * dtMs;
   let swayDir = state.formationSwayDir;
   if (swayX >= MAX_SWAY) {
@@ -937,7 +1206,10 @@ function tickEnemies(state: StarSwarmState, dtMs: number): StarSwarmState {
       state.player.x,
       state.canvasH,
       shouldDive,
-      state.wave
+      state.wave,
+      bossThresholdCrossed,
+      bossDeepThresholdCrossed,
+      _ps
     );
     let e = result.enemy;
     // Apply sway offset to enemies holding Formation position
@@ -951,7 +1223,7 @@ function tickEnemies(state: StarSwarmState, dtMs: number): StarSwarmState {
     if (e.isAlive && e.hitFlashTimer > 0) {
       e = { ...e, hitFlashTimer: Math.max(0, e.hitFlashTimer - dtMs) };
     }
-    if (result.bullet && newEnemyBullets.length < bulletCap(state.wave)) {
+    if (result.bullet && newEnemyBullets.length < bulletCap(state.wave, _ps)) {
       newEnemyBullets.push(result.bullet);
     }
     return e;
@@ -965,6 +1237,25 @@ function tickEnemies(state: StarSwarmState, dtMs: number): StarSwarmState {
     );
   }
 
+  // #1031: straggler aggression — when ≤3 enemies survive in a Playing wave,
+  // all Formation enemies immediately start wiggling
+  // #1039: pauseStraggler dev-panel toggle suppresses this
+  if (state.stragglerEnabled && !state.pauseStraggler && state.phase === "Playing") {
+    const aliveCount = enemies.filter((e) => e.isAlive).length;
+    if (aliveCount > 0 && aliveCount <= 3) {
+      enemies = enemies.map((e) => {
+        if (!e.isAlive || e.phase !== "Formation") return e;
+        return {
+          ...e,
+          phase: "Wiggling" as const,
+          wiggleTimer: WIGGLE_DURATION,
+          diveTargetX: state.player.x,
+          shootTimer: Math.min(e.shootTimer, SHOOT_INTERVAL_BASE / 2),
+        };
+      });
+    }
+  }
+
   return {
     ...state,
     enemies,
@@ -972,6 +1263,8 @@ function tickEnemies(state: StarSwarmState, dtMs: number): StarSwarmState {
     nextDiveTimer,
     formationSwayX: swayX,
     formationSwayDir: swayDir,
+    bossThresholdCrossed,
+    bossDeepThresholdCrossed,
   };
 }
 
@@ -987,10 +1280,92 @@ function tickPowerUps(state: StarSwarmState, dtMs: number): StarSwarmState {
   let activePowerUp = state.activePowerUp;
   if (activePowerUp !== null) {
     const newMs = activePowerUp.remainingMs - dtMs;
-    activePowerUp = newMs <= 0 ? null : { remainingMs: newMs };
+    if (newMs <= 0) {
+      if (__DEV__) {
+        const evt =
+          activePowerUp.type === "shield"
+            ? {
+                event: "powerup_expired",
+                type: "shield",
+                bulletsAbsorbed: activePowerUp.shieldAbsorbed,
+              }
+            : { event: "powerup_expired", type: activePowerUp.type };
+        // eslint-disable-next-line no-console
+        console.log("[StarSwarm analytics]", evt);
+      }
+      activePowerUp = null;
+    } else {
+      activePowerUp = { ...activePowerUp, remainingMs: newMs };
+    }
   }
 
-  return { ...state, powerUps, activePowerUp };
+  const bombFlashTimer = Math.max(0, state.bombFlashTimer - dtMs);
+
+  return { ...state, powerUps, activePowerUp, bombFlashTimer };
+}
+
+// ---------------------------------------------------------------------------
+// Buddy ships (#1035)
+// ---------------------------------------------------------------------------
+
+function tickBuddyShips(state: StarSwarmState, dtMs: number): StarSwarmState {
+  if (state.buddyShips.length === 0) return state;
+
+  const newPlayerBullets = [...state.playerBullets];
+  const updatedBuddies: BuddyShip[] = [];
+
+  for (const buddy of state.buddyShips) {
+    const newT = buddy.pathT + dtMs / buddy.pathDuration;
+    const pos = evalCubic(buddy.path, Math.min(newT, 1));
+
+    // Fire spread burst once at BUDDY_FIRE_AT_T
+    let hasFired = buddy.hasFired;
+    if (!hasFired && newT >= BUDDY_FIRE_AT_T) {
+      hasFired = true;
+      const bulletCount =
+        BUDDY_BULLET_COUNT_MIN +
+        Math.floor(Math.random() * (BUDDY_BULLET_COUNT_MAX - BUDDY_BULLET_COUNT_MIN + 1));
+      const aliveEnemies = state.enemies.filter((e) => e.isAlive);
+      let aimX = pos.x;
+      let aimY = pos.y + 1;
+      if (aliveEnemies.length > 0) {
+        aimX = aliveEnemies.reduce((s, e) => s + e.x, 0) / aliveEnemies.length;
+        aimY = aliveEnemies.reduce((s, e) => s + e.y, 0) / aliveEnemies.length;
+      }
+      const dx = aimX - pos.x;
+      const dy = aimY - pos.y;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      const baseDirX = dist > 1 ? dx / dist : 0;
+      const baseDirY = dist > 1 ? dy / dist : 1;
+      const baseAngle = Math.atan2(baseDirY, baseDirX);
+      const spreadHalf = Math.PI / 6; // ±30° total fan
+      for (let i = 0; i < bulletCount; i++) {
+        const angle =
+          bulletCount === 1
+            ? baseAngle
+            : baseAngle + ((i / (bulletCount - 1)) * 2 - 1) * spreadHalf;
+        newPlayerBullets.push({
+          id: nextId(),
+          x: pos.x,
+          y: pos.y,
+          vx: Math.cos(angle) * BUDDY_BULLET_SPEED,
+          vy: Math.sin(angle) * BUDDY_BULLET_SPEED,
+          owner: "player",
+          width: BULLET_E_W,
+          height: BULLET_E_H,
+          damage: 1,
+          piercing: true,
+        });
+      }
+    }
+
+    // Remove when path complete and off screen
+    if (newT < 1.2) {
+      updatedBuddies.push({ ...buddy, x: pos.x, y: pos.y, pathT: newT, hasFired });
+    }
+  }
+
+  return { ...state, buddyShips: updatedBuddies, playerBullets: newPlayerBullets };
 }
 
 // ---------------------------------------------------------------------------
@@ -1026,11 +1401,12 @@ function tickCollisions(state: StarSwarmState): StarSwarmState {
   let killsSinceLastDrop = state.killsSinceLastDrop;
   let dropJitterTarget = state.dropJitterTarget;
   let powerUps: PowerUp[] = [...state.powerUps];
+  const scoreMult = difficultyMultiplier(state.difficulty);
 
   // ── Player bullets ↔ enemies ──────────────────────────────────────────────
   const hitBulletIds = new Set<number>(); // non-piercing bullets consumed this tick
   const piercingHits = new Set<string>(); // `${bulletId}:${enemyId}` — prevents double-hit
-  const enemies = state.enemies.map((enemy) => {
+  let enemies = state.enemies.map((enemy) => {
     if (!enemy.isAlive) return enemy;
 
     for (const b of state.playerBullets) {
@@ -1051,7 +1427,7 @@ function tickCollisions(state: StarSwarmState): StarSwarmState {
         const base = TIER_SCORE[enemy.tier];
         const mult = enemy.phase === "Diving" || enemy.phase === "Circling" ? DIVE_SCORE_MULT : 1;
         const bonus = state.phase === "ChallengingStage" ? 1 : mult;
-        score += base * bonus;
+        score += Math.round(base * bonus * scoreMult);
         if (state.phase === "ChallengingStage") challengingHits += 1;
         if (state.phase === "Playing") killsSinceLastDrop++;
         return { ...enemy, hp: 0, isAlive: false, hitFlashTimer: 0 };
@@ -1072,10 +1448,12 @@ function tickCollisions(state: StarSwarmState): StarSwarmState {
     killsSinceLastDrop >= dropJitterTarget &&
     powerUps.length === 0
   ) {
-    const spawnX = POWERUP_W / 2 + rng() * (state.canvasW - POWERUP_W);
+    // #1032: X uses Math.random() — cosmetic, non-deterministic
+    const spawnX = POWERUP_W / 2 + Math.random() * (state.canvasW - POWERUP_W);
     powerUps = [
       {
         id: nextId(),
+        type: pickPowerUpType(state.player.lives),
         x: spawnX,
         y: POWERUP_H / 2,
         vy: POWERUP_VY,
@@ -1090,101 +1468,186 @@ function tickCollisions(state: StarSwarmState): StarSwarmState {
 
   // ── Player ↔ power-up collection ────────────────────────────────────────
   let activePowerUp = state.activePowerUp;
+  let buddyShips = [...state.buddyShips];
+  let bombFlashTimer = state.bombFlashTimer;
+  let bombActivated = false;
   const collectedIdx = powerUps.findIndex((pu) =>
     aabb(player.x, player.y, player.width, player.height, pu.x, pu.y, pu.width, pu.height)
   );
   if (collectedIdx !== -1) {
+    const collected = powerUps[collectedIdx]!;
     powerUps = powerUps.filter((_, i) => i !== collectedIdx);
-    activePowerUp = { remainingMs: POWERUP_DURATION };
+
+    if (__DEV__) {
+      // eslint-disable-next-line no-console
+      console.log("[StarSwarm analytics]", {
+        event: "powerup_collected",
+        type: collected.type,
+        wave: state.wave,
+        livesAtCollection: player.lives,
+      });
+    }
+
+    if (collected.type === "bomb") {
+      // #1034: instant — clear all enemy bullets, deal 1 damage to every alive enemy
+      bombActivated = true;
+      bombFlashTimer = BOMB_FLASH_DURATION;
+      enemies = enemies.map((e) => {
+        if (!e.isAlive) return e;
+        const newHp = e.hp - 1;
+        if (newHp <= 0) {
+          newExplosions.push(spawnExplosion(e.x, e.y));
+          score += Math.round(TIER_SCORE[e.tier] * scoreMult); // no dive multiplier for bomb kills
+          if (state.phase === "Playing") killsSinceLastDrop++;
+          return { ...e, hp: 0, isAlive: false, hitFlashTimer: 0 };
+        }
+        return { ...e, hp: newHp, hitFlashTimer: 120 };
+      });
+    } else if (collected.type === "buddy") {
+      // #1035: spawn a buddy ship
+      const aliveEnemies = enemies.filter((e) => e.isAlive);
+      const targetX =
+        aliveEnemies.length > 0
+          ? aliveEnemies.reduce((sum, e) => sum + e.x, 0) / aliveEnemies.length
+          : state.canvasW / 2;
+      const targetY =
+        aliveEnemies.length > 0
+          ? aliveEnemies.reduce((sum, e) => sum + e.y, 0) / aliveEnemies.length
+          : state.canvasH * 0.4;
+      const fromLeft = Math.random() > 0.5;
+      const path = buddyShipPath(fromLeft, targetX, targetY, state.canvasW, state.canvasH);
+      buddyShips = [
+        ...buddyShips,
+        {
+          id: nextId(),
+          x: fromLeft ? -40 : state.canvasW + 40,
+          y: state.canvasH * 0.3,
+          path,
+          pathT: 0,
+          pathDuration: BUDDY_SHIP_DURATION,
+          hasFired: false,
+          targetX,
+          targetY,
+          fromLeft,
+        },
+      ];
+    } else {
+      // lightning or shield: duration buff
+      activePowerUp = { remainingMs: POWERUP_DURATION, type: collected.type, shieldAbsorbed: 0 };
+    }
   }
 
   // ── Enemy contact ↔ player (bullets + #925 diving/circling ships) ──────────
   // #974: player uses a small forgiveness circle (PLAYER_HURT_RADIUS) instead of full AABB
+  // #1033: shield absorbs enemy bullets (body collision still kills)
+  const shieldActive = activePowerUp?.type === "shield";
+
+  // #1034: bomb cleared all enemy bullets on activation
+  let currentEnemyBullets: typeof state.enemyBullets = bombActivated ? [] : state.enemyBullets;
+
   if (player.invincibleTimer <= 0) {
-    const hitByBullet = state.enemyBullets.some((b) =>
+    const bulletHits = currentEnemyBullets.filter((b) =>
       collideCircleAABB(player.x, player.y, PLAYER_HURT_RADIUS, b.x, b.y, b.width, b.height)
     );
+    const hitByBullet = bulletHits.length > 0;
 
-    // #956: capture the ramming enemy so we can destroy it on collision
-    let rammingEnemyId: number | null = null;
-    const hitByShip =
-      !hitByBullet &&
-      enemies.some((e) => {
-        if (
-          e.isAlive &&
-          (e.phase === "Diving" || e.phase === "Circling") &&
-          collideCircleAABB(player.x, player.y, PLAYER_HURT_RADIUS, e.x, e.y, e.width, e.height)
-        ) {
+    if (hitByBullet && shieldActive) {
+      // Shield absorbs the bullets — no damage
+      currentEnemyBullets = currentEnemyBullets.filter(
+        (b) =>
+          !collideCircleAABB(player.x, player.y, PLAYER_HURT_RADIUS, b.x, b.y, b.width, b.height)
+      );
+      activePowerUp = {
+        ...activePowerUp!,
+        shieldAbsorbed: activePowerUp!.shieldAbsorbed + bulletHits.length,
+      };
+    } else {
+      // #956/#1029/#1030/#1077: capture the ramming enemy so we can destroy it on collision
+      // Bosses collidable only in Stage 3 (bossDeepThresholdCrossed); Elite Phase 1 always exempt
+      let rammingEnemyId: number | null = null;
+      const hitByShip =
+        !hitByBullet &&
+        enemies.some((e) => {
+          if (!e.isAlive) return false;
+          if (e.tier === "Boss" && !state.bossDeepThresholdCrossed) return false;
+          if (e.tier === "Elite" && !state.bossThresholdCrossed) return false;
+          if (e.phase !== "Diving" && e.phase !== "Circling") return false;
+          if (
+            !collideCircleAABB(player.x, player.y, PLAYER_HURT_RADIUS, e.x, e.y, e.width, e.height)
+          )
+            return false;
           rammingEnemyId = e.id;
           return true;
+        });
+
+      if (hitByBullet || hitByShip) {
+        const newLives = player.lives - 1;
+        newExplosions.push(spawnExplosion(player.x, player.y));
+
+        const finalEnemies =
+          hitByShip && rammingEnemyId !== null
+            ? enemies.map((e) => {
+                if (e.id === rammingEnemyId) {
+                  newExplosions.push(spawnExplosion(e.x, e.y));
+                  score += Math.round(TIER_SCORE[e.tier] * DIVE_SCORE_MULT * scoreMult);
+                  return { ...e, hp: 0, isAlive: false };
+                }
+                return e;
+              })
+            : enemies;
+
+        const enemyBulletsAfterHit = hitByBullet
+          ? currentEnemyBullets.filter(
+              (b) =>
+                !collideCircleAABB(
+                  player.x,
+                  player.y,
+                  PLAYER_HURT_RADIUS,
+                  b.x,
+                  b.y,
+                  b.width,
+                  b.height
+                )
+            )
+          : currentEnemyBullets;
+
+        if (newLives <= 0) {
+          return {
+            ...state,
+            enemies: finalEnemies,
+            playerBullets,
+            enemyBullets: enemyBulletsAfterHit,
+            explosions: newExplosions,
+            score,
+            challengingHits,
+            powerUps,
+            buddyShips,
+            killsSinceLastDrop,
+            dropJitterTarget,
+            activePowerUp,
+            bombFlashTimer,
+            player: { ...player, lives: 0 },
+            phase: "GameOver",
+          };
         }
-        return false;
-      });
 
-    if (hitByBullet || hitByShip) {
-      const newLives = player.lives - 1;
-      newExplosions.push(spawnExplosion(player.x, player.y));
-
-      // Kill the enemy that rammed the player (classic Galaga behaviour)
-      const finalEnemies =
-        hitByShip && rammingEnemyId !== null
-          ? enemies.map((e) => {
-              if (e.id === rammingEnemyId) {
-                newExplosions.push(spawnExplosion(e.x, e.y));
-                score += TIER_SCORE[e.tier] * DIVE_SCORE_MULT;
-                return { ...e, hp: 0, isAlive: false };
-              }
-              return e;
-            })
-          : enemies;
-
-      const enemyBullets = hitByBullet
-        ? state.enemyBullets.filter(
-            (b) =>
-              !collideCircleAABB(
-                player.x,
-                player.y,
-                PLAYER_HURT_RADIUS,
-                b.x,
-                b.y,
-                b.width,
-                b.height
-              )
-          )
-        : state.enemyBullets;
-
-      if (newLives <= 0) {
         return {
           ...state,
           enemies: finalEnemies,
           playerBullets,
-          enemyBullets,
+          enemyBullets: enemyBulletsAfterHit,
           explosions: newExplosions,
           score,
           challengingHits,
           powerUps,
+          buddyShips,
           killsSinceLastDrop,
           dropJitterTarget,
           activePowerUp,
-          player: { ...player, lives: 0 },
-          phase: "GameOver",
+          bombFlashTimer,
+          player: { ...player, lives: newLives, invincibleTimer: PLAYER_INVINCIBLE_MS },
         };
       }
-
-      return {
-        ...state,
-        enemies: finalEnemies,
-        playerBullets,
-        enemyBullets,
-        explosions: newExplosions,
-        score,
-        challengingHits,
-        powerUps,
-        killsSinceLastDrop,
-        dropJitterTarget,
-        activePowerUp,
-        player: { ...player, lives: newLives, invincibleTimer: PLAYER_INVINCIBLE_MS },
-      };
     }
   }
 
@@ -1192,13 +1655,16 @@ function tickCollisions(state: StarSwarmState): StarSwarmState {
     ...state,
     enemies,
     playerBullets,
+    enemyBullets: currentEnemyBullets,
     score,
     challengingHits,
     explosions: newExplosions,
     powerUps,
+    buddyShips,
     killsSinceLastDrop,
     dropJitterTarget,
     activePowerUp,
+    bombFlashTimer,
   };
 }
 
@@ -1239,12 +1705,17 @@ function checkPhaseTransitions(state: StarSwarmState): StarSwarmState {
     // Enemies exit when their path completes (they reach formationY which is off-screen bottom)
     const anyAlive = liveEnemies.length > 0;
     if (!anyAlive) {
-      const waveClearBonus = state.wave * WAVE_CLEAR_BONUS_BASE;
+      const sm = difficultyMultiplier(state.difficulty);
+      const waveClearBonus = Math.round(state.wave * WAVE_CLEAR_BONUS_BASE * sm);
+      const perfect = state.challengingHits === CHALLENGING_ENEMY_COUNT;
+      const perfectBonus = perfect ? Math.round(PERFECT_BONUS * sm) : 0;
       return {
         ...state,
-        score: state.score + waveClearBonus + state.challengingHits * 50,
+        score:
+          state.score + waveClearBonus + Math.round(state.challengingHits * 50 * sm) + perfectBonus,
         phase: "WaveClear",
         phaseTimer: CHALLENGING_CLEAR_PAUSE,
+        challengingPerfect: perfect,
       };
     }
     return state;
@@ -1253,7 +1724,8 @@ function checkPhaseTransitions(state: StarSwarmState): StarSwarmState {
   // Playing → WaveClear once all enemies dead
   if (state.phase === "Playing") {
     if (liveEnemies.length === 0) {
-      const waveClearBonus = state.wave * WAVE_CLEAR_BONUS_BASE;
+      const sm = difficultyMultiplier(state.difficulty);
+      const waveClearBonus = Math.round(state.wave * WAVE_CLEAR_BONUS_BASE * sm);
       return {
         ...state,
         score: state.score + waveClearBonus,
@@ -1275,8 +1747,88 @@ function startNextWave(state: StarSwarmState): StarSwarmState {
     nextWave,
     state.player,
     state.score,
-    state.bonusLivesAwarded
+    state.bonusLivesAwarded,
+    state.difficulty
   );
+}
+
+// ---------------------------------------------------------------------------
+// Public: applyPowerUp — used by triggerPowerUp dev-panel handle (#1039)
+// ---------------------------------------------------------------------------
+
+export function applyPowerUp(state: StarSwarmState, type: PowerUpType): StarSwarmState {
+  if (state.phase !== "Playing") return state;
+
+  if (type === "bomb") {
+    const newExplosions: Explosion[] = [...state.explosions];
+    const sm = difficultyMultiplier(state.difficulty);
+    let score = state.score;
+    let killsSinceLastDrop = state.killsSinceLastDrop;
+    const enemies = state.enemies.map((e) => {
+      if (!e.isAlive) return e;
+      const newHp = e.hp - 1;
+      if (newHp <= 0) {
+        newExplosions.push({
+          id: nextId(),
+          x: e.x,
+          y: e.y,
+          frame: 0,
+          frameTimer: EXPLOSION_FRAME_MS,
+        });
+        score += Math.round(TIER_SCORE[e.tier] * sm);
+        killsSinceLastDrop++;
+        return { ...e, hp: 0, isAlive: false, hitFlashTimer: 0 };
+      }
+      return { ...e, hp: newHp, hitFlashTimer: 120 };
+    });
+    return {
+      ...state,
+      enemies,
+      enemyBullets: [],
+      explosions: newExplosions,
+      score,
+      killsSinceLastDrop,
+      bombFlashTimer: BOMB_FLASH_DURATION,
+    };
+  }
+
+  if (type === "buddy") {
+    const aliveEnemies = state.enemies.filter((e) => e.isAlive);
+    const targetX =
+      aliveEnemies.length > 0
+        ? aliveEnemies.reduce((sum, e) => sum + e.x, 0) / aliveEnemies.length
+        : state.canvasW / 2;
+    const targetY =
+      aliveEnemies.length > 0
+        ? aliveEnemies.reduce((sum, e) => sum + e.y, 0) / aliveEnemies.length
+        : state.canvasH * 0.4;
+    const fromLeft = Math.random() > 0.5;
+    const path = buddyShipPath(fromLeft, targetX, targetY, state.canvasW, state.canvasH);
+    return {
+      ...state,
+      buddyShips: [
+        ...state.buddyShips,
+        {
+          id: nextId(),
+          x: fromLeft ? -40 : state.canvasW + 40,
+          y: state.canvasH * 0.3,
+          path,
+          pathT: 0,
+          pathDuration: BUDDY_SHIP_DURATION,
+          hasFired: false,
+          targetX,
+          targetY,
+          fromLeft,
+        },
+      ],
+    };
+  }
+
+  // lightning or shield: replace any active duration buff
+  return {
+    ...state,
+    activePowerUp: { remainingMs: POWERUP_DURATION, type, shieldAbsorbed: 0 },
+  };
 }
 
 // ---------------------------------------------------------------------------

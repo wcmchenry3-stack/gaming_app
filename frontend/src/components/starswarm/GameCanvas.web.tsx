@@ -3,17 +3,29 @@ import { View } from "react-native";
 import { Asset } from "expo-asset";
 import { useTranslation } from "react-i18next";
 import * as Sentry from "@sentry/react-native";
-import { initStarSwarm, tick, POWERUP_DURATION } from "../../game/starswarm/engine";
+import {
+  initStarSwarm,
+  tick,
+  applyPowerUp,
+  POWERUP_DURATION,
+  difficultyLabel,
+  difficultyMultiplier,
+} from "../../game/starswarm/engine";
 import { initStarfield, tickStarfield } from "../../game/starswarm/starfield";
 import type { StarfieldState } from "../../game/starswarm/starfield";
-import type { StarSwarmState } from "../../game/starswarm/types";
+import type { StarSwarmState, PowerUpType, DifficultyTier } from "../../game/starswarm/types";
 
 import playerShipSrc from "../../../assets/starswarm/player-ship.webp";
+import buddyShipSrc from "../../../assets/starswarm/buddy-ship.webp";
 import enemyGruntSrc from "../../../assets/starswarm/enemy-grunt.webp";
 import enemyEliteSrc from "../../../assets/starswarm/enemy-elite.webp";
 import enemyBossSrc from "../../../assets/starswarm/enemy-boss.webp";
 import bulletPlayerSrc from "../../../assets/starswarm/bullet-player.webp";
 import bulletEnemySrc from "../../../assets/starswarm/bullet-enemy.webp";
+import puShieldSrc from "../../../assets/starswarm/powerups/shield_gold.png";
+import puBombSrc from "../../../assets/starswarm/powerups/space-missiles-018.png";
+import puBuddySrc from "../../../assets/starswarm/powerups/player-life.png";
+import puLightningSrc from "../../../assets/starswarm/powerups/bolt_gold.png";
 import ef00 from "../../../assets/starswarm/explosion/frame00.png";
 import ef01 from "../../../assets/starswarm/explosion/frame01.png";
 import ef02 from "../../../assets/starswarm/explosion/frame02.png";
@@ -62,41 +74,91 @@ const EXPLOSION_DRAW_SIZE = 48;
 const DT_CAP_MS = 33;
 const INVINCIBLE_BLINK_INTERVAL = 120; // ms
 
+const C = {
+  bg: "#000010",
+  star: "#ffffff",
+  bulletEnemy: "#ff4422",
+  bulletPlayer: "#00ffcc",
+  enemyGrunt: "#8888ff",
+  enemyElite: "#ff88ff",
+  enemyBoss: "#ffff44",
+  hitFlash: "#ff2200",
+  pipFilled: "#ffffff",
+  pipEmpty: "rgba(255,255,255,0.2)",
+  player: "#00ffcc",
+  superTint: "#ffee00",
+  shieldAura: "rgba(0,170,255,0.25)",
+  shieldRing: "rgba(0,170,255,0.8)",
+  buddyShip: "rgba(0,120,255,0.8)",
+  powerUpLightning: "#ffee00",
+  powerUpShield: "rgba(0,170,255,0.9)",
+  powerUpBomb: "rgba(255,80,0,0.9)",
+  powerUpBuddy: "rgba(0,255,200,0.9)",
+  powerBarFillShield: "#00aaff",
+  buddyTint: "rgba(255,238,0,0.5)",
+  explosionHot: "#ffcc00",
+  explosionCool: "#ff4400",
+  hudText: "#ffffff",
+  hudDiff: "#aaffee",
+  lives: "#00ffcc",
+  powerBarBg: "rgba(255,255,255,0.18)",
+  powerBarFill: "#ffee00",
+  waveClear: "#00ffcc",
+  challengingStage: "#ffdd00",
+  gameOverText: "#ff4422",
+  gameOverOverlay: "rgba(0,0,0,0.65)",
+} as const;
+
 interface Images {
   playerShip: HTMLImageElement | null;
+  buddyShip: HTMLImageElement | null;
   enemyGrunt: HTMLImageElement | null;
   enemyElite: HTMLImageElement | null;
   enemyBoss: HTMLImageElement | null;
   bulletPlayer: HTMLImageElement | null;
   bulletEnemy: HTMLImageElement | null;
   explosionFrames: (HTMLImageElement | null)[];
+  puShield: HTMLImageElement | null;
+  puBomb: HTMLImageElement | null;
+  puBuddy: HTMLImageElement | null;
+  puLightning: HTMLImageElement | null;
 }
 
 export interface DevOptions {
   wave?: number;
   infiniteLives?: boolean;
+  stragglerEnabled?: boolean;
+  pauseStraggler?: boolean;
+  /** Override difficulty tier for this game (#1037). */
+  difficulty?: DifficultyTier;
 }
 
 export interface GameCanvasHandle {
   setPlayerX: (x: number) => void;
   setFire: (fire: boolean) => void;
+  triggerPowerUp: (type: PowerUpType) => void;
 }
 
 interface Props {
   highScore?: number;
-  onGameOver?: (finalScore: number) => void;
+  onGameOver?: (finalScore: number, wave: number) => void;
   onScoreChange?: (score: number) => void;
   onPlayerHit?: () => void;
   onWaveClear?: () => void;
   onLaserFire?: () => void;
   onExplosion?: () => void;
   onChallengingStage?: () => void;
-  onPowerUpCollect?: () => void;
+  /** Called once when all enemies in a Challenging Stage are hit (#1022). */
+  onChallengingPerfect?: () => void;
+  onPowerUpCollect?: (type: PowerUpType) => void;
   isPaused?: boolean;
+  onPause?: () => void;
   width: number;
   height: number;
   scale: number;
   resetTick?: number;
+  /** Active difficulty tier — passed from the pre-game selector (#1037). */
+  difficulty?: DifficultyTier;
   devOptions?: DevOptions;
 }
 
@@ -111,12 +173,15 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
       onLaserFire,
       onExplosion,
       onChallengingStage,
+      onChallengingPerfect,
       onPowerUpCollect,
       isPaused = false,
+      onPause,
       width,
       height,
       scale,
       resetTick,
+      difficulty: difficultyProp = "LieutenantJG",
       devOptions,
     },
     ref
@@ -129,7 +194,8 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
 
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const scaleRef = useRef(scale);
-    const stateRef = useRef<StarSwarmState>(initStarSwarm(width, height));
+    const difficultyRef = useRef<DifficultyTier>(difficultyProp);
+    const stateRef = useRef<StarSwarmState>(initStarSwarm(width, height, 1, 42, difficultyProp));
     const sfRef = useRef<StarfieldState>(initStarfield(width, height));
     const inputRef = useRef({ playerX: width / 2, fire: true });
     const infiniteLivesRef = useRef(false);
@@ -144,25 +210,36 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
     const onLaserFireRef = useRef(onLaserFire);
     const onExplosionRef = useRef(onExplosion);
     const onChallengingStageRef = useRef(onChallengingStage);
+    const onChallengingPerfectRef = useRef(onChallengingPerfect);
     const onPowerUpCollectRef = useRef(onPowerUpCollect);
-    const prevActivePowerUpRef = useRef(false);
+    const onPauseRef = useRef(onPause);
+    const prevActivePowerUpRef = useRef<string | null>(null);
+    const triggerPowerUpRef = useRef<PowerUpType | null>(null);
     const isPausedRef = useRef(isPaused);
     const prevScoreRef = useRef(0);
     const prevLivesRef = useRef(stateRef.current.player.lives);
     const prevPhaseRef = useRef(stateRef.current.phase);
     const imagesRef = useRef<Images>({
       playerShip: null,
+      buddyShip: null,
       enemyGrunt: null,
       enemyElite: null,
       enemyBoss: null,
       bulletPlayer: null,
       bulletEnemy: null,
       explosionFrames: Array(20).fill(null) as null[],
+      puShield: null,
+      puBomb: null,
+      puBuddy: null,
+      puLightning: null,
     });
 
     useEffect(() => {
       scaleRef.current = scale;
     }, [scale]);
+    useEffect(() => {
+      difficultyRef.current = difficultyProp;
+    }, [difficultyProp]);
     useEffect(() => {
       highScoreRef.current = highScore;
     }, [highScore]);
@@ -185,11 +262,17 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
       onPowerUpCollectRef.current = onPowerUpCollect;
     }, [onPowerUpCollect]);
     useEffect(() => {
+      onPauseRef.current = onPause;
+    }, [onPause]);
+    useEffect(() => {
       onExplosionRef.current = onExplosion;
     }, [onExplosion]);
     useEffect(() => {
       onChallengingStageRef.current = onChallengingStage;
     }, [onChallengingStage]);
+    useEffect(() => {
+      onChallengingPerfectRef.current = onChallengingPerfect;
+    }, [onChallengingPerfect]);
     useEffect(() => {
       const wasPaused = isPausedRef.current;
       isPausedRef.current = isPaused;
@@ -220,31 +303,46 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
       (async () => {
         const results = await Promise.all([
           loadImg(playerShipSrc as number),
+          loadImg(buddyShipSrc as number),
           loadImg(enemyGruntSrc as number),
           loadImg(enemyEliteSrc as number),
           loadImg(enemyBossSrc as number),
           loadImg(bulletPlayerSrc as number),
           loadImg(bulletEnemySrc as number),
+          loadImg(puShieldSrc as number),
+          loadImg(puBombSrc as number),
+          loadImg(puBuddySrc as number),
+          loadImg(puLightningSrc as number),
           ...EXPLOSION_SRCS.map((s) => loadImg(s as number)),
         ]);
         if (cancelled) return;
         const [
           playerShip,
+          buddyShip,
           enemyGrunt,
           enemyElite,
           enemyBoss,
           bulletPlayer,
           bulletEnemy,
+          puShield,
+          puBomb,
+          puBuddy,
+          puLightning,
           ...frames
         ] = results;
         imagesRef.current = {
           playerShip: playerShip ?? null,
+          buddyShip: buddyShip ?? null,
           enemyGrunt: enemyGrunt ?? null,
           enemyElite: enemyElite ?? null,
           enemyBoss: enemyBoss ?? null,
           bulletPlayer: bulletPlayer ?? null,
           bulletEnemy: bulletEnemy ?? null,
           explosionFrames: frames.map((f) => f ?? null),
+          puShield: puShield ?? null,
+          puBomb: puBomb ?? null,
+          puBuddy: puBuddy ?? null,
+          puLightning: puLightning ?? null,
         };
       })();
 
@@ -262,6 +360,9 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
         setFire(fire) {
           inputRef.current.fire = fire;
         },
+        triggerPowerUp(type) {
+          triggerPowerUpRef.current = type;
+        },
       }),
       []
     );
@@ -270,7 +371,13 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
       if (!resetTick) return;
       const opts = devOptionsRef.current;
       infiniteLivesRef.current = opts?.infiniteLives ?? false;
-      stateRef.current = initStarSwarm(width, height, opts?.wave ?? 1);
+      stateRef.current = initStarSwarm(
+        width,
+        height,
+        opts?.wave ?? 1,
+        42,
+        opts?.difficulty ?? difficultyRef.current
+      );
       sfRef.current = initStarfield(width, height);
       lastFrameTimeRef.current = 0;
       inputRef.current.playerX = width / 2;
@@ -278,7 +385,8 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
       prevScoreRef.current = 0;
       prevLivesRef.current = stateRef.current.player.lives;
       prevPhaseRef.current = stateRef.current.phase;
-      prevActivePowerUpRef.current = false;
+      prevActivePowerUpRef.current = null;
+      triggerPowerUpRef.current = null;
     }, [resetTick, width, height]);
 
     const draw = useCallback(() => {
@@ -302,13 +410,13 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
       ctx.scale(s, s);
 
       // Background
-      ctx.fillStyle = "#000010";
+      ctx.fillStyle = C.bg;
       ctx.fillRect(0, 0, width, height);
 
       // Starfield
       for (const star of sf.stars) {
         ctx.globalAlpha = star.opacity;
-        ctx.fillStyle = "#ffffff";
+        ctx.fillStyle = C.star;
         ctx.beginPath();
         ctx.arc(star.x, star.y, star.r, 0, Math.PI * 2);
         ctx.fill();
@@ -316,7 +424,7 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
       ctx.globalAlpha = 1;
 
       // Enemy bullets
-      ctx.fillStyle = "#ff4422";
+      ctx.fillStyle = C.bulletEnemy;
       for (const b of state.enemyBullets) {
         ctx.fillRect(b.x - b.width / 2, b.y - b.height / 2, b.width, b.height);
       }
@@ -327,7 +435,7 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
         if (img) {
           ctx.drawImage(img, b.x - b.width / 2, b.y - b.height / 2, b.width, b.height);
         } else {
-          ctx.fillStyle = "#00ffcc";
+          ctx.fillStyle = C.bulletPlayer;
           ctx.fillRect(b.x - b.width / 2, b.y - b.height / 2, b.width, b.height);
         }
       }
@@ -351,7 +459,11 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
           );
         } else {
           ctx.fillStyle =
-            enemy.tier === "Grunt" ? "#8888ff" : enemy.tier === "Elite" ? "#ff88ff" : "#ffff44";
+            enemy.tier === "Grunt"
+              ? C.enemyGrunt
+              : enemy.tier === "Elite"
+                ? C.enemyElite
+                : C.enemyBoss;
           ctx.fillRect(
             enemy.x - enemy.width / 2,
             enemy.y - enemy.height / 2,
@@ -360,8 +472,8 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
           );
         }
         if (enemy.hitFlashTimer > 0) {
-          ctx.globalAlpha = 0.7;
-          ctx.fillStyle = "#ffffff";
+          ctx.globalAlpha = 0.55;
+          ctx.fillStyle = C.hitFlash;
           ctx.fillRect(
             enemy.x - enemy.width / 2,
             enemy.y - enemy.height / 2,
@@ -369,6 +481,21 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
             enemy.height
           );
           ctx.globalAlpha = 1;
+        }
+
+        // HP pips — Elite (2) and Boss (4); Grunt always has 1 HP so pips are omitted
+        if (enemy.tier !== "Grunt") {
+          const totalPips = enemy.tier === "Elite" ? 2 : 4;
+          const pipW = 4;
+          const pipH = 4;
+          const pipGap = 2;
+          const rowW = totalPips * pipW + (totalPips - 1) * pipGap;
+          const rowX = enemy.x - rowW / 2;
+          const rowY = enemy.y - enemy.height / 2 - 8;
+          for (let p = 0; p < totalPips; p++) {
+            ctx.fillStyle = p < enemy.hp ? C.pipFilled : C.pipEmpty;
+            ctx.fillRect(rowX + p * (pipW + pipGap), rowY, pipW, pipH);
+          }
         }
       }
 
@@ -387,7 +514,7 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
             player.height
           );
         } else {
-          ctx.fillStyle = "#00ffcc";
+          ctx.fillStyle = C.player;
           ctx.beginPath();
           ctx.moveTo(player.x, player.y - player.height / 2);
           ctx.lineTo(player.x - player.width / 2, player.y + player.height / 2);
@@ -395,10 +522,27 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
           ctx.closePath();
           ctx.fill();
         }
-        // Super-state electric tint
-        if (state.activePowerUp !== null) {
+        // #1033 Shield aura — glowing ring
+        if (state.activePowerUp?.type === "shield") {
+          ctx.globalAlpha = 0.25;
+          ctx.fillStyle = C.shieldAura;
+          ctx.beginPath();
+          ctx.arc(player.x, player.y, player.width * 0.8, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.globalAlpha = 0.8;
+          ctx.strokeStyle = C.shieldRing;
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.arc(player.x, player.y, player.width * 0.8, 0, Math.PI * 2);
+          ctx.stroke();
+          ctx.globalAlpha = 1;
+          ctx.lineWidth = 1;
+        }
+
+        // Lightning super-state electric tint
+        if (state.activePowerUp?.type === "lightning") {
           ctx.globalAlpha = 0.45;
-          ctx.fillStyle = "#ffee00";
+          ctx.fillStyle = C.superTint;
           ctx.fillRect(
             player.x - player.width / 2,
             player.y - player.height / 2,
@@ -409,22 +553,72 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
         }
       }
 
-      // Power-ups — falling lightning bolt
-      ctx.fillStyle = "#ffee00";
+      // #1035 Buddy ships — blue ship sprite; flip for right-entry
+      for (const buddy of state.buddyShips) {
+        const img = imgs.buddyShip;
+        ctx.save();
+        if (!buddy.fromLeft) {
+          ctx.translate(buddy.x, 0);
+          ctx.scale(-1, 1);
+          ctx.translate(-buddy.x, 0);
+        }
+        if (img) {
+          ctx.drawImage(img, buddy.x - 17, buddy.y - 17, 34, 34);
+        } else {
+          ctx.fillStyle = C.buddyShip;
+          ctx.fillRect(buddy.x - 17, buddy.y - 17, 34, 34);
+        }
+        ctx.restore();
+      }
+
+      // Power-ups — Kenney CC0 sprites with procedural fallback
       for (const pu of state.powerUps) {
         const lx = pu.x - pu.width / 2;
         const ly = pu.y - pu.height / 2;
         const pw = pu.width;
         const ph = pu.height;
-        ctx.beginPath();
-        ctx.moveTo(lx + pw * 0.625, ly);
-        ctx.lineTo(lx + pw * 0.125, ly + ph * 0.542);
-        ctx.lineTo(lx + pw * 0.458, ly + ph * 0.542);
-        ctx.lineTo(lx + pw * 0.375, ly + ph);
-        ctx.lineTo(lx + pw * 0.875, ly + ph * 0.458);
-        ctx.lineTo(lx + pw * 0.542, ly + ph * 0.458);
-        ctx.closePath();
-        ctx.fill();
+        const spriteMap: Record<string, HTMLImageElement | null> = {
+          shield: imgs.puShield,
+          bomb: imgs.puBomb,
+          buddy: imgs.puBuddy,
+          lightning: imgs.puLightning,
+        };
+        const sprite = spriteMap[pu.type] ?? null;
+        if (sprite) {
+          ctx.drawImage(sprite, lx, ly, pw, ph);
+        } else if (pu.type === "shield") {
+          ctx.fillStyle = C.powerUpShield;
+          ctx.beginPath();
+          ctx.arc(pu.x, pu.y, pw * 0.4, 0, Math.PI * 2);
+          ctx.fill();
+        } else if (pu.type === "bomb") {
+          ctx.fillStyle = C.powerUpBomb;
+          ctx.beginPath();
+          ctx.arc(pu.x, pu.y, pw * 0.4, 0, Math.PI * 2);
+          ctx.fill();
+        } else if (pu.type === "buddy") {
+          ctx.fillStyle = C.powerUpBuddy;
+          ctx.fillRect(lx + pw * 0.2, ly + ph * 0.2, pw * 0.6, ph * 0.6);
+        } else {
+          ctx.fillStyle = C.powerUpLightning;
+          ctx.beginPath();
+          ctx.moveTo(lx + pw * 0.625, ly);
+          ctx.lineTo(lx + pw * 0.125, ly + ph * 0.542);
+          ctx.lineTo(lx + pw * 0.458, ly + ph * 0.542);
+          ctx.lineTo(lx + pw * 0.375, ly + ph);
+          ctx.lineTo(lx + pw * 0.875, ly + ph * 0.458);
+          ctx.lineTo(lx + pw * 0.542, ly + ph * 0.458);
+          ctx.closePath();
+          ctx.fill();
+        }
+      }
+
+      // #1034 Bomb flash — full-screen white overlay fading out
+      if (state.bombFlashTimer > 0) {
+        ctx.globalAlpha = (state.bombFlashTimer / 300) * 0.75;
+        ctx.fillStyle = "#ffffff";
+        ctx.fillRect(0, 0, width, height);
+        ctx.globalAlpha = 1;
       }
 
       // Explosions
@@ -442,7 +636,7 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
         } else {
           const progress = exp.frame / 20;
           ctx.globalAlpha = 1 - progress;
-          ctx.fillStyle = progress < 0.4 ? "#ffcc00" : "#ff4400";
+          ctx.fillStyle = progress < 0.4 ? C.explosionHot : C.explosionCool;
           ctx.beginPath();
           ctx.arc(exp.x, exp.y, 6 + progress * 18, 0, Math.PI * 2);
           ctx.fill();
@@ -453,7 +647,7 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
       // HUD
       ctx.font = "bold 13px 'Courier New', monospace";
       ctx.textBaseline = "top";
-      ctx.fillStyle = "#ffffff";
+      ctx.fillStyle = C.hudText;
       ctx.textAlign = "left";
       ctx.fillText(`${t("hud.score")} ${state.score}`, 10, 8);
       ctx.textAlign = "center";
@@ -461,18 +655,28 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
       ctx.textAlign = "right";
       ctx.fillText(`${t("hud.wave")} ${state.wave}`, width - 10, 8);
 
+      // Difficulty tier — centered below score row
+      ctx.font = "bold 10px 'Courier New', monospace";
+      ctx.textAlign = "center";
+      ctx.fillStyle = C.hudDiff;
+      ctx.fillText(
+        `${difficultyLabel(state.difficulty)} ×${difficultyMultiplier(state.difficulty)}`,
+        width / 2,
+        26
+      );
+
       // Lives — small cyan rectangles at bottom-left
       for (let i = 0; i < player.lives; i++) {
-        ctx.fillStyle = "#00ffcc";
+        ctx.fillStyle = C.lives;
         ctx.fillRect(10 + i * 16, height - 18, 10, 14);
       }
 
       // Power-up countdown bar — above lives
       if (state.activePowerUp !== null) {
         const ratio = state.activePowerUp.remainingMs / POWERUP_DURATION;
-        ctx.fillStyle = "rgba(255,255,255,0.18)";
+        ctx.fillStyle = C.powerBarBg;
         ctx.fillRect(10, height - 26, 60, 4);
-        ctx.fillStyle = "#ffee00";
+        ctx.fillStyle = C.powerBarFill;
         ctx.fillRect(10, height - 26, 60 * ratio, 4);
       }
 
@@ -482,27 +686,35 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
 
       if (state.phase === "WaveClear") {
         ctx.font = "bold 22px 'Courier New', monospace";
-        ctx.fillStyle = "#00ffcc";
+        ctx.fillStyle = C.waveClear;
         ctx.fillText(t("phase.waveClear"), width / 2, height / 2);
+        if (state.challengingPerfect) {
+          ctx.font = "bold 18px 'Courier New', monospace";
+          ctx.fillStyle = "#ffdd00";
+          ctx.shadowColor = "#ff8800";
+          ctx.shadowBlur = 8;
+          ctx.fillText(t("phase.perfect"), width / 2, height / 2 + 30);
+          ctx.shadowBlur = 0;
+        }
       }
 
       if (state.phase === "ChallengingStage") {
         ctx.font = "bold 20px 'Courier New', monospace";
-        ctx.fillStyle = "#ffdd00";
+        ctx.fillStyle = C.challengingStage;
         ctx.fillText(t("phase.challengingStage"), width / 2, height / 2 - 18);
         ctx.font = "14px 'Courier New', monospace";
-        ctx.fillStyle = "#ffffff";
+        ctx.fillStyle = C.hudText;
         ctx.fillText(t("phase.hits", { count: state.challengingHits }), width / 2, height / 2 + 12);
       }
 
       if (state.phase === "GameOver") {
-        ctx.fillStyle = "rgba(0,0,0,0.65)";
+        ctx.fillStyle = C.gameOverOverlay;
         ctx.fillRect(0, 0, width, height);
         ctx.font = "bold 28px 'Courier New', monospace";
-        ctx.fillStyle = "#ff4422";
+        ctx.fillStyle = C.gameOverText;
         ctx.fillText(t("phase.gameOver"), width / 2, height / 2 - 22);
         ctx.font = "16px 'Courier New', monospace";
-        ctx.fillStyle = "#ffffff";
+        ctx.fillStyle = C.hudText;
         ctx.fillText(`${t("hud.score")} ${state.score}`, width / 2, height / 2 + 18);
       }
 
@@ -523,11 +735,21 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
         const dtMs = Math.min(timestamp - lastFrameTimeRef.current, DT_CAP_MS);
         lastFrameTimeRef.current = timestamp;
 
+        // #1039: apply dev-panel power-up injection before regular tick
+        if (triggerPowerUpRef.current) {
+          const type = triggerPowerUpRef.current;
+          triggerPowerUpRef.current = null;
+          stateRef.current = applyPowerUp(stateRef.current, type);
+        }
+
         const prev = stateRef.current;
         if (prev.phase !== "GameOver" && !isPausedRef.current) {
           try {
             const prevCooldown = prev.player.shootCooldown;
-            const next = tick(prev, dtMs, {
+            const pauseStraggler = devOptionsRef.current?.pauseStraggler ?? false;
+            const tickInput =
+              prev.pauseStraggler !== pauseStraggler ? { ...prev, pauseStraggler } : prev;
+            const next = tick(tickInput, dtMs, {
               playerX: inputRef.current.playerX,
               fire: inputRef.current.fire,
             });
@@ -544,14 +766,17 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
               prevScoreRef.current = applied.score;
               onScoreChangeRef.current?.(applied.score);
             }
-            if (applied.player.shootCooldown > prevCooldown) {
+            if (
+              applied.player.shootCooldown > prevCooldown &&
+              applied.activePowerUp?.type === "lightning"
+            ) {
               onLaserFireRef.current?.();
             }
-            const isNowActive = applied.activePowerUp !== null;
-            if (!prevActivePowerUpRef.current && isNowActive) {
-              onPowerUpCollectRef.current?.();
+            const nowType = applied.activePowerUp?.type ?? null;
+            if (prevActivePowerUpRef.current === null && nowType !== null) {
+              onPowerUpCollectRef.current?.(nowType);
             }
-            prevActivePowerUpRef.current = isNowActive;
+            prevActivePowerUpRef.current = nowType;
             if (applied.explosions.length > prev.explosions.length) {
               onExplosionRef.current?.();
             }
@@ -561,6 +786,7 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
             prevLivesRef.current = applied.player.lives;
             if (applied.phase === "WaveClear" && prevPhaseRef.current !== "WaveClear") {
               onWaveClearRef.current?.();
+              if (applied.challengingPerfect) onChallengingPerfectRef.current?.();
             }
             if (
               applied.phase === "ChallengingStage" &&
@@ -570,7 +796,7 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
             }
             prevPhaseRef.current = applied.phase;
             if (applied.phase === "GameOver") {
-              onGameOverRef.current?.(applied.score);
+              onGameOverRef.current?.(applied.score, applied.wave);
             }
           } catch (e) {
             Sentry.captureException(e, { tags: { subsystem: "starswarm.loop" } });
@@ -584,7 +810,11 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
       }
 
       function handleVisibilityChange() {
-        if (!document.hidden) lastFrameTimeRef.current = 0;
+        if (!document.hidden) {
+          lastFrameTimeRef.current = 0;
+        } else if (stateRef.current.phase === "Playing" && !isPausedRef.current) {
+          onPauseRef.current?.();
+        }
       }
       document.addEventListener("visibilitychange", handleVisibilityChange);
       id = requestAnimationFrame(loop);

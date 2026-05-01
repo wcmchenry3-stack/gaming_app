@@ -55,6 +55,16 @@ describe("blackjack storage", () => {
     expect(await AsyncStorage.getItem(STORAGE_KEY)).toBeNull();
   });
 
+  // #1094: rawPayload must be included in the Sentry extra so engineers can
+  // see what the malformed JSON looked like without unfiltering PII fields.
+  it("includes rawPayload in Sentry extra for corrupt payload (#1094)", async () => {
+    const corrupt = "truncated{json";
+    await AsyncStorage.setItem(STORAGE_KEY, corrupt);
+    await loadGame();
+    const call = (Sentry.captureMessage as jest.Mock).mock.calls[0];
+    expect(call[1].extra.rawPayload).toBe(corrupt);
+  });
+
   it("clearGame removes the saved state", async () => {
     await saveGame(newGame());
     await clearGame();

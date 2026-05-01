@@ -175,17 +175,6 @@ export function createSeededRng(seed: number): RandomSource {
   };
 }
 
-// E2E test hook
-const _devHook = typeof __DEV__ !== "undefined" && __DEV__;
-const _testHook = process.env.EXPO_PUBLIC_TEST_HOOKS === "1";
-if ((_devHook || _testHook) && typeof globalThis !== "undefined") {
-  (globalThis as unknown as { __twenty48_setSeed?: (seed: number) => void }).__twenty48_setSeed = (
-    seed: number
-  ) => {
-    setRng(createSeededRng(seed));
-  };
-}
-
 function spawnTile(board: number[][], idBoard: number[][]): void {
   const empty: Array<[number, number]> = [];
   for (let r = 0; r < SIZE; r++) {

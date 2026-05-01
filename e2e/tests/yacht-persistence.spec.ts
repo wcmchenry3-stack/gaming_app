@@ -50,7 +50,7 @@ test.describe("Yacht — localStorage persistence (#183)", () => {
 
     // Go back to Home via URL (Lobby tab pop-to-root not reliable on web)
     await page.goto("/");
-    await expect(page.getByText("Gaming App").first()).toBeVisible();
+    await expect(page.getByText("BC Arcade").first()).toBeVisible();
 
     // Return to Yacht — should resume on Round 2
     await page.getByRole("button", { name: "Play Yacht" }).click();
@@ -74,7 +74,7 @@ test.describe("Yacht — localStorage persistence (#183)", () => {
 
     // Hard reload (simulates app restart while game is in progress)
     await page.reload();
-    await expect(page.getByText("Gaming App").first()).toBeVisible();
+    await expect(page.getByText("BC Arcade").first()).toBeVisible();
 
     await page.getByRole("button", { name: "Play Yacht" }).click();
     await expect(page.getByText("Round 2 / 13")).toBeVisible();

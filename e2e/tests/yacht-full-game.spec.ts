@@ -39,7 +39,7 @@ test.describe("Yacht — full 13-round game journey", () => {
   });
 
   test("navigates from Home to Game on Play Yacht click", async ({ page }) => {
-    await expect(page.getByText("Gaming App").first()).toBeVisible();
+    await expect(page.getByText("BC Arcade").first()).toBeVisible();
     await page.getByRole("button", { name: "Play Yacht" }).click();
     await expect(page.getByText("Round 1 / 13")).toBeVisible();
   });
@@ -152,7 +152,7 @@ test.describe("Yacht — full 13-round game journey", () => {
     await page.getByRole("button", { name: /dismiss/i }).click();
 
     // Dismiss now navigates back to HomeScreen rather than hiding the modal in-place.
-    await expect(page.getByText("Gaming App").first()).toBeVisible({
+    await expect(page.getByText("BC Arcade").first()).toBeVisible({
       timeout: 10000,
     });
   });

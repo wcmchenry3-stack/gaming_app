@@ -17,6 +17,7 @@
   "variant.classic": "Classic 9×9",
   "variant.mini": "Mini 6×6",
   "action.undo": "元に戻す",
+  "action.hint": "ヒント",
   "action.newGame": "新しいパズル",
   "action.changeDifficulty": "難易度を変更",
   "action.start": "スタート",
@@ -36,5 +37,7 @@
   "scoreboard.easyBestTime": "Easy Best",
   "scoreboard.mediumBestTime": "Medium Best",
   "scoreboard.hardBestTime": "Hard Best",
-  "scoreboard.gamesSolved": "Games Solved"
+  "scoreboard.gamesSolved": "Games Solved",
+  "action.quickRestart": "クイック再スタート",
+  "newGame.title": "新しいゲーム"
 }

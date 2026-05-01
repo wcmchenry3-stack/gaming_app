@@ -38,4 +38,4 @@ async def test_alembic_head_applied() -> None:
         result = await conn.execute(text("SELECT version_num FROM alembic_version"))
         version = result.scalar()
         # Latest head — bump when a new migration lands.
-        assert version == "0013_add_freecell_game_type"
+        assert version == "0015_add_game_entitlements"

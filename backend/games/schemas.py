@@ -142,3 +142,28 @@ class GameEventResponse(BaseModel):
 
 class GameDetailResponse(GameRowResponse):
     events: list[GameEventResponse] | None = None
+
+
+# ---------------------------------------------------------------------------
+# Catalog (#1049)
+# ---------------------------------------------------------------------------
+
+
+class GameTypeOut(BaseModel):
+    id: int
+    name: str
+    display_name: str
+    icon_emoji: str | None
+    sort_order: int
+    is_active: bool
+    is_premium: bool
+    category: str
+
+
+class CatalogResponse(BaseModel):
+    items: list[GameTypeOut]
+
+
+class PatchGameTypeRequest(BaseModel):
+    is_premium: bool | None = None
+    category: str | None = Field(default=None, min_length=1, max_length=64)

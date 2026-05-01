@@ -1,5 +1,7 @@
-import React, { useCallback, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
+  AppState,
+  AppStateStatus,
   LayoutChangeEvent,
   Modal,
   Pressable,
@@ -23,8 +25,15 @@ import Controls, {
   hapticPlayerDeath,
   hapticWaveClear,
 } from "../components/starswarm/Controls";
-import { CANVAS_W, CANVAS_H } from "../game/starswarm/engine";
-import type { GamePhase } from "../game/starswarm/types";
+import {
+  CANVAS_W,
+  CANVAS_H,
+  DIFFICULTY_TIERS,
+  difficultyLabel,
+  difficultyMultiplier,
+} from "../game/starswarm/engine";
+import type { GamePhase, PowerUpType, DifficultyTier } from "../game/starswarm/types";
+import { starSwarmApi } from "../game/starswarm/api";
 import { useStarSwarmAudio, DEFAULT_SFX_VOLUMES } from "../hooks/useStarSwarmAudio";
 import type { SfxVolumes } from "../hooks/useStarSwarmAudio";
 
@@ -46,7 +55,14 @@ export default function StarSwarmScreen() {
   const [devPanelOpen, setDevPanelOpen] = useState(false);
   const [devWave, setDevWave] = useState(1);
   const [devInfiniteLives, setDevInfiniteLives] = useState(false);
+  const [devStragglerEnabled, setDevStragglerEnabled] = useState(true);
+  const [devPauseStraggler, setDevPauseStraggler] = useState(false);
+  const [devDifficulty, setDevDifficulty] = useState<DifficultyTier>("LieutenantJG");
   const [devVolumes, setDevVolumes] = useState<SfxVolumes>(DEFAULT_SFX_VOLUMES);
+
+  // Pre-game difficulty selector — shown before each new game
+  const [difficulty, setDifficulty] = useState<DifficultyTier>("LieutenantJG");
+  const [showDifficultyPicker, setShowDifficultyPicker] = useState(true);
 
   const adjustVolume = useCallback((key: keyof SfxVolumes, delta: number) => {
     setDevVolumes((v) => ({
@@ -64,6 +80,7 @@ export default function StarSwarmScreen() {
     playGameOver,
     playChallengingStage,
     playBonusLife,
+    playPerfect,
   } = useStarSwarmAudio(phase !== "GameOver", devVolumes);
 
   const scoreRef = useRef(0);
@@ -85,7 +102,7 @@ export default function StarSwarmScreen() {
   }, []);
 
   const handleGameOver = useCallback(
-    (finalScore: number) => {
+    (finalScore: number, wave: number) => {
       setPhase("GameOver");
       playGameOver();
       hapticPlayerDeath();
@@ -93,9 +110,14 @@ export default function StarSwarmScreen() {
         highScoreRef.current = finalScore;
         setHighScore(finalScore);
       }
+      starSwarmApi.submitScore(finalScore, wave, difficulty).catch(() => {});
     },
-    [playGameOver]
+    [playGameOver, difficulty]
   );
+
+  const handleChallengingPerfect = useCallback(() => {
+    playPerfect();
+  }, [playPerfect]);
 
   const handlePlayerHit = useCallback(() => {
     playPlayerHit();
@@ -112,8 +134,26 @@ export default function StarSwarmScreen() {
     playBonusLife();
   }, [playBonusLife]);
 
+  const handleTriggerPowerUp = useCallback((type: PowerUpType) => {
+    canvasRef.current?.triggerPowerUp(type);
+  }, []);
+
   const handleNewGame = useCallback((opts?: DevOptions) => {
     if (__DEV__ && opts !== undefined) lastDevOptsRef.current = opts;
+    scoreRef.current = 0;
+    setPhase("SwoopIn");
+    setIsPaused(false);
+    setResetTick((t) => t + 1);
+  }, []);
+
+  // Show difficulty picker — triggered by header "New Game" and Controls "New Game"
+  const handleRequestNewGame = useCallback(() => {
+    setShowDifficultyPicker(true);
+  }, []);
+
+  // Confirm difficulty selection and start the game
+  const handleConfirmDifficulty = useCallback(() => {
+    setShowDifficultyPicker(false);
     scoreRef.current = 0;
     setPhase("SwoopIn");
     setIsPaused(false);
@@ -128,6 +168,15 @@ export default function StarSwarmScreen() {
     setIsPaused(false);
   }, []);
 
+  useEffect(() => {
+    const sub = AppState.addEventListener("change", (next: AppStateStatus) => {
+      if ((next === "background" || next === "inactive") && phase === "Playing") {
+        handlePause();
+      }
+    });
+    return () => sub.remove();
+  }, [phase, handlePause]);
+
   const dynamicStyles = getStyles(colors);
 
   const scale =
@@ -141,7 +190,7 @@ export default function StarSwarmScreen() {
       title={t("game.title")}
       requireBack
       onBack={() => navigation.popToTop()}
-      onNewGame={handleNewGame}
+      onNewGame={handleRequestNewGame}
       style={{
         paddingBottom: Math.max(insets.bottom, 8),
         paddingLeft: Math.max(insets.left, 0),
@@ -162,11 +211,14 @@ export default function StarSwarmScreen() {
               onPowerUpCollect={playPowerUpCollect}
               onExplosion={playExplosion}
               onChallengingStage={playChallengingStage}
+              onChallengingPerfect={handleChallengingPerfect}
               onBonusLife={handleBonusLife}
               isPaused={isPaused}
+              onPause={handlePause}
               width={CANVAS_W}
               height={CANVAS_H}
               scale={scale}
+              difficulty={difficulty}
               resetTick={resetTick}
               devOptions={lastDevOptsRef.current}
             />
@@ -177,7 +229,7 @@ export default function StarSwarmScreen() {
               isPaused={isPaused}
               onPause={handlePause}
               onResume={handleResume}
-              onNewGame={handleNewGame}
+              onNewGame={handleRequestNewGame}
             />
             {__DEV__ && (
               <Pressable style={dynamicStyles.devButton} onPress={() => setDevPanelOpen(true)}>
@@ -186,6 +238,57 @@ export default function StarSwarmScreen() {
             )}
           </View>
         )}
+        {showDifficultyPicker && scale > 0 && (
+          <Modal
+            visible
+            transparent
+            animationType="fade"
+            onRequestClose={handleConfirmDifficulty}
+            accessibilityViewIsModal
+          >
+            <View style={styles.pickerOverlay}>
+              <View style={dynamicStyles.pickerPanel}>
+                <Text style={dynamicStyles.pickerTitle}>{t("difficulty.selectTitle")}</Text>
+                <ScrollView
+                  showsVerticalScrollIndicator={false}
+                  style={styles.pickerScroll}
+                  contentContainerStyle={styles.pickerScrollContent}
+                >
+                  {DIFFICULTY_TIERS.map((tier) => (
+                    <Pressable
+                      key={tier}
+                      style={[
+                        styles.pickerRow,
+                        difficulty === tier && dynamicStyles.pickerRowSelected,
+                      ]}
+                      onPress={() => setDifficulty(tier)}
+                      accessibilityRole="radio"
+                      accessibilityState={{ checked: difficulty === tier }}
+                      accessibilityLabel={`${difficultyLabel(tier)} ×${difficultyMultiplier(tier)}`}
+                    >
+                      <Text
+                        style={[
+                          styles.pickerTierName,
+                          difficulty === tier && dynamicStyles.pickerTierNameSelected,
+                        ]}
+                      >
+                        {difficultyLabel(tier)}
+                      </Text>
+                      <Text style={styles.pickerTierMult}>{`×${difficultyMultiplier(tier)}`}</Text>
+                    </Pressable>
+                  ))}
+                </ScrollView>
+                <Pressable
+                  style={[styles.devActionBtn, dynamicStyles.devPrimary, styles.pickerStartBtn]}
+                  onPress={handleConfirmDifficulty}
+                >
+                  <Text style={styles.devPrimaryText}>{t("difficulty.start")}</Text>
+                </Pressable>
+              </View>
+            </View>
+          </Modal>
+        )}
+
         {__DEV__ && (
           <Modal
             visible={devPanelOpen}
@@ -226,17 +329,76 @@ export default function StarSwarmScreen() {
                     <Switch value={devInfiniteLives} onValueChange={setDevInfiniteLives} />
                   </View>
 
+                  <View style={styles.devRow}>
+                    <Text style={dynamicStyles.devLabel}>Straggler AI</Text>
+                    <Switch value={devStragglerEnabled} onValueChange={setDevStragglerEnabled} />
+                  </View>
+
+                  <View style={styles.devRow}>
+                    <Text style={dynamicStyles.devLabel}>Pause straggler</Text>
+                    <Switch value={devPauseStraggler} onValueChange={setDevPauseStraggler} />
+                  </View>
+
+                  <Text style={dynamicStyles.devSectionHeader}>── Difficulty Tier ──</Text>
+
+                  <ScrollView
+                    horizontal
+                    showsHorizontalScrollIndicator={false}
+                    style={styles.devTierScroll}
+                    contentContainerStyle={styles.devTierScrollContent}
+                  >
+                    {DIFFICULTY_TIERS.map((tier) => (
+                      <Pressable
+                        key={tier}
+                        style={[
+                          styles.devTierBtn,
+                          devDifficulty === tier && styles.devTierBtnActive,
+                        ]}
+                        onPress={() => setDevDifficulty(tier)}
+                        accessibilityLabel={`Dev difficulty ${difficultyLabel(tier)}`}
+                      >
+                        <Text
+                          style={[
+                            styles.devTierText,
+                            devDifficulty === tier && styles.devTierTextActive,
+                          ]}
+                        >
+                          {difficultyLabel(tier)}
+                        </Text>
+                      </Pressable>
+                    ))}
+                  </ScrollView>
+
+                  <Text style={dynamicStyles.devSectionHeader}>── Power-ups ──</Text>
+
+                  <View style={styles.devPowerUpRow}>
+                    {(["lightning", "shield", "buddy", "bomb"] as PowerUpType[]).map((type) => (
+                      <Pressable
+                        key={type}
+                        style={styles.devPowerUpBtn}
+                        onPress={() => handleTriggerPowerUp(type)}
+                        accessibilityLabel={`Trigger ${type} power-up`}
+                      >
+                        <Text style={styles.devPowerUpText}>{type}</Text>
+                      </Pressable>
+                    ))}
+                  </View>
+
                   <Text style={dynamicStyles.devSectionHeader}>── Sound Mixer ──</Text>
 
                   {(
                     [
                       ["Laser", "laser"],
-                      ["Power-up", "powerupcollect"],
+                      ["PU: Lightning", "poweruplightning"],
+                      ["PU: Shield", "powerupshield"],
+                      ["PU: Buddy", "powerupbuddy"],
+                      ["PU: Bomb", "powerupbomb"],
                       ["Explosion", "explosion"],
                       ["Player hit", "playerhit"],
                       ["Wave clear", "waveclear"],
                       ["Game over", "gameover"],
                       ["Challenging", "challengingstage"],
+                      ["Perfect bonus", "perfectbonus"],
                     ] as [string, keyof SfxVolumes][]
                   ).map(([label, key]) => (
                     <View key={key} style={styles.devRow}>
@@ -263,7 +425,13 @@ export default function StarSwarmScreen() {
                     style={[styles.devActionBtn, dynamicStyles.devPrimary]}
                     onPress={() => {
                       setDevPanelOpen(false);
-                      handleNewGame({ wave: devWave, infiniteLives: devInfiniteLives });
+                      handleNewGame({
+                        wave: devWave,
+                        infiniteLives: devInfiniteLives,
+                        stragglerEnabled: devStragglerEnabled,
+                        pauseStraggler: devPauseStraggler,
+                        difficulty: devDifficulty,
+                      });
                     }}
                   >
                     <Text style={styles.devPrimaryText}>New Game</Text>
@@ -333,6 +501,26 @@ const baseStyles = StyleSheet.create({
     fontSize: 11,
     minWidth: 80,
   },
+  devPowerUpRow: {
+    flexDirection: "row",
+    gap: 6,
+    flexWrap: "wrap",
+  },
+  devPowerUpBtn: {
+    flex: 1,
+    paddingVertical: 8,
+    borderRadius: 6,
+    alignItems: "center",
+    backgroundColor: "rgba(255,200,0,0.15)",
+    borderWidth: 1,
+    borderColor: "rgba(255,200,0,0.4)",
+  },
+  devPowerUpText: {
+    color: "#ffc800",
+    fontSize: 10,
+    fontWeight: "700",
+    textTransform: "capitalize",
+  },
   devActionBtn: {
     paddingVertical: 10,
     borderRadius: 8,
@@ -343,6 +531,70 @@ const baseStyles = StyleSheet.create({
     color: "#fff",
     fontSize: 14,
     fontWeight: "700",
+  },
+  devTierScroll: {
+    marginVertical: 2,
+  },
+  devTierScrollContent: {
+    gap: 6,
+    paddingVertical: 2,
+  },
+  devTierBtn: {
+    paddingHorizontal: 8,
+    paddingVertical: 5,
+    borderRadius: 6,
+    backgroundColor: "rgba(255,255,255,0.07)",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.15)",
+  },
+  devTierBtnActive: {
+    backgroundColor: "rgba(255,128,0,0.3)",
+    borderColor: "rgba(255,128,0,0.8)",
+  },
+  devTierText: {
+    color: "rgba(255,255,255,0.55)",
+    fontSize: 9,
+    fontWeight: "700",
+  },
+  devTierTextActive: {
+    color: "#ff8000",
+  },
+  pickerOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,10,0.88)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  pickerScroll: {
+    maxHeight: 320,
+  },
+  pickerScrollContent: {
+    gap: 6,
+    paddingVertical: 4,
+  },
+  pickerRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.1)",
+    backgroundColor: "rgba(255,255,255,0.05)",
+  },
+  pickerTierName: {
+    color: "rgba(255,255,255,0.75)",
+    fontSize: 13,
+    fontWeight: "600",
+  },
+  pickerTierMult: {
+    color: "rgba(255,238,0,0.8)",
+    fontSize: 13,
+    fontWeight: "700",
+  },
+  pickerStartBtn: {
+    marginTop: 12,
   },
 });
 
@@ -391,6 +643,31 @@ const getStyles = (colors: ReturnType<typeof useTheme>["colors"]) =>
     },
     devPrimary: {
       backgroundColor: "rgba(255,128,0,1)",
+    },
+    pickerPanel: {
+      backgroundColor: colors.surfaceHigh,
+      borderRadius: 14,
+      padding: 24,
+      width: 300,
+      maxHeight: "80%",
+      borderWidth: 1,
+      borderColor: "rgba(0,255,200,0.3)",
+    },
+    pickerTitle: {
+      color: "#00ffcc",
+      fontSize: 15,
+      fontWeight: "700",
+      letterSpacing: 1.5,
+      textAlign: "center",
+      textTransform: "uppercase",
+      marginBottom: 14,
+    },
+    pickerRowSelected: {
+      backgroundColor: "rgba(0,255,200,0.12)",
+      borderColor: "rgba(0,255,200,0.55)",
+    },
+    pickerTierNameSelected: {
+      color: "#ffffff",
     },
   });
 

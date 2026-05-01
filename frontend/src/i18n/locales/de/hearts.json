@@ -38,6 +38,7 @@
   "hand_end.moon": "{{label}} hat den Mond geschossen! +26 für alle anderen.",
   "hand_end.next": "Nächste Runde",
   "game_over.title": "Spielende",
+  "game_over.you_win": "Du gewinnst!",
   "game_over.winner": "{{label}} gewinnt!",
   "game_over.submit": "Punkte senden",
   "game_over.name_placeholder": "Dein Name hier",
