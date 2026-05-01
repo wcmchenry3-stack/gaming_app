@@ -31,7 +31,7 @@ _BOOL_COL_DEF_RE = re.compile(r'sa\.Column\(\s*["\'](\w+)["\'],\s*sa\.Boolean')
 # Matches SQL strings passed to op.execute() — plain or f-strings, single/double quoted
 _EXECUTE_SQL_RE = re.compile(r'op\.execute\(\s*(?:text\(\s*)?f?["\']([^"\']+)["\']')
 # Matches SET <col> = <integer> in SQL
-_INT_ASSIGN_RE = re.compile(r'\bSET\s+(\w+)\s*=\s*([01])\b', re.IGNORECASE)
+_INT_ASSIGN_RE = re.compile(r"\bSET\s+(\w+)\s*=\s*([01])\b", re.IGNORECASE)
 EVENT_CONFIG_TS = (
     pathlib.Path(__file__).parent.parent.parent
     / "frontend"
@@ -226,9 +226,7 @@ def test_no_integer_literals_in_boolean_updates() -> None:
                 col, val = assign_m.group(1), assign_m.group(2)
                 if col in bool_cols:
                     suggestion = "true" if val == "1" else "false"
-                    bad.append(
-                        f"  {path.name}: SET {col} = {val}  →  use '{suggestion}'"
-                    )
+                    bad.append(f"  {path.name}: SET {col} = {val}  →  use '{suggestion}'")
 
     assert not bad, (
         "Migration execute() statements use integer literals for boolean columns.\n"
