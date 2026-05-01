@@ -62,7 +62,12 @@ export type Move =
   | { readonly type: "tableau-to-freecell"; readonly fromCol: number; readonly toCell: number }
   | { readonly type: "tableau-to-foundation"; readonly fromCol: number }
   | { readonly type: "freecell-to-tableau"; readonly fromCell: number; readonly toCol: number }
-  | { readonly type: "freecell-to-foundation"; readonly fromCell: number };
+  | { readonly type: "freecell-to-foundation"; readonly fromCell: number }
+  | {
+      readonly type: "foundation-to-tableau";
+      readonly fromSuit: Suit;
+      readonly toCol: number;
+    };
 
 /** Red suits (hearts, diamonds) must alternate with black (spades, clubs) in the tableau. */
 export function cardColor(card: Card): "red" | "black" {

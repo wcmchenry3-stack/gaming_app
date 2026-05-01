@@ -908,3 +908,111 @@ describe("autoComplete", () => {
     expect(next.moveCount).toBe(8);
   });
 });
+
+// ---------------------------------------------------------------------------
+// foundation-to-tableau (#1111)
+// ---------------------------------------------------------------------------
+
+describe("validateMove — foundation-to-tableau", () => {
+  it("allows a valid stack (alternating colour, descending rank)", () => {
+    const state = mkState({
+      tableau: [[], [c("hearts", 3)], [], [], [], [], [], []],
+      foundations: { ...emptyFoundations(), spades: [c("spades", 1), c("spades", 2)] },
+    });
+    expect(
+      validateMove(state, { type: "foundation-to-tableau", fromSuit: "spades", toCol: 1 })
+    ).toBe(true);
+  });
+
+  it("allows a King onto an empty column", () => {
+    const state = mkState({
+      foundations: {
+        ...emptyFoundations(),
+        hearts: Array.from({ length: 13 }, (_, i) => c("hearts", (i + 1) as Rank)),
+      },
+    });
+    expect(
+      validateMove(state, { type: "foundation-to-tableau", fromSuit: "hearts", toCol: 0 })
+    ).toBe(true);
+  });
+
+  it("rejects a non-King onto an empty column", () => {
+    const state = mkState({
+      foundations: { ...emptyFoundations(), spades: [c("spades", 1), c("spades", 2)] },
+    });
+    expect(
+      validateMove(state, { type: "foundation-to-tableau", fromSuit: "spades", toCol: 0 })
+    ).toBe(false);
+  });
+
+  it("rejects when the foundation is empty", () => {
+    const state = mkState({
+      tableau: [[c("hearts", 3)], [], [], [], [], [], [], []],
+    });
+    expect(
+      validateMove(state, { type: "foundation-to-tableau", fromSuit: "spades", toCol: 0 })
+    ).toBe(false);
+  });
+
+  it("rejects a same-colour placement", () => {
+    // clubs (black) on top of spades (black) — same colour, invalid
+    const state = mkState({
+      tableau: [[], [c("spades", 3)], [], [], [], [], [], []],
+      foundations: { ...emptyFoundations(), clubs: [c("clubs", 1), c("clubs", 2)] },
+    });
+    expect(
+      validateMove(state, { type: "foundation-to-tableau", fromSuit: "clubs", toCol: 1 })
+    ).toBe(false);
+  });
+
+  it("rejects a non-consecutive rank", () => {
+    // 2♠ on top of 4♥ — wrong rank (needs rank 3)
+    const state = mkState({
+      tableau: [[], [c("hearts", 4)], [], [], [], [], [], []],
+      foundations: { ...emptyFoundations(), spades: [c("spades", 1), c("spades", 2)] },
+    });
+    expect(
+      validateMove(state, { type: "foundation-to-tableau", fromSuit: "spades", toCol: 1 })
+    ).toBe(false);
+  });
+});
+
+describe("applyMove — foundation-to-tableau", () => {
+  it("moves the top card from the foundation to the tableau column", () => {
+    const state = mkState({
+      tableau: [[], [c("hearts", 3)], [], [], [], [], [], []],
+      foundations: { ...emptyFoundations(), spades: [c("spades", 1), c("spades", 2)] },
+    });
+    const next = applyMove(state, { type: "foundation-to-tableau", fromSuit: "spades", toCol: 1 });
+    expect(next.foundations.spades).toEqual([c("spades", 1)]);
+    expect(next.tableau[1]).toEqual([c("hearts", 3), c("spades", 2)]);
+  });
+
+  it("costs 2 moves (penalty for retreating from foundation)", () => {
+    const state = mkState({
+      moveCount: 5,
+      tableau: [[], [c("hearts", 3)], [], [], [], [], [], []],
+      foundations: { ...emptyFoundations(), spades: [c("spades", 1), c("spades", 2)] },
+    });
+    const next = applyMove(state, { type: "foundation-to-tableau", fromSuit: "spades", toCol: 1 });
+    expect(next.moveCount).toBe(7);
+  });
+
+  it("clears the active hint after the retreat move", () => {
+    const state = mkState({
+      tableau: [[], [c("hearts", 3)], [], [], [], [], [], []],
+      foundations: { ...emptyFoundations(), spades: [c("spades", 1), c("spades", 2)] },
+      hint: { type: "tableau-to-tableau", fromCol: 0, fromIndex: 0, toCol: 1 },
+    });
+    const next = applyMove(state, { type: "foundation-to-tableau", fromSuit: "spades", toCol: 1 });
+    expect(next.hint).toBeUndefined();
+  });
+
+  it("returns state unchanged when the move is invalid", () => {
+    const state = mkState({
+      foundations: emptyFoundations(),
+    });
+    const next = applyMove(state, { type: "foundation-to-tableau", fromSuit: "spades", toCol: 0 });
+    expect(next).toBe(state);
+  });
+});
