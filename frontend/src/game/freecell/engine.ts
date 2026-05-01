@@ -486,6 +486,76 @@ export function applyHint(state: FreeCellState): FreeCellState {
 }
 
 // ---------------------------------------------------------------------------
+// Auto-complete
+// ---------------------------------------------------------------------------
+
+/**
+ * Returns true when every remaining card can reach the foundation using only
+ * direct foundation plays (no rearrangement). Uses a greedy simulation:
+ * repeatedly move any available top card / free-cell card to the foundation
+ * until no more progress is possible, then check if all 52 cards arrived.
+ */
+export function canAutoComplete(state: FreeCellState): boolean {
+  if (state.isComplete) return false;
+
+  const counts: Record<Suit, number> = {
+    spades: state.foundations.spades.length,
+    hearts: state.foundations.hearts.length,
+    diamonds: state.foundations.diamonds.length,
+    clubs: state.foundations.clubs.length,
+  };
+  const columns: Card[][] = state.tableau.map((col) => [...col]);
+  const cells: (Card | null)[] = [...state.freeCells];
+
+  let moved = true;
+  while (moved) {
+    moved = false;
+    for (let i = 0; i < cells.length; i++) {
+      const card = cells[i];
+      if (card != null && card.rank === counts[card.suit] + 1) {
+        counts[card.suit]++;
+        cells[i] = null;
+        moved = true;
+      }
+    }
+    for (const col of columns) {
+      const card = col[col.length - 1];
+      if (card !== undefined && card.rank === counts[card.suit] + 1) {
+        counts[card.suit]++;
+        col.pop();
+        moved = true;
+      }
+    }
+  }
+
+  return (
+    counts.spades + counts.hearts + counts.diamonds + counts.clubs === DECK_SIZE
+  );
+}
+
+/**
+ * Executes one step of the auto-complete sequence: moves the next available
+ * card to the foundation. Free-cell cards are preferred over tableau cards.
+ * Returns `state` unchanged if no foundation move is currently available.
+ */
+export function autoComplete(state: FreeCellState): FreeCellState {
+  for (let cell = 0; cell < FREE_CELL_COUNT; cell++) {
+    const card = state.freeCells[cell];
+    if (card != null && canStackOnFoundation(card, state.foundations[card.suit])) {
+      return applyMove(state, { type: "freecell-to-foundation", fromCell: cell });
+    }
+  }
+  for (let col = 0; col < TABLEAU_COLUMNS; col++) {
+    const pile = state.tableau[col] ?? [];
+    const card = topOf(pile);
+    if (card !== undefined && canStackOnFoundation(card, state.foundations[card.suit])) {
+      return applyMove(state, { type: "tableau-to-foundation", fromCol: col });
+    }
+  }
+  return state;
+}
+
+// ---------------------------------------------------------------------------
 // Undo
 // ---------------------------------------------------------------------------
 

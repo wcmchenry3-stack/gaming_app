@@ -16,6 +16,8 @@
 import {
   applyHint,
   applyMove,
+  autoComplete,
+  canAutoComplete,
   createSeededRng,
   dealGame,
   getHintMoves,
@@ -759,5 +761,144 @@ describe("applyHint", () => {
       toCol: 1,
     });
     expect(afterMove.hint).toBeUndefined();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// canAutoComplete
+// ---------------------------------------------------------------------------
+
+describe("canAutoComplete", () => {
+  function fullFoundations(): Foundations {
+    const thirteen = (suit: Suit) =>
+      ([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13] as const).map((r) => c(suit, r));
+    return {
+      spades: thirteen("spades"),
+      hearts: thirteen("hearts"),
+      diamonds: thirteen("diamonds"),
+      clubs: thirteen("clubs"),
+    };
+  }
+
+  it("returns false when the game is already complete", () => {
+    const state = mkState({ foundations: fullFoundations(), isComplete: true });
+    expect(canAutoComplete(state)).toBe(false);
+  });
+
+  it("returns true when all remaining cards are directly playable to foundations", () => {
+    // All suits at rank 12 (Queen) in foundations; Kings on tableau top
+    const foundations: Foundations = {
+      spades: ([1,2,3,4,5,6,7,8,9,10,11,12] as const).map((r) => c("spades", r)),
+      hearts: ([1,2,3,4,5,6,7,8,9,10,11,12] as const).map((r) => c("hearts", r)),
+      diamonds: ([1,2,3,4,5,6,7,8,9,10,11,12] as const).map((r) => c("diamonds", r)),
+      clubs: ([1,2,3,4,5,6,7,8,9,10,11,12] as const).map((r) => c("clubs", r)),
+    };
+    const state = mkState({
+      foundations,
+      tableau: [
+        [c("spades", 13)],
+        [c("hearts", 13)],
+        [c("diamonds", 13)],
+        [c("clubs", 13)],
+        [], [], [], [],
+      ],
+    });
+    expect(canAutoComplete(state)).toBe(true);
+  });
+
+  it("returns true when freecell cards are the next needed for all foundations", () => {
+    // foundations at rank 12; all four kings are split between freecells and tableau
+    const f12 = (suit: Suit) =>
+      ([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12] as const).map((r) => c(suit, r));
+    const foundations: Foundations = {
+      spades: f12("spades"),
+      hearts: f12("hearts"),
+      diamonds: f12("diamonds"),
+      clubs: f12("clubs"),
+    };
+    const state = mkState({
+      foundations,
+      freeCells: [c("spades", 13), c("hearts", 13), null, null],
+      tableau: [[c("diamonds", 13)], [c("clubs", 13)], [], [], [], [], [], []],
+    });
+    expect(canAutoComplete(state)).toBe(true);
+  });
+
+  it("returns false when a card is buried under a card that cannot yet be placed", () => {
+    // foundations empty; 3♠ sits on top of 2♠ — 2♠ needs A♠ first but A♠ is buried
+    const state = mkState({
+      tableau: [
+        [c("spades", 3), c("spades", 2)],  // 2♠ on top but A♠ missing
+        [], [], [], [], [], [], [],
+      ],
+    });
+    expect(canAutoComplete(state)).toBe(false);
+  });
+
+  it("returns false when tableau still needs rearrangement", () => {
+    // Aces buried mid-column
+    const state = mkState({
+      tableau: [
+        [c("hearts", 5), c("spades", 1)],
+        [], [], [], [], [], [], [],
+      ],
+    });
+    expect(canAutoComplete(state)).toBe(false);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// autoComplete (single step)
+// ---------------------------------------------------------------------------
+
+describe("autoComplete", () => {
+  it("moves a freecell ace to the foundation", () => {
+    const state = mkState({ freeCells: [c("spades", 1), null, null, null] });
+    const next = autoComplete(state);
+    expect(next.foundations.spades).toHaveLength(1);
+    expect(next.foundations.spades[0]).toEqual(c("spades", 1));
+    expect(next.freeCells[0]).toBeNull();
+  });
+
+  it("prefers freecell over tableau when both are playable", () => {
+    const foundations: Foundations = {
+      spades: [c("spades", 1)],
+      hearts: [],
+      diamonds: [],
+      clubs: [],
+    };
+    const state = mkState({
+      foundations,
+      freeCells: [c("spades", 2), null, null, null],
+      tableau: [[c("hearts", 1)], [], [], [], [], [], [], []],
+    });
+    const next = autoComplete(state);
+    expect(next.foundations.spades).toHaveLength(2);
+    expect(next.freeCells[0]).toBeNull();
+  });
+
+  it("moves a tableau card to the foundation when freecells are empty", () => {
+    const state = mkState({
+      tableau: [[c("spades", 1)], [], [], [], [], [], [], []],
+    });
+    const next = autoComplete(state);
+    expect(next.foundations.spades).toHaveLength(1);
+    expect(next.tableau[0]).toHaveLength(0);
+  });
+
+  it("returns the same state when no card can be placed on the foundation", () => {
+    const state = mkState({
+      tableau: [[c("spades", 5)], [], [], [], [], [], [], []],
+    });
+    expect(autoComplete(state)).toBe(state);
+  });
+
+  it("increments moveCount by 1 per step", () => {
+    const state = mkState({
+      tableau: [[c("clubs", 1)], [], [], [], [], [], [], []],
+      moveCount: 7,
+    });
+    const next = autoComplete(state);
+    expect(next.moveCount).toBe(8);
   });
 });
