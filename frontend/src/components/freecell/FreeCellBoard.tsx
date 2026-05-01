@@ -218,6 +218,25 @@ export default function FreeCellBoard({ state, onMove }: FreeCellBoardProps) {
     [state]
   );
 
+  const hint = state.hint;
+  const hintDestFoundationSuit: string | undefined = (() => {
+    if (!hint) return undefined;
+    if (hint.type === "tableau-to-foundation") {
+      const col = state.tableau[hint.fromCol];
+      return col && col.length > 0 ? col[col.length - 1].suit : undefined;
+    }
+    if (hint.type === "freecell-to-foundation") {
+      return state.freeCells[hint.fromCell]?.suit ?? undefined;
+    }
+    return undefined;
+  })();
+  const hintDestFreeCellIndex: number | undefined =
+    hint?.type === "tableau-to-freecell" ? hint.toCell : undefined;
+  const hintDestTableauCol: number | undefined =
+    hint?.type === "tableau-to-tableau" || hint?.type === "freecell-to-tableau"
+      ? hint.toCol
+      : undefined;
+
   return (
     <DragProvider getLegalDropIds={getLegalDropIds}>
       <DragContainer>
@@ -247,6 +266,7 @@ export default function FreeCellBoard({ state, onMove }: FreeCellBoardProps) {
                   (state.hint?.type === "freecell-to-tableau" && state.hint.fromCell === i) ||
                   (state.hint?.type === "freecell-to-foundation" && state.hint.fromCell === i)
                 }
+                hintDestination={hintDestFreeCellIndex === i}
                 onPress={handleFreeCellPress}
                 dropId={`freecell-slot-${i}`}
                 onDrop={(source) => handleDropToFreeCell(source, i)}
@@ -258,6 +278,7 @@ export default function FreeCellBoard({ state, onMove }: FreeCellBoardProps) {
                 pile={state.foundations[suit]}
                 suit={suit}
                 selected={false}
+                hintDestination={hintDestFoundationSuit === suit}
                 onPress={() => handleFoundationPress()}
                 dropId={`freecell-foundation-${suit}`}
                 onDrop={(source) => handleDropToFoundation(source)}
@@ -286,6 +307,7 @@ export default function FreeCellBoard({ state, onMove }: FreeCellBoardProps) {
                       : pile.length - 1
                     : undefined
                 }
+                hintDestination={hintDestTableauCol === col}
                 onCardPress={handleTableauCardPress}
                 onEmptyPress={handleTableauEmptyPress}
                 dropId={`freecell-tableau-${col}`}

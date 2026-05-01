@@ -22,6 +22,7 @@ export interface FoundationPileProps {
   readonly pile: readonly Card[];
   readonly suit: Suit;
   readonly selected?: boolean;
+  readonly hintDestination?: boolean;
   readonly onPress?: (suit: Suit) => void;
   readonly dropId?: string;
   readonly onDrop?: DropHandler;
@@ -31,6 +32,7 @@ export default function FoundationPile({
   pile,
   suit,
   selected = false,
+  hintDestination = false,
   onPress,
   dropId,
   onDrop,
@@ -57,6 +59,7 @@ export default function FoundationPile({
             width={CARD_WIDTH}
             height={CARD_HEIGHT}
             highlighted={selected}
+            hintHighlighted={hintDestination}
             onPress={onPress ? () => onPress(suit) : undefined}
             accessibilityLabel={label}
           />
@@ -68,8 +71,8 @@ export default function FoundationPile({
     const pileStyle = [
       styles.empty,
       {
-        borderColor: selected ? colors.accent : colors.border,
-        borderWidth: selected ? 2 : 1,
+        borderColor: hintDestination ? colors.bonus : selected ? colors.accent : colors.border,
+        borderWidth: hintDestination || selected ? 2 : 1,
         backgroundColor: colors.background,
       },
     ];
