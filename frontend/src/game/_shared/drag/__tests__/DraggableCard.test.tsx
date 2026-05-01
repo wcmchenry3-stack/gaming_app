@@ -7,9 +7,7 @@ import { DragProvider, useDragContext } from "../DragContext";
 import type { DragCard, DragSource } from "../DragContext";
 import { DraggableCard } from "../DraggableCard";
 
-const dragCards: DragCard[] = [
-  { suit: "spades", rank: 1, faceDown: false, width: 60, height: 90 },
-];
+const dragCards: DragCard[] = [{ suit: "spades", rank: 1, faceDown: false, width: 60, height: 90 }];
 const dragSource: DragSource = {
   game: "solitaire",
   type: "tableau",
@@ -26,13 +24,7 @@ function wrap(children: React.ReactNode) {
 }
 
 /** Renders a button that calls startDrag for the given source/cards. */
-function DragTrigger({
-  source,
-  cards,
-}: {
-  source: DragSource;
-  cards: DragCard[];
-}) {
+function DragTrigger({ source, cards }: { source: DragSource; cards: DragCard[] }) {
   const { startDrag } = useDragContext();
   return (
     <Text
