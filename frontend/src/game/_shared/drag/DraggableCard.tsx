@@ -1,5 +1,4 @@
 import React, { useCallback } from "react";
-import { Platform } from "react-native";
 import Animated, { useAnimatedRef, measure as rnMeasure } from "react-native-reanimated";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import { useSharedValue, runOnJS } from "react-native-reanimated";
@@ -93,7 +92,11 @@ export function DraggableCard({
       panActivated.value = false;
     });
 
-  // maxDistance matches pan's minDistance: touch that moves < 8 px is a tap; >= 8 px is a drag.
+  // For non-draggable (face-down) cards, RNGH tap works correctly and is unchanged.
+  // For draggable cards, pan-only in GestureDetector: when pan fails (< 8 px movement),
+  // the touch is released and the native onPress cloned onto the child below handles tap.
+  // This avoids the Simultaneous/requireExternalGestureToFail iOS UIGestureRecognizer
+  // deadlock that kept both tap and drag broken (#1101, #1102).
   const tap = Gesture.Tap()
     .maxDistance(8)
     .onEnd((_e, success) => {
@@ -101,14 +104,7 @@ export function DraggableCard({
       if (success && onTap) runOnJS(onTap)();
     });
 
-  // iOS RNGH 2.30.0: Gesture.Race blocked tap because the native recogniser
-  // kept tap in "possible" while pan was also possible, preventing tap from
-  // ever activating. requireExternalGestureToFail(pan) declares the direction
-  // explicitly — tap waits for pan to fail before it can fire, letting pan run
-  // freely without the recogniser deadlock that bare Simultaneous caused.
-  const gesture = draggable
-    ? Gesture.Simultaneous(pan, Platform.OS === "ios" ? tap.requireExternalGestureToFail(pan) : tap)
-    : tap;
+  const gesture = draggable ? pan : tap;
 
   const beingDragged = dragState !== null && isCardInDragStack(dragState.source, dragSource);
 
