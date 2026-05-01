@@ -43,7 +43,6 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTranslation } from "react-i18next";
 import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import * as ScreenOrientation from "expo-screen-orientation";
 
 import { HomeStackParamList } from "../../App";
 import { useTheme } from "../theme/ThemeContext";
@@ -223,11 +222,15 @@ export default function MahjongScreen() {
   useFocusEffect(
     useCallback(() => {
       if (Platform.OS !== "web") {
-        ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.LANDSCAPE);
+        // eslint-disable-next-line @typescript-eslint/no-require-imports
+        const SO = require("expo-screen-orientation");
+        SO.lockAsync(SO.OrientationLock.LANDSCAPE);
       }
       return () => {
         if (Platform.OS !== "web") {
-          ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT_UP);
+          // eslint-disable-next-line @typescript-eslint/no-require-imports
+          const SO = require("expo-screen-orientation");
+          SO.lockAsync(SO.OrientationLock.PORTRAIT_UP);
         }
       };
     }, [])
