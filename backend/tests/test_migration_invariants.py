@@ -25,6 +25,13 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 VERSIONS_DIR = pathlib.Path(__file__).parent.parent / "alembic" / "versions"
+
+# Matches: sa.Column("colname", sa.Boolean(), ...)
+_BOOL_COL_DEF_RE = re.compile(r'sa\.Column\(\s*["\'](\w+)["\'],\s*sa\.Boolean')
+# Matches SQL strings passed to op.execute() — plain or f-strings, single/double quoted
+_EXECUTE_SQL_RE = re.compile(r'op\.execute\(\s*(?:text\(\s*)?f?["\']([^"\']+)["\']')
+# Matches SET <col> = <integer> in SQL
+_INT_ASSIGN_RE = re.compile(r"\bSET\s+(\w+)\s*=\s*([01])\b", re.IGNORECASE)
 EVENT_CONFIG_TS = (
     pathlib.Path(__file__).parent.parent.parent
     / "frontend"
@@ -189,4 +196,41 @@ def test_event_queue_config_names_are_seeded_in_backend() -> None:
         + "\n".join(f"  • {n}" for n in unmatched)
         + "\n\nFix: add the missing event_types rows to the relevant migration(s) "
         "so the backend can accept these event names."
+    )
+
+
+def test_no_integer_literals_in_boolean_updates() -> None:
+    """op.execute() SQL must use 'true'/'false' for boolean columns, not 0/1.
+
+    PostgreSQL rejects integer literals for BOOLEAN columns (DatatypeMismatch).
+    SQLite silently coerces them, masking the error until the Postgres deploy fails.
+
+    Regression guard for 0014_game_types_premium_cat (#1154).
+    """
+    # Collect all boolean column names defined across all migrations
+    bool_cols: set[str] = set()
+    for path in sorted(VERSIONS_DIR.glob("*.py")):
+        if path.name.startswith("__"):
+            continue
+        for m in _BOOL_COL_DEF_RE.finditer(path.read_text(encoding="utf-8")):
+            bool_cols.add(m.group(1))
+
+    bad: list[str] = []
+    for path in sorted(VERSIONS_DIR.glob("*.py")):
+        if path.name.startswith("__"):
+            continue
+        text_src = path.read_text(encoding="utf-8")
+        for sql_m in _EXECUTE_SQL_RE.finditer(text_src):
+            sql = sql_m.group(1)
+            for assign_m in _INT_ASSIGN_RE.finditer(sql):
+                col, val = assign_m.group(1), assign_m.group(2)
+                if col in bool_cols:
+                    suggestion = "true" if val == "1" else "false"
+                    bad.append(f"  {path.name}: SET {col} = {val}  →  use '{suggestion}'")
+
+    assert not bad, (
+        "Migration execute() statements use integer literals for boolean columns.\n"
+        "PostgreSQL rejects this with DatatypeMismatch; use 'true'/'false' instead:\n"
+        + "\n".join(bad)
+        + "\n\nSee: https://github.com/wcmchenry3-stack/BC-Arcade/issues/1154"
     )

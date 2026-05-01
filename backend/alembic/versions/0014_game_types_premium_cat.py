@@ -50,10 +50,10 @@ def upgrade() -> None:
 
     # SQLite stores DEFAULT false as the text string "false" on existing rows
     # (not the integer 0), which SQLAlchemy's Boolean mapper reads back as True.
-    # Explicitly resetting to 0/1 after ADD COLUMN guarantees correct values
-    # regardless of backend — server_default only governs future inserts.
-    op.execute(text("UPDATE game_types SET is_premium = 0"))
-    op.execute(text(f"UPDATE game_types SET is_premium = 1 WHERE id IN {_PREMIUM_IDS}"))
+    # Explicit UPDATEs after ADD COLUMN guarantee correct values on both backends.
+    # Use SQL boolean literals (false/true) — PostgreSQL rejects 0/1 for BOOLEAN.
+    op.execute(text("UPDATE game_types SET is_premium = false"))
+    op.execute(text(f"UPDATE game_types SET is_premium = true WHERE id IN {_PREMIUM_IDS}"))
 
     for game_id, cat in _CATEGORIES.items():
         op.execute(
