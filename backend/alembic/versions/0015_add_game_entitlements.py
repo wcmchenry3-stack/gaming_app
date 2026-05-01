@@ -1,7 +1,7 @@
 """add game_entitlements table (#1050)
 
-Revision ID: 0014_add_game_entitlements
-Revises: 0013_add_freecell_game_type
+Revision ID: 0015_add_game_entitlements
+Revises: 0014_game_types_premium_cat
 Create Date: 2026-04-30
 """
 
@@ -10,8 +10,8 @@ from typing import Sequence, Union
 import sqlalchemy as sa
 from alembic import op
 
-revision: str = "0014_add_game_entitlements"
-down_revision: Union[str, None] = "0013_add_freecell_game_type"
+revision: str = "0015_add_game_entitlements"
+down_revision: Union[str, None] = "0014_game_types_premium_cat"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 

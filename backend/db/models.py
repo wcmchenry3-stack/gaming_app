@@ -59,6 +59,8 @@ class GameType(Base):
     icon_emoji: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     sort_order: Mapped[int] = mapped_column(SmallInteger, nullable=False, server_default="0")
     is_active: Mapped[bool] = mapped_column(nullable=False, server_default="true")
+    is_premium: Mapped[bool] = mapped_column(nullable=False, server_default="false")
+    category: Mapped[str] = mapped_column(Text, nullable=False, server_default="other")
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, server_default=func.now()
     )
