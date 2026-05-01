@@ -12,6 +12,6 @@ No attribution required, but appreciated.
 
 ## Buddy Ship
 
-| File            | Source                                       | Notes                                                       |
-| --------------- | -------------------------------------------- | ----------------------------------------------------------- |
+| File            | Source                                                    | Notes                                                                       |
+| --------------- | --------------------------------------------------------- | --------------------------------------------------------------------------- |
 | buddy-ship.webp | Kenney Space Shooter Redux (CC0) — playerShip1_orange.png | Hue-rotated +200° to produce blue variant (playerShip1_blue.png equivalent) |
