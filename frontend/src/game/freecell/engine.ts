@@ -214,6 +214,15 @@ export function validateMove(state: FreeCellState, move: Move): boolean {
       if (card === null || card === undefined) return false;
       return canStackOnFoundation(card, state.foundations[card.suit]);
     }
+    case "foundation-to-tableau": {
+      if (move.toCol < 0 || move.toCol >= TABLEAU_COLUMNS) return false;
+      const pile = state.foundations[move.fromSuit];
+      const card = topOf(pile);
+      if (card === undefined) return false;
+      const dst = state.tableau[move.toCol];
+      if (dst === undefined) return false;
+      return canStackOnTableau(card, topOf(dst));
+    }
   }
 }
 
@@ -366,6 +375,21 @@ export function applyMove(state: FreeCellState, move: Move): FreeCellState {
         state,
         { _v: 1, tableau: state.tableau, freeCells, foundations, moveCount: state.moveCount + 1 },
         ffEvents
+      );
+    }
+    case "foundation-to-tableau": {
+      const srcPile = state.foundations[move.fromSuit];
+      const card = topOf(srcPile);
+      if (card === undefined) return state;
+      const dst = state.tableau[move.toCol];
+      if (dst === undefined) return state;
+      const foundations = withFoundation(state.foundations, move.fromSuit, srcPile.slice(0, -1));
+      const tableau = replaceAt(state.tableau, move.toCol, [...dst, card]);
+      // Retreating from the foundation costs 2 moves (progress penalty).
+      return finalizeAfterMove(
+        state,
+        { _v: 1, tableau, freeCells: state.freeCells, foundations, moveCount: state.moveCount + 2 },
+        [{ type: "cardPlace" }]
       );
     }
   }

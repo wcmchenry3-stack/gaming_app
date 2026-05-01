@@ -6,7 +6,7 @@ import { useTheme } from "../../theme/ThemeContext";
 
 import { SUITS } from "../../game/freecell/types";
 import { validateMove } from "../../game/freecell/engine";
-import type { FreeCellState, Move } from "../../game/freecell/types";
+import type { FreeCellState, Move, Suit } from "../../game/freecell/types";
 import FreeCellSlot, { CARD_WIDTH } from "./FreeCellSlot";
 import FoundationPile from "./FoundationPile";
 import TableauColumn from "./TableauColumn";
@@ -23,6 +23,7 @@ const BOARD_WIDTH = TABLEAU_COLS * CARD_WIDTH + (TABLEAU_COLS - 1) * COL_GAP;
 type Selection =
   | { kind: "tableau"; col: number; index: number }
   | { kind: "freecell"; cell: number }
+  | { kind: "foundation"; suit: Suit }
   | null;
 
 export interface FreeCellBoardProps {
@@ -58,8 +59,10 @@ export default function FreeCellBoard({ state, onMove }: FreeCellBoardProps) {
         fromIndex: selection.index,
         toCol: col,
       });
-    } else {
+    } else if (selection.kind === "freecell") {
       tryMove({ type: "freecell-to-tableau", fromCell: selection.cell, toCol: col });
+    } else {
+      tryMove({ type: "foundation-to-tableau", fromSuit: selection.suit, toCol: col });
     }
   }
 
@@ -72,8 +75,10 @@ export default function FreeCellBoard({ state, onMove }: FreeCellBoardProps) {
         fromIndex: selection.index,
         toCol: col,
       });
-    } else {
+    } else if (selection.kind === "freecell") {
       tryMove({ type: "freecell-to-tableau", fromCell: selection.cell, toCol: col });
+    } else {
+      tryMove({ type: "foundation-to-tableau", fromSuit: selection.suit, toCol: col });
     }
   }
 
@@ -91,12 +96,23 @@ export default function FreeCellBoard({ state, onMove }: FreeCellBoardProps) {
     if (selection.kind === "tableau") {
       tryMove({ type: "tableau-to-freecell", fromCol: selection.col, toCell: cell });
     } else {
-      setSelection(null);
+      setSelection(null); // freecell-to-freecell and foundation-to-freecell are not valid moves
     }
   }
 
-  function handleFoundationPress() {
-    if (selection === null) return;
+  function handleFoundationPress(suit: Suit) {
+    if (selection === null) {
+      // Select the foundation card if there is one.
+      if (state.foundations[suit].length > 0) {
+        setSelection({ kind: "foundation", suit });
+      }
+      return;
+    }
+    if (selection.kind === "foundation") {
+      // Tap same foundation again → deselect.
+      setSelection(null);
+      return;
+    }
     if (selection.kind === "tableau") {
       tryMove({ type: "tableau-to-foundation", fromCol: selection.col });
     } else {
@@ -277,9 +293,9 @@ export default function FreeCellBoard({ state, onMove }: FreeCellBoardProps) {
                 key={suit}
                 pile={state.foundations[suit]}
                 suit={suit}
-                selected={false}
+                selected={selection?.kind === "foundation" && selection.suit === suit}
                 hintDestination={hintDestFoundationSuit === suit}
-                onPress={() => handleFoundationPress()}
+                onPress={() => handleFoundationPress(suit)}
                 dropId={`freecell-foundation-${suit}`}
                 onDrop={(source) => handleDropToFoundation(source)}
               />
