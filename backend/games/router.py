@@ -2,10 +2,12 @@
 
 from __future__ import annotations
 
+import os
 import uuid
 from datetime import datetime
 
-from fastapi import APIRouter, HTTPException, Query, Request
+from fastapi import APIRouter, Header, HTTPException, Query, Request
+from fastapi.responses import JSONResponse
 
 from db.base import get_session_factory
 from limiter import limiter, session_key
@@ -63,11 +65,15 @@ def _gt_to_out(gt) -> GameTypeOut:
 
 
 @router.get("/catalog", response_model=CatalogResponse)
-async def get_catalog() -> CatalogResponse:
+async def get_catalog() -> JSONResponse:
     factory = get_session_factory()
     async with factory() as db:
         game_types = await service.get_catalog(db)
-    return CatalogResponse(items=[_gt_to_out(gt) for gt in game_types])
+    body = CatalogResponse(items=[_gt_to_out(gt) for gt in game_types])
+    return JSONResponse(
+        content=body.model_dump(),
+        headers={"Cache-Control": "public, max-age=300"},
+    )
 
 
 @router.patch("/catalog/{game_type_id}", response_model=GameTypeOut)
@@ -76,7 +82,12 @@ async def patch_game_type(
     request: Request,
     game_type_id: int,
     body: PatchGameTypeRequest,
+    x_admin_token: str = Header(default=""),
 ) -> GameTypeOut:
+    # TODO: replace with admin role check once #971 ships.
+    admin_token = os.environ.get("ADMIN_API_TOKEN", "")
+    if not admin_token or x_admin_token != admin_token:
+        raise HTTPException(status_code=403, detail="Forbidden.")
     factory = get_session_factory()
     async with factory() as db:
         try:
