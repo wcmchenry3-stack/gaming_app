@@ -23,11 +23,21 @@ import FreeCellBoard from "../components/freecell/FreeCellBoard";
 import { CARD_WIDTH, CARD_HEIGHT } from "../components/freecell/FreeCellSlot";
 import { FreeCellFoundationAnimation } from "../components/freecell/FreeCellFoundationAnimation";
 import { FreeCellGameWinAnimation } from "../components/freecell/FreeCellGameWinAnimation";
-import { dealGame, applyMove, undoMove, applyHint, getHintMoves } from "../game/freecell/engine";
+import {
+  dealGame,
+  applyMove,
+  undoMove,
+  applyHint,
+  getHintMoves,
+  canAutoComplete,
+  autoComplete,
+} from "../game/freecell/engine";
 import type { FreeCellState, Move } from "../game/freecell/types";
 import { clearGame, loadGame, saveGame } from "../game/freecell/storage";
 import { useGameEvents } from "../game/_shared/useGameEvents";
 import { useSound } from "../game/_shared/useSound";
+
+const AUTO_STEP_MS = 120;
 
 // 8 columns × 40px + 7 gaps × 2px
 const TABLEAU_COLS = 8;
@@ -48,6 +58,10 @@ export default function FreeCellScreen() {
 
   const flashOpacity = useRef(new Animated.Value(0)).current;
   const hasLoadedRef = useRef(false);
+  const isMountedRef = useRef(true);
+  const autoCompletingRef = useRef(false);
+  const autoStepTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [autoCompleting, setAutoCompleting] = useState(false);
 
   const [showFoundation, setShowFoundation] = useState(false);
   const [showGameWin, setShowGameWin] = useState(false);
@@ -59,19 +73,52 @@ export default function FreeCellScreen() {
   const { play: playGameWin } = useSound("freecell.gameWin");
   const { play: playInvalidMove } = useSound("freecell.invalidMove");
 
+  const startAutoComplete = useCallback((fromState: FreeCellState) => {
+    if (autoCompletingRef.current) return;
+    if (!canAutoComplete(fromState)) return;
+    autoCompletingRef.current = true;
+    setAutoCompleting(true);
+
+    const step = (current: FreeCellState) => {
+      if (!isMountedRef.current) return;
+      const next = autoComplete(current);
+      if (next === current || next.isComplete) {
+        setState(next === current ? current : next);
+        autoCompletingRef.current = false;
+        setAutoCompleting(false);
+        return;
+      }
+      setState(next);
+      autoStepTimeoutRef.current = setTimeout(() => step(next), AUTO_STEP_MS);
+    };
+
+    autoStepTimeoutRef.current = setTimeout(() => step(fromState), AUTO_STEP_MS);
+  }, []);
+
+  // Track mount status for async safety
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+      if (autoStepTimeoutRef.current !== null) clearTimeout(autoStepTimeoutRef.current);
+    };
+  }, []);
+
   // Mount: resume saved game or deal fresh
   useEffect(() => {
     let alive = true;
     loadGame().then((saved) => {
       if (!alive) return;
       hasLoadedRef.current = true;
-      setState(saved ?? dealGame());
+      const initial = saved ?? dealGame();
+      setState(initial);
       setLoading(false);
+      startAutoComplete(initial);
     });
     return () => {
       alive = false;
     };
-  }, []);
+  }, [startAutoComplete]);
 
   // Persist on every state change once the mount load has resolved
   useEffect(() => {
@@ -114,7 +161,7 @@ export default function FreeCellScreen() {
 
   const handleMove = useCallback(
     (move: Move) => {
-      if (state === null) return;
+      if (state === null || autoCompletingRef.current) return;
       const next = applyMove(state, move);
       if (next === state) {
         flashInvalid();
@@ -122,8 +169,9 @@ export default function FreeCellScreen() {
         return;
       }
       setState(next);
+      startAutoComplete(next);
     },
-    [state, flashInvalid, playInvalidMove]
+    [state, flashInvalid, playInvalidMove, startAutoComplete]
   );
 
   const handleUndo = useCallback(() => {
@@ -150,8 +198,9 @@ export default function FreeCellScreen() {
     setOuterWidth(Math.floor(e.nativeEvent.layout.width));
   }, []);
 
-  const undoDisabled = state === null || state.undoStack.length === 0 || state.isComplete;
-  const hintDisabled = state === null || state.isComplete;
+  const undoDisabled =
+    state === null || state.undoStack.length === 0 || state.isComplete || autoCompleting;
+  const hintDisabled = state === null || state.isComplete || autoCompleting;
   const scale = outerWidth > 0 ? outerWidth / BOARD_WIDTH : 1;
 
   return (
