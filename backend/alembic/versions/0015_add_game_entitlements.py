@@ -29,6 +29,7 @@ def upgrade() -> None:
             nullable=False,
         ),
         sa.PrimaryKeyConstraint("id"),
+        sa.UniqueConstraint("session_id", "game_slug", name="uq_game_entitlements_session_slug"),
     )
     op.create_index(
         "game_entitlements_session_id_idx",

@@ -167,7 +167,10 @@ class GameEntitlement(Base):
     """
 
     __tablename__ = "game_entitlements"
-    __table_args__ = (Index("game_entitlements_session_id_idx", "session_id"),)
+    __table_args__ = (
+        Index("game_entitlements_session_id_idx", "session_id"),
+        UniqueConstraint("session_id", "game_slug", name="uq_game_entitlements_session_slug"),
+    )
 
     id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
     session_id: Mapped[str] = mapped_column(Text, nullable=False)

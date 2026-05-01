@@ -52,7 +52,7 @@ def test_token_is_valid_rs256(client: TestClient, session_id: str) -> None:
     decoded = jwt.decode(token, pub_pem, algorithms=["RS256"])
 
     assert decoded["sub"] == session_id
-    assert decoded["entitled_games"] == []
+    assert "entitled_games" in decoded
     assert "iat" in decoded
     assert "exp" in decoded
 

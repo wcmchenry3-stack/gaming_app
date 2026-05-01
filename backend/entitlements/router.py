@@ -25,5 +25,5 @@ async def get_entitlements(request: Request) -> EntitlementsResponse:
     token, expires_at = service.issue_token(sid, entitled_games)
     return EntitlementsResponse(
         token=token,
-        expires_at=expires_at.isoformat(),
+        expires_at=expires_at,
     )

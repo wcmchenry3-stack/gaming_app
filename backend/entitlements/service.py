@@ -12,12 +12,17 @@ from datetime import datetime, timedelta, timezone
 from typing import Any
 
 import jwt
-from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.hazmat.primitives import serialization
+from cryptography.hazmat.primitives.asymmetric import rsa
+from sqlalchemy import select
+
+from db.models import GameEntitlement
 
 TOKEN_TTL_HOURS = 24
 ALGORITHM = "RS256"
 
+# Per-process cache — each worker generates its own ephemeral pair in local/CI.
+# In production Render injects ENTITLEMENT_PRIVATE_KEY, so all workers share the same key.
 _private_key_pem: str | None = None
 _public_key_pem: str | None = None
 
@@ -77,10 +82,6 @@ def issue_token(session_id: str, entitled_games: list[str]) -> tuple[str, dateti
 
 async def get_entitled_games(db_session, session_id: str) -> list[str]:
     """Query game_entitlements for this session. Returns [] until IAP ships (#822)."""
-    from sqlalchemy import select
-
-    from db.models import GameEntitlement
-
     rows = (
         (
             await db_session.execute(
