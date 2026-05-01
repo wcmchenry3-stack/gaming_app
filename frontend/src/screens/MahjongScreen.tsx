@@ -497,7 +497,7 @@ export default function MahjongScreen() {
     syncMarkStarted();
   }, [syncGetGameId, syncComplete, syncStart, syncMarkStarted]);
 
-  const MAX_TILE_W = 100;
+  const MAX_TILE_W = 72;
   const scale = outerWidth > 0 ? Math.min(MAX_TILE_W / TILE_W, outerWidth / BOARD_W) : 1;
 
   const onOuterLayout = useCallback((e: LayoutChangeEvent) => {
