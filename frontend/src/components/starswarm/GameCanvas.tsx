@@ -29,6 +29,10 @@ const EXPLOSION_DRAW_SIZE = 48;
 const DT_CAP_MS = 33;
 const INVINCIBLE_BLINK_INTERVAL = 120; // ms
 
+const C = {
+  buddyShip: "rgba(0,120,255,0.8)",
+} as const;
+
 export interface DevOptions {
   wave?: number;
   infiniteLives?: boolean;
@@ -512,7 +516,7 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
                   y={buddy.y - 17}
                   width={34}
                   height={34}
-                  color="rgba(0,120,255,0.8)"
+                  color={C.buddyShip}
                 />
               )
             )}

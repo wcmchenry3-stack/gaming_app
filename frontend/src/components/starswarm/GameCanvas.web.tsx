@@ -89,6 +89,7 @@ const C = {
   superTint: "#ffee00",
   shieldAura: "rgba(0,170,255,0.25)",
   shieldRing: "rgba(0,170,255,0.8)",
+  buddyShip: "rgba(0,120,255,0.8)",
   powerUpLightning: "#ffee00",
   powerUpShield: "rgba(0,170,255,0.9)",
   powerUpBomb: "rgba(255,80,0,0.9)",
@@ -564,7 +565,7 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
         if (img) {
           ctx.drawImage(img, buddy.x - 17, buddy.y - 17, 34, 34);
         } else {
-          ctx.fillStyle = "rgba(0,120,255,0.8)";
+          ctx.fillStyle = C.buddyShip;
           ctx.fillRect(buddy.x - 17, buddy.y - 17, 34, 34);
         }
         ctx.restore();
