@@ -13,6 +13,17 @@ import { DropTarget } from "../../game/_shared/drag/DropTarget";
 import type { DropHandler } from "../../game/_shared/drag/DragContext";
 
 const FACE_UP_OFFSET = 36;
+const MIN_FACE_UP_OFFSET = 12;
+// Matches the tableau height budget encoded in BOARD_HEIGHT in FreeCellScreen
+const TABLEAU_MAX_HEIGHT = 12 * FACE_UP_OFFSET + CARD_HEIGHT;
+
+/** Returns the per-card vertical offset that keeps the whole pile visible.
+ *  Compresses below FACE_UP_OFFSET only when the pile would overflow. */
+export function computeCardOffset(pileLength: number): number {
+  if (pileLength <= 1) return FACE_UP_OFFSET;
+  const natural = (TABLEAU_MAX_HEIGHT - CARD_HEIGHT) / (pileLength - 1);
+  return Math.max(MIN_FACE_UP_OFFSET, Math.min(FACE_UP_OFFSET, natural));
+}
 
 export interface TableauColumnProps {
   readonly pile: readonly Card[];
@@ -66,13 +77,17 @@ export default function TableauColumn({
     return empty;
   }
 
+  const cardOffset = computeCardOffset(pile.length);
   const offsets: number[] = [];
   let acc = 0;
   for (let i = 0; i < pile.length; i++) {
     offsets.push(acc);
-    acc += FACE_UP_OFFSET;
+    acc += cardOffset;
   }
-  const containerHeight = CARD_HEIGHT + (offsets[pile.length - 1] ?? 0);
+  const containerHeight = Math.min(
+    TABLEAU_MAX_HEIGHT,
+    CARD_HEIGHT + (offsets[pile.length - 1] ?? 0)
+  );
   const containerStyle: ViewStyle = { width: CARD_WIDTH, height: containerHeight };
 
   const cards = pile.map((card, cardIndex) => {
