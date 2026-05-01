@@ -2280,7 +2280,10 @@ describe("laser sound gating", () => {
 
   // Mirrors exactly the condition checked in GameCanvas.tsx / GameCanvas.web.tsx
   function laserSoundWouldFire(prev: StarSwarmState, next: StarSwarmState): boolean {
-    return next.player.shootCooldown > prev.player.shootCooldown && next.activePowerUp?.type === "lightning";
+    return (
+      next.player.shootCooldown > prev.player.shootCooldown &&
+      next.activePowerUp?.type === "lightning"
+    );
   }
 
   it("does not trigger laser sound on normal fire (no power-up)", () => {

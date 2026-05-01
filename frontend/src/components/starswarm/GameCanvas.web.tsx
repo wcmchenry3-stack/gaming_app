@@ -763,7 +763,10 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
               prevScoreRef.current = applied.score;
               onScoreChangeRef.current?.(applied.score);
             }
-            if (applied.player.shootCooldown > prevCooldown && applied.activePowerUp?.type === "lightning") {
+            if (
+              applied.player.shootCooldown > prevCooldown &&
+              applied.activePowerUp?.type === "lightning"
+            ) {
               onLaserFireRef.current?.();
             }
             const nowType = applied.activePowerUp?.type ?? null;
