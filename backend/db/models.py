@@ -158,6 +158,23 @@ class GameEvent(Base):
     event_type: Mapped[EventType] = relationship(back_populates="events")
 
 
+class GameEntitlement(Base):
+    """Session-scoped entitlements written by IAP receipt validation.
+
+    Stubbed empty until #822 ships — rows here drive entitled_games in JWTs.
+    """
+
+    __tablename__ = "game_entitlements"
+    __table_args__ = (Index("game_entitlements_session_id_idx", "session_id"),)
+
+    id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
+    session_id: Mapped[str] = mapped_column(Text, nullable=False)
+    game_slug: Mapped[str] = mapped_column(Text, nullable=False)
+    granted_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
+    )
+
+
 class BugLog(Base):
     __tablename__ = "bug_logs"
     __table_args__ = (
