@@ -1,11 +1,14 @@
-"""Tests for GET /games/catalog and PATCH /games/catalog/{id} (#1049)."""
+"""Tests for GET /games/catalog and PATCH /games/catalog/{id} (#1049, #1150)."""
 
 from __future__ import annotations
 
+import os
 from typing import Iterator
 
 import pytest
 from fastapi.testclient import TestClient
+
+_ADMIN_TOKEN = "test-admin-token-1150"
 
 
 @pytest.fixture()
@@ -16,6 +19,23 @@ def client() -> Iterator[TestClient]:
         yield c
 
 
+@pytest.fixture(autouse=True)
+def set_admin_token(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("ADMIN_API_TOKEN", _ADMIN_TOKEN)
+
+
+def _admin_headers() -> dict[str, str]:
+    return {
+        "X-Admin-Token": _ADMIN_TOKEN,
+        "Content-Type": "application/json",
+    }
+
+
+def _get_game_id(client: TestClient, name: str) -> int:
+    items = client.get("/games/catalog").json()["items"]
+    return next(g["id"] for g in items if g["name"] == name)
+
+
 # ---------------------------------------------------------------------------
 # GET /games/catalog
 # ---------------------------------------------------------------------------
@@ -24,9 +44,7 @@ def client() -> Iterator[TestClient]:
 def test_catalog_returns_all_active_games(client: TestClient) -> None:
     r = client.get("/games/catalog")
     assert r.status_code == 200
-    body = r.json()
-    assert "items" in body
-    names = {g["name"] for g in body["items"]}
+    names = {g["name"] for g in r.json()["items"]}
     assert {
         "yacht",
         "blackjack",
@@ -83,67 +101,110 @@ def test_catalog_no_session_required(client: TestClient) -> None:
     assert r.status_code == 200
 
 
+def test_catalog_cache_control_header(client: TestClient) -> None:
+    r = client.get("/games/catalog")
+    assert r.status_code == 200
+    assert r.headers.get("Cache-Control") == "public, max-age=300"
+
+
 # ---------------------------------------------------------------------------
-# PATCH /games/catalog/{id}
+# PATCH /games/catalog/{id} — auth
 # ---------------------------------------------------------------------------
 
 
-def _get_game_id(client: TestClient, name: str) -> int:
-    items = client.get("/games/catalog").json()["items"]
-    return next(g["id"] for g in items if g["name"] == name)
+def test_patch_requires_admin_token(client: TestClient) -> None:
+    gid = _get_game_id(client, "blackjack")
+    r = client.patch(f"/games/catalog/{gid}", json={"is_premium": True})
+    assert r.status_code == 403
 
 
-def test_patch_game_type_is_premium(client: TestClient) -> None:
+def test_patch_wrong_admin_token_rejected(client: TestClient) -> None:
     gid = _get_game_id(client, "blackjack")
     r = client.patch(
         f"/games/catalog/{gid}",
         json={"is_premium": True},
-        headers={"X-Session-ID": "test-session", "Content-Type": "application/json"},
+        headers={"X-Admin-Token": "wrong-token", "Content-Type": "application/json"},
     )
-    assert r.status_code == 200
-    assert r.json()["is_premium"] is True
+    assert r.status_code == 403
 
-    # restore
-    client.patch(
-        f"/games/catalog/{gid}",
-        json={"is_premium": False},
-        headers={"X-Session-ID": "test-session", "Content-Type": "application/json"},
-    )
+
+# ---------------------------------------------------------------------------
+# PATCH /games/catalog/{id} — mutations
+# ---------------------------------------------------------------------------
+
+
+def test_patch_game_type_is_premium(client: TestClient) -> None:
+    gid = _get_game_id(client, "blackjack")
+    try:
+        r = client.patch(
+            f"/games/catalog/{gid}",
+            json={"is_premium": True},
+            headers=_admin_headers(),
+        )
+        assert r.status_code == 200
+        assert r.json()["is_premium"] is True
+    finally:
+        client.patch(
+            f"/games/catalog/{gid}",
+            json={"is_premium": False},
+            headers=_admin_headers(),
+        )
 
 
 def test_patch_game_type_category(client: TestClient) -> None:
     gid = _get_game_id(client, "blackjack")
-    r = client.patch(
-        f"/games/catalog/{gid}",
-        json={"category": "strategy"},
-        headers={"X-Session-ID": "test-session", "Content-Type": "application/json"},
-    )
-    assert r.status_code == 200
-    assert r.json()["category"] == "strategy"
-
-    # restore
-    client.patch(
-        f"/games/catalog/{gid}",
-        json={"category": "card"},
-        headers={"X-Session-ID": "test-session", "Content-Type": "application/json"},
-    )
+    try:
+        r = client.patch(
+            f"/games/catalog/{gid}",
+            json={"category": "strategy"},
+            headers=_admin_headers(),
+        )
+        assert r.status_code == 200
+        assert r.json()["category"] == "strategy"
+    finally:
+        client.patch(
+            f"/games/catalog/{gid}",
+            json={"category": "card"},
+            headers=_admin_headers(),
+        )
 
 
 def test_patch_game_type_not_found(client: TestClient) -> None:
     r = client.patch(
         "/games/catalog/9999",
         json={"is_premium": True},
-        headers={"X-Session-ID": "test-session", "Content-Type": "application/json"},
+        headers=_admin_headers(),
     )
     assert r.status_code == 404
 
 
 def test_patch_game_type_no_op(client: TestClient) -> None:
     gid = _get_game_id(client, "yacht")
-    r = client.patch(
-        f"/games/catalog/{gid}",
-        json={},
-        headers={"X-Session-ID": "test-session", "Content-Type": "application/json"},
-    )
+    r = client.patch(f"/games/catalog/{gid}", json={}, headers=_admin_headers())
     assert r.status_code == 200
     assert r.json()["name"] == "yacht"
+
+
+# ---------------------------------------------------------------------------
+# PATCH /games/catalog/{id} — schema validation
+# ---------------------------------------------------------------------------
+
+
+def test_patch_category_empty_string_rejected(client: TestClient) -> None:
+    gid = _get_game_id(client, "blackjack")
+    r = client.patch(
+        f"/games/catalog/{gid}",
+        json={"category": ""},
+        headers=_admin_headers(),
+    )
+    assert r.status_code == 422
+
+
+def test_patch_category_too_long_rejected(client: TestClient) -> None:
+    gid = _get_game_id(client, "blackjack")
+    r = client.patch(
+        f"/games/catalog/{gid}",
+        json={"category": "x" * 65},
+        headers=_admin_headers(),
+    )
+    assert r.status_code == 422

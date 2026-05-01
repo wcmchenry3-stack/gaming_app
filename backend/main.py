@@ -143,7 +143,7 @@ app.add_middleware(
     allow_origins=_allowed_origins,
     allow_methods=["GET", "POST", "PATCH"],
     expose_headers=["Retry-After"],
-    allow_headers=["Content-Type", "X-Session-ID"],
+    allow_headers=["Content-Type", "X-Session-ID", "X-Admin-Token"],
 )
 app.add_middleware(MaxBodySizeMiddleware)
 app.add_middleware(SlowAPIMiddleware)

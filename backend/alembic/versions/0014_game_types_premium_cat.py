@@ -1,6 +1,6 @@
 """add is_premium + category to game_types (#1049)
 
-Revision ID: 0014_add_is_premium_category_game_types
+Revision ID: 0014_game_types_premium_cat
 Revises: 0013_add_freecell_game_type
 Create Date: 2026-04-30
 
@@ -14,6 +14,7 @@ Game IDs: 1=yacht 2=twenty48 3=blackjack 4=cascade 6=solitaire
 from typing import Sequence, Union
 
 import sqlalchemy as sa
+from sqlalchemy import text
 from alembic import op
 
 revision: str = "0014_game_types_premium_cat"
@@ -47,13 +48,19 @@ def upgrade() -> None:
         sa.Column("category", sa.Text(), nullable=False, server_default="other"),
     )
 
-    # Explicitly reset existing rows to integer 0/1 — server_default only
-    # controls future inserts; existing rows need an explicit UPDATE.
-    op.execute("UPDATE game_types SET is_premium = 0")
-    op.execute(f"UPDATE game_types SET is_premium = 1 WHERE id IN {_PREMIUM_IDS}")
+    # SQLite stores DEFAULT false as the text string "false" on existing rows
+    # (not the integer 0), which SQLAlchemy's Boolean mapper reads back as True.
+    # Explicitly resetting to 0/1 after ADD COLUMN guarantees correct values
+    # regardless of backend — server_default only governs future inserts.
+    op.execute(text("UPDATE game_types SET is_premium = 0"))
+    op.execute(text(f"UPDATE game_types SET is_premium = 1 WHERE id IN {_PREMIUM_IDS}"))
 
     for game_id, cat in _CATEGORIES.items():
-        op.execute(f"UPDATE game_types SET category = '{cat}' WHERE id = {game_id}")
+        op.execute(
+            text("UPDATE game_types SET category = :cat WHERE id = :id").bindparams(
+                cat=cat, id=game_id
+            )
+        )
 
 
 def downgrade() -> None:
