@@ -21,7 +21,7 @@ export interface SfxVolumes {
 }
 
 export const DEFAULT_SFX_VOLUMES: SfxVolumes = {
-  laser: 0,
+  laser: 0.6,
   poweruplightning: 0.8,
   powerupshield: 0.8,
   powerupbuddy: 0.8,
