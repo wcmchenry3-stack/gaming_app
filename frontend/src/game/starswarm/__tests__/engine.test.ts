@@ -2265,3 +2265,56 @@ describe("#1022 Challenging Stage cadence & PERFECT bonus", () => {
     expect(perfect.score - noPerfect.score).toBe(40 * 50 + 10_000);
   });
 });
+
+// ---------------------------------------------------------------------------
+// Laser sound gating — only fires during lightning power-up
+// The canvas checks: shootCooldown > prevCooldown && activePowerUp?.type === "lightning"
+// ---------------------------------------------------------------------------
+
+describe("laser sound gating", () => {
+  function playingState(): StarSwarmState {
+    let s = initStarSwarm(CANVAS_W, CANVAS_H);
+    s = advanceMs(s, 8000); // advance past SwoopIn into Playing
+    return s;
+  }
+
+  // Mirrors exactly the condition checked in GameCanvas.tsx / GameCanvas.web.tsx
+  function laserSoundWouldFire(prev: StarSwarmState, next: StarSwarmState): boolean {
+    return next.player.shootCooldown > prev.player.shootCooldown && next.activePowerUp?.type === "lightning";
+  }
+
+  it("does not trigger laser sound on normal fire (no power-up)", () => {
+    const before = playingState();
+    expect(before.player.shootCooldown).toBe(0); // ready to fire
+    const after = tick(before, 16, FIRE_INPUT);
+    expect(after.player.shootCooldown).toBeGreaterThan(0); // shot was fired, cooldown reset
+    expect(laserSoundWouldFire(before, after)).toBe(false);
+  });
+
+  it("triggers laser sound on fire during lightning power-up", () => {
+    const before = applyPowerUp(playingState(), "lightning");
+    expect(before.activePowerUp?.type).toBe("lightning");
+    expect(before.player.shootCooldown).toBe(0);
+    const after = tick(before, 16, FIRE_INPUT);
+    expect(after.player.shootCooldown).toBeGreaterThan(0); // shot was fired
+    expect(laserSoundWouldFire(before, after)).toBe(true);
+  });
+
+  it("does not trigger laser sound once lightning power-up expires", () => {
+    let s = applyPowerUp(playingState(), "lightning");
+    s = advanceMs(s, POWERUP_DURATION + 100, FIRE_INPUT); // advance past expiry while firing
+    expect(s.activePowerUp).toBeNull();
+    // Advance one more frame: cooldown may already be 0 from continuous fire
+    const before = { ...s, player: { ...s.player, shootCooldown: 0 } };
+    const after = tick(before, 16, FIRE_INPUT);
+    expect(after.player.shootCooldown).toBeGreaterThan(0); // still fires shots
+    expect(laserSoundWouldFire(before, after)).toBe(false); // but no laser sound
+  });
+
+  it("does not trigger laser sound for shield power-up fire", () => {
+    const before = applyPowerUp(playingState(), "shield");
+    expect(before.activePowerUp?.type).toBe("shield");
+    const after = tick(before, 16, FIRE_INPUT);
+    expect(laserSoundWouldFire(before, after)).toBe(false);
+  });
+});
