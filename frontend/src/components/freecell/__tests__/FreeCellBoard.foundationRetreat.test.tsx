@@ -17,19 +17,13 @@ import type { FreeCellState } from "../../../game/freecell/types";
 
 const BASE: FreeCellState = {
   _v: 1,
-  tableau: [
-    [{ suit: "hearts", rank: 3 }],
-    [],
-    [],
-    [],
-    [],
-    [],
-    [],
-    [],
-  ],
+  tableau: [[{ suit: "hearts", rank: 3 }], [], [], [], [], [], [], []],
   freeCells: [null, null, null, null],
   foundations: {
-    spades: [{ suit: "spades", rank: 1 }, { suit: "spades", rank: 2 }],
+    spades: [
+      { suit: "spades", rank: 1 },
+      { suit: "spades", rank: 2 },
+    ],
     hearts: [],
     diamonds: [],
     clubs: [],
@@ -92,7 +86,10 @@ describe("foundation retreat — valid move", () => {
       ...BASE,
       foundations: {
         ...BASE.foundations,
-        hearts: Array.from({ length: 13 }, (_, i) => ({ suit: "hearts" as const, rank: (i + 1) as 1 })),
+        hearts: Array.from({ length: 13 }, (_, i) => ({
+          suit: "hearts" as const,
+          rank: (i + 1) as 1,
+        })),
       },
     };
     const { getByLabelText, onMove } = renderBoard(stateWithKing);
