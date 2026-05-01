@@ -1,4 +1,4 @@
-import { FruitTier } from "../../theme/fruitSets";
+import { FruitTier } from "../../theme/fruitSets.engine";
 import { ControlledSpawnSelector } from "./spawnSelector";
 
 export class FruitQueue {

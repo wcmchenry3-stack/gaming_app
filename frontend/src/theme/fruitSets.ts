@@ -1,14 +1,13 @@
 import { ImageSourcePropType } from "react-native";
 
 import { COSMOS_BAKED, COSMOS_ICONS, FRUIT_BAKED, FRUIT_ICONS } from "../game/_shared/images";
+import type { FruitDefinition as FruitDefinitionBase } from "./fruitSets.engine";
 
-export type FruitTier = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10;
+export type { FruitTier } from "./fruitSets.engine";
+export { MAX_SPAWN_TIER } from "./fruitSets.engine";
+import type { FruitTier } from "./fruitSets.engine";
 
-export interface FruitDefinition {
-  tier: FruitTier;
-  name: string;
-  nameKey?: string; // JSON vertex-lookup key when it differs from name.toLowerCase()
-  emoji: string;
+export interface FruitDefinition extends FruitDefinitionBase {
   icon?: ImageSourcePropType;
   /** Pre-baked game canvas PNG — composited, clipped, ready for a single drawImage. */
   bakedIcon?: ImageSourcePropType;
@@ -18,9 +17,6 @@ export interface FruitDefinition {
    * Produced by scripts/bake_sprites.py — do not edit by hand.
    */
   bakedClipR?: number;
-  color: string;
-  radius: number; // physics radius in px — identical across all sets per tier
-  scoreValue: number; // points awarded on merge
 }
 
 export interface FruitSet {
@@ -318,6 +314,3 @@ export const FRUIT_SETS: Record<string, FruitSet> = {
 };
 
 export const DEFAULT_FRUIT_SET = "fruits";
-
-// Max tier that can appear in the drop queue (avoids spawning huge fruits)
-export const MAX_SPAWN_TIER: FruitTier = 4;

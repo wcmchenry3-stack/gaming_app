@@ -1,4 +1,4 @@
-import { FruitTier } from "../../theme/fruitSets";
+import { FruitTier } from "../../theme/fruitSets.engine";
 
 const WATERMELON_BONUS = 256;
 

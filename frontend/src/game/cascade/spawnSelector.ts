@@ -1,4 +1,4 @@
-import { FruitTier, MAX_SPAWN_TIER } from "../../theme/fruitSets";
+import { FruitTier, MAX_SPAWN_TIER } from "../../theme/fruitSets.engine";
 
 const SPAWN_TIER_COUNT = MAX_SPAWN_TIER + 1;
 
