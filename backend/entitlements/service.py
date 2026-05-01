@@ -82,10 +82,12 @@ async def get_entitled_games(db_session, session_id: str) -> list[str]:
     from db.models import GameEntitlement
 
     rows = (
-        await db_session.execute(
-            select(GameEntitlement.game_slug).where(
-                GameEntitlement.session_id == session_id
+        (
+            await db_session.execute(
+                select(GameEntitlement.game_slug).where(GameEntitlement.session_id == session_id)
             )
         )
-    ).scalars().all()
+        .scalars()
+        .all()
+    )
     return list(rows)
