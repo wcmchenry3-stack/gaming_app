@@ -15,6 +15,7 @@ from sentry_sdk.integrations.fastapi import FastApiIntegration
 from sentry_sdk.integrations.starlette import StarletteIntegration
 
 from db.base import DATABASE_URL, get_engine, is_configured
+from entitlements.dependencies import EntitlementError
 from limiter import _real_ip, limiter
 from cascade.router import router as cascade_router
 from freecell.router import router as freecell_router
@@ -90,6 +91,16 @@ async def _rate_limit_handler(request: Request, exc: RateLimitExceeded) -> JSONR
 
 
 app.add_exception_handler(RateLimitExceeded, _rate_limit_handler)
+
+
+async def _entitlement_error_handler(request: Request, exc: EntitlementError) -> JSONResponse:
+    return JSONResponse(
+        status_code=403,
+        content={"detail": "not_entitled", "game": exc.game_slug},
+    )
+
+
+app.add_exception_handler(EntitlementError, _entitlement_error_handler)
 
 # ---------------------------------------------------------------------------
 # CORS — scoped to known origins; set ALLOWED_ORIGINS env var (comma-separated)

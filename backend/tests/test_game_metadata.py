@@ -241,8 +241,15 @@ def test_post_games_invalid_metadata_returns_422(client) -> None:
     not os.environ.get("DATABASE_URL"),
     reason="DATABASE_URL not set — skipping live API tests",
 )
-def test_post_games_valid_cascade_metadata_accepted(client) -> None:
+async def test_post_games_valid_cascade_metadata_accepted(client) -> None:
+    from db.base import get_session_factory
+    from db.models import GameEntitlement
+
     sid = str(uuid.uuid4())
+    factory = get_session_factory()
+    async with factory() as db:
+        db.add(GameEntitlement(session_id=sid, game_slug="cascade"))
+        await db.commit()
     r = client.post(
         "/games",
         headers=_headers(sid),
