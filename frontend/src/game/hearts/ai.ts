@@ -201,7 +201,9 @@ export function selectCardToPlay(
 
   // Moon blocking — dump points cards ASAP
   if (moonTarget !== null && moonTarget !== playerIndex) {
-    const pointCards = valid.filter((c) => cardPoints(c) > 0).sort((a, b) => aceHigh(b.rank) - aceHigh(a.rank));
+    const pointCards = valid
+      .filter((c) => cardPoints(c) > 0)
+      .sort((a, b) => aceHigh(b.rank) - aceHigh(a.rank));
     if (pointCards.length > 0) return pointCards[0]!;
   }
 
@@ -280,7 +282,9 @@ function chooseDiscard(valid: Card[]): Card {
   if (qSpades) return qSpades;
 
   // 2. Dump highest heart
-  const hearts = valid.filter((c) => c.suit === "hearts").sort((a, b) => aceHigh(b.rank) - aceHigh(a.rank));
+  const hearts = valid
+    .filter((c) => c.suit === "hearts")
+    .sort((a, b) => aceHigh(b.rank) - aceHigh(a.rank));
   if (hearts.length > 0) return hearts[0]!;
 
   // 3. Dump highest card of longest suit
