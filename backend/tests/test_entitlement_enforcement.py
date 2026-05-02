@@ -22,7 +22,6 @@ from sqlalchemy import select
 from db.base import get_session_factory
 from db.models import GameEntitlement
 
-
 # ---------------------------------------------------------------------------
 # Fixtures
 # ---------------------------------------------------------------------------
@@ -88,9 +87,7 @@ def test_create_game_premium_hearts_no_entitlement_returns_403(
 # ---------------------------------------------------------------------------
 
 
-def test_create_game_free_no_entitlement_proceeds(
-    client: TestClient, session_id: str
-) -> None:
+def test_create_game_free_no_entitlement_proceeds(client: TestClient, session_id: str) -> None:
     r = client.post(
         "/games",
         json={"game_type": "blackjack"},
@@ -106,9 +103,7 @@ def test_create_game_free_no_entitlement_proceeds(
 
 
 @pytest.mark.anyio
-async def test_create_game_entitled_premium_proceeds(
-    client: TestClient, session_id: str
-) -> None:
+async def test_create_game_entitled_premium_proceeds(client: TestClient, session_id: str) -> None:
     await _grant(session_id, "cascade")
     r = client.post(
         "/games",
@@ -123,17 +118,13 @@ async def test_create_game_entitled_premium_proceeds(
 # ---------------------------------------------------------------------------
 
 
-def test_cascade_scores_no_entitlement_returns_403(
-    client: TestClient, session_id: str
-) -> None:
+def test_cascade_scores_no_entitlement_returns_403(client: TestClient, session_id: str) -> None:
     r = client.get("/cascade/scores", headers=_headers(session_id))
     assert r.status_code == 403
     assert r.json()["game"] == "cascade"
 
 
-def test_cascade_patch_no_entitlement_returns_403(
-    client: TestClient, session_id: str
-) -> None:
+def test_cascade_patch_no_entitlement_returns_403(client: TestClient, session_id: str) -> None:
     game_id = str(uuid.uuid4())
     r = client.patch(
         f"/cascade/score/{game_id}",
@@ -144,9 +135,7 @@ def test_cascade_patch_no_entitlement_returns_403(
 
 
 @pytest.mark.anyio
-async def test_cascade_entitled_session_passes(
-    client: TestClient, session_id: str
-) -> None:
+async def test_cascade_entitled_session_passes(client: TestClient, session_id: str) -> None:
     await _grant(session_id, "cascade")
     r = client.get("/cascade/scores", headers=_headers(session_id))
     assert r.status_code != 403
@@ -157,17 +146,13 @@ async def test_cascade_entitled_session_passes(
 # ---------------------------------------------------------------------------
 
 
-def test_hearts_scores_no_entitlement_returns_403(
-    client: TestClient, session_id: str
-) -> None:
+def test_hearts_scores_no_entitlement_returns_403(client: TestClient, session_id: str) -> None:
     r = client.get("/hearts/scores", headers=_headers(session_id))
     assert r.status_code == 403
     assert r.json()["game"] == "hearts"
 
 
-def test_hearts_submit_no_entitlement_returns_403(
-    client: TestClient, session_id: str
-) -> None:
+def test_hearts_submit_no_entitlement_returns_403(client: TestClient, session_id: str) -> None:
     r = client.post(
         "/hearts/score",
         json={"player_name": "Bob", "score": 42},
@@ -177,9 +162,7 @@ def test_hearts_submit_no_entitlement_returns_403(
 
 
 @pytest.mark.anyio
-async def test_hearts_entitled_session_passes(
-    client: TestClient, session_id: str
-) -> None:
+async def test_hearts_entitled_session_passes(client: TestClient, session_id: str) -> None:
     await _grant(session_id, "hearts")
     r = client.get("/hearts/scores", headers=_headers(session_id))
     assert r.status_code != 403
@@ -190,18 +173,14 @@ async def test_hearts_entitled_session_passes(
 # ---------------------------------------------------------------------------
 
 
-def test_sudoku_scores_no_entitlement_returns_403(
-    client: TestClient, session_id: str
-) -> None:
+def test_sudoku_scores_no_entitlement_returns_403(client: TestClient, session_id: str) -> None:
     r = client.get("/sudoku/scores/easy", headers=_headers(session_id))
     assert r.status_code == 403
     assert r.json()["game"] == "sudoku"
 
 
 @pytest.mark.anyio
-async def test_sudoku_entitled_session_passes(
-    client: TestClient, session_id: str
-) -> None:
+async def test_sudoku_entitled_session_passes(client: TestClient, session_id: str) -> None:
     await _grant(session_id, "sudoku")
     r = client.get("/sudoku/scores/easy", headers=_headers(session_id))
     assert r.status_code != 403
@@ -220,9 +199,7 @@ def test_starswarm_leaderboard_no_entitlement_returns_403(
     assert r.json()["game"] == "starswarm"
 
 
-def test_starswarm_submit_no_entitlement_returns_403(
-    client: TestClient, session_id: str
-) -> None:
+def test_starswarm_submit_no_entitlement_returns_403(client: TestClient, session_id: str) -> None:
     r = client.post(
         "/starswarm/score",
         json={
@@ -236,9 +213,7 @@ def test_starswarm_submit_no_entitlement_returns_403(
 
 
 @pytest.mark.anyio
-async def test_starswarm_entitled_session_passes(
-    client: TestClient, session_id: str
-) -> None:
+async def test_starswarm_entitled_session_passes(client: TestClient, session_id: str) -> None:
     await _grant(session_id, "starswarm")
     r = client.get("/starswarm/leaderboard", headers=_headers(session_id))
     assert r.status_code != 403
