@@ -198,11 +198,7 @@ export default function HomeScreen() {
     return (
       <View style={[styles.cardWrapper, numColumns === 1 && styles.cardWrapperFull]}>
         <Pressable
-          style={[
-            styles.card,
-            { backgroundColor: colors.surfaceHigh },
-            isLocked && styles.cardLocked,
-          ]}
+          style={[styles.card, { backgroundColor: colors.surfaceHigh }]}
           onPress={isLocked ? () => Alert.alert(t("common:home.locked.comingSoon")) : item.action}
           accessibilityRole="button"
           accessibilityLabel={
@@ -378,9 +374,6 @@ const styles = StyleSheet.create({
     fontSize: 9,
     textTransform: "uppercase",
     letterSpacing: 1,
-  },
-  cardLocked: {
-    opacity: 0.6,
   },
   playBtnLocked: {
     borderWidth: 1,

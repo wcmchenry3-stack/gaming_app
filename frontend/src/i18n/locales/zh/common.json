@@ -45,7 +45,7 @@
   "overflow.abandon.body": "开始新游戏会丢失本轮的进度，但不会影响你的总统计数据。",
   "overflow.abandon.keepPlaying": "继续游戏",
   "overflow.abandon.startNew": "开始新游戏",
-  "home.locked.buttonLabel": "__NEEDS_TRANSLATION__",
-  "home.locked.cardLabel": "__NEEDS_TRANSLATION__",
-  "home.locked.comingSoon": "__NEEDS_TRANSLATION__"
+  "home.locked.buttonLabel": "解锁",
+  "home.locked.cardLabel": "{{title}} — 即将推出",
+  "home.locked.comingSoon": "该游戏即将推出"
 }

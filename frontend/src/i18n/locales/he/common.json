@@ -45,7 +45,7 @@
   "overflow.abandon.body": "התחלת משחק חדש תמחק את ההתקדמות שלך בסיבוב הזה. הסטטיסטיקות הכלליות שלך לא יושפעו.",
   "overflow.abandon.keepPlaying": "להמשיך לשחק",
   "overflow.abandon.startNew": "להתחיל חדש",
-  "home.locked.buttonLabel": "__NEEDS_TRANSLATION__",
-  "home.locked.cardLabel": "__NEEDS_TRANSLATION__",
-  "home.locked.comingSoon": "__NEEDS_TRANSLATION__"
+  "home.locked.buttonLabel": "פתיחה",
+  "home.locked.cardLabel": "{{title}} — בקרוב",
+  "home.locked.comingSoon": "המשחק הזה יגיע בקרוב"
 }

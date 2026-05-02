@@ -45,7 +45,7 @@
   "overflow.abandon.body": "Commencer une nouvelle partie effacera vos progrès dans ce tour. Vos statistiques globales ne seront pas affectées.",
   "overflow.abandon.keepPlaying": "Continuer",
   "overflow.abandon.startNew": "Commencer",
-  "home.locked.buttonLabel": "__NEEDS_TRANSLATION__",
-  "home.locked.cardLabel": "__NEEDS_TRANSLATION__",
-  "home.locked.comingSoon": "__NEEDS_TRANSLATION__"
+  "home.locked.buttonLabel": "Déverrouiller",
+  "home.locked.cardLabel": "{{title}} — Bientôt disponible",
+  "home.locked.comingSoon": "Ce jeu sera bientôt disponible"
 }

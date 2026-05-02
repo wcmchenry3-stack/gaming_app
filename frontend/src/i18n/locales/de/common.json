@@ -45,7 +45,7 @@
   "overflow.abandon.body": "Ein neues Spiel zu starten, löscht deinen Fortschritt in dieser Runde. Deine Gesamtstatistiken bleiben erhalten.",
   "overflow.abandon.keepPlaying": "Weiter spielen",
   "overflow.abandon.startNew": "Neu starten",
-  "home.locked.buttonLabel": "__NEEDS_TRANSLATION__",
-  "home.locked.cardLabel": "__NEEDS_TRANSLATION__",
-  "home.locked.comingSoon": "__NEEDS_TRANSLATION__"
+  "home.locked.buttonLabel": "Freischalten",
+  "home.locked.cardLabel": "{{title}} — Demnächst",
+  "home.locked.comingSoon": "Dieses Spiel ist bald verfügbar"
 }

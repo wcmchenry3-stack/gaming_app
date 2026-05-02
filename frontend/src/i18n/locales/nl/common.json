@@ -45,7 +45,7 @@
   "overflow.abandon.body": "Een nieuw spel starten verwijdert je voortgang in deze ronde. Je statistieken blijven behouden.",
   "overflow.abandon.keepPlaying": "Doorgaan",
   "overflow.abandon.startNew": "Nieuw starten",
-  "home.locked.buttonLabel": "__NEEDS_TRANSLATION__",
-  "home.locked.cardLabel": "__NEEDS_TRANSLATION__",
-  "home.locked.comingSoon": "__NEEDS_TRANSLATION__"
+  "home.locked.buttonLabel": "Ontgrendelen",
+  "home.locked.cardLabel": "{{title}} — Binnenkort",
+  "home.locked.comingSoon": "Dit spel is binnenkort beschikbaar"
 }
