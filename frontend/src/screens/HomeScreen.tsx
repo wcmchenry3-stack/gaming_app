@@ -225,7 +225,7 @@ export default function HomeScreen() {
 
           {/* Play / Unlock button */}
           {isLocked ? (
-            <View style={[styles.playBtn, styles.playBtnLocked]}>
+            <View style={[styles.playBtn, styles.playBtnLocked, { borderColor: colors.border }]}>
               <Text style={[styles.playBtnText, { color: colors.textMuted }]}>
                 {t("common:home.locked.buttonLabel")}
               </Text>
@@ -371,14 +371,7 @@ const styles = StyleSheet.create({
     opacity: 0.6,
   },
   playBtnLocked: {
-    marginTop: 4,
-    marginHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 20,
-    alignSelf: "stretch",
-    alignItems: "center",
     borderWidth: 1,
-    borderColor: "rgba(128,128,128,0.4)",
   },
   lockBadge: {
     position: "absolute",
