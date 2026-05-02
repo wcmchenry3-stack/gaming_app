@@ -16,6 +16,7 @@ from sentry_sdk.integrations.starlette import StarletteIntegration
 
 from db.base import DATABASE_URL, get_engine, is_configured
 from entitlements.dependencies import EntitlementError
+from entitlements.service import is_dev_override_active
 from limiter import _real_ip, limiter
 from cascade.router import router as cascade_router
 from freecell.router import router as freecell_router
@@ -201,6 +202,14 @@ async def security_headers(request: Request, call_next) -> Response:
     if "server" in response.headers:
         del response.headers["server"]
     return response
+
+
+@app.on_event("startup")
+async def _dev_entitlement_override_warning() -> None:
+    if is_dev_override_active():
+        logging.getLogger("audit").warning(
+            "DEV ENTITLEMENT OVERRIDE ACTIVE — all premium games unlocked for all sessions"
+        )
 
 
 @app.on_event("startup")

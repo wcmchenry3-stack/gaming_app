@@ -16,7 +16,13 @@ from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
 from sqlalchemy import select
 
-from db.models import GameEntitlement
+from db.models import GameEntitlement, GameType
+
+_DEV_OVERRIDE_VAR = "ENTITLEMENT_DEV_OVERRIDE"
+
+
+def is_dev_override_active() -> bool:
+    return os.environ.get(_DEV_OVERRIDE_VAR, "").lower() == "true"
 
 TOKEN_TTL_HOURS = 24
 ALGORITHM = "RS256"
@@ -81,7 +87,18 @@ def issue_token(session_id: str, entitled_games: list[str]) -> tuple[str, dateti
 
 
 async def get_entitled_games(db_session, session_id: str) -> list[str]:
-    """Query game_entitlements for this session. Returns [] until IAP ships (#822)."""
+    """Return this session's entitled game slugs.
+
+    When ENTITLEMENT_DEV_OVERRIDE=true, returns all premium game slugs so
+    internal testers can access every premium game without a purchase (#1052).
+    """
+    if is_dev_override_active():
+        rows = (
+            (await db_session.execute(select(GameType.name).where(GameType.is_premium.is_(True))))
+            .scalars()
+            .all()
+        )
+        return list(rows)
     rows = (
         (
             await db_session.execute(
