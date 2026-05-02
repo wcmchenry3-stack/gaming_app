@@ -1,5 +1,13 @@
 import React, { useEffect } from "react";
-import { Alert, View, Text, Pressable, StyleSheet, ScrollView, useWindowDimensions } from "react-native";
+import {
+  Alert,
+  View,
+  Text,
+  Pressable,
+  StyleSheet,
+  ScrollView,
+  useWindowDimensions,
+} from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTranslation } from "react-i18next";
 import { useNavigation } from "@react-navigation/native";
@@ -190,7 +198,11 @@ export default function HomeScreen() {
     return (
       <View style={[styles.cardWrapper, numColumns === 1 && styles.cardWrapperFull]}>
         <Pressable
-          style={[styles.card, { backgroundColor: colors.surfaceHigh }, isLocked && styles.cardLocked]}
+          style={[
+            styles.card,
+            { backgroundColor: colors.surfaceHigh },
+            isLocked && styles.cardLocked,
+          ]}
           onPress={isLocked ? () => Alert.alert(t("common:home.locked.comingSoon")) : item.action}
           accessibilityRole="button"
           accessibilityLabel={
