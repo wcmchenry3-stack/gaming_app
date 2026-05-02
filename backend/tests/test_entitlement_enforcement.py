@@ -12,12 +12,10 @@ Acceptance criteria:
 from __future__ import annotations
 
 import uuid
-from typing import AsyncIterator, Iterator
+from typing import Iterator
 
 import pytest
-import pytest_asyncio
 from fastapi.testclient import TestClient
-from sqlalchemy import select
 
 from db.base import get_session_factory
 from db.models import GameEntitlement
