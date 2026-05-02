@@ -1,4 +1,5 @@
 import { Page } from "@playwright/test";
+import { installEntitlementsMock } from "./api-mock";
 
 const API_BASE = "http://localhost:8000";
 const STORAGE_KEY = "sudoku_game";
@@ -14,6 +15,7 @@ export async function mockSudokuApi(page: Page): Promise<void> {
 }
 
 export async function gotoSudoku(page: Page): Promise<void> {
+  await installEntitlementsMock(page);
   await page.goto("/");
   await page.evaluate((key) => localStorage.removeItem(key), STORAGE_KEY);
   await page.getByRole("button", { name: "Play Sudoku" }).click();
