@@ -32,7 +32,11 @@ const mockRequest = jest.fn();
 jest.mock("../../game/_shared/httpClient", () => ({
   // Wrap in an intermediate closure so mockRequest is read at call-time, not at
   // module-evaluation time when babel-jest hoists jest.mock above const declarations.
-  createGameClient: jest.fn(() => (...args: unknown[]) => mockRequest(...args as Parameters<typeof mockRequest>)),
+  createGameClient: jest.fn(
+    () =>
+      (...args: unknown[]) =>
+        mockRequest(...(args as Parameters<typeof mockRequest>))
+  ),
 }));
 
 // ---------------------------------------------------------------------------
@@ -140,9 +144,7 @@ describe("EntitlementProvider", () => {
     });
 
     it("covers exactly the five premium game slugs", () => {
-      expect(PREMIUM_GAMES).toEqual(
-        new Set(["yacht", "cascade", "hearts", "sudoku", "starswarm"])
-      );
+      expect(PREMIUM_GAMES).toEqual(new Set(["yacht", "cascade", "hearts", "sudoku", "starswarm"]));
     });
   });
 
@@ -278,7 +280,9 @@ describe("verifyRawToken", () => {
   });
 
   it("returns invalid when decodeJwt throws (undecodable token)", async () => {
-    mockDecodeJwt.mockImplementation(() => { throw new Error("malformed"); });
+    mockDecodeJwt.mockImplementation(() => {
+      throw new Error("malformed");
+    });
     const result = await verifyRawToken("bad.token");
     expect(result.valid).toBe(false);
   });

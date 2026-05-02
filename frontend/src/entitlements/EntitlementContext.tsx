@@ -1,10 +1,4 @@
-import React, {
-  createContext,
-  useCallback,
-  useContext,
-  useEffect,
-  useState,
-} from "react";
+import React, { createContext, useCallback, useContext, useEffect, useState } from "react";
 import { AppState, AppStateStatus } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as Sentry from "@sentry/react-native";
@@ -59,10 +53,10 @@ export async function verifyRawToken(rawToken: string): Promise<VerifyResult> {
         const expired = Date.now() / 1000 > payload.exp;
         return { valid: true, payload, expired };
       }
-      Sentry.captureMessage(
-        "EXPO_PUBLIC_ENTITLEMENT_PUBLIC_KEY not set in production build",
-        { level: "error", tags: { subsystem: "entitlements" } }
-      );
+      Sentry.captureMessage("EXPO_PUBLIC_ENTITLEMENT_PUBLIC_KEY not set in production build", {
+        level: "error",
+        tags: { subsystem: "entitlements" },
+      });
       return { valid: false };
     }
 
@@ -101,7 +95,9 @@ export async function loadCachedEntitlements(): Promise<Set<string>> {
     // Expired token: grant access during offline grace period
     const ageMs = Date.now() - new Date(cachedAt).getTime();
     if (ageMs < OFFLINE_GRACE_MS) {
-      console.warn("[entitlements] Expired token within 7-day grace period — granting cached access");
+      console.warn(
+        "[entitlements] Expired token within 7-day grace period — granting cached access"
+      );
       return new Set(result.payload.entitled_games);
     }
 
