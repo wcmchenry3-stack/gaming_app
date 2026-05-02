@@ -27,7 +27,7 @@ function decodeJwtPayload(rawToken: string): EntitlementJWTPayload {
   return JSON.parse(atob(padded)) as EntitlementJWTPayload;
 }
 
-export type VerifyResult =
+export type ParseResult =
   | { valid: true; payload: EntitlementJWTPayload; expired: boolean }
   | { valid: false };
 
@@ -51,7 +51,7 @@ export async function fetchRawToken(): Promise<string> {
   return res.token;
 }
 
-export async function verifyRawToken(rawToken: string): Promise<VerifyResult> {
+export async function parseRawToken(rawToken: string): Promise<ParseResult> {
   try {
     const payload = decodeJwtPayload(rawToken);
     const expired = Math.floor(Date.now() / 1000) > payload.exp;
@@ -69,7 +69,7 @@ export async function loadCachedEntitlements(): Promise<Set<string>> {
 
     if (!token || !cachedAt) return new Set();
 
-    const result = await verifyRawToken(token);
+    const result = await parseRawToken(token);
     if (!result.valid) return new Set();
 
     if (!result.expired) return new Set(result.payload.entitled_games);
@@ -90,6 +90,26 @@ export async function loadCachedEntitlements(): Promise<Set<string>> {
   }
 }
 
+// Shared core: fetch a fresh token and apply it to state, falling back to
+// the cache when the token is expired or undecodable (clock skew, TTL edge case).
+async function fetchAndApplyToken(
+  setEntitledGames: (games: Set<string>) => void,
+  setLastRefreshed: (date: Date) => void
+): Promise<void> {
+  const rawToken = await fetchRawToken();
+  const result = await parseRawToken(rawToken);
+  if (result.valid && !result.expired) {
+    await AsyncStorage.multiSet([
+      [TOKEN_STORAGE_KEY, rawToken],
+      [CACHED_AT_STORAGE_KEY, new Date().toISOString()],
+    ]);
+    setEntitledGames(new Set(result.payload.entitled_games));
+    setLastRefreshed(new Date());
+  } else {
+    setEntitledGames(await loadCachedEntitlements());
+  }
+}
+
 export function EntitlementProvider({ children }: { children: React.ReactNode }) {
   const [entitledGames, setEntitledGames] = useState<Set<string> | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -97,21 +117,11 @@ export function EntitlementProvider({ children }: { children: React.ReactNode })
 
   const refresh = useCallback(async () => {
     try {
-      const rawToken = await fetchRawToken();
-      const result = await verifyRawToken(rawToken);
-      if (result.valid && !result.expired) {
-        await AsyncStorage.multiSet([
-          [TOKEN_STORAGE_KEY, rawToken],
-          [CACHED_AT_STORAGE_KEY, new Date().toISOString()],
-        ]);
-        setEntitledGames(new Set(result.payload.entitled_games));
-        setLastRefreshed(new Date());
-      } else {
-        // Server returned expired or unverifiable token (clock skew, TTL edge case).
-        // Fall back to cache so in-memory state stays consistent with storage.
-        setEntitledGames(await loadCachedEntitlements());
-      }
+      await fetchAndApplyToken(setEntitledGames, setLastRefreshed);
     } catch (e) {
+      // Network errors (TypeError) are swallowed — in-memory state stays as-is.
+      // Unlike init(), refresh() intentionally does not fall back to cache:
+      // a transient error should not downgrade access the user already has.
       if (!(e instanceof TypeError)) {
         Sentry.addBreadcrumb({
           category: "entitlements",
@@ -126,19 +136,7 @@ export function EntitlementProvider({ children }: { children: React.ReactNode })
   useEffect(() => {
     async function init() {
       try {
-        // Fetch fresh token first; fall back to cache on offline or error.
-        const rawToken = await fetchRawToken();
-        const result = await verifyRawToken(rawToken);
-        if (result.valid && !result.expired) {
-          await AsyncStorage.multiSet([
-            [TOKEN_STORAGE_KEY, rawToken],
-            [CACHED_AT_STORAGE_KEY, new Date().toISOString()],
-          ]);
-          setEntitledGames(new Set(result.payload.entitled_games));
-          setLastRefreshed(new Date());
-        } else {
-          setEntitledGames(await loadCachedEntitlements());
-        }
+        await fetchAndApplyToken(setEntitledGames, setLastRefreshed);
       } catch {
         setEntitledGames(await loadCachedEntitlements());
       } finally {

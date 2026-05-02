@@ -1,7 +1,7 @@
 /**
  * Tests for EntitlementContext.
  *
- * verifyRawToken decodes the JWT payload without signature verification —
+ * parseRawToken decodes the JWT payload without signature verification —
  * the server is the authoritative enforcer; the client only reads claims for
  * local UX decisions (lock icons, offline grace). All paths are exercised here
  * using real base64url-encoded token strings produced by makeToken().
@@ -32,7 +32,7 @@ jest.mock("../../game/_shared/httpClient", () => ({
 import {
   EntitlementProvider,
   useEntitlements,
-  verifyRawToken,
+  parseRawToken,
   PREMIUM_GAMES,
   OFFLINE_GRACE_MS,
   TOKEN_STORAGE_KEY,
@@ -249,29 +249,29 @@ describe("EntitlementProvider", () => {
 });
 
 // ---------------------------------------------------------------------------
-// Unit tests for verifyRawToken
+// Unit tests for parseRawToken
 // ---------------------------------------------------------------------------
 
-describe("verifyRawToken", () => {
+describe("parseRawToken", () => {
   it("returns valid+unexpired for a token with a future exp", async () => {
-    const result = await verifyRawToken(makeToken(makePayload(["cascade"])));
+    const result = await parseRawToken(makeToken(makePayload(["cascade"])));
     expect(result.valid).toBe(true);
     if (result.valid) expect(result.expired).toBe(false);
   });
 
   it("returns valid+expired for a token with a past exp", async () => {
-    const result = await verifyRawToken(makeToken(makePayload(["cascade"], -3_600_000)));
+    const result = await parseRawToken(makeToken(makePayload(["cascade"], -3_600_000)));
     expect(result.valid).toBe(true);
     if (result.valid) expect(result.expired).toBe(true);
   });
 
   it("returns invalid when token payload cannot be decoded", async () => {
-    const result = await verifyRawToken("x.not-valid-json.y");
+    const result = await parseRawToken("x.not-valid-json.y");
     expect(result.valid).toBe(false);
   });
 
   it("returns invalid for a token with wrong number of segments", async () => {
-    const result = await verifyRawToken("only.two");
+    const result = await parseRawToken("only.two");
     expect(result.valid).toBe(false);
   });
 });
