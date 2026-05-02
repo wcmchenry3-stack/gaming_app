@@ -168,8 +168,14 @@ function makePremiumScreen<P extends object>(
   return PremiumScreen;
 }
 
-const LazyCascadeScreen = makePremiumScreen("cascade", withSuspense(LazyScreens.Cascade, "cascade"));
-const LazyStarSwarmScreen = makePremiumScreen("starswarm", withSuspense(LazyScreens.StarSwarm, "starswarm"));
+const LazyCascadeScreen = makePremiumScreen(
+  "cascade",
+  withSuspense(LazyScreens.Cascade, "cascade")
+);
+const LazyStarSwarmScreen = makePremiumScreen(
+  "starswarm",
+  withSuspense(LazyScreens.StarSwarm, "starswarm")
+);
 const LazyBlackjackBettingScreen = withSuspense(LazyScreens.BlackjackBetting, "blackjack_betting");
 const LazyBlackjackTableScreen = withSuspense(LazyScreens.BlackjackTable, "blackjack_table");
 const LazyTwenty48Screen = withSuspense(LazyScreens.Twenty48, "twenty48");

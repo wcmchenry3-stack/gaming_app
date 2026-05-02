@@ -168,9 +168,7 @@ describe("HomeScreen — lobby prefetch (issue #706, #1055)", () => {
 
   it("passes canPlay from useEntitlements to prefetchLobbyGameScreens", async () => {
     renderScreen();
-    await waitFor(() =>
-      expect(mockPrefetch).toHaveBeenCalledWith(mockCanPlay)
-    );
+    await waitFor(() => expect(mockPrefetch).toHaveBeenCalledWith(mockCanPlay));
   });
 });
 
