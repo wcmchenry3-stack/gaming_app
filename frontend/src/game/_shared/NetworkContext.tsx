@@ -55,6 +55,11 @@ export function NetworkProvider({ children }: { children: React.ReactNode }) {
         });
       } else if (next === "active") {
         syncWorker.start();
+        syncWorker.flush().catch((e) => {
+          Sentry.captureException(e, {
+            tags: { subsystem: "syncWorker", op: "flush-on-foreground" },
+          });
+        });
         Sentry.addBreadcrumb({
           category: "syncWorker",
           message: "resumed (active)",
