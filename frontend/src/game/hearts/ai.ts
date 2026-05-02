@@ -27,11 +27,13 @@ function trickPoints(trick: readonly TrickCard[]): number {
   return trick.reduce((sum, tc) => sum + cardPoints(tc.card), 0);
 }
 
+const aceHigh = (rank: number): number => (rank === 1 ? 14 : rank);
+
 /** Highest card in array, or undefined if empty. */
 function highest(cards: Card[]): Card | undefined {
   return cards.reduce<Card | undefined>((best, c) => {
     if (!best) return c;
-    return c.rank > best.rank ? c : best;
+    return aceHigh(c.rank) > aceHigh(best.rank) ? c : best;
   }, undefined);
 }
 
@@ -39,7 +41,7 @@ function highest(cards: Card[]): Card | undefined {
 function lowest(cards: Card[]): Card | undefined {
   return cards.reduce<Card | undefined>((best, c) => {
     if (!best) return c;
-    return c.rank < best.rank ? c : best;
+    return aceHigh(c.rank) < aceHigh(best.rank) ? c : best;
   }, undefined);
 }
 
@@ -199,7 +201,9 @@ export function selectCardToPlay(
 
   // Moon blocking — dump points cards ASAP
   if (moonTarget !== null && moonTarget !== playerIndex) {
-    const pointCards = valid.filter((c) => cardPoints(c) > 0).sort((a, b) => b.rank - a.rank);
+    const pointCards = valid
+      .filter((c) => cardPoints(c) > 0)
+      .sort((a, b) => aceHigh(b.rank) - aceHigh(a.rank));
     if (pointCards.length > 0) return pointCards[0]!;
   }
 
@@ -245,13 +249,13 @@ function chooseFollow(valid: Card[], trick: readonly TrickCard[]): Card {
   // Find the highest card currently winning the trick in led suit
   let winningRank = 0;
   for (const tc of trick) {
-    if (tc.card.suit === ledSuit && tc.card.rank > winningRank) {
-      winningRank = tc.card.rank;
+    if (tc.card.suit === ledSuit && aceHigh(tc.card.rank) > winningRank) {
+      winningRank = aceHigh(tc.card.rank);
     }
   }
 
-  // Cards that would lose (rank < winning rank)
-  const losing = inSuit.filter((c) => c.rank < winningRank);
+  // Cards that would lose (ace-high rank < winning rank)
+  const losing = inSuit.filter((c) => aceHigh(c.rank) < winningRank);
 
   if (pts === 0 && isLastToPlay) {
     // Safe trick, last to play — exhaust high cards
@@ -278,7 +282,9 @@ function chooseDiscard(valid: Card[]): Card {
   if (qSpades) return qSpades;
 
   // 2. Dump highest heart
-  const hearts = valid.filter((c) => c.suit === "hearts").sort((a, b) => b.rank - a.rank);
+  const hearts = valid
+    .filter((c) => c.suit === "hearts")
+    .sort((a, b) => aceHigh(b.rank) - aceHigh(a.rank));
   if (hearts.length > 0) return hearts[0]!;
 
   // 3. Dump highest card of longest suit
