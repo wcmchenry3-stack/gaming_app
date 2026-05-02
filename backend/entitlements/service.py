@@ -18,12 +18,6 @@ from sqlalchemy import select
 
 from db.models import GameEntitlement, GameType
 
-_DEV_OVERRIDE_VAR = "ENTITLEMENT_DEV_OVERRIDE"
-
-
-def is_dev_override_active() -> bool:
-    return os.environ.get(_DEV_OVERRIDE_VAR, "").lower() == "true"
-
 TOKEN_TTL_HOURS = 24
 ALGORITHM = "RS256"
 
@@ -31,6 +25,12 @@ ALGORITHM = "RS256"
 # In production Render injects ENTITLEMENT_PRIVATE_KEY, so all workers share the same key.
 _private_key_pem: str | None = None
 _public_key_pem: str | None = None
+
+_DEV_OVERRIDE_VAR = "ENTITLEMENT_DEV_OVERRIDE"
+
+
+def is_dev_override_active() -> bool:
+    return os.environ.get(_DEV_OVERRIDE_VAR, "").lower() == "true"
 
 
 def _load_or_generate_keys() -> tuple[str, str]:
@@ -87,11 +87,7 @@ def issue_token(session_id: str, entitled_games: list[str]) -> tuple[str, dateti
 
 
 async def get_entitled_games(db_session, session_id: str) -> list[str]:
-    """Return this session's entitled game slugs.
-
-    When ENTITLEMENT_DEV_OVERRIDE=true, returns all premium game slugs so
-    internal testers can access every premium game without a purchase (#1052).
-    """
+    """Return entitled game slugs; when DEV_OVERRIDE is active, returns all premium slugs (#1052)."""
     if is_dev_override_active():
         rows = (
             (await db_session.execute(select(GameType.name).where(GameType.is_premium.is_(True))))

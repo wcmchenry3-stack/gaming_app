@@ -119,6 +119,7 @@ def test_private_key_not_in_response(client: TestClient, session_id: str) -> Non
 # Dev/QA override (#1052)
 # ---------------------------------------------------------------------------
 
+# Update this set whenever a new premium game is added (mirrors game_types.is_premium=true).
 _PREMIUM_GAMES = {"cascade", "hearts", "sudoku", "starswarm", "yacht"}
 
 
