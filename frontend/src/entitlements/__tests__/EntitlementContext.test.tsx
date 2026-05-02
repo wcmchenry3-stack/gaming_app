@@ -58,10 +58,7 @@ function makePayload(
 
 function makeToken(payload: object): string {
   const toBase64Url = (obj: object) =>
-    btoa(JSON.stringify(obj))
-      .replace(/\+/g, "-")
-      .replace(/\//g, "_")
-      .replace(/=/g, "");
+    btoa(JSON.stringify(obj)).replace(/\+/g, "-").replace(/\//g, "_").replace(/=/g, "");
   return `${toBase64Url({ alg: "RS256", typ: "JWT" })}.${toBase64Url(payload)}.fakesig`;
 }
 
