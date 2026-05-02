@@ -1,10 +1,11 @@
 import { Page } from "@playwright/test";
 
-const API_BASE = "http://localhost:8000";
 const STORAGE_KEY = "hearts_game";
 
 export async function mockHeartsApi(page: Page): Promise<void> {
-  await page.route(`${API_BASE}/hearts/**`, async (route) => {
+  // Use **/hearts/** glob so the route matches regardless of the base URL
+  // baked into the bundle (EXPO_PUBLIC_API_URL at export time).
+  await page.route("**/hearts/**", async (route) => {
     await route.fulfill({
       status: 200,
       contentType: "application/json",
