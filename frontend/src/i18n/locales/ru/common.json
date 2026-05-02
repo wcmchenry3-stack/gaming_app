@@ -44,5 +44,8 @@
   "overflow.abandon.title": "Завершить текущую игру?",
   "overflow.abandon.body": "Начав новую игру, вы потеряете прогресс в этом раунде. Общая статистика останется без изменений.",
   "overflow.abandon.keepPlaying": "Продолжить",
-  "overflow.abandon.startNew": "Начать заново"
+  "overflow.abandon.startNew": "Начать заново",
+  "home.locked.buttonLabel": "__NEEDS_TRANSLATION__",
+  "home.locked.cardLabel": "__NEEDS_TRANSLATION__",
+  "home.locked.comingSoon": "__NEEDS_TRANSLATION__"
 }

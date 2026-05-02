@@ -44,5 +44,8 @@
   "overflow.abandon.title": "क्या आप मौजूदा गेम छोड़ना चाहते हैं?",
   "overflow.abandon.body": "नया गेम शुरू करने से इस राउंड की प्रगति हट जाएगी। आपकी लाइफटाइम स्टैट्स पर कोई असर नहीं पड़ेगा।",
   "overflow.abandon.keepPlaying": "खेलते रहें",
-  "overflow.abandon.startNew": "नया शुरू करें"
+  "overflow.abandon.startNew": "नया शुरू करें",
+  "home.locked.buttonLabel": "__NEEDS_TRANSLATION__",
+  "home.locked.cardLabel": "__NEEDS_TRANSLATION__",
+  "home.locked.comingSoon": "__NEEDS_TRANSLATION__"
 }
