@@ -226,33 +226,33 @@ function AppInner() {
   return (
     <NetworkProvider>
       <EntitlementProvider>
-      <SoundProvider>
-        <ThemeProvider>
-          <CardDeckProvider>
-            <BlackjackGameProvider>
-              <HeartsRoundsProvider>
-                <YachtScorecardProvider>
-                  <Twenty48ScoreboardProvider>
-                    <SolitaireScoreboardProvider>
-                      <SudokuScoreboardProvider>
-                        <CascadeScoreboardProvider>
-                          <MahjongScoreboardProvider>
-                            <NavigationContainer>
-                              <Stack.Navigator screenOptions={{ headerShown: false }}>
-                                <Stack.Screen name="MainTabs" component={MainTabs} />
-                              </Stack.Navigator>
-                            </NavigationContainer>
-                          </MahjongScoreboardProvider>
-                        </CascadeScoreboardProvider>
-                      </SudokuScoreboardProvider>
-                    </SolitaireScoreboardProvider>
-                  </Twenty48ScoreboardProvider>
-                </YachtScorecardProvider>
-              </HeartsRoundsProvider>
-            </BlackjackGameProvider>
-          </CardDeckProvider>
-        </ThemeProvider>
-      </SoundProvider>
+        <SoundProvider>
+          <ThemeProvider>
+            <CardDeckProvider>
+              <BlackjackGameProvider>
+                <HeartsRoundsProvider>
+                  <YachtScorecardProvider>
+                    <Twenty48ScoreboardProvider>
+                      <SolitaireScoreboardProvider>
+                        <SudokuScoreboardProvider>
+                          <CascadeScoreboardProvider>
+                            <MahjongScoreboardProvider>
+                              <NavigationContainer>
+                                <Stack.Navigator screenOptions={{ headerShown: false }}>
+                                  <Stack.Screen name="MainTabs" component={MainTabs} />
+                                </Stack.Navigator>
+                              </NavigationContainer>
+                            </MahjongScoreboardProvider>
+                          </CascadeScoreboardProvider>
+                        </SudokuScoreboardProvider>
+                      </SolitaireScoreboardProvider>
+                    </Twenty48ScoreboardProvider>
+                  </YachtScorecardProvider>
+                </HeartsRoundsProvider>
+              </BlackjackGameProvider>
+            </CardDeckProvider>
+          </ThemeProvider>
+        </SoundProvider>
       </EntitlementProvider>
     </NetworkProvider>
   );

@@ -6,13 +6,15 @@
  * the payload without signature verification. That path exercises all the
  * loading, caching, and offline grace logic.
  *
- * Signature verification (the production code path) is exercised by the
- * verifyRawToken unit tests below, which mock importSPKI / jwtVerify directly.
+ * The verifyRawToken describe block below tests the dev-mode code paths
+ * (decodeJwt success, expired payload detection, and decode failure).
+ * The RS256 production path (importSPKI + jwtVerify) requires a real key pair
+ * and is not covered in the Jest suite.
  */
 
 import React from "react";
 import { AppState, AppStateStatus } from "react-native";
-import { render, waitFor, act } from "@testing-library/react-native";
+import { render, act } from "@testing-library/react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 // ---------------------------------------------------------------------------
@@ -43,6 +45,7 @@ import {
   useEntitlements,
   verifyRawToken,
   PREMIUM_GAMES,
+  OFFLINE_GRACE_MS,
   TOKEN_STORAGE_KEY,
   CACHED_AT_STORAGE_KEY,
 } from "../EntitlementContext";
@@ -206,13 +209,13 @@ describe("EntitlementProvider", () => {
     }
 
     it("grants cached entitlements when offline within 7 days of last fetch", async () => {
-      await seedExpiredCache(["cascade"], 2 * 24 * 60 * 60 * 1000);
+      await seedExpiredCache(["cascade"], OFFLINE_GRACE_MS / 2);
       await renderProvider();
       expect(ctx.canPlay("cascade")).toBe(true);
     });
 
     it("denies premium games when offline beyond 7-day grace period", async () => {
-      await seedExpiredCache(["cascade"], 8 * 24 * 60 * 60 * 1000);
+      await seedExpiredCache(["cascade"], OFFLINE_GRACE_MS + 24 * 60 * 60 * 1000);
       await renderProvider();
       expect(ctx.canPlay("cascade")).toBe(false);
     });
@@ -247,41 +250,34 @@ describe("EntitlementProvider", () => {
 });
 
 // ---------------------------------------------------------------------------
-// Unit tests for verifyRawToken — production code path (with RS256 key)
+// Unit tests for verifyRawToken (dev-mode paths: decodeJwt success, expiry,
+// and decode failure). The RS256 path requires a real key pair and is not
+// tested in Jest — see the block comment at the top of this file.
 // ---------------------------------------------------------------------------
 
 describe("verifyRawToken", () => {
-  const FAKE_KEY = "-----BEGIN PUBLIC KEY-----\nfake\n-----END PUBLIC KEY-----";
-
   beforeEach(() => {
-    jest.resetModules();
     mockImportSPKI.mockResolvedValue("pub-key");
   });
 
-  it("returns valid+unexpired when jwtVerify resolves", async () => {
+  it("returns valid+unexpired for a token with a future exp", async () => {
     const payload = makePayload(["cascade"]);
     mockJwtVerify.mockResolvedValue({ payload });
-    const result = await verifyRawToken(FAKE_KEY);
-    // In dev mode (no ENTITLEMENT_PUBLIC_KEY set), uses decodeJwt path.
-    // decodeJwt mock returns the beforeEach default payload (no entitlements).
-    expect(result.valid).toBe(true);
-  });
-
-  it("returns valid+expired when jwtVerify throws ERR_JWT_EXPIRED", async () => {
-    const expiredPayload = makePayload(["cascade"], -3600_000);
-    const expiredErr = Object.assign(new Error("expired"), { code: "ERR_JWT_EXPIRED" });
-    mockJwtVerify.mockRejectedValue(expiredErr);
-    mockDecodeJwt.mockReturnValue(expiredPayload);
-    // In production mode this would hit the ERR_JWT_EXPIRED branch. Since we're in
-    // __DEV__ with no key, decodeJwt is used and we get the expired payload.
+    mockDecodeJwt.mockReturnValue(payload);
     const result = await verifyRawToken("any.token.here");
     expect(result.valid).toBe(true);
-    if (result.valid) {
-      expect(result.expired).toBe(true);
-    }
+    if (result.valid) expect(result.expired).toBe(false);
   });
 
-  it("returns invalid when decodeJwt throws (simulates undecodable token)", async () => {
+  it("returns valid+expired for a token with a past exp", async () => {
+    const expiredPayload = makePayload(["cascade"], -3_600_000);
+    mockDecodeJwt.mockReturnValue(expiredPayload);
+    const result = await verifyRawToken("any.token.here");
+    expect(result.valid).toBe(true);
+    if (result.valid) expect(result.expired).toBe(true);
+  });
+
+  it("returns invalid when decodeJwt throws (undecodable token)", async () => {
     mockDecodeJwt.mockImplementation(() => { throw new Error("malformed"); });
     const result = await verifyRawToken("bad.token");
     expect(result.valid).toBe(false);

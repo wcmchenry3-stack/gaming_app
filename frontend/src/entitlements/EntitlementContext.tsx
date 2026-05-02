@@ -15,12 +15,12 @@ import { ENTITLEMENT_PUBLIC_KEY } from "../config/entitlementPublicKey";
 // Premium games — sourced from backend migration 0014_game_types_premium_cat
 export const PREMIUM_GAMES = new Set(["yacht", "cascade", "hearts", "sudoku", "starswarm"]);
 
-const OFFLINE_GRACE_MS = 7 * 24 * 60 * 60 * 1000;
+export const OFFLINE_GRACE_MS = 7 * 24 * 60 * 60 * 1000;
 
 export const TOKEN_STORAGE_KEY = "entitlement_token";
 export const CACHED_AT_STORAGE_KEY = "entitlement_cached_at";
 
-interface EntitlementJWTPayload {
+interface EntitlementJWTPayload extends jose.JWTPayload {
   sub: string;
   entitled_games: string[];
   iat: number;
@@ -32,6 +32,7 @@ export type VerifyResult =
   | { valid: false };
 
 export interface EntitlementContextValue {
+  /** Returns false for premium games while isLoading is true. Gate on isLoading before trusting the result. */
   canPlay: (gameSlug: string) => boolean;
   isLoading: boolean;
   lastRefreshed: Date | null;
@@ -71,7 +72,7 @@ export async function verifyRawToken(rawToken: string): Promise<VerifyResult> {
       const { payload } = await jose.jwtVerify(rawToken, publicKey, {
         algorithms: ["RS256"],
       });
-      return { valid: true, payload: payload as unknown as EntitlementJWTPayload, expired: false };
+      return { valid: true, payload: payload as EntitlementJWTPayload, expired: false };
     } catch (e) {
       if ((e as { code?: string })?.code === "ERR_JWT_EXPIRED") {
         const payload = jose.decodeJwt(rawToken) as EntitlementJWTPayload;
@@ -116,7 +117,6 @@ export function EntitlementProvider({ children }: { children: React.ReactNode })
   const [isLoading, setIsLoading] = useState(true);
   const [lastRefreshed, setLastRefreshed] = useState<Date | null>(null);
 
-  // Background foreground-triggered refresh — silently updates state on success.
   const refresh = useCallback(async () => {
     try {
       const rawToken = await fetchRawToken();
@@ -128,6 +128,10 @@ export function EntitlementProvider({ children }: { children: React.ReactNode })
         ]);
         setEntitledGames(new Set(result.payload.entitled_games));
         setLastRefreshed(new Date());
+      } else {
+        // Server returned expired or unverifiable token (clock skew, TTL edge case).
+        // Fall back to cache so in-memory state stays consistent with storage.
+        setEntitledGames(await loadCachedEntitlements());
       }
     } catch (e) {
       if (!(e instanceof TypeError)) {
