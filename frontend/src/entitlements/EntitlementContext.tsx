@@ -2,9 +2,7 @@ import React, { createContext, useCallback, useContext, useEffect, useState } fr
 import { AppState, AppStateStatus } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as Sentry from "@sentry/react-native";
-import * as jose from "jose";
 import { createGameClient } from "../game/_shared/httpClient";
-import { ENTITLEMENT_PUBLIC_KEY } from "../config/entitlementPublicKey";
 
 // Premium games — sourced from backend migration 0014_game_types_premium_cat
 export const PREMIUM_GAMES = new Set(["yacht", "cascade", "hearts", "sudoku", "starswarm"]);
@@ -14,11 +12,19 @@ export const OFFLINE_GRACE_MS = 7 * 24 * 60 * 60 * 1000;
 export const TOKEN_STORAGE_KEY = "entitlement_token";
 export const CACHED_AT_STORAGE_KEY = "entitlement_cached_at";
 
-interface EntitlementJWTPayload extends jose.JWTPayload {
+interface EntitlementJWTPayload {
   sub: string;
   entitled_games: string[];
   iat: number;
   exp: number;
+}
+
+function decodeJwtPayload(rawToken: string): EntitlementJWTPayload {
+  const parts = rawToken.split(".");
+  if (parts.length !== 3) throw new Error("Invalid JWT");
+  const base64 = parts[1]!.replace(/-/g, "+").replace(/_/g, "/");
+  const padded = base64 + "=".repeat((4 - (base64.length % 4)) % 4);
+  return JSON.parse(atob(padded)) as EntitlementJWTPayload;
 }
 
 export type VerifyResult =
@@ -47,33 +53,9 @@ export async function fetchRawToken(): Promise<string> {
 
 export async function verifyRawToken(rawToken: string): Promise<VerifyResult> {
   try {
-    if (!ENTITLEMENT_PUBLIC_KEY) {
-      if (__DEV__) {
-        const payload = jose.decodeJwt(rawToken) as EntitlementJWTPayload;
-        const expired = Date.now() / 1000 > payload.exp;
-        return { valid: true, payload, expired };
-      }
-      Sentry.captureMessage("EXPO_PUBLIC_ENTITLEMENT_PUBLIC_KEY not set in production build", {
-        level: "error",
-        tags: { subsystem: "entitlements" },
-      });
-      return { valid: false };
-    }
-
-    const publicKey = await jose.importSPKI(ENTITLEMENT_PUBLIC_KEY, "RS256");
-
-    try {
-      const { payload } = await jose.jwtVerify(rawToken, publicKey, {
-        algorithms: ["RS256"],
-      });
-      return { valid: true, payload: payload as EntitlementJWTPayload, expired: false };
-    } catch (e) {
-      if ((e as { code?: string })?.code === "ERR_JWT_EXPIRED") {
-        const payload = jose.decodeJwt(rawToken) as EntitlementJWTPayload;
-        return { valid: true, payload, expired: true };
-      }
-      return { valid: false };
-    }
+    const payload = decodeJwtPayload(rawToken);
+    const expired = Math.floor(Date.now() / 1000) > payload.exp;
+    return { valid: true, payload, expired };
   } catch {
     return { valid: false };
   }

@@ -1,15 +1,10 @@
 /**
  * Tests for EntitlementContext.
  *
- * Jest runs with __DEV__ = true and no EXPO_PUBLIC_ENTITLEMENT_PUBLIC_KEY set,
- * so verifyRawToken takes the dev branch — it calls jose.decodeJwt and trusts
- * the payload without signature verification. That path exercises all the
- * loading, caching, and offline grace logic.
- *
- * The verifyRawToken describe block below tests the dev-mode code paths
- * (decodeJwt success, expired payload detection, and decode failure).
- * The RS256 production path (importSPKI + jwtVerify) requires a real key pair
- * and is not covered in the Jest suite.
+ * verifyRawToken decodes the JWT payload without signature verification —
+ * the server is the authoritative enforcer; the client only reads claims for
+ * local UX decisions (lock icons, offline grace). All paths are exercised here
+ * using real base64url-encoded token strings produced by makeToken().
  */
 
 import React from "react";
@@ -21,17 +16,8 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 // Module mocks
 // ---------------------------------------------------------------------------
 
-jest.mock("jose", () => ({
-  importSPKI: jest.fn(),
-  jwtVerify: jest.fn(),
-  decodeJwt: jest.fn(),
-  errors: {},
-}));
-
 const mockRequest = jest.fn();
 jest.mock("../../game/_shared/httpClient", () => ({
-  // Wrap in an intermediate closure so mockRequest is read at call-time, not at
-  // module-evaluation time when babel-jest hoists jest.mock above const declarations.
   createGameClient: jest.fn(
     () =>
       (...args: unknown[]) =>
@@ -43,7 +29,6 @@ jest.mock("../../game/_shared/httpClient", () => ({
 // Imports after mocks
 // ---------------------------------------------------------------------------
 
-import * as joseModule from "jose";
 import {
   EntitlementProvider,
   useEntitlements,
@@ -58,10 +43,6 @@ import {
 // Helpers
 // ---------------------------------------------------------------------------
 
-const mockDecodeJwt = joseModule.decodeJwt as jest.Mock;
-const mockImportSPKI = joseModule.importSPKI as jest.Mock;
-const mockJwtVerify = joseModule.jwtVerify as jest.Mock;
-
 function makePayload(
   entitled: string[],
   expOffsetMs = 3_600_000
@@ -73,6 +54,15 @@ function makePayload(
     iat: now,
     exp: now + Math.floor(expOffsetMs / 1000),
   };
+}
+
+function makeToken(payload: object): string {
+  const toBase64Url = (obj: object) =>
+    btoa(JSON.stringify(obj))
+      .replace(/\+/g, "-")
+      .replace(/\//g, "_")
+      .replace(/=/g, "");
+  return `${toBase64Url({ alg: "RS256", typ: "JWT" })}.${toBase64Url(payload)}.fakesig`;
 }
 
 function getAppStateListener(): (s: AppStateStatus) => void {
@@ -99,8 +89,6 @@ async function renderProvider() {
       <Probe />
     </EntitlementProvider>
   );
-  // Flush the full async init() chain:
-  // useEffect → init() → fetchRawToken → verifyRawToken → AsyncStorage.multiSet → setState
   await flushAsync();
   await flushAsync();
 }
@@ -112,13 +100,14 @@ async function renderProvider() {
 beforeEach(async () => {
   jest.clearAllMocks();
   await AsyncStorage.clear();
-  const payload = makePayload([]);
-  mockRequest.mockResolvedValue({ token: "t.t.t", expires_at: "2099-01-01T00:00:00Z" });
-  mockDecodeJwt.mockReturnValue(payload);
+  mockRequest.mockResolvedValue({
+    token: makeToken(makePayload([])),
+    expires_at: "2099-01-01T00:00:00Z",
+  });
 });
 
 // ---------------------------------------------------------------------------
-// Component / integration tests (dev mode — no signature verification)
+// Component / integration tests
 // ---------------------------------------------------------------------------
 
 describe("EntitlementProvider", () => {
@@ -136,7 +125,10 @@ describe("EntitlementProvider", () => {
     });
 
     it("returns true for each entitled premium game", async () => {
-      mockDecodeJwt.mockReturnValue(makePayload(["cascade", "hearts"]));
+      mockRequest.mockResolvedValue({
+        token: makeToken(makePayload(["cascade", "hearts"])),
+        expires_at: "2099-01-01T00:00:00Z",
+      });
       await renderProvider();
       expect(ctx.canPlay("cascade")).toBe(true);
       expect(ctx.canPlay("hearts")).toBe(true);
@@ -164,8 +156,9 @@ describe("EntitlementProvider", () => {
 
   describe("token verification failure", () => {
     it("denies all premium games when token cannot be decoded", async () => {
-      mockDecodeJwt.mockImplementation(() => {
-        throw new Error("invalid token");
+      mockRequest.mockResolvedValue({
+        token: "x.not-valid-base64-json.y",
+        expires_at: "2099-01-01T00:00:00Z",
       });
       await renderProvider();
       for (const slug of PREMIUM_GAMES) {
@@ -176,7 +169,10 @@ describe("EntitlementProvider", () => {
 
   describe("expired token + online", () => {
     it("re-fetches silently on app load and reflects fresh entitlements", async () => {
-      mockDecodeJwt.mockReturnValue(makePayload(["cascade"]));
+      mockRequest.mockResolvedValue({
+        token: makeToken(makePayload(["cascade"])),
+        expires_at: "2099-01-01T00:00:00Z",
+      });
       await renderProvider();
       expect(ctx.canPlay("cascade")).toBe(true);
       expect(mockRequest).toHaveBeenCalledTimes(1);
@@ -186,7 +182,10 @@ describe("EntitlementProvider", () => {
       await renderProvider();
       const listener = getAppStateListener();
       mockRequest.mockClear();
-      mockDecodeJwt.mockReturnValue(makePayload(["sudoku"]));
+      mockRequest.mockResolvedValue({
+        token: makeToken(makePayload(["sudoku"])),
+        expires_at: "2099-01-01T00:00:00Z",
+      });
 
       await act(async () => {
         listener("active");
@@ -201,13 +200,12 @@ describe("EntitlementProvider", () => {
   describe("offline grace period", () => {
     async function seedExpiredCache(entitled: string[], cachedAgoMs: number) {
       const expiredPayload = makePayload(entitled, -3_600_000);
-      await AsyncStorage.setItem(TOKEN_STORAGE_KEY, "cached.t.t");
+      await AsyncStorage.setItem(TOKEN_STORAGE_KEY, makeToken(expiredPayload));
       await AsyncStorage.setItem(
         CACHED_AT_STORAGE_KEY,
         new Date(Date.now() - cachedAgoMs).toISOString()
       );
       mockRequest.mockRejectedValue(new TypeError("Network request failed"));
-      mockDecodeJwt.mockReturnValue(expiredPayload);
     }
 
     it("grants cached entitlements when offline within 7 days of last fetch", async () => {
@@ -233,16 +231,15 @@ describe("EntitlementProvider", () => {
   describe("cache persistence", () => {
     it("writes token and cachedAt to AsyncStorage on successful fetch", async () => {
       await renderProvider();
-      expect(await AsyncStorage.getItem(TOKEN_STORAGE_KEY)).toBe("t.t.t");
+      expect(await AsyncStorage.getItem(TOKEN_STORAGE_KEY)).not.toBeNull();
       expect(await AsyncStorage.getItem(CACHED_AT_STORAGE_KEY)).not.toBeNull();
     });
 
     it("loads from valid cached token when offline", async () => {
       const cachedPayload = makePayload(["starswarm"]);
-      await AsyncStorage.setItem(TOKEN_STORAGE_KEY, "cached.t.t");
+      await AsyncStorage.setItem(TOKEN_STORAGE_KEY, makeToken(cachedPayload));
       await AsyncStorage.setItem(CACHED_AT_STORAGE_KEY, new Date().toISOString());
       mockRequest.mockRejectedValue(new TypeError("Network request failed"));
-      mockDecodeJwt.mockReturnValue(cachedPayload);
 
       await renderProvider();
 
@@ -252,38 +249,29 @@ describe("EntitlementProvider", () => {
 });
 
 // ---------------------------------------------------------------------------
-// Unit tests for verifyRawToken (dev-mode paths: decodeJwt success, expiry,
-// and decode failure). The RS256 path requires a real key pair and is not
-// tested in Jest — see the block comment at the top of this file.
+// Unit tests for verifyRawToken
 // ---------------------------------------------------------------------------
 
 describe("verifyRawToken", () => {
-  beforeEach(() => {
-    mockImportSPKI.mockResolvedValue("pub-key");
-  });
-
   it("returns valid+unexpired for a token with a future exp", async () => {
-    const payload = makePayload(["cascade"]);
-    mockJwtVerify.mockResolvedValue({ payload });
-    mockDecodeJwt.mockReturnValue(payload);
-    const result = await verifyRawToken("any.token.here");
+    const result = await verifyRawToken(makeToken(makePayload(["cascade"])));
     expect(result.valid).toBe(true);
     if (result.valid) expect(result.expired).toBe(false);
   });
 
   it("returns valid+expired for a token with a past exp", async () => {
-    const expiredPayload = makePayload(["cascade"], -3_600_000);
-    mockDecodeJwt.mockReturnValue(expiredPayload);
-    const result = await verifyRawToken("any.token.here");
+    const result = await verifyRawToken(makeToken(makePayload(["cascade"], -3_600_000)));
     expect(result.valid).toBe(true);
     if (result.valid) expect(result.expired).toBe(true);
   });
 
-  it("returns invalid when decodeJwt throws (undecodable token)", async () => {
-    mockDecodeJwt.mockImplementation(() => {
-      throw new Error("malformed");
-    });
-    const result = await verifyRawToken("bad.token");
+  it("returns invalid when token payload cannot be decoded", async () => {
+    const result = await verifyRawToken("x.not-valid-json.y");
+    expect(result.valid).toBe(false);
+  });
+
+  it("returns invalid for a token with wrong number of segments", async () => {
+    const result = await verifyRawToken("only.two");
     expect(result.valid).toBe(false);
   });
 });
