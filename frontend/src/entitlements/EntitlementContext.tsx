@@ -1,0 +1,177 @@
+import React, { createContext, useCallback, useContext, useEffect, useState } from "react";
+import { AppState, AppStateStatus } from "react-native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import * as Sentry from "@sentry/react-native";
+import { createGameClient } from "../game/_shared/httpClient";
+
+// Premium games — sourced from backend migration 0014_game_types_premium_cat
+export const PREMIUM_GAMES = new Set(["yacht", "cascade", "hearts", "sudoku", "starswarm"]);
+
+export const OFFLINE_GRACE_MS = 7 * 24 * 60 * 60 * 1000;
+
+export const TOKEN_STORAGE_KEY = "entitlement_token";
+export const CACHED_AT_STORAGE_KEY = "entitlement_cached_at";
+
+interface EntitlementJWTPayload {
+  sub: string;
+  entitled_games: string[];
+  iat: number;
+  exp: number;
+}
+
+function decodeJwtPayload(rawToken: string): EntitlementJWTPayload {
+  const parts = rawToken.split(".");
+  if (parts.length !== 3) throw new Error("Invalid JWT");
+  const base64 = parts[1]!.replace(/-/g, "+").replace(/_/g, "/");
+  const padded = base64 + "=".repeat((4 - (base64.length % 4)) % 4);
+  return JSON.parse(atob(padded)) as EntitlementJWTPayload;
+}
+
+export type ParseResult =
+  | { valid: true; payload: EntitlementJWTPayload; expired: boolean }
+  | { valid: false };
+
+export interface EntitlementContextValue {
+  /** Returns false for premium games while isLoading is true. Gate on isLoading before trusting the result. */
+  canPlay: (gameSlug: string) => boolean;
+  isLoading: boolean;
+  lastRefreshed: Date | null;
+}
+
+const EntitlementContext = createContext<EntitlementContextValue>({
+  canPlay: (slug) => !PREMIUM_GAMES.has(slug),
+  isLoading: true,
+  lastRefreshed: null,
+});
+
+const _entitlementsClient = createGameClient({ apiTag: "entitlements" });
+
+export async function fetchRawToken(): Promise<string> {
+  const res = await _entitlementsClient<{ token: string; expires_at: string }>("/entitlements");
+  return res.token;
+}
+
+export async function parseRawToken(rawToken: string): Promise<ParseResult> {
+  try {
+    const payload = decodeJwtPayload(rawToken);
+    const expired = Math.floor(Date.now() / 1000) > payload.exp;
+    return { valid: true, payload, expired };
+  } catch {
+    return { valid: false };
+  }
+}
+
+export async function loadCachedEntitlements(): Promise<Set<string>> {
+  try {
+    const pairs = await AsyncStorage.multiGet([TOKEN_STORAGE_KEY, CACHED_AT_STORAGE_KEY]);
+    const token = pairs[0]?.[1] ?? null;
+    const cachedAt = pairs[1]?.[1] ?? null;
+
+    if (!token || !cachedAt) return new Set();
+
+    const result = await parseRawToken(token);
+    if (!result.valid) return new Set();
+
+    if (!result.expired) return new Set(result.payload.entitled_games);
+
+    // Expired token: grant access during offline grace period
+    const ageMs = Date.now() - new Date(cachedAt).getTime();
+    if (ageMs < OFFLINE_GRACE_MS) {
+      console.warn(
+        "[entitlements] Expired token within 7-day grace period — granting cached access"
+      );
+      return new Set(result.payload.entitled_games);
+    }
+
+    console.warn("[entitlements] Offline grace period expired — denying premium access");
+    return new Set();
+  } catch {
+    return new Set();
+  }
+}
+
+// Shared core: fetch a fresh token and apply it to state, falling back to
+// the cache when the token is expired or undecodable (clock skew, TTL edge case).
+async function fetchAndApplyToken(
+  setEntitledGames: (games: Set<string>) => void,
+  setLastRefreshed: (date: Date) => void
+): Promise<void> {
+  const rawToken = await fetchRawToken();
+  const result = await parseRawToken(rawToken);
+  if (result.valid && !result.expired) {
+    await AsyncStorage.multiSet([
+      [TOKEN_STORAGE_KEY, rawToken],
+      [CACHED_AT_STORAGE_KEY, new Date().toISOString()],
+    ]);
+    setEntitledGames(new Set(result.payload.entitled_games));
+    setLastRefreshed(new Date());
+  } else {
+    setEntitledGames(await loadCachedEntitlements());
+  }
+}
+
+export function EntitlementProvider({ children }: { children: React.ReactNode }) {
+  const [entitledGames, setEntitledGames] = useState<Set<string> | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [lastRefreshed, setLastRefreshed] = useState<Date | null>(null);
+
+  const refresh = useCallback(async () => {
+    try {
+      await fetchAndApplyToken(setEntitledGames, setLastRefreshed);
+    } catch (e) {
+      // Network errors (TypeError) are swallowed — in-memory state stays as-is.
+      // Unlike init(), refresh() intentionally does not fall back to cache:
+      // a transient error should not downgrade access the user already has.
+      if (!(e instanceof TypeError)) {
+        Sentry.addBreadcrumb({
+          category: "entitlements",
+          message: "token refresh failed",
+          level: "warning",
+          data: { error: String(e) },
+        });
+      }
+    }
+  }, []);
+
+  useEffect(() => {
+    async function init() {
+      try {
+        await fetchAndApplyToken(setEntitledGames, setLastRefreshed);
+      } catch {
+        setEntitledGames(await loadCachedEntitlements());
+      } finally {
+        setIsLoading(false);
+      }
+    }
+    init();
+  }, []);
+
+  // Re-fetch on every foreground transition.
+  useEffect(() => {
+    const sub = AppState.addEventListener("change", (next: AppStateStatus) => {
+      if (next === "active") {
+        refresh();
+      }
+    });
+    return () => sub.remove();
+  }, [refresh]);
+
+  const canPlay = useCallback(
+    (gameSlug: string): boolean => {
+      if (!PREMIUM_GAMES.has(gameSlug)) return true;
+      if (entitledGames === null) return false;
+      return entitledGames.has(gameSlug);
+    },
+    [entitledGames]
+  );
+
+  return (
+    <EntitlementContext.Provider value={{ canPlay, isLoading, lastRefreshed }}>
+      {children}
+    </EntitlementContext.Provider>
+  );
+}
+
+export function useEntitlements(): EntitlementContextValue {
+  return useContext(EntitlementContext);
+}

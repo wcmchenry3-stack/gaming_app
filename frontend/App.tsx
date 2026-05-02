@@ -23,6 +23,7 @@ import { GameState } from "./src/game/yacht/types";
 import { ThemeProvider } from "./src/theme/ThemeContext";
 import { useHtmlAttributes } from "./src/i18n/useHtmlAttributes";
 import { NetworkProvider } from "./src/game/_shared/NetworkContext";
+import { EntitlementProvider } from "./src/entitlements/EntitlementContext";
 import { SoundProvider } from "./src/game/_shared/SoundContext";
 import { CardDeckProvider } from "./src/game/_shared/decks/CardDeckContext";
 import { BlackjackGameProvider } from "./src/game/blackjack/BlackjackGameContext";
@@ -224,33 +225,35 @@ function AppInner() {
   useHtmlAttributes();
   return (
     <NetworkProvider>
-      <SoundProvider>
-        <ThemeProvider>
-          <CardDeckProvider>
-            <BlackjackGameProvider>
-              <HeartsRoundsProvider>
-                <YachtScorecardProvider>
-                  <Twenty48ScoreboardProvider>
-                    <SolitaireScoreboardProvider>
-                      <SudokuScoreboardProvider>
-                        <CascadeScoreboardProvider>
-                          <MahjongScoreboardProvider>
-                            <NavigationContainer>
-                              <Stack.Navigator screenOptions={{ headerShown: false }}>
-                                <Stack.Screen name="MainTabs" component={MainTabs} />
-                              </Stack.Navigator>
-                            </NavigationContainer>
-                          </MahjongScoreboardProvider>
-                        </CascadeScoreboardProvider>
-                      </SudokuScoreboardProvider>
-                    </SolitaireScoreboardProvider>
-                  </Twenty48ScoreboardProvider>
-                </YachtScorecardProvider>
-              </HeartsRoundsProvider>
-            </BlackjackGameProvider>
-          </CardDeckProvider>
-        </ThemeProvider>
-      </SoundProvider>
+      <EntitlementProvider>
+        <SoundProvider>
+          <ThemeProvider>
+            <CardDeckProvider>
+              <BlackjackGameProvider>
+                <HeartsRoundsProvider>
+                  <YachtScorecardProvider>
+                    <Twenty48ScoreboardProvider>
+                      <SolitaireScoreboardProvider>
+                        <SudokuScoreboardProvider>
+                          <CascadeScoreboardProvider>
+                            <MahjongScoreboardProvider>
+                              <NavigationContainer>
+                                <Stack.Navigator screenOptions={{ headerShown: false }}>
+                                  <Stack.Screen name="MainTabs" component={MainTabs} />
+                                </Stack.Navigator>
+                              </NavigationContainer>
+                            </MahjongScoreboardProvider>
+                          </CascadeScoreboardProvider>
+                        </SudokuScoreboardProvider>
+                      </SolitaireScoreboardProvider>
+                    </Twenty48ScoreboardProvider>
+                  </YachtScorecardProvider>
+                </HeartsRoundsProvider>
+              </BlackjackGameProvider>
+            </CardDeckProvider>
+          </ThemeProvider>
+        </SoundProvider>
+      </EntitlementProvider>
     </NetworkProvider>
   );
 }
