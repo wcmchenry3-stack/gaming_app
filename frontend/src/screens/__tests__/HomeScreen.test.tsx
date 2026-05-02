@@ -30,7 +30,7 @@ jest.mock("expo-linear-gradient", () => ({
 
 const mockPrefetch = jest.fn();
 jest.mock("../../utils/lazyScreens", () => ({
-  prefetchLobbyGameScreens: () => mockPrefetch(),
+  prefetchLobbyGameScreens: (canPlay: (slug: string) => boolean) => mockPrefetch(canPlay),
 }));
 
 // ---------------------------------------------------------------------------
@@ -160,10 +160,17 @@ describe("HomeScreen — AppHeader", () => {
   });
 });
 
-describe("HomeScreen — lobby prefetch (issue #706)", () => {
+describe("HomeScreen — lobby prefetch (issue #706, #1055)", () => {
   it("warms lobby game chunks after interactions settle", async () => {
     renderScreen();
     await waitFor(() => expect(mockPrefetch).toHaveBeenCalledTimes(1));
+  });
+
+  it("passes canPlay from useEntitlements to prefetchLobbyGameScreens", async () => {
+    renderScreen();
+    await waitFor(() =>
+      expect(mockPrefetch).toHaveBeenCalledWith(mockCanPlay)
+    );
   });
 });
 

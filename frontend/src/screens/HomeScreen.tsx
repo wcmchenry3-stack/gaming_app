@@ -70,10 +70,12 @@ export default function HomeScreen() {
   // Warm lobby game chunks once Home has painted so nav doesn't show a
   // Suspense fallback on tap (issue #706). setTimeout(0) defers past the
   // current frame without the InteractionManager deprecation in RN 0.83.
+  // canPlay is stable until entitlements change, so re-running on change
+  // ensures premium chunks are prefetched as soon as a session is entitled.
   useEffect(() => {
-    const id = setTimeout(prefetchLobbyGameScreens, 0);
+    const id = setTimeout(() => prefetchLobbyGameScreens(canPlay), 0);
     return () => clearTimeout(id);
-  }, []);
+  }, [canPlay]);
 
   async function startYacht() {
     const saved = await loadYachtGame();

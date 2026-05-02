@@ -37,20 +37,34 @@ export const LazyScreens = {
   Scoreboard: React.lazy(factories.Scoreboard),
 } as const;
 
+// Slugs for the four premium games that have lazy screens.
+const PREMIUM_LAZY: Array<[keyof typeof factories, string]> = [
+  ["Cascade", "cascade"],
+  ["StarSwarm", "starswarm"],
+  ["Hearts", "hearts"],
+  ["Sudoku", "sudoku"],
+];
+
 /**
  * Fire-and-forget prefetch of lobby game chunks. Called from HomeScreen after
  * interactions settle so the Suspense fallback doesn't flash when the user
  * taps into a game (issue #706). Safe to call multiple times — the module
  * loader dedupes.
+ *
+ * Free game chunks are always prefetched. Premium chunks are only prefetched
+ * when canPlay returns true for that slug so unentitled sessions never receive
+ * premium code (issue #1055).
  */
-export function prefetchLobbyGameScreens(): void {
-  factories.Cascade().catch(() => undefined);
-  factories.StarSwarm().catch(() => undefined);
+export function prefetchLobbyGameScreens(canPlay: (slug: string) => boolean): void {
   factories.BlackjackBetting().catch(() => undefined);
   factories.Twenty48().catch(() => undefined);
   factories.Solitaire().catch(() => undefined);
   factories.FreeCell().catch(() => undefined);
-  factories.Hearts().catch(() => undefined);
-  factories.Sudoku().catch(() => undefined);
   factories.Mahjong().catch(() => undefined);
+
+  for (const [key, slug] of PREMIUM_LAZY) {
+    if (canPlay(slug)) {
+      factories[key]().catch(() => undefined);
+    }
+  }
 }
