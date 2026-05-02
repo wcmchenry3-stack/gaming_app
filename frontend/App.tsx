@@ -23,6 +23,7 @@ import { GameState } from "./src/game/yacht/types";
 import { ThemeProvider } from "./src/theme/ThemeContext";
 import { useHtmlAttributes } from "./src/i18n/useHtmlAttributes";
 import { NetworkProvider } from "./src/game/_shared/NetworkContext";
+import { EntitlementProvider } from "./src/entitlements/EntitlementContext";
 import { SoundProvider } from "./src/game/_shared/SoundContext";
 import { CardDeckProvider } from "./src/game/_shared/decks/CardDeckContext";
 import { BlackjackGameProvider } from "./src/game/blackjack/BlackjackGameContext";
@@ -224,6 +225,7 @@ function AppInner() {
   useHtmlAttributes();
   return (
     <NetworkProvider>
+      <EntitlementProvider>
       <SoundProvider>
         <ThemeProvider>
           <CardDeckProvider>
@@ -251,6 +253,7 @@ function AppInner() {
           </CardDeckProvider>
         </ThemeProvider>
       </SoundProvider>
+      </EntitlementProvider>
     </NetworkProvider>
   );
 }
