@@ -374,6 +374,80 @@ describe("selectCardToPlay — always valid", () => {
 });
 
 // ---------------------------------------------------------------------------
+// Ace-high regression tests (issue #1166)
+// ---------------------------------------------------------------------------
+
+describe("selectCardToPlay — ace treated as high card", () => {
+  it("chooseLead: does not lead ace when a lower card exists in the same suit", () => {
+    const hand = [c("spades", 1), c("spades", 3)];
+    const state = mkState({
+      playerHands: [hand, [], [], []],
+      currentTrick: [],
+      tricksPlayedInHand: 3,
+      heartsBroken: true,
+      currentPlayerIndex: 0,
+    });
+    const pick = selectCardToPlay(hand, [], state, 0);
+    expect(pick).toEqual(c("spades", 3));
+  });
+
+  it("chooseDiscard: discards ace as highest heart when void in led suit", () => {
+    const hand = [c("hearts", 1), c("hearts", 3), c("diamonds", 5)];
+    const trick: TrickCard[] = [
+      { card: c("clubs", 8), playerIndex: 0 },
+      { card: c("clubs", 9), playerIndex: 1 },
+      { card: c("clubs", 10), playerIndex: 2 },
+    ];
+    const state = mkState({
+      playerHands: [[], [], [], hand],
+      currentTrick: trick,
+      tricksPlayedInHand: 3,
+      heartsBroken: true,
+      currentPlayerIndex: 3,
+    });
+    const pick = selectCardToPlay(hand, trick, state, 3);
+    expect(pick).toEqual(c("hearts", 1));
+  });
+
+  it("chooseDiscard: discards ace as highest card of longest suit", () => {
+    const hand = [c("clubs", 1), c("clubs", 4), c("clubs", 7)];
+    const trick: TrickCard[] = [
+      { card: c("spades", 5), playerIndex: 0 },
+      { card: c("spades", 6), playerIndex: 1 },
+      { card: c("spades", 7), playerIndex: 2 },
+    ];
+    const state = mkState({
+      playerHands: [[], [], [], hand],
+      currentTrick: trick,
+      tricksPlayedInHand: 3,
+      currentPlayerIndex: 3,
+    });
+    const pick = selectCardToPlay(hand, trick, state, 3);
+    expect(pick).toEqual(c("clubs", 1));
+  });
+
+  it("moon blocking: dumps ace of hearts before lower hearts", () => {
+    const allHearts5 = Array.from({ length: 5 }, (_, i) => c("hearts", (i + 2) as Rank));
+    const hand = [c("hearts", 1), c("hearts", 3), c("diamonds", 4)];
+    const trick: TrickCard[] = [
+      { card: c("spades", 4), playerIndex: 0 },
+      { card: c("spades", 5), playerIndex: 1 },
+      { card: c("spades", 6), playerIndex: 2 },
+    ];
+    const state = mkState({
+      playerHands: [[], [], [], hand],
+      currentTrick: trick,
+      tricksPlayedInHand: 5,
+      handScores: [5, 0, 0, 0],
+      wonCards: [allHearts5, [], [], []],
+      currentPlayerIndex: 3,
+    });
+    const pick = selectCardToPlay(hand, trick, state, 3);
+    expect(pick).toEqual(c("hearts", 1));
+  });
+});
+
+// ---------------------------------------------------------------------------
 // detectPotentialMoon
 // ---------------------------------------------------------------------------
 
