@@ -12,6 +12,7 @@
  */
 
 import { test, expect } from "@playwright/test";
+import { mockStarswarmApi } from "./helpers/starswarm";
 
 const API_BASE = "http://localhost:8000";
 
@@ -36,13 +37,7 @@ const MOCK_LEADERBOARD = {
 
 test.describe("Star Swarm — game-over state and score API", () => {
   test.beforeEach(async ({ page }) => {
-    await page.route(`${API_BASE}/starswarm/**`, async (route) => {
-      await route.fulfill({
-        status: 200,
-        contentType: "application/json",
-        body: JSON.stringify(MOCK_LEADERBOARD),
-      });
-    });
+    await mockStarswarmApi(page);
   });
 
   test("charge-shot button is absent during active play (#981 removal)", async ({
