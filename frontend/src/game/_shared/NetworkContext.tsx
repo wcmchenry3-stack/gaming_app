@@ -48,10 +48,18 @@ export function NetworkProvider({ children }: { children: React.ReactNode }) {
     const appStateSub = AppState.addEventListener("change", (next: AppStateStatus) => {
       if (next === "background" || next === "inactive") {
         syncWorker.stop();
-        Sentry.addBreadcrumb({ category: "syncWorker", message: "paused (background)", level: "info" });
+        Sentry.addBreadcrumb({
+          category: "syncWorker",
+          message: "paused (background)",
+          level: "info",
+        });
       } else if (next === "active") {
         syncWorker.start();
-        Sentry.addBreadcrumb({ category: "syncWorker", message: "resumed (active)", level: "info" });
+        Sentry.addBreadcrumb({
+          category: "syncWorker",
+          message: "resumed (active)",
+          level: "info",
+        });
       }
     });
     return () => {
