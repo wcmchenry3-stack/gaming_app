@@ -100,17 +100,17 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     borderWidth: 2,
     borderColor: "#4a4a56",
-    backgroundColor: "rgba(255,255,255,0.06)",
+    backgroundColor: "#ffffff0f",
     padding: BOTTLE_PADDING,
     justifyContent: "flex-end",
   },
   bottleSelected: {
     borderColor: "#8ff5ff",
-    backgroundColor: "rgba(143,245,255,0.12)",
+    backgroundColor: "#8ff5ff1f",
   },
   bottleSolved: {
     borderColor: "#22c55e",
-    backgroundColor: "rgba(34,197,94,0.10)",
+    backgroundColor: "#22c55e1a",
   },
   slots: {
     flexDirection: "column-reverse",
@@ -124,6 +124,6 @@ const styles = StyleSheet.create({
     width: BALL_SIZE,
     height: BALL_SIZE,
     borderRadius: BALL_SIZE / 2,
-    backgroundColor: "rgba(255,255,255,0.04)",
+    backgroundColor: "#ffffff0a",
   },
 });
