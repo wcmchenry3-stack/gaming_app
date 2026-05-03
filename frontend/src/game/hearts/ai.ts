@@ -148,7 +148,6 @@ function selectCardsToPassHard(hand: Card[], direction: PassDirection): Card[] {
   void direction;
   const selected: Card[] = [];
 
-  const has = (suit: string, rank: number) => hand.some((c) => c.suit === suit && c.rank === rank);
   const hasQSpades = hand.some(isQueenOfSpades);
   const voidInSpades = hand.filter((c) => c.suit === "spades").length === 0;
 

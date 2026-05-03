@@ -85,7 +85,7 @@ export default function HeartsScreen() {
   const [draftNames, setDraftNames] = useState<string[]>([...DEFAULT_NAMES]);
 
   // scoreHistory now lives on HeartsState (engine-authoritative, persisted).
-  const scoreHistory = gameState?.scoreHistory ?? [];
+  const scoreHistory = useMemo(() => gameState?.scoreHistory ?? [], [gameState?.scoreHistory]);
 
   const unmountedRef = useRef(false);
   const loopActiveRef = useRef(false);
