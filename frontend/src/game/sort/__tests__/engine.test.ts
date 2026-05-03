@@ -68,18 +68,15 @@ describe("applyPour", () => {
   });
 
   it("pours only as many as fit in destination", () => {
-    // source has run of 3, destination has only 1 slot free
-    const state = mkState([["red", "red", "red"], ["blue", "blue", "blue"], []]);
-    // pour from 0 to 2 — destination is empty (4 free), can take all 3
+    // run of 3 into empty bottle — all 3 fit
+    const state = mkState([["blue", "blue", "blue"], ["red", "red", "red"], []]);
     const next = applyPour(state, 0, 2);
-    expect(next.bottles[2]).toEqual(["red", "red", "red"]);
-    // now pour source[1] (3 blues) into a bottle with 1 space
-    const state2 = mkState([[], ["blue", "blue", "blue"], ["red", "red", "red", "red"]]);
-    // no valid destination with enough space here — just test clamp:
-    const state3 = mkState([["blue", "blue", "blue"], ["red", "red", "red"], []]);
-    // pour 3 blues into empty — all 3 fit
-    const next3 = applyPour(state3, 0, 2);
-    expect(next3.bottles[2].length).toBe(3);
+    expect(next.bottles[2]).toEqual(["blue", "blue", "blue"]);
+    // run of 3 reds into dest with 1 space — clamp to 1
+    const state2 = mkState([["blue", "red", "red", "red"], ["red", "red", "red"]]);
+    const next2 = applyPour(state2, 0, 1);
+    expect(next2.bottles[0]).toEqual(["blue", "red", "red"]);
+    expect(next2.bottles[1]).toEqual(["red", "red", "red", "red"]);
   });
 
   it("resets selectedBottleIndex to null", () => {

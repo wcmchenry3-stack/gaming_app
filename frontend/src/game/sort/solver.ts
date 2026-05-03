@@ -36,13 +36,15 @@ export function solve(state: SortState): Move[] | null {
   if (isComplete(state)) return [];
 
   const visited = new Set<string>([key(state)]);
-  // Each queue entry: [currentState, movesFromRoot]
+  // Each queue entry: [currentState, movesFromRoot]. head is an index cursor
+  // so dequeue is O(1) — Array.shift() would be O(n) on large state spaces.
   const queue: Array<[SortState, Move[]]> = [[state, []]];
+  let head = 0;
 
-  while (queue.length > 0) {
+  while (head < queue.length) {
     if (visited.size >= BFS_CAP) return null;
 
-    const [cur, moves] = queue.shift()!;
+    const [cur, moves] = queue[head++];
 
     for (let from = 0; from < cur.bottles.length; from++) {
       for (let to = 0; to < cur.bottles.length; to++) {

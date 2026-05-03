@@ -43,7 +43,7 @@ describe("solve", () => {
     ]);
     const path = solve(state);
     expect(path).not.toBeNull();
-    expect(path!.length).toBeGreaterThan(0);
+    expect(path!.length).toBe(1);
     const { applyPour } = require("../engine");
     let s = state;
     for (const move of path!) {

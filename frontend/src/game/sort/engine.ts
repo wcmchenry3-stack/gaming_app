@@ -10,7 +10,7 @@
  * bottle, up to the available space in the destination.
  */
 
-import type { Bottle, Color, Move, SortState } from "./types";
+import type { Bottle, Color, SortState } from "./types";
 import { BOTTLE_DEPTH } from "./types";
 
 // ---------------------------------------------------------------------------
