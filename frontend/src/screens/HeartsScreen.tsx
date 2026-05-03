@@ -195,8 +195,7 @@ export default function HeartsScreen() {
         setShowQueenOfSpades(true);
       },
     },
-    () =>
-      setGameState((prev) => (prev ? { ...prev, events: [] as HeartsState["events"] } : null))
+    () => setGameState((prev) => (prev ? { ...prev, events: [] as HeartsState["events"] } : null))
   );
 
   const playerLabels = playerNames;
@@ -276,7 +275,8 @@ export default function HeartsScreen() {
 
   // ─── Human card play ──────────────────────────────────────────────────────
   function handleCardPress(card: Card) {
-    if (!gameState || gameState.currentPlayerIndex !== HUMAN || gameState.phase !== "playing") return;
+    if (!gameState || gameState.currentPlayerIndex !== HUMAN || gameState.phase !== "playing")
+      return;
     ensureSyncStarted();
     const willComplete = gameState.currentTrick.length === 3;
     const completedTrick: readonly TrickCard[] | null = willComplete
@@ -344,7 +344,8 @@ export default function HeartsScreen() {
 
   // ─── Game over / play again ───────────────────────────────────────────────
   async function handleSubmitScore() {
-    if (!gameState || !playerName.trim() || submitState === "submitting" || submitState === "done") return;
+    if (!gameState || !playerName.trim() || submitState === "submitting" || submitState === "done")
+      return;
     if (isInitialized && !isOnline) return;
     setSubmitState("submitting");
     const humanScore = gameState.cumulativeScores[HUMAN] ?? 0;
@@ -416,10 +417,7 @@ export default function HeartsScreen() {
           <Text style={[styles.preGameTitle, { color: colors.text }]}>
             {t("difficulty.groupLabel", { defaultValue: "AI Difficulty" })}
           </Text>
-          <HeartsAiDifficultySelector
-            value={selectedDifficulty}
-            onChange={setSelectedDifficulty}
-          />
+          <HeartsAiDifficultySelector value={selectedDifficulty} onChange={setSelectedDifficulty} />
           <Pressable
             style={[styles.btn, { backgroundColor: colors.accent }]}
             onPress={() => handleStartGame(selectedDifficulty)}

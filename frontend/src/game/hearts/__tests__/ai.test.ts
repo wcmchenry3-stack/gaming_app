@@ -455,20 +455,38 @@ describe("selectCardToPlay — ace treated as high card", () => {
 describe("selectCardsToPass — Easy difficulty", () => {
   it("always returns exactly 3 cards", () => {
     const hand = [
-      c("spades", 12), c("spades", 1), c("spades", 13),
-      c("hearts", 1), c("hearts", 13), c("clubs", 7),
-      c("diamonds", 5), c("diamonds", 9), c("clubs", 8),
-      c("clubs", 9), c("clubs", 10), c("diamonds", 3), c("hearts", 5),
+      c("spades", 12),
+      c("spades", 1),
+      c("spades", 13),
+      c("hearts", 1),
+      c("hearts", 13),
+      c("clubs", 7),
+      c("diamonds", 5),
+      c("diamonds", 9),
+      c("clubs", 8),
+      c("clubs", 9),
+      c("clubs", 10),
+      c("diamonds", 3),
+      c("hearts", 5),
     ];
     expect(selectCardsToPass(hand, "left", "easy")).toHaveLength(3);
   });
 
   it("never passes 2♣", () => {
     const hand = [
-      c("clubs", 2), c("hearts", 1), c("hearts", 13),
-      c("spades", 3), c("spades", 4), c("spades", 5),
-      c("clubs", 7), c("clubs", 8), c("clubs", 9),
-      c("diamonds", 6), c("diamonds", 7), c("diamonds", 8), c("diamonds", 9),
+      c("clubs", 2),
+      c("hearts", 1),
+      c("hearts", 13),
+      c("spades", 3),
+      c("spades", 4),
+      c("spades", 5),
+      c("clubs", 7),
+      c("clubs", 8),
+      c("clubs", 9),
+      c("diamonds", 6),
+      c("diamonds", 7),
+      c("diamonds", 8),
+      c("diamonds", 9),
     ];
     const passed = selectCardsToPass(hand, "left", "easy");
     expect(passed).not.toContainEqual(c("clubs", 2));
@@ -476,10 +494,19 @@ describe("selectCardsToPass — Easy difficulty", () => {
 
   it("all returned cards are from the hand", () => {
     const hand = [
-      c("spades", 12), c("hearts", 5), c("diamonds", 7),
-      c("clubs", 7), c("hearts", 3), c("spades", 4),
-      c("diamonds", 2), c("clubs", 9), c("hearts", 8),
-      c("spades", 6), c("diamonds", 10), c("clubs", 10), c("hearts", 11),
+      c("spades", 12),
+      c("hearts", 5),
+      c("diamonds", 7),
+      c("clubs", 7),
+      c("hearts", 3),
+      c("spades", 4),
+      c("diamonds", 2),
+      c("clubs", 9),
+      c("hearts", 8),
+      c("spades", 6),
+      c("diamonds", 10),
+      c("clubs", 10),
+      c("hearts", 11),
     ];
     const passed = selectCardsToPass(hand, "right", "easy");
     passed.forEach((p) => expect(hand).toContainEqual(p));

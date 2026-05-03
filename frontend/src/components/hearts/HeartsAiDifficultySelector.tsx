@@ -31,10 +31,7 @@ export default function HeartsAiDifficultySelector({ value, onChange }: Props) {
               defaultValue: d === "easy" ? "Easy" : d === "medium" ? "Medium" : "Hard",
             })}
             accessibilityState={{ selected }}
-            style={[
-              styles.btn,
-              { backgroundColor: selected ? colors.accent : colors.surface },
-            ]}
+            style={[styles.btn, { backgroundColor: selected ? colors.accent : colors.surface }]}
           >
             <Text style={[styles.label, { color: selected ? colors.textOnAccent : colors.text }]}>
               {t(`difficulty.${d}`, {
