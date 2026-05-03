@@ -29,6 +29,7 @@ export async function injectHeartsState(
   page: Page,
   partial: Record<string, unknown>,
 ): Promise<void> {
+  await installEntitlementsMock(page);
   await page.goto("/");
   await page.evaluate(
     ([key, state]) =>
