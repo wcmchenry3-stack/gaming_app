@@ -671,7 +671,6 @@ youth
 zesty
 zippy
 abbey
-acute
 afoot
 aisle
 algae
@@ -721,7 +720,6 @@ corny
 couch
 coven
 covet
-cozy
 creak
 creed
 crick
@@ -957,7 +955,6 @@ vying
 wacky
 warty
 washy
-wavy
 waxen
 webby
 wedge
@@ -994,7 +991,6 @@ agony
 aider
 aioli
 airer
-alpha
 aptly
 aping
 aport

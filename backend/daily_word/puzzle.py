@@ -12,6 +12,7 @@ import unicodedata
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
+# DAILY_WORD_SALT must be set in production; default 0 makes answer order trivially derivable.
 SALT = int(os.environ.get("DAILY_WORD_SALT", "0"))
 _WORDS_DIR = Path(__file__).parent / "words"
 

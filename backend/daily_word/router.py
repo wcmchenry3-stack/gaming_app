@@ -9,6 +9,7 @@ Rate limits:
 from __future__ import annotations
 
 import json
+import unicodedata
 from datetime import datetime, timedelta, timezone
 
 from fastapi import APIRouter, HTTPException, Query, Request
@@ -18,15 +19,19 @@ from daily_word.puzzle import get_answer, get_today_meta, is_valid_guess
 from limiter import _real_ip, limiter
 from session import get_session_id
 
+_SUPPORTED_LANGS = frozenset(("en", "hi"))
+
 router = APIRouter()
 
 
 def _guess_key(request: Request) -> str:
     """Compound rate-limit key: "{session_id}:{puzzle_id}".
 
-    By the time slowapi calls this, FastAPI has already parsed the request body
-    (to resolve body: GuessRequest) and Starlette has cached it in request._body.
-    Reading _body synchronously here is safe.
+    slowapi 0.1.9 calls key_func synchronously, so we cannot await body().
+    FastAPI resolves `body: GuessRequest` before the route handler runs, which
+    causes Starlette to cache the raw bytes in request._body. Reading that
+    cached attribute synchronously is safe here, but depends on FastAPI's
+    request lifecycle — revisit if slowapi adds async key_func support.
     """
     body_bytes = getattr(request, "_body", b"") or b""
     try:
@@ -72,6 +77,8 @@ async def get_today(
     tz_offset_minutes: int = Query(0),
     lang: str = Query("en"),
 ) -> dict:
+    if lang not in _SUPPORTED_LANGS:
+        raise HTTPException(status_code=422, detail="unsupported_language")
     return get_today_meta(tz_offset_minutes, lang)
 
 
@@ -85,7 +92,7 @@ async def post_guess(request: Request, body: GuessRequest) -> dict:
     except ValueError:
         raise HTTPException(status_code=422, detail="invalid_puzzle_id")
 
-    if lang not in ("en", "hi"):
+    if lang not in _SUPPORTED_LANGS:
         raise HTTPException(status_code=422, detail="invalid_puzzle_id")
 
     local_ts = datetime.now(timezone.utc) + timedelta(minutes=body.tz_offset_minutes)
@@ -98,6 +105,8 @@ async def post_guess(request: Request, body: GuessRequest) -> dict:
         raise HTTPException(status_code=422, detail="invalid_puzzle_id")
 
     guess = body.guess.lower()
+    if lang == "hi":
+        guess = unicodedata.normalize("NFC", guess)
 
     if len(guess) != len(answer):
         raise HTTPException(status_code=422, detail="wrong_guess_length")

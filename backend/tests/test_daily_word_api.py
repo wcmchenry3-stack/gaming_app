@@ -66,6 +66,12 @@ def test_get_today_hindi(client: TestClient) -> None:
     assert r.json()["puzzle_id"].endswith(":hi")
 
 
+def test_get_today_unsupported_lang_returns_422(client: TestClient) -> None:
+    r = client.get("/daily-word/today?lang=fr")
+    assert r.status_code == 422
+    assert r.json()["detail"] == "unsupported_language"
+
+
 # ---------------------------------------------------------------------------
 # POST /daily-word/guess — happy path
 # ---------------------------------------------------------------------------
@@ -112,31 +118,26 @@ def test_post_guess_correct_word_all_correct(client: TestClient) -> None:
 def test_duplicate_letter_coloring_only_first_colored_present(client: TestClient) -> None:
     """With answer 'abbey', guess 'blabs': only two b's match, third b is absent."""
     from daily_word.puzzle import get_answer
-    from unittest.mock import patch
+    from daily_word import puzzle as puzzle_mod
 
     # patch to make today's answer "abbey"
-    with patch.object(
-        __import__("daily_word.puzzle", fromlist=["_ANSWERS_EN"]),
-        "_ANSWERS_EN",
-        ["abbey"],
-    ):
-        from daily_word import puzzle as puzzle_mod
 
-        orig = puzzle_mod._ANSWERS_EN
-        puzzle_mod._ANSWERS_EN = ["abbey"]
-        puzzle_mod._ANSWERS["en"] = ["abbey"]
-        try:
-            puzzle_id = _today_puzzle_id()
-            assert get_answer(puzzle_id) == "abbey"
-            headers = _sid_headers()
-            r = client.post(
-                "/daily-word/guess",
-                headers=headers,
-                json={"puzzle_id": puzzle_id, "guess": "blabs", "tz_offset_minutes": 0},
-            )
-        finally:
-            puzzle_mod._ANSWERS_EN = orig
-            puzzle_mod._ANSWERS["en"] = orig
+    orig_list = puzzle_mod._ANSWERS_EN
+    orig_answers = puzzle_mod._ANSWERS["en"]
+    puzzle_mod._ANSWERS_EN = ["abbey"]
+    puzzle_mod._ANSWERS["en"] = ["abbey"]
+    try:
+        puzzle_id = _today_puzzle_id()
+        assert get_answer(puzzle_id) == "abbey"
+        headers = _sid_headers()
+        r = client.post(
+            "/daily-word/guess",
+            headers=headers,
+            json={"puzzle_id": puzzle_id, "guess": "blabs", "tz_offset_minutes": 0},
+        )
+    finally:
+        puzzle_mod._ANSWERS_EN = orig_list
+        puzzle_mod._ANSWERS["en"] = orig_answers
 
     assert r.status_code == 200
     statuses = [t["status"] for t in r.json()["tiles"]]
