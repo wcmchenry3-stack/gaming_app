@@ -12,7 +12,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from db.base import get_session_factory
 from db.models import GameEntitlement, GameType
-from entitlements.service import is_dev_override_active
 from session import get_session_id
 
 
@@ -29,8 +28,6 @@ async def check_entitlement(db: AsyncSession, session_id: str, game_slug: str) -
 
     No-op for free (non-premium) game types and unknown game slugs.
     """
-    if is_dev_override_active():
-        return
     is_premium = (
         await db.execute(select(GameType.is_premium).where(GameType.name == game_slug))
     ).scalar_one_or_none()
