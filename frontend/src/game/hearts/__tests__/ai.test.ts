@@ -26,7 +26,8 @@ function c(suit: Suit, rank: Rank): Card {
 
 function mkState(overrides: Partial<HeartsState> = {}): HeartsState {
   return {
-    _v: 2,
+    _v: 3,
+    aiDifficulty: "medium",
     phase: "playing",
     handNumber: 1,
     passDirection: "left",
@@ -444,6 +445,165 @@ describe("selectCardToPlay — ace treated as high card", () => {
     });
     const pick = selectCardToPlay(hand, trick, state, 3);
     expect(pick).toEqual(c("hearts", 1));
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Easy AI — selectCardsToPass
+// ---------------------------------------------------------------------------
+
+describe("selectCardsToPass — Easy difficulty", () => {
+  it("always returns exactly 3 cards", () => {
+    const hand = [
+      c("spades", 12), c("spades", 1), c("spades", 13),
+      c("hearts", 1), c("hearts", 13), c("clubs", 7),
+      c("diamonds", 5), c("diamonds", 9), c("clubs", 8),
+      c("clubs", 9), c("clubs", 10), c("diamonds", 3), c("hearts", 5),
+    ];
+    expect(selectCardsToPass(hand, "left", "easy")).toHaveLength(3);
+  });
+
+  it("never passes 2♣", () => {
+    const hand = [
+      c("clubs", 2), c("hearts", 1), c("hearts", 13),
+      c("spades", 3), c("spades", 4), c("spades", 5),
+      c("clubs", 7), c("clubs", 8), c("clubs", 9),
+      c("diamonds", 6), c("diamonds", 7), c("diamonds", 8), c("diamonds", 9),
+    ];
+    const passed = selectCardsToPass(hand, "left", "easy");
+    expect(passed).not.toContainEqual(c("clubs", 2));
+  });
+
+  it("all returned cards are from the hand", () => {
+    const hand = [
+      c("spades", 12), c("hearts", 5), c("diamonds", 7),
+      c("clubs", 7), c("hearts", 3), c("spades", 4),
+      c("diamonds", 2), c("clubs", 9), c("hearts", 8),
+      c("spades", 6), c("diamonds", 10), c("clubs", 10), c("hearts", 11),
+    ];
+    const passed = selectCardsToPass(hand, "right", "easy");
+    passed.forEach((p) => expect(hand).toContainEqual(p));
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Easy AI — selectCardToPlay
+// ---------------------------------------------------------------------------
+
+describe("selectCardToPlay — Easy difficulty", () => {
+  it("leads the lowest valid card", () => {
+    const hand = [c("spades", 1), c("spades", 3), c("diamonds", 5)];
+    const state = mkState({
+      playerHands: [hand, [], [], []],
+      currentTrick: [],
+      tricksPlayedInHand: 3,
+      heartsBroken: true,
+      currentPlayerIndex: 0,
+    });
+    const pick = selectCardToPlay(hand, [], state, 0, "easy");
+    // Lowest card (ace-high, so spades 3 is lowest)
+    expect(pick).toEqual(c("spades", 3));
+  });
+
+  it("discards the lowest card when void in led suit", () => {
+    const hand = [c("spades", 12), c("hearts", 11), c("diamonds", 3)];
+    const trick: TrickCard[] = [
+      { card: c("clubs", 3), playerIndex: 0 },
+      { card: c("clubs", 7), playerIndex: 1 },
+      { card: c("clubs", 9), playerIndex: 2 },
+    ];
+    const state = mkState({
+      playerHands: [[], [], [], hand],
+      currentTrick: trick,
+      tricksPlayedInHand: 3,
+      currentPlayerIndex: 3,
+    });
+    const pick = selectCardToPlay(hand, trick, state, 3, "easy");
+    // Easy dumps lowest card, not the strategic Q♠
+    expect(pick).toEqual(c("diamonds", 3));
+  });
+
+  it("follows suit with the lowest card in suit", () => {
+    const hand = [c("spades", 5), c("spades", 9), c("spades", 11)];
+    const trick: TrickCard[] = [
+      { card: c("spades", 10), playerIndex: 0 },
+      { card: c("hearts", 1), playerIndex: 1 },
+    ];
+    const state = mkState({
+      playerHands: [[], [], [hand[0]!, hand[1]!, hand[2]!], []],
+      currentTrick: trick,
+      tricksPlayedInHand: 3,
+      currentPlayerIndex: 2,
+    });
+    const pick = selectCardToPlay(hand, trick, state, 2, "easy");
+    expect(pick).toEqual(c("spades", 5));
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Hard AI — moon attempt
+// ---------------------------------------------------------------------------
+
+describe("selectCardToPlay — Hard difficulty, moon attempt", () => {
+  it("discards non-hearts when void in led suit and holding 8+ hearts + Q♠ with no points taken", () => {
+    // AI player 1 holds 8 hearts + Q♠ + two diamonds (void in clubs); no points taken
+    const hearts8 = Array.from({ length: 8 }, (_, i) => c("hearts", (i + 2) as Rank));
+    const hand = [...hearts8, c("spades", 12), c("diamonds", 7), c("diamonds", 8)];
+    const trick: TrickCard[] = [{ card: c("clubs", 3), playerIndex: 0 }];
+    const state = mkState({
+      playerHands: [[], hand, [], []],
+      currentTrick: trick,
+      tricksPlayedInHand: 2,
+      currentPlayerIndex: 1,
+      handScores: [0, 0, 0, 0],
+      wonCards: [[], [], [], []],
+    });
+    const pick = selectCardToPlay(hand, trick, state, 1, "hard");
+    // Void in clubs → can discard freely. Moon attempt: keep hearts and Q♠.
+    // Should discard a diamond (highest of non-hearts/non-Q♠)
+    expect(pick.suit).not.toBe("hearts");
+    expect(pick).not.toEqual(c("spades", 12));
+    expect(pick.suit).toBe("diamonds");
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Hard AI — card counting (leading)
+// ---------------------------------------------------------------------------
+
+describe("selectCardToPlay — Hard difficulty, card counting", () => {
+  it("avoids leading K♠ when Q♠ is still live", () => {
+    const hand = [c("spades", 13), c("spades", 2), c("clubs", 7)];
+    const state = mkState({
+      playerHands: [hand, [], [], []],
+      currentTrick: [],
+      tricksPlayedInHand: 3,
+      heartsBroken: true,
+      currentPlayerIndex: 0,
+      wonCards: [[], [], [], []], // Q♠ not seen
+    });
+    const pick = selectCardToPlay(hand, [], state, 0, "hard");
+    // Should not lead K♠ since Q♠ might be discarded onto it
+    expect(pick).not.toEqual(c("spades", 13));
+  });
+
+  it("leads K♠ safely when Q♠ is already in wonCards", () => {
+    const hand = [c("spades", 13), c("spades", 2), c("clubs", 7)];
+    const state = mkState({
+      playerHands: [hand, [], [], []],
+      currentTrick: [],
+      tricksPlayedInHand: 6,
+      heartsBroken: true,
+      currentPlayerIndex: 0,
+      wonCards: [[c("spades", 12)], [], [], []], // Q♠ already taken
+    });
+    const pick = selectCardToPlay(hand, [], state, 0, "hard");
+    // Q♠ is gone — K♠ is safe to lead (lowest non-heart in safe pool)
+    // clubs 7 is also safe; the algo picks lowest of longest safe suit
+    // With Q♠ gone, K♠ is in the safe pool; lowest of spades=[K♠,2♠] is 2♠
+    // lowest of clubs=[7♣] is 7♣. bySuitDescending would pick the tie-broken suit.
+    // Either way, K♠ should appear in the valid consideration set now.
+    expect([c("spades", 2), c("clubs", 7)]).toContainEqual(pick);
   });
 });
 

@@ -23,6 +23,7 @@ import {
   selectPassCard,
 } from "../game/hearts/engine";
 import { selectCardToPlay, selectCardsToPass } from "../game/hearts/ai";
+import HeartsAiDifficultySelector from "../components/hearts/HeartsAiDifficultySelector";
 import { clearGame, loadGame, saveGame } from "../game/hearts/storage";
 import {
   DEFAULT_NAMES,
@@ -41,7 +42,7 @@ import { OfflineBanner } from "../components/shared/OfflineBanner";
 import { HeartsBrokenAnimation } from "../components/hearts/HeartsBrokenAnimation";
 import { HeartsMoonShotAnimation } from "../components/hearts/HeartsMoonShotAnimation";
 import { HeartsQueenOfSpadesAnimation } from "../components/hearts/HeartsQueenOfSpadesAnimation";
-import type { Card, HeartsState, TrickCard } from "../game/hearts/types";
+import type { AiDifficulty, Card, HeartsState, TrickCard } from "../game/hearts/types";
 
 const HUMAN = 0;
 const MAX_NAME_LENGTH = 32;
@@ -69,7 +70,8 @@ export default function HeartsScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<HomeStackParamList>>();
   const { isOnline, isInitialized } = useNetwork();
 
-  const [gameState, setGameState] = useState<HeartsState>(() => dealGame());
+  const [gameState, setGameState] = useState<HeartsState | null>(null);
+  const [selectedDifficulty, setSelectedDifficulty] = useState<AiDifficulty>("medium");
   const [lastTrick, setLastTrick] = useState<LastTrick>(null);
   const [showHeartsBroken, setShowHeartsBroken] = useState(false);
   const [showMoonShot, setShowMoonShot] = useState(false);
@@ -83,11 +85,11 @@ export default function HeartsScreen() {
   const [draftNames, setDraftNames] = useState<string[]>([...DEFAULT_NAMES]);
 
   // scoreHistory now lives on HeartsState (engine-authoritative, persisted).
-  const scoreHistory = gameState.scoreHistory;
+  const scoreHistory = gameState?.scoreHistory ?? [];
 
   const unmountedRef = useRef(false);
   const loopActiveRef = useRef(false);
-  const gameStateRef = useRef<HeartsState>(gameState);
+  const gameStateRef = useRef<HeartsState | null>(gameState);
   const trickAnimResolverRef = useRef<(() => void) | null>(null);
   const reportIntegrity = useMemo(() => createIntegrityReporter(), []);
 
@@ -116,7 +118,10 @@ export default function HeartsScreen() {
   // ─── Load saved game and player names on mount ────────────────────────────
   useEffect(() => {
     loadGame().then((saved) => {
-      if (saved && !unmountedRef.current) setGameState(saved);
+      if (!unmountedRef.current && saved) {
+        setGameState(saved);
+        setSelectedDifficulty(saved.aiDifficulty);
+      }
     });
     loadPlayerNames().then((names) => {
       if (!unmountedRef.current) {
@@ -130,15 +135,15 @@ export default function HeartsScreen() {
   const { setSnapshot: setRoundsSnapshot } = useHeartsRounds();
   useEffect(() => {
     setRoundsSnapshot({
-      cumulativeScores: gameState.cumulativeScores,
+      cumulativeScores: gameState?.cumulativeScores ?? [0, 0, 0, 0],
       scoreHistory,
       playerLabels: playerNames,
     });
-  }, [gameState.cumulativeScores, scoreHistory, playerNames, setRoundsSnapshot]);
+  }, [gameState?.cumulativeScores, scoreHistory, playerNames, setRoundsSnapshot]);
 
   // ─── Run integrity validators (Sentry-warns on impossible state) ──────────
   useEffect(() => {
-    reportIntegrity(gameState);
+    if (gameState) reportIntegrity(gameState);
   }, [gameState, reportIntegrity]);
 
   // ─── Save on blur ─────────────────────────────────────────────────────────
@@ -148,8 +153,9 @@ export default function HeartsScreen() {
   useFocusEffect(
     useCallback(() => {
       return () => {
-        if (gameStateRef.current.isComplete) return;
-        void saveGame(gameStateRef.current);
+        const gs = gameStateRef.current;
+        if (!gs || gs.isComplete) return;
+        void saveGame(gs);
       };
     }, [])
   );
@@ -158,7 +164,7 @@ export default function HeartsScreen() {
   useEffect(() => {
     const unsub = navigation.addListener("beforeRemove", () => {
       if (!syncGetGameId()) return;
-      if (gameStateRef.current.isComplete) return;
+      if (gameStateRef.current?.isComplete) return;
       syncComplete(
         { outcome: "abandoned", finalScore: 0, durationMs: 0 },
         { outcome: "abandoned" }
@@ -172,7 +178,7 @@ export default function HeartsScreen() {
   const { play: playQueenOfSpades } = useSound("hearts.queenOfSpades");
 
   useGameEvents(
-    gameState.events,
+    gameState?.events,
     {
       heartsBroken: () => {
         playHeartsBroken();
@@ -189,7 +195,8 @@ export default function HeartsScreen() {
         setShowQueenOfSpades(true);
       },
     },
-    () => setGameState((prev) => ({ ...prev, events: [] }))
+    () =>
+      setGameState((prev) => (prev ? { ...prev, events: [] as HeartsState["events"] } : null))
   );
 
   const playerLabels = playerNames;
@@ -208,7 +215,7 @@ export default function HeartsScreen() {
     try {
       // Start with a clean events slate; initial events are already in React state
       // and will be processed by useGameEvents independently.
-      let s = { ...initial, events: [] as typeof initial.events };
+      let s: HeartsState = { ...initial, events: [] };
       while (s.currentPlayerIndex !== HUMAN && s.phase === "playing") {
         const willComplete = s.currentTrick.length === 3;
         await delay(400);
@@ -218,7 +225,8 @@ export default function HeartsScreen() {
           s.playerHands[s.currentPlayerIndex] as Card[],
           s.currentTrick as TrickCard[],
           s,
-          s.currentPlayerIndex
+          s.currentPlayerIndex,
+          s.aiDifficulty
         );
         const completedTrick: readonly TrickCard[] | null = willComplete
           ? [...s.currentTrick, { card, playerIndex: s.currentPlayerIndex }]
@@ -249,25 +257,26 @@ export default function HeartsScreen() {
 
   // Trigger AI loop when it's their turn; wait for lastTrick display first.
   useEffect(() => {
+    if (!gameState) return;
     if (gameState.phase !== "playing") return;
     if (gameState.currentPlayerIndex === HUMAN) return;
     if (lastTrick !== null) return;
     void runAiTurns(gameState);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [gameState.phase, gameState.currentPlayerIndex, gameState.tricksPlayedInHand, lastTrick]);
+  }, [gameState?.phase, gameState?.currentPlayerIndex, gameState?.tricksPlayedInHand, lastTrick]);
 
   // Complete sync when game is over.
   useEffect(() => {
-    if (gameState.phase !== "game_over") return;
+    if (gameState?.phase !== "game_over") return;
     if (!syncGetGameId()) return;
     const humanScore = gameState.cumulativeScores[HUMAN] ?? 0;
     const finalScore = Math.max(0, 100 - humanScore);
     syncComplete({ outcome: "completed", finalScore, durationMs: 0 }, { final_score: finalScore });
-  }, [gameState.phase, gameState.cumulativeScores, syncComplete, syncGetGameId]);
+  }, [gameState?.phase, gameState?.cumulativeScores, syncComplete, syncGetGameId]);
 
   // ─── Human card play ──────────────────────────────────────────────────────
   function handleCardPress(card: Card) {
-    if (gameState.currentPlayerIndex !== HUMAN || gameState.phase !== "playing") return;
+    if (!gameState || gameState.currentPlayerIndex !== HUMAN || gameState.phase !== "playing") return;
     ensureSyncStarted();
     const willComplete = gameState.currentTrick.length === 3;
     const completedTrick: readonly TrickCard[] | null = willComplete
@@ -304,13 +313,19 @@ export default function HeartsScreen() {
 
   // ─── Passing ──────────────────────────────────────────────────────────────
   function handlePassCardPress(card: Card) {
+    if (!gameState) return;
     setGameState(selectPassCard(gameState, HUMAN, card));
   }
 
   function handlePassConfirm() {
+    if (!gameState) return;
     let s = gameState;
     for (let i = 1; i <= 3; i++) {
-      const aiCards = selectCardsToPass([...(s.playerHands[i] ?? [])], s.passDirection);
+      const aiCards = selectCardsToPass(
+        [...(s.playerHands[i] ?? [])],
+        s.passDirection,
+        s.aiDifficulty
+      );
       for (const c of aiCards) {
         s = selectPassCard(s, i, c);
       }
@@ -320,6 +335,7 @@ export default function HeartsScreen() {
 
   // ─── Hand end / next hand ─────────────────────────────────────────────────
   function handleNextHand() {
+    if (!gameState) return;
     setLastTrick(null);
     const next = dealNextHand(gameState);
     setGameState(next);
@@ -328,7 +344,7 @@ export default function HeartsScreen() {
 
   // ─── Game over / play again ───────────────────────────────────────────────
   async function handleSubmitScore() {
-    if (!playerName.trim() || submitState === "submitting" || submitState === "done") return;
+    if (!gameState || !playerName.trim() || submitState === "submitting" || submitState === "done") return;
     if (isInitialized && !isOnline) return;
     setSubmitState("submitting");
     const humanScore = gameState.cumulativeScores[HUMAN] ?? 0;
@@ -341,14 +357,23 @@ export default function HeartsScreen() {
     }
   }
 
+  function handleStartGame(difficulty: AiDifficulty) {
+    setLastTrick(null);
+    setSubmitState("idle");
+    setPlayerName("");
+    loopActiveRef.current = false;
+    clearGame().catch(() => {});
+    const fresh = dealGame(difficulty);
+    setGameState(fresh);
+  }
+
   function handlePlayAgain() {
     setLastTrick(null);
     setSubmitState("idle");
     setPlayerName("");
     loopActiveRef.current = false;
     clearGame().catch(() => {});
-    const fresh = dealGame();
-    setGameState(fresh);
+    setGameState(null);
   }
 
   function handleOpenRename() {
@@ -366,16 +391,49 @@ export default function HeartsScreen() {
   }
 
   // ─── Derived state ────────────────────────────────────────────────────────
-  const humanHand = [...(gameState.playerHands[HUMAN] ?? [])];
-  const isPassing = gameState.phase === "passing";
-  const humanPassSelections = [...(gameState.passSelections[HUMAN] ?? [])];
+  const humanHand = [...(gameState?.playerHands[HUMAN] ?? [])];
+  const isPassing = gameState?.phase === "passing";
+  const humanPassSelections = [...(gameState?.passSelections[HUMAN] ?? [])];
   const validCards =
-    gameState.phase === "playing" && gameState.currentPlayerIndex === HUMAN
+    gameState?.phase === "playing" && gameState.currentPlayerIndex === HUMAN
       ? getValidPlays(gameState, HUMAN)
       : [];
-  const displayTrick = lastTrick !== null ? lastTrick.trick : gameState.currentTrick;
+  const displayTrick = lastTrick !== null ? lastTrick.trick : (gameState?.currentTrick ?? []);
   const trickWinnerIndex = lastTrick !== null ? lastTrick.winnerIndex : null;
-  const moonShooter = detectMoon(gameState.wonCards);
+  const moonShooter = gameState ? detectMoon(gameState.wonCards) : null;
+
+  // ─── Pre-game: show difficulty picker until a game is started ────────────
+  if (!gameState) {
+    return (
+      <GameShell
+        title={t("game.title")}
+        onBack={() => navigation.goBack()}
+        onNewGame={() => handleStartGame(selectedDifficulty)}
+        onOpenScoreboard={() => navigation.navigate("Scoreboard", { gameKey: "hearts" })}
+        onEditPlayerNames={handleOpenRename}
+      >
+        <View style={styles.preGameContainer}>
+          <Text style={[styles.preGameTitle, { color: colors.text }]}>
+            {t("difficulty.groupLabel", { defaultValue: "AI Difficulty" })}
+          </Text>
+          <HeartsAiDifficultySelector
+            value={selectedDifficulty}
+            onChange={setSelectedDifficulty}
+          />
+          <Pressable
+            style={[styles.btn, { backgroundColor: colors.accent }]}
+            onPress={() => handleStartGame(selectedDifficulty)}
+            accessibilityRole="button"
+            accessibilityLabel={t("game.startGame", { defaultValue: "Start Game" })}
+          >
+            <Text style={[styles.btnText, { color: colors.textOnAccent }]}>
+              {t("game.startGame", { defaultValue: "Start Game" })}
+            </Text>
+          </Pressable>
+        </View>
+      </GameShell>
+    );
+  }
 
   return (
     <GameShell
@@ -604,6 +662,10 @@ export default function HeartsScreen() {
                 </Text>
               )}
 
+              <HeartsAiDifficultySelector
+                value={selectedDifficulty}
+                onChange={setSelectedDifficulty}
+              />
               <Pressable
                 style={[styles.btn, { backgroundColor: colors.surfaceAlt }]}
                 onPress={handlePlayAgain}
@@ -807,5 +869,16 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 8,
     fontSize: 15,
+  },
+  preGameContainer: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    padding: 32,
+    gap: 20,
+  },
+  preGameTitle: {
+    fontSize: 18,
+    fontWeight: "700",
   },
 });
