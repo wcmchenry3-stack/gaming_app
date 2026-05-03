@@ -11,8 +11,11 @@ import {
 } from "@expo-google-fonts/manrope";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaProvider } from "react-native-safe-area-context";
-import { NavigationContainer } from "@react-navigation/native";
-import { createNativeStackNavigator } from "@react-navigation/native-stack";
+import { NavigationContainer, useNavigation } from "@react-navigation/native";
+import {
+  createNativeStackNavigator,
+  NativeStackNavigationProp,
+} from "@react-navigation/native-stack";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import * as Sentry from "@sentry/react-native";
 import HomeScreen from "./src/screens/HomeScreen";
@@ -160,6 +163,19 @@ function makePremiumScreen<P extends object>(
 ): React.FC<P> {
   const PremiumScreen = (props: P) => {
     const { canPlay, isLoading } = useEntitlements();
+    const navigation = useNavigation<NativeStackNavigationProp<HomeStackParamList>>();
+    const wasEntitledRef = useRef<boolean | null>(null);
+
+    useEffect(() => {
+      if (isLoading) return;
+      const entitled = canPlay(slug);
+      if (wasEntitledRef.current === true && !entitled) {
+        navigation.navigate("Home");
+      }
+      wasEntitledRef.current = entitled;
+      // eslint-disable-next-line react-hooks/exhaustive-deps -- slug is a factory constant, stable for the component's lifetime
+    }, [canPlay, isLoading, navigation]);
+
     if (isLoading) return <ActivityIndicator style={{ flex: 1 }} />;
     if (!canPlay(slug)) return <LockedGameScreen />;
     return <Screen {...props} />;
@@ -168,6 +184,7 @@ function makePremiumScreen<P extends object>(
   return PremiumScreen;
 }
 
+const GuardedGameScreen = makePremiumScreen("yacht", GameScreen);
 const LazyCascadeScreen = makePremiumScreen(
   "cascade",
   withSuspense(LazyScreens.Cascade, "cascade")
@@ -198,7 +215,7 @@ function LobbyStack() {
   return (
     <HomeStack.Navigator screenOptions={{ headerShown: false }}>
       <HomeStack.Screen name="Home" component={HomeScreen} />
-      <HomeStack.Screen name="Game" component={GameScreen} />
+      <HomeStack.Screen name="Game" component={GuardedGameScreen} />
       <HomeStack.Screen name="Cascade" component={LazyCascadeScreen} />
       <HomeStack.Screen name="StarSwarm" component={LazyStarSwarmScreen} />
       <HomeStack.Screen name="BlackjackBetting" component={LazyBlackjackBettingScreen} />
