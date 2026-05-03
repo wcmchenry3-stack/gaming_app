@@ -35,11 +35,11 @@ def upgrade() -> None:
         game_types,
         [
             {
-                "id": 12,
+                "id": 13,
                 "name": "daily_word",
                 "display_name": "Daily Word",
                 "icon_emoji": "📝",
-                "sort_order": 120,
+                "sort_order": 130,
                 "is_active": True,
                 "is_premium": False,
                 "category": "word",
@@ -58,19 +58,19 @@ def upgrade() -> None:
         event_types,
         [
             {
-                "game_type_id": 12,
+                "game_type_id": 13,
                 "name": "game_started",
                 "display_name": "Game Started",
                 "description": None,
             },
             {
-                "game_type_id": 12,
+                "game_type_id": 13,
                 "name": "game_ended",
                 "display_name": "Game Ended",
                 "description": None,
             },
             {
-                "game_type_id": 12,
+                "game_type_id": 13,
                 "name": "guess_submitted",
                 "display_name": "Guess Submitted",
                 "description": None,
@@ -80,5 +80,5 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
-    op.execute("DELETE FROM event_types WHERE game_type_id = 12")
+    op.execute("DELETE FROM event_types WHERE game_type_id = 13")
     op.execute("DELETE FROM game_types WHERE name = 'daily_word'")

@@ -65,6 +65,21 @@ def test_all_hindi_answers_same_word_length():
     assert len(lengths) == 1, f"Hindi answers have mixed lengths: {lengths}"
 
 
+def test_hindi_corpus_has_year_coverage():
+    """Hindi answer corpus must be large enough for at least a year of daily puzzles."""
+    from daily_word.puzzle import _ANSWERS_HI
+
+    assert len(_ANSWERS_HI) >= 365, f"Hindi corpus too small: {len(_ANSWERS_HI)} words"
+
+
+def test_hindi_answers_subset_of_valid():
+    """Every Hindi answer must also be a valid guess."""
+    from daily_word.puzzle import _ANSWERS_HI, _VALID_HI
+
+    missing = set(_ANSWERS_HI) - set(_VALID_HI)
+    assert not missing, f"Answers not in valid_hi: {missing}"
+
+
 # ---------------------------------------------------------------------------
 # get_answer determinism
 # ---------------------------------------------------------------------------

@@ -64,6 +64,24 @@ def _score_guess(answer: str, guess: str) -> list[dict]:
     return tiles
 
 
+def _grapheme_clusters(word: str) -> list[list[int]]:
+    """Group code-point indices into visual grapheme clusters.
+
+    Devanagari combining marks (Unicode category Mc/Mn) attach to the
+    preceding base character. A character following a virama (U+094D) is
+    also part of the same conjunct cluster. The frontend uses this to
+    render multi-codepoint syllables as a single tile.
+    """
+    clusters: list[list[int]] = []
+    for i, ch in enumerate(word):
+        cat = unicodedata.category(ch)
+        if clusters and (cat.startswith("M") or (i > 0 and word[i - 1] == "्")):
+            clusters[-1].append(i)
+        else:
+            clusters.append([i])
+    return clusters
+
+
 class GuessRequest(BaseModel):
     puzzle_id: str
     guess: str
@@ -114,4 +132,7 @@ async def post_guess(request: Request, body: GuessRequest) -> dict:
     if not is_valid_guess(guess, lang):
         raise HTTPException(status_code=422, detail="not_a_word")
 
-    return {"tiles": _score_guess(answer, guess)}
+    result: dict = {"tiles": _score_guess(answer, guess)}
+    if lang == "hi":
+        result["grapheme_clusters"] = _grapheme_clusters(guess)
+    return result

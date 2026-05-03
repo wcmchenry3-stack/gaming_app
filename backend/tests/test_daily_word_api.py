@@ -281,3 +281,63 @@ def test_guess_response_time(client: TestClient) -> None:
     elapsed = time.perf_counter() - start
     assert r.status_code == 200
     assert elapsed < 0.2, f"Response too slow: {elapsed:.3f}s"
+
+
+# ---------------------------------------------------------------------------
+# Hindi grapheme clusters (#1205)
+# ---------------------------------------------------------------------------
+
+
+def test_hindi_guess_response_includes_grapheme_clusters(client: TestClient) -> None:
+    """POST /guess for Hindi must include grapheme_clusters for frontend tile rendering."""
+    from daily_word import puzzle as puzzle_mod
+
+    orig_answers = puzzle_mod._ANSWERS["hi"]
+    orig_valid = puzzle_mod._VALID["hi"]
+    # "सुंदर" = 5 code points: स, ु, ं, द, र
+    puzzle_mod._ANSWERS["hi"] = ["सुंदर"]
+    puzzle_mod._VALID["hi"] = frozenset(["सुंदर"])
+    try:
+        headers = _sid_headers()
+        r = client.post(
+            "/daily-word/guess",
+            headers=headers,
+            json={
+                "puzzle_id": _today_puzzle_id(lang="hi"),
+                "guess": "सुंदर",
+                "tz_offset_minutes": 0,
+            },
+        )
+    finally:
+        puzzle_mod._ANSWERS["hi"] = orig_answers
+        puzzle_mod._VALID["hi"] = orig_valid
+
+    assert r.status_code == 200
+    data = r.json()
+    assert "grapheme_clusters" in data
+    clusters = data["grapheme_clusters"]
+    # Every code-point index must appear exactly once across all clusters
+    all_indices = [idx for cluster in clusters for idx in cluster]
+    assert sorted(all_indices) == list(range(5))
+
+
+def test_english_guess_response_excludes_grapheme_clusters(client: TestClient) -> None:
+    """POST /guess for English must NOT include grapheme_clusters."""
+    headers = _sid_headers()
+    r = client.post(
+        "/daily-word/guess",
+        headers=headers,
+        json={"puzzle_id": _today_puzzle_id(), "guess": "crane", "tz_offset_minutes": 0},
+    )
+    assert r.status_code == 200
+    assert "grapheme_clusters" not in r.json()
+
+
+def test_hindi_grapheme_clusters_devanagari_matras(client: TestClient) -> None:
+    """Devanagari vowel signs (matras) must be grouped with their preceding consonant."""
+    from daily_word.router import _grapheme_clusters
+
+    # "सुंदर": स(Lo), ु(Mc), ं(Mn), द(Lo), र(Lo) → clusters [[0,1,2],[3],[4]]
+    clusters = _grapheme_clusters("सुंदर")
+    assert clusters[0] == [0, 1, 2], f"Expected [0,1,2], got {clusters[0]}"
+    assert len(clusters) == 3
