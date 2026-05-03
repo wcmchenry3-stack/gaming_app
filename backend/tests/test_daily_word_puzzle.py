@@ -66,7 +66,7 @@ def test_all_hindi_answers_same_word_length():
 
 
 def test_hindi_corpus_has_year_coverage():
-    """Hindi answer corpus must be large enough for at least a year of daily puzzles."""
+    """Hindi answer corpus must cover at least a year of daily puzzles (no proper nouns)."""
     from daily_word.puzzle import _ANSWERS_HI
 
     assert len(_ANSWERS_HI) >= 365, f"Hindi corpus too small: {len(_ANSWERS_HI)} words"

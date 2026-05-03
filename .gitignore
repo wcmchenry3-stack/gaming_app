@@ -38,6 +38,9 @@ frontend/android/app/upload-keystore.jks
 # Claude Code local overrides (personal, not shared)
 .claude/settings.local.json
 
+# Git worktrees created by Claude Code review agents
+.worktrees/
+
 # Local env overrides — never committed
 backend/.env
 

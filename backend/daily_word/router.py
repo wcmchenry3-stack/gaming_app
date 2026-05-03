@@ -75,7 +75,7 @@ def _grapheme_clusters(word: str) -> list[list[int]]:
     clusters: list[list[int]] = []
     for i, ch in enumerate(word):
         cat = unicodedata.category(ch)
-        if clusters and (cat.startswith("M") or (i > 0 and word[i - 1] == "्")):
+        if clusters and (cat.startswith("M") or (i > 0 and word[i - 1] == "\u094d")):
             clusters[-1].append(i)
         else:
             clusters.append([i])
@@ -113,8 +113,12 @@ async def post_guess(request: Request, body: GuessRequest) -> dict:
     if lang not in _SUPPORTED_LANGS:
         raise HTTPException(status_code=422, detail="invalid_puzzle_id")
 
-    local_ts = datetime.now(timezone.utc) + timedelta(minutes=body.tz_offset_minutes)
-    if date_str != local_ts.strftime("%Y-%m-%d"):
+    # 1-minute grace so guesses submitted just before midnight aren't rejected by
+    # server/client clock drift when the server evaluates them just after midnight.
+    now_utc = datetime.now(timezone.utc)
+    local_ts = now_utc + timedelta(minutes=body.tz_offset_minutes)
+    grace_ts = local_ts - timedelta(minutes=1)
+    if date_str not in {local_ts.strftime("%Y-%m-%d"), grace_ts.strftime("%Y-%m-%d")}:
         raise HTTPException(status_code=422, detail="stale_puzzle_id")
 
     try:
@@ -122,7 +126,7 @@ async def post_guess(request: Request, body: GuessRequest) -> dict:
     except Exception:
         raise HTTPException(status_code=422, detail="invalid_puzzle_id")
 
-    guess = body.guess.lower()
+    guess = body.guess.lower()  # no-op for Devanagari; NFC handles Hindi normalisation
     if lang == "hi":
         guess = unicodedata.normalize("NFC", guess)
 

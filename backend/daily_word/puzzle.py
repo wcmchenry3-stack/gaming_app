@@ -61,10 +61,7 @@ def get_answer(puzzle_id: str) -> str:
     answers = _ANSWERS.get(lang, _ANSWERS_EN)
     date_int = int(date_str.replace("-", ""))
     index = (date_int + SALT) % len(answers)
-    word = answers[index]
-    if lang == "hi":
-        word = unicodedata.normalize("NFC", word)
-    return word
+    return answers[index]
 
 
 def is_valid_guess(word: str, lang: str = "en") -> bool:
