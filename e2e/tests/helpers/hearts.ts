@@ -23,6 +23,8 @@ export async function gotoHearts(page: Page): Promise<void> {
   await page
     .getByRole("heading", { name: "Hearts", exact: true })
     .waitFor({ timeout: 10_000 });
+  // Dismiss the difficulty picker that appears on a fresh start
+  await page.getByRole("button", { name: "Start Game" }).click();
 }
 
 export async function injectHeartsState(

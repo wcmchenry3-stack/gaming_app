@@ -49,7 +49,8 @@ function h4(
 
 function mkState(overrides: Partial<HeartsState> = {}): HeartsState {
   return {
-    _v: 2,
+    _v: 3,
+    aiDifficulty: "medium",
     phase: "playing",
     handNumber: 1,
     passDirection: "left",
@@ -106,8 +107,8 @@ describe("dealGame", () => {
     expect(state.scoreHistory).toEqual([]);
   });
 
-  it("uses storage schema v2", () => {
-    expect(dealGame()._v).toBe(2);
+  it("uses storage schema v3", () => {
+    expect(dealGame()._v).toBe(3);
   });
 });
 

@@ -1,13 +1,13 @@
 /**
- * Hearts AI (#606).
+ * Hearts AI (#606, #1168).
  *
  * Pure TypeScript rule-based strategy for the 3 computer opponents.
- * Medium difficulty — human-beatable but not trivial (~1-in-4 AI win rate).
+ * Supports Easy / Medium / Hard difficulty via the `difficulty` parameter.
  * No randomness beyond deterministic tie-breaking. No React/AsyncStorage.
  */
 
 import { getValidPlays } from "./engine";
-import type { Card, HeartsState, PassDirection, TrickCard } from "./types";
+import type { AiDifficulty, Card, HeartsState, PassDirection, TrickCard } from "./types";
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -60,15 +60,30 @@ function bySuitDescending(cards: Card[]): Array<[string, Card[]]> {
 // Passing strategy
 // ---------------------------------------------------------------------------
 
+function passSafeFilter(selected: Card[]): (c: Card) => boolean {
+  return (c: Card) => {
+    if (selected.some((s) => s.suit === c.suit && s.rank === c.rank)) return false;
+    if (c.suit === "clubs" && c.rank === 2) return false;
+    if (c.suit === "clubs" && c.rank < 6) return false;
+    return true;
+  };
+}
+
+/** Easy: pass the first 3 safe cards with no strategic logic. Never passes 2♣. */
+function selectCardsToPassEasy(hand: Card[]): Card[] {
+  const safe = hand.filter((c) => !(c.suit === "clubs" && c.rank === 2));
+  return safe.slice(0, 3);
+}
+
 /**
- * Select exactly 3 cards to pass. Priority order per issue spec:
+ * Medium: select exactly 3 cards to pass. Priority order:
  * 1. Q♠ — unless protected (holding A♠ + K♠) or void in spades
  * 2. A♥, K♥ — highest hearts first
  * 3. A♠, K♠ — if not needed to protect Q♠
  * 4. High cards of suit being voided (longest suit)
  * 5. Never pass: 2♣ or clubs below 6
  */
-export function selectCardsToPass(hand: Card[], direction: PassDirection): Card[] {
+function selectCardsToPassMedium(hand: Card[], direction: PassDirection): Card[] {
   void direction;
   const selected: Card[] = [];
 
@@ -81,24 +96,15 @@ export function selectCardsToPass(hand: Card[], direction: PassDirection): Card[
   const qSpadeProtected = hasASpades && hasKSpades;
   const voidInSpades = spades.length === 0;
 
-  // 1. Pass Q♠ if unprotected and not void
   if (hasQSpades && !qSpadeProtected && !voidInSpades) {
     selected.push({ suit: "spades", rank: 12 });
   }
 
-  // Cards eligible to pass (never 2♣, never clubs < 6)
-  const safe = (c: Card) => {
-    if (selected.some((s) => s.suit === c.suit && s.rank === c.rank)) return false;
-    if (c.suit === "clubs" && c.rank === 2) return false;
-    if (c.suit === "clubs" && c.rank < 6) return false;
-    return true;
-  };
+  const safe = passSafeFilter(selected);
 
-  // 2. High hearts (A=1, K=13 — pass rank 13 first, then rank 1 as highest)
   const dangerHearts = hand
     .filter((c) => c.suit === "hearts" && (c.rank === 1 || c.rank >= 11) && safe(c))
     .sort((a, b) => {
-      // Treat ace (rank 1) as 14 for sorting purposes
       const ra = a.rank === 1 ? 14 : a.rank;
       const rb = b.rank === 1 ? 14 : b.rank;
       return rb - ra;
@@ -108,7 +114,6 @@ export function selectCardsToPass(hand: Card[], direction: PassDirection): Card[
     selected.push(c);
   }
 
-  // 3. A♠, K♠ — if not protecting Q♠
   if (selected.length < 3 && !hasQSpades) {
     for (const rank of [1, 13] as const) {
       if (selected.length >= 3) break;
@@ -117,10 +122,8 @@ export function selectCardsToPass(hand: Card[], direction: PassDirection): Card[
     }
   }
 
-  // 4. High cards toward voiding a suit
   if (selected.length < 3) {
     const candidates = hand.filter(safe).sort((a, b) => {
-      // Prefer high ranks, prefer non-clubs
       const ra = a.rank === 1 ? 14 : a.rank;
       const rb = b.rank === 1 ? 14 : b.rank;
       if (rb !== ra) return rb - ra;
@@ -135,6 +138,79 @@ export function selectCardsToPass(hand: Card[], direction: PassDirection): Card[
   }
 
   return selected.slice(0, 3);
+}
+
+/**
+ * Hard: like Medium but always passes Q♠ even when holding A♠ + K♠,
+ * maximising danger for opponents.
+ */
+function selectCardsToPassHard(hand: Card[], direction: PassDirection): Card[] {
+  void direction;
+  const selected: Card[] = [];
+
+  const hasQSpades = hand.some(isQueenOfSpades);
+  const voidInSpades = hand.filter((c) => c.suit === "spades").length === 0;
+
+  // Pass Q♠ even when protected (unlike Medium)
+  if (hasQSpades && !voidInSpades) {
+    selected.push({ suit: "spades", rank: 12 });
+  }
+
+  const safe = passSafeFilter(selected);
+
+  const dangerHearts = hand
+    .filter((c) => c.suit === "hearts" && (c.rank === 1 || c.rank >= 11) && safe(c))
+    .sort((a, b) => {
+      const ra = a.rank === 1 ? 14 : a.rank;
+      const rb = b.rank === 1 ? 14 : b.rank;
+      return rb - ra;
+    });
+  for (const c of dangerHearts) {
+    if (selected.length >= 3) break;
+    selected.push(c);
+  }
+
+  if (selected.length < 3 && !hasQSpades) {
+    for (const rank of [1, 13] as const) {
+      if (selected.length >= 3) break;
+      const card = hand.find((c) => c.suit === "spades" && c.rank === rank && safe(c));
+      if (card) selected.push(card);
+    }
+  }
+
+  if (selected.length < 3) {
+    const candidates = hand.filter(safe).sort((a, b) => {
+      const ra = a.rank === 1 ? 14 : a.rank;
+      const rb = b.rank === 1 ? 14 : b.rank;
+      if (rb !== ra) return rb - ra;
+      if (a.suit === "clubs" && b.suit !== "clubs") return 1;
+      if (b.suit === "clubs" && a.suit !== "clubs") return -1;
+      return 0;
+    });
+    for (const c of candidates) {
+      if (selected.length >= 3) break;
+      selected.push(c);
+    }
+  }
+
+  // Ensure at least 1 high heart if possible (pass Q♠ took a slot, still need 3)
+  // The loop above handles fill-in; has already added Q♠
+
+  return selected.slice(0, 3);
+}
+
+/**
+ * Select exactly 3 cards to pass.
+ * `difficulty` defaults to "medium" (current behaviour) so existing callers are unchanged.
+ */
+export function selectCardsToPass(
+  hand: Card[],
+  direction: PassDirection,
+  difficulty: AiDifficulty = "medium"
+): Card[] {
+  if (difficulty === "easy") return selectCardsToPassEasy(hand);
+  if (difficulty === "hard") return selectCardsToPassHard(hand, direction);
+  return selectCardsToPassMedium(hand, direction);
 }
 
 // ---------------------------------------------------------------------------
@@ -168,8 +244,36 @@ export function detectPotentialMoon(state: HeartsState): number | null {
 // Play strategy
 // ---------------------------------------------------------------------------
 
+/** Easy: always play the lowest valid card; no strategic logic. */
+function selectCardToPlayEasy(
+  hand: Card[],
+  trick: TrickCard[],
+  state: HeartsState,
+  playerIndex: number
+): Card {
+  void hand;
+  const valid = getValidPlays(state, playerIndex);
+  if (valid.length === 1) return valid[0]!;
+
+  const isLeading = trick.length === 0;
+
+  if (isLeading) {
+    return lowest(valid) ?? valid[0]!;
+  }
+
+  const first = trick[0];
+  if (!first) return valid[0]!;
+  const ledSuit = first.card.suit;
+  const inSuit = valid.filter((c) => c.suit === ledSuit);
+
+  // Void in led suit — discard lowest
+  if (inSuit.length === 0) return lowest(valid) ?? valid[0]!;
+
+  return lowest(inSuit) ?? valid[0]!;
+}
+
 /**
- * Choose a card to play. Always returns a card from getValidPlays.
+ * Medium: choose a card to play. Always returns a card from getValidPlays.
  *
  * Priority when void (discarding):
  *   1. Dump Q♠ if unprotected
@@ -187,12 +291,13 @@ export function detectPotentialMoon(state: HeartsState): number | null {
  *   - Hearts not broken: lead lowest of longest non-heart suit
  *   - Otherwise: lead lowest non-dangerous card
  */
-export function selectCardToPlay(
+function selectCardToPlayMedium(
   hand: Card[],
   trick: TrickCard[],
   state: HeartsState,
   playerIndex: number
 ): Card {
+  void hand;
   const valid = getValidPlays(state, playerIndex);
   if (valid.length === 1) return valid[0]!;
 
@@ -214,12 +319,118 @@ export function selectCardToPlay(
   return chooseFollow(valid, trick);
 }
 
+/**
+ * Hard: extends Medium with moon-attempt mode and card counting.
+ * When the AI holds 8+ hearts and Q♠ with no points yet taken, it switches
+ * to moon-shot mode: preserve hearts/Q♠ and discard everything else.
+ * Card counting: infers seen cards from wonCards + currentTrick to identify
+ * safe spade leads once all high spades have been played.
+ */
+function selectCardToPlayHard(
+  hand: Card[],
+  trick: TrickCard[],
+  state: HeartsState,
+  playerIndex: number
+): Card {
+  const valid = getValidPlays(state, playerIndex);
+  if (valid.length === 1) return valid[0]!;
+
+  const moonTarget = detectPotentialMoon(state);
+  const isLeading = trick.length === 0;
+
+  // Detect if this AI player should attempt a moon shot
+  const myHearts = hand.filter((c) => c.suit === "hearts").length;
+  const myHasQ = hand.some(isQueenOfSpades);
+  const totalPointsTaken = state.handScores.reduce((s, v) => s + (v ?? 0), 0);
+  const isMoonAttempt = myHearts >= 8 && myHasQ && totalPointsTaken === 0;
+
+  // Moon blocking (skip if we're the one attempting)
+  if (moonTarget !== null && moonTarget !== playerIndex && !isMoonAttempt) {
+    const pointCards = valid
+      .filter((c) => cardPoints(c) > 0)
+      .sort((a, b) => aceHigh(b.rank) - aceHigh(a.rank));
+    if (pointCards.length > 0) return pointCards[0]!;
+  }
+
+  // Moon attempt mode: keep hearts and Q♠, discard everything else
+  if (isMoonAttempt) {
+    if (isLeading) {
+      const nonHearts = valid.filter((c) => c.suit !== "hearts" && !isQueenOfSpades(c));
+      if (nonHearts.length > 0) return lowest(nonHearts) ?? valid[0]!;
+    }
+    const first = trick[0];
+    if (first) {
+      const inSuit = valid.filter((c) => c.suit === first.card.suit);
+      if (inSuit.length === 0) {
+        const nonHearts = valid.filter((c) => c.suit !== "hearts" && !isQueenOfSpades(c));
+        if (nonHearts.length > 0) return highest(nonHearts) ?? valid[0]!;
+      }
+    }
+  }
+
+  // Card counting: track seen cards to inform smarter leading decisions.
+  const seenKeys = new Set<string>();
+  for (const pile of state.wonCards) {
+    for (const c of pile) seenKeys.add(`${c.suit}:${c.rank}`);
+  }
+  for (const tc of state.currentTrick) seenKeys.add(`${tc.card.suit}:${tc.card.rank}`);
+
+  if (isLeading) {
+    return chooseLeadHard(valid, seenKeys);
+  }
+
+  return chooseFollow(valid, trick);
+}
+
+/**
+ * Choose a card to play.
+ * `difficulty` defaults to "medium" (current behaviour) so existing callers are unchanged.
+ */
+export function selectCardToPlay(
+  hand: Card[],
+  trick: TrickCard[],
+  state: HeartsState,
+  playerIndex: number,
+  difficulty: AiDifficulty = "medium"
+): Card {
+  if (difficulty === "easy") return selectCardToPlayEasy(hand, trick, state, playerIndex);
+  if (difficulty === "hard") return selectCardToPlayHard(hand, trick, state, playerIndex);
+  return selectCardToPlayMedium(hand, trick, state, playerIndex);
+}
+
 function chooseLead(valid: Card[]): Card {
   // Avoid leading hearts or Q♠ unless forced
   const safe = valid.filter((c) => c.suit !== "hearts" && !isQueenOfSpades(c));
   const pool = safe.length > 0 ? safe : valid;
 
   // Lead lowest of longest non-heart suit (exhaust safe suits first)
+  const suitGroups = bySuitDescending(pool);
+  const longestGroup = suitGroups[0];
+  if (longestGroup) {
+    const card = lowest(longestGroup[1]);
+    if (card) return card;
+  }
+
+  return lowest(pool) ?? valid[0]!;
+}
+
+/**
+ * Hard lead: same as Medium but prefers to lead the suit where high cards
+ * are known to be exhausted (card counting via seenKeys).
+ */
+function chooseLeadHard(valid: Card[], seenKeys: Set<string>): Card {
+  const qSpadeGone = seenKeys.has("spades:12");
+
+  // If Q♠ is gone, K♠/A♠ are safe to lead — include them in safe pool
+  const safe = valid.filter((c) => {
+    if (c.suit === "hearts") return false;
+    if (isQueenOfSpades(c)) return false;
+    // K♠ or A♠ are safe to lead only once Q♠ has been played
+    if (c.suit === "spades" && (c.rank === 13 || c.rank === 1) && !qSpadeGone) return false;
+    return true;
+  });
+  const pool = safe.length > 0 ? safe : valid;
+
   const suitGroups = bySuitDescending(pool);
   const longestGroup = suitGroups[0];
   if (longestGroup) {
