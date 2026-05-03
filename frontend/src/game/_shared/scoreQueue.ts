@@ -162,6 +162,14 @@ export class ScoreQueue {
     }
   }
 
+  async dropByGameType(gameType: GameType): Promise<void> {
+    const items = await this.read();
+    const filtered = items.filter((item) => item.game_type !== gameType);
+    if (filtered.length !== items.length) {
+      await this.write(filtered);
+    }
+  }
+
   /** For tests only. */
   async _reset(): Promise<void> {
     await AsyncStorage.removeItem(STORAGE_KEY);

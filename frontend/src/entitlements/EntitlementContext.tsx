@@ -1,8 +1,23 @@
-import React, { createContext, useCallback, useContext, useEffect, useState } from "react";
+import React, { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
 import { AppState, AppStateStatus } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as Sentry from "@sentry/react-native";
 import { createGameClient } from "../game/_shared/httpClient";
+import { clearGame as clearHearts } from "../game/hearts/storage";
+import { clearGame as clearYacht } from "../game/yacht/storage";
+import { clearGame as clearSudoku } from "../game/sudoku/storage";
+import { clearGame as clearCascade } from "../game/cascade/storage";
+import { scoreQueue } from "../game/_shared/scoreQueue";
+import type { GameType } from "../api/vocab";
+
+// Maps premium game slugs to their AsyncStorage clear functions.
+// starswarm has no local game state, so it is intentionally absent.
+const GAME_STORAGE_CLEARERS: Partial<Record<string, () => Promise<void>>> = {
+  hearts: clearHearts,
+  yacht: clearYacht,
+  sudoku: clearSudoku,
+  cascade: clearCascade,
+};
 
 // Premium games — sourced from backend migration 0014_game_types_premium_cat
 export const PREMIUM_GAMES = new Set(["yacht", "cascade", "hearts", "sudoku", "starswarm"]);
@@ -114,6 +129,7 @@ export function EntitlementProvider({ children }: { children: React.ReactNode })
   const [entitledGames, setEntitledGames] = useState<Set<string> | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [lastRefreshed, setLastRefreshed] = useState<Date | null>(null);
+  const prevEntitledRef = useRef<Set<string> | null>(null);
 
   const refresh = useCallback(async () => {
     try {
@@ -155,6 +171,35 @@ export function EntitlementProvider({ children }: { children: React.ReactNode })
     });
     return () => sub.remove();
   }, [refresh]);
+
+  // Detect revocations and clean up local state for any game no longer entitled.
+  useEffect(() => {
+    if (entitledGames === null) return;
+    const prev = prevEntitledRef.current;
+    prevEntitledRef.current = entitledGames;
+    if (prev === null) return; // first load — no prior entitlements to compare
+
+    const revoked = [...PREMIUM_GAMES].filter(
+      (slug) => prev.has(slug) && !entitledGames.has(slug)
+    );
+    if (revoked.length === 0) return;
+
+    void Promise.all(
+      revoked.map(async (slug) => {
+        try {
+          const clear = GAME_STORAGE_CLEARERS[slug];
+          if (clear) await clear();
+          await scoreQueue.dropByGameType(slug as GameType);
+          console.log(`entitlement revoked: ${slug} — local state cleared`);
+        } catch (e) {
+          Sentry.captureException(e, {
+            tags: { subsystem: "entitlements", op: "revocation" },
+            extra: { slug },
+          });
+        }
+      })
+    );
+  }, [entitledGames]);
 
   const canPlay = useCallback(
     (gameSlug: string): boolean => {

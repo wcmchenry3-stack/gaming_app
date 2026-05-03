@@ -25,6 +25,20 @@ jest.mock("../../game/_shared/httpClient", () => ({
   ),
 }));
 
+const mockClearHearts = jest.fn().mockResolvedValue(undefined);
+const mockClearYacht = jest.fn().mockResolvedValue(undefined);
+const mockClearSudoku = jest.fn().mockResolvedValue(undefined);
+const mockClearCascade = jest.fn().mockResolvedValue(undefined);
+jest.mock("../../game/hearts/storage", () => ({ clearGame: () => mockClearHearts() }));
+jest.mock("../../game/yacht/storage", () => ({ clearGame: () => mockClearYacht() }));
+jest.mock("../../game/sudoku/storage", () => ({ clearGame: () => mockClearSudoku() }));
+jest.mock("../../game/cascade/storage", () => ({ clearGame: () => mockClearCascade() }));
+
+const mockDropByGameType = jest.fn().mockResolvedValue(undefined);
+jest.mock("../../game/_shared/scoreQueue", () => ({
+  scoreQueue: { dropByGameType: (...args: unknown[]) => mockDropByGameType(...args) },
+}));
+
 // ---------------------------------------------------------------------------
 // Imports after mocks
 // ---------------------------------------------------------------------------
@@ -101,6 +115,11 @@ beforeEach(async () => {
     token: makeToken(makePayload([])),
     expires_at: "2099-01-01T00:00:00Z",
   });
+  mockClearHearts.mockResolvedValue(undefined);
+  mockClearYacht.mockResolvedValue(undefined);
+  mockClearSudoku.mockResolvedValue(undefined);
+  mockClearCascade.mockResolvedValue(undefined);
+  mockDropByGameType.mockResolvedValue(undefined);
 });
 
 // ---------------------------------------------------------------------------
@@ -270,5 +289,98 @@ describe("parseRawToken", () => {
   it("returns invalid for a token with wrong number of segments", async () => {
     const result = await parseRawToken("only.two");
     expect(result.valid).toBe(false);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Revocation flow tests
+// ---------------------------------------------------------------------------
+
+describe("revocation flow", () => {
+  async function renderAndGetListener() {
+    render(
+      <EntitlementProvider>
+        <Probe />
+      </EntitlementProvider>
+    );
+    await flushAsync();
+    await flushAsync();
+    return getAppStateListener();
+  }
+
+  async function triggerForegroundWith(entitled: string[]) {
+    const listener = await renderAndGetListener();
+    mockRequest.mockResolvedValue({
+      token: makeToken(makePayload(entitled)),
+      expires_at: "2099-01-01T00:00:00Z",
+    });
+    await act(async () => {
+      listener("active");
+      await new Promise<void>((resolve) => setImmediate(resolve));
+    });
+    await flushAsync();
+  }
+
+  it("clears storage for a revoked game on foreground refresh", async () => {
+    mockRequest.mockResolvedValue({
+      token: makeToken(makePayload(["hearts"])),
+      expires_at: "2099-01-01T00:00:00Z",
+    });
+    await triggerForegroundWith([]);
+    expect(mockClearHearts).toHaveBeenCalledTimes(1);
+  });
+
+  it("drops queue entries for the revoked game", async () => {
+    mockRequest.mockResolvedValue({
+      token: makeToken(makePayload(["sudoku"])),
+      expires_at: "2099-01-01T00:00:00Z",
+    });
+    await triggerForegroundWith([]);
+    expect(mockDropByGameType).toHaveBeenCalledWith("sudoku");
+  });
+
+  it("does not clear storage when entitlements are unchanged", async () => {
+    mockRequest.mockResolvedValue({
+      token: makeToken(makePayload(["cascade"])),
+      expires_at: "2099-01-01T00:00:00Z",
+    });
+    await triggerForegroundWith(["cascade"]);
+    expect(mockClearCascade).not.toHaveBeenCalled();
+    expect(mockDropByGameType).not.toHaveBeenCalledWith("cascade");
+  });
+
+  it("does not clear storage on first load (no prior entitlements)", async () => {
+    mockRequest.mockResolvedValue({
+      token: makeToken(makePayload(["hearts", "yacht"])),
+      expires_at: "2099-01-01T00:00:00Z",
+    });
+    render(
+      <EntitlementProvider>
+        <Probe />
+      </EntitlementProvider>
+    );
+    await flushAsync();
+    await flushAsync();
+    expect(mockClearHearts).not.toHaveBeenCalled();
+    expect(mockClearYacht).not.toHaveBeenCalled();
+  });
+
+  it("handles starswarm revocation gracefully (no storage clearer)", async () => {
+    mockRequest.mockResolvedValue({
+      token: makeToken(makePayload(["starswarm"])),
+      expires_at: "2099-01-01T00:00:00Z",
+    });
+    await expect(triggerForegroundWith([])).resolves.toBeUndefined();
+    expect(mockDropByGameType).toHaveBeenCalledWith("starswarm");
+  });
+
+  it("does not affect free games when premium revocation occurs", async () => {
+    mockRequest.mockResolvedValue({
+      token: makeToken(makePayload(["hearts"])),
+      expires_at: "2099-01-01T00:00:00Z",
+    });
+    await triggerForegroundWith([]);
+    expect(mockDropByGameType).not.toHaveBeenCalledWith("blackjack");
+    expect(mockDropByGameType).not.toHaveBeenCalledWith("twenty48");
   });
 });
