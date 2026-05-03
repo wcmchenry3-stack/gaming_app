@@ -12,6 +12,7 @@ import Animated, {
 import { useTranslation } from "react-i18next";
 import type { SortState } from "../types";
 import BottleView, { BOTTLE_WIDTH } from "./BottleView";
+import { BALL_COLORS } from "./BallView";
 
 const BOTTLE_GAP = 10;
 
@@ -50,7 +51,7 @@ export default function SortBoard({ state, colorblindMode = false, onBottleTap }
 // Win overlay — coloured ball particles cascade down when the puzzle is solved
 // ---------------------------------------------------------------------------
 
-const PARTICLE_COLORS = ["#ef4444", "#3b82f6", "#22c55e", "#eab308", "#a855f7", "#f97316"];
+const PARTICLE_COLORS = Object.values(BALL_COLORS).slice(0, 6);
 
 interface OverlayProps {
   readonly visible: boolean;

@@ -39,4 +39,14 @@ describe("BallView", () => {
     const { UNSAFE_queryAllByType } = render(withTheme(<BallView color="red" />));
     expect(UNSAFE_queryAllByType(Svg)).toHaveLength(0);
   });
+
+  it("matches snapshot without colorblind mode", () => {
+    const { toJSON } = render(withTheme(<BallView color="blue" />));
+    expect(toJSON()).toMatchSnapshot();
+  });
+
+  it("matches snapshot with colorblind mode", () => {
+    const { toJSON } = render(withTheme(<BallView color="blue" colorblindMode />));
+    expect(toJSON()).toMatchSnapshot();
+  });
 });

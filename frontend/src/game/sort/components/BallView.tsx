@@ -6,7 +6,7 @@ import type { Color } from "../types";
 
 export const BALL_SIZE = 36;
 
-const BALL_COLORS: Record<Color, string> = {
+export const BALL_COLORS: Record<Color, string> = {
   red: "#ef4444",
   blue: "#3b82f6",
   green: "#22c55e",
@@ -96,7 +96,7 @@ export default function BallView({
           width={size * 0.6}
           height={size * 0.6}
           viewBox="0 0 100 100"
-          style={[StyleSheet.absoluteFill, { top: size * 0.2, left: size * 0.2 }]}
+          style={{ position: "absolute", top: size * 0.2, left: size * 0.2 }}
           accessibilityElementsHidden
           importantForAccessibility="no-hide-descendants"
         >

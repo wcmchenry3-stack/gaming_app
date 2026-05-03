@@ -4,16 +4,13 @@ import Animated, { useAnimatedStyle, useSharedValue, withSpring } from "react-na
 import { useTranslation } from "react-i18next";
 import type { Bottle } from "../types";
 import { BOTTLE_DEPTH } from "../types";
+import { isBottleSolved } from "../engine";
 import BallView, { BALL_SIZE } from "./BallView";
 
 const BOTTLE_PADDING = 6;
 const BALL_GAP = 3;
 export const BOTTLE_WIDTH = BALL_SIZE + BOTTLE_PADDING * 2;
 export const BOTTLE_HEIGHT = BOTTLE_DEPTH * (BALL_SIZE + BALL_GAP) + BOTTLE_PADDING * 2;
-
-function isSolved(bottle: Bottle): boolean {
-  return bottle.length === 0 || (bottle.length === BOTTLE_DEPTH && new Set(bottle).size === 1);
-}
 
 export interface BottleViewProps {
   readonly bottle: Bottle;
@@ -41,7 +38,8 @@ export default function BottleView({
     transform: [{ scale: scale.value }],
   }));
 
-  const solved = isSolved(bottle);
+  const isFilled = bottle.length > 0;
+  const solved = isBottleSolved(bottle);
   let accessibilityLabel: string;
   if (selected) {
     accessibilityLabel = t("a11y.bottleSelected", { index: index + 1 });
@@ -69,7 +67,7 @@ export default function BottleView({
         style={[
           styles.bottle,
           selected && styles.bottleSelected,
-          solved && bottle.length > 0 && styles.bottleSolved,
+          solved && isFilled && styles.bottleSolved,
           animStyle,
         ]}
       >

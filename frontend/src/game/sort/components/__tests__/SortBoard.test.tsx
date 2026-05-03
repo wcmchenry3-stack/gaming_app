@@ -1,5 +1,6 @@
 import React from "react";
 import { fireEvent, render } from "@testing-library/react-native";
+import Svg from "react-native-svg";
 import { ThemeProvider } from "../../../../theme/ThemeContext";
 import SortBoard from "../SortBoard";
 import type { Color, SortState } from "../../types";
@@ -71,5 +72,13 @@ describe("SortBoard", () => {
     ]);
     const { getAllByRole } = render(withTheme(<SortBoard state={state} onBottleTap={jest.fn()} />));
     expect(getAllByRole("button")).toHaveLength(8);
+  });
+
+  it("threads colorblindMode down to BallView — Svg symbols appear when enabled", () => {
+    const state = mkState([["red", "blue"], []]);
+    const { UNSAFE_getAllByType } = render(
+      withTheme(<SortBoard state={state} colorblindMode onBottleTap={jest.fn()} />)
+    );
+    expect(UNSAFE_getAllByType(Svg).length).toBeGreaterThan(0);
   });
 });
