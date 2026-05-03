@@ -81,19 +81,26 @@ class TestSubmitScore:
         assert _submit("Alice", 20).status_code == 201
 
     def test_level_0_returns_422(self):
-        assert client.post(
-            "/sort/score", json={"player_name": "Bob", "level_reached": 0}, headers=_HEADERS
-        ).status_code == 422
+        assert (
+            client.post(
+                "/sort/score", json={"player_name": "Bob", "level_reached": 0}, headers=_HEADERS
+            ).status_code
+            == 422
+        )
 
     def test_level_21_returns_422(self):
-        assert client.post(
-            "/sort/score", json={"player_name": "Bob", "level_reached": 21}, headers=_HEADERS
-        ).status_code == 422
+        assert (
+            client.post(
+                "/sort/score", json={"player_name": "Bob", "level_reached": 21}, headers=_HEADERS
+            ).status_code
+            == 422
+        )
 
     def test_missing_player_name_returns_422(self):
-        assert client.post(
-            "/sort/score", json={"level_reached": 5}, headers=_HEADERS
-        ).status_code == 422
+        assert (
+            client.post("/sort/score", json={"level_reached": 5}, headers=_HEADERS).status_code
+            == 422
+        )
 
     def test_empty_player_name_returns_422(self):
         assert _submit("", 5).status_code == 422
