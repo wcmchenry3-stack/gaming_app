@@ -182,9 +182,7 @@ export function EntitlementProvider({ children }: { children: React.ReactNode })
     prevEntitledRef.current = entitledGames;
     if (prev === null) return; // first load — no prior entitlements to compare
 
-    const revoked = [...PREMIUM_GAMES].filter(
-      (slug) => prev.has(slug) && !entitledGames.has(slug)
-    );
+    const revoked = [...PREMIUM_GAMES].filter((slug) => prev.has(slug) && !entitledGames.has(slug));
     if (revoked.length === 0) return;
 
     void Promise.all(

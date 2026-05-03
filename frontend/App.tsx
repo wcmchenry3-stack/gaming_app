@@ -12,7 +12,10 @@ import {
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { NavigationContainer, useNavigation } from "@react-navigation/native";
-import { createNativeStackNavigator, NativeStackNavigationProp } from "@react-navigation/native-stack";
+import {
+  createNativeStackNavigator,
+  NativeStackNavigationProp,
+} from "@react-navigation/native-stack";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import * as Sentry from "@sentry/react-native";
 import HomeScreen from "./src/screens/HomeScreen";
@@ -170,7 +173,7 @@ function makePremiumScreen<P extends object>(
         navigation.navigate("Home");
       }
       wasEntitledRef.current = entitled;
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- slug is a factory constant, stable for the component's lifetime
+      // eslint-disable-next-line react-hooks/exhaustive-deps -- slug is a factory constant, stable for the component's lifetime
     }, [canPlay, isLoading, navigation]);
 
     if (isLoading) return <ActivityIndicator style={{ flex: 1 }} />;
