@@ -11,7 +11,7 @@
  * API endpoints are mocked so tests are hermetic (no running backend required).
  */
 
-import { test, expect } from "@playwright/test";
+import { test, expect } from "./fixtures";
 import { mockStarswarmApi } from "./helpers/starswarm";
 
 test.describe("Star Swarm — navigation and smoke tests", () => {

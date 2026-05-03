@@ -12,7 +12,7 @@
  * All backend calls are intercepted — no running backend needed.
  */
 
-import { test, expect } from "@playwright/test";
+import { test, expect } from "./fixtures";
 import { mockHeartsApi, injectHeartsState } from "./helpers/hearts";
 
 const c = (suit: string, rank: number) => ({ suit, rank });
