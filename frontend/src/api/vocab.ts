@@ -21,6 +21,7 @@ export const GAME_TYPES = [
   "starswarm",
   "freecell",
   "sort",
+  "daily_word",
 ] as const;
 
 export type GameType = (typeof GAME_TYPES)[number];

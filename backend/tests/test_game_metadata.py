@@ -11,6 +11,7 @@ from pydantic import ValidationError
 
 from blackjack.models import BlackjackMetadata
 from cascade.models import CascadeMetadata
+from daily_word.models import DailyWordMetadata
 from games.schemas import CreateGameRequest
 from hearts.models import HeartsMetadata
 from solitaire.models import SolitaireMetadata
@@ -142,6 +143,42 @@ def test_sudoku_metadata_player_name_too_long() -> None:
 def test_sudoku_metadata_rejects_unknown_field() -> None:
     with pytest.raises(ValidationError):
         SudokuMetadata.model_validate({"difficulty": "easy", "score": 9999})
+
+
+# ---------------------------------------------------------------------------
+# DailyWordMetadata unit tests
+# ---------------------------------------------------------------------------
+
+
+def test_daily_word_metadata_valid_en() -> None:
+    m = DailyWordMetadata.model_validate({"puzzle_id": "2026-05-02:en", "language": "en"})
+    assert m.puzzle_id == "2026-05-02:en"
+    assert m.language == "en"
+
+
+def test_daily_word_metadata_valid_hi() -> None:
+    m = DailyWordMetadata.model_validate({"puzzle_id": "2026-05-02:hi", "language": "hi"})
+    assert m.language == "hi"
+
+
+def test_daily_word_metadata_default_language_is_en() -> None:
+    m = DailyWordMetadata.model_validate({"puzzle_id": "2026-05-02:en"})
+    assert m.language == "en"
+
+
+def test_daily_word_metadata_rejects_invalid_language() -> None:
+    with pytest.raises(ValidationError):
+        DailyWordMetadata.model_validate({"puzzle_id": "2026-05-02:en", "language": "fr"})
+
+
+def test_daily_word_metadata_rejects_unknown_field() -> None:
+    with pytest.raises(ValidationError):
+        DailyWordMetadata.model_validate({"puzzle_id": "2026-05-02:en", "score": 9999})
+
+
+def test_daily_word_metadata_puzzle_id_required() -> None:
+    with pytest.raises(ValidationError):
+        DailyWordMetadata.model_validate({"language": "en"})
 
 
 # ---------------------------------------------------------------------------

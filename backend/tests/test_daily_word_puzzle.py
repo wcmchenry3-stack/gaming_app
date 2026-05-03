@@ -1,0 +1,116 @@
+"""Unit tests for the daily_word puzzle selector (#1188)."""
+
+from __future__ import annotations
+
+import unicodedata
+from datetime import datetime, timezone
+
+
+from daily_word.puzzle import get_answer, get_today_meta, is_valid_guess
+
+# ---------------------------------------------------------------------------
+# Timezone isolation
+# ---------------------------------------------------------------------------
+
+
+def test_tz_isolation_calgary_vs_london():
+    """Calgary (UTC-7) and London (UTC+0) get different puzzle_ids between 00:00–07:00 UTC."""
+    # At 2026-05-02 03:00 UTC:
+    #   Calgary offset = -420 min → local time = 2026-05-01 20:00
+    #   London  offset =    0 min → local time = 2026-05-02 03:00
+    fixed_utc = datetime(2026, 5, 2, 3, 0, 0, tzinfo=timezone.utc)
+
+    calgary = get_today_meta(-420, "en", _utc_now=fixed_utc)
+    london = get_today_meta(0, "en", _utc_now=fixed_utc)
+
+    assert calgary["puzzle_id"] != london["puzzle_id"]
+    assert calgary["puzzle_id"].startswith("2026-05-01")
+    assert london["puzzle_id"].startswith("2026-05-02")
+
+
+def test_same_tz_same_puzzle_id():
+    """Same timezone always yields the same puzzle_id for the same UTC time."""
+    fixed_utc = datetime(2026, 5, 2, 12, 0, 0, tzinfo=timezone.utc)
+    a = get_today_meta(0, "en", _utc_now=fixed_utc)
+    b = get_today_meta(0, "en", _utc_now=fixed_utc)
+    assert a["puzzle_id"] == b["puzzle_id"]
+
+
+# ---------------------------------------------------------------------------
+# Answer not in response
+# ---------------------------------------------------------------------------
+
+
+def test_get_today_meta_does_not_return_answer():
+    """get_today_meta return value must have no 'word' or 'answer' key."""
+    fixed_utc = datetime(2026, 5, 2, 12, 0, 0, tzinfo=timezone.utc)
+    meta = get_today_meta(0, "en", _utc_now=fixed_utc)
+    assert "word" not in meta
+    assert "answer" not in meta
+    assert "puzzle_id" in meta
+    assert "word_length" in meta
+
+
+def test_get_today_meta_word_length_positive():
+    fixed_utc = datetime(2026, 5, 2, 12, 0, 0, tzinfo=timezone.utc)
+    meta = get_today_meta(0, "en", _utc_now=fixed_utc)
+    assert meta["word_length"] > 0
+
+
+# ---------------------------------------------------------------------------
+# get_answer determinism
+# ---------------------------------------------------------------------------
+
+
+def test_get_answer_is_deterministic():
+    """Same puzzle_id always returns the same answer."""
+    a = get_answer("2026-05-02:en")
+    b = get_answer("2026-05-02:en")
+    assert a == b
+
+
+def test_get_answer_different_dates_may_differ():
+    """Different dates yield potentially different answers (collision is possible but unlikely)."""
+    a = get_answer("2026-05-01:en")
+    b = get_answer("2026-05-02:en")
+    # Not guaranteed to differ, but checks no crash
+    assert isinstance(a, str)
+    assert isinstance(b, str)
+
+
+def test_get_answer_consistent_with_meta():
+    """Word length from get_today_meta matches actual answer length."""
+    fixed_utc = datetime(2026, 5, 2, 12, 0, 0, tzinfo=timezone.utc)
+    meta = get_today_meta(0, "en", _utc_now=fixed_utc)
+    answer = get_answer(meta["puzzle_id"])
+    assert len(answer) == meta["word_length"]
+
+
+# ---------------------------------------------------------------------------
+# is_valid_guess (O(1) check)
+# ---------------------------------------------------------------------------
+
+
+def test_is_valid_guess_known_word():
+    assert is_valid_guess("crane", "en") is True
+
+
+def test_is_valid_guess_unknown_word():
+    assert is_valid_guess("zzzzz", "en") is False
+
+
+def test_is_valid_guess_case_insensitive():
+    assert is_valid_guess("CRANE", "en") is False  # guesses should be lower-cased by caller
+
+
+def test_is_valid_guess_hindi_nfc_roundtrip():
+    """NFC and NFD input forms both validate correctly after normalization."""
+    word = "सुंदर"
+    nfc = unicodedata.normalize("NFC", word)
+    nfd = unicodedata.normalize("NFD", word)
+    assert is_valid_guess(nfc, "hi") is True
+    assert is_valid_guess(nfd, "hi") is True
+
+
+def test_is_valid_guess_hindi_invalid():
+    assert is_valid_guess("zzzzz", "hi") is False

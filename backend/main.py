@@ -23,6 +23,7 @@ from entitlements.dependencies import EntitlementError
 from entitlements.service import is_dev_override_active
 from limiter import _real_ip, limiter
 from cascade.router import router as cascade_router
+from daily_word.router import router as daily_word_router
 from freecell.router import router as freecell_router
 from hearts.router import router as hearts_router
 from mahjong.router import router as mahjong_router
@@ -61,6 +62,7 @@ if _sentry_dsn:
 app = FastAPI(title="BC Arcade API")
 app.include_router(entitlements_router, prefix="/entitlements")
 app.include_router(cascade_router, prefix="/cascade")
+app.include_router(daily_word_router, prefix="/daily-word")
 app.include_router(freecell_router, prefix="/freecell")
 app.include_router(hearts_router, prefix="/hearts")
 app.include_router(mahjong_router, prefix="/mahjong")
