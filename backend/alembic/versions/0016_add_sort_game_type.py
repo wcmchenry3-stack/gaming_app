@@ -48,7 +48,6 @@ def upgrade() -> None:
         ],
     )
 
-
     event_types = sa.table(
         "event_types",
         sa.column("game_type_id", sa.SmallInteger),
