@@ -5,7 +5,6 @@ import uuid
 import pytest
 from fastapi.testclient import TestClient
 
-import sort.router as sort_router_module
 from db.base import get_session_factory
 from db.models import GameEntitlement
 from main import app
@@ -26,13 +25,6 @@ async def _grant(session_id: str, game_slug: str) -> None:
 @pytest.fixture(autouse=True)
 async def _sort_entitlement():
     await _grant(_SID, "sort")
-
-
-@pytest.fixture(autouse=True)
-def reset_leaderboard():
-    sort_router_module.reset_leaderboard()
-    yield
-    sort_router_module.reset_leaderboard()
 
 
 def _submit(player_name: str, level_reached: int):

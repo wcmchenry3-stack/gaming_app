@@ -52,8 +52,7 @@ async def _sort_game_type_id(db: AsyncSession) -> int:
     return row
 
 
-async def _top_scores(db: AsyncSession) -> list[ScoreEntry]:
-    gt_id = await _sort_game_type_id(db)
+async def _top_scores(db: AsyncSession, gt_id: int) -> list[ScoreEntry]:
     rows = (
         (
             await db.execute(
@@ -105,7 +104,7 @@ async def submit_score(request: Request, body: ScoreSubmitRequest) -> ScoreEntry
         db.add(game)
         await db.commit()
 
-        top = await _top_scores(db)
+        top = await _top_scores(db, gt_id)
 
     for entry in top:
         if entry.player_name == body.player_name and entry.level_reached == body.level_reached:
@@ -122,10 +121,8 @@ async def submit_score(request: Request, body: ScoreSubmitRequest) -> ScoreEntry
 async def get_scores(request: Request) -> LeaderboardResponse:
     factory = get_session_factory()
     async with factory() as db:
-        scores = await _top_scores(db)
+        gt_id = await _sort_game_type_id(db)
+        scores = await _top_scores(db, gt_id)
     return LeaderboardResponse(scores=scores)
 
 
-def reset_leaderboard() -> None:
-    """Test helper — no-op. DB isolation handled by conftest ``clean_db_tables``."""
-    return None

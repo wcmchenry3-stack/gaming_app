@@ -3,7 +3,7 @@ from pydantic import BaseModel, ConfigDict, Field
 
 class SortMetadata(BaseModel):
     model_config = ConfigDict(extra="forbid")
-    player_name: str = Field(default="", max_length=64)
+    player_name: str = Field(default="", max_length=32)
 
 
 class ScoreSubmitRequest(BaseModel):
