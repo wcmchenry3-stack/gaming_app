@@ -3274,7 +3274,7 @@ exports[`SudokuGrid matches snapshot with a typical mid-game state 1`] = `
               "justifyContent": "center",
             },
             {
-              "backgroundColor": "#8ff5ff22",
+              "backgroundColor": "#19191f",
             },
           ]
         }
@@ -3390,7 +3390,7 @@ exports[`SudokuGrid matches snapshot with a typical mid-game state 1`] = `
               "justifyContent": "center",
             },
             {
-              "backgroundColor": "#8ff5ff22",
+              "backgroundColor": "#19191f",
             },
           ]
         }
@@ -4354,7 +4354,7 @@ exports[`SudokuGrid matches snapshot with a typical mid-game state 1`] = `
               "justifyContent": "center",
             },
             {
-              "backgroundColor": "#8ff5ff22",
+              "backgroundColor": "#19191f",
             },
           ]
         }
@@ -4470,7 +4470,7 @@ exports[`SudokuGrid matches snapshot with a typical mid-game state 1`] = `
               "justifyContent": "center",
             },
             {
-              "backgroundColor": "#8ff5ff22",
+              "backgroundColor": "#19191f",
             },
           ]
         }
