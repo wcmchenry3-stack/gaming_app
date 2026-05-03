@@ -33,7 +33,7 @@ function topRun(bottle: Bottle): number {
   return n;
 }
 
-function isSolved(bottle: Bottle): boolean {
+export function isBottleSolved(bottle: Bottle): boolean {
   return bottle.length === 0 || (bottle.length === BOTTLE_DEPTH && new Set(bottle).size === 1);
 }
 
@@ -82,7 +82,7 @@ export function applyPour(state: SortState, fromIdx: number, toIdx: number): Sor
 
 /** True when every bottle is either empty or full with a single color. */
 export function isComplete(state: SortState): boolean {
-  return state.bottles.every(isSolved);
+  return state.bottles.every(isBottleSolved);
 }
 
 /**

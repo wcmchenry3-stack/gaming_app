@@ -114,6 +114,6 @@ describe("getNextHint", () => {
     const state = mkState([["blue", "blue", "blue", "blue"], ["red", "red", "red"], ["red"], []]);
     const hint = getNextHint(state);
     expect(hint).not.toBeNull();
-    expect(isValidPour(state.bottles[hint!.from], state.bottles[hint!.to])).toBe(true);
+    expect(isValidPour(state.bottles[hint!.from]!, state.bottles[hint!.to]!)).toBe(true);
   });
 });
