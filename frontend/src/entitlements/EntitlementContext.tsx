@@ -173,6 +173,9 @@ export function EntitlementProvider({ children }: { children: React.ReactNode })
   }, [refresh]);
 
   // Detect revocations and clean up local state for any game no longer entitled.
+  // Note: this effect fires after the new entitledGames state commits (canPlay has already
+  // updated). Cleanup is fire-and-forget and completes before the next render cycle, so
+  // the locked UI is shown while cleanup runs — intentional per issue #1056.
   useEffect(() => {
     if (entitledGames === null) return;
     const prev = prevEntitledRef.current;
