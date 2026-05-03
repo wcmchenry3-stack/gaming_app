@@ -91,7 +91,7 @@ export function isComplete(state: SortState): boolean {
  */
 export function undo(
   state: SortState,
-  history: readonly SortState[],
+  history: readonly SortState[]
 ): { state: SortState; history: readonly SortState[] } {
   if (history.length === 0) return { state, history };
   const prev = history[history.length - 1];
@@ -107,7 +107,7 @@ export function undo(
  */
 export function initState(levelBottles: (Color | "")[][]): SortState {
   const bottles: Bottle[] = levelBottles.map(
-    (b) => b.filter((s): s is Color => s !== "") as Bottle,
+    (b) => b.filter((s): s is Color => s !== "") as Bottle
   );
   return {
     bottles,

@@ -2,8 +2,9 @@
  * Sort Puzzle solver unit tests (#1176).
  */
 
+import { applyPour, isValidPour } from "../engine";
 import { getNextHint, solve } from "../solver";
-import type { SortState } from "../types";
+import type { Color, SortState } from "../types";
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -11,7 +12,7 @@ import type { SortState } from "../types";
 
 function mkState(bottles: string[][]): SortState {
   return {
-    bottles: bottles as any,
+    bottles: bottles as Color[][],
     moveCount: 0,
     undosUsed: 0,
     isComplete: false,
@@ -25,26 +26,16 @@ function mkState(bottles: string[][]): SortState {
 
 describe("solve", () => {
   it("returns [] for an already-complete state", () => {
-    const state = mkState([
-      ["red", "red", "red", "red"],
-      ["blue", "blue", "blue", "blue"],
-      [],
-    ]);
+    const state = mkState([["red", "red", "red", "red"], ["blue", "blue", "blue", "blue"], []]);
     expect(solve({ ...state, isComplete: true })).toEqual([]);
   });
 
   it("returns a single-move solution", () => {
     // bottle[1] needs one more red from bottle[2]; blues already complete
-    const state = mkState([
-      ["blue", "blue", "blue", "blue"],
-      ["red", "red", "red"],
-      ["red"],
-      [],
-    ]);
+    const state = mkState([["blue", "blue", "blue", "blue"], ["red", "red", "red"], ["red"], []]);
     const path = solve(state);
     expect(path).not.toBeNull();
     expect(path!.length).toBe(1);
-    const { applyPour } = require("../engine");
     let s = state;
     for (const move of path!) {
       s = applyPour(s, move.from, move.to);
@@ -53,14 +44,9 @@ describe("solve", () => {
   });
 
   it("solves a 2-color, 1-empty puzzle", () => {
-    const state = mkState([
-      ["red", "blue", "red", "blue"],
-      ["blue", "red", "blue", "red"],
-      [],
-    ]);
+    const state = mkState([["red", "blue", "red", "blue"], ["blue", "red", "blue", "red"], []]);
     const path = solve(state);
     expect(path).not.toBeNull();
-    const { applyPour } = require("../engine");
     let s = state;
     for (const move of path!) {
       s = applyPour(s, move.from, move.to);
@@ -82,12 +68,7 @@ describe("solve", () => {
   });
 
   it("path moves are valid (from/to are indices into bottles)", () => {
-    const state = mkState([
-      ["blue", "blue", "blue", "blue"],
-      ["red", "red", "red"],
-      ["red"],
-      [],
-    ]);
+    const state = mkState([["blue", "blue", "blue", "blue"], ["red", "red", "red"], ["red"], []]);
     const path = solve(state);
     expect(path).not.toBeNull();
     for (const move of path!) {
@@ -122,12 +103,7 @@ describe("getNextHint", () => {
   });
 
   it("returns the first move of the optimal path", () => {
-    const state = mkState([
-      ["blue", "blue", "blue", "blue"],
-      ["red", "red", "red"],
-      ["red"],
-      [],
-    ]);
+    const state = mkState([["blue", "blue", "blue", "blue"], ["red", "red", "red"], ["red"], []]);
     const hint = getNextHint(state);
     expect(hint).not.toBeNull();
     expect(hint).toHaveProperty("from");
@@ -135,15 +111,9 @@ describe("getNextHint", () => {
   });
 
   it("hint move is valid for the current state", () => {
-    const state = mkState([
-      ["blue", "blue", "blue", "blue"],
-      ["red", "red", "red"],
-      ["red"],
-      [],
-    ]);
+    const state = mkState([["blue", "blue", "blue", "blue"], ["red", "red", "red"], ["red"], []]);
     const hint = getNextHint(state);
     expect(hint).not.toBeNull();
-    const { isValidPour } = require("../engine");
     expect(isValidPour(state.bottles[hint!.from], state.bottles[hint!.to])).toBe(true);
   });
 });

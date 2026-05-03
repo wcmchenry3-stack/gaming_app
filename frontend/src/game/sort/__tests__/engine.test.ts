@@ -3,7 +3,7 @@
  */
 
 import { applyPour, initState, isComplete, isValidPour, undo } from "../engine";
-import type { SortState } from "../types";
+import type { Color, SortState } from "../types";
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -11,7 +11,7 @@ import type { SortState } from "../types";
 
 function mkState(bottles: (string | "")[][], overrides: Partial<SortState> = {}): SortState {
   return {
-    bottles: bottles.map((b) => b.filter((s) => s !== "") as any),
+    bottles: bottles.map((b) => b.filter((s): s is Color => s !== "")),
     moveCount: 0,
     undosUsed: 0,
     isComplete: false,
@@ -73,7 +73,10 @@ describe("applyPour", () => {
     const next = applyPour(state, 0, 2);
     expect(next.bottles[2]).toEqual(["blue", "blue", "blue"]);
     // run of 3 reds into dest with 1 space — clamp to 1
-    const state2 = mkState([["blue", "red", "red", "red"], ["red", "red", "red"]]);
+    const state2 = mkState([
+      ["blue", "red", "red", "red"],
+      ["red", "red", "red"],
+    ]);
     const next2 = applyPour(state2, 0, 1);
     expect(next2.bottles[0]).toEqual(["blue", "red", "red"]);
     expect(next2.bottles[1]).toEqual(["red", "red", "red", "red"]);
@@ -102,11 +105,7 @@ describe("isComplete", () => {
   });
 
   it("returns true when all bottles are full single-color", () => {
-    const state = mkState([
-      ["red", "red", "red", "red"],
-      ["blue", "blue", "blue", "blue"],
-      [],
-    ]);
+    const state = mkState([["red", "red", "red", "red"], ["blue", "blue", "blue", "blue"], []]);
     expect(isComplete(state)).toBe(true);
   });
 
@@ -167,14 +166,17 @@ describe("initState", () => {
       ["green", "green", "green", "green"],
       ["", "", "", ""],
     ];
-    const state = initState(apiBottles as any);
+    const state = initState(apiBottles as (Color | "")[][]);
     expect(state.bottles[0]).toEqual(["red", "blue"]);
     expect(state.bottles[1]).toEqual(["green", "green", "green", "green"]);
     expect(state.bottles[2]).toEqual([]);
   });
 
   it("initialises counters to zero and isComplete to false", () => {
-    const state = initState([["red", "", "", ""], ["", "", "", ""]]);
+    const state = initState([
+      ["red", "", "", ""],
+      ["", "", "", ""],
+    ]);
     expect(state.moveCount).toBe(0);
     expect(state.undosUsed).toBe(0);
     expect(state.isComplete).toBe(false);
