@@ -35,9 +35,7 @@ LEADERBOARD_LIMIT = 10
 _SORT_SESSION = "sort-anon"
 
 _LEVELS_PATH = pathlib.Path(__file__).parent / "levels.json"
-_LEVELS: list[LevelData] = [
-    LevelData(**item) for item in json.loads(_LEVELS_PATH.read_text())
-]
+_LEVELS: list[LevelData] = [LevelData(**item) for item in json.loads(_LEVELS_PATH.read_text())]
 
 
 async def _sort_game_type_id(db: AsyncSession) -> int:
@@ -124,5 +122,3 @@ async def get_scores(request: Request) -> LeaderboardResponse:
         gt_id = await _sort_game_type_id(db)
         scores = await _top_scores(db, gt_id)
     return LeaderboardResponse(scores=scores)
-
-
