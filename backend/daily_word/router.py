@@ -13,7 +13,7 @@ import unicodedata
 from datetime import datetime, timedelta, timezone
 
 from fastapi import APIRouter, HTTPException, Query, Request
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from daily_word.puzzle import get_answer, get_today_meta, is_valid_guess
 from limiter import _real_ip, limiter
@@ -67,14 +67,14 @@ def _score_guess(answer: str, guess: str) -> list[dict]:
 class GuessRequest(BaseModel):
     puzzle_id: str
     guess: str
-    tz_offset_minutes: int = 0
+    tz_offset_minutes: int = Field(0, ge=-840, le=840)
 
 
 @router.get("/today")
 @limiter.limit("60/minute")
 async def get_today(
     request: Request,
-    tz_offset_minutes: int = Query(0),
+    tz_offset_minutes: int = Query(0, ge=-840, le=840),
     lang: str = Query("en"),
 ) -> dict:
     if lang not in _SUPPORTED_LANGS:

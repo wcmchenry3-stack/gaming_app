@@ -58,5 +58,9 @@ class DailyWordTasks(TaskSet):
         with self.client.get(
             "/daily-word/today?tz_offset_minutes=0&lang=en",
             name="GET /daily-word/today",
+            catch_response=True,
         ) as resp:
-            resp.raise_for_status()
+            if resp.status_code == 200:
+                resp.success()
+            else:
+                resp.failure(f"Unexpected status {resp.status_code}")

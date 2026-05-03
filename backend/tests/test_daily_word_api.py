@@ -191,6 +191,21 @@ def test_missing_session_id_returns_400(client: TestClient) -> None:
     assert r.status_code == 400
 
 
+def test_out_of_range_tz_offset_post_returns_422(client: TestClient) -> None:
+    headers = _sid_headers()
+    r = client.post(
+        "/daily-word/guess",
+        headers=headers,
+        json={"puzzle_id": _today_puzzle_id(), "guess": "crane", "tz_offset_minutes": 9999},
+    )
+    assert r.status_code == 422
+
+
+def test_out_of_range_tz_offset_get_returns_422(client: TestClient) -> None:
+    r = client.get("/daily-word/today?tz_offset_minutes=9999")
+    assert r.status_code == 422
+
+
 # ---------------------------------------------------------------------------
 # Rate limiting — brute-force 7th guess returns 429 (#1195)
 # ---------------------------------------------------------------------------

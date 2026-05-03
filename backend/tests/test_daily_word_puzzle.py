@@ -57,6 +57,14 @@ def test_get_today_meta_word_length_positive():
     assert meta["word_length"] > 0
 
 
+def test_all_hindi_answers_same_word_length():
+    """Every Hindi answer must have the same word_length so the UI grid is consistent."""
+    from daily_word.puzzle import _ANSWERS_HI
+
+    lengths = {len(w) for w in _ANSWERS_HI}
+    assert len(lengths) == 1, f"Hindi answers have mixed lengths: {lengths}"
+
+
 # ---------------------------------------------------------------------------
 # get_answer determinism
 # ---------------------------------------------------------------------------
