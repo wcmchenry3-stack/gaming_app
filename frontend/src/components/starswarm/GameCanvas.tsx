@@ -342,7 +342,7 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
             {/* Starfield */}
             {sf.stars.map((star) => (
               <Circle
-                key={star.id}
+                key={`star-${star.id}`}
                 cx={star.x}
                 cy={star.y}
                 r={star.r}
