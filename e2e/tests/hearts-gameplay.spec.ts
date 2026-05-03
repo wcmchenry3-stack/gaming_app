@@ -5,7 +5,7 @@
  * All backend calls are intercepted — no running backend needed.
  */
 
-import { test, expect } from "@playwright/test";
+import { test, expect } from "./fixtures";
 import { mockHeartsApi, gotoHearts, injectHeartsState } from "./helpers/hearts";
 
 // 13-card hands where Player 1 (West) holds 2♣ and leads trick 1 automatically.

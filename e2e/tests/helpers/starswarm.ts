@@ -1,4 +1,5 @@
 import { Page } from "@playwright/test";
+import { installEntitlementsMock } from "./api-mock";
 
 const API_BASE = "http://localhost:8000";
 
@@ -13,6 +14,7 @@ export async function mockStarswarmApi(page: Page): Promise<void> {
 }
 
 export async function gotoStarswarm(page: Page): Promise<void> {
+  await installEntitlementsMock(page);
   await page.goto("/");
   await page.getByRole("button", { name: "Play Star Swarm" }).click();
   await page

@@ -11,7 +11,7 @@
  * API endpoints are mocked so tests are hermetic.
  */
 
-import { test, expect } from "@playwright/test";
+import { test, expect } from "./fixtures";
 import { mockStarswarmApi } from "./helpers/starswarm";
 
 const API_BASE = "http://localhost:8000";

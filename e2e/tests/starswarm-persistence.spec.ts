@@ -10,7 +10,7 @@
  * All backend calls are intercepted — no running backend needed.
  */
 
-import { test, expect } from "@playwright/test";
+import { test, expect } from "./fixtures";
 import {
   mockStarswarmApi,
   injectStarswarmState,

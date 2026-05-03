@@ -10,7 +10,7 @@
  * All backend calls are intercepted — no running backend needed.
  */
 
-import { test, expect } from "@playwright/test";
+import { test, expect } from "./fixtures";
 import { mockHeartsApi, injectHeartsState } from "./helpers/hearts";
 
 // Player 0 wins with 45 points (lowest). Player 1 triggers game-over at 102.

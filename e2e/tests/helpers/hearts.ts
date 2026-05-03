@@ -1,4 +1,5 @@
 import { Page } from "@playwright/test";
+import { installEntitlementsMock } from "./api-mock";
 
 const STORAGE_KEY = "hearts_game";
 
@@ -15,6 +16,7 @@ export async function mockHeartsApi(page: Page): Promise<void> {
 }
 
 export async function gotoHearts(page: Page): Promise<void> {
+  await installEntitlementsMock(page);
   await page.goto("/");
   await page.evaluate((key) => localStorage.removeItem(key), STORAGE_KEY);
   await page.getByRole("button", { name: "Play Hearts" }).click();
