@@ -280,9 +280,7 @@ describe("SudokuGrid", () => {
       // (1,1) shares a box with (0,0) but not its row or column — must not be highlighted.
       const boxOnlyCell = cells[1 * 9 + 1]!;
       expect(boxOnlyCell.props.style).not.toEqual(
-        expect.arrayContaining([
-          expect.objectContaining({ backgroundColor: "#8ff5ff22" }),
-        ])
+        expect.arrayContaining([expect.objectContaining({ backgroundColor: "#8ff5ff22" })])
       );
     });
 
