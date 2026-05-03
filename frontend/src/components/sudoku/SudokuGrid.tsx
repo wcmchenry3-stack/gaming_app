@@ -33,12 +33,7 @@ export default function SudokuGrid({
   const isPeer = (r: number, c: number): boolean => {
     if (selectedRow === null || selectedCol === null) return false;
     if (r === selectedRow && c === selectedCol) return false;
-    return (
-      r === selectedRow ||
-      c === selectedCol ||
-      (Math.floor(r / boxRows) === Math.floor(selectedRow / boxRows) &&
-        Math.floor(c / boxCols) === Math.floor(selectedCol / boxCols))
-    );
+    return r === selectedRow || c === selectedCol;
   };
 
   return (
