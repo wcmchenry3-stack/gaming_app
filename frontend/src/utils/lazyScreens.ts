@@ -14,6 +14,7 @@ const factories = {
   Hearts: () => import("../screens/HeartsScreen"),
   Sudoku: () => import("../screens/SudokuScreen"),
   Mahjong: () => import("../screens/MahjongScreen"),
+  Sort: () => import("../screens/SortScreen"),
   Leaderboard: () => import("../screens/LeaderboardScreen"),
   GameDetail: () => import("../screens/GameDetailScreen"),
   Settings: () => import("../screens/SettingsScreen"),
@@ -31,18 +32,20 @@ export const LazyScreens = {
   Hearts: React.lazy(factories.Hearts),
   Sudoku: React.lazy(factories.Sudoku),
   Mahjong: React.lazy(factories.Mahjong),
+  Sort: React.lazy(factories.Sort),
   Leaderboard: React.lazy(factories.Leaderboard),
   GameDetail: React.lazy(factories.GameDetail),
   Settings: React.lazy(factories.Settings),
   Scoreboard: React.lazy(factories.Scoreboard),
 } as const;
 
-// Slugs for the four premium games that have lazy screens.
+// Slugs for premium games that have lazy screens.
 const PREMIUM_LAZY: Array<[keyof typeof factories, string]> = [
   ["Cascade", "cascade"],
   ["StarSwarm", "starswarm"],
   ["Hearts", "hearts"],
   ["Sudoku", "sudoku"],
+  ["Sort", "sort"],
 ];
 
 /**

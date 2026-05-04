@@ -7,6 +7,7 @@ import { clearGame as clearHearts } from "../game/hearts/storage";
 import { clearGame as clearYacht } from "../game/yacht/storage";
 import { clearGame as clearSudoku } from "../game/sudoku/storage";
 import { clearGame as clearCascade } from "../game/cascade/storage";
+import { clearGame as clearSort } from "../game/sort/storage";
 import { scoreQueue } from "../game/_shared/scoreQueue";
 import type { GameType } from "../api/vocab";
 
@@ -17,10 +18,11 @@ const GAME_STORAGE_CLEARERS: Partial<Record<string, () => Promise<void>>> = {
   yacht: clearYacht,
   sudoku: clearSudoku,
   cascade: clearCascade,
+  sort: clearSort,
 };
 
 // Premium games — sourced from backend migration 0014_game_types_premium_cat
-export const PREMIUM_GAMES = new Set(["yacht", "cascade", "hearts", "sudoku", "starswarm"]);
+export const PREMIUM_GAMES = new Set(["yacht", "cascade", "hearts", "sudoku", "starswarm", "sort"]);
 
 export const OFFLINE_GRACE_MS = 7 * 24 * 60 * 60 * 1000;
 
