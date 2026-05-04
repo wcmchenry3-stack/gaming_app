@@ -1,12 +1,14 @@
-"""API tests for daily_word endpoints (#1190, #1195).
+"""API tests for daily_word endpoints (#1190, #1195, #1208).
 
 Covers:
   - Happy path GET /daily-word/today and POST /daily-word/guess
   - Duplicate-letter coloring
   - Stale puzzle_id → 422
+  - Grace-window edge cases (#1208)
   - Invalid word → 422 not_a_word
   - Brute-force 7th guess → 429
   - Missing X-Session-ID → 400
+  - GET /answer happy path and invalid puzzle_id (#1208)
   - Answer-not-in-response security assertions (#1195)
   - Response time SLO (#1195)
 """
@@ -18,6 +20,7 @@ import time
 import uuid
 from datetime import datetime, timedelta, timezone
 from typing import Iterator
+from unittest.mock import patch
 
 import pytest
 from fastapi.testclient import TestClient
@@ -168,8 +171,6 @@ def test_grace_window_accepts_yesterday_puzzle_id(client: TestClient) -> None:
     Clock is pinned to 2024-01-02 00:00:30 UTC.  local_ts=2024-01-02 00:00:30,
     grace_ts=2024-01-01 23:59:30 — so date "2024-01-01" matches grace_ts and must be accepted.
     """
-    from unittest.mock import patch
-
     pinned = datetime(2024, 1, 2, 0, 0, 30, tzinfo=timezone.utc)
     with patch("daily_word.router.datetime") as mock_dt:
         mock_dt.now.return_value = pinned
@@ -188,8 +189,6 @@ def test_grace_window_rejects_two_days_ago_puzzle_id(client: TestClient) -> None
     Clock is pinned to 2024-01-02 00:00:30 UTC.  Neither local_ts (2024-01-02)
     nor grace_ts (2024-01-01) matches "2023-12-31", so the request must be rejected.
     """
-    from unittest.mock import patch
-
     pinned = datetime(2024, 1, 2, 0, 0, 30, tzinfo=timezone.utc)
     with patch("daily_word.router.datetime") as mock_dt:
         mock_dt.now.return_value = pinned
@@ -303,6 +302,29 @@ def test_answer_not_in_post_guess_response(client: TestClient) -> None:
     json_str = json.dumps(r.json())
     for forbidden in ('"word"', '"answer"', '"solution"'):
         assert forbidden not in json_str
+
+
+# ---------------------------------------------------------------------------
+# GET /answer endpoint (#1208)
+# ---------------------------------------------------------------------------
+
+
+def test_get_answer_returns_answer_for_valid_puzzle_id(client: TestClient) -> None:
+    """GET /answer returns {"answer": <word>} for today's valid puzzle_id."""
+    puzzle_id = _today_puzzle_id()
+    r = client.get(f"/daily-word/answer?puzzle_id={puzzle_id}")
+    assert r.status_code == 200
+    data = r.json()
+    assert "answer" in data
+    assert isinstance(data["answer"], str)
+    assert len(data["answer"]) > 0
+
+
+def test_get_answer_returns_422_for_invalid_puzzle_id(client: TestClient) -> None:
+    """GET /answer returns 422 when puzzle_id is not a valid date-keyed id."""
+    r = client.get("/daily-word/answer?puzzle_id=not-a-real-id")
+    assert r.status_code == 422
+    assert r.json()["detail"] == "invalid_puzzle_id"
 
 
 # ---------------------------------------------------------------------------

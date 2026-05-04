@@ -55,7 +55,7 @@ import { ApiError } from "../game/_shared/httpClient";
 // ---------------------------------------------------------------------------
 
 const FLIP_HALF_MS = 150;
-const TILE_STAGGER_MS = 300;
+const TILE_STAGGER_MS = 100;
 const TOAST_DURATION_MS = 2000;
 const DEEP_LINK = "https://bcarcade.app/daily-word";
 
@@ -580,6 +580,7 @@ export default function DailyWordScreen() {
   const hasLoadedRef = useRef(false);
   const countdownRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const flipTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const language = getLanguage();
   const tzOffset = getTimezoneOffset();
 
@@ -598,6 +599,7 @@ export default function DailyWordScreen() {
     return () => {
       if (countdownRef.current) clearInterval(countdownRef.current);
       if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
+      if (flipTimerRef.current) clearTimeout(flipTimerRef.current);
     };
   }, []);
 
@@ -697,18 +699,6 @@ export default function DailyWordScreen() {
     await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
   }, []);
 
-  const handleSubmit = useCallback(async () => {
-    setState((currentState) => {
-      // We need a snapshot for the async handler; return unchanged
-      return currentState;
-    });
-  }, []);
-
-  // Separate async submit to avoid capturing stale state in handleSubmit
-  const doSubmit = useCallback(async () => {
-    // Read from the ref-captured latest state
-  }, []);
-
   // Use a ref to always access latest state in the async submit
   const stateRef = useRef<DailyWordState | null>(null);
   stateRef.current = state;
@@ -750,7 +740,7 @@ export default function DailyWordScreen() {
       setFlippingRowIndex(submittedRowIndex);
 
       const totalFlipMs = s.word_length * TILE_STAGGER_MS + FLIP_HALF_MS * 2;
-      setTimeout(async () => {
+      flipTimerRef.current = setTimeout(async () => {
         setFlippingRowIndex(null);
         if (finalState.is_complete) {
           if (finalState.won) {

@@ -9,7 +9,7 @@
  */
 
 import React from "react";
-import { act, render } from "@testing-library/react-native";
+import { render } from "@testing-library/react-native";
 import { ThemeProvider } from "../../theme/ThemeContext";
 import DailyWordScreen from "../DailyWordScreen";
 import type { DailyWordState } from "../../game/daily_word/types";

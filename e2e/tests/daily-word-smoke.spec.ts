@@ -15,7 +15,7 @@ test.describe("Daily Word — smoke", () => {
 
   test("tile grid renders 6 rows", async ({ page }) => {
     await gotoDailyWord(page);
-    const rows = page.locator('[testid^="daily-word-row-"]');
+    const rows = page.locator('[data-testid^="daily-word-row-"]');
     await expect(rows).toHaveCount(6, { timeout: 5_000 });
   });
 
