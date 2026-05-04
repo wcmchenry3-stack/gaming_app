@@ -30,17 +30,19 @@ describe("SortBoard", () => {
 
   it("renders one BottleView per bottle", () => {
     const state = mkState([["red"], ["blue"], []]);
-    const { getAllByRole } = render(withTheme(<SortBoard state={state} onBottleTap={jest.fn()} />));
-    expect(getAllByRole("button")).toHaveLength(3);
+    const { getAllByLabelText } = render(
+      withTheme(<SortBoard state={state} onBottleTap={jest.fn()} />)
+    );
+    expect(getAllByLabelText(/^Bottle \d/)).toHaveLength(3);
   });
 
   it("calls onBottleTap with the correct index when a bottle is tapped", () => {
     const onBottleTap = jest.fn();
     const state = mkState([["red"], ["blue"], []]);
-    const { getAllByRole } = render(
+    const { getByLabelText } = render(
       withTheme(<SortBoard state={state} onBottleTap={onBottleTap} />)
     );
-    fireEvent.press(getAllByRole("button")[1]);
+    fireEvent.press(getByLabelText("Bottle 2, 1 of 4 filled"));
     expect(onBottleTap).toHaveBeenCalledWith(1);
   });
 
@@ -70,8 +72,10 @@ describe("SortBoard", () => {
       ["pink"],
       ["teal"],
     ]);
-    const { getAllByRole } = render(withTheme(<SortBoard state={state} onBottleTap={jest.fn()} />));
-    expect(getAllByRole("button")).toHaveLength(8);
+    const { getAllByLabelText } = render(
+      withTheme(<SortBoard state={state} onBottleTap={jest.fn()} />)
+    );
+    expect(getAllByLabelText(/^Bottle \d/)).toHaveLength(8);
   });
 
   it("threads colorblindMode down to BallView — Svg symbols appear when enabled", () => {

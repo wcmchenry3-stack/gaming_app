@@ -2,7 +2,7 @@
  * Sort Puzzle engine unit tests (#1175).
  */
 
-import { applyPour, initState, isComplete, isValidPour, undo } from "../engine";
+import { applyPour, initState, isBottleSolved, isComplete, isValidPour, undo } from "../engine";
 import type { Color, SortState } from "../types";
 
 // ---------------------------------------------------------------------------
@@ -19,6 +19,28 @@ function mkState(bottles: (string | "")[][], overrides: Partial<SortState> = {})
     ...overrides,
   };
 }
+
+// ---------------------------------------------------------------------------
+// isBottleSolved
+// ---------------------------------------------------------------------------
+
+describe("isBottleSolved", () => {
+  it("returns true for an empty bottle", () => {
+    expect(isBottleSolved([])).toBe(true);
+  });
+
+  it("returns true for a full single-color bottle", () => {
+    expect(isBottleSolved(["red", "red", "red", "red"])).toBe(true);
+  });
+
+  it("returns false for a partial single-color bottle", () => {
+    expect(isBottleSolved(["red", "red", "red"])).toBe(false);
+  });
+
+  it("returns false for a full mixed-color bottle", () => {
+    expect(isBottleSolved(["red", "blue", "red", "blue"])).toBe(false);
+  });
+});
 
 // ---------------------------------------------------------------------------
 // isValidPour

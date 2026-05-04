@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { AccessibilityInfo, StyleSheet, View } from "react-native";
 import Animated, {
   cancelAnimation,
@@ -27,6 +27,13 @@ export default function SortBoard({ state, colorblindMode = false, onBottleTap }
   const numCols = state.bottles.length > 6 ? 3 : 2;
   const bottleWidthPct = `${100 / numCols}%` as `${number}%`;
 
+  const handlers = useMemo(
+    () => state.bottles.map((_, idx) => () => onBottleTap(idx)),
+    // rebuild only when bottle count or handler reference changes
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [state.bottles.length, onBottleTap]
+  );
+
   return (
     <View accessibilityLabel={t("a11y.boardRegion")} accessibilityRole="none" style={styles.board}>
       <View style={[styles.grid, { gap: BOTTLE_GAP }]}>
@@ -37,7 +44,7 @@ export default function SortBoard({ state, colorblindMode = false, onBottleTap }
               index={idx}
               selected={state.selectedBottleIndex === idx}
               colorblindMode={colorblindMode}
-              onTap={() => onBottleTap(idx)}
+              onTap={handlers[idx]}
             />
           </View>
         ))}

@@ -43,7 +43,7 @@ export default function BottleView({
   let accessibilityLabel: string;
   if (selected) {
     accessibilityLabel = t("a11y.bottleSelected", { index: index + 1 });
-  } else if (bottle.length === 0) {
+  } else if (!isFilled) {
     accessibilityLabel = t("a11y.bottleEmpty", { index: index + 1 });
   } else if (solved) {
     accessibilityLabel = t("a11y.bottleSolved", { index: index + 1 });
@@ -60,7 +60,6 @@ export default function BottleView({
       onPress={onTap}
       disabled={!onTap}
       accessibilityLabel={accessibilityLabel}
-      accessibilityRole="button"
       activeOpacity={0.8}
     >
       <Animated.View
