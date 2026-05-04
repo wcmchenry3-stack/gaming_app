@@ -21,17 +21,13 @@ import { useTheme } from "../theme/ThemeContext";
 import { typography } from "../theme/typography";
 import { applyPour, initState, isValidPour, undo as undoState } from "../game/sort/engine";
 import { getNextHint } from "../game/sort/solver";
-import type { SortState } from "../game/sort/types";
-import type { Color } from "../game/sort/types";
+import type { Color, SortState } from "../game/sort/types";
 import SortBoard from "../game/sort/components/SortBoard";
 import LevelSelectScreen from "../game/sort/components/LevelSelectScreen";
 import { sortApi, type LevelData, type ScoreEntry } from "../game/sort/api";
-import {
-  clearGame,
-  loadProgress,
-  saveProgress,
-  type SortProgress,
-} from "../game/sort/storage";
+import { loadProgress, saveProgress, type SortProgress } from "../game/sort/storage";
+import { useNetwork } from "../game/_shared/NetworkContext";
+import { OfflineBanner } from "../components/shared/OfflineBanner";
 
 const MAX_NAME_LENGTH = 32;
 
@@ -43,6 +39,8 @@ export default function SortScreen() {
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<NativeStackNavigationProp<HomeStackParamList>>();
+  const { isOnline, isInitialized } = useNetwork();
+  const offline = isInitialized && !isOnline;
 
   // Top-level view
   const [view, setView] = useState<View>("loading");
@@ -75,41 +73,55 @@ export default function SortScreen() {
   const progressRef = useRef(progress);
   progressRef.current = progress;
 
-  // Mount: load levels and saved progress
-  useEffect(() => {
-    async function init() {
-      const [levelsResult, prog] = await Promise.all([
-        sortApi.getLevels().catch(() => null),
-        loadProgress(),
-      ]);
-      if (!levelsResult) {
-        setLoadError(true);
-      } else {
-        setLevels(levelsResult.levels as LevelData[]);
-      }
-      setProgress(prog);
-      setView("select");
+  // ---------------------------------------------------------------------------
+  // Init — extracted so the retry button can re-invoke it
+  // ---------------------------------------------------------------------------
+
+  const loadScreen = useCallback(async () => {
+    setLoadError(false);
+    setView("loading");
+    const [levelsResult, prog] = await Promise.all([
+      sortApi.getLevels().catch(() => null),
+      loadProgress(),
+    ]);
+    if (!levelsResult) {
+      setLoadError(true);
+    } else {
+      setLevels(levelsResult.levels as LevelData[]);
     }
-    void init();
+    setProgress(prog);
+    setView("select");
   }, []);
 
-  // Save progress whenever in-play state changes
+  useEffect(() => {
+    void loadScreen();
+  }, [loadScreen]);
+
+  // ---------------------------------------------------------------------------
+  // Persistence effects
+  // ---------------------------------------------------------------------------
+
+  // Save whenever the in-play game state changes
   useEffect(() => {
     if (view !== "play" || currentLevelId === null || gameState === null) return;
     const inProgress = !gameState.isComplete;
-    const toSave: SortProgress = {
+    void saveProgress({
       ...progressRef.current,
       currentLevelId: inProgress ? currentLevelId : null,
       currentState: inProgress ? gameState : null,
-    };
-    void saveProgress(toSave);
+    });
   }, [gameState, view, currentLevelId]);
 
-  // Save progress and clear in-progress on app background
+  // Save on app background
   useEffect(() => {
     const sub = AppState.addEventListener("change", (next: AppStateStatus) => {
       if (next === "background" || next === "inactive") {
-        if (view === "play" && currentLevelId !== null && gameState !== null && !gameState.isComplete) {
+        if (
+          view === "play" &&
+          currentLevelId !== null &&
+          gameState !== null &&
+          !gameState.isComplete
+        ) {
           void saveProgress({
             ...progressRef.current,
             currentLevelId,
@@ -119,10 +131,11 @@ export default function SortScreen() {
       }
     });
     return () => sub.remove();
+    // progressRef is a stable ref, so it doesn't belong in the dep array.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [view, currentLevelId, gameState]);
 
-  // Win detection
+  // Show win modal when the level is completed
   useEffect(() => {
     if (gameState?.isComplete && !showWinModal) {
       setShowWinModal(true);
@@ -130,7 +143,7 @@ export default function SortScreen() {
   }, [gameState?.isComplete, showWinModal]);
 
   // ---------------------------------------------------------------------------
-  // Handlers
+  // Game handlers
   // ---------------------------------------------------------------------------
 
   function handleBottleTap(index: number) {
@@ -208,18 +221,21 @@ export default function SortScreen() {
       const res = await sortApi.getLeaderboard();
       setLeaderboard(res.scores as ScoreEntry[]);
     } catch {
-      // ignore, keep stale data
+      // keep stale data on error
     } finally {
       setLeaderboardLoading(false);
     }
   }, []);
 
-  function handleSelectTab(tab: SelectTab) {
-    setSelectTab(tab);
-    if (tab === "leaderboard") {
-      void handleLoadLeaderboard();
-    }
-  }
+  const handleSelectTab = useCallback(
+    (tab: SelectTab) => {
+      setSelectTab(tab);
+      if (tab === "leaderboard") {
+        void handleLoadLeaderboard();
+      }
+    },
+    [handleLoadLeaderboard]
+  );
 
   async function handleSubmitScore() {
     if (!playerName.trim() || currentLevelId === null || submitting) return;
@@ -289,7 +305,11 @@ export default function SortScreen() {
                 <TextInput
                   style={[
                     styles.nameInput,
-                    { color: colors.text, borderColor: colors.border, backgroundColor: colors.surface },
+                    {
+                      color: colors.text,
+                      borderColor: colors.border,
+                      backgroundColor: colors.surface,
+                    },
                   ]}
                   value={playerName}
                   onChangeText={setPlayerName}
@@ -302,7 +322,7 @@ export default function SortScreen() {
                 />
 
                 {submitError && (
-                  <Text style={[styles.errorText, { color: colors.error ?? "#e53e3e" }]}>
+                  <Text style={[styles.errorText, { color: colors.error }]}>
                     {t("error.submitFailed")}
                   </Text>
                 )}
@@ -346,7 +366,11 @@ export default function SortScreen() {
               )}
 
               <Pressable
-                style={[styles.modalBtn, styles.modalBtnSecondary, { borderColor: colors.border }]}
+                style={[
+                  styles.modalBtn,
+                  styles.modalBtnSecondary,
+                  { borderColor: colors.border },
+                ]}
                 onPress={handleBackToSelect}
                 accessibilityRole="button"
                 accessibilityLabel={t("win.backToLevels")}
@@ -409,14 +433,16 @@ export default function SortScreen() {
 
   if (view === "select") {
     return (
-      <View style={[styles.screen, { backgroundColor: colors.background, paddingTop: insets.top }]}>
+      <View
+        style={[styles.screen, { backgroundColor: colors.background, paddingTop: insets.top }]}
+      >
         {/* Header */}
         <View style={[styles.selectHeader, { borderBottomColor: colors.border }]}>
           <Pressable
             onPress={() => navigation.goBack()}
             style={styles.backBtn}
             accessibilityRole="button"
-            accessibilityLabel="Back"
+            accessibilityLabel={t("action.backToLevels")}
           >
             <Text style={[styles.backBtnText, { color: colors.accent }]}>‹</Text>
           </Pressable>
@@ -426,11 +452,22 @@ export default function SortScreen() {
           <View style={styles.backBtn} />
         </View>
 
-        {/* Error banner */}
+        {/* Error banner with retry */}
         {loadError && (
-          <Text style={[styles.loadError, { color: colors.error ?? "#e53e3e" }]}>
-            {t("error.loadFailed")}
-          </Text>
+          <View style={styles.errorRow}>
+            <Text style={[styles.loadErrorText, { color: colors.error }]}>
+              {t("error.loadFailed")}
+            </Text>
+            <Pressable
+              onPress={() => void loadScreen()}
+              accessibilityRole="button"
+              accessibilityLabel={t("error.submitRetry")}
+            >
+              <Text style={[styles.retryText, { color: colors.accent }]}>
+                {t("error.submitRetry")}
+              </Text>
+            </Pressable>
+          </View>
         )}
 
         {/* Tab bar */}
@@ -440,7 +477,10 @@ export default function SortScreen() {
               key={tab}
               style={[
                 styles.tab,
-                selectTab === tab && { borderBottomColor: colors.accent, borderBottomWidth: 2 },
+                selectTab === tab && {
+                  borderBottomColor: colors.accent,
+                  borderBottomWidth: 2,
+                },
               ]}
               onPress={() => handleSelectTab(tab)}
               accessibilityRole="tab"
@@ -478,16 +518,27 @@ export default function SortScreen() {
     <View
       style={[
         styles.screen,
-        { backgroundColor: colors.background, paddingTop: insets.top, paddingBottom: insets.bottom },
+        {
+          backgroundColor: colors.background,
+          paddingTop: insets.top,
+          paddingBottom: insets.bottom,
+        },
       ]}
     >
+      {/* Offline banner */}
+      {offline && (
+        <View style={styles.offlineBannerWrap}>
+          <OfflineBanner />
+        </View>
+      )}
+
       {/* HUD */}
       <View style={[styles.hud, { borderBottomColor: colors.border }]}>
         <Pressable
           onPress={handleBackToSelect}
           style={styles.hudBtn}
           accessibilityRole="button"
-          accessibilityLabel="Back to levels"
+          accessibilityLabel={t("action.backToLevels")}
         >
           <Text style={[styles.hudBtnText, { color: colors.accent }]}>‹</Text>
         </Pressable>
@@ -561,6 +612,8 @@ const styles = StyleSheet.create({
   screen: { flex: 1 },
   center: { alignItems: "center", justifyContent: "center" },
 
+  offlineBannerWrap: { paddingHorizontal: 12, paddingTop: 4 },
+
   // Select view
   selectHeader: {
     flexDirection: "row",
@@ -571,8 +624,22 @@ const styles = StyleSheet.create({
   },
   backBtn: { width: 40, alignItems: "center" },
   backBtnText: { fontSize: 28, lineHeight: 32, fontFamily: "System" },
-  screenTitle: { flex: 1, textAlign: "center", fontFamily: typography.heading, fontSize: 18 },
-  loadError: { textAlign: "center", padding: 8, fontFamily: typography.body, fontSize: 13 },
+  screenTitle: {
+    flex: 1,
+    textAlign: "center",
+    fontFamily: typography.heading,
+    fontSize: 18,
+  },
+  errorRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+  },
+  loadErrorText: { fontFamily: typography.body, fontSize: 13 },
+  retryText: { fontFamily: typography.label, fontSize: 13, textDecorationLine: "underline" },
   tabBar: {
     flexDirection: "row",
     borderBottomWidth: StyleSheet.hairlineWidth,
@@ -582,10 +649,15 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingVertical: 10,
   },
-  tabText: { fontFamily: typography.label, fontSize: 13, textTransform: "uppercase", letterSpacing: 0.5 },
+  tabText: {
+    fontFamily: typography.label,
+    fontSize: 13,
+    textTransform: "uppercase",
+    letterSpacing: 0.5,
+  },
   leaderboardContainer: { flex: 1 },
   leaderboardLoading: { marginTop: 32 },
-  leaderboardList: { padding: 16, gap: 0 },
+  leaderboardList: { padding: 16 },
   leaderboardRow: {
     flexDirection: "row",
     alignItems: "center",
@@ -596,7 +668,12 @@ const styles = StyleSheet.create({
   leaderboardRank: { fontFamily: typography.label, fontSize: 13, width: 28 },
   leaderboardName: { flex: 1, fontFamily: typography.body, fontSize: 14 },
   leaderboardLevel: { fontFamily: typography.label, fontSize: 13 },
-  emptyText: { textAlign: "center", marginTop: 32, fontFamily: typography.body, fontSize: 14 },
+  emptyText: {
+    textAlign: "center",
+    marginTop: 32,
+    fontFamily: typography.body,
+    fontSize: 14,
+  },
 
   // Play view — HUD
   hud: {
@@ -614,9 +691,19 @@ const styles = StyleSheet.create({
   hudMeta: { fontFamily: typography.body, fontSize: 11 },
   hudActions: { flexDirection: "row", gap: 4 },
   hudActionBtn: { paddingHorizontal: 8, paddingVertical: 4, borderRadius: 6 },
-  hudActionText: { fontFamily: typography.label, fontSize: 11, textTransform: "uppercase", letterSpacing: 0.5 },
+  hudActionText: {
+    fontFamily: typography.label,
+    fontSize: 11,
+    textTransform: "uppercase",
+    letterSpacing: 0.5,
+  },
 
-  boardContainer: { flex: 1, alignItems: "center", justifyContent: "center", padding: 16 },
+  boardContainer: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    padding: 16,
+  },
 
   colorblindToggle: { alignItems: "center", paddingVertical: 8 },
   colorblindToggleText: { fontFamily: typography.body, fontSize: 11 },

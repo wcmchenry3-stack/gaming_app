@@ -14,6 +14,14 @@ import type { SortProgress } from "../storage";
 
 const COLS = 4;
 
+function chunk<T>(arr: T[], size: number): T[][] {
+  const result: T[][] = [];
+  for (let i = 0; i < arr.length; i += size) {
+    result.push(arr.slice(i, i + size));
+  }
+  return result;
+}
+
 interface Props {
   readonly levels: LevelData[];
   readonly progress: SortProgress;
@@ -32,6 +40,8 @@ export default function LevelSelectScreen({
 
   const hasContinue =
     progress.currentLevelId !== null && progress.currentState !== null;
+
+  const rows = chunk(levels, COLS);
 
   return (
     <ScrollView
@@ -60,51 +70,58 @@ export default function LevelSelectScreen({
       )}
 
       <View style={styles.grid}>
-        {levels.map((level) => {
-          const isUnlocked = level.id <= progress.unlockedLevel;
-          return (
-            <Pressable
-              key={level.id}
-              style={[
-                styles.card,
-                {
-                  backgroundColor: isUnlocked
-                    ? colors.surfaceHigh
-                    : colors.surface,
-                  borderColor: isUnlocked ? colors.accent : colors.border,
-                  opacity: isUnlocked ? 1 : 0.5,
-                },
-              ]}
-              onPress={isUnlocked ? () => onSelectLevel(level.id) : undefined}
-              accessibilityRole="button"
-              accessibilityLabel={
-                isUnlocked
-                  ? t("hud.level", { level: level.id })
-                  : t("levelSelect.locked")
-              }
-              accessibilityState={{ disabled: !isUnlocked }}
-            >
-              {isUnlocked ? (
-                <Text style={[styles.levelNum, { color: colors.text }]}>
-                  {level.id}
-                </Text>
-              ) : (
-                <>
-                  <Text style={[styles.levelNum, { color: colors.textMuted }]}>
+        {rows.map((row, rowIdx) => (
+          <View key={rowIdx} style={styles.row}>
+            {row.map((level) => {
+              const isUnlocked = level.id <= progress.unlockedLevel;
+              return (
+                <Pressable
+                  key={level.id}
+                  style={[
+                    styles.card,
+                    {
+                      backgroundColor: isUnlocked
+                        ? colors.surfaceHigh
+                        : colors.surface,
+                      borderColor: isUnlocked ? colors.accent : colors.border,
+                      opacity: isUnlocked ? 1 : 0.5,
+                    },
+                  ]}
+                  onPress={isUnlocked ? () => onSelectLevel(level.id) : undefined}
+                  disabled={!isUnlocked}
+                  accessibilityRole="button"
+                  accessibilityLabel={
+                    isUnlocked
+                      ? t("hud.level", { level: level.id })
+                      : t("levelSelect.lockedLevel", { level: level.id })
+                  }
+                  accessibilityState={{ disabled: !isUnlocked }}
+                >
+                  <Text
+                    style={[
+                      styles.levelNum,
+                      { color: isUnlocked ? colors.text : colors.textMuted },
+                    ]}
+                  >
                     {level.id}
                   </Text>
-                  <Text style={styles.lockIcon}>🔒</Text>
-                </>
-              )}
-            </Pressable>
-          );
-        })}
+                  {!isUnlocked && (
+                    <Text style={styles.lockIcon}>🔒</Text>
+                  )}
+                </Pressable>
+              );
+            })}
+            {/* Pad last row so cards stay the correct width */}
+            {row.length < COLS &&
+              Array.from({ length: COLS - row.length }).map((_, i) => (
+                <View key={`pad-${i}`} style={styles.cardPad} />
+              ))}
+          </View>
+        ))}
       </View>
     </ScrollView>
   );
 }
-
-const CARD_SIZE = `${Math.floor(100 / COLS)}%` as `${number}%`;
 
 const styles = StyleSheet.create({
   container: {
@@ -129,18 +146,23 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   },
   grid: {
+    gap: 8,
+  },
+  row: {
     flexDirection: "row",
-    flexWrap: "wrap",
     gap: 8,
   },
   card: {
-    width: CARD_SIZE,
+    flex: 1,
     aspectRatio: 1,
     borderRadius: 12,
     borderWidth: 1,
     alignItems: "center",
     justifyContent: "center",
     gap: 2,
+  },
+  cardPad: {
+    flex: 1,
   },
   levelNum: {
     fontFamily: typography.heading,
