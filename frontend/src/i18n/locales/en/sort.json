@@ -29,5 +29,18 @@
   "settings.colorblindModeHint": "Shows a symbol on each ball in addition to color",
   "error.loadFailed": "Could not load this level.",
   "error.submitFailed": "Could not save score. Check your connection.",
-  "error.submitRetry": "Retry"
+  "error.submitRetry": "Retry",
+  "levelSelect.title": "Choose a Level",
+  "levelSelect.continue": "Continue Level {{level}}",
+  "levelSelect.locked": "Locked",
+  "tab.levels": "Levels",
+  "tab.leaderboard": "Leaderboard",
+  "win.enterName": "Your name",
+  "win.submitScore": "Submit Score",
+  "win.submitting": "Submitting…",
+  "win.nextLevel": "Next Level",
+  "win.backToLevels": "Back to Levels",
+  "win.rank": "Rank #{{rank}}",
+  "leaderboard.empty": "No scores yet.",
+  "leaderboard.levelReached": "Level {{level}}"
 }

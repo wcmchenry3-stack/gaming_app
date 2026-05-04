@@ -151,8 +151,10 @@ describe("EntitlementProvider", () => {
       expect(ctx.canPlay("sudoku")).toBe(false);
     });
 
-    it("covers exactly the five premium game slugs", () => {
-      expect(PREMIUM_GAMES).toEqual(new Set(["yacht", "cascade", "hearts", "sudoku", "starswarm"]));
+    it("covers exactly the premium game slugs", () => {
+      expect(PREMIUM_GAMES).toEqual(
+        new Set(["yacht", "cascade", "hearts", "sudoku", "starswarm", "sort"])
+      );
     });
   });
 

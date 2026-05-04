@@ -107,8 +107,15 @@ describe("HomeScreen — game cards", () => {
     expect(getByLabelText("Play Blackjack")).toBeTruthy();
     expect(getByLabelText("Play Solitaire")).toBeTruthy();
     expect(getByLabelText("Play Sudoku")).toBeTruthy();
+    expect(getByLabelText("Play Sort Puzzle")).toBeTruthy();
     // Pachisi is disabled — should not appear
     expect(queryByLabelText("Play Pachisi")).toBeNull();
+  });
+
+  it("navigates to Sort when Sort Puzzle card pressed", () => {
+    const { getByLabelText } = renderScreen();
+    fireEvent.press(getByLabelText("Play Sort Puzzle"));
+    expect(mockNavigate).toHaveBeenCalledWith("Sort");
   });
 
   it("navigates to Blackjack when Blackjack card pressed", () => {
