@@ -13,12 +13,19 @@ const MAX_ROWS = 6;
 
 function emptyRow(wordLength: number): RowState {
   return {
-    tiles: Array.from({ length: wordLength }, () => ({ letter: "", status: "empty" as TileStatus })),
+    tiles: Array.from({ length: wordLength }, () => ({
+      letter: "",
+      status: "empty" as TileStatus,
+    })),
     submitted: false,
   };
 }
 
-export function initialState(puzzle_id: string, word_length: number, language: string): DailyWordState {
+export function initialState(
+  puzzle_id: string,
+  word_length: number,
+  language: string
+): DailyWordState {
   return {
     _v: 1,
     puzzle_id,
@@ -59,7 +66,10 @@ export function applyServerResult(state: DailyWordState, tiles: TileState[]): Da
   for (const tile of tiles) {
     if (!tile.letter || tile.status === "empty" || tile.status === "tbd") continue;
     const status = tile.status as "correct" | "present" | "absent";
-    newKeyboard[tile.letter] = promoteLetter(newKeyboard[tile.letter] as LetterStatus | undefined, status);
+    newKeyboard[tile.letter] = promoteLetter(
+      newKeyboard[tile.letter] as LetterStatus | undefined,
+      status
+    );
   }
 
   return {
