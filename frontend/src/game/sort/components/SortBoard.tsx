@@ -29,7 +29,9 @@ export default function SortBoard({ state, colorblindMode = false, onBottleTap }
 
   const handlers = useMemo(
     () => state.bottles.map((_, idx) => () => onBottleTap(idx)),
-    // rebuild only when bottle count or handler reference changes
+    // state.bottles identity changes on every pour; keying on .length avoids
+    // rebuilding all handlers when only ball positions change. onBottleTap is
+    // included so callers that wrap it in useCallback get stable handles too.
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [state.bottles.length, onBottleTap]
   );
