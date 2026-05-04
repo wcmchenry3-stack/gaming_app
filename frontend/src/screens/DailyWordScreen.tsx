@@ -31,6 +31,7 @@ import { clearState, loadState, saveState } from "../game/daily_word/storage";
 import type { DailyWordState, LetterStatus, TileState, TileStatus } from "../game/daily_word/types";
 import { useGameSync } from "../game/_shared/useGameSync";
 import { ApiError } from "../game/_shared/httpClient";
+import { DW } from "../game/daily_word/tokens/colors";
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -39,40 +40,38 @@ import { ApiError } from "../game/_shared/httpClient";
 const FLIP_DURATION_MS = 150;
 const FLIP_STAGGER_MS = 100;
 
-// Standard Wordle colors — purposely not in the theme since they're semantic
-// game colors, not brand colors.
 const TILE_BG: Record<TileStatus, string> = {
-  correct: "#538d4e",
-  present: "#b59f3b",
-  absent: "#3a3a3c",
-  tbd: "#121213",
-  empty: "#121213",
+  correct: DW.tileCorrect,
+  present: DW.tilePresent,
+  absent: DW.tileAbsent,
+  tbd: DW.tileTbd,
+  empty: DW.tileTbd,
 };
 const TILE_BORDER: Record<TileStatus, string> = {
-  correct: "#538d4e",
-  present: "#b59f3b",
-  absent: "#3a3a3c",
-  tbd: "#565758",
-  empty: "#3a3a3c",
+  correct: DW.tileCorrect,
+  present: DW.tilePresent,
+  absent: DW.tileAbsent,
+  tbd: DW.tileBorderNeutral,
+  empty: DW.tileBorderEmpty,
 };
 const TILE_TEXT: Record<TileStatus, string> = {
-  correct: "#ffffff",
-  present: "#ffffff",
-  absent: "#ffffff",
-  tbd: "#ffffff",
-  empty: "#ffffff",
+  correct: DW.textWhite,
+  present: DW.textWhite,
+  absent: DW.textWhite,
+  tbd: DW.textWhite,
+  empty: DW.textWhite,
 };
 const KEY_BG: Record<LetterStatus, string> = {
-  correct: "#538d4e",
-  present: "#b59f3b",
-  absent: "#3a3a3c",
-  unused: "#818384",
+  correct: DW.keyCorrect,
+  present: DW.keyPresent,
+  absent: DW.keyAbsent,
+  unused: DW.keyUnused,
 };
 const KEY_TEXT: Record<LetterStatus, string> = {
-  correct: "#ffffff",
-  present: "#ffffff",
-  absent: "#ffffff",
-  unused: "#ffffff",
+  correct: DW.textWhite,
+  present: DW.textWhite,
+  absent: DW.textWhite,
+  unused: DW.textWhite,
 };
 
 // ---------------------------------------------------------------------------
@@ -469,7 +468,7 @@ export default function DailyWordScreen() {
       error={error ?? undefined}
     >
       <View
-        style={[styles.container, { backgroundColor: "#121213", paddingBottom: insets.bottom + 8 }]}
+        style={[styles.container, { backgroundColor: DW.bg, paddingBottom: insets.bottom + 8 }]}
       >
         {/* Toast */}
         {toast && (
@@ -519,7 +518,7 @@ export default function DailyWordScreen() {
           ))}
           <View style={styles.keyRow}>
             <Pressable
-              style={[styles.keyWide, { backgroundColor: "#818384" }]}
+              style={[styles.keyWide, { backgroundColor: DW.keyUnused }]}
               onPress={handleDelete}
               accessibilityLabel={t("daily_word:keyboard.delete")}
               disabled={submitting || gameState?.is_complete}
@@ -527,7 +526,7 @@ export default function DailyWordScreen() {
               <Text style={styles.keyActionText}>{t("daily_word:keyboard.delete")}</Text>
             </Pressable>
             <Pressable
-              style={[styles.keyWide, { backgroundColor: "#818384" }]}
+              style={[styles.keyWide, { backgroundColor: DW.keyUnused }]}
               onPress={() => void handleSubmit()}
               accessibilityLabel={t("daily_word:keyboard.submit")}
               disabled={submitting || gameState?.is_complete}
@@ -541,8 +540,8 @@ export default function DailyWordScreen() {
       {/* Win modal */}
       <Modal visible={winModalVisible} transparent animationType="fade" testID="win-modal">
         <View style={styles.modalOverlay}>
-          <View style={[styles.modalCard, { backgroundColor: "#1a1a1b" }]} testID="win-modal-card">
-            <Text style={[styles.modalTitle, { color: "#538d4e" }]}>
+          <View style={[styles.modalCard, { backgroundColor: DW.bgModal }]} testID="win-modal-card">
+            <Text style={[styles.modalTitle, { color: DW.accentWin }]}>
               {t("daily_word:win.title")}
             </Text>
             <Text style={styles.modalBody}>
@@ -551,7 +550,7 @@ export default function DailyWordScreen() {
             <Pressable style={styles.modalBtn} onPress={handleShare}>
               <Text style={styles.modalBtnText}>{t("daily_word:win.share")}</Text>
             </Pressable>
-            <Text style={[styles.modalCountdown, { color: "#818384" }]}>
+            <Text style={[styles.modalCountdown, { color: DW.textMuted }]}>
               {t("daily_word:loss.nextWord")} {countdown}
             </Text>
           </View>
@@ -561,8 +560,8 @@ export default function DailyWordScreen() {
       {/* Loss modal */}
       <Modal visible={lossModalVisible} transparent animationType="fade" testID="loss-modal">
         <View style={styles.modalOverlay}>
-          <View style={[styles.modalCard, { backgroundColor: "#1a1a1b" }]} testID="loss-modal-card">
-            <Text style={[styles.modalTitle, { color: "#b59f3b" }]}>
+          <View style={[styles.modalCard, { backgroundColor: DW.bgModal }]} testID="loss-modal-card">
+            <Text style={[styles.modalTitle, { color: DW.accentLoss }]}>
               {t("daily_word:loss.title")}
             </Text>
             {answer && (
@@ -570,7 +569,7 @@ export default function DailyWordScreen() {
                 {t("daily_word:loss.answer", { word: answer.toUpperCase() })}
               </Text>
             )}
-            <Text style={[styles.modalCountdown, { color: "#818384" }]}>
+            <Text style={[styles.modalCountdown, { color: DW.textMuted }]}>
               {t("daily_word:loss.nextWord")} {countdown}
             </Text>
           </View>
@@ -593,7 +592,7 @@ const styles = StyleSheet.create({
     position: "absolute",
     top: 12,
     zIndex: 10,
-    backgroundColor: "#ffffff",
+    backgroundColor: DW.textWhite,
     borderRadius: 6,
     paddingHorizontal: 16,
     paddingVertical: 8,
@@ -601,7 +600,7 @@ const styles = StyleSheet.create({
   toastText: {
     fontFamily: typography.bodyMedium,
     fontSize: 14,
-    color: "#121213",
+    color: DW.textDark,
   },
   gridContainer: {
     flexGrow: 1,
@@ -661,11 +660,11 @@ const styles = StyleSheet.create({
   keyActionText: {
     fontFamily: typography.label,
     fontSize: 12,
-    color: "#ffffff",
+    color: DW.textWhite,
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: "rgba(0,0,0,0.7)",
+    backgroundColor: DW.bgModalOverlay,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -683,11 +682,11 @@ const styles = StyleSheet.create({
   modalBody: {
     fontFamily: typography.body,
     fontSize: 16,
-    color: "#e8e8f0",
+    color: DW.textBody,
     textAlign: "center",
   },
   modalBtn: {
-    backgroundColor: "#538d4e",
+    backgroundColor: DW.accentWin,
     borderRadius: 8,
     paddingVertical: 12,
     paddingHorizontal: 32,
@@ -695,7 +694,7 @@ const styles = StyleSheet.create({
   modalBtnText: {
     fontFamily: typography.label,
     fontSize: 16,
-    color: "#ffffff",
+    color: DW.textWhite,
   },
   modalCountdown: {
     fontFamily: typography.body,
