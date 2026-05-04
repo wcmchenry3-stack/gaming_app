@@ -16,6 +16,7 @@ import { join } from "path";
  *   hearts      — hearts-*.spec.ts
  *   solitaire   — solitaire-*.spec.ts
  *   sudoku      — sudoku-*.spec.ts
+ *   sort        — sort-*.spec.ts
  *   cross       — accessibility.spec.ts, cascade-flow.spec.ts, ui-preferences.spec.ts
  *   logs-budget — logs-*.spec.ts (#373 acceptance gate, CPU-throttled to
  *                  approximate mid-tier mobile device performance)
@@ -96,6 +97,11 @@ export default defineConfig({
     {
       name: "sudoku",
       testMatch: "sudoku-*.spec.ts",
+      use: { ...devices["Desktop Chrome"] },
+    },
+    {
+      name: "sort",
+      testMatch: "sort-*.spec.ts",
       use: { ...devices["Desktop Chrome"] },
     },
     {
