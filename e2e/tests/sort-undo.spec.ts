@@ -42,7 +42,8 @@ test.describe("Sort Puzzle — undo", () => {
     // Undo the pour
     await page.getByRole("button", { name: "Undo" }).click();
 
-    // Bottles revert; undosUsed increments; move count shown is from the saved state
+    // Bottles and move count revert to pre-pour state
+    await expect(page.getByText(/Moves:\s*0/)).toBeVisible({ timeout: 3_000 });
     await expect(
       page.getByRole("button", { name: "Bottle 1, 4 of 4 filled" }),
     ).toBeVisible({ timeout: 3_000 });

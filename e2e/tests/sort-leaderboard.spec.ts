@@ -5,7 +5,7 @@
  * names, levels reached, and correct rank ordering (#1 through #10).
  */
 
-import { test, expect } from "@playwright/test";
+import { test, expect, type Page } from "@playwright/test";
 import { installEntitlementsMock } from "./helpers/api-mock";
 
 const TOP_10 = Array.from({ length: 10 }, (_, i) => ({
@@ -14,7 +14,7 @@ const TOP_10 = Array.from({ length: 10 }, (_, i) => ({
   rank: i + 1,
 }));
 
-function installSortMock(page: Parameters<typeof installEntitlementsMock>[0], scores: unknown[]) {
+function installSortMock(page: Page, scores: unknown[]) {
   return page.route("**/sort/**", async (route) => {
     const url = route.request().url();
     if (url.includes("/sort/levels")) {

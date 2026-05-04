@@ -91,6 +91,7 @@ test.describe("Sort Puzzle — win flow", () => {
     await page.getByRole("button", { name: "Submit Score" }).click();
 
     await expect(page.getByText(/Rank #3/)).toBeVisible({ timeout: 5_000 });
+    expect(submittedBody).not.toBeNull();
     expect(submittedBody).toMatchObject({ player_name: "Alice", level_reached: 1 });
   });
 

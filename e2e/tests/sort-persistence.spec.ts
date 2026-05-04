@@ -23,7 +23,7 @@ test("Sort Puzzle — in-progress state survives navigate away and back", async 
 
   // Navigate away to home
   await page.goto("/");
-  await page.getByText("BC Arcade").first().waitFor();
+  await page.getByRole("button", { name: "Play Sort Puzzle" }).waitFor({ timeout: 10_000 });
 
   // Return to Sort
   await page.getByRole("button", { name: "Play Sort Puzzle" }).click();
@@ -58,7 +58,7 @@ test("Sort Puzzle — unlockedLevel survives page reload", async ({ page }) => {
 
   // Reload the page
   await page.reload();
-  await page.getByText("BC Arcade").first().waitFor({ timeout: 10_000 });
+  await page.getByRole("button", { name: "Play Sort Puzzle" }).waitFor({ timeout: 10_000 });
 
   // Navigate back to sort — Level 2 should still be unlocked
   await page.getByRole("button", { name: "Play Sort Puzzle" }).click();

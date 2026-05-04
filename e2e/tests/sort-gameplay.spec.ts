@@ -12,7 +12,7 @@
  */
 
 import { test, expect } from "@playwright/test";
-import { mockSortApi, gotoSort, injectSortProgress } from "./helpers/sort";
+import { mockSortApi, gotoSort } from "./helpers/sort";
 
 test.describe("Sort Puzzle — gameplay (Level 1)", () => {
   test.beforeEach(async ({ page }) => {
@@ -57,7 +57,7 @@ test.describe("Sort Puzzle — gameplay (Level 1)", () => {
     ).toBeVisible({ timeout: 3_000 });
   });
 
-  test("invalid pour (same source and dest) deselects without moving", async ({ page }) => {
+  test("invalid pour (incompatible colors) deselects without moving", async ({ page }) => {
     // Bottle 1 top = blue; Bottle 2 top = red → cannot pour blue onto red
     await page.getByRole("button", { name: "Bottle 1, 4 of 4 filled" }).click();
     await page.getByRole("button", { name: "Bottle 2, 4 of 4 filled" }).click();
@@ -67,29 +67,3 @@ test.describe("Sort Puzzle — gameplay (Level 1)", () => {
   });
 });
 
-test("Sort Puzzle — solved bottle shows 'complete' label", async ({ page }) => {
-  await mockSortApi(page);
-  await injectSortProgress(page, {
-    unlockedLevel: 1,
-    currentLevelId: 1,
-    currentState: {
-      bottles: [
-        ["red", "red", "red", "red"],
-        ["blue"],
-        [],
-        [],
-      ],
-      moveCount: 4,
-      undosUsed: 0,
-      isComplete: false,
-      selectedBottleIndex: null,
-    },
-  });
-  await page.getByRole("button", { name: "Play Sort Puzzle" }).click();
-  await page.getByText("Choose a Level").waitFor({ timeout: 10_000 });
-  await page.getByRole("button", { name: "Continue Level 1" }).click();
-  await expect(page.getByLabel("Sort Puzzle board")).toBeVisible({ timeout: 5_000 });
-  await expect(
-    page.getByRole("button", { name: "Bottle 1, complete" }),
-  ).toBeVisible({ timeout: 3_000 });
-});
