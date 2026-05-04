@@ -49,7 +49,17 @@ import { useTheme } from "../theme/ThemeContext";
 import { typography } from "../theme/typography";
 import { GameShell } from "../components/shared/GameShell";
 import { OfflineBanner } from "../components/shared/OfflineBanner";
-import GameCanvas, { BOARD_W, BOARD_H, TILE_W, TILE_H } from "../components/mahjong/GameCanvas";
+import GameCanvas, {
+  BOARD_W,
+  BOARD_H,
+  TILE_W,
+  TILE_H,
+  PAD_X,
+  PAD_Y,
+  LAYER_DX,
+  LAYER_DY,
+  SIDE_W,
+} from "../components/mahjong/GameCanvas";
 import { createGame, elapsedMs, selectTile, shuffleBoard, undoMove } from "../game/mahjong/engine";
 import { TURTLE_LAYOUT } from "../game/mahjong/layouts/turtle";
 import type { MahjongState, SlotTile } from "../game/mahjong/types";
@@ -70,15 +80,10 @@ import { useNetwork } from "../game/_shared/NetworkContext";
 const MAX_NAME_LENGTH = 32;
 
 // ---------------------------------------------------------------------------
-// Tile layout constants — imported from GameCanvas (single source of truth)
+// Tile layout constants — all imported from GameCanvas (single source of truth)
 // ---------------------------------------------------------------------------
 
-// TILE_W and TILE_H are imported from GameCanvas above.
-const LAYER_DX = 6;
-const LAYER_DY = 5;
-const PAD_X = 10;
-const PAD_Y = 30;
-const SIDE_W = 5;
+const MAX_TILE_W = 72;
 
 function tileCenter(tile: SlotTile): { cx: number; cy: number } {
   return {
@@ -498,7 +503,6 @@ export default function MahjongScreen() {
     syncMarkStarted();
   }, [syncGetGameId, syncComplete, syncStart, syncMarkStarted]);
 
-  const MAX_TILE_W = 72;
   const scale =
     outerWidth > 0 && outerHeight > 0
       ? Math.min(MAX_TILE_W / TILE_W, outerWidth / BOARD_W, outerHeight / BOARD_H)
@@ -807,11 +811,6 @@ const styles = StyleSheet.create({
   dealIdText: {
     fontSize: 10,
     opacity: 0.6,
-  },
-  boardWrap: {
-    alignSelf: "stretch",
-    alignItems: "flex-start",
-    overflow: "hidden",
   },
   boardAnimWrap: {
     alignSelf: "flex-start",

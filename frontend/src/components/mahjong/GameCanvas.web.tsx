@@ -24,11 +24,13 @@ import { MAHJONG_TILE_FACE_SELECTED, MAHJONG_GLOW_SHADOW } from "../../theme/the
 
 export const TILE_W = 44;
 export const TILE_H = 56;
-const SIDE_W = 5;
-const LAYER_DX = 6;
-const LAYER_DY = 5;
-const PAD_X = 6;
-const PAD_Y = 10;
+export const SIDE_W = 5;
+export const LAYER_DX = 6;
+export const LAYER_DY = 5;
+export const PAD_X = 6;
+// Layer-0 top-feet tiles sit at row=0 and need PAD_Y > 0 to clear the canvas edge.
+// Higher layers only appear at row≥2, so no stacking offset reaches row 0.
+export const PAD_Y = 10;
 
 export const BOARD_W = PAD_X + 12 * TILE_W + 4 * LAYER_DX + PAD_X; // 548
 export const BOARD_H = PAD_Y + 8 * TILE_H + 4 * LAYER_DY + PAD_Y; // 468

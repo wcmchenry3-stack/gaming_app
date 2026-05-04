@@ -43,6 +43,11 @@ jest.mock("../../components/mahjong/GameCanvas", () => {
     BOARD_H: 468,
     TILE_W: 44,
     TILE_H: 56,
+    PAD_X: 6,
+    PAD_Y: 10,
+    LAYER_DX: 6,
+    LAYER_DY: 5,
+    SIDE_W: 5,
   };
 });
 
