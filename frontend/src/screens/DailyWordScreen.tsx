@@ -152,8 +152,8 @@ function WordTile({
     );
     const timer = setTimeout(() => setVisibleStatus(status), flipDelay + FLIP_HALF_MS);
     return () => clearTimeout(timer);
-  // isFlipping and status are the only meaningful triggers
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // isFlipping and status are the only meaningful triggers
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isFlipping, status]);
 
   const animStyle = useAnimatedStyle(() => ({
@@ -161,11 +161,8 @@ function WordTile({
   }));
 
   const bg = TILE_STATUS_COLORS[visibleStatus];
-  const hasBorder =
-    visibleStatus === "empty" || visibleStatus === "tbd";
-  const borderColor = letter
-    ? colors.textMuted
-    : colors.border;
+  const hasBorder = visibleStatus === "empty" || visibleStatus === "tbd";
+  const borderColor = letter ? colors.textMuted : colors.border;
 
   return (
     <Animated.View
@@ -238,10 +235,7 @@ function TileRow({
   if (!row) return null;
 
   return (
-    <View
-      testID={`daily-word-row-${rowIndex}`}
-      style={rowStyles.row}
-    >
+    <View testID={`daily-word-row-${rowIndex}`} style={rowStyles.row}>
       {row.tiles.map((tile, tileIndex) => (
         <WordTile
           key={tileIndex}
@@ -254,13 +248,7 @@ function TileRow({
       ))}
       {/* Pad empty tiles if row is shorter than word_length (shouldn't happen) */}
       {Array.from({ length: Math.max(0, wordLength - row.tiles.length) }, (_, i) => (
-        <WordTile
-          key={`pad-${i}`}
-          letter=""
-          status="empty"
-          isFlipping={false}
-          flipDelay={0}
-        />
+        <WordTile key={`pad-${i}`} letter="" status="empty" isFlipping={false} flipDelay={0} />
       ))}
     </View>
   );
@@ -302,18 +290,17 @@ function WordKeyboard({
   function renderKey(key: string, idx: number) {
     const isAction = key === "Enter" || key === "Delete";
     const letterStatus = keyboardState[key.toLowerCase()] ?? keyboardState[key] ?? "unused";
-    const bg = isAction ? (colors.surfaceHigh ?? "#818384") : (KEY_BG[letterStatus] ?? KEY_BG.unused);
-    const label = key === "Enter" ? t("keyboard.enter") : key === "Delete" ? t("keyboard.delete") : key;
+    const bg = isAction
+      ? (colors.surfaceHigh ?? "#818384")
+      : (KEY_BG[letterStatus] ?? KEY_BG.unused);
+    const label =
+      key === "Enter" ? t("keyboard.enter") : key === "Delete" ? t("keyboard.delete") : key;
 
     return (
       <Pressable
         key={`${key}-${idx}`}
         onPress={() => onKey(key)}
-        style={[
-          keyStyles.key,
-          isAction && keyStyles.actionKey,
-          { backgroundColor: bg },
-        ]}
+        style={[keyStyles.key, isAction && keyStyles.actionKey, { backgroundColor: bg }]}
         accessibilityRole="button"
         accessibilityLabel={label}
       >
@@ -431,9 +418,20 @@ function WinModal({
   }
 
   return (
-    <Modal visible transparent animationType="fade" accessibilityViewIsModal onRequestClose={onClose}>
+    <Modal
+      visible
+      transparent
+      animationType="fade"
+      accessibilityViewIsModal
+      onRequestClose={onClose}
+    >
       <View style={modalStyles.overlay}>
-        <View style={[modalStyles.card, { backgroundColor: colors.surfaceHigh, borderColor: colors.border }]}>
+        <View
+          style={[
+            modalStyles.card,
+            { backgroundColor: colors.surfaceHigh, borderColor: colors.border },
+          ]}
+        >
           <Text style={[modalStyles.title, { color: colors.text }]} accessibilityRole="header">
             {t("result.win.title")}
           </Text>
@@ -476,9 +474,20 @@ function LossModal({
   const { colors } = useTheme();
 
   return (
-    <Modal visible transparent animationType="fade" accessibilityViewIsModal onRequestClose={onClose}>
+    <Modal
+      visible
+      transparent
+      animationType="fade"
+      accessibilityViewIsModal
+      onRequestClose={onClose}
+    >
       <View style={modalStyles.overlay}>
-        <View style={[modalStyles.card, { backgroundColor: colors.surfaceHigh, borderColor: colors.border }]}>
+        <View
+          style={[
+            modalStyles.card,
+            { backgroundColor: colors.surfaceHigh, borderColor: colors.border },
+          ]}
+        >
           <Text style={[modalStyles.title, { color: colors.text }]} accessibilityRole="header">
             {t("result.loss.title")}
           </Text>
@@ -648,7 +657,9 @@ export default function DailyWordScreen() {
             // Fetch answer for loss modal
             dailyWordApi
               .getAnswer(gameState.puzzle_id)
-              .then((r) => { if (alive) setAnswer(r.answer.toUpperCase()); })
+              .then((r) => {
+                if (alive) setAnswer(r.answer.toUpperCase());
+              })
               .catch(() => {});
             setLossModalVisible(true);
           }
@@ -662,9 +673,11 @@ export default function DailyWordScreen() {
     }
 
     load();
-    return () => { alive = false; };
-  // Run once on mount
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    return () => {
+      alive = false;
+    };
+    // Run once on mount
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // ---------------------------------------------------------------------------
@@ -680,16 +693,13 @@ export default function DailyWordScreen() {
   // Input handlers
   // ---------------------------------------------------------------------------
 
-  const handleLetter = useCallback(
-    async (letter: string) => {
-      setState((s) => {
-        if (!s || s.is_complete) return s;
-        return setCurrentRowLetter(s, letter.toLowerCase());
-      });
-      await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
-    },
-    []
-  );
+  const handleLetter = useCallback(async (letter: string) => {
+    setState((s) => {
+      if (!s || s.is_complete) return s;
+      return setCurrentRowLetter(s, letter.toLowerCase());
+    });
+    await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
+  }, []);
 
   const handleDelete = useCallback(async () => {
     setState((s) => {
@@ -788,12 +798,7 @@ export default function DailyWordScreen() {
 
   if (loading) {
     return (
-      <GameShell
-        title={t("game.title")}
-        requireBack
-        onBack={() => navigation.popToTop()}
-        loading
-      >
+      <GameShell title={t("game.title")} requireBack onBack={() => navigation.popToTop()} loading>
         {null}
       </GameShell>
     );
@@ -813,10 +818,7 @@ export default function DailyWordScreen() {
 
         {/* Tile grid */}
         {state !== null && (
-          <View
-            style={styles.grid}
-            accessibilityLabel="Daily Word board"
-          >
+          <View style={styles.grid} accessibilityLabel="Daily Word board">
             {state.rows.map((_, rowIndex) => (
               <TileRow
                 key={rowIndex}
@@ -839,21 +841,12 @@ export default function DailyWordScreen() {
         )}
 
         {/* Loading indicator during submit */}
-        {submitting && (
-          <ActivityIndicator
-            style={styles.submitIndicator}
-            color={colors.accent}
-          />
-        )}
+        {submitting && <ActivityIndicator style={styles.submitIndicator} color={colors.accent} />}
       </View>
 
       {/* Win modal */}
       {state !== null && winModalVisible && (
-        <WinModal
-          state={state}
-          countdown={countdown}
-          onClose={() => setWinModalVisible(false)}
-        />
+        <WinModal state={state} countdown={countdown} onClose={() => setWinModalVisible(false)} />
       )}
 
       {/* Loss modal */}
