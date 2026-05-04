@@ -18,6 +18,7 @@ import { useTheme } from "../../../theme/ThemeContext";
 import type { Card, DrawMode } from "../types";
 import type { CanonicalSuit } from "../../_shared/decks/types";
 import CardView, { CARD_HEIGHT, CARD_WIDTH } from "./CardView";
+import { useCardSize } from "../../_shared/CardSizeContext";
 import { DraggableCard } from "../../_shared/drag/DraggableCard";
 
 export interface StockWastePileProps {
@@ -39,6 +40,7 @@ export default function StockWastePile({
 }: StockWastePileProps) {
   const { colors } = useTheme();
   const { t } = useTranslation("solitaire");
+  const cardSize = useCardSize();
 
   return (
     <View style={styles.row}>
@@ -47,6 +49,7 @@ export default function StockWastePile({
         colors={colors}
         onPress={onStockPress}
         drawMode={drawMode}
+        cardSize={cardSize}
         t={t}
       />
       <Waste
@@ -54,6 +57,7 @@ export default function StockWastePile({
         drawMode={drawMode}
         selected={wasteSelected}
         onPress={onWastePress}
+        cardSize={cardSize}
         t={t}
       />
     </View>
@@ -65,14 +69,18 @@ function Stock({
   colors,
   onPress,
   drawMode,
+  cardSize,
   t,
 }: {
   readonly count: number;
   readonly colors: ReturnType<typeof useTheme>["colors"];
   readonly onPress?: () => void;
   readonly drawMode: DrawMode;
+  readonly cardSize: ReturnType<typeof useCardSize>;
   readonly t: TFunction<"solitaire">;
 }) {
+  const cardWidth = cardSize.cardWidth || CARD_WIDTH;
+  const cardHeight = cardSize.cardHeight || CARD_HEIGHT;
   const isEmpty = count === 0;
   const label = isEmpty
     ? t("pile.stock.empty", { count: drawMode })
@@ -81,6 +89,8 @@ function Stock({
   const style = [
     styles.slot,
     {
+      width: cardWidth,
+      height: cardHeight,
       backgroundColor: isEmpty ? colors.background : colors.surfaceAlt,
       borderColor: colors.border,
       borderWidth: 1,
@@ -120,18 +130,23 @@ function Waste({
   drawMode,
   selected,
   onPress,
+  cardSize,
   t,
 }: {
   readonly waste: readonly Card[];
   readonly drawMode: DrawMode;
   readonly selected: boolean;
   readonly onPress?: () => void;
+  readonly cardSize: ReturnType<typeof useCardSize>;
   readonly t: TFunction<"solitaire">;
 }) {
+  const cardWidth = cardSize.cardWidth || CARD_WIDTH;
+  const cardHeight = cardSize.cardHeight || CARD_HEIGHT;
+
   if (waste.length === 0) {
     return (
       <View
-        style={styles.wasteEmpty}
+        style={[styles.wasteEmpty, { width: cardWidth, height: cardHeight }]}
         accessibilityRole="image"
         accessibilityLabel={t("pile.waste.empty")}
       />
@@ -144,8 +159,8 @@ function Waste({
       suit: top.suit as CanonicalSuit,
       rank: top.rank,
       faceDown: false,
-      width: CARD_WIDTH,
-      height: CARD_HEIGHT,
+      width: cardWidth,
+      height: cardHeight,
     },
   ];
 
@@ -163,10 +178,10 @@ function Waste({
 
   const visibleCount = Math.min(3, waste.length);
   const visible = waste.slice(waste.length - visibleCount);
-  const containerWidth = (visibleCount - 1) * WASTE_FAN_OFFSET + CARD_WIDTH;
+  const containerWidth = (visibleCount - 1) * WASTE_FAN_OFFSET + cardWidth;
 
   return (
-    <View style={[styles.wasteFanContainer, { width: containerWidth }]}>
+    <View style={[styles.wasteFanContainer, { width: containerWidth, height: cardHeight }]}>
       {visible.map((card, i) => {
         const isTop = i === visible.length - 1;
         if (isTop) {
@@ -204,18 +219,12 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   slot: {
-    width: CARD_WIDTH,
-    height: CARD_HEIGHT,
     borderRadius: 8,
     alignItems: "center",
     justifyContent: "center",
   },
-  wasteEmpty: {
-    width: CARD_WIDTH,
-    height: CARD_HEIGHT,
-  },
+  wasteEmpty: {},
   wasteFanContainer: {
-    height: CARD_HEIGHT,
     position: "relative",
   },
   wasteFanCard: {

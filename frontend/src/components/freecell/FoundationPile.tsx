@@ -8,6 +8,7 @@ import { rankLabel } from "../../game/_shared/decks/cardId";
 import type { CanonicalSuit } from "../../game/_shared/decks/types";
 import type { Card, Suit } from "../../game/freecell/types";
 import { CARD_WIDTH, CARD_HEIGHT } from "./FreeCellSlot";
+import { useCardSize } from "../../game/_shared/CardSizeContext";
 import { DropTarget } from "../../game/_shared/drag/DropTarget";
 import type { DropHandler } from "../../game/_shared/drag/DragContext";
 
@@ -39,6 +40,9 @@ export default function FoundationPile({
 }: FoundationPileProps) {
   const { colors } = useTheme();
   const { t } = useTranslation("freecell");
+  const { cardWidth: ctxW, cardHeight: ctxH } = useCardSize();
+  const cardWidth = ctxW || CARD_WIDTH;
+  const cardHeight = ctxH || CARD_HEIGHT;
   const hasDrop = dropId !== undefined && onDrop !== undefined;
   const RED_SUITS = new Set(["hearts", "diamonds"]);
   const suitSymbolColor = RED_SUITS.has(suit) ? "#ff716c" : colors.textFilled;
@@ -56,8 +60,8 @@ export default function FoundationPile({
           <SharedPlayingCard
             suit={top.suit as CanonicalSuit}
             rank={top.rank}
-            width={CARD_WIDTH}
-            height={CARD_HEIGHT}
+            width={cardWidth}
+            height={cardHeight}
             highlighted={selected}
             hintHighlighted={hintDestination}
             onPress={onPress ? () => onPress(suit) : undefined}
@@ -71,6 +75,8 @@ export default function FoundationPile({
     const pileStyle = [
       styles.empty,
       {
+        width: cardWidth,
+        height: cardHeight,
         borderColor: hintDestination ? colors.bonus : selected ? colors.accent : colors.border,
         borderWidth: hintDestination || selected ? 2 : 1,
         backgroundColor: colors.background,
@@ -116,8 +122,6 @@ export default function FoundationPile({
 
 const styles = StyleSheet.create({
   empty: {
-    width: CARD_WIDTH,
-    height: CARD_HEIGHT,
     borderRadius: 6,
     alignItems: "center",
     justifyContent: "center",

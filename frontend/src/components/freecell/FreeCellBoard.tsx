@@ -10,6 +10,7 @@ import type { FreeCellState, Move, Suit } from "../../game/freecell/types";
 import FreeCellSlot, { CARD_WIDTH } from "./FreeCellSlot";
 import FoundationPile from "./FoundationPile";
 import TableauColumn from "./TableauColumn";
+import { useCardSize } from "../../game/_shared/CardSizeContext";
 import { DragProvider } from "../../game/_shared/drag/DragContext";
 import { DragContainer } from "../../game/_shared/drag/DragContainer";
 import type { DragSource, DragCard } from "../../game/_shared/drag/DragContext";
@@ -17,8 +18,6 @@ import type { DragSource, DragCard } from "../../game/_shared/drag/DragContext";
 const TABLEAU_COLS = 8;
 const COL_GAP = 2;
 const ROW_GAP = 8;
-
-const BOARD_WIDTH = TABLEAU_COLS * CARD_WIDTH + (TABLEAU_COLS - 1) * COL_GAP;
 
 type Selection =
   | { kind: "tableau"; col: number; index: number }
@@ -34,6 +33,8 @@ export interface FreeCellBoardProps {
 export default function FreeCellBoard({ state, onMove }: FreeCellBoardProps) {
   const { t } = useTranslation("freecell");
   const { colors } = useTheme();
+  const { cardWidth: ctxW } = useCardSize();
+  const boardWidth = TABLEAU_COLS * (ctxW || CARD_WIDTH) + (TABLEAU_COLS - 1) * COL_GAP;
   const [selection, setSelection] = useState<Selection>(null);
 
   function tryMove(move: Move) {
@@ -265,6 +266,7 @@ export default function FreeCellBoard({ state, onMove }: FreeCellBoardProps) {
             style={[
               styles.topRow,
               {
+                width: boardWidth,
                 borderBottomWidth: 1,
                 borderBottomColor: colors.border,
                 paddingTop: 6,
@@ -345,7 +347,6 @@ const styles = StyleSheet.create({
   topRow: {
     flexDirection: "row",
     gap: COL_GAP,
-    width: BOARD_WIDTH,
   },
   tableau: {
     flexDirection: "row",

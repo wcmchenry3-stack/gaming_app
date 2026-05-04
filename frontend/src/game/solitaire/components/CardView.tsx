@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import SharedPlayingCard from "../../../components/shared/PlayingCard";
 import { rankLabel } from "../../_shared/decks/cardId";
 import type { CanonicalSuit } from "../../_shared/decks/types";
+import { useCardSize } from "../../_shared/CardSizeContext";
 import type { Card } from "../types";
 
 export interface CardViewProps {
@@ -13,6 +14,9 @@ export interface CardViewProps {
 
 export default function CardView({ card, selected = false, onPress }: CardViewProps) {
   const { t } = useTranslation("solitaire");
+  const { cardWidth: ctxW, cardHeight: ctxH } = useCardSize();
+  const w = ctxW || CARD_WIDTH;
+  const h = ctxH || CARD_HEIGHT;
   const rl = rankLabel(card.rank);
   const suitName = t(`suit.${card.suit}` as const);
 
@@ -28,6 +32,8 @@ export default function CardView({ card, selected = false, onPress }: CardViewPr
     <SharedPlayingCard
       suit={card.suit as CanonicalSuit}
       rank={card.rank}
+      width={w}
+      height={h}
       faceDown={!card.faceUp}
       highlighted={selected}
       onPress={onPress}

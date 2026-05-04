@@ -13,6 +13,7 @@ import { useTranslation } from "react-i18next";
 import { useTheme } from "../../../theme/ThemeContext";
 import type { Card, Suit } from "../types";
 import CardView, { CARD_HEIGHT, CARD_WIDTH } from "./CardView";
+import { useCardSize } from "../../_shared/CardSizeContext";
 import { DropTarget } from "../../_shared/drag/DropTarget";
 import type { DropHandler } from "../../_shared/drag/DragContext";
 
@@ -43,6 +44,9 @@ export default function FoundationPile({
 }: FoundationPileProps) {
   const { colors } = useTheme();
   const { t } = useTranslation("solitaire");
+  const { cardWidth: ctxW, cardHeight: ctxH } = useCardSize();
+  const cardWidth = ctxW || CARD_WIDTH;
+  const cardHeight = ctxH || CARD_HEIGHT;
   const hasDrop = dropId !== undefined && onDrop !== undefined;
 
   const highlightStyle = { borderColor: colors.accent, borderWidth: 2, borderRadius: 8 };
@@ -66,6 +70,8 @@ export default function FoundationPile({
     const style = [
       styles.empty,
       {
+        width: cardWidth,
+        height: cardHeight,
         borderColor: selected ? colors.accent : colors.border,
         borderWidth: selected ? 2 : 1,
         backgroundColor: colors.background,
@@ -107,8 +113,6 @@ export default function FoundationPile({
 
 const styles = StyleSheet.create({
   empty: {
-    width: CARD_WIDTH,
-    height: CARD_HEIGHT,
     borderRadius: 8,
     alignItems: "center",
     justifyContent: "center",

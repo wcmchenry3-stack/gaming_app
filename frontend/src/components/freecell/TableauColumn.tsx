@@ -8,6 +8,7 @@ import { rankLabel } from "../../game/_shared/decks/cardId";
 import type { CanonicalSuit } from "../../game/_shared/decks/types";
 import type { Card } from "../../game/freecell/types";
 import { CARD_WIDTH, CARD_HEIGHT } from "./FreeCellSlot";
+import { useCardSize } from "../../game/_shared/CardSizeContext";
 import { DraggableCard } from "../../game/_shared/drag/DraggableCard";
 import { DropTarget } from "../../game/_shared/drag/DropTarget";
 import type { DropHandler } from "../../game/_shared/drag/DragContext";
@@ -39,6 +40,10 @@ export default function TableauColumn({
 }: TableauColumnProps) {
   const { colors } = useTheme();
   const { t } = useTranslation("freecell");
+  const { cardWidth: ctxW, cardHeight: ctxH } = useCardSize();
+  const cardWidth = ctxW || CARD_WIDTH;
+  const cardHeight = ctxH || CARD_HEIGHT;
+  const faceUpOffset = Math.round(FACE_UP_OFFSET * (cardWidth / CARD_WIDTH));
 
   const highlightStyle: ViewStyle = { borderColor: colors.accent, borderWidth: 2, borderRadius: 6 };
   const dimStyle: ViewStyle = { opacity: 0.4 };
@@ -51,6 +56,8 @@ export default function TableauColumn({
         style={[
           styles.empty,
           {
+            width: cardWidth,
+            height: cardHeight,
             borderColor: hintDestination ? colors.bonus : colors.border,
             borderWidth: hintDestination ? 2 : 1,
             backgroundColor: colors.background,
@@ -79,10 +86,10 @@ export default function TableauColumn({
   let acc = 0;
   for (let i = 0; i < pile.length; i++) {
     offsets.push(acc);
-    acc += FACE_UP_OFFSET;
+    acc += faceUpOffset;
   }
-  const containerHeight = CARD_HEIGHT + (offsets[pile.length - 1] ?? 0);
-  const containerStyle: ViewStyle = { width: CARD_WIDTH, height: containerHeight };
+  const containerHeight = cardHeight + (offsets[pile.length - 1] ?? 0);
+  const containerStyle: ViewStyle = { width: cardWidth, height: containerHeight };
 
   const cards = pile.map((card, cardIndex) => {
     const isSelected = selectedIndex !== undefined && cardIndex >= selectedIndex;
@@ -99,8 +106,8 @@ export default function TableauColumn({
       suit: c.suit as CanonicalSuit,
       rank: c.rank,
       faceDown: false,
-      width: CARD_WIDTH,
-      height: CARD_HEIGHT,
+      width: cardWidth,
+      height: cardHeight,
     }));
 
     return (
@@ -114,8 +121,8 @@ export default function TableauColumn({
         <SharedPlayingCard
           suit={card.suit as CanonicalSuit}
           rank={card.rank}
-          width={CARD_WIDTH}
-          height={CARD_HEIGHT}
+          width={cardWidth}
+          height={cardHeight}
           highlighted={isSelected}
           hintHighlighted={isHint || isHintDest}
           accessibilityLabel={label}
@@ -155,8 +162,6 @@ export default function TableauColumn({
 
 const styles = StyleSheet.create({
   empty: {
-    width: CARD_WIDTH,
-    height: CARD_HEIGHT,
     borderRadius: 6,
     borderWidth: 1,
     borderStyle: "dashed",
