@@ -1,7 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Modal, Pressable, ScrollView, Share, StyleSheet, Text, View } from "react-native";
 import Animated, {
-  interpolate,
   runOnJS,
   useAnimatedStyle,
   useSharedValue,
@@ -97,12 +96,14 @@ const HI_ROWS = [
 // ---------------------------------------------------------------------------
 
 function msUntilMidnight(tzOffsetMinutes: number): number {
+  // Shift UTC epoch by the local offset, then find the next midnight in that shifted domain.
+  // Can be off by ±1h at DST transitions, but DST errors only affect the countdown display.
   const nowLocalMs = Date.now() + tzOffsetMinutes * 60_000;
   const midnight = Math.ceil(nowLocalMs / 86_400_000) * 86_400_000;
   return midnight - nowLocalMs;
 }
 
-function formatCountdown(ms: number): string {
+export function formatCountdown(ms: number): string {
   const totalSecs = Math.max(0, Math.floor(ms / 1000));
   const h = Math.floor(totalSecs / 3600);
   const m = Math.floor((totalSecs % 3600) / 60);
@@ -130,11 +131,7 @@ interface TileProps {
 
 function Tile({ tile, scaleY, revealed }: TileProps) {
   const animStyle = useAnimatedStyle(() => ({
-    transform: [
-      {
-        scaleY: interpolate(scaleY.value, [0, 1], [0, 1]),
-      },
-    ],
+    transform: [{ scaleY: scaleY.value }],
   }));
 
   const status = tile.status;
@@ -171,7 +168,8 @@ export default function DailyWordScreen() {
   const [answer, setAnswer] = useState<string | null>(null);
   const [countdown, setCountdown] = useState<string>("00:00:00");
 
-  // Tile flip shared values — one scaleY per tile slot, pre-allocated up to MAX_WORD_LEN
+  // Tile flip shared values — one scaleY per tile slot. 8 slots cover EN (5) and HI (max 4
+  // grapheme clusters, verified against answers_hi.txt). Increase if new word lists exceed 8.
   const s0 = useSharedValue(1);
   const s1 = useSharedValue(1);
   const s2 = useSharedValue(1);
@@ -206,8 +204,10 @@ export default function DailyWordScreen() {
         const today = await dailyWordApi.getToday(tzOffset(), lang);
         const saved = await loadState();
         let state: DailyWordState;
+        let resuming = false;
         if (saved && saved.puzzle_id === today.puzzle_id) {
           state = saved;
+          resuming = true;
         } else {
           if (saved) await clearState();
           state = initialState(today.puzzle_id, today.word_length, lang);
@@ -215,6 +215,7 @@ export default function DailyWordScreen() {
         }
         setGameState(state);
         start({});
+        if (resuming && (state.current_row > 0 || state.is_complete)) markStarted();
       } catch {
         setError(t("daily_word:error.loadFailed"));
       } finally {
@@ -390,12 +391,7 @@ export default function DailyWordScreen() {
       if (won || lost) {
         final = markComplete(afterGuess, won);
         complete({ finalScore: won ? afterGuess.current_row : 0, outcome: won ? "won" : "lost" });
-        if (lost) {
-          dailyWordApi
-            .getAnswer(gameState.puzzle_id)
-            .then((r) => setAnswer(r.answer))
-            .catch(() => {});
-        }
+        // Answer is fetched by the useEffect watching is_complete + !won
       }
 
       setGameState(final);
@@ -545,7 +541,7 @@ export default function DailyWordScreen() {
               {t("daily_word:win.title")}
             </Text>
             <Text style={styles.modalBody}>
-              {t("daily_word:win.guesses_other", { count: submittedCount })}
+              {t("daily_word:win.guesses", { count: submittedCount })}
             </Text>
             <Pressable style={styles.modalBtn} onPress={handleShare}>
               <Text style={styles.modalBtnText}>{t("daily_word:win.share")}</Text>

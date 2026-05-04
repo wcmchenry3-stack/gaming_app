@@ -2,7 +2,7 @@ import React, { Suspense } from "react";
 import { Text } from "react-native";
 import { act, render, waitFor } from "@testing-library/react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import DailyWordScreen from "../DailyWordScreen";
+import DailyWordScreen, { formatCountdown } from "../DailyWordScreen";
 import { ThemeProvider } from "../../theme/ThemeContext";
 import { initialState, applyServerResult, markComplete } from "../../game/daily_word/engine";
 import { saveState } from "../../game/daily_word/storage";
@@ -206,15 +206,6 @@ describe("DailyWordScreen — loss modal", () => {
 
 describe("DailyWordScreen — countdown format", () => {
   it("formatCountdown produces HH:MM:SS strings", () => {
-    // Test the countdown helper directly — it's deterministic
-    function formatCountdown(ms: number): string {
-      const totalSecs = Math.max(0, Math.floor(ms / 1000));
-      const h = Math.floor(totalSecs / 3600);
-      const m = Math.floor((totalSecs % 3600) / 60);
-      const s = totalSecs % 60;
-      return [h, m, s].map((n) => String(n).padStart(2, "0")).join(":");
-    }
-
     expect(formatCountdown(0)).toBe("00:00:00");
     expect(formatCountdown(3661_000)).toBe("01:01:01");
     expect(formatCountdown(86399_000)).toBe("23:59:59");

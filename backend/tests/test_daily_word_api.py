@@ -370,7 +370,7 @@ def test_get_answer_invalid_puzzle_id_returns_422(client: TestClient) -> None:
 
 def test_get_answer_unsupported_lang_returns_422(client: TestClient) -> None:
     """GET /daily-word/answer with an unsupported language returns 422."""
-    r = client.get("/daily-word/answer?puzzle_id=2026-05-03:fr")
+    r = client.get(f"/daily-word/answer?puzzle_id={_today_puzzle_id(lang='fr')}")
     assert r.status_code == 422
 
 
@@ -384,3 +384,32 @@ def test_get_answer_hindi_returns_correct_word(client: TestClient) -> None:
     r = client.get(f"/daily-word/answer?puzzle_id={puzzle_id}")
     assert r.status_code == 200
     assert r.json()["answer"] == expected
+
+
+def test_get_answer_future_puzzle_id_returns_422(client: TestClient) -> None:
+    """GET /daily-word/answer with a far-future date returns 422 stale_puzzle_id."""
+    r = client.get("/daily-word/answer?puzzle_id=2099-01-01:en")
+    assert r.status_code == 422
+    assert r.json()["detail"] == "stale_puzzle_id"
+
+
+def test_get_answer_old_puzzle_id_returns_422(client: TestClient) -> None:
+    """GET /daily-word/answer with a date older than 2 days returns 422 stale_puzzle_id."""
+    r = client.get("/daily-word/answer?puzzle_id=2020-01-01:en")
+    assert r.status_code == 422
+    assert r.json()["detail"] == "stale_puzzle_id"
+
+
+def test_get_answer_is_session_rate_limited(client: TestClient) -> None:
+    """GET /daily-word/answer 7th call from same session returns 429."""
+    import uuid
+
+    headers = {"X-Session-ID": str(uuid.uuid4())}
+    puzzle_id = _today_puzzle_id()
+
+    for _ in range(6):
+        r = client.get(f"/daily-word/answer?puzzle_id={puzzle_id}", headers=headers)
+        assert r.status_code == 200
+
+    r7 = client.get(f"/daily-word/answer?puzzle_id={puzzle_id}", headers=headers)
+    assert r7.status_code == 429

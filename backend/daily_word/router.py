@@ -4,13 +4,15 @@ Rate limits:
   GET /today   — 60/minute (IP-keyed, no auth)
   POST /guess  — 6/hour keyed by f"{session_id}:{puzzle_id}" (compound key
                  isolates by puzzle so the limit resets naturally each new day)
+  GET /answer  — 6/hour keyed by f"{session_id}:{puzzle_id}" (same budget as
+                 guesses; IP fallback when no session header)
 """
 
 from __future__ import annotations
 
 import json
 import unicodedata
-from datetime import datetime, timedelta, timezone
+from datetime import date, datetime, timedelta, timezone
 
 from fastapi import APIRouter, HTTPException, Query, Request
 from pydantic import BaseModel, Field
@@ -22,6 +24,13 @@ from session import get_session_id
 _SUPPORTED_LANGS = frozenset(("en", "hi"))
 
 router = APIRouter()
+
+
+def _answer_key(request: Request) -> str:
+    """Session-based rate-limit key for GET /answer: "{session_id}:{puzzle_id}"."""
+    sid = request.headers.get("X-Session-ID", "").strip() or _real_ip(request)
+    puzzle_id = request.query_params.get("puzzle_id", "")
+    return f"{sid}:{puzzle_id}"
 
 
 def _guess_key(request: Request) -> str:
@@ -89,7 +98,7 @@ class GuessRequest(BaseModel):
 
 
 @router.get("/answer")
-@limiter.limit("6/hour")
+@limiter.limit("6/hour", key_func=_answer_key)
 async def get_answer_endpoint(
     request: Request,
     puzzle_id: str = Query(...),
@@ -98,14 +107,22 @@ async def get_answer_endpoint(
 
     Intended to be called by the client only after all 6 guesses are exhausted.
     Rate-limited to match the guess budget so bulk pre-game fetching is
-    meaningfully slowed.
+    meaningfully slowed. Only accepts puzzle_ids within ±1 day of today in UTC
+    (covers all valid timezones) to prevent brute-forcing arbitrary dates.
     """
     try:
-        _, lang = puzzle_id.rsplit(":", 1)
+        date_str, lang = puzzle_id.rsplit(":", 1)
     except ValueError:
         raise HTTPException(status_code=422, detail="invalid_puzzle_id")
     if lang not in _SUPPORTED_LANGS:
         raise HTTPException(status_code=422, detail="invalid_puzzle_id")
+    try:
+        puzzle_date = datetime.strptime(date_str, "%Y-%m-%d").date()
+    except ValueError:
+        raise HTTPException(status_code=422, detail="invalid_puzzle_id")
+    days_delta = (datetime.now(timezone.utc).date() - puzzle_date).days
+    if days_delta < -1 or days_delta > 2:
+        raise HTTPException(status_code=422, detail="stale_puzzle_id")
     try:
         answer = get_answer(puzzle_id)
     except Exception:
