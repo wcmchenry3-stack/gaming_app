@@ -117,7 +117,9 @@ describe("SortScreen — loading and level select", () => {
     const { findByText } = renderScreen();
     // Wait for the error to appear, then press Retry
     const retryBtn = await findByText("Retry");
-    await act(async () => { fireEvent.press(retryBtn); });
+    await act(async () => {
+      fireEvent.press(retryBtn);
+    });
     expect(sortApi.getLevels).toHaveBeenCalledTimes(2);
   });
 });
@@ -127,23 +129,31 @@ describe("SortScreen — entering and playing a level", () => {
   it("transitions to the play view when a level card is tapped", async () => {
     const { findByLabelText, findByText } = renderScreen();
     const levelCard = await findByLabelText("Level 1");
-    await act(async () => { fireEvent.press(levelCard); });
+    await act(async () => {
+      fireEvent.press(levelCard);
+    });
     expect(await findByText("Level 1")).toBeTruthy(); // HUD text
   });
 
   it("back button in play view returns to level select", async () => {
     const { findByLabelText, findByText } = renderScreen();
     const levelCard = await findByLabelText("Level 1");
-    await act(async () => { fireEvent.press(levelCard); });
+    await act(async () => {
+      fireEvent.press(levelCard);
+    });
     const backBtn = await findByLabelText("Back to levels");
-    await act(async () => { fireEvent.press(backBtn); });
+    await act(async () => {
+      fireEvent.press(backBtn);
+    });
     expect(await findByText("Choose a Level")).toBeTruthy();
   });
 
   it("undo button is disabled initially (no history)", async () => {
     const { findByLabelText } = renderScreen();
     const levelCard = await findByLabelText("Level 1");
-    await act(async () => { fireEvent.press(levelCard); });
+    await act(async () => {
+      fireEvent.press(levelCard);
+    });
     const undoBtn = await findByLabelText("Undo");
     expect(undoBtn.props.accessibilityState?.disabled).toBe(true);
   });
@@ -151,22 +161,32 @@ describe("SortScreen — entering and playing a level", () => {
   it("selecting a bottle updates its accessibility label", async () => {
     const { findByLabelText } = renderScreen();
     const levelCard = await findByLabelText("Level 1");
-    await act(async () => { fireEvent.press(levelCard); });
+    await act(async () => {
+      fireEvent.press(levelCard);
+    });
     // Bottle 1 has balls — tapping it selects it
     const bottle = await findByLabelText(/^Bottle 1,/);
-    await act(async () => { fireEvent.press(bottle); });
+    await act(async () => {
+      fireEvent.press(bottle);
+    });
     expect(await findByLabelText(/Bottle 1 selected/)).toBeTruthy();
   });
 
   it("undo button becomes enabled after a valid pour", async () => {
     const { findByLabelText } = renderScreen();
     const levelCard = await findByLabelText("Level 1");
-    await act(async () => { fireEvent.press(levelCard); });
+    await act(async () => {
+      fireEvent.press(levelCard);
+    });
     // Bottle 1 = ["red","blue"] (top: blue), Bottle 3 = [] (empty) — valid pour
     const bottle1 = await findByLabelText(/^Bottle 1,/);
-    await act(async () => { fireEvent.press(bottle1); });
+    await act(async () => {
+      fireEvent.press(bottle1);
+    });
     const bottle3 = await findByLabelText(/^Bottle 3,/);
-    await act(async () => { fireEvent.press(bottle3); });
+    await act(async () => {
+      fireEvent.press(bottle3);
+    });
     const undoBtn = await findByLabelText("Undo");
     expect(undoBtn.props.accessibilityState?.disabled).toBeFalsy();
   });
@@ -180,7 +200,9 @@ describe("SortScreen — leaderboard tab", () => {
     const { findByText } = renderScreen();
     await findByText("Choose a Level");
     const leaderboardTab = await findByText("Leaderboard");
-    await act(async () => { fireEvent.press(leaderboardTab); });
+    await act(async () => {
+      fireEvent.press(leaderboardTab);
+    });
     expect(await findByText("Alice")).toBeTruthy();
     expect(await findByText("Level 5")).toBeTruthy();
   });
@@ -189,7 +211,9 @@ describe("SortScreen — leaderboard tab", () => {
     const { findByText } = renderScreen();
     await findByText("Choose a Level");
     const leaderboardTab = await findByText("Leaderboard");
-    await act(async () => { fireEvent.press(leaderboardTab); });
+    await act(async () => {
+      fireEvent.press(leaderboardTab);
+    });
     expect(await findByText("No scores yet.")).toBeTruthy();
   });
 });

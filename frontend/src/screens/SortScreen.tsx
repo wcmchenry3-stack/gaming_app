@@ -290,9 +290,7 @@ export default function SortScreen() {
       >
         <View style={styles.modalOverlay}>
           <View style={[styles.modalCard, { backgroundColor: colors.surfaceHigh }]}>
-            <Text style={[styles.winTitle, { color: colors.text }]}>
-              {t("win.title")}
-            </Text>
+            <Text style={[styles.winTitle, { color: colors.text }]}>{t("win.title")}</Text>
             <Text style={[styles.winStat, { color: colors.textMuted }]}>
               {t("win.movesUsed", { moves: gameState.moveCount })}
             </Text>
@@ -366,11 +364,7 @@ export default function SortScreen() {
               )}
 
               <Pressable
-                style={[
-                  styles.modalBtn,
-                  styles.modalBtnSecondary,
-                  { borderColor: colors.border },
-                ]}
+                style={[styles.modalBtn, styles.modalBtnSecondary, { borderColor: colors.border }]}
                 onPress={handleBackToSelect}
                 accessibilityRole="button"
                 accessibilityLabel={t("win.backToLevels")}
@@ -404,12 +398,8 @@ export default function SortScreen() {
         contentContainerStyle={styles.leaderboardList}
         renderItem={({ item, index }) => (
           <View style={[styles.leaderboardRow, { borderBottomColor: colors.border }]}>
-            <Text style={[styles.leaderboardRank, { color: colors.textMuted }]}>
-              #{index + 1}
-            </Text>
-            <Text style={[styles.leaderboardName, { color: colors.text }]}>
-              {item.player_name}
-            </Text>
+            <Text style={[styles.leaderboardRank, { color: colors.textMuted }]}>#{index + 1}</Text>
+            <Text style={[styles.leaderboardName, { color: colors.text }]}>{item.player_name}</Text>
             <Text style={[styles.leaderboardLevel, { color: colors.accent }]}>
               {t("leaderboard.levelReached", { level: item.level_reached })}
             </Text>
@@ -433,9 +423,7 @@ export default function SortScreen() {
 
   if (view === "select") {
     return (
-      <View
-        style={[styles.screen, { backgroundColor: colors.background, paddingTop: insets.top }]}
-      >
+      <View style={[styles.screen, { backgroundColor: colors.background, paddingTop: insets.top }]}>
         {/* Header */}
         <View style={[styles.selectHeader, { borderBottomColor: colors.border }]}>
           <Pressable
@@ -446,9 +434,7 @@ export default function SortScreen() {
           >
             <Text style={[styles.backBtnText, { color: colors.accent }]}>‹</Text>
           </Pressable>
-          <Text style={[styles.screenTitle, { color: colors.text }]}>
-            {t("game.title")}
-          </Text>
+          <Text style={[styles.screenTitle, { color: colors.text }]}>{t("game.title")}</Text>
           <View style={styles.backBtn} />
         </View>
 
@@ -563,9 +549,7 @@ export default function SortScreen() {
             accessibilityLabel={t("action.undo")}
             accessibilityState={{ disabled: history.length === 0 }}
           >
-            <Text style={[styles.hudActionText, { color: colors.text }]}>
-              {t("action.undo")}
-            </Text>
+            <Text style={[styles.hudActionText, { color: colors.text }]}>{t("action.undo")}</Text>
           </Pressable>
           <Pressable
             onPress={handleHint}
@@ -573,9 +557,7 @@ export default function SortScreen() {
             accessibilityRole="button"
             accessibilityLabel={t("action.hint")}
           >
-            <Text style={[styles.hudActionText, { color: colors.text }]}>
-              {t("action.hint")}
-            </Text>
+            <Text style={[styles.hudActionText, { color: colors.text }]}>{t("action.hint")}</Text>
           </Pressable>
         </View>
       </View>

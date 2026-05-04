@@ -1,11 +1,5 @@
 import React from "react";
-import {
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-} from "react-native";
+import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { useTranslation } from "react-i18next";
 import { useTheme } from "../../../theme/ThemeContext";
 import { typography } from "../../../theme/typography";
@@ -29,30 +23,17 @@ interface Props {
   readonly onContinue: () => void;
 }
 
-export default function LevelSelectScreen({
-  levels,
-  progress,
-  onSelectLevel,
-  onContinue,
-}: Props) {
+export default function LevelSelectScreen({ levels, progress, onSelectLevel, onContinue }: Props) {
   const { t } = useTranslation("sort");
   const { colors } = useTheme();
 
-  const hasContinue =
-    progress.currentLevelId !== null && progress.currentState !== null;
+  const hasContinue = progress.currentLevelId !== null && progress.currentState !== null;
 
   const rows = chunk(levels, COLS);
 
   return (
-    <ScrollView
-      contentContainerStyle={[
-        styles.container,
-        { backgroundColor: colors.background },
-      ]}
-    >
-      <Text style={[styles.title, { color: colors.text }]}>
-        {t("levelSelect.title")}
-      </Text>
+    <ScrollView contentContainerStyle={[styles.container, { backgroundColor: colors.background }]}>
+      <Text style={[styles.title, { color: colors.text }]}>{t("levelSelect.title")}</Text>
 
       {hasContinue && (
         <Pressable
@@ -80,9 +61,7 @@ export default function LevelSelectScreen({
                   style={[
                     styles.card,
                     {
-                      backgroundColor: isUnlocked
-                        ? colors.surfaceHigh
-                        : colors.surface,
+                      backgroundColor: isUnlocked ? colors.surfaceHigh : colors.surface,
                       borderColor: isUnlocked ? colors.accent : colors.border,
                       opacity: isUnlocked ? 1 : 0.5,
                     },
@@ -105,9 +84,7 @@ export default function LevelSelectScreen({
                   >
                     {level.id}
                   </Text>
-                  {!isUnlocked && (
-                    <Text style={styles.lockIcon}>🔒</Text>
-                  )}
+                  {!isUnlocked && <Text style={styles.lockIcon}>🔒</Text>}
                 </Pressable>
               );
             })}
