@@ -202,6 +202,7 @@ export default function MahjongScreen() {
   const [state, setState] = useState<MahjongState | null>(null);
   const [loading, setLoading] = useState(true);
   const [outerWidth, setOuterWidth] = useState(0);
+  const [outerHeight, setOuterHeight] = useState(0);
   const [stats, setStats] = useState<MahjongStats>({
     bestScore: 0,
     bestTimeMs: 0,
@@ -498,10 +499,14 @@ export default function MahjongScreen() {
   }, [syncGetGameId, syncComplete, syncStart, syncMarkStarted]);
 
   const MAX_TILE_W = 72;
-  const scale = outerWidth > 0 ? Math.min(MAX_TILE_W / TILE_W, outerWidth / BOARD_W) : 1;
+  const scale =
+    outerWidth > 0 && outerHeight > 0
+      ? Math.min(MAX_TILE_W / TILE_W, outerWidth / BOARD_W, outerHeight / BOARD_H)
+      : 1;
 
   const onOuterLayout = useCallback((e: LayoutChangeEvent) => {
     setOuterWidth(Math.floor(e.nativeEvent.layout.width));
+    setOuterHeight(Math.floor(e.nativeEvent.layout.height));
   }, []);
 
   const undoDisabled = !state || state.undoStack.length === 0 || state.isComplete;
@@ -558,7 +563,14 @@ export default function MahjongScreen() {
               </Text>
             </View>
 
-            <View style={[styles.boardWrap, outerWidth > 0 ? { height: BOARD_H * scale } : null]}>
+            <View
+              style={{
+                width: BOARD_W * scale,
+                height: BOARD_H * scale,
+                overflow: "hidden",
+                alignSelf: "center",
+              }}
+            >
               {/* boardAnimWrap handles shake + pulse; inner board View applies scale transform */}
               <Animated.View style={[styles.boardAnimWrap, boardAnimStyle]}>
                 <View

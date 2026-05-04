@@ -39,8 +39,8 @@ jest.mock("../../components/mahjong/GameCanvas", () => {
   return {
     __esModule: true,
     default: MockGameCanvas,
-    BOARD_W: 572,
-    BOARD_H: 508,
+    BOARD_W: 548,
+    BOARD_H: 468,
     TILE_W: 44,
     TILE_H: 56,
   };

@@ -30,11 +30,11 @@ export const TILE_H = 56; // face height
 const SIDE_W = 5; // 3-D side strip width (right + bottom)
 const LAYER_DX = 6; // rightward offset per layer
 const LAYER_DY = 5; // upward offset per layer
-const PAD_X = 10;
-const PAD_Y = 30; // extra top padding so layer-4 tiles don't clip
+const PAD_X = 6;
+const PAD_Y = 10; // top + bottom; layer-4 offset = 4×LAYER_DY = 20px, so 10px still clears it
 
-export const BOARD_W = PAD_X + 12 * TILE_W + 4 * LAYER_DX + PAD_X; // 572
-export const BOARD_H = PAD_Y + 8 * TILE_H + 4 * LAYER_DY + PAD_Y; // 508
+export const BOARD_W = PAD_X + 12 * TILE_W + 4 * LAYER_DX + PAD_X; // 548
+export const BOARD_H = PAD_Y + 8 * TILE_H + 4 * LAYER_DY + PAD_Y; // 468
 
 function tileX(col: number, layer: number): number {
   return PAD_X + (col / 2) * TILE_W + layer * LAYER_DX;

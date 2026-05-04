@@ -27,11 +27,11 @@ export const TILE_H = 56;
 const SIDE_W = 5;
 const LAYER_DX = 6;
 const LAYER_DY = 5;
-const PAD_X = 10;
-const PAD_Y = 30;
+const PAD_X = 6;
+const PAD_Y = 10;
 
-export const BOARD_W = PAD_X + 12 * TILE_W + 4 * LAYER_DX + PAD_X; // 572
-export const BOARD_H = PAD_Y + 8 * TILE_H + 4 * LAYER_DY + PAD_Y; // 508
+export const BOARD_W = PAD_X + 12 * TILE_W + 4 * LAYER_DX + PAD_X; // 548
+export const BOARD_H = PAD_Y + 8 * TILE_H + 4 * LAYER_DY + PAD_Y; // 468
 
 function tileX(col: number, layer: number): number {
   return PAD_X + (col / 2) * TILE_W + layer * LAYER_DX;
