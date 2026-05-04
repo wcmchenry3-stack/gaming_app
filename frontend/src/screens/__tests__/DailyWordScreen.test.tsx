@@ -107,7 +107,7 @@ describe("DailyWordScreen — mount", () => {
     const saved = initialState(TODAY_PUZZLE_ID, 5, "en");
     await saveState(saved);
 
-    const { getByTestId } = renderScreen();
+    renderScreen();
     // Game loads without error — loadState and getToday both resolve
     await waitFor(() => expect(mockGetToday).toHaveBeenCalledTimes(1));
     // After loading, saved state is reused (current_row = 0)
