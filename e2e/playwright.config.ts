@@ -17,6 +17,7 @@ import { join } from "path";
  *   solitaire   — solitaire-*.spec.ts
  *   sudoku      — sudoku-*.spec.ts
  *   sort        — sort-*.spec.ts
+ *   daily_word  — daily-word-*.spec.ts
  *   cross       — accessibility.spec.ts, cascade-flow.spec.ts, ui-preferences.spec.ts
  *   logs-budget — logs-*.spec.ts (#373 acceptance gate, CPU-throttled to
  *                  approximate mid-tier mobile device performance)
@@ -102,6 +103,11 @@ export default defineConfig({
     {
       name: "sort",
       testMatch: "sort-*.spec.ts",
+      use: { ...devices["Desktop Chrome"] },
+    },
+    {
+      name: "daily_word",
+      testMatch: "daily-word-*.spec.ts",
       use: { ...devices["Desktop Chrome"] },
     },
     {

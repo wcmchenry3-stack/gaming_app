@@ -19,7 +19,8 @@ type Namespace =
   | "profile"
   | "starswarm"
   | "mahjong"
-  | "sort";
+  | "sort"
+  | "daily_word";
 type TranslationModule = Promise<{ default: Record<string, string> }>;
 
 // Resolve the best supported locale from the device's preference list
@@ -53,6 +54,7 @@ const localeLoaders: Record<string, Partial<Record<Namespace, () => TranslationM
     starswarm: () => import("./locales/en/starswarm.json") as TranslationModule,
     mahjong: () => import("./locales/en/mahjong.json") as TranslationModule,
     sort: () => import("./locales/en/sort.json") as TranslationModule,
+    daily_word: () => import("./locales/en/daily_word.json") as TranslationModule,
   },
   "fr-CA": {
     common: () => import("./locales/fr-CA/common.json") as TranslationModule,
@@ -83,6 +85,7 @@ const localeLoaders: Record<string, Partial<Record<Namespace, () => TranslationM
     twenty48: () => import("./locales/hi/twenty48.json") as TranslationModule,
     sudoku: () => import("./locales/hi/sudoku.json") as TranslationModule,
     feedback: () => import("./locales/hi/feedback.json") as TranslationModule,
+    daily_word: () => import("./locales/hi/daily_word.json") as TranslationModule,
   },
   ar: {
     common: () => import("./locales/ar/common.json") as TranslationModule,
@@ -212,6 +215,7 @@ i18n
       "starswarm",
       "mahjong",
       "sort",
+      "daily_word",
     ],
     defaultNS: "common",
     interpolation: { escapeValue: false },

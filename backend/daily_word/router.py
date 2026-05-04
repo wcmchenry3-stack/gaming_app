@@ -138,5 +138,20 @@ async def post_guess(request: Request, body: GuessRequest) -> dict:
 
     result: dict = {"tiles": _score_guess(answer, guess)}
     if lang == "hi":
+        # clusters describe how to split the guess's code points into displayable tile units (not the answer)
         result["grapheme_clusters"] = _grapheme_clusters(guess)
     return result
+
+
+@router.get("/answer")
+@limiter.limit("20/minute")
+async def get_answer_route(
+    request: Request,
+    puzzle_id: str = Query(...),
+) -> dict:
+    """Return the answer for a puzzle — only called client-side after all guesses are exhausted."""
+    try:
+        answer = get_answer(puzzle_id)
+    except Exception:
+        raise HTTPException(status_code=422, detail="invalid_puzzle_id")
+    return {"answer": answer}

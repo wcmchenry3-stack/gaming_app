@@ -15,6 +15,7 @@ const factories = {
   Sudoku: () => import("../screens/SudokuScreen"),
   Mahjong: () => import("../screens/MahjongScreen"),
   Sort: () => import("../screens/SortScreen"),
+  DailyWord: () => import("../screens/DailyWordScreen"),
   Leaderboard: () => import("../screens/LeaderboardScreen"),
   GameDetail: () => import("../screens/GameDetailScreen"),
   Settings: () => import("../screens/SettingsScreen"),
@@ -33,6 +34,7 @@ export const LazyScreens = {
   Sudoku: React.lazy(factories.Sudoku),
   Mahjong: React.lazy(factories.Mahjong),
   Sort: React.lazy(factories.Sort),
+  DailyWord: React.lazy(factories.DailyWord),
   Leaderboard: React.lazy(factories.Leaderboard),
   GameDetail: React.lazy(factories.GameDetail),
   Settings: React.lazy(factories.Settings),
@@ -64,6 +66,7 @@ export function prefetchLobbyGameScreens(canPlay: (slug: string) => boolean): vo
   factories.Solitaire().catch(() => undefined);
   factories.FreeCell().catch(() => undefined);
   factories.Mahjong().catch(() => undefined);
+  factories.DailyWord().catch(() => undefined);
 
   for (const [key, slug] of PREMIUM_LAZY) {
     if (canPlay(slug)) {

@@ -26,6 +26,7 @@ _ANSWERS_EN: list[str] = _load_list("answers_en.txt")
 _VALID_EN: frozenset[str] = frozenset(_load_list("valid_en.txt")) | frozenset(_ANSWERS_EN)
 
 _ANSWERS_HI: list[str] = [unicodedata.normalize("NFC", w) for w in _load_list("answers_hi.txt")]
+# valid_hi.txt intentionally includes proper nouns — accepted as guesses but excluded from answers
 _VALID_HI: frozenset[str] = frozenset(
     unicodedata.normalize("NFC", w) for w in _load_list("valid_hi.txt")
 ) | frozenset(_ANSWERS_HI)
