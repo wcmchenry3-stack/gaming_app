@@ -9,6 +9,7 @@
   "action.hint": "Hint",
   "action.newGame": "New Game",
   "action.colorblindToggle": "Colorblind Mode",
+  "action.back": "Back",
   "action.backToLevels": "Back to levels",
   "win.title": "Solved!",
   "win.movesUsed": "Moves: {{moves}}",

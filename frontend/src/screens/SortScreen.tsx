@@ -442,7 +442,7 @@ export default function SortScreen() {
             onPress={() => navigation.goBack()}
             style={styles.backBtn}
             accessibilityRole="button"
-            accessibilityLabel={t("action.backToLevels")}
+            accessibilityLabel={t("action.back")}
           >
             <Text style={[styles.backBtnText, { color: colors.accent }]}>‹</Text>
           </Pressable>
@@ -561,6 +561,7 @@ export default function SortScreen() {
             disabled={history.length === 0}
             accessibilityRole="button"
             accessibilityLabel={t("action.undo")}
+            accessibilityState={{ disabled: history.length === 0 }}
           >
             <Text style={[styles.hudActionText, { color: colors.text }]}>
               {t("action.undo")}
