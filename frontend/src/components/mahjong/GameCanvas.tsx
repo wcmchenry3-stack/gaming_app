@@ -27,14 +27,16 @@ import { MAHJONG_TILE_FACE_SELECTED, MAHJONG_GLOW_BG } from "../../theme/theme.c
 
 export const TILE_W = 44; // face width
 export const TILE_H = 56; // face height
-const SIDE_W = 5; // 3-D side strip width (right + bottom)
-const LAYER_DX = 6; // rightward offset per layer
-const LAYER_DY = 5; // upward offset per layer
-const PAD_X = 10;
-const PAD_Y = 30; // extra top padding so layer-4 tiles don't clip
+export const SIDE_W = 5; // 3-D side strip width (right + bottom)
+export const LAYER_DX = 6; // rightward offset per layer
+export const LAYER_DY = 5; // upward offset per layer
+export const PAD_X = 6;
+// Layer-0 top-feet tiles sit at row=0 and need PAD_Y > 0 to clear the canvas edge.
+// Higher layers only appear at row≥2, so no stacking offset reaches row 0.
+export const PAD_Y = 10;
 
-export const BOARD_W = PAD_X + 12 * TILE_W + 4 * LAYER_DX + PAD_X; // 572
-export const BOARD_H = PAD_Y + 8 * TILE_H + 4 * LAYER_DY + PAD_Y; // 508
+export const BOARD_W = PAD_X + 12 * TILE_W + 4 * LAYER_DX + PAD_X; // 548
+export const BOARD_H = PAD_Y + 8 * TILE_H + 4 * LAYER_DY + PAD_Y; // 468
 
 function tileX(col: number, layer: number): number {
   return PAD_X + (col / 2) * TILE_W + layer * LAYER_DX;
