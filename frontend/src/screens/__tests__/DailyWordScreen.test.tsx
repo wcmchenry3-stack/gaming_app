@@ -111,7 +111,7 @@ const LOSS_STATE: DailyWordState = {
   puzzle_id: "2026-05-03:en",
   word_length: 5,
   language: "en",
-  rows: Array.from({ length: 6 }, (_, i) => ({
+  rows: Array.from({ length: 6 }, () => ({
     tiles: Array.from({ length: 5 }, () => ({ letter: "z", status: "absent" as const })),
     submitted: true,
   })),
