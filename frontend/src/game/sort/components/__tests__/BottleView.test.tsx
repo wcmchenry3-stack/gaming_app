@@ -34,8 +34,10 @@ describe("BottleView", () => {
 
   it("fires onTap when pressed", () => {
     const onTap = jest.fn();
-    const { getByRole } = render(withTheme(<BottleView bottle={[]} index={0} onTap={onTap} />));
-    fireEvent.press(getByRole("button"));
+    const { getByLabelText } = render(
+      withTheme(<BottleView bottle={[]} index={0} onTap={onTap} />)
+    );
+    fireEvent.press(getByLabelText("Bottle 1, empty"));
     expect(onTap).toHaveBeenCalledTimes(1);
   });
 
