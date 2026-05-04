@@ -162,6 +162,47 @@ def test_stale_puzzle_id_returns_422(client: TestClient) -> None:
     assert r.json()["detail"] == "stale_puzzle_id"
 
 
+def test_grace_window_accepts_yesterday_puzzle_id(client: TestClient) -> None:
+    """Yesterday's puzzle_id is accepted when local time is within the 1-minute grace window.
+
+    Clock is pinned to 2024-01-02 00:00:30 UTC.  local_ts=2024-01-02 00:00:30,
+    grace_ts=2024-01-01 23:59:30 — so date "2024-01-01" matches grace_ts and must be accepted.
+    """
+    from unittest.mock import patch
+
+    pinned = datetime(2024, 1, 2, 0, 0, 30, tzinfo=timezone.utc)
+    with patch("daily_word.router.datetime") as mock_dt:
+        mock_dt.now.return_value = pinned
+        headers = _sid_headers()
+        r = client.post(
+            "/daily-word/guess",
+            headers=headers,
+            json={"puzzle_id": "2024-01-01:en", "guess": "crane", "tz_offset_minutes": 0},
+        )
+    assert r.status_code == 200
+
+
+def test_grace_window_rejects_two_days_ago_puzzle_id(client: TestClient) -> None:
+    """A puzzle_id two days old is rejected even when local time is near midnight.
+
+    Clock is pinned to 2024-01-02 00:00:30 UTC.  Neither local_ts (2024-01-02)
+    nor grace_ts (2024-01-01) matches "2023-12-31", so the request must be rejected.
+    """
+    from unittest.mock import patch
+
+    pinned = datetime(2024, 1, 2, 0, 0, 30, tzinfo=timezone.utc)
+    with patch("daily_word.router.datetime") as mock_dt:
+        mock_dt.now.return_value = pinned
+        headers = _sid_headers()
+        r = client.post(
+            "/daily-word/guess",
+            headers=headers,
+            json={"puzzle_id": "2023-12-31:en", "guess": "crane", "tz_offset_minutes": 0},
+        )
+    assert r.status_code == 422
+    assert r.json()["detail"] == "stale_puzzle_id"
+
+
 def test_invalid_word_returns_422_not_a_word(client: TestClient) -> None:
     headers = _sid_headers()
     r = client.post(

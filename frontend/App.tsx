@@ -79,6 +79,7 @@ export type HomeStackParamList = {
   Sudoku: undefined;
   Mahjong: undefined;
   Sort: undefined;
+  DailyWord: undefined;
   Scoreboard: {
     gameKey:
       | "hearts"
@@ -203,6 +204,7 @@ const LazyHeartsScreen = makePremiumScreen("hearts", withSuspense(LazyScreens.He
 const LazySudokuScreen = makePremiumScreen("sudoku", withSuspense(LazyScreens.Sudoku, "sudoku"));
 const LazyMahjongScreen = withSuspense(LazyScreens.Mahjong, "mahjong");
 const LazySortScreen = makePremiumScreen("sort", withSuspense(LazyScreens.Sort, "sort"));
+const LazyDailyWordScreen = withSuspense(LazyScreens.DailyWord, "daily_word");
 const LazyLeaderboardScreen = withSuspense(LazyScreens.Leaderboard, "leaderboard");
 const LazyGameDetailScreen = withSuspense(LazyScreens.GameDetail, "game_detail");
 const LazySettingsScreen = withSuspense(LazyScreens.Settings, "settings");
@@ -229,6 +231,7 @@ function LobbyStack() {
       <HomeStack.Screen name="Sudoku" component={LazySudokuScreen} />
       <HomeStack.Screen name="Mahjong" component={LazyMahjongScreen} />
       <HomeStack.Screen name="Sort" component={LazySortScreen} />
+      <HomeStack.Screen name="DailyWord" component={LazyDailyWordScreen} />
       <HomeStack.Screen name="Scoreboard" component={LazyScoreboardScreen} />
     </HomeStack.Navigator>
   );
