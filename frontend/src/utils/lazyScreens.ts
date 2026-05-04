@@ -19,6 +19,7 @@ const factories = {
   GameDetail: () => import("../screens/GameDetailScreen"),
   Settings: () => import("../screens/SettingsScreen"),
   Scoreboard: () => import("../screens/ScoreboardScreen"),
+  DailyWord: () => import("../screens/DailyWordScreen"),
 } as const;
 
 export const LazyScreens = {
@@ -37,6 +38,7 @@ export const LazyScreens = {
   GameDetail: React.lazy(factories.GameDetail),
   Settings: React.lazy(factories.Settings),
   Scoreboard: React.lazy(factories.Scoreboard),
+  DailyWord: React.lazy(factories.DailyWord),
 } as const;
 
 // Slugs for premium games that have lazy screens.
@@ -64,6 +66,7 @@ export function prefetchLobbyGameScreens(canPlay: (slug: string) => boolean): vo
   factories.Solitaire().catch(() => undefined);
   factories.FreeCell().catch(() => undefined);
   factories.Mahjong().catch(() => undefined);
+  factories.DailyWord().catch(() => undefined);
 
   for (const [key, slug] of PREMIUM_LAZY) {
     if (canPlay(slug)) {

@@ -19,6 +19,10 @@ export interface GuessResponse {
   readonly grapheme_clusters?: readonly (readonly number[])[];
 }
 
+export interface AnswerResponse {
+  readonly answer: string;
+}
+
 export const dailyWordApi = {
   getToday: (tz_offset_minutes: number, lang: string) =>
     request<TodayResponse>(
@@ -29,4 +33,6 @@ export const dailyWordApi = {
       method: "POST",
       body: JSON.stringify({ puzzle_id, guess, tz_offset_minutes }),
     }),
+  getAnswer: (puzzle_id: string) =>
+    request<AnswerResponse>(`/daily-word/answer?puzzle_id=${encodeURIComponent(puzzle_id)}`),
 };

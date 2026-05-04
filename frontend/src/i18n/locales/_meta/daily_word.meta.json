@@ -1,0 +1,146 @@
+{
+  "game.title": {
+    "component": "HomeScreen",
+    "description": "Name of the Daily Word game card.",
+    "tone": "neutral",
+    "characterLimit": 20,
+    "placeholders": [],
+    "doNotTranslate": [],
+    "notes": "A daily Wordle-style word puzzle."
+  },
+  "game.description": {
+    "component": "HomeScreen",
+    "description": "One-line description on the Daily Word game card.",
+    "tone": "casual, punchy",
+    "characterLimit": 60,
+    "placeholders": [],
+    "doNotTranslate": [],
+    "notes": null
+  },
+  "game.playLabel": {
+    "component": "HomeScreen",
+    "description": "Accessibility label for the Daily Word play button.",
+    "tone": "functional",
+    "characterLimit": 25,
+    "placeholders": [],
+    "doNotTranslate": [],
+    "notes": null
+  },
+  "keyboard.delete": {
+    "component": "DailyWordScreen keyboard",
+    "description": "Delete key label on the on-screen keyboard.",
+    "tone": "functional",
+    "characterLimit": 10,
+    "placeholders": [],
+    "doNotTranslate": [],
+    "notes": null
+  },
+  "keyboard.submit": {
+    "component": "DailyWordScreen keyboard",
+    "description": "Submit/Enter key label on the on-screen keyboard.",
+    "tone": "functional",
+    "characterLimit": 10,
+    "placeholders": [],
+    "doNotTranslate": [],
+    "notes": null
+  },
+  "win.title": {
+    "component": "DailyWordScreen win modal",
+    "description": "Header shown when the player wins.",
+    "tone": "celebratory",
+    "characterLimit": 20,
+    "placeholders": [],
+    "doNotTranslate": [],
+    "notes": null
+  },
+  "win.guesses_one": {
+    "component": "DailyWordScreen win modal",
+    "description": "Singular form: number of guesses used (only 1 guess).",
+    "tone": "neutral",
+    "characterLimit": 40,
+    "placeholders": ["{{count}}"],
+    "doNotTranslate": [],
+    "notes": "{{count}} is always 1 for singular form."
+  },
+  "win.guesses_other": {
+    "component": "DailyWordScreen win modal",
+    "description": "Plural form: number of guesses used.",
+    "tone": "neutral",
+    "characterLimit": 40,
+    "placeholders": ["{{count}}"],
+    "doNotTranslate": [],
+    "notes": "{{count}} is 2–6."
+  },
+  "win.share": {
+    "component": "DailyWordScreen win modal",
+    "description": "Button label to share the result.",
+    "tone": "action",
+    "characterLimit": 12,
+    "placeholders": [],
+    "doNotTranslate": [],
+    "notes": null
+  },
+  "loss.title": {
+    "component": "DailyWordScreen loss modal",
+    "description": "Header shown when the player loses (exhausted all 6 guesses).",
+    "tone": "empathetic, not harsh",
+    "characterLimit": 30,
+    "placeholders": [],
+    "doNotTranslate": [],
+    "notes": null
+  },
+  "loss.answer": {
+    "component": "DailyWordScreen loss modal",
+    "description": "Reveals the correct word to the player after a loss.",
+    "tone": "neutral",
+    "characterLimit": 40,
+    "placeholders": ["{{word}}"],
+    "doNotTranslate": ["{{word}}"],
+    "notes": "{{word}} is the correct answer string — do not translate it."
+  },
+  "loss.nextWord": {
+    "component": "DailyWordScreen loss modal",
+    "description": "Label before the HH:MM:SS countdown to midnight.",
+    "tone": "neutral",
+    "characterLimit": 20,
+    "placeholders": [],
+    "doNotTranslate": [],
+    "notes": "Followed by a live countdown timer (e.g., 'Next word in 08:42:11')."
+  },
+  "error.loadFailed": {
+    "component": "DailyWordScreen",
+    "description": "Error shown when today's puzzle cannot be fetched from the server.",
+    "tone": "apologetic, clear",
+    "characterLimit": 60,
+    "placeholders": [],
+    "doNotTranslate": [],
+    "notes": null
+  },
+  "error.guessFailed": {
+    "component": "DailyWordScreen",
+    "description": "Error shown when submitting a guess fails (network error).",
+    "tone": "apologetic, clear",
+    "characterLimit": 60,
+    "placeholders": [],
+    "doNotTranslate": [],
+    "notes": null
+  },
+  "error.invalidWord": {
+    "component": "DailyWordScreen",
+    "description": "Toast shown when the submitted word is not in the word list.",
+    "tone": "neutral",
+    "characterLimit": 24,
+    "placeholders": [],
+    "doNotTranslate": [],
+    "notes": null
+  },
+  "error.tooShort": {
+    "component": "DailyWordScreen",
+    "description": "Toast shown when the player tries to submit before filling all tiles.",
+    "tone": "neutral",
+    "characterLimit": 24,
+    "placeholders": [],
+    "doNotTranslate": [],
+    "notes": null
+  }
+}

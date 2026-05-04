@@ -52,6 +52,7 @@ export default function HomeScreen() {
     "starswarm",
     "mahjong",
     "sort",
+    "daily_word",
     "errors",
   ]);
   const { colors } = useTheme();
@@ -175,6 +176,14 @@ export default function HomeScreen() {
       description: t("sort:game.description"),
       action: () => navigation.navigate("Sort"),
     },
+    {
+      key: "daily_word",
+      slug: "daily_word",
+      emoji: "📝",
+      title: t("daily_word:game.title"),
+      description: t("daily_word:game.description"),
+      action: () => navigation.navigate("DailyWord"),
+    },
   ];
 
   const playLabels: Record<string, string> = {
@@ -189,6 +198,7 @@ export default function HomeScreen() {
     [t("starswarm:game.title")]: t("starswarm:game.playLabel"),
     [t("mahjong:game.title")]: t("mahjong:game.playLabel"),
     [t("sort:game.title")]: t("sort:game.playLabel"),
+    [t("daily_word:game.title")]: t("daily_word:game.playLabel"),
   };
 
   // Cycle through BC Arcade accent colors for the gradient top border on each card.

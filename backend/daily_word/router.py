@@ -88,6 +88,31 @@ class GuessRequest(BaseModel):
     tz_offset_minutes: int = Field(0, ge=-840, le=840)
 
 
+@router.get("/answer")
+@limiter.limit("6/hour")
+async def get_answer_endpoint(
+    request: Request,
+    puzzle_id: str = Query(...),
+) -> dict:
+    """Return the answer for a completed puzzle.
+
+    Intended to be called by the client only after all 6 guesses are exhausted.
+    Rate-limited to match the guess budget so bulk pre-game fetching is
+    meaningfully slowed.
+    """
+    try:
+        _, lang = puzzle_id.rsplit(":", 1)
+    except ValueError:
+        raise HTTPException(status_code=422, detail="invalid_puzzle_id")
+    if lang not in _SUPPORTED_LANGS:
+        raise HTTPException(status_code=422, detail="invalid_puzzle_id")
+    try:
+        answer = get_answer(puzzle_id)
+    except Exception:
+        raise HTTPException(status_code=422, detail="invalid_puzzle_id")
+    return {"answer": answer}
+
+
 @router.get("/today")
 @limiter.limit("60/minute")
 async def get_today(

@@ -341,3 +341,46 @@ def test_hindi_grapheme_clusters_devanagari_matras(client: TestClient) -> None:
     clusters = _grapheme_clusters("सुंदर")
     assert clusters[0] == [0, 1, 2], f"Expected [0,1,2], got {clusters[0]}"
     assert len(clusters) == 3
+
+
+# ---------------------------------------------------------------------------
+# GET /daily-word/answer
+# ---------------------------------------------------------------------------
+
+
+def test_get_answer_returns_correct_word(client: TestClient) -> None:
+    """GET /daily-word/answer must return the answer for a valid puzzle_id."""
+    from daily_word.puzzle import get_answer
+
+    puzzle_id = _today_puzzle_id()
+    expected = get_answer(puzzle_id)
+
+    r = client.get(f"/daily-word/answer?puzzle_id={puzzle_id}")
+    assert r.status_code == 200
+    data = r.json()
+    assert "answer" in data
+    assert data["answer"] == expected
+
+
+def test_get_answer_invalid_puzzle_id_returns_422(client: TestClient) -> None:
+    """GET /daily-word/answer with a malformed puzzle_id returns 422."""
+    r = client.get("/daily-word/answer?puzzle_id=not_valid")
+    assert r.status_code == 422
+
+
+def test_get_answer_unsupported_lang_returns_422(client: TestClient) -> None:
+    """GET /daily-word/answer with an unsupported language returns 422."""
+    r = client.get("/daily-word/answer?puzzle_id=2026-05-03:fr")
+    assert r.status_code == 422
+
+
+def test_get_answer_hindi_returns_correct_word(client: TestClient) -> None:
+    """GET /daily-word/answer works for Hindi puzzle_id."""
+    from daily_word.puzzle import get_answer
+
+    puzzle_id = _today_puzzle_id(lang="hi")
+    expected = get_answer(puzzle_id)
+
+    r = client.get(f"/daily-word/answer?puzzle_id={puzzle_id}")
+    assert r.status_code == 200
+    assert r.json()["answer"] == expected

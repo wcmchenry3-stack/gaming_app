@@ -58,6 +58,14 @@ jest.mock("react-native-reanimated", () => {
     makeShareable: (obj: unknown) => obj,
     startMapper: () => 0,
     stopMapper: () => {},
+    interpolate: (value: number, inputRange: number[], outputRange: number[]) => {
+      // Linear interpolation between the first and last output range values.
+      const [i0, i1] = [inputRange[0] ?? 0, inputRange[inputRange.length - 1] ?? 1];
+      const [o0, o1] = [outputRange[0] ?? 0, outputRange[outputRange.length - 1] ?? 1];
+      if (i1 === i0) return o0;
+      return o0 + ((value - i0) / (i1 - i0)) * (o1 - o0);
+    },
+    Extrapolation: { CLAMP: "clamp", EXTEND: "extend", IDENTITY: "identity" },
   };
 });
 

@@ -1,0 +1,18 @@
+{
+  "game.title": "दैनिक शब्द",
+  "game.description": "एक शब्द, एक मौका — क्या आप अनुमान लगा सकते हैं?",
+  "game.playLabel": "दैनिक शब्द खेलें",
+  "keyboard.delete": "मिटाएं",
+  "keyboard.submit": "दर्ज",
+  "win.title": "शानदार!",
+  "win.guesses_one": "आपने {{count}} अनुमान में सही किया",
+  "win.guesses_other": "आपने {{count}} अनुमानों में सही किया",
+  "win.share": "शेयर करें",
+  "loss.title": "कल फिर कोशिश करें",
+  "loss.answer": "शब्द था {{word}}",
+  "loss.nextWord": "अगला शब्द",
+  "error.loadFailed": "आज की पहेली लोड नहीं हो सकी।",
+  "error.guessFailed": "अनुमान सबमिट नहीं हो सका। कनेक्शन जांचें।",
+  "error.invalidWord": "शब्द सूची में नहीं है",
+  "error.tooShort": "पर्याप्त अक्षर नहीं हैं"
+}

@@ -1,0 +1,18 @@
+{
+  "game.title": "Daily Word",
+  "game.description": "One word, one chance per day — can you guess it?",
+  "game.playLabel": "Play Daily Word",
+  "keyboard.delete": "Delete",
+  "keyboard.submit": "Enter",
+  "win.title": "Brilliant!",
+  "win.guesses_one": "You got it in {{count}} guess",
+  "win.guesses_other": "You got it in {{count}} guesses",
+  "win.share": "Share",
+  "loss.title": "Better luck tomorrow",
+  "loss.answer": "The word was {{word}}",
+  "loss.nextWord": "Next word in",
+  "error.loadFailed": "Could not load today's puzzle.",
+  "error.guessFailed": "Could not submit your guess. Check your connection.",
+  "error.invalidWord": "Not in word list",
+  "error.tooShort": "Not enough letters"
+}
