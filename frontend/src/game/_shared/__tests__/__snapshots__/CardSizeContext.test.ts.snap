@@ -1,27 +1,27 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`useResponsiveCardSize snapshot at viewport width 320 1`] = `
+exports[`computeCardSize snapshot at viewport width 320 1`] = `
+{
+  "cardHeight": 59,
+  "cardWidth": 42,
+}
+`;
+
+exports[`computeCardSize snapshot at viewport width 360 1`] = `
+{
+  "cardHeight": 67,
+  "cardWidth": 47,
+}
+`;
+
+exports[`computeCardSize snapshot at viewport width 1024 1`] = `
 {
   "cardHeight": 74,
   "cardWidth": 52,
 }
 `;
 
-exports[`useResponsiveCardSize snapshot at viewport width 360 1`] = `
-{
-  "cardHeight": 74,
-  "cardWidth": 52,
-}
-`;
-
-exports[`useResponsiveCardSize snapshot at viewport width 1024 1`] = `
-{
-  "cardHeight": 74,
-  "cardWidth": 52,
-}
-`;
-
-exports[`useResponsiveCardSize snapshot at viewport width 1440 1`] = `
+exports[`computeCardSize snapshot at viewport width 1440 1`] = `
 {
   "cardHeight": 74,
   "cardWidth": 52,
