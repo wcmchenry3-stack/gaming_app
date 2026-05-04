@@ -58,6 +58,8 @@ function promoteLetter(
 }
 
 export function applyServerResult(state: DailyWordState, tiles: TileState[]): DailyWordState {
+  if (state.is_complete || state.current_row >= MAX_ROWS) return state;
+
   const newRows = state.rows.map((row, i) =>
     i === state.current_row ? { tiles, submitted: true } : row
   );

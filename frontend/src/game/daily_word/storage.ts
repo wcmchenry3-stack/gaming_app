@@ -4,6 +4,10 @@ import type { DailyWordState } from "./types";
 
 const STORAGE_KEY = "daily_word_state_v1";
 
+// Callers must compare loaded state's puzzle_id against today's puzzle
+// (via dailyWordApi.getToday) and call clearState() on a mismatch so a
+// stale save from a previous day is never presented to the player.
+
 // puzzle_id format: "YYYY-MM-DD:lang"
 const PUZZLE_ID_RE = /^\d{4}-\d{2}-\d{2}:[a-z]{2}$/;
 

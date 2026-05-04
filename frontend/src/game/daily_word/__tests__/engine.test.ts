@@ -97,6 +97,17 @@ describe("applyServerResult — duplicate-letter coloring", () => {
   });
 });
 
+describe("applyServerResult — guards", () => {
+  it("does nothing when game is complete", () => {
+    const tiles: TileState[] = Array.from({ length: 5 }, (_, i) => ({
+      letter: "abcde"[i]!,
+      status: "absent" as const,
+    }));
+    const s = markComplete(initialState("2026-05-03:en", 5, "en"), false);
+    expect(applyServerResult(s, tiles)).toBe(s);
+  });
+});
+
 describe("keyboard promotion rules", () => {
   it("correct is never downgraded to absent", () => {
     const correctTiles: TileState[] = [
