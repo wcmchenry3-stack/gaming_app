@@ -556,7 +556,10 @@ export default function DailyWordScreen() {
       {/* Loss modal */}
       <Modal visible={lossModalVisible} transparent animationType="fade" testID="loss-modal">
         <View style={styles.modalOverlay}>
-          <View style={[styles.modalCard, { backgroundColor: DW.bgModal }]} testID="loss-modal-card">
+          <View
+            style={[styles.modalCard, { backgroundColor: DW.bgModal }]}
+            testID="loss-modal-card"
+          >
             <Text style={[styles.modalTitle, { color: DW.accentLoss }]}>
               {t("daily_word:loss.title")}
             </Text>

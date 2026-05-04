@@ -111,9 +111,7 @@ describe("DailyWordScreen — mount", () => {
     // Game loads without error — loadState and getToday both resolve
     await waitFor(() => expect(mockGetToday).toHaveBeenCalledTimes(1));
     // After loading, saved state is reused (current_row = 0)
-    await waitFor(() =>
-      expect(AsyncStorage.getItem).toBeDefined()
-    );
+    await waitFor(() => expect(AsyncStorage.getItem).toBeDefined());
   });
 
   it("discards stale saved state when puzzle_id differs from today", async () => {
