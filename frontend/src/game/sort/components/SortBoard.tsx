@@ -156,12 +156,30 @@ function SortWinOverlay({ visible }: OverlayProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [visible]);
 
-  const a0 = useAnimatedStyle(() => ({ transform: [{ translateY: y0.value }], opacity: op0.value }));
-  const a1 = useAnimatedStyle(() => ({ transform: [{ translateY: y1.value }], opacity: op1.value }));
-  const a2 = useAnimatedStyle(() => ({ transform: [{ translateY: y2.value }], opacity: op2.value }));
-  const a3 = useAnimatedStyle(() => ({ transform: [{ translateY: y3.value }], opacity: op3.value }));
-  const a4 = useAnimatedStyle(() => ({ transform: [{ translateY: y4.value }], opacity: op4.value }));
-  const a5 = useAnimatedStyle(() => ({ transform: [{ translateY: y5.value }], opacity: op5.value }));
+  const a0 = useAnimatedStyle(() => ({
+    transform: [{ translateY: y0.value }],
+    opacity: op0.value,
+  }));
+  const a1 = useAnimatedStyle(() => ({
+    transform: [{ translateY: y1.value }],
+    opacity: op1.value,
+  }));
+  const a2 = useAnimatedStyle(() => ({
+    transform: [{ translateY: y2.value }],
+    opacity: op2.value,
+  }));
+  const a3 = useAnimatedStyle(() => ({
+    transform: [{ translateY: y3.value }],
+    opacity: op3.value,
+  }));
+  const a4 = useAnimatedStyle(() => ({
+    transform: [{ translateY: y4.value }],
+    opacity: op4.value,
+  }));
+  const a5 = useAnimatedStyle(() => ({
+    transform: [{ translateY: y5.value }],
+    opacity: op5.value,
+  }));
 
   if (!visible || reduceMotion) return null;
 
@@ -172,12 +190,24 @@ function SortWinOverlay({ visible }: OverlayProps) {
       accessibilityElementsHidden
       importantForAccessibility="no-hide-descendants"
     >
-      <Animated.View style={[styles.particle, styles.p0, { backgroundColor: PARTICLE_COLORS[0] }, a0]} />
-      <Animated.View style={[styles.particle, styles.p1, { backgroundColor: PARTICLE_COLORS[1] }, a1]} />
-      <Animated.View style={[styles.particle, styles.p2, { backgroundColor: PARTICLE_COLORS[2] }, a2]} />
-      <Animated.View style={[styles.particle, styles.p3, { backgroundColor: PARTICLE_COLORS[3] }, a3]} />
-      <Animated.View style={[styles.particle, styles.p4, { backgroundColor: PARTICLE_COLORS[4] }, a4]} />
-      <Animated.View style={[styles.particle, styles.p5, { backgroundColor: PARTICLE_COLORS[5] }, a5]} />
+      <Animated.View
+        style={[styles.particle, styles.p0, { backgroundColor: PARTICLE_COLORS[0] }, a0]}
+      />
+      <Animated.View
+        style={[styles.particle, styles.p1, { backgroundColor: PARTICLE_COLORS[1] }, a1]}
+      />
+      <Animated.View
+        style={[styles.particle, styles.p2, { backgroundColor: PARTICLE_COLORS[2] }, a2]}
+      />
+      <Animated.View
+        style={[styles.particle, styles.p3, { backgroundColor: PARTICLE_COLORS[3] }, a3]}
+      />
+      <Animated.View
+        style={[styles.particle, styles.p4, { backgroundColor: PARTICLE_COLORS[4] }, a4]}
+      />
+      <Animated.View
+        style={[styles.particle, styles.p5, { backgroundColor: PARTICLE_COLORS[5] }, a5]}
+      />
     </View>
   );
 }

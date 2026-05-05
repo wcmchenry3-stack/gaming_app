@@ -106,10 +106,7 @@ export default function BottleView({
   useEffect(() => {
     if (selected) {
       bounceY.value = withRepeat(
-        withSequence(
-          withTiming(-10, { duration: 250 }),
-          withTiming(0, { duration: 250 })
-        ),
+        withSequence(withTiming(-10, { duration: 250 }), withTiming(0, { duration: 250 })),
         -1,
         false
       );
