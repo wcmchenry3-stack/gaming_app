@@ -10,7 +10,10 @@ import { DropTarget } from "../DropTarget";
 const dragCards: DragCard[] = [{ suit: "clubs", rank: 3, faceDown: false, width: 60, height: 90 }];
 const dragSource: DragSource = { game: "solitaire", type: "waste" };
 
-function wrap(children: React.ReactNode, getLegalDropIds?: (s: DragSource, c: DragCard[]) => string[]) {
+function wrap(
+  children: React.ReactNode,
+  getLegalDropIds?: (s: DragSource, c: DragCard[]) => string[]
+) {
   return (
     <DragProvider getLegalDropIds={getLegalDropIds}>
       <ThemeProvider>{children}</ThemeProvider>
