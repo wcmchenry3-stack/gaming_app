@@ -15,6 +15,8 @@ import type { Card } from "../types";
 import type { CanonicalSuit } from "../../_shared/decks/types";
 import CardView, { CARD_HEIGHT, CARD_WIDTH } from "./CardView";
 import { useCardSize } from "../../_shared/CardSizeContext";
+import { rankLabel } from "../../_shared/decks/cardId";
+import SelectableCard from "../../_shared/SelectableCard";
 import { DraggableCard } from "../../_shared/drag/DraggableCard";
 import { DropTarget } from "../../_shared/drag/DropTarget";
 import type { DropHandler } from "../../_shared/drag/DragContext";
@@ -112,6 +114,11 @@ export default function TableauPile({
       width: cardWidth,
       height: cardHeight,
     }));
+    const rl = rankLabel(card.rank);
+    const suitName = t(`suit.${card.suit}` as const);
+    const selectedLabel = card.faceUp
+      ? t("card.faceUpSelected", { rank: rl, suit: suitName })
+      : t("card.faceDownSelected");
     return (
       <DraggableCard
         key={cardIndex}
@@ -121,7 +128,19 @@ export default function TableauPile({
         dragSource={{ game: "solitaire", type: "tableau", col: colIndex, fromIndex: cardIndex }}
         draggable={card.faceUp}
       >
-        <CardView card={card} selected={isSelected} />
+        {isSelected ? (
+          <SelectableCard
+            suit={card.suit as CanonicalSuit}
+            rank={card.rank}
+            faceDown={!card.faceUp}
+            width={cardWidth}
+            height={cardHeight}
+            selected
+            accessibilityLabel={selectedLabel}
+          />
+        ) : (
+          <CardView card={card} />
+        )}
       </DraggableCard>
     );
   });

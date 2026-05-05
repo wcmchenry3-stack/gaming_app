@@ -4,9 +4,9 @@ import { useTranslation } from "react-i18next";
 
 import { useTheme } from "../../theme/ThemeContext";
 import { typography } from "../../theme/typography";
-import SharedPlayingCard from "../shared/PlayingCard";
 import { rankLabel } from "../../game/_shared/decks/cardId";
 import type { CanonicalSuit } from "../../game/_shared/decks/types";
+import SelectableCard from "../../game/_shared/SelectableCard";
 import type { Card } from "../../game/freecell/types";
 import { useCardSize } from "../../game/_shared/CardSizeContext";
 import { DraggableCard } from "../../game/_shared/drag/DraggableCard";
@@ -54,12 +54,12 @@ export default function FreeCellSlot({
       : t("card.label", { rank: rl, suit: suitName });
 
     const cardEl = (
-      <SharedPlayingCard
+      <SelectableCard
         suit={card.suit as CanonicalSuit}
         rank={card.rank}
         width={cardWidth}
         height={cardHeight}
-        highlighted={selected}
+        selected={selected}
         hintHighlighted={hintSource}
         accessibilityLabel={label}
       />

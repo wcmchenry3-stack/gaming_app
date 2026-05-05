@@ -12,8 +12,10 @@ import { useTranslation } from "react-i18next";
 
 import { useTheme } from "../../../theme/ThemeContext";
 import type { Card, Suit } from "../types";
-import CardView, { CARD_HEIGHT, CARD_WIDTH } from "./CardView";
+import { CARD_HEIGHT, CARD_WIDTH } from "./CardView";
 import { useCardSize } from "../../_shared/CardSizeContext";
+import type { CanonicalSuit } from "../../_shared/decks/types";
+import SelectableCard from "../../_shared/SelectableCard";
 import { DropTarget } from "../../_shared/drag/DropTarget";
 import type { DropHandler } from "../../_shared/drag/DragContext";
 
@@ -57,8 +59,11 @@ export default function FoundationPile({
       const top = pile[pile.length - 1];
       if (top !== undefined) {
         return (
-          <CardView
-            card={top}
+          <SelectableCard
+            suit={top.suit as CanonicalSuit}
+            rank={top.rank}
+            width={cardWidth}
+            height={cardHeight}
             selected={selected}
             onPress={onPress ? () => onPress(suit) : undefined}
           />
