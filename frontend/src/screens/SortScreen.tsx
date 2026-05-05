@@ -85,9 +85,8 @@ export default function SortScreen() {
   const audio = useSortAudio();
 
   useEffect(() => {
-    const timer = pourTimerRef.current;
     return () => {
-      if (timer !== null) clearTimeout(timer);
+      if (pourTimerRef.current !== null) clearTimeout(pourTimerRef.current);
     };
   }, []);
 
@@ -244,6 +243,13 @@ export default function SortScreen() {
   }
 
   function handleBackToSelect() {
+    if (pourTimerRef.current !== null) {
+      clearTimeout(pourTimerRef.current);
+      pourTimerRef.current = null;
+    }
+    setIsPouring(false);
+    setPouringFrom(null);
+    setPouringTo(null);
     setView("select");
     setShowWinModal(false);
   }
