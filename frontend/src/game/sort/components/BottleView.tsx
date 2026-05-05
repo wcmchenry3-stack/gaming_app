@@ -1,22 +1,86 @@
 import React, { useEffect } from "react";
 import { StyleSheet, TouchableOpacity, View } from "react-native";
-import Animated, { useAnimatedStyle, useSharedValue, withSpring } from "react-native-reanimated";
+import Animated, {
+  cancelAnimation,
+  useAnimatedStyle,
+  useSharedValue,
+  withDelay,
+  withRepeat,
+  withSequence,
+  withTiming,
+} from "react-native-reanimated";
+import Svg, {
+  Circle,
+  ClipPath,
+  Defs,
+  G,
+  LinearGradient,
+  Path,
+  Rect,
+  Stop,
+  Text as SvgText,
+} from "react-native-svg";
 import { useTranslation } from "react-i18next";
-import type { Bottle } from "../types";
+import type { Bottle, Color } from "../types";
 import { BOTTLE_DEPTH } from "../types";
 import { isBottleSolved } from "../engine";
-import BallView, { BALL_SIZE } from "./BallView";
 
-const BOTTLE_PADDING = 6;
-const BALL_GAP = 3;
-export const BOTTLE_WIDTH = BALL_SIZE + BOTTLE_PADDING * 2;
-export const BOTTLE_HEIGHT = BOTTLE_DEPTH * (BALL_SIZE + BALL_GAP) + BOTTLE_PADDING * 2;
+// SVG design dimensions — the viewBox stays fixed; width/height props scale the render.
+const VB_W = 56;
+const VB_H = 168;
+const PAD_TOP = 14; // neck height in viewBox units
+const BODY_BOTTOM = VB_H - 2; // 166
+const INNER_H = BODY_BOTTOM - PAD_TOP; // 152
+const UNIT_H = INNER_H / BOTTLE_DEPTH; // 38 per liquid unit
+
+// Test-tube shape: straight walls → rounded bottom, narrow opening at neck.
+// TUBE_CAVITY clips liquid to body only; TUBE_OUTLINE draws the full silhouette.
+const TUBE_CAVITY = `M 12 ${PAD_TOP} L 12 150 Q 12 ${BODY_BOTTOM} 28 ${BODY_BOTTOM} Q 44 ${BODY_BOTTOM} 44 150 L 44 ${PAD_TOP} Z`;
+const TUBE_OUTLINE = `M 20 0 L 20 ${PAD_TOP} L 12 ${PAD_TOP} L 12 150 Q 12 ${BODY_BOTTOM} 28 ${BODY_BOTTOM} Q 44 ${BODY_BOTTOM} 44 150 L 44 ${PAD_TOP} L 36 ${PAD_TOP} L 36 0 Z`;
+
+export const LIQUID_COLORS: Record<Color, string> = {
+  red: "#ff716c",
+  blue: "#5b8cff",
+  green: "#4ade80",
+  yellow: "#ffae3b",
+  orange: "#ff9f3b",
+  purple: "#d674ff",
+  pink: "#ff5fa8",
+  teal: "#8ff5ff",
+};
+
+const COLORBLIND_SYMBOLS: Record<Color, string> = {
+  red: "▲",
+  blue: "●",
+  green: "■",
+  yellow: "★",
+  orange: "⬡",
+  purple: "◆",
+  pink: "✦",
+  teal: "✚",
+};
+
+export const DEFAULT_BOTTLE_WIDTH = 52;
+export const DEFAULT_BOTTLE_HEIGHT = 156;
+// Backward-compat names used by SortBoard and snapshot tests
+export const BOTTLE_WIDTH = DEFAULT_BOTTLE_WIDTH;
+export const BOTTLE_HEIGHT = DEFAULT_BOTTLE_HEIGHT;
+
+// Pour animation timing (ms)
+const TILT_IN_MS = 250;
+const TILT_HOLD_MS = 150;
+const TILT_OUT_MS = 200;
+const TILT_DEG = 62;
 
 export interface BottleViewProps {
   readonly bottle: Bottle;
   readonly index: number;
   readonly selected?: boolean;
+  readonly pouring?: boolean;
+  readonly pouringDirection?: "left" | "right";
   readonly colorblindMode?: boolean;
+  readonly bottleWidth?: number;
+  readonly bottleHeight?: number;
   readonly onTap?: () => void;
 }
 
@@ -24,22 +88,49 @@ export default function BottleView({
   bottle,
   index,
   selected = false,
+  pouring = false,
+  pouringDirection,
   colorblindMode = false,
+  bottleWidth = DEFAULT_BOTTLE_WIDTH,
+  bottleHeight = DEFAULT_BOTTLE_HEIGHT,
   onTap,
 }: BottleViewProps) {
   const { t } = useTranslation("sort");
-  const scale = useSharedValue(1);
-
-  useEffect(() => {
-    scale.value = withSpring(selected ? 1.06 : 1, { damping: 10, stiffness: 220 });
-  }, [selected, scale]);
-
-  const animStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: scale.value }],
-  }));
+  const bounceY = useSharedValue(0);
+  const tiltDeg = useSharedValue(0);
 
   const isFilled = bottle.length > 0;
   const solved = isBottleSolved(bottle);
+
+  // Continuous bounce while selected
+  useEffect(() => {
+    if (selected) {
+      bounceY.value = withRepeat(
+        withSequence(withTiming(-10, { duration: 250 }), withTiming(0, { duration: 250 })),
+        -1,
+        false
+      );
+    } else {
+      cancelAnimation(bounceY);
+      bounceY.value = withTiming(0, { duration: 100 });
+    }
+  }, [selected, bounceY]);
+
+  // Tilt toward target bottle while pouring
+  useEffect(() => {
+    if (pouring && pouringDirection) {
+      const angle = pouringDirection === "right" ? TILT_DEG : -TILT_DEG;
+      tiltDeg.value = withSequence(
+        withTiming(angle, { duration: TILT_IN_MS }),
+        withDelay(TILT_HOLD_MS, withTiming(0, { duration: TILT_OUT_MS }))
+      );
+    }
+  }, [pouring, pouringDirection, tiltDeg]);
+
+  const animStyle = useAnimatedStyle(() => ({
+    transform: [{ translateY: bounceY.value }, { rotate: `${tiltDeg.value}deg` }],
+  }));
+
   let accessibilityLabel: string;
   if (selected) {
     accessibilityLabel = t("a11y.bottleSelected", { index: index + 1 });
@@ -55,6 +146,12 @@ export default function BottleView({
     });
   }
 
+  const clipId = `bv-clip-${index}`;
+  const gradId = `bv-grad-${index}`;
+  const strokeColor = selected ? "#8ff5ff" : solved && isFilled ? "#22c55e" : "#4a4a56";
+  const strokeWidth = selected ? 2 : 1.2;
+  const bodyFill = selected ? "#8ff5ff22" : "#ffffff0f";
+
   return (
     <TouchableOpacity
       onPress={onTap}
@@ -62,65 +159,95 @@ export default function BottleView({
       accessibilityLabel={accessibilityLabel}
       activeOpacity={0.8}
     >
-      <Animated.View
-        style={[
-          styles.bottle,
-          selected && styles.bottleSelected,
-          solved && isFilled && styles.bottleSolved,
-          animStyle,
-        ]}
-      >
-        {/* Slots rendered bottom→top: column-reverse makes index 0 appear at bottom */}
-        <View style={styles.slots}>
-          {Array.from({ length: BOTTLE_DEPTH }, (_, slotIdx) => {
-            const color = slotIdx < bottle.length ? bottle[slotIdx]! : null;
-            return (
-              <View key={slotIdx} style={styles.slot}>
-                {color !== null ? (
-                  <BallView color={color} colorblindMode={colorblindMode} />
-                ) : (
-                  <View style={styles.emptySlot} />
-                )}
-              </View>
-            );
-          })}
-        </View>
+      <Animated.View style={[{ width: bottleWidth, height: bottleHeight }, animStyle]}>
+        <Svg width={bottleWidth} height={bottleHeight} viewBox={`0 0 ${VB_W} ${VB_H}`}>
+          <Defs>
+            <ClipPath id={clipId}>
+              <Path d={TUBE_CAVITY} />
+            </ClipPath>
+            <LinearGradient id={gradId} x1="0" x2="1" y1="0" y2="0">
+              <Stop offset="0" stopColor="#ffffff" stopOpacity="0.12" />
+              <Stop offset="0.5" stopColor="#ffffff" stopOpacity="0" />
+              <Stop offset="1" stopColor="#000000" stopOpacity="0.15" />
+            </LinearGradient>
+          </Defs>
+
+          {/* Glass body */}
+          <Path d={TUBE_OUTLINE} fill={bodyFill} stroke={strokeColor} strokeWidth={strokeWidth} />
+
+          {/* Liquid layers clipped inside cavity */}
+          <G clipPath={`url(#${clipId})`}>
+            {bottle.map((color, i) => {
+              const y = BODY_BOTTOM - (i + 1) * UNIT_H;
+              const fill = LIQUID_COLORS[color];
+              return (
+                <G key={i}>
+                  <Rect x={0} y={y} width={VB_W} height={UNIT_H + 0.5} fill={fill} />
+                  {/* Glossy highlight at top of each band */}
+                  <Rect
+                    x={0}
+                    y={y}
+                    width={VB_W}
+                    height={Math.min(4, UNIT_H * 0.12)}
+                    fill="rgba(255,255,255,0.2)"
+                  />
+                  {colorblindMode && (
+                    <SvgText
+                      x={VB_W / 2}
+                      y={y + UNIT_H / 2 + 5}
+                      textAnchor="middle"
+                      fontSize={Math.min(UNIT_H * 0.5, 16)}
+                      fill="rgba(0,0,0,0.65)"
+                      fontWeight="700"
+                    >
+                      {COLORBLIND_SYMBOLS[color]}
+                    </SvgText>
+                  )}
+                </G>
+              );
+            })}
+            {/* Glass gloss overlay */}
+            <Rect x={0} y={0} width={VB_W} height={VB_H} fill={`url(#${gradId})`} />
+          </G>
+
+          {/* Cavity outline drawn on top of liquid */}
+          <Path d={TUBE_CAVITY} fill="none" stroke={strokeColor} strokeWidth={strokeWidth} />
+
+          {/* Solved checkmark badge in neck */}
+          {solved && isFilled && (
+            <G>
+              <Circle cx={VB_W / 2} cy={PAD_TOP / 2} r={7} fill="#22c55e" />
+              <Path
+                d={`M ${VB_W / 2 - 3} ${PAD_TOP / 2 + 0.5} L ${VB_W / 2 - 0.5} ${PAD_TOP / 2 + 3} L ${VB_W / 2 + 3.5} ${PAD_TOP / 2 - 2}`}
+                stroke="#0e0e13"
+                strokeWidth="1.8"
+                fill="none"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </G>
+          )}
+        </Svg>
+
+        {/* Hidden accessible views for each liquid color (screen readers + tests) */}
+        {bottle.map((color, i) => (
+          <View
+            key={`a11y-${i}`}
+            accessible
+            accessibilityLabel={t(`color.${color}` as const)}
+            style={styles.a11yHidden}
+          />
+        ))}
       </Animated.View>
     </TouchableOpacity>
   );
 }
 
 const styles = StyleSheet.create({
-  bottle: {
-    width: BOTTLE_WIDTH,
-    height: BOTTLE_HEIGHT,
-    borderRadius: 10,
-    borderWidth: 2,
-    borderColor: "#4a4a56",
-    backgroundColor: "#ffffff0f",
-    padding: BOTTLE_PADDING,
-    justifyContent: "flex-end",
-  },
-  bottleSelected: {
-    borderColor: "#8ff5ff",
-    backgroundColor: "#8ff5ff1f",
-  },
-  bottleSolved: {
-    borderColor: "#22c55e",
-    backgroundColor: "#22c55e1a",
-  },
-  slots: {
-    flexDirection: "column-reverse",
-    gap: BALL_GAP,
-  },
-  slot: {
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  emptySlot: {
-    width: BALL_SIZE,
-    height: BALL_SIZE,
-    borderRadius: BALL_SIZE / 2,
-    backgroundColor: "#ffffff0a",
+  a11yHidden: {
+    position: "absolute",
+    width: 1,
+    height: 1,
+    overflow: "hidden",
   },
 });

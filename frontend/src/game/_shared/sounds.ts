@@ -125,6 +125,11 @@ export const SOUND_REGISTRY: Partial<Record<SoundKey, number>> = {
   "freecell.gameWin": require("../../../assets/sounds/freecell-game-win.mp3"),
   // eslint-disable-next-line @typescript-eslint/no-require-imports
   "freecell.invalidMove": require("../../../assets/sounds/freecell-invalid-move.mp3"),
+  // Sort (#1265, #1268)
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  "sort.pour": require("../../../assets/sounds/cascade-fruit-merge.ogg"),
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  "sort.win": require("../../../assets/sounds/freecell-game-win.mp3"),
   // Mahjong (#914)
   // eslint-disable-next-line @typescript-eslint/no-require-imports
   "mahjong.tileSelect": require("../../../assets/sounds/mahjong-tile-select.ogg"),

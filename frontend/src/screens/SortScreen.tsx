@@ -4,6 +4,7 @@ import {
   AppState,
   AppStateStatus,
   FlatList,
+  LayoutChangeEvent,
   Modal,
   Pressable,
   StyleSheet,
@@ -28,6 +29,7 @@ import { sortApi, type LevelData, type ScoreEntry } from "../game/sort/api";
 import { loadProgress, saveProgress, type SortProgress } from "../game/sort/storage";
 import { useNetwork } from "../game/_shared/NetworkContext";
 import { OfflineBanner } from "../components/shared/OfflineBanner";
+import { useSortAudio } from "../game/sort/useSortAudio";
 
 const MAX_NAME_LENGTH = 32;
 
@@ -63,6 +65,13 @@ export default function SortScreen() {
   const [history, setHistory] = useState<readonly SortState[]>([]);
   const [colorblindMode, setColorblindMode] = useState(false);
 
+  // Pour animation state
+  const [pouringFrom, setPouringFrom] = useState<number | null>(null);
+  const [pouringTo, setPouringTo] = useState<number | null>(null);
+  const [isPouring, setIsPouring] = useState(false);
+  const [boardHeight, setBoardHeight] = useState(0);
+  const pourTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   // Win modal
   const [showWinModal, setShowWinModal] = useState(false);
   const [playerName, setPlayerName] = useState("");
@@ -72,6 +81,14 @@ export default function SortScreen() {
 
   const progressRef = useRef(progress);
   progressRef.current = progress;
+
+  const audio = useSortAudio();
+
+  useEffect(() => {
+    return () => {
+      if (pourTimerRef.current !== null) clearTimeout(pourTimerRef.current);
+    };
+  }, []);
 
   // ---------------------------------------------------------------------------
   // Init — extracted so the retry button can re-invoke it
@@ -147,7 +164,7 @@ export default function SortScreen() {
   // ---------------------------------------------------------------------------
 
   function handleBottleTap(index: number) {
-    if (!gameState || gameState.isComplete) return;
+    if (!gameState || gameState.isComplete || isPouring) return;
     const { selectedBottleIndex } = gameState;
 
     if (selectedBottleIndex === null) {
@@ -163,22 +180,37 @@ export default function SortScreen() {
     }
 
     if (isValidPour(gameState.bottles[selectedBottleIndex], gameState.bottles[index])) {
-      setHistory((h) => [...h, gameState]);
-      setGameState(applyPour(gameState, selectedBottleIndex, index));
+      const snapshot = gameState;
+      setHistory((h) => [...h, snapshot]);
+      setIsPouring(true);
+      setPouringFrom(selectedBottleIndex);
+      setPouringTo(index);
+      setGameState({ ...gameState, selectedBottleIndex: null });
+      audio.playPour();
+      pourTimerRef.current = setTimeout(() => {
+        const nextState = applyPour(snapshot, selectedBottleIndex, index);
+        setGameState(nextState);
+        setIsPouring(false);
+        setPouringFrom(null);
+        setPouringTo(null);
+        if (nextState.isComplete) {
+          audio.playWin();
+        }
+      }, 640);
     } else {
       setGameState({ ...gameState, selectedBottleIndex: null });
     }
   }
 
   function handleUndo() {
-    if (!gameState) return;
+    if (!gameState || isPouring) return;
     const { state: newState, history: newHistory } = undoState(gameState, history);
     setGameState(newState);
     setHistory(newHistory);
   }
 
   function handleHint() {
-    if (!gameState || gameState.isComplete) return;
+    if (!gameState || gameState.isComplete || isPouring) return;
     const hint = getNextHint(gameState);
     if (!hint) return;
     setGameState({ ...gameState, selectedBottleIndex: hint.from });
@@ -211,6 +243,13 @@ export default function SortScreen() {
   }
 
   function handleBackToSelect() {
+    if (pourTimerRef.current !== null) {
+      clearTimeout(pourTimerRef.current);
+      pourTimerRef.current = null;
+    }
+    setIsPouring(false);
+    setPouringFrom(null);
+    setPouringTo(null);
     setView("select");
     setShowWinModal(false);
   }
@@ -563,12 +602,18 @@ export default function SortScreen() {
       </View>
 
       {/* Board */}
-      <View style={styles.boardContainer}>
+      <View
+        style={styles.boardContainer}
+        onLayout={(e: LayoutChangeEvent) => setBoardHeight(e.nativeEvent.layout.height)}
+      >
         {gameState && (
           <SortBoard
             state={gameState}
             colorblindMode={colorblindMode}
             onBottleTap={handleBottleTap}
+            pouringFrom={pouringFrom}
+            pouringTo={pouringTo}
+            availableHeight={boardHeight}
           />
         )}
       </View>
