@@ -101,12 +101,12 @@ test.describe("Cascade — merge and score behavior", () => {
     // Merge 1: two tier-0 → score += 2 (left side, same regime as mixed-tier test)
     await spawnTierAt(page, 0, 80);
     await spawnTierAt(page, 0, 90);
-    await fastForward(page, 1500);
+    await fastForward(page, 2000);
 
     // Merge 2: two more tier-0 → score += 2 (total = 4) (right side, well separated)
     await spawnTierAt(page, 0, 260);
     await spawnTierAt(page, 0, 270);
-    await fastForward(page, 1500);
+    await fastForward(page, 2000);
 
     const state = await getState(page);
     expect(state.score).toBe(4); // 2 + 2
@@ -116,11 +116,11 @@ test.describe("Cascade — merge and score behavior", () => {
     // tier-0 merge (+2), tier-2 merge (+8)
     await spawnTierAt(page, 0, 80);
     await spawnTierAt(page, 0, 90);
-    await fastForward(page, 1500);
+    await fastForward(page, 2000);
 
     await spawnTierAt(page, 2, 220);
     await spawnTierAt(page, 2, 230);
-    await fastForward(page, 1500);
+    await fastForward(page, 2000);
 
     const state = await getState(page);
     expect(state.score).toBe(10); // 2 + 8
