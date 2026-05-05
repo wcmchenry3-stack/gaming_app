@@ -3,8 +3,8 @@ import { Pressable, StyleSheet, Text, View } from "react-native";
 import { useTranslation } from "react-i18next";
 
 import { useTheme } from "../../theme/ThemeContext";
-import SharedPlayingCard from "../shared/PlayingCard";
 import { rankLabel } from "../../game/_shared/decks/cardId";
+import SelectableCard from "../../game/_shared/SelectableCard";
 import type { CanonicalSuit } from "../../game/_shared/decks/types";
 import type { Card, Suit } from "../../game/freecell/types";
 import { CARD_WIDTH, CARD_HEIGHT } from "./FreeCellSlot";
@@ -57,12 +57,12 @@ export default function FoundationPile({
           ? t("card.selected", { rank: rl, suit: suitName })
           : t("card.label", { rank: rl, suit: suitName });
         return (
-          <SharedPlayingCard
+          <SelectableCard
             suit={top.suit as CanonicalSuit}
             rank={top.rank}
             width={cardWidth}
             height={cardHeight}
-            highlighted={selected}
+            selected={selected}
             hintHighlighted={hintDestination}
             onPress={onPress ? () => onPress(suit) : undefined}
             accessibilityLabel={label}

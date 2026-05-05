@@ -3,12 +3,12 @@ import { Pressable, StyleSheet, View, ViewStyle } from "react-native";
 import { useTranslation } from "react-i18next";
 
 import { useTheme } from "../../theme/ThemeContext";
-import SharedPlayingCard from "../shared/PlayingCard";
 import { rankLabel } from "../../game/_shared/decks/cardId";
 import type { CanonicalSuit } from "../../game/_shared/decks/types";
 import type { Card } from "../../game/freecell/types";
 import { CARD_WIDTH, CARD_HEIGHT } from "./FreeCellSlot";
 import { useCardSize } from "../../game/_shared/CardSizeContext";
+import SelectableCard from "../../game/_shared/SelectableCard";
 import { DraggableCard } from "../../game/_shared/drag/DraggableCard";
 import { DropTarget } from "../../game/_shared/drag/DropTarget";
 import type { DropHandler } from "../../game/_shared/drag/DragContext";
@@ -118,12 +118,12 @@ export default function TableauColumn({
         dragCards={dragCards}
         dragSource={{ game: "freecell", type: "tableau", col: colIndex, fromIndex: cardIndex }}
       >
-        <SharedPlayingCard
+        <SelectableCard
           suit={card.suit as CanonicalSuit}
           rank={card.rank}
           width={cardWidth}
           height={cardHeight}
-          highlighted={isSelected}
+          selected={isSelected}
           hintHighlighted={isHint || isHintDest}
           accessibilityLabel={label}
         />

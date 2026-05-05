@@ -17,9 +17,11 @@ import type { TFunction } from "i18next";
 import { useTheme } from "../../../theme/ThemeContext";
 import type { Card, DrawMode } from "../types";
 import type { CanonicalSuit } from "../../_shared/decks/types";
-import CardView, { CARD_HEIGHT, CARD_WIDTH } from "./CardView";
+import { CARD_HEIGHT, CARD_WIDTH } from "./CardView";
 import { useCardSize } from "../../_shared/CardSizeContext";
+import { rankLabel } from "../../_shared/decks/cardId";
 import { DraggableCard } from "../../_shared/drag/DraggableCard";
+import SelectableCard from "../../_shared/SelectableCard";
 
 export interface StockWastePileProps {
   readonly stock: readonly Card[];
@@ -160,6 +162,11 @@ function Waste({
     },
   ];
 
+  const topLabel = t("card.faceUp", {
+    rank: rankLabel(top.rank),
+    suit: t(`suit.${top.suit}` as const),
+  });
+
   if (drawMode !== 3) {
     return (
       <DraggableCard
@@ -167,7 +174,14 @@ function Waste({
         dragCards={topDragCards}
         dragSource={{ game: "solitaire", type: "waste" }}
       >
-        <CardView card={top} selected={selected} />
+        <SelectableCard
+          suit={top.suit as CanonicalSuit}
+          rank={top.rank}
+          width={cardWidth}
+          height={cardHeight}
+          selected={selected}
+          accessibilityLabel={topLabel}
+        />
       </DraggableCard>
     );
   }
@@ -180,6 +194,10 @@ function Waste({
     <View style={[styles.wasteFanContainer, { width: containerWidth, height: cardHeight }]}>
       {visible.map((card, i) => {
         const isTop = i === visible.length - 1;
+        const label = t("card.faceUp", {
+          rank: rankLabel(card.rank),
+          suit: t(`suit.${card.suit}` as const),
+        });
         if (isTop) {
           return (
             <View
@@ -191,7 +209,14 @@ function Waste({
                 dragCards={topDragCards}
                 dragSource={{ game: "solitaire", type: "waste" }}
               >
-                <CardView card={card} selected={selected} />
+                <SelectableCard
+                  suit={card.suit as CanonicalSuit}
+                  rank={card.rank}
+                  width={cardWidth}
+                  height={cardHeight}
+                  selected={selected}
+                  accessibilityLabel={label}
+                />
               </DraggableCard>
             </View>
           );
@@ -201,7 +226,14 @@ function Waste({
             key={`${card.suit}-${card.rank}`}
             style={[styles.wasteFanCard, { left: i * wasteFanOffset }]}
           >
-            <CardView card={card} selected={false} />
+            <SelectableCard
+              suit={card.suit as CanonicalSuit}
+              rank={card.rank}
+              width={cardWidth}
+              height={cardHeight}
+              selected={false}
+              accessibilityLabel={label}
+            />
           </View>
         );
       })}
