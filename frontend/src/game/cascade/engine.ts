@@ -13,9 +13,11 @@ export {
   FRUIT_DENSITY,
   SCALE,
   GRAVITY_Y,
+  FIXED_STEP_MS,
   RAPIER_SOLVER_ITERATIONS,
   MATTER_POSITION_ITERATIONS,
   MATTER_VELOCITY_ITERATIONS,
+  MATTER_SLEEP_THRESHOLD,
   MAX_FRUIT_SPEED_PX_S,
 } from "./engine.shared";
 export type {
@@ -36,6 +38,7 @@ import {
   GRAVITY_Y,
   WALL_THICKNESS,
   DANGER_LINE_RATIO,
+  FIXED_STEP_MS,
   RAPIER_SOLVER_ITERATIONS,
   MAX_FRUIT_SPEED_PX_S,
 } from "./engine.shared";
@@ -90,6 +93,8 @@ export async function createEngine(
   const world = new R.World({ x: 0.0, y: GRAVITY_Y });
   // Rapier defaults to 4 solver iterations; 8 resolves penetration in 15-deep stacks.
   world.integrationParameters.numSolverIterations = RAPIER_SOLVER_ITERATIONS;
+  // Fix the timestep so every sub-step runs at exactly 60 Hz.
+  world.integrationParameters.dt = FIXED_STEP_MS / 1000;
   const eventQueue = new R.EventQueue(true);
 
   // fruitMap: rigidBody.handle → FruitBody metadata
@@ -127,6 +132,8 @@ export async function createEngine(
   let gameOverFired = false;
   let comboMergeCount = 0;
   let comboFired = false;
+  // Accumulator for the fixed-step loop; carries leftover ms across frames.
+  let accumulatorMs = 0;
 
   // Merges are queued during collision events and processed synchronously after draining.
   // The third element is the tier snapshotted at enqueue time; processMerges re-verifies
@@ -138,7 +145,8 @@ export async function createEngine(
   function spawnAt(def: FruitDefinition, setId: string, x: number, y: number): FruitBody {
     const rbDesc = R.RigidBodyDesc.dynamic()
       .setTranslation(x * SCALE, y * SCALE)
-      .setCcdEnabled(true);
+      .setCcdEnabled(true)
+      .canSleep(true);
     const rb = world.createRigidBody(rbDesc);
 
     const nameKey = (def as { nameKey?: string }).nameKey ?? def.name.toLowerCase();
@@ -235,7 +243,20 @@ export async function createEngine(
       if (tier < 10) {
         const nextDef = fruitSet.fruits[(tier + 1) as FruitTier];
         if (nextDef !== undefined) {
-          spawnAt(nextDef, fruitSet.id, midX, midY);
+          const newFb = spawnAt(nextDef, fruitSet.id, midX, midY);
+          // Wake any sleeping neighbors within 2× spawn radius so they react to the new body.
+          const wakeRadiusSq = (nextDef.radius * 2) ** 2;
+          fruitMap.forEach((_fb2, wHandle) => {
+            if (wHandle === newFb.handle) return;
+            const wrb = world.getRigidBody(wHandle);
+            if (!wrb) return;
+            const wpos = wrb.translation();
+            const dx = wpos.x / SCALE - midX;
+            const dy = wpos.y / SCALE - midY;
+            if (dx * dx + dy * dy < wakeRadiusSq) {
+              wrb.wakeUp();
+            }
+          });
         }
       }
     }
@@ -251,11 +272,15 @@ export async function createEngine(
 
       const events: GameEvent[] = [];
 
-      if (dt !== undefined) {
-        // Clamp: min 1/120s (avoid micro-steps), max 1/30s (avoid spiral of death on slow frames)
-        world.integrationParameters.dt = Math.max(1 / 120, Math.min(dt, 1 / 30));
+      // Fixed-step accumulator: clamp total elapsed to 1/6 s to prevent a spiral of death
+      // on backgrounded tabs, then consume whole 60 Hz sub-steps from the accumulator.
+      // Using ms throughout avoids the float-precision gap between 1/60*1000 and 1000/60.
+      const rawElapsedMs = Math.min((dt ?? 1 / 60) * 1000, 1000 / 6);
+      accumulatorMs += rawElapsedMs;
+      while (accumulatorMs >= FIXED_STEP_MS - 0.001) {
+        world.step(eventQueue);
+        accumulatorMs = Math.max(0, accumulatorMs - FIXED_STEP_MS);
       }
-      world.step(eventQueue);
 
       // Drain collision events → queue same-tier pairs for merging
       eventQueue.drainCollisionEvents((h1: number, h2: number, started: boolean) => {

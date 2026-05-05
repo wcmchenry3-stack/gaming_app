@@ -24,6 +24,7 @@ const _engine: typeof import("../engine") = require(
 /* eslint-enable @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires */
 const { createEngine } = _engine;
 import type { EngineHandle } from "../engine.shared";
+import { FIXED_STEP_MS } from "../engine.shared";
 import { scoreForMerge } from "../scoring";
 import { FRUIT_SETS, FruitSet, FruitDefinition } from "../../../theme/fruitSets";
 import { MockWorld } from "../../../../__mocks__/@dimforge/rapier2d-compat";
@@ -383,5 +384,72 @@ describe("cleanup after multi-step simulation", () => {
     handle.step();
 
     expect(() => handle.cleanup()).not.toThrow();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Fixed-step accumulator — GH #1220
+// ---------------------------------------------------------------------------
+
+describe("fixed-step accumulator — sub-step counts", () => {
+  it("step(1/60) runs exactly 1 physics sub-step", async () => {
+    const handle = await buildEngine();
+    const world = getWorld();
+    const stepSpy = jest.spyOn(world, "step");
+    handle.step(1 / 60);
+    expect(stepSpy).toHaveBeenCalledTimes(1);
+  });
+
+  it("step(1/30) runs exactly 2 physics sub-steps", async () => {
+    const handle = await buildEngine();
+    const world = getWorld();
+    const stepSpy = jest.spyOn(world, "step");
+    handle.step(1 / 30);
+    expect(stepSpy).toHaveBeenCalledTimes(2);
+  });
+
+  it("step(0.005) runs 0 physics sub-steps — accumulates partial frame", async () => {
+    const handle = await buildEngine();
+    const world = getWorld();
+    const stepSpy = jest.spyOn(world, "step");
+    handle.step(0.005);
+    expect(stepSpy).toHaveBeenCalledTimes(0);
+  });
+
+  it("three 8ms frames accumulate to 1 sub-step on the third call", async () => {
+    const handle = await buildEngine();
+    const world = getWorld();
+    const stepSpy = jest.spyOn(world, "step");
+
+    handle.step(0.008); // 8ms — below 16.67ms threshold
+    expect(stepSpy).toHaveBeenCalledTimes(0);
+    handle.step(0.008); // 16ms cumulative — still below
+    expect(stepSpy).toHaveBeenCalledTimes(0);
+    handle.step(0.008); // 24ms cumulative — crosses threshold → 1 sub-step
+    expect(stepSpy).toHaveBeenCalledTimes(1);
+  });
+
+  it("a huge frame delta is capped — no more than 10 sub-steps regardless of dt", async () => {
+    const handle = await buildEngine();
+    const world = getWorld();
+    const stepSpy = jest.spyOn(world, "step");
+    handle.step(10); // 10 seconds — clamped to 1/6 s → ≤ 10 sub-steps
+    expect(stepSpy.mock.calls.length).toBeLessThanOrEqual(10);
+  });
+
+  it("total simulated time never exceeds total wall time across a mixed sequence", async () => {
+    const handle = await buildEngine();
+    const world = getWorld();
+    const stepSpy = jest.spyOn(world, "step");
+
+    const frames = [1 / 60, 1 / 60, 1 / 30, 0.005, 0.008, 0.008, 0.008, 1 / 60];
+    let totalWallMs = 0;
+    for (const dt of frames) {
+      totalWallMs += Math.min(dt * 1000, 1000 / 6); // match the engine's 1/6s cap
+      handle.step(dt);
+    }
+
+    const totalSimMs = stepSpy.mock.calls.length * FIXED_STEP_MS;
+    expect(totalSimMs).toBeLessThanOrEqual(totalWallMs + 0.1);
   });
 });

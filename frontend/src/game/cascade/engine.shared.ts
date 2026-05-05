@@ -24,6 +24,10 @@ export const FRUIT_DENSITY = 1.0;
 export const SCALE = 0.01;
 export const GRAVITY_Y = 14.0;
 
+// --- Fixed physics timestep ---
+/** Fixed physics sub-step duration (ms). Both engines run at 60 Hz regardless of frame rate. */
+export const FIXED_STEP_MS = 1000 / 60;
+
 // --- Solver iteration counts ---
 // O(N × iterations) cost per step — raise to fix penetration in deep stacks,
 // lower if the physics budget grows tight on low-end devices.
@@ -34,6 +38,10 @@ export const RAPIER_SOLVER_ITERATIONS = 8;
 export const MATTER_POSITION_ITERATIONS = 10;
 /** Matter.js velocity correction iterations (default 4). 6 matches Rapier's constraint budget. */
 export const MATTER_VELOCITY_ITERATIONS = 6;
+
+// --- Body sleeping ---
+/** Ticks of low velocity before a Matter.js body sleeps (default 60 ≈ 1 s at 60 Hz). */
+export const MATTER_SLEEP_THRESHOLD = 60;
 
 // --- Terminal velocity guard ---
 /** Max fruit speed in px/s. Tier-0 at 1200 px/s travels 20 px per 1/60s frame — within CCD range. */

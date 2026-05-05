@@ -14,9 +14,11 @@ export {
   FRUIT_DENSITY,
   SCALE,
   GRAVITY_Y,
+  FIXED_STEP_MS,
   RAPIER_SOLVER_ITERATIONS, // re-exported for import-parity with engine.ts; not used by Matter.js
   MATTER_POSITION_ITERATIONS,
   MATTER_VELOCITY_ITERATIONS,
+  MATTER_SLEEP_THRESHOLD,
   MAX_FRUIT_SPEED_PX_S,
 } from "./engine.shared";
 export type {
@@ -33,8 +35,10 @@ import {
   GAME_OVER_GRACE_MS,
   FRUIT_RESTITUTION,
   FRUIT_FRICTION,
+  FIXED_STEP_MS,
   MATTER_POSITION_ITERATIONS,
   MATTER_VELOCITY_ITERATIONS,
+  MATTER_SLEEP_THRESHOLD,
   MAX_FRUIT_SPEED_PX_S,
 } from "./engine.shared";
 import type { FruitBody, BodySnapshot, EngineHandle } from "./engine.shared";
@@ -58,11 +62,6 @@ const COMBO_THRESHOLD = 3;
 // With default scale 0.001 and y=1.4, that gives us a punchy-but-controllable fall.
 const MATTER_GRAVITY_Y = 1.4;
 
-// Fixed physics sub-step (60Hz). Matter warns at >16.67ms because collision
-// detection starts missing thin walls. step() breaks larger frame deltas
-// into N × FIXED_STEP_MS updates.
-const FIXED_STEP_MS = 1000 / 60;
-
 export async function createEngine(
   W: number,
   H: number,
@@ -70,6 +69,7 @@ export async function createEngine(
 ): Promise<EngineHandle> {
   const engine = Matter.Engine.create({
     gravity: { x: 0, y: MATTER_GRAVITY_Y },
+    enableSleeping: true,
   });
   // Matter defaults: positionIterations=6, velocityIterations=4.
   // Higher counts resolve penetration in 15-deep stacks cleanly.
@@ -124,6 +124,7 @@ export async function createEngine(
       restitution: FRUIT_RESTITUTION,
       friction: FRUIT_FRICTION,
       density: 0.001, // matter.js density is per-pixel-area; tuned for natural feel
+      sleepThreshold: MATTER_SLEEP_THRESHOLD,
     };
 
     if (verts && verts.length >= 3) {
@@ -205,7 +206,17 @@ export async function createEngine(
             nextDef.radius,
             Math.min(H - WALL_THICKNESS - nextDef.radius, midY)
           );
-          spawnAt(nextDef, fruitSet.id, spawnX, spawnY);
+          const newFb = spawnAt(nextDef, fruitSet.id, spawnX, spawnY);
+          // Wake sleeping neighbors within 2× spawn radius so they react to the new body.
+          const wakeRadiusSq = (nextDef.radius * 2) ** 2;
+          for (const b of Matter.Composite.allBodies(world)) {
+            if (b.isStatic || b.id === newFb.handle) continue;
+            const dx = b.position.x - midX;
+            const dy = b.position.y - midY;
+            if (dx * dx + dy * dy < wakeRadiusSq) {
+              Matter.Sleeping.set(b, false);
+            }
+          }
         }
       }
     }

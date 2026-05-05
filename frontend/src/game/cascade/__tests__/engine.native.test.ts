@@ -66,6 +66,16 @@ describe("createEngine", () => {
     expect(engineInstance.velocityIterations).toBe(MATTER_VELOCITY_ITERATIONS);
     handle.cleanup();
   });
+
+  it("enables sleeping on the Matter engine", async () => {
+    const createSpy = jest.spyOn(Matter.Engine, "create");
+    const handle = await buildEngine();
+    const engineInstance = createSpy.mock.results[0]?.value as Matter.Engine & {
+      enableSleeping: boolean;
+    };
+    expect(engineInstance.enableSleeping).toBe(true);
+    handle.cleanup();
+  });
 });
 
 // ---------------------------------------------------------------------------
