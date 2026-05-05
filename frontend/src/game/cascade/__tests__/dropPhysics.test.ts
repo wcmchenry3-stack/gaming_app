@@ -192,7 +192,8 @@ describe("single sprite — drop and settle", () => {
   });
 
   it("tier-8 sprite settles within 2px of floor after 480 frames", async () => {
-    // Heavier fruits expose solver under-count first — this test guards RAPIER_SOLVER_ITERATIONS.
+    // Heavier fruits expose solver under-count first — this test guards MATTER_POSITION_ITERATIONS
+    // and MATTER_VELOCITY_ITERATIONS (Matter.js engine is used throughout dropPhysics.test.ts).
     const handle = await buildEngine();
     const def = fruit(8);
     handle.drop(def, fruitSet.id, W / 2, 30 + def.radius);

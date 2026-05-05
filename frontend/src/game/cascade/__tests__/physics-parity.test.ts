@@ -22,9 +22,11 @@ const _rapierEngine: typeof import("../engine") = require(
 );
 /* eslint-enable @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires */
 const { createEngine: createRapierEngine } = _rapierEngine;
+import Matter from "matter-js";
 import { createEngine as createNativeEngine } from "../engine.native";
 import { FRUIT_SETS, FruitSet, FruitDefinition } from "../../../theme/fruitSets";
 import { MockWorld } from "../../../../__mocks__/@dimforge/rapier2d-compat";
+import { MAX_FRUIT_SPEED_PX_S, SCALE } from "../engine.shared";
 
 const RAPIER_MOCK = require("@dimforge/rapier2d-compat").default; // eslint-disable-line @typescript-eslint/no-require-imports
 
@@ -155,15 +157,44 @@ describe("merge semantics — same-tier collision fires fruitMerge on both engin
 // ---------------------------------------------------------------------------
 
 describe("velocity clamp parity", () => {
-  it("both engines export the same MAX_FRUIT_SPEED_PX_S constant", () => {
-    // Both engines re-export MAX_FRUIT_SPEED_PX_S from engine.shared; confirm they expose
-    // the same value so a future per-engine override cannot silently diverge.
-    /* eslint-disable @typescript-eslint/no-require-imports */
-    const rapierExports = require(require("path").resolve(__dirname, "..", "engine.ts"));
-    const nativeExports = require("../engine.native");
-    /* eslint-enable @typescript-eslint/no-require-imports */
-    expect(typeof rapierExports.MAX_FRUIT_SPEED_PX_S).toBe("number");
-    expect(rapierExports.MAX_FRUIT_SPEED_PX_S).toBe(nativeExports.MAX_FRUIT_SPEED_PX_S);
+  it("Rapier: body exceeding MAX_FRUIT_SPEED_PX_S is clamped after step", async () => {
+    const handle = await createRapierEngine(W, H, fruitSet);
+    const world = getRapierWorld();
+
+    handle.drop(fruit(0), fruitSet.id, W / 2, 100);
+    handle.step(); // register body (handle 0)
+
+    const body = world._bodies.get(0)!;
+    body._vx = 99; // >> maxPhysSpeed = MAX_FRUIT_SPEED_PX_S * SCALE = 12
+    body._vy = 99;
+    handle.step();
+
+    const vel = body.linvel();
+    const maxPhysSpeed = MAX_FRUIT_SPEED_PX_S * SCALE;
+    expect(Math.sqrt(vel.x ** 2 + vel.y ** 2)).toBeLessThanOrEqual(maxPhysSpeed + 0.001);
+  });
+
+  it("Matter.js: body exceeding MAX_FRUIT_SPEED_PX_S is clamped after step", async () => {
+    const createSpy = jest.spyOn(Matter.Engine, "create");
+    const handle = await createNativeEngine(W, H, fruitSet);
+    const engineInstance = createSpy.mock.results[0]?.value as Matter.Engine;
+
+    handle.drop(fruit(0), fruitSet.id, W / 2, 100);
+    handle.step(1 / 60); // register body
+
+    const dynamicBodies = Matter.Composite.allBodies(engineInstance.world).filter(
+      (b) => !b.isStatic
+    );
+    const fruitBody = dynamicBodies[0];
+    if (!fruitBody) throw new Error("Expected a fruit body");
+
+    Matter.Body.setVelocity(fruitBody, { x: 0, y: 9999 });
+    handle.step(1 / 60);
+
+    const speed = Math.sqrt(fruitBody.velocity.x ** 2 + fruitBody.velocity.y ** 2);
+    expect(speed).toBeLessThanOrEqual(MAX_FRUIT_SPEED_PX_S / 60 + 0.5);
+
+    handle.cleanup();
   });
 });
 
