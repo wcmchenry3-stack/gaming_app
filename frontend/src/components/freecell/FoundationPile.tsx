@@ -43,9 +43,7 @@ export default function FoundationPile({
 }: FoundationPileProps) {
   const { colors } = useTheme();
   const { t } = useTranslation("freecell");
-  const { cardWidth: ctxW, cardHeight: ctxH } = useCardSize();
-  const cardWidth = ctxW || CARD_WIDTH;
-  const cardHeight = ctxH || CARD_HEIGHT;
+  const { cardWidth, cardHeight } = useCardSize();
   const hasDrop = dropId !== undefined && onDrop !== undefined;
   const RED_SUITS = new Set(["hearts", "diamonds"]);
   const suitSymbolColor = RED_SUITS.has(suit) ? "#ff716c" : colors.textFilled;

@@ -22,8 +22,8 @@ import { DropTarget } from "../../_shared/drag/DropTarget";
 import type { DropHandler } from "../../_shared/drag/DragContext";
 import type { SharedValue } from "react-native-reanimated";
 
-const FACE_UP_OFFSET = 24;
-const FACE_DOWN_OFFSET = 14;
+const FACE_UP_OFFSET = 28;
+const FACE_DOWN_OFFSET = 20;
 
 export interface TableauPileProps {
   readonly pile: readonly Card[];
@@ -49,9 +49,7 @@ export default function TableauPile({
 }: TableauPileProps) {
   const { colors } = useTheme();
   const { t } = useTranslation("solitaire");
-  const { cardWidth: ctxW, cardHeight: ctxH } = useCardSize();
-  const cardWidth = ctxW || CARD_WIDTH;
-  const cardHeight = ctxH || CARD_HEIGHT;
+  const { cardWidth, cardHeight } = useCardSize();
   const scale = cardWidth / CARD_WIDTH;
   const faceUpOffset = Math.round(FACE_UP_OFFSET * scale);
   const faceDownOffset = Math.round(FACE_DOWN_OFFSET * scale);
@@ -108,6 +106,7 @@ export default function TableauPile({
   const containerStyle: ViewStyle = { width: cardWidth, height: containerHeight };
 
   const cards = pile.map((card, cardIndex) => {
+    const isTop = cardIndex === pile.length - 1;
     const isSelected = selectedIndex !== undefined && cardIndex >= selectedIndex;
     const handlePress = onCardPress ? () => onCardPress(colIndex, cardIndex) : undefined;
     const dragCards = pile.slice(cardIndex).map((c) => ({
@@ -125,6 +124,10 @@ export default function TableauPile({
           })
         : t("card.faceDownSelected")
       : undefined;
+    const stripeHeight = isTop ? 0 : (offsets[cardIndex + 1] ?? 0) - (offsets[cardIndex] ?? 0);
+    const hitSlop = isTop
+      ? undefined
+      : { top: 0, bottom: Math.min(24, stripeHeight), left: 4, right: 4 };
     return (
       <DraggableCard
         key={cardIndex}
@@ -133,6 +136,7 @@ export default function TableauPile({
         dragCards={dragCards}
         dragSource={{ game: "solitaire", type: "tableau", col: colIndex, fromIndex: cardIndex }}
         draggable={card.faceUp}
+        hitSlop={hitSlop}
       >
         {isSelected ? (
           <SelectableCard

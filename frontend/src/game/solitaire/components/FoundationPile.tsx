@@ -50,9 +50,7 @@ export default function FoundationPile({
 }: FoundationPileProps) {
   const { colors } = useTheme();
   const { t } = useTranslation("solitaire");
-  const { cardWidth: ctxW, cardHeight: ctxH } = useCardSize();
-  const cardWidth = ctxW || CARD_WIDTH;
-  const cardHeight = ctxH || CARD_HEIGHT;
+  const { cardWidth, cardHeight } = useCardSize();
   const hasDrop = dropId !== undefined && onDrop !== undefined;
 
   const highlightStyle = { borderColor: colors.accent, borderWidth: 2, borderRadius: 8 };

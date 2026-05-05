@@ -36,8 +36,8 @@ export interface FreeCellBoardProps {
 export default function FreeCellBoard({ state, onMove }: FreeCellBoardProps) {
   const { t } = useTranslation("freecell");
   const { colors } = useTheme();
-  const { cardWidth: ctxW } = useCardSize();
-  const boardWidth = TABLEAU_COLS * (ctxW || CARD_WIDTH) + (TABLEAU_COLS - 1) * COL_GAP;
+  const { cardWidth } = useCardSize();
+  const boardWidth = TABLEAU_COLS * cardWidth + (TABLEAU_COLS - 1) * COL_GAP;
   const [selection, setSelection] = useState<Selection>(null);
   const lastTapRef = useRef<{ key: string; time: number } | null>(null);
 

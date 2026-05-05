@@ -14,9 +14,7 @@ export interface CardViewProps {
 
 export default function CardView({ card, selected = false, onPress }: CardViewProps) {
   const { t } = useTranslation("solitaire");
-  const { cardWidth: ctxW, cardHeight: ctxH } = useCardSize();
-  const w = ctxW || CARD_WIDTH;
-  const h = ctxH || CARD_HEIGHT;
+  const { cardWidth: w, cardHeight: h } = useCardSize();
   const rl = rankLabel(card.rank);
   const suitName = t(`suit.${card.suit}` as const);
 

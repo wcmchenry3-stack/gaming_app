@@ -77,6 +77,7 @@ import { useCardSelection } from "../game/_shared/useCardSelection";
 
 const TABLEAU_COLS = 7;
 const COL_GAP = 6;
+const SCREEN_H_PADDING = 24;
 const DOUBLE_TAP_MS = 300;
 const AUTO_STEP_MS = 120;
 const MAX_NAME_LENGTH = 32;
@@ -583,9 +584,8 @@ export default function SolitaireScreen() {
 
   const undoDisabled = state === null || state.undoStack.length === 0 || autoCompleting;
   const showAutoComplete = state !== null && !state.isComplete && canAutoComplete(state);
-  const cardSize = useResponsiveCardSize(CARD_WIDTH, CARD_HEIGHT, TABLEAU_COLS, COL_GAP, 24);
-  const naturalBoardWidth = TABLEAU_COLS * CARD_WIDTH + (TABLEAU_COLS - 1) * COL_GAP;
-  const boardWidth = Math.round(naturalBoardWidth * (cardSize.cardWidth / CARD_WIDTH));
+  const cardSize = useResponsiveCardSize(CARD_WIDTH, CARD_HEIGHT, TABLEAU_COLS, COL_GAP, SCREEN_H_PADDING);
+  const boardWidth = TABLEAU_COLS * cardSize.cardWidth + (TABLEAU_COLS - 1) * COL_GAP;
 
   const tableauSelection = (col: number): number | undefined => {
     if (selection === null || selection.kind !== "tableau") return undefined;

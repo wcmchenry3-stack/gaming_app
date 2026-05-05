@@ -42,9 +42,7 @@ export default function FreeCellSlot({
 }: FreeCellSlotProps) {
   const { colors } = useTheme();
   const { t } = useTranslation("freecell");
-  const { cardWidth: ctxW, cardHeight: ctxH } = useCardSize();
-  const cardWidth = ctxW || CARD_WIDTH;
-  const cardHeight = ctxH || CARD_HEIGHT;
+  const { cardWidth, cardHeight } = useCardSize();
 
   const handlePress = onPress ? () => onPress(cellIndex) : undefined;
   const hasDrop = dropId !== undefined && onDrop !== undefined;

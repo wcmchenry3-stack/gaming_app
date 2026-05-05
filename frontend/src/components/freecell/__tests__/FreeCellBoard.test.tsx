@@ -27,6 +27,8 @@ import { render, fireEvent } from "@testing-library/react-native";
 import { ThemeProvider } from "../../../theme/ThemeContext";
 import FreeCellBoard from "../FreeCellBoard";
 import type { FreeCellState } from "../../../game/freecell/types";
+import { DragProvider } from "../../../game/_shared/drag/DragContext";
+import { DraggableCard } from "../../../game/_shared/drag/DraggableCard";
 
 // Col 0: 2♣   Col 1: 3♥   Col 2: K♦   Cols 3–7: empty
 // freeCells[0]: A♠   [1]: K♠   [2–3]: null
@@ -294,5 +296,42 @@ describe("FreeCellBoard — double-tap (Story 10)", () => {
     jest.advanceTimersByTime(301); // past double-tap window
     fireEvent.press(getByLabelText("A of Spades (selected)")); // second tap: deselects
     expect(onMove).not.toHaveBeenCalled();
+  });
+});
+
+// ── Tree-shape: DragProvider placement (#1249) ────────────────────────────────
+
+describe("FreeCellBoard — DragProvider tree shape", () => {
+  it("DragProvider ancestors all DraggableCard instances (no missing provider)", () => {
+    // DraggableCard calls useDragContext on mount; if DragProvider were missing or
+    // misplaced, the render below would throw. This guards against accidental removal
+    // or nesting of DragProvider inside a transformed view (which breaks iOS coords).
+    const { UNSAFE_getAllByType } = renderBoard();
+    const draggables = UNSAFE_getAllByType(DraggableCard);
+    expect(draggables.length).toBeGreaterThan(0);
+  });
+
+  it("DragProvider is rendered exactly once in FreeCellBoard", () => {
+    const { UNSAFE_getAllByType } = renderBoard();
+    const providers = UNSAFE_getAllByType(DragProvider);
+    expect(providers).toHaveLength(1);
+  });
+
+  it("DragProvider has no ancestor with a transform style", () => {
+    const { UNSAFE_root } = renderBoard();
+    const dp = UNSAFE_root.findByType(DragProvider);
+    let node = dp.parent;
+    while (node) {
+      const s = node.props?.style;
+      const styles = Array.isArray(s) ? s.flat(Infinity) : [s];
+      for (const style of styles) {
+        if (style && typeof style === "object" && !Array.isArray(style) && "transform" in style) {
+          throw new Error(
+            `DragProvider ancestor has transform style: ${JSON.stringify(style)}`
+          );
+        }
+      }
+      node = node.parent;
+    }
   });
 });

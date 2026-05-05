@@ -43,9 +43,7 @@ export default function TableauColumn({
 }: TableauColumnProps) {
   const { colors } = useTheme();
   const { t } = useTranslation("freecell");
-  const { cardWidth: ctxW, cardHeight: ctxH } = useCardSize();
-  const cardWidth = ctxW || CARD_WIDTH;
-  const cardHeight = ctxH || CARD_HEIGHT;
+  const { cardWidth, cardHeight } = useCardSize();
   const faceUpOffset = Math.round(FACE_UP_OFFSET * (cardWidth / CARD_WIDTH));
 
   const highlightStyle: ViewStyle = { borderColor: colors.accent, borderWidth: 2, borderRadius: 6 };
@@ -95,6 +93,7 @@ export default function TableauColumn({
   const containerStyle: ViewStyle = { width: cardWidth, height: containerHeight };
 
   const cards = pile.map((card, cardIndex) => {
+    const isTop = cardIndex === pile.length - 1;
     const isSelected = selectedIndex !== undefined && cardIndex >= selectedIndex;
     const isHint = hintIndex !== undefined && cardIndex >= hintIndex;
     const isHintDest = hintDestination && cardIndex === pile.length - 1;
@@ -112,6 +111,10 @@ export default function TableauColumn({
       width: cardWidth,
       height: cardHeight,
     }));
+    const stripeHeight = isTop ? 0 : (offsets[cardIndex + 1] ?? 0) - (offsets[cardIndex] ?? 0);
+    const hitSlop = isTop
+      ? undefined
+      : { top: 0, bottom: Math.min(24, stripeHeight), left: 4, right: 4 };
 
     return (
       <DraggableCard
@@ -120,6 +123,7 @@ export default function TableauColumn({
         onTap={handlePress}
         dragCards={dragCards}
         dragSource={{ game: "freecell", type: "tableau", col: colIndex, fromIndex: cardIndex }}
+        hitSlop={hitSlop}
       >
         <SelectableCard
           suit={card.suit as CanonicalSuit}
