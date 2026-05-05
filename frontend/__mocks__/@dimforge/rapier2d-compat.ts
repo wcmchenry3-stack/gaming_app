@@ -10,6 +10,7 @@ export class MockRigidBody {
   _angle = 0;
   _vx = 0;
   _vy = 0;
+  _wakeUpCount = 0;
   _colliders: MockCollider[] = [];
 
   constructor(handle: number, x: number, y: number) {
@@ -30,6 +31,9 @@ export class MockRigidBody {
   setLinvel(vel: { x: number; y: number }) {
     this._vx = vel.x;
     this._vy = vel.y;
+  }
+  wakeUp() {
+    this._wakeUpCount++;
   }
   numColliders() {
     return this._colliders.length;
@@ -141,6 +145,10 @@ const RAPIER_MOCK = {
         },
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
         setCcdEnabled(_enabled: boolean) {
+          return builder;
+        },
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        setCanSleep(_enabled: boolean) {
           return builder;
         },
       };

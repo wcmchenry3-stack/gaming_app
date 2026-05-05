@@ -698,6 +698,89 @@ describe("CCD enablement", () => {
 });
 
 // ---------------------------------------------------------------------------
+// Body sleeping — canSleep (#1222)
+// ---------------------------------------------------------------------------
+
+describe("body sleeping — canSleep", () => {
+  it("calls canSleep(true) on every spawned fruit body", async () => {
+    const canSleepSpy = jest.fn().mockImplementation(function (this: unknown) {
+      return this;
+    });
+    const origDynamic = RAPIER_MOCK.RigidBodyDesc.dynamic;
+    RAPIER_MOCK.RigidBodyDesc.dynamic = () => {
+      const builder = origDynamic();
+      builder.setCanSleep = canSleepSpy;
+      return builder;
+    };
+
+    try {
+      const handle = await buildEngine();
+      handle.drop(fruit(1), fruitSet.id, 150, 300);
+      handle.drop(fruit(2), fruitSet.id, 160, 300);
+      handle.step();
+      expect(canSleepSpy).toHaveBeenCalledTimes(2);
+      expect(canSleepSpy).toHaveBeenCalledWith(true);
+    } finally {
+      RAPIER_MOCK.RigidBodyDesc.dynamic = origDynamic;
+    }
+  });
+
+  it("calls canSleep(true) on the body spawned by a merge", async () => {
+    const canSleepSpy = jest.fn().mockImplementation(function (this: unknown) {
+      return this;
+    });
+    const origDynamic = RAPIER_MOCK.RigidBodyDesc.dynamic;
+    RAPIER_MOCK.RigidBodyDesc.dynamic = () => {
+      const builder = origDynamic();
+      builder.setCanSleep = canSleepSpy;
+      return builder;
+    };
+
+    try {
+      const handle = await buildEngine();
+      const world = getWorld();
+
+      handle.drop(fruit(2), fruitSet.id, 100, 300);
+      handle.drop(fruit(2), fruitSet.id, 110, 300);
+      handle.step(); // 2 drops → 2 canSleep calls so far
+      canSleepSpy.mockClear();
+
+      world._fireCollision(1003, 1004);
+      handle.step(); // merge fires → spawns tier-3 body → 1 more canSleep call
+
+      expect(canSleepSpy).toHaveBeenCalledTimes(1);
+      expect(canSleepSpy).toHaveBeenCalledWith(true);
+    } finally {
+      RAPIER_MOCK.RigidBodyDesc.dynamic = origDynamic;
+    }
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Body sleeping — neighbor wake (#1222)
+// ---------------------------------------------------------------------------
+
+describe("body sleeping — neighbor wake", () => {
+  it("calls wakeUp() on bodies within 2× spawn radius after a merge", async () => {
+    const handle = await buildEngine();
+    const world = getWorld();
+
+    // Drop 3 fruits: two will merge (1003/1004), one nearby (1005) that should be woken.
+    handle.drop(fruit(2), fruitSet.id, 100, 300); // body 0, collider 1003
+    handle.drop(fruit(2), fruitSet.id, 110, 300); // body 1, collider 1004
+    handle.drop(fruit(0), fruitSet.id, 105, 310); // body 2, collider 1005 — nearby
+    handle.step();
+
+    world._fireCollision(1003, 1004);
+    handle.step(); // merge fires, spawns tier-3 near (100,300)
+
+    const nearbyBody = world._bodies.get(2);
+    expect(nearbyBody).toBeDefined();
+    expect(nearbyBody!._wakeUpCount).toBeGreaterThan(0);
+  });
+});
+
+// ---------------------------------------------------------------------------
 // Exported types / constants
 // ---------------------------------------------------------------------------
 

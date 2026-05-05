@@ -26,7 +26,7 @@ import Matter from "matter-js";
 import { createEngine as createNativeEngine } from "../engine.native";
 import { FRUIT_SETS, FruitSet, FruitDefinition } from "../../../theme/fruitSets";
 import { MockWorld } from "../../../../__mocks__/@dimforge/rapier2d-compat";
-import { MAX_FRUIT_SPEED_PX_S, SCALE } from "../engine.shared";
+import { MAX_FRUIT_SPEED_PX_S, SCALE, FIXED_STEP_MS } from "../engine.shared";
 
 const RAPIER_MOCK = require("@dimforge/rapier2d-compat").default; // eslint-disable-line @typescript-eslint/no-require-imports
 
@@ -194,6 +194,68 @@ describe("velocity clamp parity", () => {
     const speed = Math.sqrt(fruitBody.velocity.x ** 2 + fruitBody.velocity.y ** 2);
     expect(speed).toBeLessThanOrEqual(MAX_FRUIT_SPEED_PX_S / 60 + 0.5);
 
+    handle.cleanup();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// 7. Fixed-step parity: both engines run 2 sub-steps for dt=1/30 — GH #1220
+// ---------------------------------------------------------------------------
+
+describe("fixed-step parity — dt=1/30 produces 2 sub-steps on both engines", () => {
+  it("Rapier: step(1/30) calls world.step() exactly twice", async () => {
+    const handle = await createRapierEngine(W, H, fruitSet);
+    const world = getRapierWorld();
+    const stepSpy = jest.spyOn(world, "step");
+    handle.step(1 / 30);
+    expect(stepSpy).toHaveBeenCalledTimes(2);
+  });
+
+  it("Matter.js: step(1/30) calls Matter.Engine.update() exactly twice", async () => {
+    const handle = await createNativeEngine(W, H, fruitSet);
+    const updateSpy = jest.spyOn(Matter.Engine, "update");
+    handle.step(1 / 30);
+    expect(updateSpy).toHaveBeenCalledTimes(2);
+    for (const call of updateSpy.mock.calls) {
+      expect(call[1]).toBeLessThanOrEqual(FIXED_STEP_MS + 0.001);
+    }
+    handle.cleanup();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// 8. Body sleeping parity — GH #1222
+// ---------------------------------------------------------------------------
+
+describe("body sleeping parity — sleeping is enabled on both engines", () => {
+  it("Rapier: canSleep(true) is called on every spawned body", async () => {
+    const canSleepSpy = jest.fn().mockImplementation(function (this: unknown) {
+      return this;
+    });
+    const origDynamic = RAPIER_MOCK.RigidBodyDesc.dynamic;
+    RAPIER_MOCK.RigidBodyDesc.dynamic = () => {
+      const builder = origDynamic();
+      builder.setCanSleep = canSleepSpy;
+      return builder;
+    };
+
+    try {
+      const handle = await createRapierEngine(W, H, fruitSet);
+      handle.drop(fruit(0), fruitSet.id, W / 2, 300);
+      handle.step();
+      expect(canSleepSpy).toHaveBeenCalledWith(true);
+    } finally {
+      RAPIER_MOCK.RigidBodyDesc.dynamic = origDynamic;
+    }
+  });
+
+  it("Matter.js: enableSleeping is true on the Matter engine", async () => {
+    const createSpy = jest.spyOn(Matter.Engine, "create");
+    const handle = await createNativeEngine(W, H, fruitSet);
+    const engineInstance = createSpy.mock.results[0]?.value as Matter.Engine & {
+      enableSleeping: boolean;
+    };
+    expect(engineInstance.enableSleeping).toBe(true);
     handle.cleanup();
   });
 });
