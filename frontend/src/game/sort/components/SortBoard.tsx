@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { AccessibilityInfo, StyleSheet, View } from "react-native";
+import { AccessibilityInfo, StyleSheet, useWindowDimensions, View } from "react-native";
 import Animated, {
   cancelAnimation,
   useAnimatedStyle,
@@ -11,27 +11,62 @@ import Animated, {
 } from "react-native-reanimated";
 import { useTranslation } from "react-i18next";
 import type { SortState } from "../types";
-import BottleView, { BOTTLE_WIDTH } from "./BottleView";
-import { BALL_COLORS } from "./BallView";
+import BottleView, {
+  DEFAULT_BOTTLE_HEIGHT,
+  DEFAULT_BOTTLE_WIDTH,
+  LIQUID_COLORS,
+} from "./BottleView";
 
-const BOTTLE_GAP = 10;
+const BOTTLE_GAP = 12;
+const ASPECT_RATIO = DEFAULT_BOTTLE_WIDTH / DEFAULT_BOTTLE_HEIGHT; // ≈ 0.333
 
 export interface SortBoardProps {
   readonly state: SortState;
   readonly colorblindMode?: boolean;
   readonly onBottleTap: (index: number) => void;
+  readonly pouringFrom?: number | null;
+  readonly pouringTo?: number | null;
+  /** Height of the board container in pixels — used to scale bottles to fit. */
+  readonly availableHeight?: number;
 }
 
-export default function SortBoard({ state, colorblindMode = false, onBottleTap }: SortBoardProps) {
+export default function SortBoard({
+  state,
+  colorblindMode = false,
+  onBottleTap,
+  pouringFrom = null,
+  pouringTo = null,
+  availableHeight,
+}: SortBoardProps) {
   const { t } = useTranslation("sort");
-  const numCols = state.bottles.length > 6 ? 3 : 2;
-  const bottleWidthPct = `${100 / numCols}%` as `${number}%`;
+  const { width: screenW } = useWindowDimensions();
+
+  const numBottles = state.bottles.length;
+  // Single row for ≤4 bottles; 3 cols for 5–6; 4 cols for 7+
+  const numCols = numBottles <= 4 ? numBottles : numBottles <= 6 ? 3 : 4;
+  const numRows = Math.ceil(numBottles / numCols);
+
+  // Scale bottles to fill available height without overflow
+  const avH = availableHeight && availableHeight > 0 ? availableHeight : 480;
+  const maxBottleH = Math.max(60, (avH - BOTTLE_GAP * (numRows - 1)) / numRows);
+  const bottleHFromHeight = Math.min(DEFAULT_BOTTLE_HEIGHT, maxBottleH);
+
+  // Also clamp to horizontal space so bottles never overflow screen width
+  const horizPad = 32;
+  const maxBottleW = (screenW - horizPad - BOTTLE_GAP * (numCols - 1)) / numCols;
+  const bottleW = Math.min(bottleHFromHeight * ASPECT_RATIO, maxBottleW);
+  const bottleH = bottleW / ASPECT_RATIO;
+
+  // Pour tilt direction for the source bottle only
+  const pouringDirection: "left" | "right" | undefined =
+    pouringFrom !== null && pouringTo !== null
+      ? pouringFrom < pouringTo
+        ? "right"
+        : "left"
+      : undefined;
 
   const handlers = useMemo(
     () => state.bottles.map((_, idx) => () => onBottleTap(idx)),
-    // state.bottles identity changes on every pour; keying on .length avoids
-    // rebuilding all handlers when only ball positions change. onBottleTap is
-    // included so callers that wrap it in useCallback get stable handles too.
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [state.bottles.length, onBottleTap]
   );
@@ -40,12 +75,16 @@ export default function SortBoard({ state, colorblindMode = false, onBottleTap }
     <View accessibilityLabel={t("a11y.boardRegion")} accessibilityRole="none" style={styles.board}>
       <View style={[styles.grid, { gap: BOTTLE_GAP }]}>
         {state.bottles.map((bottle, idx) => (
-          <View key={idx} style={[styles.bottleCell, { width: bottleWidthPct }]}>
+          <View key={idx} style={[styles.bottleCell, { width: bottleW }]}>
             <BottleView
               bottle={bottle}
               index={idx}
               selected={state.selectedBottleIndex === idx}
+              pouring={idx === pouringFrom}
+              pouringDirection={idx === pouringFrom ? pouringDirection : undefined}
               colorblindMode={colorblindMode}
+              bottleWidth={bottleW}
+              bottleHeight={bottleH}
               onTap={handlers[idx]}
             />
           </View>
@@ -57,10 +96,10 @@ export default function SortBoard({ state, colorblindMode = false, onBottleTap }
 }
 
 // ---------------------------------------------------------------------------
-// Win overlay — coloured ball particles cascade down when the puzzle is solved
+// Win overlay — liquid-coloured confetti cascades down when the puzzle is solved
 // ---------------------------------------------------------------------------
 
-const PARTICLE_COLORS = Object.values(BALL_COLORS).slice(0, 6);
+const PARTICLE_COLORS = Object.values(LIQUID_COLORS).slice(0, 6);
 
 interface OverlayProps {
   readonly visible: boolean;
@@ -114,30 +153,12 @@ function SortWinOverlay({ visible }: OverlayProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [visible]);
 
-  const a0 = useAnimatedStyle(() => ({
-    transform: [{ translateY: y0.value }],
-    opacity: op0.value,
-  }));
-  const a1 = useAnimatedStyle(() => ({
-    transform: [{ translateY: y1.value }],
-    opacity: op1.value,
-  }));
-  const a2 = useAnimatedStyle(() => ({
-    transform: [{ translateY: y2.value }],
-    opacity: op2.value,
-  }));
-  const a3 = useAnimatedStyle(() => ({
-    transform: [{ translateY: y3.value }],
-    opacity: op3.value,
-  }));
-  const a4 = useAnimatedStyle(() => ({
-    transform: [{ translateY: y4.value }],
-    opacity: op4.value,
-  }));
-  const a5 = useAnimatedStyle(() => ({
-    transform: [{ translateY: y5.value }],
-    opacity: op5.value,
-  }));
+  const a0 = useAnimatedStyle(() => ({ transform: [{ translateY: y0.value }], opacity: op0.value }));
+  const a1 = useAnimatedStyle(() => ({ transform: [{ translateY: y1.value }], opacity: op1.value }));
+  const a2 = useAnimatedStyle(() => ({ transform: [{ translateY: y2.value }], opacity: op2.value }));
+  const a3 = useAnimatedStyle(() => ({ transform: [{ translateY: y3.value }], opacity: op3.value }));
+  const a4 = useAnimatedStyle(() => ({ transform: [{ translateY: y4.value }], opacity: op4.value }));
+  const a5 = useAnimatedStyle(() => ({ transform: [{ translateY: y5.value }], opacity: op5.value }));
 
   if (!visible || reduceMotion) return null;
 
@@ -148,38 +169,28 @@ function SortWinOverlay({ visible }: OverlayProps) {
       accessibilityElementsHidden
       importantForAccessibility="no-hide-descendants"
     >
-      <Animated.View
-        style={[styles.particle, styles.p0, { backgroundColor: PARTICLE_COLORS[0] }, a0]}
-      />
-      <Animated.View
-        style={[styles.particle, styles.p1, { backgroundColor: PARTICLE_COLORS[1] }, a1]}
-      />
-      <Animated.View
-        style={[styles.particle, styles.p2, { backgroundColor: PARTICLE_COLORS[2] }, a2]}
-      />
-      <Animated.View
-        style={[styles.particle, styles.p3, { backgroundColor: PARTICLE_COLORS[3] }, a3]}
-      />
-      <Animated.View
-        style={[styles.particle, styles.p4, { backgroundColor: PARTICLE_COLORS[4] }, a4]}
-      />
-      <Animated.View
-        style={[styles.particle, styles.p5, { backgroundColor: PARTICLE_COLORS[5] }, a5]}
-      />
+      <Animated.View style={[styles.particle, styles.p0, { backgroundColor: PARTICLE_COLORS[0] }, a0]} />
+      <Animated.View style={[styles.particle, styles.p1, { backgroundColor: PARTICLE_COLORS[1] }, a1]} />
+      <Animated.View style={[styles.particle, styles.p2, { backgroundColor: PARTICLE_COLORS[2] }, a2]} />
+      <Animated.View style={[styles.particle, styles.p3, { backgroundColor: PARTICLE_COLORS[3] }, a3]} />
+      <Animated.View style={[styles.particle, styles.p4, { backgroundColor: PARTICLE_COLORS[4] }, a4]} />
+      <Animated.View style={[styles.particle, styles.p5, { backgroundColor: PARTICLE_COLORS[5] }, a5]} />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   board: {
+    flex: 1,
     width: "100%",
     alignItems: "center",
+    justifyContent: "center",
   },
   grid: {
     flexDirection: "row",
     flexWrap: "wrap",
     justifyContent: "center",
-    maxWidth: (BOTTLE_WIDTH + BOTTLE_GAP) * 3 + BOTTLE_GAP,
+    alignItems: "center",
   },
   bottleCell: {
     alignItems: "center",
