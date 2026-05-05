@@ -1,6 +1,6 @@
 import React, { createContext, useCallback, useContext, useRef, useState } from "react";
 import Animated from "react-native-reanimated";
-import { useSharedValue, useAnimatedRef, runOnJS, withTiming } from "react-native-reanimated";
+import { useSharedValue, useAnimatedRef, runOnJS, withSpring } from "react-native-reanimated";
 import type { SharedValue, AnimatedRef } from "react-native-reanimated";
 import type { CanonicalSuit } from "../decks/types";
 
@@ -56,6 +56,9 @@ export interface DragContextValue {
   // Animated ref for the DragContainer — allows worklets to re-measure it on drag start.
   containerRef: AnimatedRef<Animated.View>;
 
+  // Opacity of the source card slot while a drag is active (1 = normal, 0.6 = dimmed).
+  dragOriginOpacity: SharedValue<number>;
+
   // JS-thread actions
   startDrag: (source: DragSource, cards: DragCard[]) => void;
   endDrag: (absoluteX: number, absoluteY: number) => void;
@@ -94,31 +97,35 @@ export function DragProvider({ children, getLegalDropIds }: DragProviderProps) {
   const containerOffsetX = useSharedValue(0);
   const containerOffsetY = useSharedValue(0);
   const containerRef = useAnimatedRef<Animated.View>();
+  const dragOriginOpacity = useSharedValue(1);
 
   const dropZonesRef = useRef<Map<string, DropZoneEntry>>(new Map());
   const dragStateRef = useRef<DragState | null>(null);
 
   const clearDrag = useCallback(() => {
+    dragOriginOpacity.value = 1;
     setDragState(null);
     setLegalTargetIds(new Set());
     dragStateRef.current = null;
-  }, []);
+  }, [dragOriginOpacity]);
 
   const startDrag = useCallback(
     (source: DragSource, cards: DragCard[]) => {
       const state: DragState = { cards, source };
       dragStateRef.current = state;
+      dragOriginOpacity.value = 0.6;
       setDragState(state);
       if (getLegalDropIds) {
         setLegalTargetIds(new Set(getLegalDropIds(source, cards)));
       }
     },
-    [getLegalDropIds]
+    [dragOriginOpacity, getLegalDropIds]
   );
 
   const snapBackAndClear = useCallback(() => {
-    cardX.value = withTiming(originX.value, { duration: 200 });
-    cardY.value = withTiming(originY.value, { duration: 200 }, (finished) => {
+    const springCfg = { duration: 250, dampingRatio: 0.8 };
+    cardX.value = withSpring(originX.value, springCfg);
+    cardY.value = withSpring(originY.value, springCfg, (finished) => {
       "worklet";
       if (finished) runOnJS(clearDrag)();
     });
@@ -168,6 +175,7 @@ export function DragProvider({ children, getLegalDropIds }: DragProviderProps) {
     containerOffsetX,
     containerOffsetY,
     containerRef,
+    dragOriginOpacity,
     startDrag,
     endDrag,
     snapBackAndClear,

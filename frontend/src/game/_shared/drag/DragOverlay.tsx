@@ -13,7 +13,7 @@ export function DragOverlay() {
   const { dragState, cardX, cardY } = useDragContext();
 
   const animStyle = useAnimatedStyle(() => ({
-    transform: [{ translateX: cardX.value }, { translateY: cardY.value }],
+    transform: [{ translateX: cardX.value }, { translateY: cardY.value - 8 }],
   }));
 
   if (!dragState) return null;

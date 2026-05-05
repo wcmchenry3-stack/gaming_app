@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useRef } from "react";
 import { View } from "react-native";
 import type { ViewStyle } from "react-native";
+import { useTheme } from "../../../theme/ThemeContext";
 import { useDragContext } from "./DragContext";
 import type { DropHandler } from "./DragContext";
 
@@ -14,6 +15,7 @@ export interface DropTargetProps {
   highlightStyle?: ViewStyle;
   /** Style applied on top of `style` when drag is active AND this is not legal. */
   dimStyle?: ViewStyle;
+  testID?: string;
 }
 
 export function DropTarget({
@@ -23,9 +25,11 @@ export function DropTarget({
   style,
   highlightStyle,
   dimStyle,
+  testID,
 }: DropTargetProps) {
   const viewRef = useRef<View>(null);
   const boundsRef = useRef<{ x: number; y: number; width: number; height: number } | null>(null);
+  const { colors } = useTheme();
 
   // Keep the latest onDrop in a ref so re-renders don't force re-registration.
   const onDropRef = useRef(onDrop);
@@ -55,10 +59,14 @@ export function DropTarget({
   const isDragActive = dragState !== null;
   const isLegal = legalTargetIds.has(id);
 
-  const overlayStyle = isDragActive ? (isLegal ? highlightStyle : dimStyle) : undefined;
+  const overlayStyle = isDragActive
+    ? isLegal
+      ? [{ backgroundColor: colors.accent + "33" }, highlightStyle]
+      : dimStyle
+    : undefined;
 
   return (
-    <View ref={viewRef} style={[style, overlayStyle]} onLayout={onLayout}>
+    <View ref={viewRef} testID={testID} style={[style, overlayStyle]} onLayout={onLayout}>
       {children}
     </View>
   );
