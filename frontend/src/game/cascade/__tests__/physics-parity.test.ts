@@ -151,7 +151,24 @@ describe("merge semantics — same-tier collision fires fruitMerge on both engin
 });
 
 // ---------------------------------------------------------------------------
-// 5. Different-tier fruits never merge on either engine
+// 5. Velocity clamp parity: both engines cap at the same constant
+// ---------------------------------------------------------------------------
+
+describe("velocity clamp parity", () => {
+  it("both engines export the same MAX_FRUIT_SPEED_PX_S constant", () => {
+    // Both engines re-export MAX_FRUIT_SPEED_PX_S from engine.shared; confirm they expose
+    // the same value so a future per-engine override cannot silently diverge.
+    /* eslint-disable @typescript-eslint/no-require-imports */
+    const rapierExports = require(require("path").resolve(__dirname, "..", "engine.ts"));
+    const nativeExports = require("../engine.native");
+    /* eslint-enable @typescript-eslint/no-require-imports */
+    expect(typeof rapierExports.MAX_FRUIT_SPEED_PX_S).toBe("number");
+    expect(rapierExports.MAX_FRUIT_SPEED_PX_S).toBe(nativeExports.MAX_FRUIT_SPEED_PX_S);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// 6. Different-tier fruits never merge on either engine
 // ---------------------------------------------------------------------------
 
 describe("no cross-tier merges", () => {

@@ -24,6 +24,21 @@ export const FRUIT_DENSITY = 1.0;
 export const SCALE = 0.01;
 export const GRAVITY_Y = 14.0;
 
+// --- Solver iteration counts ---
+// O(N × iterations) cost per step — raise to fix penetration in deep stacks,
+// lower if the physics budget grows tight on low-end devices.
+// Validated against 15-deep piles; these counts resolve cleanly without visible jitter.
+/** Rapier constraint solver iterations (default 4). 8 resolves 15-deep stacks cleanly. */
+export const RAPIER_SOLVER_ITERATIONS = 8;
+/** Matter.js position correction iterations (default 6). 10 prevents jitter in deep stacks. */
+export const MATTER_POSITION_ITERATIONS = 10;
+/** Matter.js velocity correction iterations (default 4). 6 matches Rapier's constraint budget. */
+export const MATTER_VELOCITY_ITERATIONS = 6;
+
+// --- Terminal velocity guard ---
+/** Max fruit speed in px/s. Tier-0 at 1200 px/s travels 20 px per 1/60s frame — within CCD range. */
+export const MAX_FRUIT_SPEED_PX_S = 1200;
+
 // --- Shared interfaces ---
 
 export interface FruitBody {

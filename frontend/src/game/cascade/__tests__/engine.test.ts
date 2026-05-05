@@ -17,7 +17,7 @@ const _engine: typeof import("../engine") = require(
 /* eslint-enable @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires */
 const { createEngine } = _engine;
 import type { EngineHandle, BodySnapshot } from "../engine.shared";
-import { DANGER_LINE_RATIO, WALL_THICKNESS } from "../engine.shared";
+import { DANGER_LINE_RATIO, WALL_THICKNESS, RAPIER_SOLVER_ITERATIONS, MAX_FRUIT_SPEED_PX_S, SCALE } from "../engine.shared";
 import { FRUIT_SETS, FruitSet, FruitDefinition } from "../../../theme/fruitSets";
 import { MockWorld } from "../../../../__mocks__/@dimforge/rapier2d-compat";
 
@@ -79,6 +79,12 @@ describe("createEngine", () => {
   it("creates 3 static wall/floor colliders via cuboid", async () => {
     await buildEngine();
     expect(RAPIER_MOCK.ColliderDesc.cuboid).toHaveBeenCalledTimes(3);
+  });
+
+  it("sets numSolverIterations to RAPIER_SOLVER_ITERATIONS on the Rapier world", async () => {
+    await buildEngine();
+    const world = getWorld();
+    expect(world.integrationParameters.numSolverIterations).toBe(RAPIER_SOLVER_ITERATIONS);
   });
 });
 
@@ -535,6 +541,30 @@ describe("cleanup", () => {
   it("frees the world without throwing", async () => {
     const handle = await buildEngine();
     expect(() => handle.cleanup()).not.toThrow();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Velocity clamp
+// ---------------------------------------------------------------------------
+
+describe("velocity clamp", () => {
+  it("body exceeding MAX_FRUIT_SPEED_PX_S is clamped after step", async () => {
+    const handle = await buildEngine();
+    handle.drop(fruit(0), fruitSet.id, 150, 300);
+    handle.step(); // register body (handle 0)
+
+    const world = getWorld();
+    const body = world._bodies.get(0)!;
+    // Set velocity far above the cap in physics units/s
+    body._vx = 99;
+    body._vy = 99;
+    handle.step();
+
+    const vel = body.linvel();
+    const speed = Math.sqrt(vel.x * vel.x + vel.y * vel.y);
+    const maxPhysSpeed = MAX_FRUIT_SPEED_PX_S * SCALE;
+    expect(speed).toBeLessThanOrEqual(maxPhysSpeed + 0.001);
   });
 });
 
