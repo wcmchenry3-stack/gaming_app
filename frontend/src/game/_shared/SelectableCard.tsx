@@ -44,7 +44,8 @@ export default function SelectableCard({
       scale.value = withTiming(1, TIMING_OUT);
       glow.value = withTiming(0, TIMING_OUT);
     }
-  }, [selected]); // lift/scale/glow are stable refs — omitting avoids lint noise
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selected]); // lift/scale/glow are stable SharedValue refs — safe to omit
 
   const isNeon = activeDeck.id === "neon";
   const glowColor = isNeon ? colors.accentBright : "#ffffff";

@@ -116,7 +116,10 @@ export default function TableauPile({
     }));
     const selectedLabel = isSelected
       ? card.faceUp
-        ? t("card.faceUpSelected", { rank: rankLabel(card.rank), suit: t(`suit.${card.suit}` as const) })
+        ? t("card.faceUpSelected", {
+            rank: rankLabel(card.rank),
+            suit: t(`suit.${card.suit}` as const),
+          })
         : t("card.faceDownSelected")
       : undefined;
     return (
