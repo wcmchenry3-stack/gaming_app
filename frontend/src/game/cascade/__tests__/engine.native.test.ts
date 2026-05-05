@@ -7,7 +7,11 @@
 import Matter from "matter-js";
 import { createEngine } from "../engine.native";
 import type { EngineHandle } from "../engine.shared";
-import { MATTER_POSITION_ITERATIONS, MATTER_VELOCITY_ITERATIONS, MAX_FRUIT_SPEED_PX_S } from "../engine.shared";
+import {
+  MATTER_POSITION_ITERATIONS,
+  MATTER_VELOCITY_ITERATIONS,
+  MAX_FRUIT_SPEED_PX_S,
+} from "../engine.shared";
 import { FRUIT_SETS, FruitSet, FruitDefinition } from "../../../theme/fruitSets";
 
 function requireFruitSet(id: string): FruitSet {

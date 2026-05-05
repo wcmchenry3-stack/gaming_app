@@ -252,7 +252,7 @@ export async function createEngine(
       // the last sub-step is shorter, body.velocity is proportionally smaller, and the
       // clamp threshold is never exceeded — this is safe because travel distance also shrinks.
       {
-        const maxVelPerStep = MAX_FRUIT_SPEED_PX_S * FIXED_STEP_MS / 1000;
+        const maxVelPerStep = (MAX_FRUIT_SPEED_PX_S * FIXED_STEP_MS) / 1000;
         const maxVelSq = maxVelPerStep * maxVelPerStep;
         fruitMap.forEach((_fb, bodyId) => {
           const body = allBodiesPostMerge.find((b) => b.id === bodyId);

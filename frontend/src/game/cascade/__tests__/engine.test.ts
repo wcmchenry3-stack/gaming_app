@@ -17,7 +17,13 @@ const _engine: typeof import("../engine") = require(
 /* eslint-enable @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires */
 const { createEngine } = _engine;
 import type { EngineHandle, BodySnapshot } from "../engine.shared";
-import { DANGER_LINE_RATIO, WALL_THICKNESS, RAPIER_SOLVER_ITERATIONS, MAX_FRUIT_SPEED_PX_S, SCALE } from "../engine.shared";
+import {
+  DANGER_LINE_RATIO,
+  WALL_THICKNESS,
+  RAPIER_SOLVER_ITERATIONS,
+  MAX_FRUIT_SPEED_PX_S,
+  SCALE,
+} from "../engine.shared";
 import { FRUIT_SETS, FruitSet, FruitDefinition } from "../../../theme/fruitSets";
 import { MockWorld } from "../../../../__mocks__/@dimforge/rapier2d-compat";
 
