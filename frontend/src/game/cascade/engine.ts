@@ -13,6 +13,10 @@ export {
   FRUIT_DENSITY,
   SCALE,
   GRAVITY_Y,
+  RAPIER_SOLVER_ITERATIONS,
+  MATTER_POSITION_ITERATIONS,
+  MATTER_VELOCITY_ITERATIONS,
+  MAX_FRUIT_SPEED_PX_S,
 } from "./engine.shared";
 export type {
   FruitBody,
@@ -32,6 +36,8 @@ import {
   GRAVITY_Y,
   WALL_THICKNESS,
   DANGER_LINE_RATIO,
+  RAPIER_SOLVER_ITERATIONS,
+  MAX_FRUIT_SPEED_PX_S,
 } from "./engine.shared";
 import type { FruitBody, BodySnapshot, EngineHandle } from "./engine.shared";
 import type { GameEvent } from "./types";
@@ -82,6 +88,8 @@ export async function createEngine(
   const R = await getRapier();
 
   const world = new R.World({ x: 0.0, y: GRAVITY_Y });
+  // Rapier defaults to 4 solver iterations; 8 resolves penetration in 15-deep stacks.
+  world.integrationParameters.numSolverIterations = RAPIER_SOLVER_ITERATIONS;
   const eventQueue = new R.EventQueue(true);
 
   // fruitMap: rigidBody.handle → FruitBody metadata
@@ -277,6 +285,23 @@ export async function createEngine(
       } else {
         comboMergeCount = 0;
         comboFired = false;
+      }
+
+      // Velocity clamp: prevent unbounded free-fall from producing tunneling speeds.
+      // Runs after the sub-step loop; maxPhysSpeed is in Rapier physics units/s (px/s × SCALE).
+      {
+        const maxPhysSpeed = MAX_FRUIT_SPEED_PX_S * SCALE;
+        const maxPhysSpeedSq = maxPhysSpeed * maxPhysSpeed;
+        fruitMap.forEach((_fb, handle) => {
+          const rb = world.getRigidBody(handle);
+          if (!rb) return;
+          const vel = rb.linvel();
+          const speedSq = vel.x * vel.x + vel.y * vel.y;
+          if (speedSq > maxPhysSpeedSq) {
+            const factor = maxPhysSpeed / Math.sqrt(speedSq);
+            rb.setLinvel({ x: vel.x * factor, y: vel.y * factor }, true);
+          }
+        });
       }
 
       // Game-over: a settled fruit (past grace period) with its top above the danger line

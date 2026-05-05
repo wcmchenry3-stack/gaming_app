@@ -14,6 +14,10 @@ export {
   FRUIT_DENSITY,
   SCALE,
   GRAVITY_Y,
+  RAPIER_SOLVER_ITERATIONS, // re-exported for import-parity with engine.ts; not used by Matter.js
+  MATTER_POSITION_ITERATIONS,
+  MATTER_VELOCITY_ITERATIONS,
+  MAX_FRUIT_SPEED_PX_S,
 } from "./engine.shared";
 export type {
   FruitBody,
@@ -29,6 +33,9 @@ import {
   GAME_OVER_GRACE_MS,
   FRUIT_RESTITUTION,
   FRUIT_FRICTION,
+  MATTER_POSITION_ITERATIONS,
+  MATTER_VELOCITY_ITERATIONS,
+  MAX_FRUIT_SPEED_PX_S,
 } from "./engine.shared";
 import type { FruitBody, BodySnapshot, EngineHandle } from "./engine.shared";
 import type { GameEvent } from "./types";
@@ -64,6 +71,10 @@ export async function createEngine(
   const engine = Matter.Engine.create({
     gravity: { x: 0, y: MATTER_GRAVITY_Y },
   });
+  // Matter defaults: positionIterations=6, velocityIterations=4.
+  // Higher counts resolve penetration in 15-deep stacks cleanly.
+  engine.positionIterations = MATTER_POSITION_ITERATIONS;
+  engine.velocityIterations = MATTER_VELOCITY_ITERATIONS;
 
   const world = engine.world;
 
@@ -230,6 +241,31 @@ export async function createEngine(
         comboFired = false;
       }
 
+      // Single allBodies snapshot shared by the velocity clamp and wall-clamp below.
+      // processMerges has already run, so this reflects the post-merge body list.
+      const allBodiesPostMerge = Matter.Composite.allBodies(world);
+
+      // Velocity clamp: cap per-step speed so no body can tunnel through a 16px wall.
+      // Runs after the sub-step loop, before the wall-clamp band-aid (CASCADE-PHYS-09).
+      // body.velocity in Matter.js is position change per step (px/step), so the threshold
+      // is MAX_FRUIT_SPEED_PX_S × FIXED_STEP_MS/1000. On sub-60 Hz frames (dt < 1/60),
+      // the last sub-step is shorter, body.velocity is proportionally smaller, and the
+      // clamp threshold is never exceeded — this is safe because travel distance also shrinks.
+      {
+        const maxVelPerStep = (MAX_FRUIT_SPEED_PX_S * FIXED_STEP_MS) / 1000;
+        const maxVelSq = maxVelPerStep * maxVelPerStep;
+        fruitMap.forEach((_fb, bodyId) => {
+          const body = allBodiesPostMerge.find((b) => b.id === bodyId);
+          if (!body) return;
+          const { x: vx, y: vy } = body.velocity;
+          const speedSq = vx * vx + vy * vy;
+          if (speedSq > maxVelSq) {
+            const factor = maxVelPerStep / Math.sqrt(speedSq);
+            Matter.Body.setVelocity(body, { x: vx * factor, y: vy * factor });
+          }
+        });
+      }
+
       // Safety net: hard-clamp any body that drifted slightly outside the
       // left/right walls or below the floor and zero outward velocity so it
       // can't re-tunnel next frame. This catches the rare case where Matter.js
@@ -238,9 +274,8 @@ export async function createEngine(
       // — bodies farther outside are left for the escape-detection pass below
       // to remove. See #699 for the floor case (19 events / 5 users).
       {
-        const allBodiesAfterMerge = Matter.Composite.allBodies(world);
         fruitMap.forEach((fb, bodyId) => {
-          const body = allBodiesAfterMerge.find((b) => b.id === bodyId);
+          const body = allBodiesPostMerge.find((b) => b.id === bodyId);
           if (!body) return;
           const innerLeft = WALL_THICKNESS + fb.fruitRadius;
           const innerRight = W - WALL_THICKNESS - fb.fruitRadius;

@@ -15,7 +15,7 @@
  */
 import { createEngine } from "../engine.native";
 import type { EngineHandle, BodySnapshot } from "../engine.shared";
-import { WALL_THICKNESS } from "../engine.shared";
+import { WALL_THICKNESS, MAX_FRUIT_SPEED_PX_S } from "../engine.shared";
 import { FRUIT_SETS, FruitSet, FruitDefinition } from "../../../theme/fruitSets";
 
 function requireFruitSet(id: string): FruitSet {
@@ -143,6 +143,8 @@ describe("single sprite — drop and settle", () => {
     handle.drop(fruit(0), fruitSet.id, W / 2, 30);
 
     const frames = stepNCollect(handle, 360);
+    const maxDeltaPerFrame = MAX_FRUIT_SPEED_PX_S / 60 + 1;
+    let prevSnaps: BodySnapshot[] | undefined;
     for (const snaps of frames) {
       for (const s of snaps) {
         // Centre must stay inside the floor + walls (allow a hair of float
@@ -152,7 +154,16 @@ describe("single sprite — drop and settle", () => {
         expect(s.y).toBeLessThanOrEqual(innerFloorTop + 0.5);
         // Top of the sprite must stay below the top of the bin.
         expect(s.y - r).toBeGreaterThan(0);
+        // No single-frame position delta may exceed the velocity clamp budget.
+        if (prevSnaps) {
+          const prev = prevSnaps.find((p) => p.id === s.id);
+          if (prev) {
+            expect(Math.abs(s.x - prev.x)).toBeLessThanOrEqual(maxDeltaPerFrame);
+            expect(Math.abs(s.y - prev.y)).toBeLessThanOrEqual(maxDeltaPerFrame);
+          }
+        }
       }
+      prevSnaps = snaps;
     }
     // All sprites still present in snapshots (none escaped)
     expect(frames[frames.length - 1]).toHaveLength(1);
@@ -177,6 +188,21 @@ describe("single sprite — drop and settle", () => {
     if (after === undefined) throw new Error("Expected a snapshot");
     expect(Math.abs(after.x - snap.x)).toBeLessThan(0.5);
     expect(Math.abs(after.y - snap.y)).toBeLessThan(0.5);
+    handle.cleanup();
+  });
+
+  it("tier-8 sprite settles within 2px of floor after 480 frames", async () => {
+    // Heavier fruits expose solver under-count first — this test guards MATTER_POSITION_ITERATIONS
+    // and MATTER_VELOCITY_ITERATIONS (Matter.js engine is used throughout dropPhysics.test.ts).
+    const handle = await buildEngine();
+    const def = fruit(8);
+    handle.drop(def, fruitSet.id, W / 2, 30 + def.radius);
+    const final = stepN(handle, 480);
+    expect(final).toHaveLength(1);
+    const snap = final[0];
+    if (snap === undefined) throw new Error("Expected a snapshot");
+    expect(snap.y + def.radius).toBeGreaterThan(innerFloorTop - 2);
+    expect(snap.y + def.radius).toBeLessThan(innerFloorTop + 1);
     handle.cleanup();
   });
 

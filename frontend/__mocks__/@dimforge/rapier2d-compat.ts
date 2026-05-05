@@ -8,6 +8,8 @@ export class MockRigidBody {
   _x: number;
   _y: number;
   _angle = 0;
+  _vx = 0;
+  _vy = 0;
   _colliders: MockCollider[] = [];
 
   constructor(handle: number, x: number, y: number) {
@@ -21,6 +23,13 @@ export class MockRigidBody {
   }
   rotation() {
     return this._angle;
+  }
+  linvel() {
+    return { x: this._vx, y: this._vy };
+  }
+  setLinvel(vel: { x: number; y: number }) {
+    this._vx = vel.x;
+    this._vy = vel.y;
   }
   numColliders() {
     return this._colliders.length;
@@ -57,6 +66,7 @@ export class MockWorld {
   _bodyHandleCounter = 0;
   _colliderHandleCounter = 1000;
   _activeEventQueue: MockEventQueue | null = null;
+  integrationParameters = { numSolverIterations: 4, dt: 1 / 60 };
 
   createRigidBody(desc: { x: number; y: number }) {
     const handle = this._bodyHandleCounter++;

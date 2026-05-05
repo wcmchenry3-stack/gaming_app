@@ -7,6 +7,11 @@
 import Matter from "matter-js";
 import { createEngine } from "../engine.native";
 import type { EngineHandle } from "../engine.shared";
+import {
+  MATTER_POSITION_ITERATIONS,
+  MATTER_VELOCITY_ITERATIONS,
+  MAX_FRUIT_SPEED_PX_S,
+} from "../engine.shared";
 import { FRUIT_SETS, FruitSet, FruitDefinition } from "../../../theme/fruitSets";
 
 function requireFruitSet(id: string): FruitSet {
@@ -50,6 +55,15 @@ describe("createEngine", () => {
     const handle = await buildEngine();
     const { snapshots } = handle.step(1 / 60);
     expect(snapshots).toEqual([]);
+    handle.cleanup();
+  });
+
+  it("sets positionIterations and velocityIterations on the Matter engine", async () => {
+    const createSpy = jest.spyOn(Matter.Engine, "create");
+    const handle = await buildEngine();
+    const engineInstance = createSpy.mock.results[0]?.value as Matter.Engine;
+    expect(engineInstance.positionIterations).toBe(MATTER_POSITION_ITERATIONS);
+    expect(engineInstance.velocityIterations).toBe(MATTER_VELOCITY_ITERATIONS);
     handle.cleanup();
   });
 });
@@ -209,6 +223,37 @@ describe("cleanup", () => {
     handle.drop(fruit(0), "fruits", W / 2, 30);
     handle.step(1 / 60);
     expect(() => handle.cleanup()).not.toThrow();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Velocity clamp
+// ---------------------------------------------------------------------------
+
+describe("velocity clamp", () => {
+  it("Matter body velocity is capped per step", async () => {
+    const createSpy = jest.spyOn(Matter.Engine, "create");
+    const handle = await buildEngine();
+    const engineInstance = createSpy.mock.results[0]?.value as Matter.Engine;
+
+    handle.drop(fruit(0), "fruits", W / 2, 300);
+    handle.step(1 / 60); // register body
+
+    const dynamicBodies = Matter.Composite.allBodies(engineInstance.world).filter(
+      (b) => !b.isStatic
+    );
+    const fruitBody = dynamicBodies[0];
+    if (!fruitBody) throw new Error("Expected a fruit body");
+
+    // Force velocity far above the clamp threshold
+    Matter.Body.setVelocity(fruitBody, { x: 0, y: 9999 });
+    handle.step(1 / 60);
+
+    const speed = Math.sqrt(fruitBody.velocity.x ** 2 + fruitBody.velocity.y ** 2);
+    const maxSpeedPerStep = MAX_FRUIT_SPEED_PX_S / 60;
+    expect(speed).toBeLessThanOrEqual(maxSpeedPerStep + 0.5);
+
+    handle.cleanup();
   });
 });
 
