@@ -7,6 +7,7 @@ export function useCardSelection(playInvalidMove: () => void): {
   triggerShake: () => void;
   triggerIllegal: () => void;
 } {
+  // useSharedValue returns a stable object — its reference never changes across renders.
   const shakeX = useSharedValue(0);
 
   const triggerShake = useCallback(() => {

@@ -50,6 +50,33 @@ const BASE_STATE: FreeCellState = {
   moveCount: 0,
 };
 
+// State with two non-empty foundations for Story 9 re-select test.
+const STATE_WITH_TWO_FOUNDATIONS: FreeCellState = {
+  _v: 1,
+  tableau: [[], [], [], [], [], [], [], []],
+  freeCells: [null, null, null, null],
+  foundations: {
+    spades: [{ suit: "spades", rank: 1 }],
+    hearts: [{ suit: "hearts", rank: 1 }],
+    diamonds: [],
+    clubs: [],
+  },
+  undoStack: [],
+  isComplete: false,
+  moveCount: 0,
+};
+
+// State with an Ace in tableau col 0 for Story 10 double-tap test.
+const STATE_WITH_ACE_TABLEAU: FreeCellState = {
+  _v: 1,
+  tableau: [[{ suit: "diamonds", rank: 1 }], [], [], [], [], [], [], []],
+  freeCells: [null, null, null, null],
+  foundations: { spades: [], hearts: [], diamonds: [], clubs: [] },
+  undoStack: [],
+  isComplete: false,
+  moveCount: 0,
+};
+
 function renderBoard(state = BASE_STATE, onMove = jest.fn()) {
   const utils = render(
     <ThemeProvider>
@@ -58,6 +85,8 @@ function renderBoard(state = BASE_STATE, onMove = jest.fn()) {
   );
   return { ...utils, onMove };
 }
+
+afterEach(() => jest.useRealTimers());
 
 // ── Selection ────────────────────────────────────────────────────────────────
 
@@ -75,7 +104,6 @@ describe("FreeCellBoard — selection", () => {
     jest.advanceTimersByTime(301); // past DOUBLE_TAP_MS=300
     fireEvent.press(getByLabelText("2 of Clubs (selected)"));
     expect(getByLabelText("2 of Clubs")).toBeTruthy();
-    jest.useRealTimers();
   });
 
   it("selects a freecell card on first tap", () => {
@@ -84,9 +112,11 @@ describe("FreeCellBoard — selection", () => {
     expect(getByLabelText("A of Spades (selected)")).toBeTruthy();
   });
 
-  it("deselects a freecell card when tapped a second time", () => {
+  it("deselects a freecell card when tapped after the double-tap window", () => {
+    jest.useFakeTimers();
     const { getByLabelText } = renderBoard();
     fireEvent.press(getByLabelText("A of Spades"));
+    jest.advanceTimersByTime(301); // past DOUBLE_TAP_MS=300 — prevents freecell-to-foundation double-tap
     fireEvent.press(getByLabelText("A of Spades (selected)"));
     expect(getByLabelText("A of Spades")).toBeTruthy();
   });
@@ -106,12 +136,11 @@ describe("FreeCellBoard — selection", () => {
   });
 
   it("preserves selection after an invalid move attempt", () => {
-    const { getByLabelText, queryByLabelText } = renderBoard();
     jest.useFakeTimers();
+    const { getByLabelText, queryByLabelText } = renderBoard();
     fireEvent.press(getByLabelText("3 of Hearts")); // select col 1
     jest.advanceTimersByTime(301); // past double-tap window so second tap is not a double-tap
-    fireEvent.press(getByLabelText("2 of Clubs")); // invalid destination
-    jest.useRealTimers();
+    fireEvent.press(getByLabelText("2 of Clubs")); // invalid destination → re-select col 0
     expect(queryByLabelText(/\(selected\)/)).toBeTruthy();
   });
 });
@@ -222,6 +251,48 @@ describe("FreeCellBoard — invalid moves", () => {
     const { getByLabelText, onMove } = renderBoard();
     fireEvent.press(getByLabelText("A of Spades")); // select freecell 0
     fireEvent.press(getByLabelText("K of Spades")); // tap freecell 1 → deselect
+    expect(onMove).not.toHaveBeenCalled();
+  });
+});
+
+// ── Story 9: foundation re-select ────────────────────────────────────────────
+
+describe("FreeCellBoard — foundation re-select (Story 9)", () => {
+  it("re-selects to a different non-empty foundation when one is already selected", () => {
+    const { getByLabelText, queryByLabelText } = renderBoard(STATE_WITH_TWO_FOUNDATIONS);
+    fireEvent.press(getByLabelText("A of Spades")); // select spades foundation
+    expect(getByLabelText("A of Spades (selected)")).toBeTruthy();
+    fireEvent.press(getByLabelText("A of Hearts")); // tap hearts foundation → re-select
+    expect(getByLabelText("A of Hearts (selected)")).toBeTruthy();
+    expect(queryByLabelText("A of Spades (selected)")).toBeNull();
+  });
+});
+
+// ── Story 10: double-tap ──────────────────────────────────────────────────────
+
+describe("FreeCellBoard — double-tap (Story 10)", () => {
+  it("freecell: two taps within 300ms → freecell-to-foundation", () => {
+    jest.useFakeTimers();
+    const { getByLabelText, onMove } = renderBoard();
+    fireEvent.press(getByLabelText("A of Spades")); // first tap: selects
+    fireEvent.press(getByLabelText("A of Spades (selected)")); // second tap within 300ms → foundation
+    expect(onMove).toHaveBeenCalledWith({ type: "freecell-to-foundation", fromCell: 0 });
+  });
+
+  it("tableau: two taps within 300ms on top card → tableau-to-foundation", () => {
+    jest.useFakeTimers();
+    const { getByLabelText, onMove } = renderBoard(STATE_WITH_ACE_TABLEAU);
+    fireEvent.press(getByLabelText("A of Diamonds")); // first tap: selects
+    fireEvent.press(getByLabelText("A of Diamonds (selected)")); // second tap within 300ms → foundation
+    expect(onMove).toHaveBeenCalledWith({ type: "tableau-to-foundation", fromCol: 0 });
+  });
+
+  it("freecell: two taps separated by >300ms do NOT trigger a foundation move", () => {
+    jest.useFakeTimers();
+    const { getByLabelText, onMove } = renderBoard();
+    fireEvent.press(getByLabelText("A of Spades")); // first tap: selects
+    jest.advanceTimersByTime(301); // past double-tap window
+    fireEvent.press(getByLabelText("A of Spades (selected)")); // second tap: deselects
     expect(onMove).not.toHaveBeenCalled();
   });
 });

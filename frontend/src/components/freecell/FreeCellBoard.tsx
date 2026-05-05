@@ -65,6 +65,7 @@ export default function FreeCellBoard({ state, onMove }: FreeCellBoardProps) {
     const isDouble = last !== null && last.key === key && now - last.time < DOUBLE_TAP_MS;
     lastTapRef.current = { key, time: now };
 
+    // FreeCell cards are always face-up; no faceUp guard needed (contrast Solitaire).
     if (isDouble && index === pile.length - 1) {
       tryMove({ type: "tableau-to-foundation", fromCol: col });
       return;

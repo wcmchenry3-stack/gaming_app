@@ -42,6 +42,8 @@ function renderBoard(state = BASE, onMove = jest.fn()) {
   return { ...utils, onMove };
 }
 
+afterEach(() => jest.useRealTimers());
+
 // ── Selection ────────────────────────────────────────────────────────────────
 
 describe("foundation retreat — selection", () => {

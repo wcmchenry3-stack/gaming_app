@@ -29,7 +29,6 @@ import {
   View,
   ViewStyle,
 } from "react-native";
-import { useCardSelection } from "../game/_shared/useCardSelection";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTranslation } from "react-i18next";
 import { useNavigation } from "@react-navigation/native";
@@ -74,6 +73,7 @@ import { solitaireApi, type ScoreEntry } from "../game/solitaire/api";
 import { useGameSync } from "../game/_shared/useGameSync";
 import { useNetwork } from "../game/_shared/NetworkContext";
 import { OfflineBanner } from "../components/shared/OfflineBanner";
+import { useCardSelection } from "../game/_shared/useCardSelection";
 
 const TABLEAU_COLS = 7;
 const COL_GAP = 6;
