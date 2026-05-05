@@ -584,7 +584,13 @@ export default function SolitaireScreen() {
 
   const undoDisabled = state === null || state.undoStack.length === 0 || autoCompleting;
   const showAutoComplete = state !== null && !state.isComplete && canAutoComplete(state);
-  const cardSize = useResponsiveCardSize(CARD_WIDTH, CARD_HEIGHT, TABLEAU_COLS, COL_GAP, SCREEN_H_PADDING);
+  const cardSize = useResponsiveCardSize(
+    CARD_WIDTH,
+    CARD_HEIGHT,
+    TABLEAU_COLS,
+    COL_GAP,
+    SCREEN_H_PADDING
+  );
   const boardWidth = TABLEAU_COLS * cardSize.cardWidth + (TABLEAU_COLS - 1) * COL_GAP;
 
   const tableauSelection = (col: number): number | undefined => {

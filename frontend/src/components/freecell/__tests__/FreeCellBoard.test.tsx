@@ -326,9 +326,7 @@ describe("FreeCellBoard — DragProvider tree shape", () => {
       const styles = Array.isArray(s) ? s.flat(Infinity) : [s];
       for (const style of styles) {
         if (style && typeof style === "object" && !Array.isArray(style) && "transform" in style) {
-          throw new Error(
-            `DragProvider ancestor has transform style: ${JSON.stringify(style)}`
-          );
+          throw new Error(`DragProvider ancestor has transform style: ${JSON.stringify(style)}`);
         }
       }
       node = node.parent;

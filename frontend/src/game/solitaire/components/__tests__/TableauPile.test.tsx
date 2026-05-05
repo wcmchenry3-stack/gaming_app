@@ -83,9 +83,7 @@ describe("TableauPile — cascade offsets (#1247)", () => {
       card("hearts", 3),
       card("spades", 2),
     ];
-    const { getByLabelText } = render(
-      withTheme(<TableauPile pile={pile} colIndex={0} />)
-    );
+    const { getByLabelText } = render(withTheme(<TableauPile pile={pile} colIndex={0} />));
     const container = getByLabelText("Tableau column 1, 12 cards");
     expect(container.props.style).toMatchSnapshot();
   });
@@ -94,9 +92,7 @@ describe("TableauPile — cascade offsets (#1247)", () => {
 describe("TableauPile — hitSlop on buried cards (#1248)", () => {
   it("buried DraggableCard wrappers receive hitSlop; top card does not", () => {
     const pile = [card("spades", 5, false), card("hearts", 6), card("clubs", 5)];
-    const { UNSAFE_getAllByType } = render(
-      withTheme(<TableauPile pile={pile} colIndex={0} />)
-    );
+    const { UNSAFE_getAllByType } = render(withTheme(<TableauPile pile={pile} colIndex={0} />));
     const draggables = UNSAFE_getAllByType(DraggableCard);
     expect(draggables).toHaveLength(3);
     // Cards at index 0 and 1 are buried — must have hitSlop.
@@ -109,9 +105,7 @@ describe("TableauPile — hitSlop on buried cards (#1248)", () => {
   it("hitSlop bottom is clamped to the visible strip height (face-down strip < 24pt)", () => {
     // face-down strip = FACE_DOWN_OFFSET (20) < 24, so bottom = 20.
     const pile = [card("spades", 5, false), card("hearts", 6)];
-    const { UNSAFE_getAllByType } = render(
-      withTheme(<TableauPile pile={pile} colIndex={0} />)
-    );
+    const { UNSAFE_getAllByType } = render(withTheme(<TableauPile pile={pile} colIndex={0} />));
     const draggables = UNSAFE_getAllByType(DraggableCard);
     const buriedSlop = draggables[0]!.props.hitSlop;
     expect(buriedSlop).toBeDefined();

@@ -170,7 +170,13 @@ export default function FreeCellScreen() {
   const undoDisabled =
     state === null || state.undoStack.length === 0 || state.isComplete || autoCompleting;
   const hintDisabled = state === null || state.isComplete || autoCompleting;
-  const cardSize = useResponsiveCardSize(CARD_WIDTH, CARD_HEIGHT, TABLEAU_COLS, COL_GAP, SCREEN_H_PADDING);
+  const cardSize = useResponsiveCardSize(
+    CARD_WIDTH,
+    CARD_HEIGHT,
+    TABLEAU_COLS,
+    COL_GAP,
+    SCREEN_H_PADDING
+  );
 
   return (
     <GameShell
