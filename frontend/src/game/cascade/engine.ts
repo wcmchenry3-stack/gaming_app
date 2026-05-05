@@ -146,7 +146,7 @@ export async function createEngine(
     const rbDesc = R.RigidBodyDesc.dynamic()
       .setTranslation(x * SCALE, y * SCALE)
       .setCcdEnabled(true)
-      .canSleep(true);
+      .setCanSleep(true);
     const rb = world.createRigidBody(rbDesc);
 
     const nameKey = (def as { nameKey?: string }).nameKey ?? def.name.toLowerCase();

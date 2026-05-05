@@ -709,7 +709,7 @@ describe("body sleeping — canSleep", () => {
     const origDynamic = RAPIER_MOCK.RigidBodyDesc.dynamic;
     RAPIER_MOCK.RigidBodyDesc.dynamic = () => {
       const builder = origDynamic();
-      builder.canSleep = canSleepSpy;
+      builder.setCanSleep = canSleepSpy;
       return builder;
     };
 
@@ -732,7 +732,7 @@ describe("body sleeping — canSleep", () => {
     const origDynamic = RAPIER_MOCK.RigidBodyDesc.dynamic;
     RAPIER_MOCK.RigidBodyDesc.dynamic = () => {
       const builder = origDynamic();
-      builder.canSleep = canSleepSpy;
+      builder.setCanSleep = canSleepSpy;
       return builder;
     };
 

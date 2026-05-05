@@ -235,7 +235,7 @@ describe("body sleeping parity — sleeping is enabled on both engines", () => {
     const origDynamic = RAPIER_MOCK.RigidBodyDesc.dynamic;
     RAPIER_MOCK.RigidBodyDesc.dynamic = () => {
       const builder = origDynamic();
-      builder.canSleep = canSleepSpy;
+      builder.setCanSleep = canSleepSpy;
       return builder;
     };
 

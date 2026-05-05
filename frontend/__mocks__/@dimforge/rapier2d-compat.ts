@@ -148,7 +148,7 @@ const RAPIER_MOCK = {
           return builder;
         },
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        canSleep(_enabled: boolean) {
+        setCanSleep(_enabled: boolean) {
           return builder;
         },
       };
