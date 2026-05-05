@@ -19,6 +19,7 @@ import { rankLabel } from "../../_shared/decks/cardId";
 import SelectableCard from "../../_shared/SelectableCard";
 import { DropTarget } from "../../_shared/drag/DropTarget";
 import type { DropHandler } from "../../_shared/drag/DragContext";
+import type { SharedValue } from "react-native-reanimated";
 
 const SUIT_SYMBOL: Record<Suit, string> = {
   spades: "♠",
@@ -31,6 +32,7 @@ export interface FoundationPileProps {
   readonly pile: readonly Card[];
   readonly suit: Suit;
   readonly selected?: boolean;
+  readonly shakeX?: SharedValue<number>;
   readonly onPress?: (suit: Suit) => void;
   /** Unique drop-zone ID, e.g. "solitaire-foundation-spades". */
   readonly dropId?: string;
@@ -41,6 +43,7 @@ export default function FoundationPile({
   pile,
   suit,
   selected = false,
+  shakeX,
   onPress,
   dropId,
   onDrop,
@@ -71,6 +74,7 @@ export default function FoundationPile({
             width={cardWidth}
             height={cardHeight}
             selected={selected}
+            shakeX={shakeX}
             onPress={onPress ? () => onPress(suit) : undefined}
             accessibilityLabel={cardLabel}
           />

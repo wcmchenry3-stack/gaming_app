@@ -1,14 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import {
-  Animated,
-  Modal,
-  Platform,
-  Pressable,
-  StyleSheet,
-  Text,
-  View,
-  ViewStyle,
-} from "react-native";
+import { Modal, Platform, Pressable, StyleSheet, Text, View, ViewStyle } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTranslation } from "react-i18next";
 import { useNavigation } from "@react-navigation/native";
@@ -50,7 +41,6 @@ export default function FreeCellScreen() {
   const [state, setState] = useState<FreeCellState | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const flashOpacity = useRef(new Animated.Value(0)).current;
   const hasLoadedRef = useRef(false);
   const isMountedRef = useRef(true);
   const autoCompletingRef = useRef(false);
@@ -65,7 +55,6 @@ export default function FreeCellScreen() {
   const { play: playSupermove } = useSound("freecell.supermove", 0.5);
   const { play: playFoundationComplete } = useSound("freecell.foundationComplete");
   const { play: playGameWin } = useSound("freecell.gameWin");
-  const { play: playInvalidMove } = useSound("freecell.invalidMove");
 
   const startAutoComplete = useCallback((fromState: FreeCellState) => {
     if (autoCompletingRef.current) return;
@@ -146,26 +135,15 @@ export default function FreeCellScreen() {
     () => setState((prev) => (prev === null ? null : { ...prev, events: [] }))
   );
 
-  const flashInvalid = useCallback(() => {
-    Animated.sequence([
-      Animated.timing(flashOpacity, { toValue: 0.4, duration: 80, useNativeDriver: true }),
-      Animated.timing(flashOpacity, { toValue: 0, duration: 180, useNativeDriver: true }),
-    ]).start();
-  }, [flashOpacity]);
-
   const handleMove = useCallback(
     (move: Move) => {
       if (state === null || autoCompletingRef.current) return;
       const next = applyMove(state, move);
-      if (next === state) {
-        flashInvalid();
-        playInvalidMove();
-        return;
-      }
+      if (next === state) return;
       setState(next);
       startAutoComplete(next);
     },
-    [state, flashInvalid, playInvalidMove, startAutoComplete]
+    [state, startAutoComplete]
   );
 
   const handleUndo = useCallback(() => {
@@ -287,17 +265,6 @@ export default function FreeCellScreen() {
                 </Pressable>
               </View>
             )}
-
-            <Animated.View
-              pointerEvents="none"
-              accessibilityElementsHidden
-              importantForAccessibility="no-hide-descendants"
-              style={[
-                StyleSheet.absoluteFill,
-                { backgroundColor: colors.error, opacity: flashOpacity },
-              ]}
-              testID="freecell-invalid-flash"
-            />
           </View>
         </CardSizeContext.Provider>
       )}

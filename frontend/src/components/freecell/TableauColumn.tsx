@@ -12,6 +12,7 @@ import SelectableCard from "../../game/_shared/SelectableCard";
 import { DraggableCard } from "../../game/_shared/drag/DraggableCard";
 import { DropTarget } from "../../game/_shared/drag/DropTarget";
 import type { DropHandler } from "../../game/_shared/drag/DragContext";
+import type { SharedValue } from "react-native-reanimated";
 
 const FACE_UP_OFFSET = 36;
 
@@ -19,6 +20,7 @@ export interface TableauColumnProps {
   readonly pile: readonly Card[];
   readonly colIndex: number;
   readonly selectedIndex?: number;
+  readonly shakeX?: SharedValue<number>;
   readonly hintIndex?: number;
   readonly hintDestination?: boolean;
   readonly onCardPress?: (colIndex: number, cardIndex: number) => void;
@@ -31,6 +33,7 @@ export default function TableauColumn({
   pile,
   colIndex,
   selectedIndex,
+  shakeX,
   hintIndex,
   hintDestination = false,
   onCardPress,
@@ -124,6 +127,7 @@ export default function TableauColumn({
           width={cardWidth}
           height={cardHeight}
           selected={isSelected}
+          shakeX={isSelected ? shakeX : undefined}
           hintHighlighted={isHint || isHintDest}
           accessibilityLabel={label}
         />

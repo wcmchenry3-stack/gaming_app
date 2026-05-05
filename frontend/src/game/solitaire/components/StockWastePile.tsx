@@ -22,12 +22,14 @@ import { useCardSize } from "../../_shared/CardSizeContext";
 import { rankLabel } from "../../_shared/decks/cardId";
 import { DraggableCard } from "../../_shared/drag/DraggableCard";
 import SelectableCard from "../../_shared/SelectableCard";
+import type { SharedValue } from "react-native-reanimated";
 
 export interface StockWastePileProps {
   readonly stock: readonly Card[];
   readonly waste: readonly Card[];
   readonly drawMode: DrawMode;
   readonly wasteSelected?: boolean;
+  readonly shakeX?: SharedValue<number>;
   readonly onStockPress?: () => void;
   readonly onWastePress?: () => void;
 }
@@ -37,6 +39,7 @@ export default function StockWastePile({
   waste,
   drawMode,
   wasteSelected = false,
+  shakeX,
   onStockPress,
   onWastePress,
 }: StockWastePileProps) {
@@ -56,6 +59,7 @@ export default function StockWastePile({
         waste={waste}
         drawMode={drawMode}
         selected={wasteSelected}
+        shakeX={shakeX}
         onPress={onWastePress}
         t={t}
       />
@@ -127,12 +131,14 @@ function Waste({
   waste,
   drawMode,
   selected,
+  shakeX,
   onPress,
   t,
 }: {
   readonly waste: readonly Card[];
   readonly drawMode: DrawMode;
   readonly selected: boolean;
+  readonly shakeX?: SharedValue<number>;
   readonly onPress?: () => void;
   readonly t: TFunction<"solitaire">;
 }) {
@@ -180,6 +186,7 @@ function Waste({
           width={cardWidth}
           height={cardHeight}
           selected={selected}
+          shakeX={shakeX}
           accessibilityLabel={topLabel}
         />
       </DraggableCard>
@@ -215,6 +222,7 @@ function Waste({
                   width={cardWidth}
                   height={cardHeight}
                   selected={selected}
+                  shakeX={shakeX}
                   accessibilityLabel={label}
                 />
               </DraggableCard>

@@ -20,6 +20,7 @@ import SelectableCard from "../../_shared/SelectableCard";
 import { DraggableCard } from "../../_shared/drag/DraggableCard";
 import { DropTarget } from "../../_shared/drag/DropTarget";
 import type { DropHandler } from "../../_shared/drag/DragContext";
+import type { SharedValue } from "react-native-reanimated";
 
 const FACE_UP_OFFSET = 24;
 const FACE_DOWN_OFFSET = 14;
@@ -28,6 +29,7 @@ export interface TableauPileProps {
   readonly pile: readonly Card[];
   readonly colIndex: number;
   readonly selectedIndex?: number;
+  readonly shakeX?: SharedValue<number>;
   readonly onCardPress?: (colIndex: number, cardIndex: number) => void;
   readonly onEmptyPress?: (colIndex: number) => void;
   /** Unique drop-zone ID, e.g. "solitaire-tableau-0". Required for DnD. */
@@ -39,6 +41,7 @@ export default function TableauPile({
   pile,
   colIndex,
   selectedIndex,
+  shakeX,
   onCardPress,
   onEmptyPress,
   dropId,
@@ -139,6 +142,7 @@ export default function TableauPile({
             width={cardWidth}
             height={cardHeight}
             selected
+            shakeX={shakeX}
             accessibilityLabel={selectedLabel}
           />
         ) : (
