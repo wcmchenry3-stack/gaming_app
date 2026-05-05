@@ -302,10 +302,10 @@ describe("FreeCellBoard — double-tap (Story 10)", () => {
 // ── Tree-shape: DragProvider placement (#1249) ────────────────────────────────
 
 describe("FreeCellBoard — DragProvider tree shape", () => {
-  it("DragProvider ancestors all DraggableCard instances (no missing provider)", () => {
-    // DraggableCard calls useDragContext on mount; if DragProvider were missing or
-    // misplaced, the render below would throw. This guards against accidental removal
-    // or nesting of DragProvider inside a transformed view (which breaks iOS coords).
+  it("all DraggableCard instances have a DragProvider ancestor (no missing provider)", () => {
+    // If DragProvider were absent or misplaced, DraggableCard.useDragContext would
+    // throw on mount — this render is the implicit assertion. The count check
+    // confirms cards actually rendered rather than being silently absent.
     const { UNSAFE_getAllByType } = renderBoard();
     const draggables = UNSAFE_getAllByType(DraggableCard);
     expect(draggables.length).toBeGreaterThan(0);

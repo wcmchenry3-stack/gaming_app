@@ -78,7 +78,7 @@ test("solitaire drag: waste → tableau (K♥ onto empty column)", async ({ page
 // ---------------------------------------------------------------------------
 // Test 2: tableau → foundation
 // Board:  col 0 = [A♠(fu)]   foundations all empty   stock = rest
-// Tap:    A♠ (col 0) → empty Spades foundation  (double-tap variant)
+// Tap:    A♠ (col 0) → empty Spades foundation  (select then tap)
 // Expect: spades foundation gains 1 card; col 0 becomes empty
 // ---------------------------------------------------------------------------
 test("solitaire drag: tableau → foundation (A♠ to Spades foundation)", async ({ page }) => {
