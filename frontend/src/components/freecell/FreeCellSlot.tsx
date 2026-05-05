@@ -12,6 +12,7 @@ import { useCardSize } from "../../game/_shared/CardSizeContext";
 import { DraggableCard } from "../../game/_shared/drag/DraggableCard";
 import { DropTarget } from "../../game/_shared/drag/DropTarget";
 import type { DropHandler } from "../../game/_shared/drag/DragContext";
+import type { SharedValue } from "react-native-reanimated";
 
 export const CARD_WIDTH = 40;
 export const CARD_HEIGHT = 57;
@@ -20,6 +21,7 @@ export interface FreeCellSlotProps {
   readonly card: Card | null;
   readonly cellIndex: number;
   readonly selected?: boolean;
+  readonly shakeX?: SharedValue<number>;
   readonly hintSource?: boolean;
   readonly hintDestination?: boolean;
   readonly onPress?: (cellIndex: number) => void;
@@ -31,6 +33,7 @@ export default function FreeCellSlot({
   card,
   cellIndex,
   selected = false,
+  shakeX,
   hintSource = false,
   hintDestination = false,
   onPress,
@@ -60,6 +63,7 @@ export default function FreeCellSlot({
         width={cardWidth}
         height={cardHeight}
         selected={selected}
+        shakeX={shakeX}
         hintHighlighted={hintSource}
         accessibilityLabel={label}
       />

@@ -11,6 +11,7 @@ import { CARD_WIDTH, CARD_HEIGHT } from "./FreeCellSlot";
 import { useCardSize } from "../../game/_shared/CardSizeContext";
 import { DropTarget } from "../../game/_shared/drag/DropTarget";
 import type { DropHandler } from "../../game/_shared/drag/DragContext";
+import type { SharedValue } from "react-native-reanimated";
 
 const SUIT_SYMBOL: Record<Suit, string> = {
   spades: "♠",
@@ -23,6 +24,7 @@ export interface FoundationPileProps {
   readonly pile: readonly Card[];
   readonly suit: Suit;
   readonly selected?: boolean;
+  readonly shakeX?: SharedValue<number>;
   readonly hintDestination?: boolean;
   readonly onPress?: (suit: Suit) => void;
   readonly dropId?: string;
@@ -33,6 +35,7 @@ export default function FoundationPile({
   pile,
   suit,
   selected = false,
+  shakeX,
   hintDestination = false,
   onPress,
   dropId,
@@ -63,6 +66,7 @@ export default function FoundationPile({
             width={cardWidth}
             height={cardHeight}
             selected={selected}
+            shakeX={shakeX}
             hintHighlighted={hintDestination}
             onPress={onPress ? () => onPress(suit) : undefined}
             accessibilityLabel={label}

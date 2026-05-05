@@ -68,11 +68,14 @@ describe("FreeCellBoard — selection", () => {
     expect(getByLabelText("2 of Clubs (selected)")).toBeTruthy();
   });
 
-  it("deselects a tableau card when tapped a second time", () => {
+  it("deselects a tableau card when tapped after the double-tap window", () => {
+    jest.useFakeTimers();
     const { getByLabelText } = renderBoard();
     fireEvent.press(getByLabelText("2 of Clubs"));
+    jest.advanceTimersByTime(301); // past DOUBLE_TAP_MS=300
     fireEvent.press(getByLabelText("2 of Clubs (selected)"));
     expect(getByLabelText("2 of Clubs")).toBeTruthy();
+    jest.useRealTimers();
   });
 
   it("selects a freecell card on first tap", () => {
@@ -102,11 +105,14 @@ describe("FreeCellBoard — selection", () => {
     expect(queryByLabelText(/\(selected\)/)).toBeNull();
   });
 
-  it("clears selection after an invalid move attempt", () => {
+  it("preserves selection after an invalid move attempt", () => {
     const { getByLabelText, queryByLabelText } = renderBoard();
+    jest.useFakeTimers();
     fireEvent.press(getByLabelText("3 of Hearts")); // select col 1
+    jest.advanceTimersByTime(301); // past double-tap window so second tap is not a double-tap
     fireEvent.press(getByLabelText("2 of Clubs")); // invalid destination
-    expect(queryByLabelText(/\(selected\)/)).toBeNull();
+    jest.useRealTimers();
+    expect(queryByLabelText(/\(selected\)/)).toBeTruthy();
   });
 });
 

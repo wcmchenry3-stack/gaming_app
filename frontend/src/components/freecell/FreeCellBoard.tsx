@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useRef, useState } from "react";
 import { StyleSheet, View } from "react-native";
 import { useTranslation } from "react-i18next";
 
@@ -14,10 +14,13 @@ import { useCardSize } from "../../game/_shared/CardSizeContext";
 import { DragProvider } from "../../game/_shared/drag/DragContext";
 import { DragContainer } from "../../game/_shared/drag/DragContainer";
 import type { DragSource, DragCard } from "../../game/_shared/drag/DragContext";
+import { useSound } from "../../game/_shared/useSound";
+import { useCardSelection } from "../../game/_shared/useCardSelection";
 
 const TABLEAU_COLS = 8;
 const COL_GAP = 2;
 const ROW_GAP = 8;
+const DOUBLE_TAP_MS = 300;
 
 type Selection =
   | { kind: "tableau"; col: number; index: number }
@@ -36,15 +39,37 @@ export default function FreeCellBoard({ state, onMove }: FreeCellBoardProps) {
   const { cardWidth: ctxW } = useCardSize();
   const boardWidth = TABLEAU_COLS * (ctxW || CARD_WIDTH) + (TABLEAU_COLS - 1) * COL_GAP;
   const [selection, setSelection] = useState<Selection>(null);
+  const lastTapRef = useRef<{ key: string; time: number } | null>(null);
+
+  const { play: playInvalidMove } = useSound("freecell.invalidMove");
+  const { shakeX, triggerIllegal } = useCardSelection(playInvalidMove);
 
   function tryMove(move: Move) {
     if (validateMove(state, move)) {
       onMove(move);
+      setSelection(null);
+    } else {
+      triggerIllegal();
     }
-    setSelection(null);
   }
 
   function handleTableauCardPress(col: number, index: number) {
+    const pile = state.tableau[col];
+    if (pile === undefined) return;
+    const card = pile[index];
+    if (card === undefined) return;
+
+    const key = `tableau:${col}:${index}`;
+    const now = Date.now();
+    const last = lastTapRef.current;
+    const isDouble = last !== null && last.key === key && now - last.time < DOUBLE_TAP_MS;
+    lastTapRef.current = { key, time: now };
+
+    if (isDouble && index === pile.length - 1) {
+      tryMove({ type: "tableau-to-foundation", fromCol: col });
+      return;
+    }
+
     if (selection === null) {
       setSelection({ kind: "tableau", col, index });
       return;
@@ -84,6 +109,17 @@ export default function FreeCellBoard({ state, onMove }: FreeCellBoardProps) {
   }
 
   function handleFreeCellPress(cell: number) {
+    const key = `freecell:${cell}`;
+    const now = Date.now();
+    const last = lastTapRef.current;
+    const isDouble = last !== null && last.key === key && now - last.time < DOUBLE_TAP_MS;
+    lastTapRef.current = { key, time: now };
+
+    if (isDouble && state.freeCells[cell] !== null) {
+      tryMove({ type: "freecell-to-foundation", fromCell: cell });
+      return;
+    }
+
     if (selection === null) {
       if (state.freeCells[cell] !== null) {
         setSelection({ kind: "freecell", cell });
@@ -103,15 +139,17 @@ export default function FreeCellBoard({ state, onMove }: FreeCellBoardProps) {
 
   function handleFoundationPress(suit: Suit) {
     if (selection === null) {
-      // Select the foundation card if there is one.
       if (state.foundations[suit].length > 0) {
         setSelection({ kind: "foundation", suit });
       }
       return;
     }
     if (selection.kind === "foundation") {
-      // Tap same foundation again → deselect.
-      setSelection(null);
+      if (selection.suit === suit) {
+        setSelection(null);
+      } else {
+        setSelection({ kind: "foundation", suit });
+      }
       return;
     }
     if (selection.kind === "tableau") {
@@ -240,7 +278,7 @@ export default function FreeCellBoard({ state, onMove }: FreeCellBoardProps) {
     if (!hint) return undefined;
     if (hint.type === "tableau-to-foundation") {
       const col = state.tableau[hint.fromCol];
-      return col && col.length > 0 ? col[col.length - 1].suit : undefined;
+      return col && col.length > 0 ? col[col.length - 1]!.suit : undefined;
     }
     if (hint.type === "freecell-to-foundation") {
       return state.freeCells[hint.fromCell]?.suit ?? undefined;
@@ -280,6 +318,9 @@ export default function FreeCellBoard({ state, onMove }: FreeCellBoardProps) {
                 card={card}
                 cellIndex={i}
                 selected={selection?.kind === "freecell" && selection.cell === i}
+                shakeX={
+                  selection?.kind === "freecell" && selection.cell === i ? shakeX : undefined
+                }
                 hintSource={
                   (state.hint?.type === "freecell-to-tableau" && state.hint.fromCell === i) ||
                   (state.hint?.type === "freecell-to-foundation" && state.hint.fromCell === i)
@@ -296,6 +337,9 @@ export default function FreeCellBoard({ state, onMove }: FreeCellBoardProps) {
                 pile={state.foundations[suit]}
                 suit={suit}
                 selected={selection?.kind === "foundation" && selection.suit === suit}
+                shakeX={
+                  selection?.kind === "foundation" && selection.suit === suit ? shakeX : undefined
+                }
                 hintDestination={hintDestFoundationSuit === suit}
                 onPress={() => handleFoundationPress(suit)}
                 dropId={`freecell-foundation-${suit}`}
@@ -314,6 +358,9 @@ export default function FreeCellBoard({ state, onMove }: FreeCellBoardProps) {
                   selection?.kind === "tableau" && selection.col === col
                     ? selection.index
                     : undefined
+                }
+                shakeX={
+                  selection?.kind === "tableau" && selection.col === col ? shakeX : undefined
                 }
                 hintIndex={
                   (state.hint?.type === "tableau-to-tableau" ||

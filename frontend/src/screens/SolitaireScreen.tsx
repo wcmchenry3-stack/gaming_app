@@ -29,6 +29,7 @@ import {
   View,
   ViewStyle,
 } from "react-native";
+import { useCardSelection } from "../game/_shared/useCardSelection";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTranslation } from "react-i18next";
 import { useNavigation } from "@react-navigation/native";
@@ -103,9 +104,6 @@ export default function SolitaireScreen() {
     gamesWon: 0,
   });
 
-  // Invalid-move flash — red overlay pulse instead of positional shake so we
-  // don't fight React Navigation / safe-area layout math.
-  const flashOpacity = useRef(new Animated.Value(0)).current;
   const sparkleOpacity = useRef(new Animated.Value(0)).current;
   const lastTapRef = useRef<{ key: string; time: number } | null>(null);
   const autoStepTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -126,6 +124,7 @@ export default function SolitaireScreen() {
   const { play: playFoundationComplete } = useSound("solitaire.foundationComplete");
   const { play: playInvalidMove } = useSound("solitaire.invalidMove");
   const { play: playGameWin } = useSound("solitaire.gameWin");
+  const { shakeX, triggerIllegal } = useCardSelection(playInvalidMove);
 
   const {
     start: syncStart,
@@ -279,15 +278,6 @@ export default function SolitaireScreen() {
     [syncGetGameId, syncStart, syncMarkStarted]
   );
 
-  const flashInvalid = useCallback(() => {
-    playInvalidMove();
-    setSelection(null);
-    Animated.sequence([
-      Animated.timing(flashOpacity, { toValue: 0.4, duration: 80, useNativeDriver: true }),
-      Animated.timing(flashOpacity, { toValue: 0, duration: 180, useNativeDriver: true }),
-    ]).start();
-  }, [flashOpacity, playInvalidMove]);
-
   const deal = useCallback((drawMode: DrawMode) => {
     setState(dealGame(drawMode));
     setSelection(null);
@@ -321,7 +311,7 @@ export default function SolitaireScreen() {
     lastTapRef.current = { key: "waste", time: now };
 
     if (isDouble) {
-      if (!tryMove({ type: "waste-to-foundation" })) flashInvalid();
+      if (!tryMove({ type: "waste-to-foundation" })) triggerIllegal();
       return;
     }
     if (state.waste.length === 0) return;
@@ -330,7 +320,7 @@ export default function SolitaireScreen() {
       return;
     }
     setSelection({ kind: "waste" });
-  }, [state, selection, autoCompleting, tryMove, flashInvalid]);
+  }, [state, selection, autoCompleting, tryMove, triggerIllegal]);
 
   const handleStockPress = useCallback(() => {
     if (state === null || autoCompleting) return;
@@ -351,7 +341,7 @@ export default function SolitaireScreen() {
       if (selection !== null) {
         if (selection.kind === "waste") {
           if (tryMove({ type: "waste-to-foundation" })) return;
-          flashInvalid();
+          triggerIllegal();
           return;
         }
         if (selection.kind === "tableau") {
@@ -359,12 +349,12 @@ export default function SolitaireScreen() {
           if (col !== undefined && selection.index === col.length - 1) {
             if (tryMove({ type: "tableau-to-foundation", fromCol: selection.col })) return;
           }
-          flashInvalid();
+          triggerIllegal();
           return;
         }
         if (selection.kind === "foundation") {
           if (selection.suit === suit) setSelection(null);
-          else flashInvalid();
+          else triggerIllegal();
           return;
         }
       }
@@ -372,7 +362,7 @@ export default function SolitaireScreen() {
         setSelection({ kind: "foundation", suit });
       }
     },
-    [state, selection, autoCompleting, tryMove, flashInvalid]
+    [state, selection, autoCompleting, tryMove, triggerIllegal]
   );
 
   const handleTableauCardPress = useCallback(
@@ -390,20 +380,23 @@ export default function SolitaireScreen() {
       lastTapRef.current = { key, time: now };
 
       if (isDouble && index === pile.length - 1 && card.faceUp) {
-        if (!tryMove({ type: "tableau-to-foundation", fromCol: col })) flashInvalid();
+        if (!tryMove({ type: "tableau-to-foundation", fromCol: col })) triggerIllegal();
         return;
       }
 
       if (selection !== null) {
+        // Face-down card with active selection → no-op (no flash, no deselect).
+        if (!card.faceUp) return;
+
         if (selection.kind === "waste") {
           if (tryMove({ type: "waste-to-tableau", toCol: col })) return;
-          flashInvalid();
+          triggerIllegal();
           return;
         }
         if (selection.kind === "foundation") {
           if (tryMove({ type: "foundation-to-tableau", fromSuit: selection.suit, toCol: col }))
             return;
-          flashInvalid();
+          triggerIllegal();
           return;
         }
         if (selection.kind === "tableau") {
@@ -412,26 +405,29 @@ export default function SolitaireScreen() {
               setSelection(null);
               return;
             }
-            if (card.faceUp) setSelection({ kind: "tableau", col, index });
+            // Face-up guaranteed by the guard above — re-select within same column.
+            setSelection({ kind: "tableau", col, index });
             return;
           }
-          if (
-            tryMove({
-              type: "tableau-to-tableau",
-              fromCol: selection.col,
-              fromIndex: selection.index,
-              toCol: col,
-            })
-          )
-            return;
-          flashInvalid();
+          // Different column, face-up guaranteed. Legal destination → move; otherwise re-select.
+          const move = {
+            type: "tableau-to-tableau" as const,
+            fromCol: selection.col,
+            fromIndex: selection.index,
+            toCol: col,
+          };
+          if (validateMove(state, move)) {
+            tryMove(move);
+          } else {
+            setSelection({ kind: "tableau", col, index });
+          }
           return;
         }
       }
 
       if (card.faceUp) setSelection({ kind: "tableau", col, index });
     },
-    [state, selection, autoCompleting, tryMove, flashInvalid]
+    [state, selection, autoCompleting, tryMove, triggerIllegal]
   );
 
   const handleEmptyTableauPress = useCallback(
@@ -440,12 +436,12 @@ export default function SolitaireScreen() {
       lastTapRef.current = null;
       if (selection === null) return;
       if (selection.kind === "waste") {
-        if (!tryMove({ type: "waste-to-tableau", toCol: col })) flashInvalid();
+        if (!tryMove({ type: "waste-to-tableau", toCol: col })) triggerIllegal();
         return;
       }
       if (selection.kind === "foundation") {
         if (!tryMove({ type: "foundation-to-tableau", fromSuit: selection.suit, toCol: col }))
-          flashInvalid();
+          triggerIllegal();
         return;
       }
       if (selection.kind === "tableau") {
@@ -457,10 +453,10 @@ export default function SolitaireScreen() {
             toCol: col,
           })
         )
-          flashInvalid();
+          triggerIllegal();
       }
     },
-    [state, selection, autoCompleting, tryMove, flashInvalid]
+    [state, selection, autoCompleting, tryMove, triggerIllegal]
   );
 
   // ── Drag-and-drop handlers ─────────────────────────────────────────────────
@@ -661,6 +657,11 @@ export default function SolitaireScreen() {
                         pile={state.foundations[suit]}
                         suit={suit}
                         selected={selection?.kind === "foundation" && selection.suit === suit}
+                        shakeX={
+                          selection?.kind === "foundation" && selection.suit === suit
+                            ? shakeX
+                            : undefined
+                        }
                         onPress={handleFoundationPress}
                         dropId={`solitaire-foundation-${suit}`}
                         onDrop={(source) => handleDropToFoundation(source)}
@@ -685,6 +686,11 @@ export default function SolitaireScreen() {
                       pile={pile}
                       colIndex={col}
                       selectedIndex={tableauSelection(col)}
+                      shakeX={
+                        selection?.kind === "tableau" && selection.col === col
+                          ? shakeX
+                          : undefined
+                      }
                       onCardPress={handleTableauCardPress}
                       onEmptyPress={handleEmptyTableauPress}
                       dropId={`solitaire-tableau-${col}`}
@@ -699,6 +705,7 @@ export default function SolitaireScreen() {
                     waste={state.waste}
                     drawMode={state.drawMode}
                     wasteSelected={selection?.kind === "waste"}
+                    shakeX={selection?.kind === "waste" ? shakeX : undefined}
                     onStockPress={handleStockPress}
                     onWastePress={handleWastePress}
                   />
@@ -719,17 +726,6 @@ export default function SolitaireScreen() {
               )}
 
               <SolitaireWinCascade visible={cascadeVisible} />
-
-              <Animated.View
-                pointerEvents="none"
-                accessibilityElementsHidden
-                importantForAccessibility="no-hide-descendants"
-                style={[
-                  StyleSheet.absoluteFill,
-                  { backgroundColor: colors.error, opacity: flashOpacity },
-                ]}
-                testID="solitaire-invalid-flash"
-              />
             </DragContainer>
           </CardSizeContext.Provider>
         )}
