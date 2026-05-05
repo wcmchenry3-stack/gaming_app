@@ -27,7 +27,7 @@ export class MockRigidBody {
   linvel() {
     return { x: this._vx, y: this._vy };
   }
-  setLinvel(vel: { x: number; y: number }, _wake?: boolean) {
+  setLinvel(vel: { x: number; y: number }) {
     this._vx = vel.x;
     this._vy = vel.y;
   }
