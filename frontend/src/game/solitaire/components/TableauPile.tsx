@@ -114,11 +114,11 @@ export default function TableauPile({
       width: cardWidth,
       height: cardHeight,
     }));
-    const rl = rankLabel(card.rank);
-    const suitName = t(`suit.${card.suit}` as const);
-    const selectedLabel = card.faceUp
-      ? t("card.faceUpSelected", { rank: rl, suit: suitName })
-      : t("card.faceDownSelected");
+    const selectedLabel = isSelected
+      ? card.faceUp
+        ? t("card.faceUpSelected", { rank: rankLabel(card.rank), suit: t(`suit.${card.suit}` as const) })
+        : t("card.faceDownSelected")
+      : undefined;
     return (
       <DraggableCard
         key={cardIndex}

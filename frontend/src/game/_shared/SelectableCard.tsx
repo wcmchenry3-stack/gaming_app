@@ -44,7 +44,7 @@ export default function SelectableCard({
       scale.value = withTiming(1, TIMING_OUT);
       glow.value = withTiming(0, TIMING_OUT);
     }
-  }, [selected, lift, scale, glow]);
+  }, [selected]); // lift/scale/glow are stable refs — omitting avoids lint noise
 
   const isNeon = activeDeck.id === "neon";
   const glowColor = isNeon ? colors.accentBright : "#ffffff";
@@ -59,7 +59,7 @@ export default function SelectableCard({
       shadowColor: glowColor,
       shadowRadius: 12 * glow.value,
       shadowOpacity: 0.85 * glow.value,
-      elevation: 2 + 6 * glow.value,
+      elevation: 8 * glow.value,
     }),
   }));
 

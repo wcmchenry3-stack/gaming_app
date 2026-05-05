@@ -8,7 +8,7 @@ exports[`SelectableCard snapshot: selected 1`] = `
         "overflow": "visible",
       },
       {
-        "elevation": 2,
+        "elevation": 0,
         "shadowColor": "#ffffff",
         "shadowOpacity": 0,
         "shadowRadius": 0,
@@ -111,7 +111,7 @@ exports[`SelectableCard snapshot: unselected 1`] = `
         "overflow": "visible",
       },
       {
-        "elevation": 2,
+        "elevation": 0,
         "shadowColor": "#ffffff",
         "shadowOpacity": 0,
         "shadowRadius": 0,

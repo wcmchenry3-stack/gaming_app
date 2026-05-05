@@ -15,6 +15,7 @@ import type { Card, Suit } from "../types";
 import { CARD_HEIGHT, CARD_WIDTH } from "./CardView";
 import { useCardSize } from "../../_shared/CardSizeContext";
 import type { CanonicalSuit } from "../../_shared/decks/types";
+import { rankLabel } from "../../_shared/decks/cardId";
 import SelectableCard from "../../_shared/SelectableCard";
 import { DropTarget } from "../../_shared/drag/DropTarget";
 import type { DropHandler } from "../../_shared/drag/DragContext";
@@ -58,6 +59,11 @@ export default function FoundationPile({
     if (pile.length > 0) {
       const top = pile[pile.length - 1];
       if (top !== undefined) {
+        const rl = rankLabel(top.rank);
+        const suitName = t(`suit.${top.suit}` as const);
+        const cardLabel = selected
+          ? t("card.faceUpSelected", { rank: rl, suit: suitName })
+          : t("card.faceUp", { rank: rl, suit: suitName });
         return (
           <SelectableCard
             suit={top.suit as CanonicalSuit}
@@ -66,6 +72,7 @@ export default function FoundationPile({
             height={cardHeight}
             selected={selected}
             onPress={onPress ? () => onPress(suit) : undefined}
+            accessibilityLabel={cardLabel}
           />
         );
       }
