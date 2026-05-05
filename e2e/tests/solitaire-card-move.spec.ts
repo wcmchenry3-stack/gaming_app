@@ -175,10 +175,7 @@ test("solitaire drag: multi-card run (Q♣-J♥ onto K♦)", async ({ page }) =>
   await page.getByLabel("Q of Clubs").click();
 
   // Tap K♦ as the destination.
-  await page
-    .getByRole("button", { name: "K of Diamonds" })
-    .or(page.getByRole("button", { name: "K of Diamonds (selected)" }))
-    .click();
+  await page.getByLabel("K of Diamonds").click();
 
   // Col 1 now has 3 cards (K♦, Q♣, J♥); col 2 is empty.
   await expect(page.getByLabel("Tableau column 1, 3 cards")).toBeVisible({ timeout: 3_000 });
