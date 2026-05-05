@@ -1,13 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import {
-  Modal,
-  Platform,
-  Pressable,
-  StyleSheet,
-  Text,
-  View,
-  ViewStyle,
-} from "react-native";
+import { Modal, Platform, Pressable, StyleSheet, Text, View, ViewStyle } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTranslation } from "react-i18next";
 import { useNavigation } from "@react-navigation/native";
@@ -273,7 +265,6 @@ export default function FreeCellScreen() {
                 </Pressable>
               </View>
             )}
-
           </View>
         </CardSizeContext.Provider>
       )}
