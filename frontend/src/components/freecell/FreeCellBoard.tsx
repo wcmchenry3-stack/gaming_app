@@ -319,9 +319,7 @@ export default function FreeCellBoard({ state, onMove }: FreeCellBoardProps) {
                 card={card}
                 cellIndex={i}
                 selected={selection?.kind === "freecell" && selection.cell === i}
-                shakeX={
-                  selection?.kind === "freecell" && selection.cell === i ? shakeX : undefined
-                }
+                shakeX={selection?.kind === "freecell" && selection.cell === i ? shakeX : undefined}
                 hintSource={
                   (state.hint?.type === "freecell-to-tableau" && state.hint.fromCell === i) ||
                   (state.hint?.type === "freecell-to-foundation" && state.hint.fromCell === i)
@@ -360,9 +358,7 @@ export default function FreeCellBoard({ state, onMove }: FreeCellBoardProps) {
                     ? selection.index
                     : undefined
                 }
-                shakeX={
-                  selection?.kind === "tableau" && selection.col === col ? shakeX : undefined
-                }
+                shakeX={selection?.kind === "tableau" && selection.col === col ? shakeX : undefined}
                 hintIndex={
                   (state.hint?.type === "tableau-to-tableau" ||
                     state.hint?.type === "tableau-to-freecell" ||

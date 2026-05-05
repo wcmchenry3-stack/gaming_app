@@ -687,9 +687,7 @@ export default function SolitaireScreen() {
                       colIndex={col}
                       selectedIndex={tableauSelection(col)}
                       shakeX={
-                        selection?.kind === "tableau" && selection.col === col
-                          ? shakeX
-                          : undefined
+                        selection?.kind === "tableau" && selection.col === col ? shakeX : undefined
                       }
                       onCardPress={handleTableauCardPress}
                       onEmptyPress={handleEmptyTableauPress}
