@@ -137,3 +137,21 @@ def test_is_valid_guess_hindi_nfc_roundtrip():
 
 def test_is_valid_guess_hindi_invalid():
     assert is_valid_guess("zzzzz", "hi") is False
+
+
+# ---------------------------------------------------------------------------
+# English valid-guess corpus size (#1261)
+# ---------------------------------------------------------------------------
+
+
+def test_valid_en_corpus_size():
+    """valid_en.txt must be large enough to accept common 5-letter words (>8 000 entries)."""
+    from daily_word.puzzle import _VALID_EN
+
+    assert len(_VALID_EN) > 8_000, f"English valid-guess corpus too small: {len(_VALID_EN)}"
+
+
+def test_valid_en_common_words_accepted():
+    """Words routinely rejected before #1261 fix must now validate."""
+    for word in ("stoic", "piety", "tryst", "grove", "flint"):
+        assert is_valid_guess(word, "en") is True, f"{word!r} should be a valid guess"
