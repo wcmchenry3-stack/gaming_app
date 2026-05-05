@@ -14,6 +14,7 @@ import { useTheme } from "../../../theme/ThemeContext";
 import type { Card } from "../types";
 import type { CanonicalSuit } from "../../_shared/decks/types";
 import CardView, { CARD_HEIGHT, CARD_WIDTH } from "./CardView";
+import { useCardSize } from "../../_shared/CardSizeContext";
 import { DraggableCard } from "../../_shared/drag/DraggableCard";
 import { DropTarget } from "../../_shared/drag/DropTarget";
 import type { DropHandler } from "../../_shared/drag/DragContext";
@@ -43,6 +44,12 @@ export default function TableauPile({
 }: TableauPileProps) {
   const { colors } = useTheme();
   const { t } = useTranslation("solitaire");
+  const { cardWidth: ctxW, cardHeight: ctxH } = useCardSize();
+  const cardWidth = ctxW || CARD_WIDTH;
+  const cardHeight = ctxH || CARD_HEIGHT;
+  const scale = cardWidth / CARD_WIDTH;
+  const faceUpOffset = Math.round(FACE_UP_OFFSET * scale);
+  const faceDownOffset = Math.round(FACE_DOWN_OFFSET * scale);
 
   const highlightStyle: ViewStyle = {
     borderColor: colors.accent,
@@ -56,7 +63,15 @@ export default function TableauPile({
     const empty = (
       <Pressable
         onPress={onEmptyPress ? () => onEmptyPress(colIndex) : undefined}
-        style={[styles.empty, { borderColor: colors.border, backgroundColor: colors.background }]}
+        style={[
+          styles.empty,
+          {
+            width: cardWidth,
+            height: cardHeight,
+            borderColor: colors.border,
+            backgroundColor: colors.background,
+          },
+        ]}
         accessibilityRole="button"
         accessibilityLabel={t("pile.tableau.empty", { col: colIndex + 1 })}
       />
@@ -82,10 +97,10 @@ export default function TableauPile({
     offsets.push(acc);
     const card = pile[i];
     if (card === undefined) break;
-    acc += card.faceUp ? FACE_UP_OFFSET : FACE_DOWN_OFFSET;
+    acc += card.faceUp ? faceUpOffset : faceDownOffset;
   }
-  const containerHeight = CARD_HEIGHT + (offsets[pile.length - 1] ?? 0);
-  const containerStyle: ViewStyle = { width: CARD_WIDTH, height: containerHeight };
+  const containerHeight = cardHeight + (offsets[pile.length - 1] ?? 0);
+  const containerStyle: ViewStyle = { width: cardWidth, height: containerHeight };
 
   const cards = pile.map((card, cardIndex) => {
     const isSelected = selectedIndex !== undefined && cardIndex >= selectedIndex;
@@ -94,8 +109,8 @@ export default function TableauPile({
       suit: c.suit as CanonicalSuit,
       rank: c.rank,
       faceDown: !c.faceUp,
-      width: CARD_WIDTH,
-      height: CARD_HEIGHT,
+      width: cardWidth,
+      height: cardHeight,
     }));
     return (
       <DraggableCard
@@ -144,8 +159,6 @@ export default function TableauPile({
 
 const styles = StyleSheet.create({
   empty: {
-    width: CARD_WIDTH,
-    height: CARD_HEIGHT,
     borderRadius: 8,
     borderWidth: 1,
     borderStyle: "dashed",

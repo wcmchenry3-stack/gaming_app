@@ -18,6 +18,7 @@ import { useTheme } from "../../../theme/ThemeContext";
 import type { Card, DrawMode } from "../types";
 import type { CanonicalSuit } from "../../_shared/decks/types";
 import CardView, { CARD_HEIGHT, CARD_WIDTH } from "./CardView";
+import { useCardSize } from "../../_shared/CardSizeContext";
 import { DraggableCard } from "../../_shared/drag/DraggableCard";
 
 export interface StockWastePileProps {
@@ -73,6 +74,9 @@ function Stock({
   readonly drawMode: DrawMode;
   readonly t: TFunction<"solitaire">;
 }) {
+  const { cardWidth: ctxW, cardHeight: ctxH } = useCardSize();
+  const cardWidth = ctxW || CARD_WIDTH;
+  const cardHeight = ctxH || CARD_HEIGHT;
   const isEmpty = count === 0;
   const label = isEmpty
     ? t("pile.stock.empty", { count: drawMode })
@@ -81,6 +85,8 @@ function Stock({
   const style = [
     styles.slot,
     {
+      width: cardWidth,
+      height: cardHeight,
       backgroundColor: isEmpty ? colors.background : colors.surfaceAlt,
       borderColor: colors.border,
       borderWidth: 1,
@@ -128,10 +134,15 @@ function Waste({
   readonly onPress?: () => void;
   readonly t: TFunction<"solitaire">;
 }) {
+  const { cardWidth: ctxW, cardHeight: ctxH } = useCardSize();
+  const cardWidth = ctxW || CARD_WIDTH;
+  const cardHeight = ctxH || CARD_HEIGHT;
+  const wasteFanOffset = Math.round(WASTE_FAN_OFFSET * (cardWidth / CARD_WIDTH));
+
   if (waste.length === 0) {
     return (
       <View
-        style={styles.wasteEmpty}
+        style={{ width: cardWidth, height: cardHeight }}
         accessibilityRole="image"
         accessibilityLabel={t("pile.waste.empty")}
       />
@@ -144,8 +155,8 @@ function Waste({
       suit: top.suit as CanonicalSuit,
       rank: top.rank,
       faceDown: false,
-      width: CARD_WIDTH,
-      height: CARD_HEIGHT,
+      width: cardWidth,
+      height: cardHeight,
     },
   ];
 
@@ -163,17 +174,17 @@ function Waste({
 
   const visibleCount = Math.min(3, waste.length);
   const visible = waste.slice(waste.length - visibleCount);
-  const containerWidth = (visibleCount - 1) * WASTE_FAN_OFFSET + CARD_WIDTH;
+  const containerWidth = (visibleCount - 1) * wasteFanOffset + cardWidth;
 
   return (
-    <View style={[styles.wasteFanContainer, { width: containerWidth }]}>
+    <View style={[styles.wasteFanContainer, { width: containerWidth, height: cardHeight }]}>
       {visible.map((card, i) => {
         const isTop = i === visible.length - 1;
         if (isTop) {
           return (
             <View
               key={`${card.suit}-${card.rank}`}
-              style={[styles.wasteFanCard, { left: i * WASTE_FAN_OFFSET }]}
+              style={[styles.wasteFanCard, { left: i * wasteFanOffset }]}
             >
               <DraggableCard
                 onTap={onPress}
@@ -188,7 +199,7 @@ function Waste({
         return (
           <View
             key={`${card.suit}-${card.rank}`}
-            style={[styles.wasteFanCard, { left: i * WASTE_FAN_OFFSET }]}
+            style={[styles.wasteFanCard, { left: i * wasteFanOffset }]}
           >
             <CardView card={card} selected={false} />
           </View>
@@ -204,18 +215,11 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   slot: {
-    width: CARD_WIDTH,
-    height: CARD_HEIGHT,
     borderRadius: 8,
     alignItems: "center",
     justifyContent: "center",
   },
-  wasteEmpty: {
-    width: CARD_WIDTH,
-    height: CARD_HEIGHT,
-  },
   wasteFanContainer: {
-    height: CARD_HEIGHT,
     position: "relative",
   },
   wasteFanCard: {

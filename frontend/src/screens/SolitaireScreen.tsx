@@ -20,7 +20,6 @@ import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Animated,
-  LayoutChangeEvent,
   Modal,
   Platform,
   Pressable,
@@ -60,6 +59,7 @@ import { SUITS } from "../game/solitaire/types";
 import { DragProvider } from "../game/_shared/drag/DragContext";
 import { DragContainer } from "../game/_shared/drag/DragContainer";
 import type { DragSource, DragCard } from "../game/_shared/drag/DragContext";
+import { CardSizeContext, useResponsiveCardSize } from "../game/_shared/CardSizeContext";
 import {
   clearGame,
   loadGame,
@@ -76,13 +76,6 @@ import { OfflineBanner } from "../components/shared/OfflineBanner";
 
 const TABLEAU_COLS = 7;
 const COL_GAP = 6;
-/** Full-size width of the 7-column board — target scale baseline. */
-const BOARD_WIDTH = TABLEAU_COLS * CARD_WIDTH + (TABLEAU_COLS - 1) * COL_GAP;
-/** Upper-bound intrinsic board height for layout reservation. Foundations
- * (CARD_HEIGHT) + tableau worst-case (~12 cards × 24px offset + CARD_HEIGHT)
- * + stock+waste (CARD_HEIGHT) + inter-row margins. Scaled by `scale` so the
- * outer wrapper reserves exactly the visible pixel height. */
-const BOARD_HEIGHT = CARD_HEIGHT * 3 + 12 * 24 + 12 * 2;
 const DOUBLE_TAP_MS = 300;
 const AUTO_STEP_MS = 120;
 const MAX_NAME_LENGTH = 32;
@@ -102,7 +95,6 @@ export default function SolitaireScreen() {
   const [selection, setSelection] = useState<Selection | null>(null);
   const [moves, setMoves] = useState(0);
   const [autoCompleting, setAutoCompleting] = useState(false);
-  const [outerWidth, setOuterWidth] = useState(0);
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState<SolitaireStats>({
     bestTimeMs: 0,
@@ -595,11 +587,9 @@ export default function SolitaireScreen() {
 
   const undoDisabled = state === null || state.undoStack.length === 0 || autoCompleting;
   const showAutoComplete = state !== null && !state.isComplete && canAutoComplete(state);
-  const scale = outerWidth > 0 ? Math.min(1, outerWidth / BOARD_WIDTH) : 1;
-
-  const onOuterLayout = useCallback((e: LayoutChangeEvent) => {
-    setOuterWidth(Math.floor(e.nativeEvent.layout.width));
-  }, []);
+  const cardSize = useResponsiveCardSize(CARD_WIDTH, CARD_HEIGHT, TABLEAU_COLS, COL_GAP, 24);
+  const naturalBoardWidth = TABLEAU_COLS * CARD_WIDTH + (TABLEAU_COLS - 1) * COL_GAP;
+  const boardWidth = Math.round(naturalBoardWidth * (cardSize.cardWidth / CARD_WIDTH));
 
   const tableauSelection = (col: number): number | undefined => {
     if (selection === null || selection.kind !== "tableau") return undefined;
@@ -642,34 +632,26 @@ export default function SolitaireScreen() {
         {state === null ? (
           <PreGameModal onChoose={deal} />
         ) : (
-          <DragContainer style={styles.body as ViewStyle} onLayout={onOuterLayout}>
-            <View style={styles.hudRow} accessibilityRole="summary">
-              <Text
-                style={[styles.hudText, { color: colors.text }]}
-                accessibilityLabel={t("solitaire:score.label", { score: state.score })}
-              >
-                {t("solitaire:score.label", { score: state.score })}
-              </Text>
-              <Text
-                style={[styles.hudText, { color: colors.textMuted }]}
-                accessibilityLabel={t("solitaire:score.moves", { moves })}
-              >
-                {t("solitaire:score.moves", { moves })}
-              </Text>
-            </View>
+          <CardSizeContext.Provider value={cardSize}>
+            <DragContainer style={styles.body as ViewStyle}>
+              <View style={styles.hudRow} accessibilityRole="summary">
+                <Text
+                  style={[styles.hudText, { color: colors.text }]}
+                  accessibilityLabel={t("solitaire:score.label", { score: state.score })}
+                >
+                  {t("solitaire:score.label", { score: state.score })}
+                </Text>
+                <Text
+                  style={[styles.hudText, { color: colors.textMuted }]}
+                  accessibilityLabel={t("solitaire:score.moves", { moves })}
+                >
+                  {t("solitaire:score.moves", { moves })}
+                </Text>
+              </View>
 
-            <View
-              style={[styles.boardWrap, outerWidth > 0 ? { height: BOARD_HEIGHT * scale } : null]}
-              accessibilityLabel={t("solitaire:a11y.boardRegion")}
-            >
               <View
-                style={[
-                  styles.board,
-                  {
-                    width: BOARD_WIDTH,
-                    transform: [{ scale }],
-                  } as ViewStyle,
-                ]}
+                style={[styles.board, { width: boardWidth }]}
+                accessibilityLabel={t("solitaire:a11y.boardRegion")}
               >
                 <View>
                   <View style={styles.foundationsRow}>
@@ -696,7 +678,7 @@ export default function SolitaireScreen() {
                   />
                 </View>
 
-                <View style={styles.tableauRow}>
+                <View style={[styles.tableauRow, { minHeight: cardSize.cardHeight * 3 }]}>
                   {state.tableau.map((pile, col) => (
                     <TableauPile
                       key={col}
@@ -722,34 +704,34 @@ export default function SolitaireScreen() {
                   />
                 </View>
               </View>
-            </View>
 
-            {showAutoComplete && (
-              <Pressable
-                onPress={handleAutoComplete}
-                style={[styles.autoBtn, { backgroundColor: colors.accent }]}
-                accessibilityRole="button"
-                accessibilityLabel={t("solitaire:action.autoComplete")}
-              >
-                <Text style={[styles.autoBtnText, { color: colors.textOnAccent }]}>
-                  {t("solitaire:action.autoComplete")}
-                </Text>
-              </Pressable>
-            )}
+              {showAutoComplete && (
+                <Pressable
+                  onPress={handleAutoComplete}
+                  style={[styles.autoBtn, { backgroundColor: colors.accent }]}
+                  accessibilityRole="button"
+                  accessibilityLabel={t("solitaire:action.autoComplete")}
+                >
+                  <Text style={[styles.autoBtnText, { color: colors.textOnAccent }]}>
+                    {t("solitaire:action.autoComplete")}
+                  </Text>
+                </Pressable>
+              )}
 
-            <SolitaireWinCascade visible={cascadeVisible} />
+              <SolitaireWinCascade visible={cascadeVisible} />
 
-            <Animated.View
-              pointerEvents="none"
-              accessibilityElementsHidden
-              importantForAccessibility="no-hide-descendants"
-              style={[
-                StyleSheet.absoluteFill,
-                { backgroundColor: colors.error, opacity: flashOpacity },
-              ]}
-              testID="solitaire-invalid-flash"
-            />
-          </DragContainer>
+              <Animated.View
+                pointerEvents="none"
+                accessibilityElementsHidden
+                importantForAccessibility="no-hide-descendants"
+                style={[
+                  StyleSheet.absoluteFill,
+                  { backgroundColor: colors.error, opacity: flashOpacity },
+                ]}
+                testID="solitaire-invalid-flash"
+              />
+            </DragContainer>
+          </CardSizeContext.Provider>
         )}
 
         {state?.isComplete === true && <WinModal score={state.score} onNewGame={resetToPreGame} />}
@@ -984,15 +966,9 @@ const styles = StyleSheet.create({
     fontSize: 16,
     letterSpacing: 0.5,
   },
-  boardWrap: {
-    alignSelf: "stretch",
-    alignItems: "flex-start",
-    overflow: "hidden",
-  },
   board: {
     alignSelf: "flex-start",
-    transformOrigin: "top left",
-  } as ViewStyle,
+  },
   foundationsRow: {
     flexDirection: "row",
     gap: COL_GAP,
@@ -1002,7 +978,6 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     gap: COL_GAP,
     alignItems: "flex-start",
-    minHeight: CARD_HEIGHT * 3,
   },
   stockWasteRow: {
     flexDirection: "row",

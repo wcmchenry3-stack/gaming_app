@@ -1,7 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   Animated,
-  LayoutChangeEvent,
   Modal,
   Platform,
   Pressable,
@@ -36,15 +35,11 @@ import type { FreeCellState, Move } from "../game/freecell/types";
 import { clearGame, loadGame, saveGame } from "../game/freecell/storage";
 import { useGameEvents } from "../game/_shared/useGameEvents";
 import { useSound } from "../game/_shared/useSound";
+import { CardSizeContext, useResponsiveCardSize } from "../game/_shared/CardSizeContext";
 
 const AUTO_STEP_MS = 120;
-
-// 8 columns × 40px + 7 gaps × 2px
 const TABLEAU_COLS = 8;
 const COL_GAP = 2;
-const BOARD_WIDTH = TABLEAU_COLS * CARD_WIDTH + (TABLEAU_COLS - 1) * COL_GAP;
-// Top row (free cells + foundations) + gap + tableau worst case (12 cards stacked at 36px offset)
-const BOARD_HEIGHT = CARD_HEIGHT * 2 + 8 + 12 * 36 + CARD_HEIGHT;
 
 export default function FreeCellScreen() {
   const { t } = useTranslation("freecell");
@@ -54,7 +49,6 @@ export default function FreeCellScreen() {
 
   const [state, setState] = useState<FreeCellState | null>(null);
   const [loading, setLoading] = useState(true);
-  const [outerWidth, setOuterWidth] = useState(0);
 
   const flashOpacity = useRef(new Animated.Value(0)).current;
   const hasLoadedRef = useRef(false);
@@ -194,14 +188,10 @@ export default function FreeCellScreen() {
     setState(dealGame());
   }, []);
 
-  const onOuterLayout = useCallback((e: LayoutChangeEvent) => {
-    setOuterWidth(Math.floor(e.nativeEvent.layout.width));
-  }, []);
-
   const undoDisabled =
     state === null || state.undoStack.length === 0 || state.isComplete || autoCompleting;
   const hintDisabled = state === null || state.isComplete || autoCompleting;
-  const scale = outerWidth > 0 ? outerWidth / BOARD_WIDTH : 1;
+  const cardSize = useResponsiveCardSize(CARD_WIDTH, CARD_HEIGHT, TABLEAU_COLS, COL_GAP, 24);
 
   return (
     <GameShell
@@ -251,76 +241,65 @@ export default function FreeCellScreen() {
       }
     >
       {state !== null && (
-        <View style={styles.body} onLayout={onOuterLayout}>
-          <View style={styles.hudRow} accessibilityRole="summary">
-            <Text style={[styles.hudTitle, { color: colors.text }]}>
-              {t("freecell:game.title")}
-            </Text>
-            <Text
-              style={[styles.hudText, { color: colors.textMuted }]}
-              accessibilityLabel={t("freecell:score.moves", { moves: state.moveCount })}
-            >
-              {t("freecell:score.moves", { moves: state.moveCount })}
-            </Text>
-          </View>
+        <CardSizeContext.Provider value={cardSize}>
+          <View style={styles.body}>
+            <View style={styles.hudRow} accessibilityRole="summary">
+              <Text style={[styles.hudTitle, { color: colors.text }]}>
+                {t("freecell:game.title")}
+              </Text>
+              <Text
+                style={[styles.hudText, { color: colors.textMuted }]}
+                accessibilityLabel={t("freecell:score.moves", { moves: state.moveCount })}
+              >
+                {t("freecell:score.moves", { moves: state.moveCount })}
+              </Text>
+            </View>
 
-          <View
-            style={[styles.boardWrap, outerWidth > 0 ? { height: BOARD_HEIGHT * scale } : null]}
-            accessibilityLabel={t("freecell:a11y.boardRegion")}
-          >
-            <View
-              style={[
-                styles.board,
-                {
-                  width: BOARD_WIDTH,
-                  transform: [{ scale }],
-                } as ViewStyle,
-              ]}
-            >
+            <View style={styles.boardWrap} accessibilityLabel={t("freecell:a11y.boardRegion")}>
               <FreeCellBoard state={state} onMove={handleMove} />
             </View>
-          </View>
 
-          {showNoMovesBanner && (
-            <View
-              style={[
-                styles.noMovesBanner,
-                { backgroundColor: colors.surfaceHigh, borderColor: colors.border },
-              ]}
-              accessibilityRole="alert"
-              accessibilityLiveRegion="assertive"
-            >
-              <Text style={[styles.noMovesText, { color: colors.text }]}>
-                {t("freecell:noMoves.message")}
-              </Text>
-              <Pressable
-                onPress={handleUndo}
-                disabled={undoDisabled}
+            {showNoMovesBanner && (
+              <View
                 style={[
-                  styles.noMovesUndoBtn,
-                  { borderColor: colors.accent, opacity: undoDisabled ? 0.4 : 1 },
+                  styles.noMovesBanner,
+                  { backgroundColor: colors.surfaceHigh, borderColor: colors.border },
                 ]}
-                accessibilityRole="button"
-                accessibilityLabel={t("freecell:action.undo")}
+                accessibilityRole="alert"
+                accessibilityLiveRegion="assertive"
               >
-                <Text style={[styles.headerBtnText, { color: colors.accent }]}>
-                  {t("freecell:action.undo")}
+                <Text style={[styles.noMovesText, { color: colors.text }]}>
+                  {t("freecell:noMoves.message")}
                 </Text>
-              </Pressable>
-            </View>
-          )}
+                <Pressable
+                  onPress={handleUndo}
+                  disabled={undoDisabled}
+                  style={[
+                    styles.noMovesUndoBtn,
+                    { borderColor: colors.accent, opacity: undoDisabled ? 0.4 : 1 },
+                  ]}
+                  accessibilityRole="button"
+                  accessibilityLabel={t("freecell:action.undo")}
+                >
+                  <Text style={[styles.headerBtnText, { color: colors.accent }]}>
+                    {t("freecell:action.undo")}
+                  </Text>
+                </Pressable>
+              </View>
+            )}
 
-          <Animated.View
-            pointerEvents="none"
-            accessibilityElementsHidden
-            importantForAccessibility="no-hide-descendants"
-            style={[
-              StyleSheet.absoluteFill,
-              { backgroundColor: colors.error, opacity: flashOpacity },
-            ]}
-            testID="freecell-invalid-flash"
-          />
-        </View>
+            <Animated.View
+              pointerEvents="none"
+              accessibilityElementsHidden
+              importantForAccessibility="no-hide-descendants"
+              style={[
+                StyleSheet.absoluteFill,
+                { backgroundColor: colors.error, opacity: flashOpacity },
+              ]}
+              testID="freecell-invalid-flash"
+            />
+          </View>
+        </CardSizeContext.Provider>
       )}
 
       {state?.isComplete === true && (
@@ -475,12 +454,7 @@ const styles = StyleSheet.create({
   boardWrap: {
     alignSelf: "stretch",
     alignItems: "center",
-    overflow: "hidden",
   },
-  board: {
-    alignSelf: "center",
-    transformOrigin: "top center",
-  } as ViewStyle,
   modalOverlay: {
     flex: 1,
     alignItems: "center",

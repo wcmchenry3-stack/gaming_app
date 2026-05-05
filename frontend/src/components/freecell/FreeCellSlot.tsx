@@ -8,6 +8,7 @@ import SharedPlayingCard from "../shared/PlayingCard";
 import { rankLabel } from "../../game/_shared/decks/cardId";
 import type { CanonicalSuit } from "../../game/_shared/decks/types";
 import type { Card } from "../../game/freecell/types";
+import { useCardSize } from "../../game/_shared/CardSizeContext";
 import { DraggableCard } from "../../game/_shared/drag/DraggableCard";
 import { DropTarget } from "../../game/_shared/drag/DropTarget";
 import type { DropHandler } from "../../game/_shared/drag/DragContext";
@@ -38,6 +39,9 @@ export default function FreeCellSlot({
 }: FreeCellSlotProps) {
   const { colors } = useTheme();
   const { t } = useTranslation("freecell");
+  const { cardWidth: ctxW, cardHeight: ctxH } = useCardSize();
+  const cardWidth = ctxW || CARD_WIDTH;
+  const cardHeight = ctxH || CARD_HEIGHT;
 
   const handlePress = onPress ? () => onPress(cellIndex) : undefined;
   const hasDrop = dropId !== undefined && onDrop !== undefined;
@@ -53,8 +57,8 @@ export default function FreeCellSlot({
       <SharedPlayingCard
         suit={card.suit as CanonicalSuit}
         rank={card.rank}
-        width={CARD_WIDTH}
-        height={CARD_HEIGHT}
+        width={cardWidth}
+        height={cardHeight}
         highlighted={selected}
         hintHighlighted={hintSource}
         accessibilityLabel={label}
@@ -69,8 +73,8 @@ export default function FreeCellSlot({
             suit: card.suit as CanonicalSuit,
             rank: card.rank,
             faceDown: false,
-            width: CARD_WIDTH,
-            height: CARD_HEIGHT,
+            width: cardWidth,
+            height: cardHeight,
           },
         ]}
         dragSource={{ game: "freecell", type: "freecell", cell: cellIndex }}
@@ -99,6 +103,8 @@ export default function FreeCellSlot({
   const slotStyle = [
     styles.empty,
     {
+      width: cardWidth,
+      height: cardHeight,
       borderColor: hintDestination ? colors.bonus : selected ? colors.accent : colors.border,
       borderWidth: hintDestination || selected ? 2 : 1,
       backgroundColor: colors.background,
@@ -139,8 +145,6 @@ export default function FreeCellSlot({
 
 const styles = StyleSheet.create({
   empty: {
-    width: CARD_WIDTH,
-    height: CARD_HEIGHT,
     borderRadius: 6,
     borderStyle: "dashed",
     alignItems: "center",
