@@ -17,7 +17,7 @@ import type { TFunction } from "i18next";
 import { useTheme } from "../../../theme/ThemeContext";
 import type { Card, DrawMode } from "../types";
 import type { CanonicalSuit } from "../../_shared/decks/types";
-import { CARD_HEIGHT, CARD_WIDTH } from "./CardView";
+import { CARD_WIDTH } from "./CardView";
 import { useCardSize } from "../../_shared/CardSizeContext";
 import { rankLabel } from "../../_shared/decks/cardId";
 import { DraggableCard } from "../../_shared/drag/DraggableCard";

@@ -7,7 +7,7 @@ import { useTheme } from "../../theme/ThemeContext";
 import { SUITS } from "../../game/freecell/types";
 import { validateMove } from "../../game/freecell/engine";
 import type { FreeCellState, Move, Suit } from "../../game/freecell/types";
-import FreeCellSlot, { CARD_WIDTH } from "./FreeCellSlot";
+import FreeCellSlot from "./FreeCellSlot";
 import FoundationPile from "./FoundationPile";
 import TableauColumn from "./TableauColumn";
 import { useCardSize } from "../../game/_shared/CardSizeContext";

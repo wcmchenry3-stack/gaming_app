@@ -13,7 +13,7 @@ import { useTranslation } from "react-i18next";
 import { useTheme } from "../../../theme/ThemeContext";
 import type { Card } from "../types";
 import type { CanonicalSuit } from "../../_shared/decks/types";
-import CardView, { CARD_HEIGHT, CARD_WIDTH } from "./CardView";
+import CardView, { CARD_WIDTH } from "./CardView";
 import { useCardSize } from "../../_shared/CardSizeContext";
 import { rankLabel } from "../../_shared/decks/cardId";
 import SelectableCard from "../../_shared/SelectableCard";

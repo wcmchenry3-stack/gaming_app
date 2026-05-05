@@ -7,7 +7,6 @@ import { rankLabel } from "../../game/_shared/decks/cardId";
 import SelectableCard from "../../game/_shared/SelectableCard";
 import type { CanonicalSuit } from "../../game/_shared/decks/types";
 import type { Card, Suit } from "../../game/freecell/types";
-import { CARD_WIDTH, CARD_HEIGHT } from "./FreeCellSlot";
 import { useCardSize } from "../../game/_shared/CardSizeContext";
 import { DropTarget } from "../../game/_shared/drag/DropTarget";
 import type { DropHandler } from "../../game/_shared/drag/DragContext";

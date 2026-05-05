@@ -6,7 +6,7 @@ import { useTheme } from "../../theme/ThemeContext";
 import { rankLabel } from "../../game/_shared/decks/cardId";
 import type { CanonicalSuit } from "../../game/_shared/decks/types";
 import type { Card } from "../../game/freecell/types";
-import { CARD_WIDTH, CARD_HEIGHT } from "./FreeCellSlot";
+import { CARD_WIDTH } from "./FreeCellSlot";
 import { useCardSize } from "../../game/_shared/CardSizeContext";
 import SelectableCard from "../../game/_shared/SelectableCard";
 import { DraggableCard } from "../../game/_shared/drag/DraggableCard";
