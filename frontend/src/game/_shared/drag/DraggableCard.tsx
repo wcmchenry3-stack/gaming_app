@@ -1,4 +1,4 @@
-import React, { useCallback } from "react";
+import React, { useCallback, useMemo } from "react";
 import { Platform } from "react-native";
 import type { Insets } from "react-native";
 import Animated, {
@@ -124,19 +124,22 @@ export function DraggableCard({
 
   // On web, hitSlop is not a native prop — expand the hit area with padding
   // and compensate with negative margin so layout doesn't shift.
-  const webHitSlopStyle =
-    Platform.OS === "web" && hitSlop
-      ? {
-          paddingTop: hitSlop.top ?? 0,
-          paddingBottom: hitSlop.bottom ?? 0,
-          paddingLeft: hitSlop.left ?? 0,
-          paddingRight: hitSlop.right ?? 0,
-          marginTop: -(hitSlop.top ?? 0),
-          marginBottom: -(hitSlop.bottom ?? 0),
-          marginLeft: -(hitSlop.left ?? 0),
-          marginRight: -(hitSlop.right ?? 0),
-        }
-      : undefined;
+  const webHitSlopStyle = useMemo(
+    () =>
+      Platform.OS === "web" && hitSlop
+        ? {
+            paddingTop: hitSlop.top ?? 0,
+            paddingBottom: hitSlop.bottom ?? 0,
+            paddingLeft: hitSlop.left ?? 0,
+            paddingRight: hitSlop.right ?? 0,
+            marginTop: -(hitSlop.top ?? 0),
+            marginBottom: -(hitSlop.bottom ?? 0),
+            marginLeft: -(hitSlop.left ?? 0),
+            marginRight: -(hitSlop.right ?? 0),
+          }
+        : undefined,
+    [hitSlop]
+  );
 
   const child = React.Children.only(children) as React.ReactElement<AnyProps>;
   const innerEl = onTap ? React.cloneElement(child, { onPress: onTap }) : child;

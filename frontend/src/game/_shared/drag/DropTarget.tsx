@@ -59,14 +59,19 @@ export function DropTarget({
   const isDragActive = dragState !== null;
   const isLegal = legalTargetIds.has(id);
 
-  const overlayStyle = isDragActive
-    ? isLegal
-      ? [{ backgroundColor: colors.accent + "33" }, highlightStyle]
-      : dimStyle
-    : undefined;
-
+  // "33" hex suffix = 0x33/0xFF ≈ 20% opacity tint over the accent color.
   return (
-    <View ref={viewRef} testID={testID} style={[style, overlayStyle]} onLayout={onLayout}>
+    <View
+      ref={viewRef}
+      testID={testID}
+      style={[
+        style,
+        isDragActive && isLegal && { backgroundColor: colors.accent + "33" },
+        isDragActive && isLegal && highlightStyle,
+        isDragActive && !isLegal && dimStyle,
+      ]}
+      onLayout={onLayout}
+    >
       {children}
     </View>
   );

@@ -13,6 +13,7 @@ export function DragOverlay() {
   const { dragState, cardX, cardY } = useDragContext();
 
   const animStyle = useAnimatedStyle(() => ({
+    // -8pt lifts the ghost above the fingertip so the card face stays visible.
     transform: [{ translateX: cardX.value }, { translateY: cardY.value - 8 }],
   }));
 
@@ -22,7 +23,7 @@ export function DragOverlay() {
 
   return (
     <View style={StyleSheet.absoluteFill} pointerEvents="none">
-      <Animated.View style={[styles.overlay, animStyle]}>
+      <Animated.View testID="drag-overlay-ghost" style={[styles.overlay, animStyle]}>
         {cards.map((card, i) => (
           <View key={i} style={[styles.card, { top: i * STACK_OFFSET }]}>
             <SharedPlayingCard

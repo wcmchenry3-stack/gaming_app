@@ -56,9 +56,6 @@ export interface DragContextValue {
   // Animated ref for the DragContainer — allows worklets to re-measure it on drag start.
   containerRef: AnimatedRef<Animated.View>;
 
-  // Opacity of the source card slot while a drag is active (1 = normal, 0.6 = dimmed).
-  dragOriginOpacity: SharedValue<number>;
-
   // JS-thread actions
   startDrag: (source: DragSource, cards: DragCard[]) => void;
   endDrag: (absoluteX: number, absoluteY: number) => void;
@@ -81,6 +78,8 @@ export function useDragContext(): DragContextValue {
 // Provider
 // ---------------------------------------------------------------------------
 
+const SNAP_SPRING = { duration: 250, dampingRatio: 0.8 };
+
 export interface DragProviderProps {
   children: React.ReactNode;
   getLegalDropIds?: (source: DragSource, cards: DragCard[]) => string[];
@@ -97,35 +96,31 @@ export function DragProvider({ children, getLegalDropIds }: DragProviderProps) {
   const containerOffsetX = useSharedValue(0);
   const containerOffsetY = useSharedValue(0);
   const containerRef = useAnimatedRef<Animated.View>();
-  const dragOriginOpacity = useSharedValue(1);
 
   const dropZonesRef = useRef<Map<string, DropZoneEntry>>(new Map());
   const dragStateRef = useRef<DragState | null>(null);
 
   const clearDrag = useCallback(() => {
-    dragOriginOpacity.value = 1;
     setDragState(null);
     setLegalTargetIds(new Set());
     dragStateRef.current = null;
-  }, [dragOriginOpacity]);
+  }, []);
 
   const startDrag = useCallback(
     (source: DragSource, cards: DragCard[]) => {
       const state: DragState = { cards, source };
       dragStateRef.current = state;
-      dragOriginOpacity.value = 0.6;
       setDragState(state);
       if (getLegalDropIds) {
         setLegalTargetIds(new Set(getLegalDropIds(source, cards)));
       }
     },
-    [dragOriginOpacity, getLegalDropIds]
+    [getLegalDropIds]
   );
 
   const snapBackAndClear = useCallback(() => {
-    const springCfg = { duration: 250, dampingRatio: 0.8 };
-    cardX.value = withSpring(originX.value, springCfg);
-    cardY.value = withSpring(originY.value, springCfg, (finished) => {
+    cardX.value = withSpring(originX.value, SNAP_SPRING);
+    cardY.value = withSpring(originY.value, SNAP_SPRING, (finished) => {
       "worklet";
       if (finished) runOnJS(clearDrag)();
     });
@@ -175,7 +170,6 @@ export function DragProvider({ children, getLegalDropIds }: DragProviderProps) {
     containerOffsetX,
     containerOffsetY,
     containerRef,
-    dragOriginOpacity,
     startDrag,
     endDrag,
     snapBackAndClear,
