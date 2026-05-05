@@ -65,9 +65,7 @@ export default function SelectableCard({
 
   const webFilterStyle =
     Platform.OS === "web" && selected
-      ? {
-          filter: `drop-shadow(0 0 14px ${isNeon ? colors.accentBright : "rgba(255,255,255,0.85)"})`,
-        }
+      ? { filter: `drop-shadow(0 0 14px ${glowColor})` }
       : undefined;
 
   return (
