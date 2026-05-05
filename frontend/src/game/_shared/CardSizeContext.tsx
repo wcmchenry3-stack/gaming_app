@@ -42,5 +42,12 @@ export function useResponsiveCardSize(
   horizontalPadding = 0
 ): CardSizeContextValue {
   const { width: availableWidth } = useWindowDimensions();
-  return computeCardSize(availableWidth, naturalWidth, naturalHeight, columns, gap, horizontalPadding);
+  return computeCardSize(
+    availableWidth,
+    naturalWidth,
+    naturalHeight,
+    columns,
+    gap,
+    horizontalPadding
+  );
 }

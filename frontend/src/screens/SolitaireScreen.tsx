@@ -705,18 +705,18 @@ export default function SolitaireScreen() {
                 </View>
               </View>
 
-            {showAutoComplete && (
-              <Pressable
-                onPress={handleAutoComplete}
-                style={[styles.autoBtn, { backgroundColor: colors.accent }]}
-                accessibilityRole="button"
-                accessibilityLabel={t("solitaire:action.autoComplete")}
-              >
-                <Text style={[styles.autoBtnText, { color: colors.textOnAccent }]}>
-                  {t("solitaire:action.autoComplete")}
-                </Text>
-              </Pressable>
-            )}
+              {showAutoComplete && (
+                <Pressable
+                  onPress={handleAutoComplete}
+                  style={[styles.autoBtn, { backgroundColor: colors.accent }]}
+                  accessibilityRole="button"
+                  accessibilityLabel={t("solitaire:action.autoComplete")}
+                >
+                  <Text style={[styles.autoBtnText, { color: colors.textOnAccent }]}>
+                    {t("solitaire:action.autoComplete")}
+                  </Text>
+                </Pressable>
+              )}
 
               <SolitaireWinCascade visible={cascadeVisible} />
 

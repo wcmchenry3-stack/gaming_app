@@ -255,52 +255,49 @@ export default function FreeCellScreen() {
               </Text>
             </View>
 
-            <View
-              style={styles.boardWrap}
-              accessibilityLabel={t("freecell:a11y.boardRegion")}
-            >
+            <View style={styles.boardWrap} accessibilityLabel={t("freecell:a11y.boardRegion")}>
               <FreeCellBoard state={state} onMove={handleMove} />
             </View>
 
-          {showNoMovesBanner && (
-            <View
-              style={[
-                styles.noMovesBanner,
-                { backgroundColor: colors.surfaceHigh, borderColor: colors.border },
-              ]}
-              accessibilityRole="alert"
-              accessibilityLiveRegion="assertive"
-            >
-              <Text style={[styles.noMovesText, { color: colors.text }]}>
-                {t("freecell:noMoves.message")}
-              </Text>
-              <Pressable
-                onPress={handleUndo}
-                disabled={undoDisabled}
+            {showNoMovesBanner && (
+              <View
                 style={[
-                  styles.noMovesUndoBtn,
-                  { borderColor: colors.accent, opacity: undoDisabled ? 0.4 : 1 },
+                  styles.noMovesBanner,
+                  { backgroundColor: colors.surfaceHigh, borderColor: colors.border },
                 ]}
-                accessibilityRole="button"
-                accessibilityLabel={t("freecell:action.undo")}
+                accessibilityRole="alert"
+                accessibilityLiveRegion="assertive"
               >
-                <Text style={[styles.headerBtnText, { color: colors.accent }]}>
-                  {t("freecell:action.undo")}
+                <Text style={[styles.noMovesText, { color: colors.text }]}>
+                  {t("freecell:noMoves.message")}
                 </Text>
-              </Pressable>
-            </View>
-          )}
+                <Pressable
+                  onPress={handleUndo}
+                  disabled={undoDisabled}
+                  style={[
+                    styles.noMovesUndoBtn,
+                    { borderColor: colors.accent, opacity: undoDisabled ? 0.4 : 1 },
+                  ]}
+                  accessibilityRole="button"
+                  accessibilityLabel={t("freecell:action.undo")}
+                >
+                  <Text style={[styles.headerBtnText, { color: colors.accent }]}>
+                    {t("freecell:action.undo")}
+                  </Text>
+                </Pressable>
+              </View>
+            )}
 
-          <Animated.View
-            pointerEvents="none"
-            accessibilityElementsHidden
-            importantForAccessibility="no-hide-descendants"
-            style={[
-              StyleSheet.absoluteFill,
-              { backgroundColor: colors.error, opacity: flashOpacity },
-            ]}
-            testID="freecell-invalid-flash"
-          />
+            <Animated.View
+              pointerEvents="none"
+              accessibilityElementsHidden
+              importantForAccessibility="no-hide-descendants"
+              style={[
+                StyleSheet.absoluteFill,
+                { backgroundColor: colors.error, opacity: flashOpacity },
+              ]}
+              testID="freecell-invalid-flash"
+            />
           </View>
         </CardSizeContext.Provider>
       )}

@@ -65,7 +65,12 @@ export default function TableauPile({
         onPress={onEmptyPress ? () => onEmptyPress(colIndex) : undefined}
         style={[
           styles.empty,
-          { width: cardWidth, height: cardHeight, borderColor: colors.border, backgroundColor: colors.background },
+          {
+            width: cardWidth,
+            height: cardHeight,
+            borderColor: colors.border,
+            backgroundColor: colors.background,
+          },
         ]}
         accessibilityRole="button"
         accessibilityLabel={t("pile.tableau.empty", { col: colIndex + 1 })}
