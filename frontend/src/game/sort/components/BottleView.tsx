@@ -24,6 +24,19 @@ import { useTranslation } from "react-i18next";
 import type { Bottle, Color } from "../types";
 import { BOTTLE_DEPTH } from "../types";
 import { isBottleSolved } from "../engine";
+import {
+  BOTTLE_LIQUID_COLORS,
+  BOTTLE_STROKE_SELECTED,
+  BOTTLE_STROKE_SOLVED,
+  BOTTLE_STROKE_DEFAULT,
+  BOTTLE_BODY_FILL_SELECTED,
+  BOTTLE_BODY_FILL_DEFAULT,
+  BOTTLE_GLOSS_HIGHLIGHT,
+  BOTTLE_GLOSS_SHADOW,
+  BOTTLE_CHECKMARK_BG,
+  BOTTLE_CHECKMARK_STROKE,
+  BOTTLE_COLORBLIND_TEXT,
+} from "../../../theme/theme.bottle";
 
 // SVG design dimensions — the viewBox stays fixed; width/height props scale the render.
 const VB_W = 56;
@@ -38,16 +51,8 @@ const UNIT_H = INNER_H / BOTTLE_DEPTH; // 38 per liquid unit
 const TUBE_CAVITY = `M 12 ${PAD_TOP} L 12 150 Q 12 ${BODY_BOTTOM} 28 ${BODY_BOTTOM} Q 44 ${BODY_BOTTOM} 44 150 L 44 ${PAD_TOP} Z`;
 const TUBE_OUTLINE = `M 20 0 L 20 ${PAD_TOP} L 12 ${PAD_TOP} L 12 150 Q 12 ${BODY_BOTTOM} 28 ${BODY_BOTTOM} Q 44 ${BODY_BOTTOM} 44 150 L 44 ${PAD_TOP} L 36 ${PAD_TOP} L 36 0 Z`;
 
-export const LIQUID_COLORS: Record<Color, string> = {
-  red: "#ff716c",
-  blue: "#5b8cff",
-  green: "#4ade80",
-  yellow: "#ffae3b",
-  orange: "#ff9f3b",
-  purple: "#d674ff",
-  pink: "#ff5fa8",
-  teal: "#8ff5ff",
-};
+// Liquid colors are now imported from theme.bottle
+export const LIQUID_COLORS = BOTTLE_LIQUID_COLORS;
 
 const COLORBLIND_SYMBOLS: Record<Color, string> = {
   red: "▲",
@@ -152,9 +157,9 @@ export default function BottleView({
 
   const clipId = `bv-clip-${index}`;
   const gradId = `bv-grad-${index}`;
-  const strokeColor = selected ? "#8ff5ff" : solved && isFilled ? "#22c55e" : "#4a4a56";
+  const strokeColor = selected ? BOTTLE_STROKE_SELECTED : solved && isFilled ? BOTTLE_STROKE_SOLVED : BOTTLE_STROKE_DEFAULT;
   const strokeWidth = selected ? 2 : 1.2;
-  const bodyFill = selected ? "#8ff5ff22" : "#ffffff0f";
+  const bodyFill = selected ? BOTTLE_BODY_FILL_SELECTED : BOTTLE_BODY_FILL_DEFAULT;
 
   const bottleContent = (
     <Animated.View style={[{ width: bottleWidth, height: bottleHeight }, animStyle]}>
@@ -164,9 +169,9 @@ export default function BottleView({
             <Path d={TUBE_CAVITY} />
           </ClipPath>
           <LinearGradient id={gradId} x1="0" x2="1" y1="0" y2="0">
-            <Stop offset="0" stopColor="#ffffff" stopOpacity="0.12" />
-            <Stop offset="0.5" stopColor="#ffffff" stopOpacity="0" />
-            <Stop offset="1" stopColor="#000000" stopOpacity="0.15" />
+            <Stop offset="0" stopColor={BOTTLE_GLOSS_HIGHLIGHT} stopOpacity="0.12" />
+            <Stop offset="0.5" stopColor={BOTTLE_GLOSS_HIGHLIGHT} stopOpacity="0" />
+            <Stop offset="1" stopColor={BOTTLE_GLOSS_SHADOW} stopOpacity="0.15" />
           </LinearGradient>
         </Defs>
 
@@ -187,7 +192,7 @@ export default function BottleView({
                   y={y}
                   width={VB_W}
                   height={Math.min(4, UNIT_H * 0.12)}
-                  fill="rgba(255,255,255,0.2)"
+                  fill={BOTTLE_GLOSS_HIGHLIGHT}
                 />
                 {colorblindMode && (
                   <SvgText
@@ -195,7 +200,7 @@ export default function BottleView({
                     y={y + UNIT_H / 2 + 5}
                     textAnchor="middle"
                     fontSize={Math.min(UNIT_H * 0.5, 16)}
-                    fill="rgba(0,0,0,0.65)"
+                    fill={BOTTLE_COLORBLIND_TEXT}
                     fontWeight="700"
                   >
                     {COLORBLIND_SYMBOLS[color]}
@@ -214,10 +219,10 @@ export default function BottleView({
         {/* Solved checkmark badge in neck */}
         {solved && isFilled && (
           <G>
-            <Circle cx={VB_W / 2} cy={PAD_TOP / 2} r={7} fill="#22c55e" />
+            <Circle cx={VB_W / 2} cy={PAD_TOP / 2} r={7} fill={BOTTLE_CHECKMARK_BG} />
             <Path
               d={`M ${VB_W / 2 - 3} ${PAD_TOP / 2 + 0.5} L ${VB_W / 2 - 0.5} ${PAD_TOP / 2 + 3} L ${VB_W / 2 + 3.5} ${PAD_TOP / 2 - 2}`}
-              stroke="#0e0e13"
+              stroke={BOTTLE_CHECKMARK_STROKE}
               strokeWidth="1.8"
               fill="none"
               strokeLinecap="round"
