@@ -158,7 +158,11 @@ export default function BottleView({
 
   const clipId = `bv-clip-${index}`;
   const gradId = `bv-grad-${index}`;
-  const strokeColor = selected ? BOTTLE_STROKE_SELECTED : solved && isFilled ? BOTTLE_STROKE_SOLVED : BOTTLE_STROKE_DEFAULT;
+  const strokeColor = selected
+    ? BOTTLE_STROKE_SELECTED
+    : solved && isFilled
+      ? BOTTLE_STROKE_SOLVED
+      : BOTTLE_STROKE_DEFAULT;
   const strokeWidth = selected ? 2 : 1.2;
   const bodyFill = selected ? BOTTLE_BODY_FILL_SELECTED : BOTTLE_BODY_FILL_DEFAULT;
 

@@ -253,7 +253,10 @@ export default function SortScreen() {
     setView("select");
     setShowWinModal(false);
     // Silently refresh levels in the background so the next session gets new mixtures
-    void sortApi.getLevels().then((res) => setLevels(res.levels as LevelData[])).catch(() => {});
+    void sortApi
+      .getLevels()
+      .then((res) => setLevels(res.levels as LevelData[]))
+      .catch(() => {});
   }
 
   const handleLoadLeaderboard = useCallback(async () => {

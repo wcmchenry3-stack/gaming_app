@@ -218,9 +218,7 @@ export default function SortBoard({
               index={idx}
               selected={state.selectedBottleIndex === idx}
               pouring={reduceMotion ? idx === pouringFrom : false}
-              pouringDirection={
-                reduceMotion && idx === pouringFrom ? pouringDirection : undefined
-              }
+              pouringDirection={reduceMotion && idx === pouringFrom ? pouringDirection : undefined}
               colorblindMode={colorblindMode}
               bottleWidth={bottleW}
               bottleHeight={bottleH}
