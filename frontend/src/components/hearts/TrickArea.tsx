@@ -155,7 +155,7 @@ export default function TrickArea({
       <Text style={[styles.srOnly, { color: colors.text }]}>{t("trick.area")}</Text>
       {([0, 1, 2, 3] as const).map((offset) => {
         const seat = (playerIndex + offset) % 4;
-        const pos = positionForSeat(seat);
+        const pos = POSITIONS[offset] ?? "bottom";
         return renderSlot(pos, seat);
       })}
     </View>
