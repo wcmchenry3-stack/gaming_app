@@ -196,7 +196,7 @@ export default function SortScreen() {
         if (nextState.isComplete) {
           audio.playWin();
         }
-      }, 640);
+      }, 1250);
     } else {
       setGameState({ ...gameState, selectedBottleIndex: null });
     }
@@ -252,6 +252,8 @@ export default function SortScreen() {
     setPouringTo(null);
     setView("select");
     setShowWinModal(false);
+    // Silently refresh levels in the background so the next session gets new mixtures
+    void sortApi.getLevels().then((res) => setLevels(res.levels as LevelData[])).catch(() => {});
   }
 
   const handleLoadLeaderboard = useCallback(async () => {
