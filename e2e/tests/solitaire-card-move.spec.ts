@@ -172,7 +172,9 @@ test("solitaire drag: multi-card run (Q♣-J♥ onto K♦)", async ({ page }) =>
   await expect(page.getByLabel("Tableau column 2, 2 cards")).toBeVisible({ timeout: 3_000 });
 
   // Select Q♣ (the base of the run in col 2, index 0).
-  await page.getByLabel("Q of Clubs").click();
+  // Q♣ is buried under J♥ — its visible stripe is the top ~28px (FACE_UP_OFFSET).
+  // Click within that stripe so J♥'s SVG rect doesn't intercept.
+  await page.getByLabel("Q of Clubs").click({ position: { x: 26, y: 10 } });
 
   // Tap K♦ as the destination.
   await page.getByLabel("K of Diamonds").click();
