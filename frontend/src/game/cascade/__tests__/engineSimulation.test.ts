@@ -404,7 +404,8 @@ describe("merge pipeline hardening — 5 simultaneous pairs", () => {
     const handle = await buildEngine();
     const world = getWorld();
 
-    // bodies 0–9, colliders 1003–1012
+    // Mock _colliderHandleCounter starts at 1000; 3 wall colliders consume 1000–1002,
+    // so the first fruit collider is 1003. Bodies 0–9 → colliders 1003–1012.
     for (let i = 0; i < 10; i++) {
       handle.drop(fruit(2), fruitSet.id, 50 + i * 20, 300);
     }

@@ -401,7 +401,9 @@ describe("spawn grace parity — both engines apply and expire grace on the same
     // Spawned body should have grace filter right after merge step
     const dynBodies = () =>
       Matter.Composite.allBodies(engineInstance.world).filter((b) => !b.isStatic);
-    const graceBody = dynBodies().find((b) => b.collisionFilter.category === COLLISION_GROUP_DYNAMIC);
+    const graceBody = dynBodies().find(
+      (b) => b.collisionFilter.category === COLLISION_GROUP_DYNAMIC
+    );
     expect(graceBody).toBeDefined();
     expect(graceBody!.collisionFilter.mask & COLLISION_GROUP_DYNAMIC).toBe(0);
 

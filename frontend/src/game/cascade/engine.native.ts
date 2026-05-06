@@ -149,9 +149,7 @@ export async function createEngine(
       collisionFilter: {
         category: COLLISION_GROUP_DYNAMIC,
         mask:
-          graceTicks > 0
-            ? COLLISION_GROUP_WALL
-            : COLLISION_GROUP_WALL | COLLISION_GROUP_DYNAMIC,
+          graceTicks > 0 ? COLLISION_GROUP_WALL : COLLISION_GROUP_WALL | COLLISION_GROUP_DYNAMIC,
       },
     };
 
@@ -161,6 +159,9 @@ export async function createEngine(
         y: v.y * def.radius,
       }));
       const polyBody = Matter.Bodies.fromVertices(x, y, [matterVerts], bodyOpts);
+      // fromVertices can return a body whose centre-of-mass differs from (x, y).
+      // Force the position to the requested drop point so it matches the circle
+      // fallback behaviour and the renderer's expectations.
       if (polyBody) {
         Matter.Body.setPosition(polyBody, { x, y });
         body = polyBody;
