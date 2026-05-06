@@ -19,6 +19,9 @@
   "error.tooShort": "Not enough letters",
   "error.couldNotLoad": "Could not load today's puzzle",
   "error.couldNotSubmit": "Could not submit your guess",
+  "error.stalePuzzle": "New puzzle available — loading today's word",
+  "error.wrongLength": "Guess length doesn't match today's word",
+  "error.rateLimited": "Too many guesses — try again later",
   "keyboard.delete": "Delete",
   "keyboard.enter": "Enter"
 }

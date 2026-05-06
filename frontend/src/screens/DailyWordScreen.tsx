@@ -15,6 +15,7 @@ import {
   Modal,
   Platform,
   Pressable,
+  ScrollView,
   StyleSheet,
   Text,
   View,
@@ -49,6 +50,8 @@ import type { DailyWordState, TileStatus } from "../game/daily_word/types";
 import { dailyWordApi } from "../game/daily_word/api";
 import { loadState, saveState, clearState } from "../game/daily_word/storage";
 import { ApiError } from "../game/_shared/httpClient";
+import { devLog } from "../game/daily_word/devLog";
+import type { DevLogEntry } from "../game/daily_word/devLog";
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -425,34 +428,44 @@ function WinModal({
       accessibilityViewIsModal
       onRequestClose={onClose}
     >
-      <View style={modalStyles.overlay}>
-        <View
-          style={[
-            modalStyles.card,
-            { backgroundColor: colors.surfaceHigh, borderColor: colors.border },
-          ]}
-        >
-          <Text style={[modalStyles.title, { color: colors.text }]} accessibilityRole="header">
-            {t("result.win.title")}
-          </Text>
-          <Text style={[modalStyles.body, { color: colors.textMuted }]}>
-            {t("result.win.guesses", { count: guessCount })}
-          </Text>
-          <Pressable
-            onPress={handleShare}
-            style={[modalStyles.primaryBtn, { backgroundColor: colors.accent }]}
-            accessibilityRole="button"
-            accessibilityLabel={t("result.win.share")}
+      <Pressable style={modalStyles.overlay} onPress={onClose}>
+        <Pressable>
+          <View
+            style={[
+              modalStyles.card,
+              { backgroundColor: colors.surfaceHigh, borderColor: colors.border },
+            ]}
           >
-            <Text style={[modalStyles.primaryBtnText, { color: "#ffffff" }]}>
-              {copied ? t("result.win.copied") : t("result.win.share")}
+            <Pressable
+              style={modalStyles.closeBtn}
+              onPress={onClose}
+              accessibilityRole="button"
+              accessibilityLabel="Close"
+            >
+              <Text style={[modalStyles.closeBtnText, { color: colors.textMuted }]}>✕</Text>
+            </Pressable>
+            <Text style={[modalStyles.title, { color: colors.text }]} accessibilityRole="header">
+              {t("result.win.title")}
             </Text>
-          </Pressable>
-          <Text style={[modalStyles.countdown, { color: colors.textMuted }]}>
-            {t("result.win.countdown", { time: countdown })}
-          </Text>
-        </View>
-      </View>
+            <Text style={[modalStyles.body, { color: colors.textMuted }]}>
+              {t("result.win.guesses", { count: guessCount })}
+            </Text>
+            <Pressable
+              onPress={handleShare}
+              style={[modalStyles.primaryBtn, { backgroundColor: colors.accent }]}
+              accessibilityRole="button"
+              accessibilityLabel={t("result.win.share")}
+            >
+              <Text style={[modalStyles.primaryBtnText, { color: "#ffffff" }]}>
+                {copied ? t("result.win.copied") : t("result.win.share")}
+              </Text>
+            </Pressable>
+            <Text style={[modalStyles.countdown, { color: colors.textMuted }]}>
+              {t("result.win.countdown", { time: countdown })}
+            </Text>
+          </View>
+        </Pressable>
+      </Pressable>
     </Modal>
   );
 }
@@ -481,30 +494,40 @@ function LossModal({
       accessibilityViewIsModal
       onRequestClose={onClose}
     >
-      <View style={modalStyles.overlay}>
-        <View
-          style={[
-            modalStyles.card,
-            { backgroundColor: colors.surfaceHigh, borderColor: colors.border },
-          ]}
-        >
-          <Text style={[modalStyles.title, { color: colors.text }]} accessibilityRole="header">
-            {t("result.loss.title")}
-          </Text>
-          {answer !== null && (
-            <Text style={[modalStyles.body, { color: colors.text }]}>
-              {t("result.loss.answer", { answer })}
+      <Pressable style={modalStyles.overlay} onPress={onClose}>
+        <Pressable>
+          <View
+            style={[
+              modalStyles.card,
+              { backgroundColor: colors.surfaceHigh, borderColor: colors.border },
+            ]}
+          >
+            <Pressable
+              style={modalStyles.closeBtn}
+              onPress={onClose}
+              accessibilityRole="button"
+              accessibilityLabel="Close"
+            >
+              <Text style={[modalStyles.closeBtnText, { color: colors.textMuted }]}>✕</Text>
+            </Pressable>
+            <Text style={[modalStyles.title, { color: colors.text }]} accessibilityRole="header">
+              {t("result.loss.title")}
             </Text>
-          )}
-          <Text style={[modalStyles.body, { color: colors.textMuted }]}>
-            {t("result.loss.countdown", { time: countdown })}
-          </Text>
-          <Text style={[modalStyles.nextWordLabel, { color: colors.textMuted }]}>
-            {"Next word in "}
-            <Text style={{ color: colors.text }}>{countdown}</Text>
-          </Text>
-        </View>
-      </View>
+            {answer !== null && (
+              <Text style={[modalStyles.body, { color: colors.text }]}>
+                {t("result.loss.answer", { answer })}
+              </Text>
+            )}
+            <Text style={[modalStyles.body, { color: colors.textMuted }]}>
+              {t("result.loss.countdown", { time: countdown })}
+            </Text>
+            <Text style={[modalStyles.nextWordLabel, { color: colors.textMuted }]}>
+              {"Next word in "}
+              <Text style={{ color: colors.text }}>{countdown}</Text>
+            </Text>
+          </View>
+        </Pressable>
+      </Pressable>
     </Modal>
   );
 }
@@ -563,6 +586,20 @@ const modalStyles = StyleSheet.create({
     fontSize: 14,
     textAlign: "center",
   },
+  closeBtn: {
+    position: "absolute",
+    top: 12,
+    right: 12,
+    width: 32,
+    height: 32,
+    alignItems: "center",
+    justifyContent: "center",
+    zIndex: 1,
+  },
+  closeBtnText: {
+    fontSize: 18,
+    fontWeight: "600",
+  },
 });
 
 // ---------------------------------------------------------------------------
@@ -586,6 +623,13 @@ export default function DailyWordScreen() {
   const [countdown, setCountdown] = useState("");
   const [flippingRowIndex, setFlippingRowIndex] = useState<number | null>(null);
 
+  // Dev panel (#1293) — all gated by __DEV__; Metro eliminates in production
+  const [devPanelOpen, setDevPanelOpen] = useState(false);
+  const [devAnswer, setDevAnswer] = useState<string | null>(null);
+  const [devAnswerVisible, setDevAnswerVisible] = useState(false);
+  const [devLogEntries, setDevLogEntries] = useState<DevLogEntry[]>([]);
+  const [devExpandedIndex, setDevExpandedIndex] = useState<number | null>(null);
+
   const hasLoadedRef = useRef(false);
   const countdownRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -604,12 +648,32 @@ export default function DailyWordScreen() {
     countdownRef.current = setInterval(tick, 1000);
   }, [tzOffset]);
 
+  const resetToToday = useCallback(async () => {
+    try {
+      await clearState();
+      const todayMeta = await dailyWordApi.getToday(tzOffset, language);
+      const fresh = initialState(todayMeta.puzzle_id, todayMeta.word_length, language);
+      setState(fresh);
+      setWinModalVisible(false);
+      setLossModalVisible(false);
+      setFlippingRowIndex(null);
+    } catch {
+      // caller handles any toast; silent failure here is acceptable
+    }
+  }, [tzOffset, language]);
+
   useEffect(() => {
     return () => {
       if (countdownRef.current) clearInterval(countdownRef.current);
       if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
       if (flipTimerRef.current) clearTimeout(flipTimerRef.current);
     };
+  }, []);
+
+  useEffect(() => {
+    if (!__DEV__) return;
+    setDevLogEntries(devLog.list().slice());
+    return devLog.subscribe(() => setDevLogEntries(devLog.list().slice()));
   }, []);
 
   // ---------------------------------------------------------------------------
@@ -729,9 +793,15 @@ export default function DailyWordScreen() {
       return;
     }
 
+    const _devTs = __DEV__ ? Date.now() : 0;
+    const _devBody = __DEV__
+      ? { puzzle_id: s.puzzle_id, guess, tz_offset_minutes: tzOffset }
+      : undefined;
+
     setSubmitting(true);
     try {
       const result = await dailyWordApi.submitGuess(s.puzzle_id, guess, tzOffset);
+      if (__DEV__) devLog.push({ ts: _devTs, method: "POST", path: "/daily-word/guess", body: _devBody, status: 200, response: result });
       const tileStates = result.tiles.map((t) => ({ letter: t.letter, status: t.status }));
 
       const afterApply = applyServerResult(s, tileStates);
@@ -768,8 +838,20 @@ export default function DailyWordScreen() {
         }
       }, totalFlipMs);
     } catch (err) {
-      if (err instanceof ApiError && err.status === 422 && err.message === "not_a_word") {
-        showToast(t("error.notAWord"));
+      if (__DEV__) devLog.push({ ts: _devTs, method: "POST", path: "/daily-word/guess", body: _devBody, status: err instanceof ApiError ? err.status : undefined, error: err instanceof ApiError ? err.message : String(err) });
+      if (err instanceof ApiError && err.status === 422) {
+        if (err.message === "not_a_word") {
+          showToast(t("error.notAWord"));
+        } else if (err.message === "stale_puzzle_id") {
+          showToast(t("error.stalePuzzle"));
+          await resetToToday();
+        } else if (err.message === "wrong_guess_length") {
+          showToast(t("error.wrongLength"));
+        } else {
+          showToast(t("error.couldNotSubmit"));
+        }
+      } else if (err instanceof ApiError && err.status === 429) {
+        showToast(t("error.rateLimited"));
       } else {
         showToast(t("error.couldNotSubmit"));
       }
@@ -777,7 +859,7 @@ export default function DailyWordScreen() {
     } finally {
       setSubmitting(false);
     }
-  }, [submitting, showToast, startCountdown, t, tzOffset]);
+  }, [submitting, showToast, startCountdown, t, tzOffset, resetToToday]);
 
   const handleKey = useCallback(
     (key: string) => {
@@ -842,6 +924,13 @@ export default function DailyWordScreen() {
 
         {/* Loading indicator during submit */}
         {submitting && <ActivityIndicator style={styles.submitIndicator} color={colors.accent} />}
+
+        {/* Dev panel trigger */}
+        {__DEV__ && (
+          <Pressable style={styles.devButton} onPress={() => setDevPanelOpen(true)}>
+            <Text style={styles.devButtonText}>DEV</Text>
+          </Pressable>
+        )}
       </View>
 
       {/* Win modal */}
@@ -856,6 +945,154 @@ export default function DailyWordScreen() {
           countdown={countdown}
           onClose={() => setLossModalVisible(false)}
         />
+      )}
+
+      {/* Dev panel (#1293) */}
+      {__DEV__ && (
+        <Modal
+          visible={devPanelOpen}
+          transparent
+          animationType="fade"
+          accessibilityViewIsModal
+          onRequestClose={() => setDevPanelOpen(false)}
+        >
+          <View style={styles.devOverlay}>
+            <View style={[styles.devPanel, { backgroundColor: colors.surfaceHigh }]}>
+              <ScrollView
+                showsVerticalScrollIndicator={false}
+                contentContainerStyle={styles.devScrollContent}
+              >
+                <Text style={styles.devPanelTitle}>Dev Panel</Text>
+
+                <Text style={styles.devSectionHeader}>{"── Today's Puzzle ──"}</Text>
+
+                {state !== null && (
+                  <>
+                    <Text style={[styles.devInfoText, { color: colors.textMuted }]}>
+                      {`puzzle_id: ${state.puzzle_id}\nword_length: ${state.word_length}\nlang: ${state.language}`}
+                    </Text>
+
+                    <Pressable
+                      style={styles.devActionBtn}
+                      onPress={async () => {
+                        if (devAnswerVisible) {
+                          setDevAnswerVisible(false);
+                          setDevAnswer(null);
+                        } else {
+                          try {
+                            const r = await dailyWordApi.getAnswer(state.puzzle_id);
+                            setDevAnswer(r.answer.toUpperCase());
+                            setDevAnswerVisible(true);
+                          } catch {
+                            setDevAnswer("(failed to fetch)");
+                            setDevAnswerVisible(true);
+                          }
+                        }
+                      }}
+                    >
+                      <Text style={[styles.devBtnText, { color: colors.textMuted }]}>
+                        {devAnswerVisible ? "Hide Answer" : "Show Answer"}
+                      </Text>
+                    </Pressable>
+
+                    {devAnswerVisible && devAnswer !== null && (
+                      <Text style={styles.devAnswerText}>{devAnswer}</Text>
+                    )}
+
+                    <Pressable
+                      style={styles.devPrimaryBtn}
+                      onPress={async () => {
+                        await resetToToday();
+                        setDevAnswer(null);
+                        setDevAnswerVisible(false);
+                        setDevPanelOpen(false);
+                      }}
+                    >
+                      <Text style={[styles.devBtnText, { color: "#fff" }]}>Reset Game</Text>
+                    </Pressable>
+                    <Text style={styles.devWarningText}>
+                      {"Resets local board only — backend rate limit (6/hr per session+puzzle) still applies"}
+                    </Text>
+                  </>
+                )}
+
+                <Text style={styles.devSectionHeader}>── Game State ──</Text>
+
+                {state !== null && (
+                  <Text style={[styles.devInfoText, { color: colors.textMuted }]}>
+                    {`row: ${state.current_row}  won: ${state.won}  done: ${state.is_complete}`}
+                    {state.rows
+                      .filter((r) => r.submitted)
+                      .map(
+                        (r, i) =>
+                          `\n${i + 1}: ${r.tiles.map((tile) => tile.letter).join("")}  [${r.tiles.map((tile) => tile.status[0]).join("")}]`
+                      )
+                      .join("")}
+                  </Text>
+                )}
+
+                <Text style={styles.devSectionHeader}>── API Log ──</Text>
+
+                <Pressable
+                  style={styles.devActionBtn}
+                  onPress={() => {
+                    devLog.clear();
+                    setDevExpandedIndex(null);
+                  }}
+                >
+                  <Text style={[styles.devBtnText, { color: colors.textMuted }]}>Clear log</Text>
+                </Pressable>
+
+                {devLogEntries.length === 0 && (
+                  <Text style={[styles.devInfoText, { color: colors.textMuted }]}>No API calls yet</Text>
+                )}
+
+                {devLogEntries.map((entry, idx) => (
+                  <Pressable
+                    key={`${entry.ts}-${idx}`}
+                    style={styles.devLogEntry}
+                    onPress={() => setDevExpandedIndex(devExpandedIndex === idx ? null : idx)}
+                  >
+                    <View style={styles.devLogHeader}>
+                      <Text
+                        style={[
+                          styles.devLogStatus,
+                          {
+                            backgroundColor: entry.error
+                              ? "rgba(255,60,60,0.2)"
+                              : "rgba(60,200,60,0.2)",
+                            color: entry.error ? "#ff6060" : "#60e060",
+                          },
+                        ]}
+                      >
+                        {entry.status ?? "err"}
+                      </Text>
+                      <Text style={styles.devLogPath} numberOfLines={1}>
+                        {entry.method} {entry.path.split("?")[0]}
+                      </Text>
+                      <Text style={[styles.devInfoText, { color: colors.textMuted, flex: 0, fontSize: 10 }]}>
+                        {new Date(entry.ts).toLocaleTimeString()}
+                      </Text>
+                    </View>
+                    {devExpandedIndex === idx && (
+                      <Text style={styles.devLogBody}>
+                        {JSON.stringify(
+                          { body: entry.body, response: entry.response, error: entry.error },
+                          null,
+                          2
+                        )}
+                      </Text>
+                    )}
+                  </Pressable>
+                ))}
+
+                <Pressable style={styles.devActionBtn} onPress={() => setDevPanelOpen(false)}>
+                  <Text style={[styles.devBtnText, { color: colors.textMuted }]}>Close</Text>
+                </Pressable>
+              </ScrollView>
+            </View>
+          </View>
+        </Modal>
       )}
     </GameShell>
   );
@@ -877,5 +1114,118 @@ const styles = StyleSheet.create({
   submitIndicator: {
     position: "absolute",
     bottom: 16,
+    width: 40,
+    height: 40,
+    alignSelf: "center",
+  },
+  // Dev panel styles
+  devButton: {
+    position: "absolute",
+    top: 6,
+    left: 6,
+    backgroundColor: "rgba(255,128,0,0.85)",
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
+    zIndex: 100,
+  },
+  devButtonText: {
+    color: "#fff",
+    fontSize: 10,
+    fontWeight: "700",
+    letterSpacing: 1,
+  },
+  devOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.7)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  devPanel: {
+    borderRadius: 12,
+    padding: 20,
+    width: 300,
+    maxHeight: "85%",
+    borderWidth: 1,
+    borderColor: "rgba(255,128,0,0.5)",
+  },
+  devScrollContent: {
+    gap: 12,
+    paddingBottom: 4,
+  },
+  devPanelTitle: {
+    color: "rgba(255,128,0,1)",
+    fontSize: 14,
+    fontWeight: "700",
+    letterSpacing: 2,
+    textAlign: "center",
+    textTransform: "uppercase",
+  },
+  devSectionHeader: {
+    color: "rgba(255,128,0,0.7)",
+    fontSize: 10,
+    letterSpacing: 1,
+    textAlign: "center",
+    marginTop: 4,
+  },
+  devActionBtn: {
+    paddingVertical: 10,
+    borderRadius: 8,
+    alignItems: "center",
+    backgroundColor: "rgba(255,255,255,0.08)",
+  },
+  devPrimaryBtn: {
+    paddingVertical: 10,
+    borderRadius: 8,
+    alignItems: "center",
+    backgroundColor: "rgba(255,128,0,0.9)",
+  },
+  devBtnText: {
+    fontSize: 13,
+    fontWeight: "700",
+  },
+  devInfoText: {
+    fontSize: 11,
+    lineHeight: 17,
+  },
+  devAnswerText: {
+    fontSize: 22,
+    fontWeight: "900",
+    color: "#ffd700",
+    textAlign: "center",
+    letterSpacing: 6,
+  },
+  devWarningText: {
+    fontSize: 10,
+    color: "rgba(255,200,0,0.7)",
+    textAlign: "center",
+    fontStyle: "italic",
+  },
+  devLogEntry: {
+    backgroundColor: "rgba(255,255,255,0.05)",
+    borderRadius: 6,
+    padding: 8,
+    gap: 4,
+  },
+  devLogHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+  },
+  devLogStatus: {
+    fontSize: 10,
+    fontWeight: "700",
+    paddingHorizontal: 4,
+    paddingVertical: 1,
+    borderRadius: 4,
+  },
+  devLogPath: {
+    fontSize: 11,
+    color: "rgba(255,255,255,0.7)",
+    flex: 1,
+  },
+  devLogBody: {
+    fontSize: 10,
+    color: "rgba(255,255,255,0.5)",
   },
 });
