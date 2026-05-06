@@ -47,6 +47,14 @@ export const MATTER_SLEEP_THRESHOLD = 60;
 /** Max fruit speed in px/s. Tier-0 at 1200 px/s travels 20 px per 1/60s frame — within CCD range. */
 export const MAX_FRUIT_SPEED_PX_S = 1200;
 
+// --- Spawn grace period ---
+/** Number of physics ticks a merge-spawned body is immune to dynamic-vs-dynamic collisions. */
+export const SPAWN_GRACE_TICKS = 3;
+
+// --- Collision group bitmasks (shared by Rapier and Matter.js implementations) ---
+export const COLLISION_GROUP_WALL = 0x0001;
+export const COLLISION_GROUP_DYNAMIC = 0x0002;
+
 // --- Shared interfaces ---
 
 export interface FruitBody {
@@ -59,6 +67,8 @@ export interface FruitBody {
   /** Normalized collision hull vertices in [-1, 1] per axis, matching sprite rendering.
    *  Multiply by fruitRadius to get pixel-space polygon. */
   collisionVerts: { x: number; y: number }[] | null;
+  /** Ticks remaining in spawn-grace period (0 = normal; >0 = no dynamic-vs-dynamic collisions). */
+  graceTicksRemaining: number;
 }
 
 export interface BodySnapshot {

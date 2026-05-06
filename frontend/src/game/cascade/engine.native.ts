@@ -20,6 +20,9 @@ export {
   MATTER_VELOCITY_ITERATIONS,
   MATTER_SLEEP_THRESHOLD,
   MAX_FRUIT_SPEED_PX_S,
+  SPAWN_GRACE_TICKS,
+  COLLISION_GROUP_WALL,
+  COLLISION_GROUP_DYNAMIC,
 } from "./engine.shared";
 export type {
   FruitBody,
@@ -40,6 +43,9 @@ import {
   MATTER_VELOCITY_ITERATIONS,
   MATTER_SLEEP_THRESHOLD,
   MAX_FRUIT_SPEED_PX_S,
+  SPAWN_GRACE_TICKS,
+  COLLISION_GROUP_WALL,
+  COLLISION_GROUP_DYNAMIC,
 } from "./engine.shared";
 import type { FruitBody, BodySnapshot, EngineHandle } from "./engine.shared";
 import type { GameEvent } from "./types";
@@ -99,23 +105,38 @@ export async function createEngine(
   const dangerY = H * DANGER_LINE_RATIO;
   let gameOverFired = false;
 
-  const mergeQueue: Array<[number, number]> = [];
+  // mergeQueue carries [idA, idB, snapshotTier] — tier is snapshotted at enqueue time
+  // so processMerges can re-verify it (mirrors the Rapier engine's guard).
+  const mergeQueue: Array<[number, number, number]> = [];
   let comboMergeCount = 0;
   let comboFired = false;
 
   // --- Collision handler ---
+  // isMerging is set atomically when enqueueing so that a second collisionStart
+  // for the same pair (fired during a later sub-step) is filtered out before
+  // it can create a duplicate queue entry.
   Matter.Events.on(engine, "collisionStart", (event) => {
     for (const pair of event.pairs) {
       const fa = fruitMap.get(pair.bodyA.id);
       const fb = fruitMap.get(pair.bodyB.id);
       if (!fa || !fb || fa.isMerging || fb.isMerging) continue;
+      // Skip merges during grace period — the body is immune to dynamic collisions.
+      if (fa.graceTicksRemaining > 0 || fb.graceTicksRemaining > 0) continue;
       if (fa.fruitTier === fb.fruitTier) {
-        mergeQueue.push([pair.bodyA.id, pair.bodyB.id]);
+        fa.isMerging = true;
+        fb.isMerging = true;
+        mergeQueue.push([pair.bodyA.id, pair.bodyB.id, fa.fruitTier]);
       }
     }
   });
 
-  function spawnAt(def: FruitDefinition, setId: string, x: number, y: number): FruitBody {
+  function spawnAt(
+    def: FruitDefinition,
+    setId: string,
+    x: number,
+    y: number,
+    graceTicks = 0
+  ): FruitBody {
     const nameKey = (def as { nameKey?: string }).nameKey ?? def.name.toLowerCase();
     const verts = getVerticesForFruit(setId, nameKey);
 
@@ -125,6 +146,13 @@ export async function createEngine(
       friction: FRUIT_FRICTION,
       density: 0.001, // matter.js density is per-pixel-area; tuned for natural feel
       sleepThreshold: MATTER_SLEEP_THRESHOLD,
+      collisionFilter: {
+        category: COLLISION_GROUP_DYNAMIC,
+        mask:
+          graceTicks > 0
+            ? COLLISION_GROUP_WALL
+            : COLLISION_GROUP_WALL | COLLISION_GROUP_DYNAMIC,
+      },
     };
 
     if (verts && verts.length >= 3) {
@@ -133,9 +161,6 @@ export async function createEngine(
         y: v.y * def.radius,
       }));
       const polyBody = Matter.Bodies.fromVertices(x, y, [matterVerts], bodyOpts);
-      // fromVertices can return a body whose centre-of-mass differs from (x, y).
-      // Force the position to the requested drop point so it matches the circle
-      // fallback behaviour and the renderer's expectations.
       if (polyBody) {
         Matter.Body.setPosition(polyBody, { x, y });
         body = polyBody;
@@ -144,6 +169,10 @@ export async function createEngine(
       }
     } else {
       body = Matter.Bodies.circle(x, y, def.radius, bodyOpts);
+    }
+
+    if (graceTicks > 0) {
+      Matter.Body.setVelocity(body, { x: 0, y: 0 });
     }
 
     Matter.Composite.add(world, body);
@@ -156,6 +185,7 @@ export async function createEngine(
       createdAt: Date.now(),
       fruitRadius: def.radius,
       collisionVerts: verts,
+      graceTicksRemaining: graceTicks,
     };
     fruitMap.set(body.id, fb);
     return fb;
@@ -171,16 +201,17 @@ export async function createEngine(
   }
 
   function processMerges(events: GameEvent[]): void {
-    for (const [idA, idB] of mergeQueue) {
+    for (const [idA, idB, enqueuedTier] of mergeQueue) {
       const fa = fruitMap.get(idA);
       const fb = fruitMap.get(idB);
-      if (!fa || !fb || fa.isMerging || fb.isMerging) continue;
-      if (fa.fruitTier !== fb.fruitTier) continue;
+      // isMerging is guaranteed true for all queued entries (set atomically at enqueue).
+      // The !fa/!fb guard catches the edge case where a body was already removed.
+      if (!fa || !fb) continue;
+      // Re-verify tiers against the snapshot taken at enqueue time, mirroring
+      // the Rapier engine's guard against handle-reuse phantom merges.
+      if (fa.fruitTier !== enqueuedTier || fb.fruitTier !== enqueuedTier) continue;
 
-      fa.isMerging = true;
-      fb.isMerging = true;
-
-      const tier = fa.fruitTier;
+      const tier = enqueuedTier;
       const bodies = Matter.Composite.allBodies(world);
       const bodyA = bodies.find((b) => b.id === idA);
       const bodyB = bodies.find((b) => b.id === idB);
@@ -206,7 +237,7 @@ export async function createEngine(
             nextDef.radius,
             Math.min(H - WALL_THICKNESS - nextDef.radius, midY)
           );
-          const newFb = spawnAt(nextDef, fruitSet.id, spawnX, spawnY);
+          const newFb = spawnAt(nextDef, fruitSet.id, spawnX, spawnY, SPAWN_GRACE_TICKS);
           // Wake sleeping neighbors within 2× spawn radius so they react to the new body.
           const wakeRadiusSq = (nextDef.radius * 2) ** 2;
           for (const b of Matter.Composite.allBodies(world)) {
@@ -252,9 +283,21 @@ export async function createEngine(
         comboFired = false;
       }
 
-      // Single allBodies snapshot shared by the velocity clamp and wall-clamp below.
+      // Single allBodies snapshot shared by grace-tick, velocity-clamp, and wall-clamp below.
       // processMerges has already run, so this reflects the post-merge body list.
       const allBodiesPostMerge = Matter.Composite.allBodies(world);
+
+      // Grace-tick decrement: restore normal collision filter when grace period expires.
+      fruitMap.forEach((fb, bodyId) => {
+        if (fb.graceTicksRemaining <= 0) return;
+        fb.graceTicksRemaining--;
+        if (fb.graceTicksRemaining === 0) {
+          const body = allBodiesPostMerge.find((b) => b.id === bodyId);
+          if (body) {
+            body.collisionFilter.mask = COLLISION_GROUP_WALL | COLLISION_GROUP_DYNAMIC;
+          }
+        }
+      });
 
       // Velocity clamp: cap per-step speed so no body can tunnel through a 16px wall.
       // Runs after the sub-step loop, before the wall-clamp band-aid (CASCADE-PHYS-09).
