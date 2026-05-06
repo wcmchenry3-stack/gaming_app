@@ -12,6 +12,7 @@ export const AI_DIFFICULTIES: readonly AiDifficulty[] = ["easy", "medium", "hard
 export type GameEvent =
   | { readonly type: "moonShot"; readonly shooter: number }
   | { readonly type: "heartsBroken" }
+  | { readonly type: "queenOfSpadesPlayed" }
   | { readonly type: "queenOfSpades"; readonly takerSeat: number };
 
 export type Suit = "spades" | "hearts" | "diamonds" | "clubs";

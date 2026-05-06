@@ -272,6 +272,7 @@ export function playCard(state: HeartsState, playerIndex: number, card: Card): H
   const newEvents = [
     ...(state.events ?? []),
     ...(!state.heartsBroken && card.suit === "hearts" ? ([{ type: "heartsBroken" }] as const) : []),
+    ...(isQueenOfSpades(card) ? ([{ type: "queenOfSpadesPlayed" }] as const) : []),
   ];
 
   let next: HeartsState = {

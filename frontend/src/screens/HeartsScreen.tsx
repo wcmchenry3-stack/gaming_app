@@ -185,12 +185,14 @@ export default function HeartsScreen() {
         setShowHeartsBroken(true);
       },
       moonShot: (event) => {
-        playMoonShot();
+        if (event.shooter === HUMAN) playMoonShot();
         setMoonShotLabel(playerNames[event.shooter] ?? "");
         setShowMoonShot(true);
       },
-      queenOfSpades: (event) => {
+      queenOfSpadesPlayed: () => {
         playQueenOfSpades();
+      },
+      queenOfSpades: (event) => {
         setQueenOfSpadesLabel(playerNames[event.takerSeat] ?? "");
         setShowQueenOfSpades(true);
       },
