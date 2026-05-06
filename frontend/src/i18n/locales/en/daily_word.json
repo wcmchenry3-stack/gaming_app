@@ -22,6 +22,7 @@
   "error.stalePuzzle": "New puzzle available — loading today's word",
   "error.wrongLength": "Guess length doesn't match today's word",
   "error.rateLimited": "Too many guesses — try again later",
+  "modal.close": "Close",
   "keyboard.delete": "Delete",
   "keyboard.enter": "Enter"
 }

@@ -429,7 +429,7 @@ function WinModal({
       onRequestClose={onClose}
     >
       <Pressable style={modalStyles.overlay} onPress={onClose}>
-        <Pressable>
+        <Pressable onPress={() => {}}>
           <View
             style={[
               modalStyles.card,
@@ -440,7 +440,7 @@ function WinModal({
               style={modalStyles.closeBtn}
               onPress={onClose}
               accessibilityRole="button"
-              accessibilityLabel="Close"
+              accessibilityLabel={t("modal.close")}
             >
               <Text style={[modalStyles.closeBtnText, { color: colors.textMuted }]}>✕</Text>
             </Pressable>
@@ -495,7 +495,7 @@ function LossModal({
       onRequestClose={onClose}
     >
       <Pressable style={modalStyles.overlay} onPress={onClose}>
-        <Pressable>
+        <Pressable onPress={() => {}}>
           <View
             style={[
               modalStyles.card,
@@ -506,7 +506,7 @@ function LossModal({
               style={modalStyles.closeBtn}
               onPress={onClose}
               accessibilityRole="button"
-              accessibilityLabel="Close"
+              accessibilityLabel={t("modal.close")}
             >
               <Text style={[modalStyles.closeBtnText, { color: colors.textMuted }]}>✕</Text>
             </Pressable>
@@ -648,17 +648,19 @@ export default function DailyWordScreen() {
     countdownRef.current = setInterval(tick, 1000);
   }, [tzOffset]);
 
-  const resetToToday = useCallback(async () => {
+  const resetToToday = useCallback(async (): Promise<boolean> => {
     try {
       await clearState();
       const todayMeta = await dailyWordApi.getToday(tzOffset, language);
       const fresh = initialState(todayMeta.puzzle_id, todayMeta.word_length, language);
       setState(fresh);
+      setAnswer(null);
       setWinModalVisible(false);
       setLossModalVisible(false);
       setFlippingRowIndex(null);
+      return true;
     } catch {
-      // caller handles any toast; silent failure here is acceptable
+      return false;
     }
   }, [tzOffset, language]);
 
@@ -843,8 +845,8 @@ export default function DailyWordScreen() {
         if (err.message === "not_a_word") {
           showToast(t("error.notAWord"));
         } else if (err.message === "stale_puzzle_id") {
-          showToast(t("error.stalePuzzle"));
-          await resetToToday();
+          const recovered = await resetToToday();
+          showToast(recovered ? t("error.stalePuzzle") : t("error.couldNotLoad"));
         } else if (err.message === "wrong_guess_length") {
           showToast(t("error.wrongLength"));
         } else {
@@ -1049,7 +1051,7 @@ export default function DailyWordScreen() {
 
                 {devLogEntries.map((entry, idx) => (
                   <Pressable
-                    key={`${entry.ts}-${idx}`}
+                    key={`${entry.ts}-${entry.method}-${entry.path}`}
                     style={styles.devLogEntry}
                     onPress={() => setDevExpandedIndex(devExpandedIndex === idx ? null : idx)}
                   >
