@@ -264,24 +264,19 @@ describe("TrickArea", () => {
       // appeared for only ~60ms before animating, making it imperceptible.
       const trick: TrickCard[] = [
         { card: c("spades", 10), playerIndex: 2 }, // North leads
-        { card: c("hearts", 3), playerIndex: 3 },  // East (Elaine)
-        { card: c("clubs", 8), playerIndex: 0 },   // South (human)
+        { card: c("hearts", 3), playerIndex: 3 }, // East (Elaine)
+        { card: c("clubs", 8), playerIndex: 0 }, // South (human)
         { card: c("diamonds", 5), playerIndex: 1 }, // West (George) — completing card
       ];
       const onComplete = jest.fn();
       const { getByText } = wrap(
-        <TrickArea
-          trick={trick}
-          playerIndex={0}
-          winnerIndex={1}
-          onAnimationComplete={onComplete}
-        />
+        <TrickArea trick={trick} playerIndex={0} winnerIndex={1} onAnimationComplete={onComplete} />
       );
       // All 4 cards visible immediately (before animation starts).
       expect(getByText("10")).toBeTruthy(); // North
-      expect(getByText("3")).toBeTruthy();  // East
-      expect(getByText("8")).toBeTruthy();  // South
-      expect(getByText("5")).toBeTruthy();  // West (the completing card)
+      expect(getByText("3")).toBeTruthy(); // East
+      expect(getByText("8")).toBeTruthy(); // South
+      expect(getByText("5")).toBeTruthy(); // West (the completing card)
       // Animation not complete before settle window ends.
       act(() => {
         jest.advanceTimersByTime(249);
