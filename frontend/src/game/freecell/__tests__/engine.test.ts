@@ -755,8 +755,9 @@ describe("getHintMoves", () => {
       freeCells: [c("hearts", 3), c("diamonds", 3), c("clubs", 3), c("spades", 3)],
     });
     const hints = getHintMoves(state);
-    expect(hints.length).toBeGreaterThan(0);
-    // The reversible swap from col 0 must not appear in hints
+    // The productive 5♠→6♥ move (col 3 → col 2) must appear
+    expect(hints.some((m) => m.type === "tableau-to-tableau" && m.fromCol === 3)).toBe(true);
+    // The reversible swap from col 0 must not appear
     expect(hints.every((m) => m.type !== "tableau-to-tableau" || m.fromCol !== 0)).toBe(true);
   });
 });
@@ -771,24 +772,15 @@ describe("isProductiveMove", () => {
       tableau: [[c("spades", 1)], [], [], [], [], [], [], []],
     });
     expect(isProductiveMove(state, { type: "tableau-to-foundation", fromCol: 0 })).toBe(true);
-    expect(
-      isProductiveMove(state, { type: "tableau-to-freecell", fromCol: 0, toCell: 0 })
-    ).toBe(true);
+    expect(isProductiveMove(state, { type: "tableau-to-freecell", fromCol: 0, toCell: 0 })).toBe(
+      true
+    );
   });
 
   it("returns false for single-card reversible swap (canonical 7♥/8♠/8♣ position)", () => {
     // 7♥ on 8♠ in col 0; 8♣ in col 1. Moving 7♥ to col 1 is non-productive.
     const state = mkState({
-      tableau: [
-        [c("spades", 8), c("hearts", 7)],
-        [c("clubs", 8)],
-        [],
-        [],
-        [],
-        [],
-        [],
-        [],
-      ],
+      tableau: [[c("spades", 8), c("hearts", 7)], [c("clubs", 8)], [], [], [], [], [], []],
     });
     const move = { type: "tableau-to-tableau" as const, fromCol: 0, fromIndex: 1, toCol: 1 };
     expect(isProductiveMove(state, move)).toBe(false);
@@ -849,12 +841,15 @@ describe("isProductiveMove", () => {
   });
 
   it("returns true when parent and destination differ in color", () => {
-    // 7♥ on 8♥ (both red) — not a valid tableau stack, but testing color check directly.
-    // Use 6♠ on 7♠ moving to 7♦: parent 7♠ (black), dest 7♦ (red) — different color.
+    // 6♦ on 7♠ in col 0; 7♥ in col 1.
+    // Moving 6♦ to col 1: parent is 7♠ (black), dest is 7♥ (red) — different colors.
+    // Not a reversible swap even though ranks match (black ≠ red).
+    // Note: this move is invalid per validateMove (6♦ red cannot stack on 7♥ red),
+    // but isProductiveMove is a pure predicate tested independently of validateMove.
     const state = mkState({
       tableau: [
-        [c("spades", 7), c("diamonds", 6)], // col 0: 7♠ then 6♦
-        [c("hearts", 7)], // col 1: 7♥ (red) — different color from parent 7♠
+        [c("spades", 7), c("diamonds", 6)], // col 0: 7♠ then 6♦ on top
+        [c("hearts", 7)], // col 1: 7♥ — different color from parent 7♠
         [],
         [],
         [],
@@ -863,23 +858,13 @@ describe("isProductiveMove", () => {
         [],
       ],
     });
-    // 6♦ moving to col 1 (over 7♥): parent is 7♠ (black), dest is 7♥ (red) — different color
     const move = { type: "tableau-to-tableau" as const, fromCol: 0, fromIndex: 1, toCol: 1 };
     expect(isProductiveMove(state, move)).toBe(true);
   });
 
   it("returns true when player manually executes non-productive move (applyMove accepts it)", () => {
     const state = mkState({
-      tableau: [
-        [c("spades", 8), c("hearts", 7)],
-        [c("clubs", 8)],
-        [],
-        [],
-        [],
-        [],
-        [],
-        [],
-      ],
+      tableau: [[c("spades", 8), c("hearts", 7)], [c("clubs", 8)], [], [], [], [], [], []],
     });
     const move = { type: "tableau-to-tableau" as const, fromCol: 0, fromIndex: 1, toCol: 1 };
     // isProductiveMove returns false (hint would skip it), but applyMove still accepts it

@@ -55,7 +55,10 @@ import { loadGame } from "../../game/freecell/storage";
 const REVERSIBLE_ONLY_STATE: FreeCellState = {
   _v: 1,
   tableau: [
-    [{ suit: "spades", rank: 8 }, { suit: "hearts", rank: 7 }],
+    [
+      { suit: "spades", rank: 8 },
+      { suit: "hearts", rank: 7 },
+    ],
     [{ suit: "clubs", rank: 8 }],
     [],
     [],
@@ -92,11 +95,12 @@ describe("FreeCellScreen — hint on reversible-only position (#1295)", () => {
   });
 
   afterEach(() => {
+    jest.runAllTimers();
     (loadGame as jest.Mock).mockResolvedValue(null);
   });
 
-  it("shows 'No moves left' banner instead of oscillating when Hint is pressed", async () => {
-    const { getByLabelText, queryByText } = renderScreen();
+  it("shows 'No moves left' banner with message and Undo action when Hint is pressed", async () => {
+    const { getByLabelText, queryByText, getAllByLabelText } = renderScreen();
 
     // Wait for loadGame to resolve and state to mount
     await waitFor(() => getByLabelText("Hint"));
@@ -108,36 +112,18 @@ describe("FreeCellScreen — hint on reversible-only position (#1295)", () => {
       fireEvent.press(getByLabelText("Hint"));
     });
 
-    await waitFor(() => expect(queryByText(/no moves left/i)).not.toBeNull());
-  });
-
-  it("banner contains the no-moves message text", async () => {
-    const { getByLabelText, getByText } = renderScreen();
-
-    await waitFor(() => getByLabelText("Hint"));
-
-    act(() => {
-      fireEvent.press(getByLabelText("Hint"));
-    });
-
-    await waitFor(() =>
-      expect(getByText(/no moves left/i)).toBeTruthy()
-    );
-  });
-
-  it("banner includes an Undo action", async () => {
-    const { getByLabelText, getAllByLabelText } = renderScreen();
-
-    await waitFor(() => getByLabelText("Hint"));
-
-    act(() => {
-      fireEvent.press(getByLabelText("Hint"));
-    });
-
-    // After banner appears, an Undo button is rendered inside it
     await waitFor(() => {
-      const undoBtns = getAllByLabelText("Undo");
-      expect(undoBtns.length).toBeGreaterThan(0);
+      // Banner message is visible
+      expect(queryByText(/no moves left/i)).not.toBeNull();
+      // Banner adds a second Undo button (header already has one, banner adds another)
+      expect(getAllByLabelText("Undo").length).toBe(2);
     });
+  });
+
+  it("banner does not appear before Hint is pressed", async () => {
+    const { getByLabelText, queryByText } = renderScreen();
+
+    await waitFor(() => getByLabelText("Hint"));
+    expect(queryByText(/no moves left/i)).toBeNull();
   });
 });
