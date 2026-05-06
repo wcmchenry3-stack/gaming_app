@@ -31,6 +31,7 @@ import { CardSizeContext, useResponsiveCardSize } from "../game/_shared/CardSize
 const AUTO_STEP_MS = 120;
 const TABLEAU_COLS = 8;
 const COL_GAP = 2;
+const SCREEN_H_PADDING = 24;
 
 export default function FreeCellScreen() {
   const { t } = useTranslation("freecell");
@@ -169,7 +170,13 @@ export default function FreeCellScreen() {
   const undoDisabled =
     state === null || state.undoStack.length === 0 || state.isComplete || autoCompleting;
   const hintDisabled = state === null || state.isComplete || autoCompleting;
-  const cardSize = useResponsiveCardSize(CARD_WIDTH, CARD_HEIGHT, TABLEAU_COLS, COL_GAP, 24);
+  const cardSize = useResponsiveCardSize(
+    CARD_WIDTH,
+    CARD_HEIGHT,
+    TABLEAU_COLS,
+    COL_GAP,
+    SCREEN_H_PADDING
+  );
 
   return (
     <GameShell

@@ -17,7 +17,7 @@ import type { TFunction } from "i18next";
 import { useTheme } from "../../../theme/ThemeContext";
 import type { Card, DrawMode } from "../types";
 import type { CanonicalSuit } from "../../_shared/decks/types";
-import { CARD_HEIGHT, CARD_WIDTH } from "./CardView";
+import { CARD_WIDTH } from "./CardView";
 import { useCardSize } from "../../_shared/CardSizeContext";
 import { rankLabel } from "../../_shared/decks/cardId";
 import { DraggableCard } from "../../_shared/drag/DraggableCard";
@@ -80,9 +80,7 @@ function Stock({
   readonly drawMode: DrawMode;
   readonly t: TFunction<"solitaire">;
 }) {
-  const { cardWidth: ctxW, cardHeight: ctxH } = useCardSize();
-  const cardWidth = ctxW || CARD_WIDTH;
-  const cardHeight = ctxH || CARD_HEIGHT;
+  const { cardWidth, cardHeight } = useCardSize();
   const isEmpty = count === 0;
   const label = isEmpty
     ? t("pile.stock.empty", { count: drawMode })
@@ -142,9 +140,7 @@ function Waste({
   readonly onPress?: () => void;
   readonly t: TFunction<"solitaire">;
 }) {
-  const { cardWidth: ctxW, cardHeight: ctxH } = useCardSize();
-  const cardWidth = ctxW || CARD_WIDTH;
-  const cardHeight = ctxH || CARD_HEIGHT;
+  const { cardWidth, cardHeight } = useCardSize();
   const wasteFanOffset = Math.round(WASTE_FAN_OFFSET * (cardWidth / CARD_WIDTH));
 
   if (waste.length === 0) {

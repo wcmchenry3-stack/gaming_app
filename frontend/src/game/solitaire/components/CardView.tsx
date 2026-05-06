@@ -14,9 +14,7 @@ export interface CardViewProps {
 
 export default function CardView({ card, selected = false, onPress }: CardViewProps) {
   const { t } = useTranslation("solitaire");
-  const { cardWidth: ctxW, cardHeight: ctxH } = useCardSize();
-  const w = ctxW || CARD_WIDTH;
-  const h = ctxH || CARD_HEIGHT;
+  const { cardWidth, cardHeight } = useCardSize();
   const rl = rankLabel(card.rank);
   const suitName = t(`suit.${card.suit}` as const);
 
@@ -32,8 +30,8 @@ export default function CardView({ card, selected = false, onPress }: CardViewPr
     <SharedPlayingCard
       suit={card.suit as CanonicalSuit}
       rank={card.rank}
-      width={w}
-      height={h}
+      width={cardWidth}
+      height={cardHeight}
       faceDown={!card.faceUp}
       highlighted={selected}
       onPress={onPress}

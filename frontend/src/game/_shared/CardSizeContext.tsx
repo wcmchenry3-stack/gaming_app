@@ -1,14 +1,21 @@
 import { createContext, useContext } from "react";
 import { useWindowDimensions } from "react-native";
 
-const MIN_CARD_W = 28;
+const MIN_CARD_W = 28; // ~half a finger-width minimum tap target
+
+// default avoids 0×0 renders outside a Provider
+const DEFAULT_CARD_WIDTH = 52;
+const DEFAULT_CARD_HEIGHT = 74;
 
 export interface CardSizeContextValue {
   readonly cardWidth: number;
   readonly cardHeight: number;
 }
 
-export const CardSizeContext = createContext<CardSizeContextValue>({ cardWidth: 0, cardHeight: 0 });
+export const CardSizeContext = createContext<CardSizeContextValue>({
+  cardWidth: DEFAULT_CARD_WIDTH,
+  cardHeight: DEFAULT_CARD_HEIGHT,
+});
 
 export function useCardSize(): CardSizeContextValue {
   return useContext(CardSizeContext);

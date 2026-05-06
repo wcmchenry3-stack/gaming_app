@@ -12,7 +12,6 @@ import { useTranslation } from "react-i18next";
 
 import { useTheme } from "../../../theme/ThemeContext";
 import type { Card, Suit } from "../types";
-import { CARD_HEIGHT, CARD_WIDTH } from "./CardView";
 import { useCardSize } from "../../_shared/CardSizeContext";
 import type { CanonicalSuit } from "../../_shared/decks/types";
 import { rankLabel } from "../../_shared/decks/cardId";
@@ -50,9 +49,7 @@ export default function FoundationPile({
 }: FoundationPileProps) {
   const { colors } = useTheme();
   const { t } = useTranslation("solitaire");
-  const { cardWidth: ctxW, cardHeight: ctxH } = useCardSize();
-  const cardWidth = ctxW || CARD_WIDTH;
-  const cardHeight = ctxH || CARD_HEIGHT;
+  const { cardWidth, cardHeight } = useCardSize();
   const hasDrop = dropId !== undefined && onDrop !== undefined;
 
   const highlightStyle = { borderColor: colors.accent, borderWidth: 2, borderRadius: 8 };

@@ -7,7 +7,6 @@ import { rankLabel } from "../../game/_shared/decks/cardId";
 import SelectableCard from "../../game/_shared/SelectableCard";
 import type { CanonicalSuit } from "../../game/_shared/decks/types";
 import type { Card, Suit } from "../../game/freecell/types";
-import { CARD_WIDTH, CARD_HEIGHT } from "./FreeCellSlot";
 import { useCardSize } from "../../game/_shared/CardSizeContext";
 import { DropTarget } from "../../game/_shared/drag/DropTarget";
 import type { DropHandler } from "../../game/_shared/drag/DragContext";
@@ -43,9 +42,7 @@ export default function FoundationPile({
 }: FoundationPileProps) {
   const { colors } = useTheme();
   const { t } = useTranslation("freecell");
-  const { cardWidth: ctxW, cardHeight: ctxH } = useCardSize();
-  const cardWidth = ctxW || CARD_WIDTH;
-  const cardHeight = ctxH || CARD_HEIGHT;
+  const { cardWidth, cardHeight } = useCardSize();
   const hasDrop = dropId !== undefined && onDrop !== undefined;
   const RED_SUITS = new Set(["hearts", "diamonds"]);
   const suitSymbolColor = RED_SUITS.has(suit) ? "#ff716c" : colors.textFilled;
