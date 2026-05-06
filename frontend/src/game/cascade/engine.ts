@@ -179,8 +179,6 @@ export async function createEngine(
     const nameKey = (def as { nameKey?: string }).nameKey ?? def.name.toLowerCase();
     const verts = getVerticesForFruit(setId, nameKey);
 
-    const groups = graceTicks > 0 ? GRACE_GROUPS : NORMAL_GROUPS;
-
     let collider: RAPIER_TYPE.Collider;
 
     if (verts && verts.length >= 3) {
@@ -196,13 +194,11 @@ export async function createEngine(
             .setFriction(FRUIT_FRICTION)
             .setDensity(FRUIT_DENSITY)
             .setActiveEvents(R.ActiveEvents.COLLISION_EVENTS)
-            .setCollisionGroups(groups)
         : R.ColliderDesc.ball(def.radius * SCALE)
             .setRestitution(FRUIT_RESTITUTION)
             .setFriction(FRUIT_FRICTION)
             .setDensity(FRUIT_DENSITY)
-            .setActiveEvents(R.ActiveEvents.COLLISION_EVENTS)
-            .setCollisionGroups(groups);
+            .setActiveEvents(R.ActiveEvents.COLLISION_EVENTS);
       collider = world.createCollider(desc, rb);
     } else {
       collider = world.createCollider(
@@ -210,10 +206,17 @@ export async function createEngine(
           .setRestitution(FRUIT_RESTITUTION)
           .setFriction(FRUIT_FRICTION)
           .setDensity(FRUIT_DENSITY)
-          .setActiveEvents(R.ActiveEvents.COLLISION_EVENTS)
-          .setCollisionGroups(groups),
+          .setActiveEvents(R.ActiveEvents.COLLISION_EVENTS),
         rb
       );
+    }
+
+    // Grace bodies (merge-spawned) filter out dynamic-vs-dynamic collisions for
+    // SPAWN_GRACE_TICKS to prevent phantom merges. Normal player drops use the
+    // Rapier default (all groups) — explicit NORMAL_GROUPS suppresses CollisionStart
+    // for deeply-overlapping bodies and breaks E2E tests.
+    if (graceTicks > 0) {
+      collider.setCollisionGroups(GRACE_GROUPS);
     }
 
     bodyToCollider.set(rb.handle, collider);
