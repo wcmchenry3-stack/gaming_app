@@ -43,8 +43,10 @@ test.describe("Cascade — merge and score behavior", () => {
   });
 
   test("two tier-1 fruits merge → score = 4", async ({ page }) => {
+    // Tier-1 radius=25, sum-of-radii=50. Place 49px apart (1px contact) so
+    // Rapier fires CollisionStart without explosive penetration-correction.
     await spawnTierAt(page, 1, 145);
-    await spawnTierAt(page, 1, 155);
+    await spawnTierAt(page, 1, 194);
     await fastForward(page, 2000);
 
     const state = await getState(page);
