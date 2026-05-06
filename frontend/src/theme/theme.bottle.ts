@@ -35,17 +35,20 @@ export const BOTTLE_BODY_FILL_SELECTED = "#8ff5ff22";
 /** Bottle body fill in default state (white with low opacity). */
 export const BOTTLE_BODY_FILL_DEFAULT = "#ffffff0f";
 
-/** Gloss highlight color (white). */
+/** White base used for glass gloss gradient stops (opacity applied via stopOpacity). */
 export const BOTTLE_GLOSS_HIGHLIGHT = "#ffffff";
 
-/** Gloss shadow color (black). */
+/** Black base used for glass gloss shadow gradient stop (opacity applied via stopOpacity). */
 export const BOTTLE_GLOSS_SHADOW = "#000000";
 
-/** Checkmark badge background when bottle is solved (green). */
+/** Fill for the thin gloss stripe at the top of each liquid band (20% white). */
+export const BOTTLE_LIQUID_GLOSS_FILL = "rgba(255,255,255,0.2)";
+
+/** Checkmark badge background when bottle is solved. */
 export const BOTTLE_CHECKMARK_BG = "#22c55e";
 
-/** Checkmark badge stroke color (dark). */
+/** Checkmark badge stroke color. */
 export const BOTTLE_CHECKMARK_STROKE = "#0e0e13";
 
-/** Colorblind mode symbol text color (dark with transparency). */
+/** Colorblind mode symbol text color. */
 export const BOTTLE_COLORBLIND_TEXT = "rgba(0,0,0,0.65)";

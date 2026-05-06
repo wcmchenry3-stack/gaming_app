@@ -33,6 +33,7 @@ import {
   BOTTLE_BODY_FILL_DEFAULT,
   BOTTLE_GLOSS_HIGHLIGHT,
   BOTTLE_GLOSS_SHADOW,
+  BOTTLE_LIQUID_GLOSS_FILL,
   BOTTLE_CHECKMARK_BG,
   BOTTLE_CHECKMARK_STROKE,
   BOTTLE_COLORBLIND_TEXT,
@@ -75,7 +76,7 @@ export const BOTTLE_HEIGHT = DEFAULT_BOTTLE_HEIGHT;
 const TILT_IN_MS = 250;
 const TILT_HOLD_MS = 150;
 const TILT_OUT_MS = 200;
-const TILT_DEG = 62;
+export const TILT_DEG = 62;
 
 export interface BottleViewProps {
   readonly bottle: Bottle;
@@ -192,7 +193,7 @@ export default function BottleView({
                   y={y}
                   width={VB_W}
                   height={Math.min(4, UNIT_H * 0.12)}
-                  fill={BOTTLE_GLOSS_HIGHLIGHT}
+                  fill={BOTTLE_LIQUID_GLOSS_FILL}
                 />
                 {colorblindMode && (
                   <SvgText

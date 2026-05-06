@@ -16,6 +16,7 @@ import BottleView, {
   DEFAULT_BOTTLE_HEIGHT,
   DEFAULT_BOTTLE_WIDTH,
   LIQUID_COLORS,
+  TILT_DEG,
 } from "./BottleView";
 
 const BOTTLE_GAP = 12;
@@ -38,13 +39,13 @@ interface GhostInfo {
   startY: number;
 }
 
-// Ghost animation timing (ms) — matches BottleView tilt constants
+// Ghost animation timing (ms) — TILT_* values must stay in sync with BottleView
 const LIFT_MS = 150;
 const TRAVEL_MS = 150;
 const TILT_IN_MS = 250;
 const TILT_HOLD_MS = 150;
 const TILT_OUT_MS = 200;
-const TILT_DEG = 62;
+// TILT_DEG imported from BottleView — single source of truth
 
 export default function SortBoard({
   state,
@@ -79,7 +80,9 @@ export default function SortBoard({
     AccessibilityInfo.isReduceMotionEnabled().then(setReduceMotion);
   }, []);
 
-  // Position tracking — updated by onLayout, never triggers re-render
+  // Position tracking — updated by onLayout, never triggers re-render.
+  // React Native fires onLayout top-down (parent before children), so
+  // gridOffsetRef is populated before any bottle cell onLayout runs.
   const gridOffsetRef = useRef({ x: 0, y: 0 });
   const bottlePositionsRef = useRef<{ x: number; y: number }[]>([]);
 
@@ -140,7 +143,9 @@ export default function SortBoard({
       startY: srcPos.y,
     });
 
-    // Lift → travel → tilt in → hold → tilt out → return travel → lower
+    // Lift → travel → tilt in → hold → tilt out → return travel → lower (~1200ms total).
+    // Ghost clears at ~1200ms; SortScreen commits state at 1250ms — the 50ms gap is
+    // imperceptible and ensures the state update lands after the animation completes.
     ghostLiftY.value = withTiming(-liftHeight, { duration: LIFT_MS }, (finished) => {
       if (!finished) return;
       ghostTravelX.value = withTiming(dx, { duration: TRAVEL_MS }, (finished) => {
@@ -225,8 +230,9 @@ export default function SortBoard({
         ))}
       </View>
 
-      {/* Ghost bottle overlay — floats above grid during pour animation */}
-      {ghost !== null && !reduceMotion && (
+      {/* Ghost bottle overlay — floats above grid during pour animation.
+          ghost is only set when !reduceMotion, so the extra guard is omitted. */}
+      {ghost !== null && (
         <View
           style={StyleSheet.absoluteFill}
           pointerEvents="none"
