@@ -7,8 +7,7 @@ GET /sort/scores  — top-10 entries by level_reached desc (ties: older wins).
 
 from __future__ import annotations
 
-import json
-import pathlib
+import asyncio
 from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, HTTPException, Request
@@ -21,6 +20,7 @@ from entitlements.dependencies import require_entitlement
 from limiter import limiter
 from vocab import GameType as GameTypeEnum
 
+from .generate_levels import build_levels
 from .models import (
     LeaderboardResponse,
     LevelData,
@@ -33,9 +33,6 @@ router = APIRouter(dependencies=[Depends(require_entitlement("sort"))])
 
 LEADERBOARD_LIMIT = 10
 _SORT_SESSION = "sort-anon"
-
-_LEVELS_PATH = pathlib.Path(__file__).parent / "levels.json"
-_LEVELS: list[LevelData] = [LevelData(**item) for item in json.loads(_LEVELS_PATH.read_text())]
 
 
 async def _sort_game_type_id(db: AsyncSession) -> int:
@@ -83,7 +80,8 @@ async def _top_scores(db: AsyncSession, gt_id: int) -> list[ScoreEntry]:
 @router.get("/levels", response_model=LevelsResponse)
 @limiter.limit("60/minute")
 async def get_levels(request: Request) -> LevelsResponse:
-    return LevelsResponse(levels=_LEVELS)
+    raw = await asyncio.to_thread(build_levels)
+    return LevelsResponse(levels=[LevelData(**item) for item in raw])
 
 
 @router.post("/score", response_model=ScoreEntry, status_code=201)

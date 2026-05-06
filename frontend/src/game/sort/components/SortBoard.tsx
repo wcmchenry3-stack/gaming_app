@@ -1,7 +1,8 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { AccessibilityInfo, StyleSheet, useWindowDimensions, View } from "react-native";
 import Animated, {
   cancelAnimation,
+  runOnJS,
   useAnimatedStyle,
   useSharedValue,
   withDelay,
@@ -10,11 +11,12 @@ import Animated, {
   withTiming,
 } from "react-native-reanimated";
 import { useTranslation } from "react-i18next";
-import type { SortState } from "../types";
+import type { Bottle, SortState } from "../types";
 import BottleView, {
   DEFAULT_BOTTLE_HEIGHT,
   DEFAULT_BOTTLE_WIDTH,
   LIQUID_COLORS,
+  TILT_DEG,
 } from "./BottleView";
 
 const BOTTLE_GAP = 12;
@@ -29,6 +31,21 @@ export interface SortBoardProps {
   /** Height of the board container in pixels — used to scale bottles to fit. */
   readonly availableHeight?: number;
 }
+
+interface GhostInfo {
+  bottle: Bottle;
+  bottleIndex: number;
+  startX: number;
+  startY: number;
+}
+
+// Ghost animation timing (ms) — TILT_* values must stay in sync with BottleView
+const LIFT_MS = 150;
+const TRAVEL_MS = 150;
+const TILT_IN_MS = 250;
+const TILT_HOLD_MS = 150;
+const TILT_OUT_MS = 200;
+// TILT_DEG imported from BottleView — single source of truth
 
 export default function SortBoard({
   state,
@@ -57,7 +74,103 @@ export default function SortBoard({
   const bottleW = Math.min(bottleHFromHeight * ASPECT_RATIO, maxBottleW);
   const bottleH = bottleW / ASPECT_RATIO;
 
-  // Pour tilt direction for the source bottle only
+  // Reduce-motion: fall back to tilt-only (no ghost overlay)
+  const [reduceMotion, setReduceMotion] = useState(false);
+  useEffect(() => {
+    AccessibilityInfo.isReduceMotionEnabled().then(setReduceMotion);
+  }, []);
+
+  // Position tracking — updated by onLayout, never triggers re-render.
+  // React Native fires onLayout top-down (parent before children), so
+  // gridOffsetRef is populated before any bottle cell onLayout runs.
+  const gridOffsetRef = useRef({ x: 0, y: 0 });
+  const bottlePositionsRef = useRef<{ x: number; y: number }[]>([]);
+
+  // Ghost shared values — always allocated (hooks can't be conditional)
+  const ghostLiftY = useSharedValue(0);
+  const ghostTravelX = useSharedValue(0);
+  const ghostTiltDeg = useSharedValue(0);
+
+  const ghostAnimStyle = useAnimatedStyle(() => ({
+    transform: [
+      { translateY: ghostLiftY.value },
+      { translateX: ghostTravelX.value },
+      { rotate: `${ghostTiltDeg.value}deg` },
+    ],
+  }));
+
+  // Ghost React state (drives overlay visibility and bottle capture)
+  const [ghost, setGhost] = useState<GhostInfo | null>(null);
+
+  // Stable refs for values read inside the effect (avoids stale closure without
+  // adding them to the dep array, which would re-trigger on every state change)
+  const bottleHRef = useRef(bottleH);
+  bottleHRef.current = bottleH;
+  const stateRef = useRef(state);
+  stateRef.current = state;
+
+  useEffect(() => {
+    if (pouringFrom === null || pouringTo === null || reduceMotion) {
+      cancelAnimation(ghostLiftY);
+      cancelAnimation(ghostTravelX);
+      cancelAnimation(ghostTiltDeg);
+      ghostLiftY.value = 0;
+      ghostTravelX.value = 0;
+      ghostTiltDeg.value = 0;
+      setGhost(null);
+      return;
+    }
+
+    const srcPos = bottlePositionsRef.current[pouringFrom];
+    const dstPos = bottlePositionsRef.current[pouringTo];
+    if (!srcPos || !dstPos) return; // layout not measured yet — silent fallback
+
+    const dx = dstPos.x - srcPos.x;
+    const liftHeight = bottleHRef.current + 20;
+    const tiltAngle = pouringFrom < pouringTo ? TILT_DEG : -TILT_DEG;
+
+    const sourceBottle = stateRef.current.bottles[pouringFrom];
+    if (!sourceBottle) return;
+
+    ghostLiftY.value = 0;
+    ghostTravelX.value = 0;
+    ghostTiltDeg.value = 0;
+
+    setGhost({
+      bottle: sourceBottle,
+      bottleIndex: pouringFrom,
+      startX: srcPos.x,
+      startY: srcPos.y,
+    });
+
+    // Lift → travel → tilt in → hold → tilt out → return travel → lower (~1200ms total).
+    // Ghost clears at ~1200ms; SortScreen commits state at 1250ms — the 50ms gap is
+    // imperceptible and ensures the state update lands after the animation completes.
+    ghostLiftY.value = withTiming(-liftHeight, { duration: LIFT_MS }, (finished) => {
+      if (!finished) return;
+      ghostTravelX.value = withTiming(dx, { duration: TRAVEL_MS }, (finished) => {
+        if (!finished) return;
+        ghostTiltDeg.value = withTiming(tiltAngle, { duration: TILT_IN_MS }, (finished) => {
+          if (!finished) return;
+          ghostTiltDeg.value = withDelay(
+            TILT_HOLD_MS,
+            withTiming(0, { duration: TILT_OUT_MS }, (finished) => {
+              if (!finished) return;
+              ghostTravelX.value = withTiming(0, { duration: TRAVEL_MS }, (finished) => {
+                if (!finished) return;
+                ghostLiftY.value = withTiming(0, { duration: LIFT_MS }, () => {
+                  runOnJS(setGhost)(null);
+                });
+              });
+            })
+          );
+        });
+      });
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pouringFrom, pouringTo, reduceMotion]);
+
+  // Pour tilt direction — used for reduce-motion fallback only
   const pouringDirection: "left" | "right" | undefined =
     pouringFrom !== null && pouringTo !== null
       ? pouringFrom < pouringTo
@@ -76,15 +189,36 @@ export default function SortBoard({
 
   return (
     <View accessibilityLabel={t("a11y.boardRegion")} accessibilityRole="none" style={styles.board}>
-      <View style={[styles.grid, { gap: BOTTLE_GAP }]}>
+      <View
+        style={[styles.grid, { gap: BOTTLE_GAP }]}
+        onLayout={(e) => {
+          gridOffsetRef.current = {
+            x: e.nativeEvent.layout.x,
+            y: e.nativeEvent.layout.y,
+          };
+        }}
+      >
         {state.bottles.map((bottle, idx) => (
-          <View key={idx} style={[styles.bottleCell, { width: bottleW }]}>
+          <View
+            key={idx}
+            style={[
+              styles.bottleCell,
+              { width: bottleW },
+              idx === pouringFrom && ghost !== null ? styles.bottleHidden : null,
+            ]}
+            onLayout={(e) => {
+              bottlePositionsRef.current[idx] = {
+                x: gridOffsetRef.current.x + e.nativeEvent.layout.x,
+                y: gridOffsetRef.current.y + e.nativeEvent.layout.y,
+              };
+            }}
+          >
             <BottleView
               bottle={bottle}
               index={idx}
               selected={state.selectedBottleIndex === idx}
-              pouring={idx === pouringFrom}
-              pouringDirection={idx === pouringFrom ? pouringDirection : undefined}
+              pouring={reduceMotion ? idx === pouringFrom : false}
+              pouringDirection={reduceMotion && idx === pouringFrom ? pouringDirection : undefined}
               colorblindMode={colorblindMode}
               bottleWidth={bottleW}
               bottleHeight={bottleH}
@@ -93,6 +227,40 @@ export default function SortBoard({
           </View>
         ))}
       </View>
+
+      {/* Ghost bottle overlay — floats above grid during pour animation.
+          ghost is only set when !reduceMotion, so the extra guard is omitted. */}
+      {ghost !== null && (
+        <View
+          style={StyleSheet.absoluteFill}
+          pointerEvents="none"
+          accessibilityElementsHidden
+          importantForAccessibility="no-hide-descendants"
+        >
+          <Animated.View
+            style={[
+              styles.ghostBottle,
+              {
+                left: ghost.startX,
+                top: ghost.startY,
+                width: bottleW,
+                height: bottleH,
+              },
+              ghostAnimStyle,
+            ]}
+          >
+            <BottleView
+              bottle={ghost.bottle}
+              index={ghost.bottleIndex}
+              isGhost
+              colorblindMode={colorblindMode}
+              bottleWidth={bottleW}
+              bottleHeight={bottleH}
+            />
+          </Animated.View>
+        </View>
+      )}
+
       <SortWinOverlay visible={state.isComplete} />
     </View>
   );
@@ -227,6 +395,12 @@ const styles = StyleSheet.create({
   },
   bottleCell: {
     alignItems: "center",
+  },
+  bottleHidden: {
+    opacity: 0,
+  },
+  ghostBottle: {
+    position: "absolute",
   },
   particle: { position: "absolute", width: 20, height: 20, borderRadius: 10, top: 0 },
   p0: { left: "8%" },

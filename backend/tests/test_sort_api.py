@@ -59,6 +59,11 @@ class TestGetLevels:
         ids = [lvl["id"] for lvl in levels]
         assert ids == list(range(1, 21))
 
+    def test_consecutive_calls_return_different_levels(self):
+        r1 = client.get("/sort/levels", headers=_HEADERS).json()["levels"]
+        r2 = client.get("/sort/levels", headers=_HEADERS).json()["levels"]
+        assert r1 != r2
+
 
 # ---------------------------------------------------------------------------
 # POST /sort/score

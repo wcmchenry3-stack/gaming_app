@@ -147,6 +147,43 @@ LEVEL_SPECS = [
 ]
 
 
+def _build_level_fast(
+    colors: list[str], n_empty: int, rng: random.Random, max_attempts: int = 1000
+) -> list[list[str]]:
+    """Generate a non-trivial level without BFS (for 5+ colors where state space is too large)."""
+    units = [c for c in colors for _ in range(DEPTH)]
+    for _ in range(max_attempts):
+        rng.shuffle(units)
+        state: list[list[str]] = [
+            list(units[i * DEPTH : (i + 1) * DEPTH]) for i in range(len(colors))
+        ]
+        state += [[] for _ in range(n_empty)]
+        if not _is_trivial(state):
+            return state
+    raise RuntimeError(
+        f"No non-trivial level found after {max_attempts} attempts "
+        f"({len(colors)} colors, {n_empty} empty)"
+    )
+
+
+def build_levels(seed: int | None = None) -> list[dict]:
+    """Generate 20 levels with fresh randomisation. seed=None uses a random seed.
+
+    Levels with ≤4 colors are BFS-verified solvable. Levels with 5+ colors skip
+    full BFS (state space exceeds the cap anyway) and are assumed solvable given a
+    non-trivial, balanced random distribution with 2+ empty bottles.
+    """
+    rng = random.Random(seed)
+    levels = []
+    for level_id, colors, n_empty in LEVEL_SPECS:
+        if len(colors) <= 4:
+            state = generate_level(colors, n_empty, rng)
+        else:
+            state = _build_level_fast(colors, n_empty, rng)
+        levels.append({"id": level_id, "bottles": to_json_bottles(state)})
+    return levels
+
+
 def main() -> None:
     rng = random.Random(42)
     levels = []
