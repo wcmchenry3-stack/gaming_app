@@ -803,7 +803,15 @@ export default function DailyWordScreen() {
     setSubmitting(true);
     try {
       const result = await dailyWordApi.submitGuess(s.puzzle_id, guess, tzOffset);
-      if (__DEV__) devLog.push({ ts: _devTs, method: "POST", path: "/daily-word/guess", body: _devBody, status: 200, response: result });
+      if (__DEV__)
+        devLog.push({
+          ts: _devTs,
+          method: "POST",
+          path: "/daily-word/guess",
+          body: _devBody,
+          status: 200,
+          response: result,
+        });
       const tileStates = result.tiles.map((t) => ({ letter: t.letter, status: t.status }));
 
       const afterApply = applyServerResult(s, tileStates);
@@ -840,7 +848,15 @@ export default function DailyWordScreen() {
         }
       }, totalFlipMs);
     } catch (err) {
-      if (__DEV__) devLog.push({ ts: _devTs, method: "POST", path: "/daily-word/guess", body: _devBody, status: err instanceof ApiError ? err.status : undefined, error: err instanceof ApiError ? err.message : String(err) });
+      if (__DEV__)
+        devLog.push({
+          ts: _devTs,
+          method: "POST",
+          path: "/daily-word/guess",
+          body: _devBody,
+          status: err instanceof ApiError ? err.status : undefined,
+          error: err instanceof ApiError ? err.message : String(err),
+        });
       if (err instanceof ApiError && err.status === 422) {
         if (err.message === "not_a_word") {
           showToast(t("error.notAWord"));
@@ -1013,7 +1029,9 @@ export default function DailyWordScreen() {
                       <Text style={[styles.devBtnText, { color: "#fff" }]}>Reset Game</Text>
                     </Pressable>
                     <Text style={styles.devWarningText}>
-                      {"Resets local board only — backend rate limit (6/hr per session+puzzle) still applies"}
+                      {
+                        "Resets local board only — backend rate limit (6/hr per session+puzzle) still applies"
+                      }
                     </Text>
                   </>
                 )}
@@ -1046,7 +1064,9 @@ export default function DailyWordScreen() {
                 </Pressable>
 
                 {devLogEntries.length === 0 && (
-                  <Text style={[styles.devInfoText, { color: colors.textMuted }]}>No API calls yet</Text>
+                  <Text style={[styles.devInfoText, { color: colors.textMuted }]}>
+                    No API calls yet
+                  </Text>
                 )}
 
                 {devLogEntries.map((entry, idx) => (
@@ -1072,7 +1092,12 @@ export default function DailyWordScreen() {
                       <Text style={styles.devLogPath} numberOfLines={1}>
                         {entry.method} {entry.path.split("?")[0]}
                       </Text>
-                      <Text style={[styles.devInfoText, { color: colors.textMuted, flex: 0, fontSize: 10 }]}>
+                      <Text
+                        style={[
+                          styles.devInfoText,
+                          { color: colors.textMuted, flex: 0, fontSize: 10 },
+                        ]}
+                      >
                         {new Date(entry.ts).toLocaleTimeString()}
                       </Text>
                     </View>
