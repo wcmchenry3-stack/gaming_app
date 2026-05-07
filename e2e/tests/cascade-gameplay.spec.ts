@@ -43,10 +43,10 @@ test.describe("Cascade — merge and score behavior", () => {
   });
 
   test("two tier-1 fruits merge → score = 4", async ({ page }) => {
-    // Tier-1 radius=25, sum-of-radii=50. Place 49px apart (1px contact) so
-    // Rapier fires CollisionStart without explosive penetration-correction.
+    // Tier-1 radius=25, sum-of-radii=50. Place 44px apart (6px overlap, ~12%)
+    // so Rapier fires CollisionStart reliably — mirrors the watermelon test design.
     await spawnTierAt(page, 1, 145);
-    await spawnTierAt(page, 1, 194);
+    await spawnTierAt(page, 1, 189);
     await fastForward(page, 2000);
 
     const state = await getState(page);
@@ -119,10 +119,11 @@ test.describe("Cascade — merge and score behavior", () => {
     await spawnTierAt(page, 0, 185);
     await fastForward(page, 2000);
 
-    // tier-2 merge (+8): 65px apart (radius=33, sum=66) → 1px contact.
-    // Start at x=235 to clear the tier-1 body spawned above (at x≈167, radius=25).
+    // tier-2 merge (+8): 58px apart (radius=33, sum=66, 8px overlap ~12%)
+    // so Rapier fires CollisionStart reliably. Start at x=235 to clear the
+    // tier-1 body spawned above (at x≈167, radius=25, rightmost edge ≈192).
     await spawnTierAt(page, 2, 235);
-    await spawnTierAt(page, 2, 300);
+    await spawnTierAt(page, 2, 293);
     await fastForward(page, 2000);
 
     const state = await getState(page);
