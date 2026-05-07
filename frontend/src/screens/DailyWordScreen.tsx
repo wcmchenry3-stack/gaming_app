@@ -163,7 +163,13 @@ function WordTile({
     transform: [{ rotateY: `${rotation.value}deg` }],
   }));
 
-  const bg = TILE_STATUS_COLORS[visibleStatus];
+  // During the first half of the flip, visibleStatus is still "tbd" (transparent).
+  // A transparent background rotates against the dark screen and causes a black
+  // compositing artifact on web. Use a solid surface color while flipping instead.
+  const bg =
+    isFlipping && (visibleStatus === "tbd" || visibleStatus === "empty")
+      ? (colors.surface ?? "#1a1a1b")
+      : TILE_STATUS_COLORS[visibleStatus];
   const hasBorder = visibleStatus === "empty" || visibleStatus === "tbd";
   const borderColor = letter ? colors.textMuted : colors.border;
 
@@ -779,9 +785,17 @@ export default function DailyWordScreen() {
   const stateRef = useRef<DailyWordState | null>(null);
   stateRef.current = state;
 
+  const lastSubmitMsRef = useRef<number>(0);
+
   const onSubmit = useCallback(async () => {
     const s = stateRef.current;
     if (!s || submitting || s.is_complete) return;
+
+    // Debounce rapid double-taps (e.g. two Enter presses within 500 ms) so they
+    // don't consume a rate-limit slot without advancing the game.
+    const now = Date.now();
+    if (now - lastSubmitMsRef.current < 500) return;
+    lastSubmitMsRef.current = now;
 
     const row = s.rows[s.current_row];
     if (!row) return;
@@ -931,13 +945,19 @@ export default function DailyWordScreen() {
           </View>
         )}
 
-        {/* Keyboard */}
-        {state !== null && !state.is_complete && (
-          <WordKeyboard
-            keyboardState={state.keyboard_state}
-            language={language}
-            onKey={handleKey}
-          />
+        {/* Keyboard — always rendered to prevent layout jump during flip animation;
+            hidden via opacity + pointerEvents once game is complete */}
+        {state !== null && (
+          <View
+            style={{ opacity: state.is_complete ? 0 : 1 }}
+            pointerEvents={state.is_complete ? "none" : "auto"}
+          >
+            <WordKeyboard
+              keyboardState={state.keyboard_state}
+              language={language}
+              onKey={handleKey}
+            />
+          </View>
         )}
 
         {/* Loading indicator during submit */}
@@ -1030,7 +1050,7 @@ export default function DailyWordScreen() {
                     </Pressable>
                     <Text style={styles.devWarningText}>
                       {
-                        "Resets local board only — backend rate limit (6/hr per session+puzzle) still applies"
+                        "Resets local board only — backend rate limit (20/hr per session+puzzle) still applies"
                       }
                     </Text>
                   </>

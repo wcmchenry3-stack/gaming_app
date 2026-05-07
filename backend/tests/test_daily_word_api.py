@@ -255,7 +255,7 @@ def test_brute_force_rate_limited(client: TestClient) -> None:
     headers = _sid_headers()
     puzzle_id = _today_puzzle_id()
 
-    for _ in range(6):
+    for _ in range(20):
         r = client.post(
             "/daily-word/guess",
             headers=headers,
@@ -263,12 +263,12 @@ def test_brute_force_rate_limited(client: TestClient) -> None:
         )
         assert r.status_code == 200
 
-    r7 = client.post(
+    r21 = client.post(
         "/daily-word/guess",
         headers=headers,
         json={"puzzle_id": puzzle_id, "guess": "crane", "tz_offset_minutes": 0},
     )
-    assert r7.status_code == 429
+    assert r21.status_code == 429
 
 
 # ---------------------------------------------------------------------------

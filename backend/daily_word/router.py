@@ -2,8 +2,10 @@
 
 Rate limits:
   GET /today   — 60/minute (IP-keyed, no auth)
-  POST /guess  — 6/hour keyed by f"{session_id}:{puzzle_id}" (compound key
-                 isolates by puzzle so the limit resets naturally each new day)
+  POST /guess  — 20/hour keyed by f"{session_id}:{puzzle_id}" (compound key
+                 isolates by puzzle so the limit resets naturally each new day;
+                 20/hour gives 6 real guesses + room for invalid-word attempts
+                 and network retries without blocking a legitimate game)
 """
 
 from __future__ import annotations
@@ -101,7 +103,7 @@ async def get_today(
 
 
 @router.post("/guess")
-@limiter.limit("6/hour", key_func=_guess_key)
+@limiter.limit("20/hour", key_func=_guess_key)
 async def post_guess(request: Request, body: GuessRequest) -> dict:
     get_session_id(request)
 
