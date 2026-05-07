@@ -468,7 +468,9 @@ describe("game-over hysteresis", () => {
     // Inject a synthetic merge between the pair → resets ticksSinceLastMerge to 0
     const allDynamic = getDynamic();
     const mergeBodyA = allDynamic.find((b) => Math.abs(b.position.y - 300) < 20)!;
-    const mergeBodyB = allDynamic.find((b) => b !== mergeBodyA && Math.abs(b.position.y - 300) < 20)!;
+    const mergeBodyB = allDynamic.find(
+      (b) => b !== mergeBodyA && Math.abs(b.position.y - 300) < 20
+    )!;
     Matter.Events.trigger(engineInstance, "collisionStart", {
       pairs: [{ bodyA: mergeBodyA, bodyB: mergeBodyB }],
     });
