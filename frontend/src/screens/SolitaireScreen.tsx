@@ -16,7 +16,7 @@
  * is intentionally route-agnostic and reads its navigation via the hook.
  */
 
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Animated,
@@ -74,6 +74,7 @@ import { useGameSync } from "../game/_shared/useGameSync";
 import { useNetwork } from "../game/_shared/NetworkContext";
 import { OfflineBanner } from "../components/shared/OfflineBanner";
 import { useCardSelection } from "../game/_shared/useCardSelection";
+import { rankLabel } from "../game/_shared/decks/cardId";
 
 const TABLEAU_COLS = 7;
 const COL_GAP = 6;
@@ -599,6 +600,36 @@ export default function SolitaireScreen() {
     return selection.index;
   };
 
+  const selectionLabel = useMemo((): string | null => {
+    if (!selection || !state) return null;
+    if (selection.kind === "waste") {
+      const card = state.waste[state.waste.length - 1];
+      if (!card?.faceUp) return null;
+      return t("card.faceUpSelected", {
+        rank: rankLabel(card.rank),
+        suit: t(`suit.${card.suit}` as const),
+      });
+    }
+    if (selection.kind === "foundation") {
+      const pile = state.foundations[selection.suit];
+      const card = pile[pile.length - 1];
+      if (!card) return null;
+      return t("card.faceUpSelected", {
+        rank: rankLabel(card.rank),
+        suit: t(`suit.${card.suit}` as const),
+      });
+    }
+    // tableau
+    const col = state.tableau[selection.col];
+    const card = col?.[selection.index];
+    if (!card) return null;
+    if (!card.faceUp) return t("card.faceDownSelected");
+    return t("card.faceUpSelected", {
+      rank: rankLabel(card.rank),
+      suit: t(`suit.${card.suit}` as const),
+    });
+  }, [selection, state, t]);
+
   return (
     <DragProvider getLegalDropIds={getLegalDropIds}>
       <GameShell
@@ -684,6 +715,14 @@ export default function SolitaireScreen() {
                     ]}
                   />
                 </View>
+
+                {selectionLabel !== null && (
+                  <View style={styles.selectionIndicator} accessibilityLiveRegion="polite">
+                    <Text style={[styles.selectionIndicatorText, { color: colors.accent }]}>
+                      {selectionLabel}
+                    </Text>
+                  </View>
+                )}
 
                 <View style={[styles.tableauRow, { minHeight: cardSize.cardHeight * 3 }]}>
                   {state.tableau.map((pile, col) => (
@@ -973,6 +1012,15 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     gap: COL_GAP,
     marginBottom: 12,
+  },
+  selectionIndicator: {
+    alignItems: "center",
+    paddingVertical: 4,
+  },
+  selectionIndicatorText: {
+    fontSize: 13,
+    fontWeight: "700",
+    letterSpacing: 0.4,
   },
   tableauRow: {
     flexDirection: "row",
