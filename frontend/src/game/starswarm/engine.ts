@@ -1107,7 +1107,12 @@ function tickDiving(
   };
 }
 
-function tickCircling(enemy: Enemy, dtMs: number, playerX: number, playerY: number): EnemyTickResult {
+function tickCircling(
+  enemy: Enemy,
+  dtMs: number,
+  playerX: number,
+  playerY: number
+): EnemyTickResult {
   const newAngle = enemy.circleAngle + enemy.circleSpeed * dtMs;
   const newX = enemy.circleCx + Math.cos(newAngle) * enemy.circleRadius;
   const newY = enemy.circleCy + Math.sin(newAngle) * enemy.circleRadius;
@@ -1262,7 +1267,11 @@ function tickEnemies(state: StarSwarmState, dtMs: number): StarSwarmState {
     if (e.isAlive && e.hitFlashTimer > 0) {
       e = { ...e, hitFlashTimer: Math.max(0, e.hitFlashTimer - dtMs) };
     }
-    if (result.bullet && newEnemyBullets.length < bulletCap(state.wave, _ps) && !state.enemyFireDisabled) {
+    if (
+      result.bullet &&
+      newEnemyBullets.length < bulletCap(state.wave, _ps) &&
+      !state.enemyFireDisabled
+    ) {
       newEnemyBullets.push(result.bullet);
     }
     return e;

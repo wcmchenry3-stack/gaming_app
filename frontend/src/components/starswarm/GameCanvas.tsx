@@ -250,9 +250,12 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
             const pauseStraggler = devOptionsRef.current?.pauseStraggler ?? false;
             const playerFireDisabled = devOptionsRef.current?.playerFireDisabled ?? false;
             const enemyFireDisabled = devOptionsRef.current?.enemyFireDisabled ?? false;
-            let tickInput = prev.pauseStraggler !== pauseStraggler ? { ...prev, pauseStraggler } : prev;
-            if (tickInput.playerFireDisabled !== playerFireDisabled) tickInput = { ...tickInput, playerFireDisabled };
-            if (tickInput.enemyFireDisabled !== enemyFireDisabled) tickInput = { ...tickInput, enemyFireDisabled };
+            let tickInput =
+              prev.pauseStraggler !== pauseStraggler ? { ...prev, pauseStraggler } : prev;
+            if (tickInput.playerFireDisabled !== playerFireDisabled)
+              tickInput = { ...tickInput, playerFireDisabled };
+            if (tickInput.enemyFireDisabled !== enemyFireDisabled)
+              tickInput = { ...tickInput, enemyFireDisabled };
             const next = tick(tickInput, dtMs, {
               playerX: inputRef.current.playerX,
               fire: inputRef.current.fire,
@@ -434,31 +437,32 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
                       color={fallbackColor}
                     />
                   )}
-                  {enemy.hitFlashTimer > 0 && (() => {
-                    const progress = 1 - enemy.hitFlashTimer / HIT_FLASH_DURATION;
-                    const refR = Math.max(enemy.width, enemy.height) * 0.6;
-                    const r = refR * (0.6 + 0.5 * progress);
-                    const a = enemy.hitFlashTimer / HIT_FLASH_DURATION; // 1→0 as burst plays
-                    return (
-                      <>
-                        <Circle
-                          cx={enemy.x}
-                          cy={enemy.y}
-                          r={r}
-                          color={`rgba(0,170,255,${(a * 0.25).toFixed(3)})`}
-                          style="fill"
-                        />
-                        <Circle
-                          cx={enemy.x}
-                          cy={enemy.y}
-                          r={r}
-                          color={`rgba(0,170,255,${(a * 0.75).toFixed(3)})`}
-                          style="stroke"
-                          strokeWidth={2}
-                        />
-                      </>
-                    );
-                  })()}
+                  {enemy.hitFlashTimer > 0 &&
+                    (() => {
+                      const progress = 1 - enemy.hitFlashTimer / HIT_FLASH_DURATION;
+                      const refR = Math.max(enemy.width, enemy.height) * 0.6;
+                      const r = refR * (0.6 + 0.5 * progress);
+                      const a = enemy.hitFlashTimer / HIT_FLASH_DURATION; // 1→0 as burst plays
+                      return (
+                        <>
+                          <Circle
+                            cx={enemy.x}
+                            cy={enemy.y}
+                            r={r}
+                            color={`rgba(0,170,255,${(a * 0.25).toFixed(3)})`}
+                            style="fill"
+                          />
+                          <Circle
+                            cx={enemy.x}
+                            cy={enemy.y}
+                            r={r}
+                            color={`rgba(0,170,255,${(a * 0.75).toFixed(3)})`}
+                            style="stroke"
+                            strokeWidth={2}
+                          />
+                        </>
+                      );
+                    })()}
                 </Group>
               );
             })}

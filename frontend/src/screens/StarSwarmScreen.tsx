@@ -226,12 +226,16 @@ export default function StarSwarmScreen() {
               // then override live-toggleable fields so they propagate mid-game without New Game.
               // pauseStraggler is also overridden here (fixes a pre-existing gap where the toggle
               // only took effect after New Game).
-              devOptions={__DEV__ ? {
-                ...lastDevOptsRef.current,
-                pauseStraggler: devPauseStraggler,
-                playerFireDisabled: devPlayerFireOff,
-                enemyFireDisabled: devEnemyFireOff,
-              } : undefined}
+              devOptions={
+                __DEV__
+                  ? {
+                      ...lastDevOptsRef.current,
+                      pauseStraggler: devPauseStraggler,
+                      playerFireDisabled: devPlayerFireOff,
+                      enemyFireDisabled: devEnemyFireOff,
+                    }
+                  : undefined
+              }
             />
             <Controls
               canvasRef={canvasRef}
@@ -368,10 +372,7 @@ export default function StarSwarmScreen() {
                 {DIFFICULTY_TIERS.map((tier) => (
                   <Pressable
                     key={tier}
-                    style={[
-                      styles.devTierBtn,
-                      devDifficulty === tier && styles.devTierBtnActive,
-                    ]}
+                    style={[styles.devTierBtn, devDifficulty === tier && styles.devTierBtnActive]}
                     onPress={() => setDevDifficulty(tier)}
                     accessibilityLabel={`Dev difficulty ${difficultyLabel(tier)}`}
                   >
