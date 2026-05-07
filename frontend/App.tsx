@@ -250,7 +250,7 @@ function MainTabs() {
   return (
     <Tab.Navigator
       tabBar={(props) => <BottomTabBar {...props} />}
-      screenOptions={{ headerShown: false, tabBarPosition: 'bottom' }}
+      screenOptions={{ headerShown: false, tabBarPosition: "bottom" }}
     >
       <Tab.Screen name="Lobby" component={LobbyStack} />
       <Tab.Screen name="Ranks" component={LazyLeaderboardScreen} />
