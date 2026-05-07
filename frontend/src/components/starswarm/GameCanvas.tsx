@@ -16,6 +16,7 @@ import {
   tick,
   applyPowerUp,
   BULLET_C_W,
+  HIT_FLASH_DURATION,
   POWERUP_DURATION,
   difficultyLabel,
   difficultyMultiplier,
@@ -41,6 +42,10 @@ export interface DevOptions {
   pauseStraggler?: boolean;
   /** Override difficulty tier for this game (#1037). */
   difficulty?: DifficultyTier;
+  /** Suppress player bullet spawning (#1311). */
+  playerFireDisabled?: boolean;
+  /** Suppress enemy bullet spawning (#1311). */
+  enemyFireDisabled?: boolean;
 }
 
 export interface GameCanvasHandle {
@@ -243,8 +248,14 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
             const prevCooldown = prev.player.shootCooldown;
             // #1039: apply pauseStraggler from devOptions each tick
             const pauseStraggler = devOptionsRef.current?.pauseStraggler ?? false;
-            const tickInput =
+            const playerFireDisabled = devOptionsRef.current?.playerFireDisabled ?? false;
+            const enemyFireDisabled = devOptionsRef.current?.enemyFireDisabled ?? false;
+            let tickInput =
               prev.pauseStraggler !== pauseStraggler ? { ...prev, pauseStraggler } : prev;
+            if (tickInput.playerFireDisabled !== playerFireDisabled)
+              tickInput = { ...tickInput, playerFireDisabled };
+            if (tickInput.enemyFireDisabled !== enemyFireDisabled)
+              tickInput = { ...tickInput, enemyFireDisabled };
             const next = tick(tickInput, dtMs, {
               playerX: inputRef.current.playerX,
               fire: inputRef.current.fire,
@@ -426,15 +437,32 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
                       color={fallbackColor}
                     />
                   )}
-                  {enemy.hitFlashTimer > 0 && (
-                    <Rect
-                      x={enemy.x - enemy.width / 2}
-                      y={enemy.y - enemy.height / 2}
-                      width={enemy.width}
-                      height={enemy.height}
-                      color="rgba(255,255,255,0.7)"
-                    />
-                  )}
+                  {enemy.hitFlashTimer > 0 &&
+                    (() => {
+                      const progress = 1 - enemy.hitFlashTimer / HIT_FLASH_DURATION;
+                      const refR = Math.max(enemy.width, enemy.height) * 0.6;
+                      const r = refR * (0.6 + 0.5 * progress);
+                      const a = enemy.hitFlashTimer / HIT_FLASH_DURATION; // 1→0 as burst plays
+                      return (
+                        <>
+                          <Circle
+                            cx={enemy.x}
+                            cy={enemy.y}
+                            r={r}
+                            color={`rgba(0,170,255,${(a * 0.25).toFixed(3)})`}
+                            style="fill"
+                          />
+                          <Circle
+                            cx={enemy.x}
+                            cy={enemy.y}
+                            r={r}
+                            color={`rgba(0,170,255,${(a * 0.75).toFixed(3)})`}
+                            style="stroke"
+                            strokeWidth={2}
+                          />
+                        </>
+                      );
+                    })()}
                 </Group>
               );
             })}
