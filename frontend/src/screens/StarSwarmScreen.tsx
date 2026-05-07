@@ -222,6 +222,10 @@ export default function StarSwarmScreen() {
               scale={scale}
               difficulty={difficulty}
               resetTick={resetTick}
+              // #1311/#1312: spread lastDevOptsRef for new-game options (wave, lives, etc.),
+              // then override live-toggleable fields so they propagate mid-game without New Game.
+              // pauseStraggler is also overridden here (fixes a pre-existing gap where the toggle
+              // only took effect after New Game).
               devOptions={__DEV__ ? {
                 ...lastDevOptsRef.current,
                 pauseStraggler: devPauseStraggler,
@@ -297,7 +301,12 @@ export default function StarSwarmScreen() {
         )}
 
         {__DEV__ && devPanelOpen && (
-          <View style={dynamicStyles.devPanelOverlay}>
+          <View
+            style={dynamicStyles.devPanelOverlay}
+            accessible
+            accessibilityLabel="Developer panel"
+            accessibilityRole="menu"
+          >
             <ScrollView
               showsVerticalScrollIndicator={false}
               contentContainerStyle={styles.devScrollContent}

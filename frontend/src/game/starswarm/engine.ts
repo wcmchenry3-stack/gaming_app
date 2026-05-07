@@ -550,7 +550,9 @@ export function bulletCap(wave: number, paramScale = 1): number {
   return Math.min(24, Math.round((3 + Math.floor((wave - 1) / 2)) * paramScale));
 }
 
-// #1314: proportional aim — keeps vy = BULLET_E_VY (same arrival time), scales vx to intersect the player
+// #1314: proportional aim — keeps vy = BULLET_E_VY (same arrival time), scales vx to intersect the player.
+// vx is capped at ±BULLET_E_VY so the bullet never travels more than 45° from vertical; without the cap,
+// circling enemies near the player's altitude produce extreme vx values (dy is small → dx/dy blows up).
 function aimVelocity(
   enemyX: number,
   enemyY: number,
@@ -560,7 +562,9 @@ function aimVelocity(
   const dy = playerY - enemyY;
   if (dy <= 0) return { vx: 0, vy: BULLET_E_VY }; // player at or above enemy — fire straight down
   const dx = playerX - enemyX;
-  return { vx: (dx / dy) * BULLET_E_VY, vy: BULLET_E_VY };
+  const rawVx = (dx / dy) * BULLET_E_VY;
+  const vx = Math.max(-BULLET_E_VY, Math.min(BULLET_E_VY, rawVx));
+  return { vx, vy: BULLET_E_VY };
 }
 
 // #924/#1314: compute velocity for a Grunt enemy bullet — straight down before wave 1+;
@@ -1536,7 +1540,7 @@ function tickCollisions(state: StarSwarmState): StarSwarmState {
           if (state.phase === "Playing") killsSinceLastDrop++;
           return { ...e, hp: 0, isAlive: false, hitFlashTimer: 0 };
         }
-        return { ...e, hp: newHp, hitFlashTimer: 120 };
+        return { ...e, hp: newHp, hitFlashTimer: HIT_FLASH_DURATION };
       });
     } else if (collected.type === "buddy") {
       // #1035: spawn a buddy ship
@@ -1814,7 +1818,7 @@ export function applyPowerUp(state: StarSwarmState, type: PowerUpType): StarSwar
         killsSinceLastDrop++;
         return { ...e, hp: 0, isAlive: false, hitFlashTimer: 0 };
       }
-      return { ...e, hp: newHp, hitFlashTimer: 120 };
+      return { ...e, hp: newHp, hitFlashTimer: HIT_FLASH_DURATION };
     });
     return {
       ...state,
