@@ -67,7 +67,11 @@ export default function ScoreRow({
       <View style={styles.labelBox}>
         {!compact && <CategoryIcon category={category} tone={tone} muted={!isFilled} />}
         <Text
-          style={[styles.label, compact && styles.labelCompact, { color: isFilled ? colors.text : colors.textMuted }]}
+          style={[
+            styles.label,
+            compact && styles.labelCompact,
+            { color: isFilled ? colors.text : colors.textMuted },
+          ]}
           numberOfLines={1}
         >
           {label}

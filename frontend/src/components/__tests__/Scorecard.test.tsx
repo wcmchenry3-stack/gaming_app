@@ -95,7 +95,9 @@ describe("Scorecard — wide layout (≥600dp)", () => {
   afterEach(() => {
     dimSpy.mockRestore();
     // Restore the narrow-viewport default for subsequent describe blocks
-    jest.spyOn(Dimensions, "get").mockReturnValue({ width: 390, height: 844, scale: 1, fontScale: 1 });
+    jest
+      .spyOn(Dimensions, "get")
+      .mockReturnValue({ width: 390, height: 844, scale: 1, fontScale: 1 });
   });
 
   it("renders all 13 categories without tabs", () => {

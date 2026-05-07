@@ -107,7 +107,9 @@ export default function Scorecard({
     return (
       <>
         <View style={styles.badgeRow}>
-          <View style={[styles.badge, { backgroundColor: colors.surface, borderColor: colors.accent }]}>
+          <View
+            style={[styles.badge, { backgroundColor: colors.surface, borderColor: colors.accent }]}
+          >
             <Text style={[styles.badgeText, { color: colors.accent }]}>{t("bonus.badge")}</Text>
           </View>
         </View>
@@ -122,10 +124,7 @@ export default function Scorecard({
         <View style={[styles.bonusRow, { borderTopColor: colors.border }]}>
           <Text style={[styles.bonusLabel, { color: colors.textMuted }]}>{t("bonus.label")}</Text>
           <Text
-            style={[
-              styles.bonusValue,
-              { color: upperBonus > 0 ? colors.bonus : colors.textMuted },
-            ]}
+            style={[styles.bonusValue, { color: upperBonus > 0 ? colors.bonus : colors.textMuted }]}
           >
             {upperBonus > 0
               ? t("bonus.achieved", { subtotal: upperSubtotal })
