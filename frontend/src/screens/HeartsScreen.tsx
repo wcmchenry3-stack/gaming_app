@@ -93,6 +93,7 @@ export default function HeartsScreen() {
   const gameStateRef = useRef<HeartsState | null>(gameState);
   const trickAnimResolverRef = useRef<(() => void) | null>(null);
   const humanJustPlayedQSRef = useRef(false);
+  const gameOverFiredRef = useRef(false);
   const reportIntegrity = useMemo(() => createIntegrityReporter(), []);
 
   const {
@@ -286,7 +287,10 @@ export default function HeartsScreen() {
   }, [gameState?.phase, gameState?.cumulativeScores, syncComplete, syncGetGameId]);
 
   useEffect(() => {
-    if (gameState?.phase === "game_over") playGameOver();
+    if (gameState?.phase === "game_over" && !gameOverFiredRef.current) {
+      gameOverFiredRef.current = true;
+      playGameOver();
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [gameState?.phase]);
 
@@ -324,7 +328,7 @@ export default function HeartsScreen() {
   // clears lastTrick directly.
   function handleTrickAnimationComplete() {
     if (unmountedRef.current) return;
-    playTrickWon();
+    if (gameState?.phase === "playing") playTrickWon();
     const resolve = trickAnimResolverRef.current;
     if (resolve) {
       trickAnimResolverRef.current = null;
@@ -386,6 +390,7 @@ export default function HeartsScreen() {
     setSubmitState("idle");
     setPlayerName("");
     loopActiveRef.current = false;
+    gameOverFiredRef.current = false;
     clearGame().catch(() => {});
     const fresh = dealGame(difficulty);
     setGameState(fresh);
@@ -396,6 +401,7 @@ export default function HeartsScreen() {
     setSubmitState("idle");
     setPlayerName("");
     loopActiveRef.current = false;
+    gameOverFiredRef.current = false;
     clearGame().catch(() => {});
     setGameState(null);
   }
