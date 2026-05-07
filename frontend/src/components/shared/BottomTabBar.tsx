@@ -38,6 +38,7 @@ export default function BottomTabBar({ state, navigation }: BottomTabBarProps) {
           shadowColor: colors.chromeShadowColor,
           shadowOpacity: colors.chromeShadowOpacity,
         },
+        Platform.OS === "web" && styles.wrapperWeb,
       ]}
     >
       {/* Blur background */}
@@ -116,6 +117,10 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: -4 },
     shadowRadius: 20,
     elevation: 8,
+  },
+  wrapperWeb: {
+    alignSelf: "stretch",
+    flexShrink: 0,
   },
   blurFallback: {
     borderTopLeftRadius: 32,
