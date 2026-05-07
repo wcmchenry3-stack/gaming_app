@@ -13,6 +13,7 @@
  * velocities settled, drift bounded. Sub-pixel parity with Rapier is not
  * asserted; that's covered by physics-parity.test.ts.
  */
+import Matter from "matter-js";
 import { createEngine } from "../engine.native";
 import type { EngineHandle, BodySnapshot } from "../engine.shared";
 import { WALL_THICKNESS, MAX_FRUIT_SPEED_PX_S } from "../engine.shared";
@@ -391,6 +392,51 @@ describe("two sprites — stacked drop, different tiers (no merge)", () => {
         expect(s.y + r).toBeLessThanOrEqual(innerFloorTop + 0.5);
         expect(s.y - r).toBeGreaterThan(0);
       }
+    }
+    handle.cleanup();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Stacked merge — spawn grace prevents explosion (#1226)
+// ---------------------------------------------------------------------------
+
+describe("stacked merge — spawn grace period", () => {
+  it("no body exceeds 50 px/s outward velocity in the merge frame", async () => {
+    // Two same-tier fruits sitting on top of each other trigger a merge.
+    // Pre-grace: the spawned body's midpoint is inside neighboring fruits,
+    // causing a large penetration-correction impulse that shoots them outward.
+    // With spawn grace: the new body can't collide with dynamic bodies for
+    // SPAWN_GRACE_TICKS ticks, so no explosive impulse fires.
+    const createSpy = jest.spyOn(Matter.Engine, "create");
+    const handle = await buildEngine();
+    const engineInstance = createSpy.mock.results[0]?.value as Matter.Engine;
+
+    // Let two tier-0 fruits fall and collide naturally
+    handle.drop(fruit(0), fruitSet.id, W / 2 - 5, 30);
+    handle.drop(fruit(0), fruitSet.id, W / 2 + 5, 30);
+
+    let mergeFrame = -1;
+    for (let i = 0; i < 300; i++) {
+      const { events } = handle.step(DT);
+      if (events.some((e) => e.type === "fruitMerge")) {
+        mergeFrame = i;
+        break;
+      }
+    }
+    expect(mergeFrame).toBeGreaterThanOrEqual(0);
+
+    // On the step immediately after the merge, measure all body velocities.
+    handle.step(DT);
+    const MAX_OUTWARD_SPEED = 50; // px/s — generous threshold; explosions reach 500+ px/s
+    const bodiesAfterMerge = Matter.Composite.allBodies(engineInstance.world).filter(
+      (b) => !b.isStatic
+    );
+    for (const body of bodiesAfterMerge) {
+      const { x: vx, y: vy } = body.velocity;
+      // velocity in Matter.js is px/step; multiply by 60 for px/s
+      const speedPxS = Math.sqrt(vx * vx + vy * vy) * 60;
+      expect(speedPxS).toBeLessThanOrEqual(MAX_OUTWARD_SPEED);
     }
     handle.cleanup();
   });

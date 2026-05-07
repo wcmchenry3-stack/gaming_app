@@ -19,6 +19,9 @@ export {
   MATTER_VELOCITY_ITERATIONS,
   MATTER_SLEEP_THRESHOLD,
   MAX_FRUIT_SPEED_PX_S,
+  SPAWN_GRACE_TICKS,
+  COLLISION_GROUP_WALL,
+  COLLISION_GROUP_DYNAMIC,
 } from "./engine.shared";
 export type {
   FruitBody,
@@ -41,6 +44,9 @@ import {
   FIXED_STEP_MS,
   RAPIER_SOLVER_ITERATIONS,
   MAX_FRUIT_SPEED_PX_S,
+  SPAWN_GRACE_TICKS,
+  COLLISION_GROUP_WALL,
+  COLLISION_GROUP_DYNAMIC,
 } from "./engine.shared";
 import type { FruitBody, BodySnapshot, EngineHandle } from "./engine.shared";
 import type { GameEvent } from "./types";
@@ -101,6 +107,15 @@ export async function createEngine(
   const fruitMap = new Map<number, FruitBody>();
   // collider.handle → rigidBody.handle (for collision event lookup)
   const colliderToBody = new Map<number, number>();
+  // rigidBody.handle → primary Collider (for collision-group restoration after grace period)
+  const bodyToCollider = new Map<number, RAPIER_TYPE.Collider>();
+
+  // Packed InteractionGroups constants for Rapier:
+  //   normal: membership=DYNAMIC, filter=WALL|DYNAMIC
+  //   grace:  membership=DYNAMIC, filter=WALL only (no dynamic-vs-dynamic for SPAWN_GRACE_TICKS)
+  const NORMAL_GROUPS =
+    COLLISION_GROUP_DYNAMIC | ((COLLISION_GROUP_WALL | COLLISION_GROUP_DYNAMIC) << 16);
+  const GRACE_GROUPS = COLLISION_GROUP_DYNAMIC | (COLLISION_GROUP_WALL << 16);
 
   // --- Static walls and floor ---
   // Rapier cuboid takes half-extents, so divide sizes by 2.
@@ -142,12 +157,24 @@ export async function createEngine(
   // body, making fruitMap.get(handle) return the wrong tier in subsequent queue entries).
   const mergeQueue: Array<[number, number, number]> = []; // [handleA, handleB, tier]
 
-  function spawnAt(def: FruitDefinition, setId: string, x: number, y: number): FruitBody {
+  function spawnAt(
+    def: FruitDefinition,
+    setId: string,
+    x: number,
+    y: number,
+    graceTicks = 0
+  ): FruitBody {
     const rbDesc = R.RigidBodyDesc.dynamic()
       .setTranslation(x * SCALE, y * SCALE)
       .setCcdEnabled(true)
       .setCanSleep(true);
     const rb = world.createRigidBody(rbDesc);
+
+    if (graceTicks > 0) {
+      // Explicitly zero velocity so penetration-correction impulses from the
+      // spawn midpoint don't give the new body an initial kick.
+      rb.setLinvel({ x: 0, y: 0 }, true);
+    }
 
     const nameKey = (def as { nameKey?: string }).nameKey ?? def.name.toLowerCase();
     const verts = getVerticesForFruit(setId, nameKey);
@@ -184,6 +211,16 @@ export async function createEngine(
       );
     }
 
+    // Grace bodies (merge-spawned) filter out dynamic-vs-dynamic collisions for
+    // SPAWN_GRACE_TICKS to prevent phantom merges. Normal player drops use the
+    // Rapier default (all groups) — explicit NORMAL_GROUPS suppresses CollisionStart
+    // for deeply-overlapping bodies and breaks E2E tests.
+    if (graceTicks > 0) {
+      collider.setCollisionGroups(GRACE_GROUPS);
+    }
+
+    bodyToCollider.set(rb.handle, collider);
+
     const fb: FruitBody = {
       handle: rb.handle,
       fruitTier: def.tier,
@@ -192,6 +229,7 @@ export async function createEngine(
       createdAt: Date.now(),
       fruitRadius: def.radius,
       collisionVerts: verts,
+      graceTicksRemaining: graceTicks,
     };
     fruitMap.set(rb.handle, fb);
     colliderToBody.set(collider.handle, rb.handle);
@@ -201,7 +239,6 @@ export async function createEngine(
   function removeBody(bodyHandle: number): void {
     const rb = world.getRigidBody(bodyHandle);
     if (rb) {
-      // Unmap all colliders attached to this body
       const numColliders = rb.numColliders();
       for (let i = 0; i < numColliders; i++) {
         const c = rb.collider(i);
@@ -209,6 +246,7 @@ export async function createEngine(
       }
       world.removeRigidBody(rb);
     }
+    bodyToCollider.delete(bodyHandle);
     fruitMap.delete(bodyHandle);
   }
 
@@ -216,7 +254,9 @@ export async function createEngine(
     for (const [ha, hb, enqueuedTier] of mergeQueue) {
       const fa = fruitMap.get(ha);
       const fb = fruitMap.get(hb);
-      if (!fa || !fb || fa.isMerging || fb.isMerging) continue;
+      // isMerging is guaranteed true for all queued entries (set atomically at enqueue).
+      // The !fa/!fb guard catches the edge case where a body was already removed.
+      if (!fa || !fb) continue;
       // Re-verify tiers against the snapshot captured at enqueue time.
       // Rapier's generational arena can reuse a handle after removeRigidBody,
       // so fruitMap.get(ha) may now point to a newly spawned body with a
@@ -243,7 +283,7 @@ export async function createEngine(
       if (tier < 10) {
         const nextDef = fruitSet.fruits[(tier + 1) as FruitTier];
         if (nextDef !== undefined) {
-          const newFb = spawnAt(nextDef, fruitSet.id, midX, midY);
+          const newFb = spawnAt(nextDef, fruitSet.id, midX, midY, SPAWN_GRACE_TICKS);
           // Wake any sleeping neighbors within 2× spawn radius so they react to the new body.
           const wakeRadiusSq = (nextDef.radius * 2) ** 2;
           fruitMap.forEach((_fb2, wHandle) => {
@@ -282,7 +322,10 @@ export async function createEngine(
         accumulatorMs = Math.max(0, accumulatorMs - FIXED_STEP_MS);
       }
 
-      // Drain collision events → queue same-tier pairs for merging
+      // Drain collision events → queue same-tier pairs for merging.
+      // isMerging is set atomically here (before any positional read) so that
+      // a pair queued in a prior sub-step cannot enter a second queue entry
+      // during subsequent sub-steps of the same step() call.
       eventQueue.drainCollisionEvents((h1: number, h2: number, started: boolean) => {
         if (!started) return;
         const rbh1 = colliderToBody.get(h1);
@@ -291,7 +334,11 @@ export async function createEngine(
         const fa = fruitMap.get(rbh1);
         const fb = fruitMap.get(rbh2);
         if (!fa || !fb || fa.isMerging || fb.isMerging) return;
+        // Skip merges during grace period — the body is immune to dynamic collisions.
+        if (fa.graceTicksRemaining > 0 || fb.graceTicksRemaining > 0) return;
         if (fa.fruitTier === fb.fruitTier) {
+          fa.isMerging = true;
+          fb.isMerging = true;
           mergeQueue.push([rbh1, rbh2, fa.fruitTier]); // snapshot tier at enqueue
         }
       });
@@ -299,6 +346,16 @@ export async function createEngine(
       // Capture merge count before processing (processMerges clears the queue).
       const mergesThisStep = mergeQueue.length;
       processMerges(events);
+
+      // Grace-tick decrement: restore normal collision groups when the grace period expires.
+      fruitMap.forEach((fb, handle) => {
+        if (fb.graceTicksRemaining <= 0) return;
+        fb.graceTicksRemaining--;
+        if (fb.graceTicksRemaining === 0) {
+          const c = bodyToCollider.get(handle);
+          if (c) c.setCollisionGroups(NORMAL_GROUPS);
+        }
+      });
 
       // Cascade combo: fire when a chain of consecutive-step merges reaches COMBO_THRESHOLD.
       if (mergesThisStep > 0) {
@@ -398,6 +455,7 @@ export async function createEngine(
       disposed = true;
       fruitMap.clear();
       colliderToBody.clear();
+      bodyToCollider.clear();
       try {
         eventQueue.free();
       } catch {

@@ -11,6 +11,9 @@ import {
   MATTER_POSITION_ITERATIONS,
   MATTER_VELOCITY_ITERATIONS,
   MAX_FRUIT_SPEED_PX_S,
+  SPAWN_GRACE_TICKS,
+  COLLISION_GROUP_DYNAMIC,
+  COLLISION_GROUP_WALL,
 } from "../engine.shared";
 import { FRUIT_SETS, FruitSet, FruitDefinition } from "../../../theme/fruitSets";
 
@@ -541,6 +544,156 @@ describe("physics sub-stepping", () => {
     // 1/6s cap = ~166.67ms. Allow a hair of float drift.
     expect(totalMs).toBeLessThanOrEqual(1000 / 6 + 0.1);
     expect(updateSpy.mock.calls.length).toBeLessThanOrEqual(11);
+    handle.cleanup();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Merge pipeline hardening (#1224)
+// ---------------------------------------------------------------------------
+
+describe("merge pipeline hardening — Matter tier snapshot guard", () => {
+  it("rejects stale pair when collisionStart fires twice for the same pair", async () => {
+    // Emit the same collision pair twice (simulating two sub-steps firing the same event).
+    // With isMerging set atomically at enqueue, the second emission should be a no-op.
+    const createSpy = jest.spyOn(Matter.Engine, "create");
+    const handle = await buildEngine();
+    const engineInstance = createSpy.mock.results[0]?.value as Matter.Engine;
+
+    // Drop well apart (2× radius = 64px; use 80+220=140px gap) so they don't auto-merge
+    handle.drop(fruit(2), "fruits", 80, 300);
+    handle.drop(fruit(2), "fruits", 220, 300);
+    handle.step(1 / 60); // register without collision
+
+    const dynamicBodies = Matter.Composite.allBodies(engineInstance.world).filter(
+      (b) => !b.isStatic && b.parent === b
+    );
+    const [bodyA, bodyB] = dynamicBodies;
+    if (!bodyA || !bodyB) throw new Error("Expected two fruit bodies");
+
+    // Emit collisionStart twice for the same pair — simulates two sub-steps
+    const fakePair = { bodyA, bodyB, activeContacts: [], separation: 0, isActive: true };
+    Matter.Events.trigger(engineInstance, "collisionStart", { pairs: [fakePair] });
+    Matter.Events.trigger(engineInstance, "collisionStart", { pairs: [fakePair] });
+
+    const { events } = handle.step(1 / 60);
+    const merges = events.filter((e) => e.type === "fruitMerge");
+    expect(merges).toHaveLength(1);
+    handle.cleanup();
+  });
+
+  it("no duplicate fruitMerge when collisionStart fires twice for same pair", async () => {
+    const createSpy = jest.spyOn(Matter.Engine, "create");
+    const handle = await buildEngine();
+    const engineInstance = createSpy.mock.results[0]?.value as Matter.Engine;
+
+    handle.drop(fruit(3), "fruits", 80, 300);
+    handle.drop(fruit(3), "fruits", 220, 300);
+    handle.step(1 / 60);
+
+    const allBodies = Matter.Composite.allBodies(engineInstance.world).filter(
+      (b) => !b.isStatic && b.parent === b
+    );
+    const [bA, bB] = allBodies;
+    if (!bA || !bB) throw new Error("Expected two fruit bodies");
+
+    const fakePair = { bodyA: bA, bodyB: bB, activeContacts: [], separation: 0, isActive: true };
+    Matter.Events.trigger(engineInstance, "collisionStart", { pairs: [fakePair] });
+    Matter.Events.trigger(engineInstance, "collisionStart", { pairs: [fakePair] });
+    Matter.Events.trigger(engineInstance, "collisionStart", { pairs: [fakePair] });
+
+    const { events } = handle.step(1 / 60);
+    // No matter how many times the event fires, at most one merge per pair
+    expect(events.filter((e) => e.type === "fruitMerge").length).toBeLessThanOrEqual(1);
+    handle.cleanup();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Spawn grace period (#1226)
+// ---------------------------------------------------------------------------
+
+describe("spawn grace — Matter.js", () => {
+  it("merge-spawned body has collision filter excluding dynamic for SPAWN_GRACE_TICKS ticks", async () => {
+    const createSpy = jest.spyOn(Matter.Engine, "create");
+    const handle = await buildEngine();
+    const engineInstance = createSpy.mock.results[0]?.value as Matter.Engine;
+
+    const tier0 = fruit(0);
+    handle.drop(tier0, "fruits", W / 2 - 5, 30);
+    handle.drop(tier0, "fruits", W / 2 + 5, 30);
+
+    // Run until merge fires
+    let spawned = false;
+    for (let i = 0; i < 300; i++) {
+      const { events } = handle.step(1 / 60);
+      if (events.some((e) => e.type === "fruitMerge")) {
+        spawned = true;
+        break;
+      }
+    }
+    expect(spawned).toBe(true);
+
+    // After the merge step, check the spawned tier-1 body's collision filter
+    const dynBodies = Matter.Composite.allBodies(engineInstance.world).filter((b) => !b.isStatic);
+    const tier1Body = dynBodies.find((b) => b.collisionFilter.category === COLLISION_GROUP_DYNAMIC);
+    expect(tier1Body).toBeDefined();
+    // Grace body: mask should only include WALL group, not DYNAMIC
+    expect(tier1Body!.collisionFilter.mask & COLLISION_GROUP_DYNAMIC).toBe(0);
+    expect(tier1Body!.collisionFilter.mask & COLLISION_GROUP_WALL).not.toBe(0);
+
+    handle.cleanup();
+  });
+
+  it("spawned grace body collision filter is restored after SPAWN_GRACE_TICKS steps", async () => {
+    const createSpy = jest.spyOn(Matter.Engine, "create");
+    const handle = await buildEngine();
+    const engineInstance = createSpy.mock.results[0]?.value as Matter.Engine;
+
+    const tier0 = fruit(0);
+    handle.drop(tier0, "fruits", W / 2 - 5, 30);
+    handle.drop(tier0, "fruits", W / 2 + 5, 30);
+
+    let mergeStep = -1;
+    for (let i = 0; i < 300; i++) {
+      const { events } = handle.step(1 / 60);
+      if (events.some((e) => e.type === "fruitMerge")) {
+        mergeStep = i;
+        break;
+      }
+    }
+    expect(mergeStep).toBeGreaterThanOrEqual(0);
+
+    // Step SPAWN_GRACE_TICKS-1 more times (the merge step already decremented once)
+    for (let i = 0; i < SPAWN_GRACE_TICKS - 1; i++) {
+      handle.step(1 / 60);
+    }
+
+    // After grace expires, the spawned body should collide with DYNAMIC group again
+    const dynBodies = Matter.Composite.allBodies(engineInstance.world).filter((b) => !b.isStatic);
+    const tier1Body = dynBodies.find((b) => b.collisionFilter.category === COLLISION_GROUP_DYNAMIC);
+    expect(tier1Body).toBeDefined();
+    expect(tier1Body!.collisionFilter.mask & COLLISION_GROUP_DYNAMIC).not.toBe(0);
+
+    handle.cleanup();
+  });
+
+  it("player-dropped body is not in grace (can collide with other dynamic bodies immediately)", async () => {
+    const handle = await buildEngine();
+
+    // Drop two tier-0 fruits close together — they should be able to collide/merge immediately
+    const tier0 = fruit(0);
+    handle.drop(tier0, "fruits", W / 2 - 5, 30);
+    handle.drop(tier0, "fruits", W / 2 + 5, 30);
+
+    let mergeCount = 0;
+    for (let i = 0; i < 300; i++) {
+      const { events } = handle.step(1 / 60);
+      mergeCount += events.filter((e) => e.type === "fruitMerge").length;
+      if (mergeCount > 0) break;
+    }
+    // Player drops should be able to merge (no grace restriction)
+    expect(mergeCount).toBeGreaterThan(0);
     handle.cleanup();
   });
 });

@@ -26,7 +26,14 @@ import Matter from "matter-js";
 import { createEngine as createNativeEngine } from "../engine.native";
 import { FRUIT_SETS, FruitSet, FruitDefinition } from "../../../theme/fruitSets";
 import { MockWorld } from "../../../../__mocks__/@dimforge/rapier2d-compat";
-import { MAX_FRUIT_SPEED_PX_S, SCALE, FIXED_STEP_MS } from "../engine.shared";
+import {
+  MAX_FRUIT_SPEED_PX_S,
+  SCALE,
+  FIXED_STEP_MS,
+  SPAWN_GRACE_TICKS,
+  COLLISION_GROUP_DYNAMIC,
+  COLLISION_GROUP_WALL,
+} from "../engine.shared";
 
 const RAPIER_MOCK = require("@dimforge/rapier2d-compat").default; // eslint-disable-line @typescript-eslint/no-require-imports
 
@@ -291,6 +298,127 @@ describe("no cross-tier merges", () => {
     }
 
     expect(mergeCount).toBe(0);
+    handle.cleanup();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// 9. Merge count parity (#1224)
+// ---------------------------------------------------------------------------
+
+describe("merge count parity — same collision sequence → same fruitMerge count", () => {
+  it("Rapier: 3 non-overlapping pairs each produce exactly 1 fruitMerge", async () => {
+    const handle = await createRapierEngine(W, H, fruitSet);
+    const world = getRapierWorld();
+
+    handle.drop(fruit(1), fruitSet.id, 50, 300);
+    handle.drop(fruit(1), fruitSet.id, 60, 300);
+    handle.drop(fruit(1), fruitSet.id, 100, 300);
+    handle.drop(fruit(1), fruitSet.id, 110, 300);
+    handle.drop(fruit(1), fruitSet.id, 150, 300);
+    handle.drop(fruit(1), fruitSet.id, 160, 300);
+    handle.step();
+
+    world._fireCollision(1003, 1004);
+    world._fireCollision(1005, 1006);
+    world._fireCollision(1007, 1008);
+    const { events } = handle.step();
+
+    expect(events.filter((e) => e.type === "fruitMerge")).toHaveLength(3);
+  });
+
+  it("Matter.js: same-tier pairs produce the same fruitMerge count as Rapier", async () => {
+    const handle = await createNativeEngine(W, H, fruitSet);
+    const tier1 = fruit(1);
+    let mergeCount = 0;
+
+    handle.drop(tier1, fruitSet.id, 50, 30);
+    handle.drop(tier1, fruitSet.id, 58, 30);
+
+    for (let i = 0; i < 300; i++) {
+      const { events } = handle.step(1 / 60);
+      mergeCount += events.filter((e) => e.type === "fruitMerge").length;
+      if (mergeCount > 0) break;
+    }
+    // Both engines should produce exactly 1 merge for one pair
+    expect(mergeCount).toBe(1);
+    handle.cleanup();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// 10. Spawn grace parity (#1226)
+// ---------------------------------------------------------------------------
+
+describe("spawn grace parity — both engines apply and expire grace on the same tick count", () => {
+  it("Rapier: grace collision groups restored after exactly SPAWN_GRACE_TICKS steps", async () => {
+    const handle = await createRapierEngine(W, H, fruitSet);
+    const world = getRapierWorld();
+
+    handle.drop(fruit(2), fruitSet.id, 100, 300); // body 0, col 1003
+    handle.drop(fruit(2), fruitSet.id, 110, 300); // body 1, col 1004
+    handle.step();
+
+    world._fireCollision(1003, 1004);
+    handle.step(); // merge → spawns grace body (body 2, col 1005)
+
+    const spawnedCollider = world._bodies.get(2)?._colliders[0];
+    expect(spawnedCollider).toBeDefined();
+
+    const GRACE_GROUPS = COLLISION_GROUP_DYNAMIC | (COLLISION_GROUP_WALL << 16);
+    const NORMAL_GROUPS =
+      COLLISION_GROUP_DYNAMIC | ((COLLISION_GROUP_WALL | COLLISION_GROUP_DYNAMIC) << 16);
+
+    // After spawn step: graceTicksRemaining was 3, decremented to 2 → still grace
+    expect(spawnedCollider!._collisionGroups).toBe(GRACE_GROUPS);
+
+    // Step SPAWN_GRACE_TICKS-1 more times to exhaust grace
+    for (let i = 0; i < SPAWN_GRACE_TICKS - 1; i++) {
+      handle.step();
+    }
+    expect(spawnedCollider!._collisionGroups).toBe(NORMAL_GROUPS);
+  });
+
+  it("Matter.js: grace filter restored after exactly SPAWN_GRACE_TICKS steps", async () => {
+    const createSpy = jest.spyOn(Matter.Engine, "create");
+    const handle = await createNativeEngine(W, H, fruitSet);
+    const engineInstance = createSpy.mock.results[0]?.value as Matter.Engine;
+
+    const tier0 = fruit(0);
+    handle.drop(tier0, fruitSet.id, W / 2 - 5, 30);
+    handle.drop(tier0, fruitSet.id, W / 2 + 5, 30);
+
+    let mergeStep = -1;
+    for (let i = 0; i < 300; i++) {
+      const { events } = handle.step(1 / 60);
+      if (events.some((e) => e.type === "fruitMerge")) {
+        mergeStep = i;
+        break;
+      }
+    }
+    expect(mergeStep).toBeGreaterThanOrEqual(0);
+
+    // Spawned body should have grace filter right after merge step
+    const dynBodies = () =>
+      Matter.Composite.allBodies(engineInstance.world).filter((b) => !b.isStatic);
+    const graceBody = dynBodies().find(
+      (b) => b.collisionFilter.category === COLLISION_GROUP_DYNAMIC
+    );
+    expect(graceBody).toBeDefined();
+    expect(graceBody!.collisionFilter.mask & COLLISION_GROUP_DYNAMIC).toBe(0);
+
+    // Step SPAWN_GRACE_TICKS-1 more times
+    for (let i = 0; i < SPAWN_GRACE_TICKS - 1; i++) {
+      handle.step(1 / 60);
+    }
+
+    // After grace expires, dynamic collisions allowed again
+    const restoredBody = dynBodies().find(
+      (b) => b.collisionFilter.category === COLLISION_GROUP_DYNAMIC
+    );
+    expect(restoredBody).toBeDefined();
+    expect(restoredBody!.collisionFilter.mask & COLLISION_GROUP_DYNAMIC).not.toBe(0);
+
     handle.cleanup();
   });
 });

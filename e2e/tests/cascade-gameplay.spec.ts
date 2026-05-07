@@ -31,11 +31,10 @@ test.describe("Cascade — merge and score behavior", () => {
   test("two tier-0 fruits at same x merge → score = 2, fruitCount = 1", async ({
     page,
   }) => {
-    // Drop two tier-0 fruits slightly apart so physics detects overlap.
-    // x=80/90 is used here (same positions as the passing mixed-tier test)
-    // to avoid the high-overlap regime that can suppress Rapier contact events.
-    await spawnTierAt(page, 0, 80);
-    await spawnTierAt(page, 0, 90);
+    // Tier-0 radius=18, sum-of-radii=36. Place 35px apart (1px contact) so
+    // Rapier fires CollisionStart without explosive penetration-correction.
+    await spawnTierAt(page, 0, 150);
+    await spawnTierAt(page, 0, 185);
     await fastForward(page, 2000);
 
     const state = await getState(page);
@@ -44,8 +43,10 @@ test.describe("Cascade — merge and score behavior", () => {
   });
 
   test("two tier-1 fruits merge → score = 4", async ({ page }) => {
+    // Tier-1 radius=25, sum-of-radii=50. Place 44px apart (6px overlap, ~12%)
+    // so Rapier fires CollisionStart reliably — mirrors the watermelon test design.
     await spawnTierAt(page, 1, 145);
-    await spawnTierAt(page, 1, 155);
+    await spawnTierAt(page, 1, 189);
     await fastForward(page, 2000);
 
     const state = await getState(page);
@@ -98,14 +99,14 @@ test.describe("Cascade — merge and score behavior", () => {
   test("sequential tier-0 merges accumulate score correctly", async ({
     page,
   }) => {
-    // Merge 1: two tier-0 → score += 2 (left side, same regime as mixed-tier test)
-    await spawnTierAt(page, 0, 80);
-    await spawnTierAt(page, 0, 90);
+    // Merge 1: two tier-0 → score += 2 (35px apart = 1px contact, no explosive separation)
+    await spawnTierAt(page, 0, 110);
+    await spawnTierAt(page, 0, 145);
     await fastForward(page, 2000);
 
-    // Merge 2: two more tier-0 → score += 2 (total = 4) (right side, well separated)
-    await spawnTierAt(page, 0, 260);
-    await spawnTierAt(page, 0, 270);
+    // Merge 2: two more tier-0 → score += 2 (total = 4), right side
+    await spawnTierAt(page, 0, 240);
+    await spawnTierAt(page, 0, 275);
     await fastForward(page, 2000);
 
     const state = await getState(page);
@@ -113,13 +114,16 @@ test.describe("Cascade — merge and score behavior", () => {
   });
 
   test("mixed-tier merges accumulate score correctly", async ({ page }) => {
-    // tier-0 merge (+2), tier-2 merge (+8)
-    await spawnTierAt(page, 0, 80);
-    await spawnTierAt(page, 0, 90);
+    // tier-0 merge (+2): 35px apart (radius=18, sum=36) → 1px contact
+    await spawnTierAt(page, 0, 150);
+    await spawnTierAt(page, 0, 185);
     await fastForward(page, 2000);
 
-    await spawnTierAt(page, 2, 220);
-    await spawnTierAt(page, 2, 230);
+    // tier-2 merge (+8): 58px apart (radius=33, sum=66, 8px overlap ~12%)
+    // so Rapier fires CollisionStart reliably. Start at x=235 to clear the
+    // tier-1 body spawned above (at x≈167, radius=25, rightmost edge ≈192).
+    await spawnTierAt(page, 2, 235);
+    await spawnTierAt(page, 2, 293);
     await fastForward(page, 2000);
 
     const state = await getState(page);

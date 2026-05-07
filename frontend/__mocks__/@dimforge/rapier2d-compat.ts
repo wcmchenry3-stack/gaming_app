@@ -48,8 +48,12 @@ export class MockRigidBody {
 
 export class MockCollider {
   handle: number;
+  _collisionGroups = 0xffffffff;
   constructor(handle: number) {
     this.handle = handle;
+  }
+  setCollisionGroups(groups: number) {
+    this._collisionGroups = groups;
   }
 }
 
@@ -79,10 +83,14 @@ export class MockWorld {
     return rb;
   }
 
-  createCollider(_desc: unknown, rb?: MockRigidBody) {
+  createCollider(desc: unknown, rb?: MockRigidBody) {
     const handle = this._colliderHandleCounter++;
     const c = new MockCollider(handle);
     if (rb) rb._addCollider(c);
+    // Propagate collision groups from the builder desc if available
+    if (desc && typeof (desc as { _getGroups?: () => number })._getGroups === "function") {
+      c._collisionGroups = (desc as { _getGroups: () => number })._getGroups();
+    }
     return c;
   }
 
@@ -115,13 +123,22 @@ export class MockWorld {
   }
 }
 
-const mockColliderDescBuilder = () => ({
-  setRestitution: () => mockColliderDescBuilder(),
-  setFriction: () => mockColliderDescBuilder(),
-  setDensity: () => mockColliderDescBuilder(),
-  setActiveEvents: () => mockColliderDescBuilder(),
-  setTranslation: () => mockColliderDescBuilder(),
-});
+const mockColliderDescBuilder = (initialGroups = 0xffffffff) => {
+  let _groups = initialGroups;
+  const builder = {
+    _getGroups: () => _groups,
+    setRestitution: () => builder,
+    setFriction: () => builder,
+    setDensity: () => builder,
+    setActiveEvents: () => builder,
+    setTranslation: () => builder,
+    setCollisionGroups: (groups: number) => {
+      _groups = groups;
+      return builder;
+    },
+  };
+  return builder;
+};
 
 const RAPIER_MOCK = {
   init: jest.fn().mockResolvedValue(undefined),
