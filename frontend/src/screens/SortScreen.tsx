@@ -20,7 +20,13 @@ import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { HomeStackParamList } from "../../App";
 import { useTheme } from "../theme/ThemeContext";
 import { typography } from "../theme/typography";
-import { applyPour, initState, isValidPour, pourUnits, undo as undoState } from "../game/sort/engine";
+import {
+  applyPour,
+  initState,
+  isValidPour,
+  pourUnits,
+  undo as undoState,
+} from "../game/sort/engine";
 import { getNextHint } from "../game/sort/solver";
 import type { Color, SortState } from "../game/sort/types";
 import SortBoard, {

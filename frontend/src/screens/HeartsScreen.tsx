@@ -220,52 +220,55 @@ export default function HeartsScreen() {
   }
 
   // ─── AI turn loop ─────────────────────────────────────────────────────────
-  const runAiTurns = useCallback(async (initial: HeartsState) => {
-    if (loopActiveRef.current) return;
-    loopActiveRef.current = true;
-    try {
-      // Start with a clean events slate; initial events are already in React state
-      // and will be processed by useGameEvents independently.
-      let s: HeartsState = { ...initial, events: [] };
-      while (s.currentPlayerIndex !== HUMAN && s.phase === "playing") {
-        const willComplete = s.currentTrick.length === 3;
-        await delay(400);
-        if (unmountedRef.current) return;
-
-        const card = selectCardToPlay(
-          s.playerHands[s.currentPlayerIndex] as Card[],
-          s.currentTrick as TrickCard[],
-          s,
-          s.currentPlayerIndex,
-          s.aiDifficulty
-        );
-        const completedTrick: readonly TrickCard[] | null = willComplete
-          ? [...s.currentTrick, { card, playerIndex: s.currentPlayerIndex }]
-          : null;
-
-        s = playCard(s, s.currentPlayerIndex, card);
-        playCardPlay();
-
-        if (completedTrick) {
-          setLastTrick({ trick: completedTrick, winnerIndex: s.currentLeaderIndex });
-          void saveGame(s);
-        }
-        setGameState(s);
-        // Clear events so the next playCard call doesn't re-emit them via a new array reference.
-        s = { ...s, events: [] };
-
-        if (completedTrick && s.phase === "playing") {
-          await new Promise<void>((resolve) => {
-            trickAnimResolverRef.current = resolve;
-          });
+  const runAiTurns = useCallback(
+    async (initial: HeartsState) => {
+      if (loopActiveRef.current) return;
+      loopActiveRef.current = true;
+      try {
+        // Start with a clean events slate; initial events are already in React state
+        // and will be processed by useGameEvents independently.
+        let s: HeartsState = { ...initial, events: [] };
+        while (s.currentPlayerIndex !== HUMAN && s.phase === "playing") {
+          const willComplete = s.currentTrick.length === 3;
+          await delay(400);
           if (unmountedRef.current) return;
-          setLastTrick(null);
+
+          const card = selectCardToPlay(
+            s.playerHands[s.currentPlayerIndex] as Card[],
+            s.currentTrick as TrickCard[],
+            s,
+            s.currentPlayerIndex,
+            s.aiDifficulty
+          );
+          const completedTrick: readonly TrickCard[] | null = willComplete
+            ? [...s.currentTrick, { card, playerIndex: s.currentPlayerIndex }]
+            : null;
+
+          s = playCard(s, s.currentPlayerIndex, card);
+          playCardPlay();
+
+          if (completedTrick) {
+            setLastTrick({ trick: completedTrick, winnerIndex: s.currentLeaderIndex });
+            void saveGame(s);
+          }
+          setGameState(s);
+          // Clear events so the next playCard call doesn't re-emit them via a new array reference.
+          s = { ...s, events: [] };
+
+          if (completedTrick && s.phase === "playing") {
+            await new Promise<void>((resolve) => {
+              trickAnimResolverRef.current = resolve;
+            });
+            if (unmountedRef.current) return;
+            setLastTrick(null);
+          }
         }
+      } finally {
+        loopActiveRef.current = false;
       }
-    } finally {
-      loopActiveRef.current = false;
-    }
-  }, [playCardPlay]);
+    },
+    [playCardPlay]
+  );
 
   // Trigger AI loop when it's their turn; wait for lastTrick display first.
   useEffect(() => {
