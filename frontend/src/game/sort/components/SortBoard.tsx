@@ -212,6 +212,17 @@ export default function SortBoard({
     [state.bottles.length, onBottleTap]
   );
 
+  // Stream geometry — derived from ghost snapshot; stable for the life of each pour.
+  const streamTopColor = ghost !== null && ghost.bottle.length > 0
+    ? ghost.bottle[ghost.bottle.length - 1]
+    : null;
+  const streamColor = streamTopColor ? LIQUID_COLORS[streamTopColor] : "transparent";
+  const streamTop = ghost !== null ? ghost.startY - LIFT_HEIGHT : 0;
+  const streamHeight = ghost !== null
+    ? Math.max(0, ghost.dstY - ghost.startY + LIFT_HEIGHT)
+    : 0;
+  const streamLeft = ghost !== null ? ghost.dstX + (bottleW - STREAM_WIDTH) / 2 : 0;
+
   return (
     <View accessibilityLabel={t("a11y.boardRegion")} accessibilityRole="none" style={styles.board}>
       <View
@@ -255,58 +266,51 @@ export default function SortBoard({
 
       {/* Ghost bottle overlay — floats above grid during pour animation.
           ghost is only set when !reduceMotion, so the extra guard is omitted. */}
-      {ghost !== null && (() => {
-        const topColor = ghost.bottle.length > 0 ? ghost.bottle[ghost.bottle.length - 1] : null;
-        const streamColor = topColor ? LIQUID_COLORS[topColor] : "transparent";
-        const streamTop = ghost.startY - LIFT_HEIGHT;
-        const streamHeight = Math.max(0, ghost.dstY - ghost.startY + LIFT_HEIGHT);
-        const streamLeft = ghost.dstX + (bottleW - STREAM_WIDTH) / 2;
-        return (
-          <View
-            style={StyleSheet.absoluteFill}
-            pointerEvents="none"
-            accessibilityElementsHidden
-            importantForAccessibility="no-hide-descendants"
-          >
-            {streamHeight > 0 && (
-              <Animated.View
-                style={[
-                  styles.stream,
-                  {
-                    left: streamLeft,
-                    top: streamTop,
-                    width: STREAM_WIDTH,
-                    height: streamHeight,
-                    backgroundColor: streamColor,
-                  },
-                  ghostStreamStyle,
-                ]}
-              />
-            )}
+      {ghost !== null && (
+        <View
+          style={StyleSheet.absoluteFill}
+          pointerEvents="none"
+          accessibilityElementsHidden
+          importantForAccessibility="no-hide-descendants"
+        >
+          {streamHeight > 0 && (
             <Animated.View
               style={[
-                styles.ghostBottle,
+                styles.stream,
                 {
-                  left: ghost.startX,
-                  top: ghost.startY,
-                  width: bottleW,
-                  height: bottleH,
+                  left: streamLeft,
+                  top: streamTop,
+                  width: STREAM_WIDTH,
+                  height: streamHeight,
+                  backgroundColor: streamColor,
                 },
-                ghostAnimStyle,
+                ghostStreamStyle,
               ]}
-            >
-              <BottleView
-                bottle={ghost.bottle}
-                index={ghost.bottleIndex}
-                isGhost
-                colorblindMode={colorblindMode}
-                bottleWidth={bottleW}
-                bottleHeight={bottleH}
-              />
-            </Animated.View>
-          </View>
-        );
-      })()}
+            />
+          )}
+          <Animated.View
+            style={[
+              styles.ghostBottle,
+              {
+                left: ghost.startX,
+                top: ghost.startY,
+                width: bottleW,
+                height: bottleH,
+              },
+              ghostAnimStyle,
+            ]}
+          >
+            <BottleView
+              bottle={ghost.bottle}
+              index={ghost.bottleIndex}
+              isGhost
+              colorblindMode={colorblindMode}
+              bottleWidth={bottleW}
+              bottleHeight={bottleH}
+            />
+          </Animated.View>
+        </View>
+      )}
 
       <SortWinOverlay visible={state.isComplete} />
     </View>
