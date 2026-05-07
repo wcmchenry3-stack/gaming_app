@@ -131,6 +131,9 @@ const SUPER_DAMAGE = 4;
 // #974: small circle around the player sprite centre — forgiveness hitbox
 export const PLAYER_HURT_RADIUS = 7; // px
 
+// #1310: duration of the shield-ring hit flash on non-lethal Elite/Boss hits
+export const HIT_FLASH_DURATION = 250; // ms
+
 const TIER_SCORE: Record<EnemyTier, number> = { Grunt: 100, Elite: 200, Boss: 400 };
 const TIER_HP: Record<EnemyTier, number> = { Grunt: 1, Elite: 2, Boss: 4 };
 
@@ -547,13 +550,34 @@ export function bulletCap(wave: number, paramScale = 1): number {
   return Math.min(24, Math.round((3 + Math.floor((wave - 1) / 2)) * paramScale));
 }
 
-// #924: compute vx for an enemy bullet — non-zero only at wave 4+; cap raised by difficulty
-function aimedBulletVx(enemyX: number, playerX: number, wave: number, paramScale = 1): number {
-  if (wave < AIMED_SHOT_WAVE_START) return 0;
+// #1314: proportional aim — keeps vy = BULLET_E_VY (same arrival time), scales vx to intersect the player
+function aimVelocity(
+  enemyX: number,
+  enemyY: number,
+  playerX: number,
+  playerY: number
+): { vx: number; vy: number } {
+  const dy = playerY - enemyY;
+  if (dy <= 0) return { vx: 0, vy: BULLET_E_VY }; // player at or above enemy — fire straight down
+  const dx = playerX - enemyX;
+  return { vx: (dx / dy) * BULLET_E_VY, vy: BULLET_E_VY };
+}
+
+// #924/#1314: compute velocity for a Grunt enemy bullet — straight down before wave 1+;
+// probability-gated proportional aim that ramps per wave
+function aimedBulletVelocity(
+  enemyX: number,
+  enemyY: number,
+  playerX: number,
+  playerY: number,
+  wave: number,
+  paramScale = 1
+): { vx: number; vy: number } {
+  if (wave < AIMED_SHOT_WAVE_START) return { vx: 0, vy: BULLET_E_VY };
   const cap = Math.min(0.9, 0.6 * paramScale);
   const fraction = Math.min(cap, AIMED_SHOT_FRACTION + (wave - AIMED_SHOT_WAVE_START) * 0.05);
-  if (rng() > fraction) return 0;
-  return Math.sign(playerX - enemyX) * BULLET_E_VY * 0.5;
+  if (rng() > fraction) return { vx: 0, vy: BULLET_E_VY };
+  return aimVelocity(enemyX, enemyY, playerX, playerY);
 }
 
 // ---------------------------------------------------------------------------
@@ -656,6 +680,8 @@ function buildWaveState(
     bombFlashTimer: 0,
     difficulty,
     challengingPerfect: false,
+    playerFireDisabled: false,
+    enemyFireDisabled: false,
   };
 }
 
@@ -738,7 +764,7 @@ function tickPlayer(state: StarSwarmState, dtMs: number, input: StarSwarmInput):
 
   const isSuper = state.activePowerUp?.type === "lightning";
 
-  if (shootCooldown === 0 && input.fire) {
+  if (shootCooldown === 0 && input.fire && !state.playerFireDisabled) {
     const bullet: Bullet = {
       id: nextId(),
       x: newX,
@@ -774,6 +800,7 @@ function tickSingleEnemy(
   enemy: Enemy,
   dtMs: number,
   playerX: number,
+  playerY: number,
   canvasH: number,
   shouldDive: boolean,
   wave: number,
@@ -791,6 +818,7 @@ function tickSingleEnemy(
         enemy,
         dtMs,
         playerX,
+        playerY,
         shouldDive,
         wave,
         bossThresholdCrossed,
@@ -804,11 +832,12 @@ function tickSingleEnemy(
         dtMs,
         canvasH,
         playerX,
+        playerY,
         bossThresholdCrossed,
         bossDeepThresholdCrossed
       );
     case "Circling":
-      return tickCircling(enemy, dtMs, playerX);
+      return tickCircling(enemy, dtMs, playerX, playerY);
     case "Returning":
       return tickReturning(enemy, dtMs);
   }
@@ -845,6 +874,7 @@ function tickFormation(
   enemy: Enemy,
   dtMs: number,
   playerX: number,
+  playerY: number,
   shouldDive: boolean,
   wave: number,
   bossThresholdCrossed: boolean,
@@ -875,22 +905,22 @@ function tickFormation(
 
   // #979: Boss fires in bursts; other tiers use random single-shot interval
   if (enemy.tier === "Boss") {
-    const { enemy: e, bullet } = bossBurstFire(enemy, playerX);
+    const { enemy: e, bullet } = bossBurstFire(enemy, playerX, playerY);
     return { enemy: e, bullet };
   }
 
-  // Elites always fire aimed shots; Grunts use wave-scaled probabilistic aim
-  const vx =
+  // #1314: Elites always fire proportionally-aimed shots; Grunts use wave-scaled probabilistic aim
+  const vel =
     enemy.tier === "Elite"
-      ? Math.sign(playerX - enemy.x) * BULLET_E_VY * 0.5
-      : aimedBulletVx(enemy.x, playerX, wave, paramScale);
+      ? aimVelocity(enemy.x, enemy.y, playerX, playerY)
+      : aimedBulletVelocity(enemy.x, enemy.y, playerX, playerY, wave, paramScale);
 
   const bullet: Bullet = {
     id: nextId(),
     x: enemy.x,
     y: enemy.y + enemy.height / 2,
-    vx,
-    vy: BULLET_E_VY,
+    vx: vel.vx,
+    vy: vel.vy,
     owner: "enemy",
     width: BULLET_E_W,
     height: BULLET_E_H,
@@ -903,7 +933,7 @@ function tickFormation(
 }
 
 // #979: shared burst-fire logic for Boss in Formation and Diving phases
-function bossBurstFire(enemy: Enemy, playerX: number): EnemyTickResult {
+function bossBurstFire(enemy: Enemy, playerX: number, playerY: number): EnemyTickResult {
   const newBurstShotsLeft =
     enemy.burstShotsLeft === 0
       ? 2 + Math.floor(rng() * 2) - 1 // start new burst: pick 2 or 3, return remaining
@@ -911,12 +941,13 @@ function bossBurstFire(enemy: Enemy, playerX: number): EnemyTickResult {
   const newShootTimer =
     newBurstShotsLeft > 0 ? BURST_INTERVAL : BURST_PAUSE_BASE + rng() * BURST_PAUSE_JITTER;
 
+  const vel = aimVelocity(enemy.x, enemy.y, playerX, playerY); // #1314
   const bullet: Bullet = {
     id: nextId(),
     x: enemy.x,
     y: enemy.y + enemy.height / 2,
-    vx: Math.sign(playerX - enemy.x) * BULLET_E_VY * 0.5,
-    vy: BULLET_E_VY,
+    vx: vel.vx,
+    vy: vel.vy,
     owner: "enemy",
     width: BULLET_E_W,
     height: BULLET_E_H,
@@ -977,6 +1008,7 @@ function tickDiving(
   dtMs: number,
   canvasH: number,
   playerX: number,
+  playerY: number,
   bossThresholdCrossed: boolean,
   bossDeepThresholdCrossed: boolean
 ): EnemyTickResult {
@@ -991,17 +1023,18 @@ function tickDiving(
 
   if (shootTimer <= 0) {
     if (enemy.tier === "Boss") {
-      const result = bossBurstFire(enemy, playerX);
+      const result = bossBurstFire(enemy, playerX, playerY);
       bullet = result.bullet;
       nextShootTimer = result.enemy.shootTimer;
       nextBurstShotsLeft = result.enemy.burstShotsLeft;
     } else {
+      const vel = aimVelocity(enemy.x, enemy.y, playerX, playerY); // #1314
       bullet = {
         id: nextId(),
         x: enemy.x,
         y: enemy.y + enemy.height / 2,
-        vx: Math.sign(playerX - enemy.x) * BULLET_E_VY * 0.5,
-        vy: BULLET_E_VY,
+        vx: vel.vx,
+        vy: vel.vy,
         owner: "enemy",
         width: BULLET_E_W,
         height: BULLET_E_H,
@@ -1070,21 +1103,22 @@ function tickDiving(
   };
 }
 
-function tickCircling(enemy: Enemy, dtMs: number, playerX: number): EnemyTickResult {
+function tickCircling(enemy: Enemy, dtMs: number, playerX: number, playerY: number): EnemyTickResult {
   const newAngle = enemy.circleAngle + enemy.circleSpeed * dtMs;
   const newX = enemy.circleCx + Math.cos(newAngle) * enemy.circleRadius;
   const newY = enemy.circleCy + Math.sin(newAngle) * enemy.circleRadius;
 
-  // #944: tick shoot timer and fire aimed bullet if ready
+  // #944/#1314: tick shoot timer and fire proportionally-aimed bullet if ready
   const shootTimer = enemy.shootTimer - dtMs;
   let bullet: Bullet | null = null;
   if (shootTimer <= 0) {
+    const vel = aimVelocity(enemy.x, enemy.y, playerX, playerY);
     bullet = {
       id: nextId(),
       x: enemy.x,
       y: enemy.y + enemy.height / 2,
-      vx: Math.sign(playerX - enemy.x) * BULLET_E_VY * 0.5,
-      vy: BULLET_E_VY,
+      vx: vel.vx,
+      vy: vel.vy,
       owner: "enemy",
       width: BULLET_E_W,
       height: BULLET_E_H,
@@ -1204,6 +1238,7 @@ function tickEnemies(state: StarSwarmState, dtMs: number): StarSwarmState {
       enemy,
       dtMs,
       state.player.x,
+      state.player.y,
       state.canvasH,
       shouldDive,
       state.wave,
@@ -1223,7 +1258,7 @@ function tickEnemies(state: StarSwarmState, dtMs: number): StarSwarmState {
     if (e.isAlive && e.hitFlashTimer > 0) {
       e = { ...e, hitFlashTimer: Math.max(0, e.hitFlashTimer - dtMs) };
     }
-    if (result.bullet && newEnemyBullets.length < bulletCap(state.wave, _ps)) {
+    if (result.bullet && newEnemyBullets.length < bulletCap(state.wave, _ps) && !state.enemyFireDisabled) {
       newEnemyBullets.push(result.bullet);
     }
     return e;
@@ -1433,8 +1468,8 @@ function tickCollisions(state: StarSwarmState): StarSwarmState {
         return { ...enemy, hp: 0, isAlive: false, hitFlashTimer: 0 };
       }
 
-      // Non-lethal hit — flash (#976); killing blow skips flash (explosion takes over)
-      return { ...enemy, hp: newHp, hitFlashTimer: 120 };
+      // Non-lethal hit — shield ring burst (#1310); killing blow skips flash (explosion takes over)
+      return { ...enemy, hp: newHp, hitFlashTimer: HIT_FLASH_DURATION };
     }
     return enemy;
   });

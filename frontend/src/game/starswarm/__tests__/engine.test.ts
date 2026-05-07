@@ -1157,6 +1157,7 @@ describe("Bézier arc dives (#977)", () => {
     const wiggling = s.enemies.find((e) => e.phase === "Wiggling");
     if (!wiggling) throw new Error("no wiggling enemy");
     const id = wiggling.id;
+    s = { ...s, player: { ...s.player, invincibleTimer: 999_999 } };
     s = advanceMs(s, WIGGLE_DURATION + DIVE_PATH_DURATION + 200, NO_INPUT);
     const after = s.enemies.find((e) => e.id === id)!;
     const completed =
@@ -2066,6 +2067,7 @@ describe("#1035 Buddy Ship", () => {
     expect(s.buddyShips.length).toBe(1);
 
     // Advance until the buddy has fired (pathT >= 0.45) and completed (pathT > 1.2)
+    s = { ...s, player: { ...s.player, invincibleTimer: 999_999 } };
     s = advanceMs(s, 4000, NO_INPUT);
 
     // Buddy should be gone after full traversal
@@ -2305,6 +2307,7 @@ describe("laser sound gating", () => {
 
   it("does not trigger laser sound once lightning power-up expires", () => {
     let s = applyPowerUp(playingState(), "lightning");
+    s = { ...s, player: { ...s.player, invincibleTimer: 999_999 } };
     s = advanceMs(s, POWERUP_DURATION + 100, FIRE_INPUT); // advance past expiry while firing
     expect(s.activePowerUp).toBeNull();
     // Advance one more frame: cooldown may already be 0 from continuous fire
