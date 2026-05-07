@@ -265,7 +265,7 @@ export default function HeartsScreen() {
     } finally {
       loopActiveRef.current = false;
     }
-  }, []);
+  }, [playCardPlay]);
 
   // Trigger AI loop when it's their turn; wait for lastTrick display first.
   useEffect(() => {
