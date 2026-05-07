@@ -20,10 +20,16 @@ import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { HomeStackParamList } from "../../App";
 import { useTheme } from "../theme/ThemeContext";
 import { typography } from "../theme/typography";
-import { applyPour, initState, isValidPour, undo as undoState } from "../game/sort/engine";
+import { applyPour, initState, isValidPour, pourUnits, undo as undoState } from "../game/sort/engine";
 import { getNextHint } from "../game/sort/solver";
 import type { Color, SortState } from "../game/sort/types";
-import SortBoard from "../game/sort/components/SortBoard";
+import SortBoard, {
+  LIFT_MS,
+  TRAVEL_MS,
+  TILT_IN_MS,
+  TILT_OUT_MS,
+  TILT_HOLD_MS_PER_UNIT,
+} from "../game/sort/components/SortBoard";
 import LevelSelectScreen from "../game/sort/components/LevelSelectScreen";
 import { sortApi, type LevelData, type ScoreEntry } from "../game/sort/api";
 import { loadProgress, saveProgress, type SortProgress } from "../game/sort/storage";
@@ -68,6 +74,7 @@ export default function SortScreen() {
   // Pour animation state
   const [pouringFrom, setPouringFrom] = useState<number | null>(null);
   const [pouringTo, setPouringTo] = useState<number | null>(null);
+  const [pourHoldMs, setPourHoldMs] = useState(TILT_HOLD_MS_PER_UNIT);
   const [isPouring, setIsPouring] = useState(false);
   const [boardHeight, setBoardHeight] = useState(0);
   const pourTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -181,10 +188,15 @@ export default function SortScreen() {
 
     if (isValidPour(gameState.bottles[selectedBottleIndex], gameState.bottles[index])) {
       const snapshot = gameState;
+      const units = pourUnits(gameState.bottles[selectedBottleIndex]!, gameState.bottles[index]!);
+      const holdMs = TILT_HOLD_MS_PER_UNIT * units;
+      const totalMs =
+        LIFT_MS + TRAVEL_MS + TILT_IN_MS + holdMs + TILT_OUT_MS + TRAVEL_MS + LIFT_MS + 50;
       setHistory((h) => [...h, snapshot]);
       setIsPouring(true);
       setPouringFrom(selectedBottleIndex);
       setPouringTo(index);
+      setPourHoldMs(holdMs);
       setGameState({ ...gameState, selectedBottleIndex: null });
       audio.playPour();
       pourTimerRef.current = setTimeout(() => {
@@ -196,7 +208,7 @@ export default function SortScreen() {
         if (nextState.isComplete) {
           audio.playWin();
         }
-      }, 1250);
+      }, totalMs);
     } else {
       setGameState({ ...gameState, selectedBottleIndex: null });
     }
@@ -619,6 +631,7 @@ export default function SortScreen() {
             pouringFrom={pouringFrom}
             pouringTo={pouringTo}
             availableHeight={boardHeight}
+            pourHoldMs={pourHoldMs}
           />
         )}
       </View>

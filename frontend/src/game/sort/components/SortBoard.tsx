@@ -30,6 +30,8 @@ export interface SortBoardProps {
   readonly pouringTo?: number | null;
   /** Height of the board container in pixels — used to scale bottles to fit. */
   readonly availableHeight?: number;
+  /** Tilt-hold duration in ms; defaults to TILT_HOLD_MS_PER_UNIT (1 unit). */
+  readonly pourHoldMs?: number;
 }
 
 interface GhostInfo {
@@ -37,15 +39,23 @@ interface GhostInfo {
   bottleIndex: number;
   startX: number;
   startY: number;
+  dstX: number;
+  dstY: number;
 }
 
-// Ghost animation timing (ms) — TILT_* values must stay in sync with BottleView
-const LIFT_MS = 150;
-const TRAVEL_MS = 150;
-const TILT_IN_MS = 250;
-const TILT_HOLD_MS = 150;
-const TILT_OUT_MS = 200;
-// TILT_DEG imported from BottleView — single source of truth
+// Ghost animation timing constants (ms) — exported so SortScreen can compute total timeout
+export const LIFT_MS = 150;
+export const TRAVEL_MS = 150;
+export const TILT_IN_MS = 250;
+export const TILT_OUT_MS = 200;
+export const TILT_HOLD_MS_PER_UNIT = 150;  // scaled by # of sections poured
+const TILT_HOLD_MS_DEFAULT = TILT_HOLD_MS_PER_UNIT;  // fallback when no prop
+
+// Ghost rises just enough to clear the target bottle's opening
+const LIFT_HEIGHT = 40;
+
+// Stream dimensions
+const STREAM_WIDTH = 5;
 
 export default function SortBoard({
   state,
@@ -54,6 +64,7 @@ export default function SortBoard({
   pouringFrom = null,
   pouringTo = null,
   availableHeight,
+  pourHoldMs = TILT_HOLD_MS_DEFAULT,
 }: SortBoardProps) {
   const { t } = useTranslation("sort");
   const { width: screenW } = useWindowDimensions();
@@ -90,6 +101,7 @@ export default function SortBoard({
   const ghostLiftY = useSharedValue(0);
   const ghostTravelX = useSharedValue(0);
   const ghostTiltDeg = useSharedValue(0);
+  const ghostStreamOpacity = useSharedValue(0);
 
   const ghostAnimStyle = useAnimatedStyle(() => ({
     transform: [
@@ -99,13 +111,15 @@ export default function SortBoard({
     ],
   }));
 
+  const ghostStreamStyle = useAnimatedStyle(() => ({
+    opacity: ghostStreamOpacity.value,
+  }));
+
   // Ghost React state (drives overlay visibility and bottle capture)
   const [ghost, setGhost] = useState<GhostInfo | null>(null);
 
-  // Stable refs for values read inside the effect (avoids stale closure without
+  // Stable ref for values read inside the effect (avoids stale closure without
   // adding them to the dep array, which would re-trigger on every state change)
-  const bottleHRef = useRef(bottleH);
-  bottleHRef.current = bottleH;
   const stateRef = useRef(state);
   stateRef.current = state;
 
@@ -114,9 +128,11 @@ export default function SortBoard({
       cancelAnimation(ghostLiftY);
       cancelAnimation(ghostTravelX);
       cancelAnimation(ghostTiltDeg);
+      cancelAnimation(ghostStreamOpacity);
       ghostLiftY.value = 0;
       ghostTravelX.value = 0;
       ghostTiltDeg.value = 0;
+      ghostStreamOpacity.value = 0;
       setGhost(null);
       return;
     }
@@ -126,7 +142,6 @@ export default function SortBoard({
     if (!srcPos || !dstPos) return; // layout not measured yet — silent fallback
 
     const dx = dstPos.x - srcPos.x;
-    const liftHeight = bottleHRef.current + 20;
     const tiltAngle = pouringFrom < pouringTo ? TILT_DEG : -TILT_DEG;
 
     const sourceBottle = stateRef.current.bottles[pouringFrom];
@@ -135,25 +150,27 @@ export default function SortBoard({
     ghostLiftY.value = 0;
     ghostTravelX.value = 0;
     ghostTiltDeg.value = 0;
+    ghostStreamOpacity.value = 0;
 
     setGhost({
       bottle: sourceBottle,
       bottleIndex: pouringFrom,
       startX: srcPos.x,
       startY: srcPos.y,
+      dstX: dstPos.x,
+      dstY: dstPos.y,
     });
 
-    // Lift → travel → tilt in → hold → tilt out → return travel → lower (~1200ms total).
-    // Ghost clears at ~1200ms; SortScreen commits state at 1250ms — the 50ms gap is
-    // imperceptible and ensures the state update lands after the animation completes.
-    ghostLiftY.value = withTiming(-liftHeight, { duration: LIFT_MS }, (finished) => {
+    // Lift → travel → tilt in → hold → tilt out → return travel → lower.
+    // Ghost clears at end; SortScreen commits state 50ms later.
+    ghostLiftY.value = withTiming(-LIFT_HEIGHT, { duration: LIFT_MS }, (finished) => {
       if (!finished) return;
       ghostTravelX.value = withTiming(dx, { duration: TRAVEL_MS }, (finished) => {
         if (!finished) return;
         ghostTiltDeg.value = withTiming(tiltAngle, { duration: TILT_IN_MS }, (finished) => {
           if (!finished) return;
           ghostTiltDeg.value = withDelay(
-            TILT_HOLD_MS,
+            pourHoldMs,
             withTiming(0, { duration: TILT_OUT_MS }, (finished) => {
               if (!finished) return;
               ghostTravelX.value = withTiming(0, { duration: TRAVEL_MS }, (finished) => {
@@ -167,8 +184,17 @@ export default function SortBoard({
         });
       });
     });
+
+    // Stream fades in at tilt-in start, holds, fades out at tilt-out start.
+    ghostStreamOpacity.value = withDelay(
+      LIFT_MS + TRAVEL_MS,
+      withSequence(
+        withTiming(1, { duration: TILT_IN_MS }),
+        withDelay(pourHoldMs, withTiming(0, { duration: TILT_OUT_MS }))
+      )
+    );
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pouringFrom, pouringTo, reduceMotion]);
+  }, [pouringFrom, pouringTo, reduceMotion, pourHoldMs]);
 
   // Pour tilt direction — used for reduce-motion fallback only
   const pouringDirection: "left" | "right" | undefined =
@@ -230,36 +256,58 @@ export default function SortBoard({
 
       {/* Ghost bottle overlay — floats above grid during pour animation.
           ghost is only set when !reduceMotion, so the extra guard is omitted. */}
-      {ghost !== null && (
-        <View
-          style={StyleSheet.absoluteFill}
-          pointerEvents="none"
-          accessibilityElementsHidden
-          importantForAccessibility="no-hide-descendants"
-        >
-          <Animated.View
-            style={[
-              styles.ghostBottle,
-              {
-                left: ghost.startX,
-                top: ghost.startY,
-                width: bottleW,
-                height: bottleH,
-              },
-              ghostAnimStyle,
-            ]}
+      {ghost !== null && (() => {
+        const topColor = ghost.bottle.length > 0 ? ghost.bottle[ghost.bottle.length - 1] : null;
+        const streamColor = topColor ? LIQUID_COLORS[topColor] : "#ffffff";
+        const streamTop = ghost.startY - LIFT_HEIGHT;
+        const streamHeight = Math.max(0, ghost.dstY - ghost.startY + LIFT_HEIGHT);
+        const streamLeft = ghost.dstX + (bottleW - STREAM_WIDTH) / 2;
+        return (
+          <View
+            style={StyleSheet.absoluteFill}
+            pointerEvents="none"
+            accessibilityElementsHidden
+            importantForAccessibility="no-hide-descendants"
           >
-            <BottleView
-              bottle={ghost.bottle}
-              index={ghost.bottleIndex}
-              isGhost
-              colorblindMode={colorblindMode}
-              bottleWidth={bottleW}
-              bottleHeight={bottleH}
-            />
-          </Animated.View>
-        </View>
-      )}
+            <Animated.View
+              style={[
+                styles.ghostBottle,
+                {
+                  left: ghost.startX,
+                  top: ghost.startY,
+                  width: bottleW,
+                  height: bottleH,
+                },
+                ghostAnimStyle,
+              ]}
+            >
+              <BottleView
+                bottle={ghost.bottle}
+                index={ghost.bottleIndex}
+                isGhost
+                colorblindMode={colorblindMode}
+                bottleWidth={bottleW}
+                bottleHeight={bottleH}
+              />
+            </Animated.View>
+            {streamHeight > 0 && (
+              <Animated.View
+                style={[
+                  styles.stream,
+                  {
+                    left: streamLeft,
+                    top: streamTop,
+                    width: STREAM_WIDTH,
+                    height: streamHeight,
+                    backgroundColor: streamColor,
+                  },
+                  ghostStreamStyle,
+                ]}
+              />
+            )}
+          </View>
+        );
+      })()}
 
       <SortWinOverlay visible={state.isComplete} />
     </View>
@@ -401,6 +449,10 @@ const styles = StyleSheet.create({
   },
   ghostBottle: {
     position: "absolute",
+  },
+  stream: {
+    position: "absolute",
+    borderRadius: STREAM_WIDTH / 2,
   },
   particle: { position: "absolute", width: 20, height: 20, borderRadius: 10, top: 0 },
   p0: { left: "8%" },
