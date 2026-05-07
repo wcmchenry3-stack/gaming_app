@@ -117,10 +117,10 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: -4 },
     shadowRadius: 20,
     elevation: 8,
+    flexShrink: 0,
   },
   wrapperWeb: {
     alignSelf: "stretch",
-    flexShrink: 0,
   },
   blurFallback: {
     borderTopLeftRadius: 32,
