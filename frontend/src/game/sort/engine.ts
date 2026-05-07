@@ -33,6 +33,11 @@ function topRun(bottle: Bottle): number {
   return n;
 }
 
+/** Number of units actually poured when moving from `from` to `to`. Assumes the move is valid. */
+export function pourUnits(from: Bottle, to: Bottle): number {
+  return Math.min(topRun(from), BOTTLE_DEPTH - to.length);
+}
+
 export function isBottleSolved(bottle: Bottle): boolean {
   return bottle.length === 0 || (bottle.length === BOTTLE_DEPTH && new Set(bottle).size === 1);
 }
