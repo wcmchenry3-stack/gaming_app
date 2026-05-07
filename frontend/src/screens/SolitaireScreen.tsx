@@ -716,13 +716,13 @@ export default function SolitaireScreen() {
                   />
                 </View>
 
-                {selectionLabel !== null && (
-                  <View style={styles.selectionIndicator} accessibilityLiveRegion="polite">
+                <View style={styles.selectionIndicator} accessibilityLiveRegion="polite">
+                  {selectionLabel !== null && (
                     <Text style={[styles.selectionIndicatorText, { color: colors.accent }]}>
                       {selectionLabel}
                     </Text>
-                  </View>
-                )}
+                  )}
+                </View>
 
                 <View style={[styles.tableauRow, { minHeight: cardSize.cardHeight * 3 }]}>
                   {state.tableau.map((pile, col) => (
@@ -1018,6 +1018,7 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
   },
   selectionIndicatorText: {
+    fontFamily: typography.heading,
     fontSize: 13,
     fontWeight: "700",
     letterSpacing: 0.4,
