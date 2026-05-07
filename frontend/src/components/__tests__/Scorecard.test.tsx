@@ -1,7 +1,12 @@
 import React from "react";
 import { render, fireEvent } from "@testing-library/react-native";
+import { Dimensions } from "react-native";
 import Scorecard from "../Scorecard";
 import { ThemeProvider } from "../../theme/ThemeContext";
+
+// Ensure all tests run in a narrow viewport so tab layout is active by default.
+// Wide-layout tests override this per-describe via beforeEach/afterEach.
+jest.spyOn(Dimensions, "get").mockReturnValue({ width: 390, height: 844, scale: 1, fontScale: 1 });
 
 const ALL_CATEGORIES = [
   "ones",
@@ -75,6 +80,29 @@ describe("Scorecard — tabs", () => {
     const tabs = getAllByRole("tab");
     expect(tabs[0]?.props.accessibilityState?.selected).toBe(false);
     expect(tabs[1]?.props.accessibilityState?.selected).toBe(true);
+  });
+});
+
+describe("Scorecard — wide layout (≥600dp)", () => {
+  let dimSpy: jest.SpyInstance;
+
+  beforeEach(() => {
+    dimSpy = jest
+      .spyOn(Dimensions, "get")
+      .mockReturnValue({ width: 800, height: 1200, scale: 1, fontScale: 1 });
+  });
+
+  afterEach(() => {
+    dimSpy.mockRestore();
+    // Restore the narrow-viewport default for subsequent describe blocks
+    jest.spyOn(Dimensions, "get").mockReturnValue({ width: 390, height: 844, scale: 1, fontScale: 1 });
+  });
+
+  it("renders all 13 categories without tabs", () => {
+    const { queryByRole, getAllByRole } = renderScorecard({ rollsUsed: 0 });
+    expect(queryByRole("tab")).toBeNull();
+    const rows = getAllByRole("button").filter((b) => b.props.accessibilityLabel?.includes(":"));
+    expect(rows.length).toBe(13);
   });
 });
 
@@ -167,9 +195,8 @@ describe("Scorecard — reset to all-null scores (GH #263)", () => {
   });
 
   it("renders all lower section rows as 'not available' when scores are null", () => {
-    const { getByRole, getByRole: gr } = renderScorecard({ rollsUsed: 0 });
-    // Switch to lower tab first
-    fireEvent.press(gr("tab", { name: /lower/i }));
+    const { getByRole } = renderScorecard({ rollsUsed: 0 });
+    fireEvent.press(getByRole("tab", { name: /lower/i }));
     for (const cat of LOWER_CATS) {
       expect(
         getByRole("button", {
@@ -215,7 +242,6 @@ describe("Scorecard — reset to all-null scores (GH #263)", () => {
       scores: filledScores,
       rollsUsed: 0,
     });
-    // Switch to lower tab to see lower categories
     fireEvent.press(getByRole("tab", { name: /lower/i }));
     expect(getByRole("button", { name: /Chance:.*scored/i })).toBeTruthy();
 

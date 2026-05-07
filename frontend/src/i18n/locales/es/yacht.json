@@ -57,6 +57,6 @@
   "gameOver.playAgainLabel": "Iniciar un juego nuevo",
   "gameOver.dismiss": "No, gracias",
   "gameOver.dismissLabel": "Cerrar y mantener la puntuación actual visible",
-  "tab.upper": "Alta",
-  "tab.lower": "Baja"
+  "tab.upper": "Superior",
+  "tab.lower": "Inferior"
 }
