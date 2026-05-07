@@ -19,6 +19,7 @@ import {
   dealNextHand,
   detectMoon,
   getValidPlays,
+  isQueenOfSpades,
   playCard,
   selectPassCard,
 } from "../game/hearts/engine";
@@ -91,6 +92,8 @@ export default function HeartsScreen() {
   const loopActiveRef = useRef(false);
   const gameStateRef = useRef<HeartsState | null>(gameState);
   const trickAnimResolverRef = useRef<(() => void) | null>(null);
+  const humanJustPlayedQSRef = useRef(false);
+  const gameOverFiredRef = useRef(false);
   const reportIntegrity = useMemo(() => createIntegrityReporter(), []);
 
   const {
@@ -176,6 +179,9 @@ export default function HeartsScreen() {
   const { play: playHeartsBroken } = useSound("hearts.heartsBroken");
   const { play: playMoonShot } = useSound("hearts.moonShot");
   const { play: playQueenOfSpades } = useSound("hearts.queenOfSpades");
+  const { play: playCardPlay } = useSound("hearts.cardPlay");
+  const { play: playTrickWon } = useSound("hearts.trickWon");
+  const { play: playGameOver } = useSound("hearts.gameOver");
 
   useGameEvents(
     gameState?.events,
@@ -190,6 +196,10 @@ export default function HeartsScreen() {
         setShowMoonShot(true);
       },
       queenOfSpadesPlayed: () => {
+        if (humanJustPlayedQSRef.current) {
+          humanJustPlayedQSRef.current = false;
+          return;
+        }
         playQueenOfSpades();
       },
       queenOfSpades: (event) => {
@@ -234,6 +244,7 @@ export default function HeartsScreen() {
           : null;
 
         s = playCard(s, s.currentPlayerIndex, card);
+        playCardPlay();
 
         if (completedTrick) {
           setLastTrick({ trick: completedTrick, winnerIndex: s.currentLeaderIndex });
@@ -275,11 +286,24 @@ export default function HeartsScreen() {
     syncComplete({ outcome: "completed", finalScore, durationMs: 0 }, { final_score: finalScore });
   }, [gameState?.phase, gameState?.cumulativeScores, syncComplete, syncGetGameId]);
 
+  useEffect(() => {
+    if (gameState?.phase === "game_over" && !gameOverFiredRef.current) {
+      gameOverFiredRef.current = true;
+      playGameOver();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [gameState?.phase]);
+
   // ─── Human card play ──────────────────────────────────────────────────────
   function handleCardPress(card: Card) {
     if (!gameState || gameState.currentPlayerIndex !== HUMAN || gameState.phase !== "playing")
       return;
     ensureSyncStarted();
+    playCardPlay();
+    if (isQueenOfSpades(card)) {
+      humanJustPlayedQSRef.current = true;
+      playQueenOfSpades();
+    }
     const willComplete = gameState.currentTrick.length === 3;
     const completedTrick: readonly TrickCard[] | null = willComplete
       ? [...gameState.currentTrick, { card, playerIndex: HUMAN }]
@@ -304,6 +328,7 @@ export default function HeartsScreen() {
   // clears lastTrick directly.
   function handleTrickAnimationComplete() {
     if (unmountedRef.current) return;
+    if (gameState?.phase === "playing") playTrickWon();
     const resolve = trickAnimResolverRef.current;
     if (resolve) {
       trickAnimResolverRef.current = null;
@@ -365,6 +390,7 @@ export default function HeartsScreen() {
     setSubmitState("idle");
     setPlayerName("");
     loopActiveRef.current = false;
+    gameOverFiredRef.current = false;
     clearGame().catch(() => {});
     const fresh = dealGame(difficulty);
     setGameState(fresh);
@@ -375,6 +401,7 @@ export default function HeartsScreen() {
     setSubmitState("idle");
     setPlayerName("");
     loopActiveRef.current = false;
+    gameOverFiredRef.current = false;
     clearGame().catch(() => {});
     setGameState(null);
   }
