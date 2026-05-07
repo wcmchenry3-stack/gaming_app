@@ -20,6 +20,12 @@ export const SOUND_REGISTRY: Partial<Record<SoundKey, number>> = {
   "hearts.moonShot": require("../../../assets/sounds/hearts-moon-shot.mp3"),
   // eslint-disable-next-line @typescript-eslint/no-require-imports
   "hearts.queenOfSpades": require("../../../assets/sounds/hearts-queen-of-spades.mp3"),
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  "hearts.cardPlay": require("../../../assets/sounds/solitaire-card-place.ogg"),
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  "hearts.trickWon": require("../../../assets/sounds/solitaire-card-flip.ogg"),
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  "hearts.gameOver": require("../../../assets/sounds/cascade-game-over.ogg"),
   // Blackjack (#826)
   // eslint-disable-next-line @typescript-eslint/no-require-imports
   "blackjack.cardDeal": require("../../../assets/sounds/blackjack-card-deal.ogg"),
