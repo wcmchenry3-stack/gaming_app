@@ -48,7 +48,7 @@ export const LIFT_MS = 150;
 export const TRAVEL_MS = 150;
 export const TILT_IN_MS = 250;
 export const TILT_OUT_MS = 200;
-export const TILT_HOLD_MS_PER_UNIT = 150;  // scaled by # of sections poured
+export const TILT_HOLD_MS_PER_UNIT = 150; // scaled by # of sections poured
 
 // Ghost rises just enough to clear the target bottle's opening
 const LIFT_HEIGHT = 40;
@@ -213,14 +213,11 @@ export default function SortBoard({
   );
 
   // Stream geometry — derived from ghost snapshot; stable for the life of each pour.
-  const streamTopColor = ghost !== null && ghost.bottle.length > 0
-    ? ghost.bottle[ghost.bottle.length - 1]
-    : null;
+  const streamTopColor =
+    ghost !== null && ghost.bottle.length > 0 ? ghost.bottle[ghost.bottle.length - 1] : null;
   const streamColor = streamTopColor ? LIQUID_COLORS[streamTopColor] : "transparent";
   const streamTop = ghost !== null ? ghost.startY - LIFT_HEIGHT : 0;
-  const streamHeight = ghost !== null
-    ? Math.max(0, ghost.dstY - ghost.startY + LIFT_HEIGHT)
-    : 0;
+  const streamHeight = ghost !== null ? Math.max(0, ghost.dstY - ghost.startY + LIFT_HEIGHT) : 0;
   const streamLeft = ghost !== null ? ghost.dstX + (bottleW - STREAM_WIDTH) / 2 : 0;
 
   return (
