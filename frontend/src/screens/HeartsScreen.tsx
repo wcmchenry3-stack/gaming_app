@@ -299,10 +299,11 @@ export default function HeartsScreen() {
     if (!gameState || gameState.currentPlayerIndex !== HUMAN || gameState.phase !== "playing")
       return;
     ensureSyncStarted();
-    playCardPlay();
     if (isQueenOfSpades(card)) {
       humanJustPlayedQSRef.current = true;
       playQueenOfSpades();
+    } else {
+      playCardPlay();
     }
     const willComplete = gameState.currentTrick.length === 3;
     const completedTrick: readonly TrickCard[] | null = willComplete
