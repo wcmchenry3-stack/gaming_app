@@ -49,7 +49,6 @@ export const TRAVEL_MS = 150;
 export const TILT_IN_MS = 250;
 export const TILT_OUT_MS = 200;
 export const TILT_HOLD_MS_PER_UNIT = 150;  // scaled by # of sections poured
-const TILT_HOLD_MS_DEFAULT = TILT_HOLD_MS_PER_UNIT;  // fallback when no prop
 
 // Ghost rises just enough to clear the target bottle's opening
 const LIFT_HEIGHT = 40;
@@ -64,7 +63,7 @@ export default function SortBoard({
   pouringFrom = null,
   pouringTo = null,
   availableHeight,
-  pourHoldMs = TILT_HOLD_MS_DEFAULT,
+  pourHoldMs = TILT_HOLD_MS_PER_UNIT,
 }: SortBoardProps) {
   const { t } = useTranslation("sort");
   const { width: screenW } = useWindowDimensions();
@@ -258,7 +257,7 @@ export default function SortBoard({
           ghost is only set when !reduceMotion, so the extra guard is omitted. */}
       {ghost !== null && (() => {
         const topColor = ghost.bottle.length > 0 ? ghost.bottle[ghost.bottle.length - 1] : null;
-        const streamColor = topColor ? LIQUID_COLORS[topColor] : "#ffffff";
+        const streamColor = topColor ? LIQUID_COLORS[topColor] : "transparent";
         const streamTop = ghost.startY - LIFT_HEIGHT;
         const streamHeight = Math.max(0, ghost.dstY - ghost.startY + LIFT_HEIGHT);
         const streamLeft = ghost.dstX + (bottleW - STREAM_WIDTH) / 2;
@@ -269,6 +268,21 @@ export default function SortBoard({
             accessibilityElementsHidden
             importantForAccessibility="no-hide-descendants"
           >
+            {streamHeight > 0 && (
+              <Animated.View
+                style={[
+                  styles.stream,
+                  {
+                    left: streamLeft,
+                    top: streamTop,
+                    width: STREAM_WIDTH,
+                    height: streamHeight,
+                    backgroundColor: streamColor,
+                  },
+                  ghostStreamStyle,
+                ]}
+              />
+            )}
             <Animated.View
               style={[
                 styles.ghostBottle,
@@ -290,21 +304,6 @@ export default function SortBoard({
                 bottleHeight={bottleH}
               />
             </Animated.View>
-            {streamHeight > 0 && (
-              <Animated.View
-                style={[
-                  styles.stream,
-                  {
-                    left: streamLeft,
-                    top: streamTop,
-                    width: STREAM_WIDTH,
-                    height: streamHeight,
-                    backgroundColor: streamColor,
-                  },
-                  ghostStreamStyle,
-                ]}
-              />
-            )}
           </View>
         );
       })()}
