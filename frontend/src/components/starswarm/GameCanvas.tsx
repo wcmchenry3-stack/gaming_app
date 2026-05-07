@@ -444,7 +444,7 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
                       const r = refR * (0.6 + 0.5 * progress);
                       const a = enemy.hitFlashTimer / HIT_FLASH_DURATION; // 1→0 as burst plays
                       return (
-                        <>
+                        <Group>
                           <Circle
                             cx={enemy.x}
                             cy={enemy.y}
@@ -460,7 +460,7 @@ const GameCanvas = forwardRef<GameCanvasHandle, Props>(
                             style="stroke"
                             strokeWidth={2}
                           />
-                        </>
+                        </Group>
                       );
                     })()}
                 </Group>
